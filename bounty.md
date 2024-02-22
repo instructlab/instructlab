@@ -15,6 +15,7 @@ to prove this model.
 * RHEL Firewall configurations
 * Systemd configurations
 * Podman
+* Converting Docker Compose to Kubernetes YAML
 * Red Hat OpenShift for AWS / Azure Red Hat OpenShift configuration
 * Quarkus LLM usage
 * OpenShift Pipeline configuration
@@ -33,7 +34,7 @@ Knowledge requires source documentation as well as skills that demonstrate that 
 
 In the case of FedRamp, this would be what is required to make for a good submission:
 
-1. A collection of documents, converted to [Markdown}(https://www.markdownguide.org/basic-syntax/)
+1. A collection of documents, converted to [Markdown](https://www.markdownguide.org/basic-syntax/)
 1. A small set of question and answer prompts that represent what you would expect based on this knowledge.
     1. For the best results, the questions should have good coverage over the provided document.  For example, instead of providing
      5 questions for the 500+ page FedRamp document, it might be better to include the three most relevant chapters as Markdown,
