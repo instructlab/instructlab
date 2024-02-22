@@ -11,10 +11,12 @@ to prove this model.
 
 ### Linux
 > dnf install pandoc
+> 
 > pandoc -t markdown document .docx  | less
 
 ### Mac
 > brew install pandoc
+> 
 > pandoc -t markdown document .docx  | less
 
 ## Needed Skills
