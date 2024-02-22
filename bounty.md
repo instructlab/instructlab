@@ -5,6 +5,11 @@ your fingerprints on an AI model in a scalable, open source approach.  But your 
 so in this early phase, we want to focus contributions in the areas that will be most impactful
 to prove this model.
 
+## Prerequisite
+
+* Markdown expert and converter
+  * Check with Dan Walsh if you need some tips here
+
 ## Needed Skills
 
 * RHEL Firewall configurations
@@ -23,3 +28,13 @@ Knowledge requires source documentation as well as skills that demonstrate that 
 * RHEL ABI Policies
 * Red Hat Subscription Model
 * Red Hat History
+
+### Knowledge Submission Examples
+
+In the case of FedRamp, this would be what is required to make for a good submission:
+
+1. A collection of documents, converted to [Markdown}(https://www.markdownguide.org/basic-syntax/)
+1. A small set of question and answer prompts that represent what you would expect based on this knowledge.
+    1. For the best results, the questions should have good coverage over the provided document.  For example, instead of providing
+     5 questions for the 500+ page FedRamp document, it might be better to include the three most relevant chapters as Markdown,
+     with 5 questions for each chapter.
