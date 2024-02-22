@@ -7,8 +7,15 @@ to prove this model.
 
 ## Prerequisite
 
-* Markdown expert and converter
-  * Check with Dan Walsh if you need some tips here
+* Markdown conversion ability.  Pandoc works pretty well in converting from word documents to Markdown.
+
+### Linux
+> dnf install pandoc
+> pandoc -t markdown document .docx  | less
+
+### Mac
+> brew install pandoc
+> pandoc -t markdown document .docx  | less
 
 ## Needed Skills
 
