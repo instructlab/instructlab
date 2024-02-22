@@ -1,0 +1,24 @@
+[project]
+name = "cli"
+version = "0.0.1"
+authors = [
+    { name="TBD", email="jon@example.com" },
+]
+description = "CLI for open-labrador"
+readme = "README.md"
+requires-python = ">=3.9"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: MacOS",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Programming Language :: Python :: 3",
+]
+
+[project.urls]
+Homepage = "https://github.com/open-labrador/cli"
+Issues = "https://github.com/open-labrador/cli/issues"
+
+[console_scripts]
+cli = "cli.cli"
