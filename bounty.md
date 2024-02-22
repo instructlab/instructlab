@@ -10,6 +10,9 @@ to prove this model.
 * RHEL Firewall configurations
 * Systemd configurations
 * Podman
+* Red Hat OpenShift for AWS / Azure Red Hat OpenShift configuration
+* Quarkus LLM usage
+* OpenShift Pipeline configuration
 
 ## Needed Knowledge
 
@@ -19,3 +22,4 @@ Knowledge requires source documentation as well as skills that demonstrate that 
 * FedRAMP Knowledge
 * RHEL ABI Policies
 * Red Hat Subscription Model
+* Red Hat History
