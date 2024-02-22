@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+if [ ! -t 0 ]; then
+  input=$(cat)
+  q="Below in the <cmdout> tags is a command output that helps you answer the query.
+<cmdout>
+$input
+</cmdout>
+Now give the command for the query: $@
+Please return the command only without any explanantion."
+else
+  q="$@"
+fi
+
+chat -qq --context cli_helper "$q"

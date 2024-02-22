@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+
+$HOME/.conda/envs/chat-cli/bin/python $HOME/src/chat-cli/chat.py $@
