@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import click
 
 @click.group()
@@ -6,18 +8,13 @@ def cli():
     pass
 
 @cli.command()
-def help():
-    """Provides more information about commands"""
-    click.echo("# help TBD")
-
-@cli.command()
 def init():
     """Initializes environment for labrador"""
     click.echo("# init TBD")
 
 @cli.command()
 def generate():
-    """Generates ..."""
+    """Generates synthetic data to enhance your example data"""
     click.echo("# generate TBD")
 
 @cli.command()
@@ -34,3 +31,7 @@ def test():
 def chat():
     """Run a chat using the modified model"""
     click.echo("# chat TBD")
+
+
+if __name__ == "__main__":
+    cli()
