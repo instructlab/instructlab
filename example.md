@@ -41,3 +41,19 @@ We need to convert the table from the results into Markdown.  A simple manual co
 | 3784 | Red Hat®, Inc.	| Red Hat Enterprise Linux 8 libgcrypt Cryptographic Module	| Software | 12/21/2020 |
 
 We save this Markdown table off into it's own file.
+
+The next step is to provide knowledge about the [SSP Appendix Q - Cryptographic Modules Table](https://www.fedramp.gov/assets/resources/templates/SSP-Appendix-Q-Cryptographic-Modules-Table.docx) table for a FedRamp submission.
+This is one of the many [resources](https://www.fedramp.gov/documents-templates/) involved in a
+FedRamp submission.
+
+Since the download is a word document, we will use pandoc to convert the word document into Markdown format:
+
+> pandoc -t markdown ~/Downloads/SSP-Appendix-Q-Cryptographic-Modules-Table.docx > SSP-Appendix-Q-Example.md
+
+## Core Skill
+
+Now we are going to teach our model how to fill out the FedRamp [SSP Appendix Q - Cryptographic Modules Table](https://www.fedramp.gov/assets/resources/templates/SSP-Appendix-Q-Cryptographic-Modules-Table.docx) table for a FedRamp submission
+that is utilizing RHEL 7 or RHEL 8.  The goal of this skill would be to make it easier to utilize this model to compose a FedRamp submission when
+utilizing Red Hat technology.
+
+In this case, we will be providing question and answer examples 
