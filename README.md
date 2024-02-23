@@ -30,7 +30,7 @@ source venv/bin/activate
 
 Run CLI as follows:
 
-```
+```ShellSession
 $ python -m cli
 Usage: python -m cli [OPTIONS] COMMAND [ARGS]...
 
