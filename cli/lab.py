@@ -22,7 +22,6 @@ def init():
 @cli.command()
 @click.option("--model", default="/models/ggml-labrador13B-model-Q4_K_M.gguf", show_default=True)
 @click.option("--n_gpu_layers", default=-1, show_default=True)
-@click.option("--api_key", default="bogus", show_default=True)
 def serve(model, n_gpu_layers):
     """Start a local server"""
     settings = Settings(model=model, n_gpu_layers=n_gpu_layers)
