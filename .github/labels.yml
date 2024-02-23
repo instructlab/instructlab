@@ -1,0 +1,13 @@
+# labels to be used with /area command
+area:
+  - 'bug'
+  - 'important'
+
+kind:
+  - 'feature'
+  - 'enhancement'
+
+priority:
+  - 'low'
+  - 'mid'
+  - 'high'
