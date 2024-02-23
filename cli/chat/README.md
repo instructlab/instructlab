@@ -20,7 +20,7 @@ Options:
   -m, --model TEXT        Model to use
   -c, --context TEXT      Name of system context in config file
   -s, --session FILENAME  Filepath of a dialog session file
-  -qq, --quick-question   Exist after answering question
+  -qq, --quick-question   Exit after answering question
   --help                  Show this message and exit.
 ```
 

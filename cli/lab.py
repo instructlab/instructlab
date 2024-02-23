@@ -68,7 +68,7 @@ def test():
     "-s", "--session", "session", help="Filepath of a dialog session file", type=click.File("r")
 )
 @click.option(
-    "-qq", "--quick-question", "qq", help="Exist after answering question", is_flag=True
+    "-qq", "--quick-question", "qq", help="Exit after answering question", is_flag=True
 )
 def chat(question, model, context, session, qq):
     """Run a chat using the modified model"""
