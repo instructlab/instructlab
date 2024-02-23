@@ -9,7 +9,7 @@ This is the command-line interface for TBD...
 * MacOS
   * 14.x with M1/M2/M3 (Metal/GPU)
 
-## Using
+## Usage
 
 To install from source, clone this repo.
 
@@ -40,9 +40,9 @@ Commands:
   train     Trains labrador model
 ```
 
-## Development
+> TODO: publish package to PyPI
 
-> TODO: run in a project folder using `pip this` from PyPI
+## Development
 
 To run from source, clone this repo.
 
@@ -53,7 +53,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Always be sure to activate the venv in your working shell.
+Always be sure to activate the *venv* in your working shell.
 
 ```shell
 source venv/bin/activate

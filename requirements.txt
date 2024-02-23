@@ -1,4 +1,5 @@
 click
+click_didyoumean
 numpy
 rouge_score
 openai
