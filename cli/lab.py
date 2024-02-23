@@ -5,6 +5,7 @@ import uvicorn
 
 from click_didyoumean import DYMGroup
 from .generator.generate_data import generate_data
+from .download_model import download_model
 
 
 @click.group(cls=DYMGroup)
@@ -60,4 +61,4 @@ def chat():
 @cli.command()
 def download():
     """Download the model(s) to train"""
-    click.echo("# download TBD")
+    download_model()
