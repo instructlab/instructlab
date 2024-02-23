@@ -59,6 +59,24 @@ The flow of commands (in order) are as follows:
 6. test
 7. train
 
+## Downloading Models
+
+Temporarily, the model's files are hosted on GitHub, split in parts, and require to be downloaded manually and combined.
+
+You can either download the assets from [the latest release](https://github.com/open-labrador/cli/releases/tag/v0.0.0) manually, or use the [`gh` command line tool](https://cli.github.com/):
+
+```
+gh release download v0.0.0 --repo "https://github.com/open-labrador/cli.git"
+```
+
+Once the files are downloaded, combine them using the `cat` command:
+
+```
+cat ggml-labrador13B-model-Q4_K_M.gguf.split.* > ggml-labrador13B-model-Q4_K_M.gguf && rm ggml-labrador13B-model-Q4_K_M..gguf.split.*
+```
+
+The resulting `ggml-labrador13B-model-Q4_K_M.gguf` file is the model, ready to be trained, tested, or served. 
+
 ## Inferencing Models
 
 This repo provides instructions on how to inference models as follows:
