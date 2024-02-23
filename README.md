@@ -73,7 +73,7 @@ gh release download v0.0.0 --repo "https://github.com/open-labrador/cli.git"
 Once the files are downloaded, combine them using the `cat` command:
 
 ```bash
-cat ggml-labrador13B-model-Q4_K_M.gguf.split.* > ggml-labrador13B-model-Q4_K_M.gguf && rm ggml-labrador13B-model-Q4_K_M..gguf.split.*
+cat ggml-labrador13B-model-Q4_K_M.gguf.split.* > ggml-labrador13B-model-Q4_K_M.gguf && rm ggml-labrador13B-model-Q4_K_M.gguf.split.*
 ```
 
 The resulting `ggml-labrador13B-model-Q4_K_M.gguf` file is the model, ready to be trained, tested, or served. 
