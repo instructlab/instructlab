@@ -6,6 +6,7 @@ import time
 import toml
 
 import openai
+from openai import OpenAI
 
 from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import FormattedText
@@ -48,6 +49,7 @@ CONFIG_FILENAME = "chat-cli.toml"
 CONTEXTS = None
 
 CONFIG_FILEPATHS = [
+    os.path.expanduser(f"./cli/chat/{CONFIG_FILENAME}"),
     os.path.expanduser(f"~/.{CONFIG_FILENAME}"),
     os.path.expanduser(f"~/.config/{CONFIG_FILENAME}"),
 ]
@@ -66,8 +68,11 @@ PROMPT_PREFIX = ">>> "
 # TODO Autosave chat history
 class ConsoleChatBot():
 
-    def __init__(self, model, vi_mode=False, prompt=True, vertical_overflow="ellipsis", loaded={}):
+    def __init__(self, model, client, vi_mode=False, prompt=True, vertical_overflow="ellipsis", loaded={}):
         
+        # self.base_url = "http://localhost:8000/v1"
+        self.client = client
+        # self.api_key = "sk-init"  # lazy
         self.model = model
         self.vi_mode = vi_mode
         self.vertical_overflow = vertical_overflow
@@ -261,25 +266,17 @@ class ConsoleChatBot():
 
         # Get and parse response
         try:
-            response = openai.ChatCompletion.create(
-                model=self.model,
-                messages=self.info["messages"],
-                stream=True,
-            )
-            assert next(response)['choices'][0]['delta']["role"] == "assistant", 'first response should be {"role": "assistant"}'
-        except openai.error.AuthenticationError:
+            response = self.client.chat.completions.create(model=self.model, messages=self.info["messages"], stream=True)
+            assert next(response).choices[0].delta.role == "assistant", 'first response should be {"role": "assistant"}'
+        except openai.AuthenticationError:
             self.console.print("Invalid API Key", style="bold red")
             raise EOFError
-        except openai.error.RateLimitError:
+        except openai.RateLimitError:
             self.console.print("Rate limit or maximum monthly limit exceeded", style="bold red")
             self.info["messages"].pop()
             raise KeyboardInterrupt
-        except openai.error.APIConnectionError:
+        except openai.APIConnectionError:
             self.console.print("Connection error, try again...", style="red bold")
-            self.info["messages"].pop()
-            raise KeyboardInterrupt
-        except openai.error.Timeout:
-            self.console.print("Connection timed out, try again...", style="red bold")
             self.info["messages"].pop()
             raise KeyboardInterrupt
         except:
@@ -291,9 +288,10 @@ class ConsoleChatBot():
         with Live(panel, console=self.console, refresh_per_second=5, vertical_overflow=self.vertical_overflow) as live:
             start_time = time.time()
             for chunk in response:
-                chunk_message = chunk['choices'][0]['delta']
-                if 'content' in chunk_message:
-                    response_content.append(chunk_message['content'])
+                chunk_message = chunk.choices[0].delta
+                if chunk_message.content:
+                    response_content.append(chunk_message.content)
+
                 if box:
                     panel.subtitle = f"elapsed {time.time() - start_time:.3f} seconds"
 
@@ -317,25 +315,20 @@ def chat_cli(question, model, context, session, qq) -> None:
         print(f"Config file not found. Please copy {CONFIG_FILENAME} from the repo to any path in {CONFIG_FILEPATHS}.")
         sys.exit(1)
 
-    api_base = config.get("api_base")
-    if api_base is not None:
-        openai.api_base = api_base
-    
     # Read API key
-    api_key = os.environ.get("OAI_SECRET_KEY", config.get("api_key"))
+    api_key = os.environ.get("OAI_SECRET_KEY", config.get("api_key", "no-api-key"))
+    base_url = config.get("api_base")
 
     if api_key is None:
         print(f"API key not found. Please set it in the config file ({config_filepath}) or via environment variable `OAI_SECRET_KEY` (higher priority).")
         sys.exit(1)
-    if not api_key.startswith("sk-"):
-        print('API key incorrect. Please make sure it starts with "sk-".')
-        sys.exit(1)
 
-    openai.api_key = api_key
+    # proxy = config.get("proxy")
+    # if proxy is not None:
+        # TODO: The 'openai.proxy' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(proxy={"http": proxy, "https": proxy})'
+        # openai.proxy = {"http": proxy, "https": proxy}
 
-    proxy = config.get("proxy")
-    if proxy is not None:
-        openai.proxy = {"http": proxy, "https": proxy}
+    client = OpenAI(base_url=base_url, api_key=api_key)
 
     # Load context/session
     loaded = {}
@@ -359,7 +352,8 @@ def chat_cli(question, model, context, session, qq) -> None:
         loaded["messages"] = json.loads(session.read())
 
     # Initialize chat bot
-    ccb = ConsoleChatBot(config["model"] if model is None else model, 
+    ccb = ConsoleChatBot(config["model"] if model is None else model,
+                         client=client,
                          vi_mode=config.get("vi_mode", False),
                          prompt=not qq,
                          vertical_overflow=("visible" if config.get("visible_overflow", False) else "ellipsis"), 
