@@ -159,7 +159,6 @@ def generate_data(
             model_name=model_name,
             batch_size=request_batch_size,
             decoding_args=decoding_args,
-            logit_bias={"50256": -100},  # prevent the <|endoftext|> token from being generated
         )
         request_duration = time.time() - request_start
 
