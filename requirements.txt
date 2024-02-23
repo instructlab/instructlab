@@ -1,1 +1,10 @@
 click
+numpy
+rouge_score
+openai
+tqdm
+transformers>=4.28.1
+torch
+sentencepiece
+tokenizers>=0.13.3
+wandb
