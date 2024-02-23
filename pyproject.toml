@@ -4,7 +4,7 @@ version = "0.0.1"
 authors = [
     { name="TBD", email="jon@example.com" },
 ]
-description = "CLI for open-labrador"
+description = "CLI for interacting with labrador"
 readme = "README.md"
 requires-python = ">=3.9"
 classifiers = [
@@ -20,5 +20,11 @@ classifiers = [
 Homepage = "https://github.com/open-labrador/cli"
 Issues = "https://github.com/open-labrador/cli/issues"
 
-[console_scripts]
-cli = "cli.cli"
+[project.scripts]
+# defines lab executable
+lab = "cli.lab:cli"
+
+[tool.setuptools.packages.find]
+# defines where to look for sub-packages
+where = ["cli"]
+
