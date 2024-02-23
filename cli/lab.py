@@ -46,3 +46,8 @@ def test():
 def chat():
     """Run a chat using the modified model"""
     click.echo("# chat TBD")
+
+@cli.command()
+def download():
+    """Download the model(s) to train"""
+    click.echo("# download TBD")
