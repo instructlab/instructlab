@@ -1,5 +1,6 @@
 click
 click_didyoumean
+llama_cpp_python[server]
 numpy
 rouge_score
 openai

@@ -1,4 +1,7 @@
 import click
+from llama_cpp.server.app import create_app
+from llama_cpp.server.settings import Settings
+import uvicorn
 
 from click_didyoumean import DYMGroup
 from .generator.generate_data import generate_data
@@ -17,9 +20,17 @@ def init():
 
 
 @cli.command()
-def serve():
+@click.option("--model", default="/models/ggml-labrador13B-model-Q4_K_M.gguf", show_default=True)
+@click.option("--n_gpu_layers", default=-1, show_default=True)
+@click.option("--api_key", default="bogus", show_default=True)
+def serve(model, n_gpu_layers):
     """Start a local server"""
-    click.echo("# serve TBD")
+    settings = Settings(model=model, n_gpu_layers=n_gpu_layers)
+    app = create_app(settings=settings)
+    click.echo("Starting server process")
+    click.echo("After application startup complete see http://127.0.0.1:8000/docs for API.")
+    click.echo("Press CTRL+C to shutdown server.")
+    uvicorn.run(app)  # TODO: host params, etc...
 
 
 @cli.command()
