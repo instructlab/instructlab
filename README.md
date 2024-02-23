@@ -41,6 +41,7 @@ Options:
 
 Commands:
   chat      Run a chat using the modified model
+  download  Download the model(s) to train
   generate  Generates synthetic data to enhance your example data
   init      Initializes environment for labrador
   serve     Start a local server
