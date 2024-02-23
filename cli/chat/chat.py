@@ -70,9 +70,7 @@ class ConsoleChatBot():
 
     def __init__(self, model, client, vi_mode=False, prompt=True, vertical_overflow="ellipsis", loaded={}):
         
-        # self.base_url = "http://localhost:8000/v1"
         self.client = client
-        # self.api_key = "sk-init"  # lazy
         self.model = model
         self.vi_mode = vi_mode
         self.vertical_overflow = vertical_overflow
@@ -100,16 +98,17 @@ class ConsoleChatBot():
         self._sys_print(Markdown(f"Welcome to Chat CLI w/ **{self.model.upper()}**" + side_info_str))
 
     def display_expense(self):
-        total_expense = calculate_expense(
-            self.info["tokens"]["user"],
-            self.info["tokens"]["assistant"],
-            PRICING_RATE[self.model]["prompt"],
-            PRICING_RATE[self.model]["completion"],
-        )
-        self._sys_print(
-            f"Total tokens used: [green bold]{self._total_tokens}[/green bold]\n"
-            f"Estimated expense: [green bold]${total_expense}[/green bold]",
-        )
+        # total_expense = calculate_expense(
+        #     self.info["tokens"]["user"],
+        #     self.info["tokens"]["assistant"],
+        #     PRICING_RATE[self.model]["prompt"],
+        #     PRICING_RATE[self.model]["completion"],
+        # )
+        # self._sys_print(
+        #     f"Total tokens used: [green bold]{self._total_tokens}[/green bold]\n"
+        #     f"Estimated expense: [green bold]${total_expense}[/green bold]",
+        # )
+        pass
 
     @property
     def _total_tokens(self): return self.info["tokens"]["user"] + self.info["tokens"]["assistant"]
