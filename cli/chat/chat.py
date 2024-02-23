@@ -23,7 +23,7 @@ import json
 
 import atexit
 
-from util import num_tokens_from_messages, calculate_expense
+from .util import num_tokens_from_messages, calculate_expense
 
 
 HELP_MD = """
@@ -299,23 +299,8 @@ class ConsoleChatBot():
         # Update message history and token counters
         self._update_conversation(response_content.plain, "assistant")
 
-@click.command()
-@click.argument(
-    "question", nargs=-1, type=click.UNPROCESSED
-)
-@click.option(
-    "-m", "--model", "model", help="Model to use"
-)
-@click.option(
-    "-c", "--context", "context", help="Name of system context in config file", default="default"
-)
-@click.option(
-    "-s", "--session", "session", help="Filepath of a dialog session file", type=click.File("r")
-)
-@click.option(
-    "-qq", "--quick-question", "qq", help="Exist after answering question", is_flag=True
-)
-def main(question, model, context, session, qq) -> None:
+
+def chat_cli(question, model, context, session, qq) -> None:
     assert (context is None) or (session is None), "Cannot load context and session in the same time"
 
     # Load config file
@@ -404,7 +389,3 @@ def main(question, model, context, session, qq) -> None:
     else:
         # TODO Autosave session in QQ mode
         pass
-
-
-if __name__ == "__main__":
-    main()

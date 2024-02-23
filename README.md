@@ -64,3 +64,8 @@ The flow of commands (in order) are as follows:
 This repo provides instructions on how to inference models as follows:
 
 - [Inferencing AI Models on a Mac Laptop](./mac_inference/README.md)
+
+
+## Chatting with Models
+
+- [Chatting with AI Models using CLI Chat](/cli/chat/README.md)
