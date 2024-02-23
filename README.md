@@ -87,4 +87,4 @@ This repo provides instructions on how to inference models as follows:
 
 ## Chatting with Models
 
-- [Chatting with AI Models using CLI Chat](/cli/chat/README.md)
+- [Chatting with AI Models using CLI Chat](./cli/chat/README.md)
