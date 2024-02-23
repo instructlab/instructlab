@@ -1,7 +1,5 @@
-#!/usr/bin/env python
-
 import click
-from generator.generate_data import generate_data
+from .generator.generate_data import generate_data
 
 @click.group()
 def cli():
@@ -39,7 +37,3 @@ def test():
 def chat():
     """Run a chat using the modified model"""
     click.echo("# chat TBD")
-
-
-if __name__ == "__main__":
-    cli()
