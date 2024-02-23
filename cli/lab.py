@@ -5,6 +5,8 @@ import uvicorn
 
 from click_didyoumean import DYMGroup
 from .generator.generate_data import generate_data
+from .chat.chat import chat_cli
+from .download_model import download_model
 
 
 @click.group(cls=DYMGroup)
@@ -53,11 +55,27 @@ def test():
 
 
 @cli.command()
-def chat():
+@click.argument(
+    "question", nargs=-1, type=click.UNPROCESSED
+)
+@click.option(
+    "-m", "--model", "model", help="Model to use"
+)
+@click.option(
+    "-c", "--context", "context", help="Name of system context in config file", default="default"
+)
+@click.option(
+    "-s", "--session", "session", help="Filepath of a dialog session file", type=click.File("r")
+)
+@click.option(
+    "-qq", "--quick-question", "qq", help="Exit after answering question", is_flag=True
+)
+def chat(question, model, context, session, qq):
     """Run a chat using the modified model"""
-    click.echo("# chat TBD")
+    chat_cli(question, model, context, session, qq)
+
 
 @cli.command()
 def download():
     """Download the model(s) to train"""
-    click.echo("# download TBD")
+    download_model()
