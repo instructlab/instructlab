@@ -83,3 +83,8 @@ The resulting `ggml-labrador13B-model-Q4_K_M.gguf` file is the model, ready to b
 This repo provides instructions on how to inference models as follows:
 
 - [Inferencing AI Models on a Mac Laptop](./mac_inference/README.md)
+
+
+## Chatting with Models
+
+- [Chatting with AI Models using CLI Chat](/cli/chat/README.md)
