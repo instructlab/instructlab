@@ -20,8 +20,21 @@ def cli():
 @cli.command()
 def init():
     """Initializes environment for labrador"""
-    click.echo("# init TBD")
+    click.echo("please do\n")
+    click.echo("git clone git@github.com:open-labrador/taxonomy.git\n")
+    click.echo("to get the taxonomy repo")
 
+@cli.command()
+def list():
+    """Initializes environment for labrador"""
+    click.echo("please do\n")
+    click.echo("tree taxonomy\n")
+    click.echo("to view the taxonomy repo")
+
+@cli.command()
+def submit():
+    """Initializes environment for labrador"""
+    click.echo("please use git commands and GitHub to submit a PR to the taxonomy repo")
 
 @cli.command()
 @click.option("--model", default="./models/ggml-labrador13B-model-Q4_K_M.gguf", show_default=True)
