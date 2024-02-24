@@ -73,8 +73,7 @@ command:
 
   `python -m cli init`
   
-  🚧 **Under construction:** This command isn´t ready yet! 😅 In the meanwhile,
-you can use [this jupyter notebook hosted on Google Colab](https://colab.research.google.com/drive/1qQr7X9Js6RTuXV12mRJtDHZU-bk4WgSU?usp=sharing) as a training environment. 
+  🚧 **Under construction:** This command isn´t ready yet! 😅 
 
 - Download the model to train using the **download** command:
 
@@ -83,6 +82,7 @@ you can use [this jupyter notebook hosted on Google Colab](https://colab.researc
   🚧 **Under construction:** This command isn´t ready yet! 😅 Pop over to our 
 [model download guide](https://github.com/open-labrador/cli/releases/tag/v0.0.0) for a set of instructions on how to do this 
 manually; you can also run the command `python -m cli download` to receive instructions.
+
   📋 **Note:** Once you have the model chunks downloaded and reassembled according to the instructions above, please move the model to a `models` directory in the root directory of your git checkout of this project (this assumed the model is in your Downloads folder):
   ```
   mkdir models
@@ -232,4 +232,8 @@ For example, the following command converts the f16 GGUF model to a Q4_K_M quant
 
 > Tip: Use `./quantize help` for a list of quantization types with their relative size and output quality along with additional usage parameters.
 
+# Other stuffs
+
+Hosted training environment:
+[This jupyter notebook hosted on Google Colab](https://colab.research.google.com/drive/1qQr7X9Js6RTuXV12mRJtDHZU-bk4WgSU?usp=sharing)
 
