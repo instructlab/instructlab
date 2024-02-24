@@ -1,4 +1,6 @@
 import click
+import llama_cpp.llama_chat_format as llama_chat_format
+import llama_cpp.server.app as llama_app
 from llama_cpp.server.app import create_app
 from llama_cpp.server.settings import Settings
 import uvicorn
@@ -22,12 +24,15 @@ def init():
 
 
 @cli.command()
-@click.option("--model", default="/models/ggml-labrador13B-model-Q4_K_M.gguf", show_default=True)
+@click.option("--model", default="./models/ggml-labrador13B-model-Q4_K_M.gguf", show_default=True)
 @click.option("--n_gpu_layers", default=-1, show_default=True)
 def serve(model, n_gpu_layers):
     """Start a local server"""
     settings = Settings(model=model, n_gpu_layers=n_gpu_layers)
     app = create_app(settings=settings)
+    llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
+        template="{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}", eos_token="<|endoftext|>", bos_token=""
+    ).to_chat_handler()
     click.echo("Starting server process")
     click.echo("After application startup complete see http://127.0.0.1:8000/docs for API.")
     click.echo("Press CTRL+C to shutdown server.")
