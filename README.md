@@ -27,13 +27,12 @@ future support for 🐧 Linux and other operating systems as well as for
 - 📦 A quantized model in GGUF format (or read our [guide](#TODO) on to convert 
 models to GGUF format and quantize them.)
   
-🗒️ **Note:** The steps below use [Python venv](https://docs.python.org/3/library/
-venv.html) for virtual environments. If you have used [pyenv](https://github.
-com/pyenv/pyenv), [Conda Miniforge](https://github.com/conda-forge/miniforge) 
-or another tool for Python version management on your laptop, then use the 
-virtual environment with that tool instead. Otherwise, you may have issues with 
-packages installed but modules from that package not found as they are linked 
-to your Python version management tool and not `venv`.
+🗒️ **Note:** The steps below use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. If you have used [pyenv](https://github.com/pyenv/pyenv), 
+[Conda Miniforge](https://github.com/conda-forge/miniforge) or another tool for 
+Python version management on your laptop, then use the virtual environment with that 
+tool instead. Otherwise, you may have issues with packages installed but modules 
+from that package not found as they are linked to your Python version management 
+tool and not `venv`.
 
 ## 🧰 Installation
 
@@ -64,24 +63,25 @@ python -m cli
 
 # How to use `cli`
 
-First, you will need a properly-formatted **[example dataset](#TODO)** to tune 
-the model with. Once you have that, 
-using the Labrador 🐶 method involves a number of steps, supported by various 
-commands:
+First, you will need a properly-formatted **[example dataset](https://github.com/open-labrador/taxonomy)** to tune the model with. Once you have that, using the Labrador 🐶 method 
+involves a number of steps, supported by various commands:
 
 ## 🏗️ 1. Initial setup
 - Initialize a local environment to use Labrador 🐶 via the **init**
 command:
 
   `python -m cli init`
+  
+  🚧 **Under construction:** This command isn´t ready yet! 😅 In the meanwhile,
+you can use [this jupyter notebook hosted on Google Colab](https://colab.research.google.com/drive/1qQr7X9Js6RTuXV12mRJtDHZU-bk4WgSU?usp=sharing) as a training environment. 
 
 - Download the model to train using the **download** command:
 
   `python -m cli download {URL to gguf-format model}`
 
   🚧 **Under construction:** This command isn´t ready yet! 😅 Pop over to our 
-[model download guide](#TODO) for a set of instructions on how to do this 
-manually.
+[model download guide](https://github.com/open-labrador/cli/releases/tag/v0.0.0) for a set of instructions on how to do this 
+manually; you can also run the command to receive instructions.
 
 ## 🧑‍🏫 2. Model training
 - Generate a synthetic dataset to enhance your example data set using the 
