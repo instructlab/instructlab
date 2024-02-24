@@ -12,23 +12,24 @@ future support for 🐧 Linux and other operating systems as well as for
 💻 additional hardware.*
 
 ## Contents:
-* [Getting `cli`](#TODO)
-* [How to use `cli`](#TODO)
-* [How to convert and quantize a model (Optional)](#TODO)
+* [Getting `cli`](#getting)
+* [How to use `cli`](#how-to-use)
+* [How to convert and quantize a model (Optional)](#model-convert-quant)
 
-
-
+<a name="getting"></a>
 # Getting `cli`
 
 ## 📋 Requirements
 
 - 🐍 Python 3.9 or later (CLang dsitribution of Python: 15.0.0 from xcode)
 - 🍎 macOS (14.x with an M1/M2/M3 Metal/GPU) 
-- 📦 A quantized model in GGUF format (or read our [guide](#TODO) on to convert 
+- 📦 A quantized model in GGUF format (or read our [guide](#model-convert-quant) on to convert 
 models to GGUF format and quantize them.)
   
-🗒️ **Note:** The steps below use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. If you have used [pyenv](https://github.com/pyenv/pyenv), 
-[Conda Miniforge](https://github.com/conda-forge/miniforge) or another tool for 
+🗒️ **Note:** The steps below use 
+[Python venv](https://docs.python.org/3/library/venv.html) 
+for virtual environments. If you have used [pyenv](https://github.com/pyenv/pyenv), 
+[Conda Miniforge](https://github.com/conda-forge/miniforge), or another tool for 
 Python version management on your laptop, then use the virtual environment with that 
 tool instead. Otherwise, you may have issues with packages installed but modules 
 from that package not found as they are linked to your Python version management 
@@ -61,6 +62,7 @@ Then, run `cli` as follows:
 python -m cli
 ```
 
+<a name="how-to-use"></a>
 # How to use `cli`
 
 First, you will need a properly-formatted **[example dataset](https://github.com/open-labrador/taxonomy)** to tune the model with. Once you have that, using the Labrador 🐶 method 
@@ -120,7 +122,7 @@ Of course the final step is, if you've improved the model, to share your new
 dataset by submitting it! You'll submit it via a pull-request process, which 
 is documented in the [taxonomy respository](#TODO).
 
-
+<a name="model-convert-quant"></a>
 # Converting a Model to GGUF and Quantizing (Optional)
 
 The latest [llama.cpp](https://github.com/ggerganov/llama.cpp) framework 
