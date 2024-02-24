@@ -42,9 +42,11 @@ def serve(model, n_gpu_layers):
 @cli.command()
 @click.option("--model", default="ggml-labrador13B-model-Q4_K_M", show_default=True)
 @click.option("--num_cpus", default=10, show_default=True)
-def generate(model, num_cpus):
+@click.option("--taxonomy", default="../taxonomy", show_default=True, type=click.Path())
+@click.option("--seed_file", default="./cli/generator/seed_tasks.jsonl", show_default=True, type=click.Path())
+def generate(model, num_cpus, taxonomy, seed_file):
     """Generates synthetic data to enhance your example data"""
-    generate_data(model_name=model, num_cpus=num_cpus)
+    generate_data(model_name=model, num_cpus=num_cpus, taxonomy=taxonomy, seed_tasks_path=seed_file)
 
 
 @cli.command()

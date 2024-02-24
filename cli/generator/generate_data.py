@@ -1,11 +1,13 @@
 import time
 import json
 import os
+from os.path import splitext
 import random
 import re
 import string
 from functools import partial
 from multiprocessing import Pool
+import yaml
 
 import numpy as np
 import tqdm
@@ -99,21 +101,50 @@ def find_word_in_string(w, s):
 
 def generate_data(
     output_dir="./",
-    seed_tasks_path="./cli/generator/seed_tasks.jsonl",
+    taxonomy="../taxonomy",
+    seed_tasks_path="",  # "./cli/generator/seed_tasks.jsonl",
     num_instructions_to_generate=100,
     model_name="ggml-labrador13B-model-Q4_K_M",
-    num_prompt_instructions=3,
+    num_prompt_instructions=2,
     request_batch_size=5,
     temperature=1.0,
     top_p=1.0,
     num_cpus=10,
 ):
-    seed_tasks = [json.loads(l) for l in open(seed_tasks_path, "r")]
-    seed_instruction_data = [
-        {"instruction": t["instruction"], "input": t["instances"][0]["input"], "output": t["instances"][0]["output"]}
-        for t in seed_tasks
-    ]
-    print(f"Loaded {len(seed_instruction_data)} human-written seed instructions")
+    seed_instruction_data = []
+    if taxonomy:
+        errors = 0
+        for root, dirs, files in os.walk(taxonomy):
+            files = [f for f in files if not f[0] == '.' and splitext(f)[1].lower() in [".yaml", ".yml"]]
+            dirs[:] = [d for d in dirs if not d[0] == '.']
+            for f in files:
+                file_path = os.path.join(root, f)
+                try:
+                    with open(file_path, 'r') as file:
+                        contents = yaml.safe_load(file)
+                        for t in contents:
+                            seed_instruction_data.append(
+                                {"instruction": t["question"], "input": "", "output": t["answer"]})
+                except Exception as e:
+                    errors += 1
+                    print(e.__repr__, " in ", file_path)
+                    print(e)
+
+        if errors:
+            raise SystemExit(yaml.YAMLError(f"{errors} taxonomy files with YAML errors!  Exiting."))
+
+    elif seed_tasks_path:
+        seed_tasks = [json.loads(l) for l in open(seed_tasks_path, "r")]
+        seed_instruction_data = [
+            {"instruction": t["instruction"], "input": t["instances"][0]["input"],
+             "output": t["instances"][0]["output"]}
+            for t in seed_tasks
+        ]
+
+    seeds = len(seed_instruction_data)
+    print(f"Loaded {seeds} human-written seed instructions")
+    if not seeds:
+        raise SystemExit("Nothing to generate. Exiting.")
 
     os.makedirs(output_dir, exist_ok=True)
     request_idx = 0
@@ -179,16 +210,18 @@ def generate_data(
                     all_instruction_tokens,
                 )
             rouge_scores = [score.fmeasure for score in rouge_scores]
-            most_similar_instructions = {
-                all_instructions[i]: rouge_scores[i] for i in np.argsort(rouge_scores)[-10:][::-1]
-            }
+            # Comment out extra info not currently being used:
+            # most_similar_instructions = {
+            #    all_instructions[i]: rouge_scores[i] for i in np.argsort(rouge_scores)[-10:][::-1]
+            # }
             KEEP_ROUGE_SCORES_LT = 0.7   # TODO: PARAM
             if max(rouge_scores) > KEEP_ROUGE_SCORES_LT:
                 continue
             else:
                 keep += 1
-            instruction_data_entry["most_similar_instructions"] = most_similar_instructions
-            instruction_data_entry["avg_similarity_score"] = float(np.mean(rouge_scores))
+            # Comment out extra info not currently being used:
+            # instruction_data_entry["most_similar_instructions"] = most_similar_instructions
+            # instruction_data_entry["avg_similarity_score"] = float(np.mean(rouge_scores))
             machine_instruction_data.append(instruction_data_entry)
             all_instructions.append(instruction_data_entry["instruction"])
             all_instruction_tokens.append(new_instruction_tokens)
