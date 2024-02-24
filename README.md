@@ -65,8 +65,7 @@ python -m cli
 <a name="how-to-use"></a>
 # How to use `cli`
 
-First, you will need a properly-formatted **[example dataset](https://github.com/open-labrador/taxonomy)** to tune the model with. Once you have that, using the Labrador 🐶 method 
-involves a number of steps, supported by various commands:
+Using the Labrador 🐶 method involves a number of steps, supported by various commands:
 
 ## 🏗️ 1. Initial setup
 - Initialize a local environment to use Labrador 🐶 via the **init**
@@ -83,13 +82,38 @@ you can use [this jupyter notebook hosted on Google Colab](https://colab.researc
 
   🚧 **Under construction:** This command isn´t ready yet! 😅 Pop over to our 
 [model download guide](https://github.com/open-labrador/cli/releases/tag/v0.0.0) for a set of instructions on how to do this 
-manually; you can also run the command to receive instructions.
+manually; you can also run the command `python -m cli download to receive instructions.
+  📋 **Note:** Once you have the model chunks downloaded and reassembled according to the instructions above, please move the model to a `models` directory in the root directory of your git checkout of this project (this assumed the model is in your Downloads folder):
+```
+mkdir models
+mv ~/Downloads/ggml-labrador13B-model-Q4_K_M.gguf models
+```
 
 ## 🧑‍🏫 2. Model training
-- Generate a synthetic dataset to enhance your example data set using the 
-**generate** command:
+- Serve the downloaded model locally via the **serve** command using the 
+[llama.cpp framework](#TODO) and [llama-cpp-python](#TODO) (which provides 
+Python bindings for llama.cpp):
 
-  `python -m cli generate {path to root directory location of dataset}`
+  `python -m cli serve`
+
+  Once the model is being served and ready (takes less than 1 minute on an M1 mac), you'll see the following output:
+  ```
+  Starting server process
+  After application startup complete see http://127.0.0.1:8000/docs for API.
+  Press CTRL+C to shutdown server.
+  INFO:     Started server process [4295]
+  INFO:     Waiting for application startup.
+  INFO:     Application startup complete.
+  INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+  ```
+- Generate a synthetic dataset to enhance your example data set using the 
+**generate** command, in another venv-activated terminal with the server running:
+  ```
+  cd cli
+  source venv/bin/activate
+  python -m cli generate
+  ```
+4:23
 
 - Train the model on your synthetic data-enhanced dataset using **train**:
 
