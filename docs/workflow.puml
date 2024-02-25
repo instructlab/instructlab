@@ -1,12 +1,12 @@
 @startditaa
-+--------+                                /-------------------------\
-|lab init|-=---taxonomy repo cloned       |legend                   |
-+---+----+                                | +-------+ +-----------+ |
-    |                                     | |lab cmd| |manual cPNK| |
-    v                                     | +---+---+ +-----------+ |
-+---+----+                                |                     cFFF|
-|lab pull|-=---model weights downloaded   \-------------------------/
-+---+----+
++--------+                                    /-------------------------\
+|lab init|-=---taxonomy repo cloned           |legend                   |
++---+----+                                    | +-------+ +-----------+ |
+    |                                         | |lab cmd| |manual cPNK| |
+    v                                         | +---+---+ +-----------+ |
++---+--------+                                |                     cFFF|
+|lab download|-=---model weights downloaded   \-------------------------/
++---+--------+
     |
     v
 +---+-----+
