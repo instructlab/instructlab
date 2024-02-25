@@ -4,7 +4,7 @@ Labrador 🐶 is a novel synthetic data-based alignment tuning method for Large
 Language Models (LLMs.) The "**lab**" in **Lab**rador 🐶 stands for **L**arge-
 scale **A**lignment for Chat **B**ots.
 
-This command-line interface for Labrador 🐶 will allow you to create models tuned 
+This command-line interface for Labrador 🐶 (`cli`) will allow you to create models tuned 
 with your data using the Labrador 🐶 method on your laptop or workstation.
 
 *This is currently a tool that **requires an M1/M2/M3 Mac** to use; we anticipate 
@@ -26,14 +26,9 @@ future support for 🐧 Linux and other operating systems as well as for
 - 📦 A quantized model in GGUF format (or read our [guide](#model-convert-quant) on to convert 
 models to GGUF format and quantize them.)
   
-🗒️ **Note:** The steps below use 
-[Python venv](https://docs.python.org/3/library/venv.html) 
-for virtual environments. If you have used [pyenv](https://github.com/pyenv/pyenv), 
-[Conda Miniforge](https://github.com/conda-forge/miniforge), or another tool for 
-Python version management on your laptop, then use the virtual environment with that 
-tool instead. Otherwise, you may have issues with packages installed but modules 
-from that package not found as they are linked to your Python version management 
-tool and not `venv`.
+🗒️ **Note:** The steps below use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. If you have used [pyenv](https://github.com/pyenv/pyenv), 
+[Conda Miniforge](https://github.com/conda-forge/miniforge), or another tool for Python version management on your laptop, then use the virtual environment with that tool instead. Otherwise, you may have issues with packages installed but modules 
+from that package not found as they are linked to your Python version management tool and not `venv`.
 
 ## 🧰 Installation
 
@@ -65,6 +60,8 @@ python -m cli
 <a name="how-to-use"></a>
 # How to use `cli`
 
+🗒️ **Note:** The instructions below all assume that you are in the root directory of your `cli` git repository checkout.
+
 Using the Labrador 🐶 method involves a number of steps, supported by various commands:
 
 ## 🏗️ 1. Initial setup
@@ -73,23 +70,34 @@ command:
 
   `python -m cli init`
   
-  🚧 **Under construction:** This command isn´t ready yet! 😅 
+  🚧 **Under construction:** This command isn't ready yet! 😅 If you run it, it will give you instructions to check out [the **taxonomy** repo](https://github.com/open-labrador/taxonomy):
+
+  `git clone git@github.com:open-labrador/taxonomy.git`
 
 - Download the model to train using the **download** command:
 
   `python -m cli download {URL to gguf-format model}`
 
-  🚧 **Under construction:** This command isn´t ready yet! 😅 Pop over to our 
-[model download guide](https://github.com/open-labrador/cli/releases/tag/v0.0.0) for a set of instructions on how to do this 
+  🚧 **Under construction:** This command isn't ready yet! 😅 Pop over to our 
+[model download guide](https://github.com/open-labrador/cli/releases/tag/v0.1.0) for a set of instructions on how to do this 
 manually; you can also run the command `python -m cli download` to receive instructions.
 
-  📋 **Note:** Once you have the model chunks downloaded and reassembled according to the instructions above, please move the model to a `models` directory in the root directory of your git checkout of this project (this assumed the model is in your Downloads folder):
+  📋 **Note:** Once you have the model chunks downloaded and reassembled according to the instructions above, please move the model to a `models/` directory in the root directory of your git checkout of this project (this assumes the model is in your `Downloads/` folder):
   ```
   mkdir models
   mv ~/Downloads/ggml-labrador13B-model-Q4_K_M.gguf models
   ```
 
 ## 🧑‍🏫 2. Model training
+***
+📋 **Note:** By default, the serve and generate commands assuming use of `ggml-malachite-7b-Q4_K_M.gguf` - this is a lightweight, fast model based on [Mistral](https://mistral.ai/news/announcing-mistral-7b/) that takes about ~45 min for synthetic data generation on an M1 / 16GB mac. If you have another quantized, gguf-format model you would like to use instead, there is a `--model` argument you can add to the **serve** and **generate** commands to indicate which model to use:
+
+   - **Serve** with the `--model` argument requires indicating the directory path to the model file, e.g.:
+`python -m cli serve --model models/ggml-malachite-7b-Q4_K_M.gguf`
+
+   - **Generate** with the `--model` argument just requires the file name of the gguf model and assumes the model is located in the `models/` subdirectory of the root `cli/` git checkout directory, e.g.:
+`python -m cli generate --model ggml-malachite-7b-Q4_K_M.gguf`
+*** 
 - Serve the downloaded model locally via the **serve** command using the 
 [llama.cpp framework](#TODO) and [llama-cpp-python](#TODO) (which provides 
 Python bindings for llama.cpp):
@@ -111,14 +119,15 @@ Python bindings for llama.cpp):
   ```
   cd cli
   source venv/bin/activate
-  python -m cli generate
+  python -m cli generate --seed_file '' --taxonomy taxonomy
   ```
-4:23
+
+  ⚠️  **Note:** The `--seed_file` argument will go away; the `--taxonomy` flag will point the command at the `taxonomy` checkout.
+  📋 **Note:** This takes about **~45 minutes** to complete on an M1 mac with 16 GB RAM. The synthetic data set will be a file starting with the name `regen` ending in a `.jsonl` file extension in the root `cli/` directory of the `cli` git checkout.
 
 - Train the model on your synthetic data-enhanced dataset using **train**:
 
-  `python -m cli train {local path to gguf-format model} {path to root directory 
-location of dataset}` 
+  `python -m cli train {local path to gguf-format model} {path to root directorylocation of dataset}`
 
 ## 👩🏽‍🔬 3. Testing the fine-tuned model
 - Serve the fine-tuned model locally via the **serve** command using the 
@@ -150,14 +159,7 @@ is documented in the [taxonomy respository](#TODO).
 # Converting a Model to GGUF and Quantizing (Optional)
 
 The latest [llama.cpp](https://github.com/ggerganov/llama.cpp) framework 
-requires the model to be converted into [GGUF](https://medium.com/@sandyeep70/
-ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format. [GGUF]
-(https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-
-formats-cd5d3a6058f9) is a quantization technique. [Quantization]
-(https://www.tensorops.ai/post/what-are-quantized-llms) is a technique used to 
-reduce the size of large neural networks, including large language models 
-(LLMs) by modifying the precision of their weights. If you have a model already
- in GGUF format, you can skip this step.
+requires the model to be converted into [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format. [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) is a quantization technique. [Quantization](https://www.tensorops.ai/post/what-are-quantized-llms) is a technique used to reduce the size of large neural networks, including large language models (LLMs) by modifying the precision of their weights. If you have a model already in GGUF format, you can skip this step.
 
 ## Clone the llama.cpp repo
 
