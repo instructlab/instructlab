@@ -25,11 +25,12 @@ def init():
     click.echo("to get the taxonomy repo")
 
 @cli.command()
-def list():
-    """Initializes environment for labrador"""
-    click.echo("please do\n")
-    click.echo("tree taxonomy\n")
-    click.echo("to view the taxonomy repo")
+@click.option("--taxonomy", default="taxonomy", show_default=True, type=click.Path())
+def list(taxonomy):
+    """List taxonomy YAML files"""
+    from os import system
+    system(f"find {taxonomy} -iname '*.yaml'")
+
 
 @cli.command()
 def submit():
@@ -55,7 +56,7 @@ def serve(model, n_gpu_layers):
 @cli.command()
 @click.option("--model", default="ggml-malachite-7b-Q4_K_M", show_default=True)
 @click.option("--num_cpus", default=10, show_default=True)
-@click.option("--taxonomy", default="../taxonomy", show_default=True, type=click.Path())
+@click.option("--taxonomy", default="taxonomy", show_default=True, type=click.Path())
 @click.option("--seed_file", default="./cli/generator/seed_tasks.jsonl", show_default=True, type=click.Path())
 def generate(model, num_cpus, taxonomy, seed_file):
     """Generates synthetic data to enhance your example data"""
