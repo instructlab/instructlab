@@ -1,11 +1,11 @@
 @startditaa
-+--------+
-|lab init|-=---taxonomy repo cloned
-+---+----+
-    |
-    v
-+---+----+
-|lab pull|-=---model weights downloaded
++--------+                                /-------------------------\
+|lab init|-=---taxonomy repo cloned       |legend                   |
++---+----+                                | +-------+ +-----------+ |
+    |                                     | |lab cmd| |manual cPNK| |
+    v                                     | +---+---+ +-----------+ |
++---+----+                                |                     cFFF|
+|lab pull|-=---model weights downloaded   \-------------------------/
 +---+----+
     |
     v
@@ -24,10 +24,9 @@
 +---+----+
     |
     v
-+---+---------------------+
++---+---------------------+still magic
 |contributor create/update|
-|examples in taxonomy     |<------------+
-|(still magic)            |             |
+|examples in taxonomy cPNK|<------------+
 +---+---------------------+             |
     |                                   |
     v                                   |
@@ -46,6 +45,11 @@
 +---+----+                              |
     |                                   |
     v                                   |
++---+---------------+                   |
+|kill lab serve cPNK|-=---kill server   |
++---+---------------+                   |
+    |                                   |
+    v                                   |
 +---+-----+                             |
 |lab serve|-=---start model server      |
 +---+-----+                             |
@@ -56,7 +60,9 @@
 +---+----+
     |
     v
-+---+------+
-|lab submit|-=---help contributor to create a PR
-+----------+
++---+---------------------------+
+|contributor uses Git to commits|
+|changes in the taxonomy repo   |
+|and create a PR            cPNK|
++---+---------------------------+
 @endditaa
