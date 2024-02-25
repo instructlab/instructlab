@@ -4,7 +4,7 @@ Labrador 🐶 is a novel synthetic data-based alignment tuning method for Large
 Language Models (LLMs.) The "**lab**" in **Lab**rador 🐶 stands for **L**arge-
 scale **A**lignment for Chat **B**ots.
 
-This command-line interface for Labrador 🐶 (`cli`) will allow you to create models tuned 
+This command-line interface for Labrador 🐶 (`lab`) will allow you to create models tuned 
 with your data using the Labrador 🐶 method on your laptop or workstation.
 
 *This is currently a tool that **requires an M1/M2/M3 Mac** to use; we anticipate 
@@ -12,12 +12,12 @@ future support for 🐧 Linux and other operating systems as well as for
 💻 additional hardware.*
 
 ## Contents:
-* [Getting `cli`](#getting)
-* [How to use `cli`](#how-to-use)
+* [Getting `lab`](#getting)
+* [How to use `lab`](#how-to-use)
 * [How to convert and quantize a model (Optional)](#model-convert-quant)
 
 <a name="getting"></a>
-# Getting `cli`
+# Getting `lab`
 
 ## 📋 Requirements
 
@@ -32,18 +32,32 @@ from that package not found as they are linked to your Python version management
 
 ## 🧰 Installation
 
-`cli` will be available via `pip install lab-cli` in the future. At this time, 
-you will need to run `cli` from source:
+`lab` will be available via `pip install lab-cli` in the future. At this time, 
+you will need to run `lab` from source or GitHub repository URL:
+
+### From source
 
 ```ShellSession
 git clone https://github.com/open-labrador/cli.git
 cd cli
 python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install .
 ```
 
-## 🚀 Running `cli`
+### From GitHub
+
+In the following example, `<project_dir>` is any directory you create to work in.
+
+```ShellSession
+mkdir <project_dir>
+cd <project_dir>
+python3 -m venv venv
+source venv/bin/activate
+pip install git+https://github.com/open-labrador/cli.git
+```
+
+## 🚀 Running `lab`
 
 Always be sure to activate the venv in your working shell:
 
@@ -51,16 +65,16 @@ Always be sure to activate the venv in your working shell:
 source venv/bin/activate
 ```
 
-Then, run `cli` as follows:
+Then, run `lab` as follows:
 
 ```ShellSession
-python -m cli
+lab
 ```
 
 <a name="how-to-use"></a>
-# How to use `cli`
+# How to use `lab`
 
-🗒️ **Note:** The instructions below all assume that you are in the root directory of your `cli` git repository checkout.
+🗒️ **Note:** The instructions below all assume that you are in the root directory of your `cli` git repository checkout or your `<project_dir>`.
 
 Using the Labrador 🐶 method involves a number of steps, supported by various commands:
 
@@ -68,7 +82,7 @@ Using the Labrador 🐶 method involves a number of steps, supported by various 
 - Initialize a local environment to use Labrador 🐶 via the **init**
 command:
 
-  `python -m cli init`
+  `lab init`
   
   🚧 **Under construction:** This command isn't ready yet! 😅 If you run it, it will give you instructions to check out [the **taxonomy** repo](https://github.com/open-labrador/taxonomy):
 
@@ -76,11 +90,11 @@ command:
 
 - Download the model to train using the **download** command:
 
-  `python -m cli download {URL to gguf-format model}`
+  `lab download {URL to gguf-format model}`
 
   🚧 **Under construction:** This command isn't ready yet! 😅 Pop over to our 
 [model download guide](https://github.com/open-labrador/cli/releases/tag/v0.1.0) for a set of instructions on how to do this 
-manually; you can also run the command `python -m cli download` to receive instructions.
+manually; you can also run the command `lab download` to receive instructions.
 
   📋 **Note:** Once you have the model chunks downloaded and reassembled according to the instructions above, please move the model to a `models/` directory in the root directory of your git checkout of this project (this assumes the model is in your `Downloads/` folder):
   ```
@@ -93,16 +107,16 @@ manually; you can also run the command `python -m cli download` to receive instr
 📋 **Note:** By default, the serve and generate commands assuming use of `ggml-malachite-7b-Q4_K_M.gguf` - this is a lightweight, fast model based on [Mistral](https://mistral.ai/news/announcing-mistral-7b/) that takes about ~45 min for synthetic data generation on an M1 / 16GB mac. If you have another quantized, gguf-format model you would like to use instead, there is a `--model` argument you can add to the **serve** and **generate** commands to indicate which model to use:
 
    - **Serve** with the `--model` argument requires indicating the directory path to the model file, e.g.:
-`python -m cli serve --model models/ggml-malachite-7b-Q4_K_M.gguf`
+`lab serve --model models/ggml-malachite-7b-Q4_K_M.gguf`
 
    - **Generate** with the `--model` argument just requires the file name of the gguf model and assumes the model is located in the `models/` subdirectory of the root `cli/` git checkout directory, e.g.:
-`python -m cli generate --model ggml-malachite-7b-Q4_K_M.gguf`
+`lab generate --model ggml-malachite-7b-Q4_K_M.gguf`
 *** 
 - Serve the downloaded model locally via the **serve** command using the 
 [llama.cpp framework](#TODO) and [llama-cpp-python](#TODO) (which provides 
 Python bindings for llama.cpp):
 
-  `python -m cli serve`
+  `lab serve`
 
   Once the model is being served and ready (takes less than 1 minute on an M1 mac), you'll see the following output:
   ```
@@ -119,7 +133,7 @@ Python bindings for llama.cpp):
   ```
   cd cli
   source venv/bin/activate
-  python -m cli generate --seed_file '' --taxonomy taxonomy
+  lab generate --seed_file '' --taxonomy taxonomy
   ```
 
   ⚠️  **Note:** The `--seed_file` argument will go away; the `--taxonomy` flag will point the command at the `taxonomy` checkout.
@@ -127,14 +141,14 @@ Python bindings for llama.cpp):
 
 - Train the model on your synthetic data-enhanced dataset using **train**:
 
-  `python -m cli train {local path to gguf-format model} {path to root directorylocation of dataset}`
+  `lab train {local path to gguf-format model} {path to root directorylocation of dataset}`
 
 ## 👩🏽‍🔬 3. Testing the fine-tuned model
 - Serve the fine-tuned model locally via the **serve** command using the 
 [llama.cpp framework](#TODO) and [llama-cpp-python](#TODO) (which provides 
 Python bindings for llama.cpp):
 
-  `python -m cli serve {local path to fine-tuned model}`
+  `lab serve {local path to fine-tuned model}`
 
   🚧 **Under construction:** This command isn´t ready yet! 😅 Pop over to our 
   [model servingguide](#TODO) for a set of instructions on how to do this 
@@ -142,12 +156,12 @@ Python bindings for llama.cpp):
 - Try the fine-tuned model out live using a chat interface, and see if the 
 results are better than the untrained version of the model with **chat**:
 
-  `python -m cli chat`
+  `lab chat`
 
   📋 **Note:** We have [a detailed guide](#TODO) on using the **chat** command.
 - Run tests against the model via the **test** command:
 
-  `python -m cli test`
+  `lab test`
 
 ## 🎁 4. Submit your dataset!
 
