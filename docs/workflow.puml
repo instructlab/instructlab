@@ -1,0 +1,68 @@
+@startditaa
++--------+                                    /-------------------------\
+|lab init|-=---taxonomy repo cloned           |legend                   |
++---+----+                                    | +-------+ +-----------+ |
+    |                                         | |lab cmd| |manual cPNK| |
+    v                                         | +---+---+ +-----------+ |
++---+--------+                                |                     cFFF|
+|lab download|-=---model weights downloaded   \-------------------------/
++---+--------+
+    |
+    v
++---+-----+
+|lab serve|-=---optional, start model server
++---+-----+
+    |
+    v
++---+----+
+|lab chat|-=---chat with the model
++---+----+
+    |
+    v
++---+----+
+|lab list|-=---view the taxonomy
++---+----+
+    |
+    v
++---+---------------------+still magic
+|contributor create/update|
+|examples in taxonomy cPNK|<------------+
++---+---------------------+             |
+    |                                   |
+    v                                   |
++---+--------+                          |
+|lab generate|-=---synthesize data      |
++---+--------+                          |
+    |                                   | 
+    v                                   | 
++---+-----+                             |
+|lab train|-=---train the model         |
++---+-----+                             |
+    |                                   |
+    v                                   |
++---+----+                              |
+|lab test|------------------------------+ -=---iterate if test failed
++---+----+                              |
+    |                                   |
+    v                                   |
++---+---------------+                   |
+|kill lab serve cPNK|-=---kill server   |
++---+---------------+                   |
+    |                                   |
+    v                                   |
++---+-----+                             |
+|lab serve|-=---start model server      |
++---+-----+                             |
+    |                                   |
+    v                                   |
++---+----+                              |
+|lab chat|------------------------------+ -=---iterate if not happy with outputs
++---+----+
+    |
+    v
++---+---------------------------+
+|contributor uses Git to commits|
+|changes in the taxonomy repo   |
+|and create a PR            cPNK|
++---+---------------------------+
+@endditaa
