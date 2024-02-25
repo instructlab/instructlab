@@ -158,12 +158,7 @@ is documented in the [taxonomy respository](#TODO).
 # Converting a Model to GGUF and Quantizing (Optional)
 
 The latest [llama.cpp](https://github.com/ggerganov/llama.cpp) framework 
-requires the model to be converted into [GGUF](https://medium.com/@sandyeep70/
-ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format. [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-
-formats-cd5d3a6058f9) is a quantization technique. [Quantization](https://www.tensorops.ai/post/what-are-quantized-llms) is a technique used to 
-reduce the size of large neural networks, including large language models 
-(LLMs) by modifying the precision of their weights. If you have a model already
- in GGUF format, you can skip this step.
+requires the model to be converted into [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format. [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) is a quantization technique. [Quantization](https://www.tensorops.ai/post/what-are-quantized-llms) is a technique used to reduce the size of large neural networks, including large language models (LLMs) by modifying the precision of their weights. If you have a model already in GGUF format, you can skip this step.
 
 ## Clone the llama.cpp repo
 
