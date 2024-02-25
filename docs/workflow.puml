@@ -32,12 +32,12 @@
     |                                   |
     v                                   |
 +---+--------+                          |
-|lab generate|-=---synthesize test data |
+|lab generate|-=---synthesize data      |
 +---+--------+                          |
     |                                   | 
     v                                   | 
 +---+-----+                             |
-|lab trian|-=---LoRA train the model    |
+|lab train|-=---LoRA train the model    |
 +---+-----+                             |
     |                                   |
     v                                   |
