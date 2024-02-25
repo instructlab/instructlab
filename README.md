@@ -70,7 +70,9 @@ command:
 
   `python -m cli init`
   
-  🚧 **Under construction:** This command isn't ready yet! 😅 When it is ready, it will create a `models/` subdirectory in the root `cli` checkout folder, as well as clone [the taxonomy repo](https://github.com/open-labrador/taxonomy).
+  🚧 **Under construction:** This command isn't ready yet! 😅 If you run it, it will give you instructions to check out [the **taxonomy** repo](https://github.com/open-labrador/taxonomy):
+
+  `git clone git@github.com:open-labrador/taxonomy.git`
 
 - Download the model to train using the **download** command:
 
