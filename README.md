@@ -77,7 +77,7 @@ command:
   `python -m cli download {URL to gguf-format model}`
 
   🚧 **Under construction:** This command isn't ready yet! 😅 Pop over to our 
-[model download guide](https://github.com/open-labrador/cli/releases/tag/v0.0.0) for a set of instructions on how to do this 
+[model download guide](https://github.com/open-labrador/cli/releases/tag/v0.1.0) for a set of instructions on how to do this 
 manually; you can also run the command `python -m cli download` to receive instructions.
 
   📋 **Note:** Once you have the model chunks downloaded and reassembled according to the instructions above, please move the model to a `models/` directory in the root directory of your git checkout of this project (this assumes the model is in your `Downloads/` folder):
