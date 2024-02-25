@@ -119,9 +119,10 @@ Python bindings for llama.cpp):
   ```
   cd cli
   source venv/bin/activate
-  python -m cli generate
+  python -m cli generate --seed_file '' --taxonomy taxonomy
   ```
 
+  ⚠️  **Note:** The `--seed_file` argument will go away; the `--taxonomy` flag will point the command at the `taxonomy` checkout.
   📋 **Note:** This takes about **~45 minutes** to complete on an M1 mac with 16 GB RAM. The synthetic data set will be a file starting with the name `regen` ending in a `.jsonl` file extension in the root `cli/` directory of the `cli` git checkout.
 
 - Train the model on your synthetic data-enhanced dataset using **train**:
