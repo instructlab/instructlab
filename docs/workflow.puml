@@ -37,7 +37,7 @@
     |                                   | 
     v                                   | 
 +---+-----+                             |
-|lab train|-=---LoRA train the model    |
+|lab train|-=---train the model         |
 +---+-----+                             |
     |                                   |
     v                                   |
