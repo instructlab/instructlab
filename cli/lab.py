@@ -10,7 +10,7 @@ import logging
 from .generator.generate_data import generate_data
 from .download_model import download_model
 from .chat.chat import chat_cli
-from .config import Config
+from .config.config import Config
 
 
 class Lab(object):
@@ -21,8 +21,8 @@ class Lab(object):
         FORMAT = "%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s"
         logging.basicConfig(format=FORMAT)
         self.logger = logging.getLogger(__name__)
-        # TODO: change the default loglevel to whatever user specified
-        self.logger.setLevel(logging.DEBUG)
+        self.logger.setLevel(self.config.get_log_level())
+
 
 
 @click.group(cls=DYMGroup)
