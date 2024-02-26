@@ -148,14 +148,13 @@ Python bindings for llama.cpp):
 - Generate a synthetic dataset to enhance your example data set using the 
 **generate** command, in another venv-activated terminal with the server running:
   ```
-  cd cli
-  source venv/bin/activate
-  lab generate --seed_file '' --taxonomy taxonomy
+  lab generate
   ```
 
-  ⚠️  **Note:** The `--seed_file` argument will go away; the `--taxonomy` flag will point the command at the `taxonomy` checkout.
+  📋 **Note:** This takes about **~45 minutes** to complete on an M1 mac with 16 GB RAM. The synthetic data set will be a file starting with the name `generated` ending in a `.json` file extension in the directory of your taxonomy.  The file name includes model used and date time of generation.
 
-  📋 **Note:** This takes about **~45 minutes** to complete on an M1 mac with 16 GB RAM. The synthetic data set will be a file starting with the name `regen` ending in a `.jsonl` file extension in the root `cli/` directory of the `cli` git checkout.
+  > Tip:  If you want to pickup where you left off, copy a generated JSON file into a file named `regen.json`.  `regen.json` will be picked up at the start of `lab generate` when available.
+
 
 ### Train the model
 
