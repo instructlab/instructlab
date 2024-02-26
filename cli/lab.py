@@ -58,11 +58,11 @@ def submit(ctx):
 
 @cli.command()
 @click.option("--model", default="./models/ggml-malachite-7b-Q4_K_M.gguf", show_default=True)
-@click.option("--n_gpu_layers", default=-1, show_default=True)
+@click.option("--gpu-layers", default=-1, show_default=True)
 @click.pass_context
-def serve(ctx, model, n_gpu_layers):
+def serve(ctx, model, gpu_layers):
     """Start a local server"""
-    settings = Settings(model=model, n_ctx=4096, n_gpu_layers=n_gpu_layers)
+    settings = Settings(model=model, n_ctx=4096, n_gpu_layers=gpu_layers)
     app = create_app(settings=settings)
     llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
         template="{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}", eos_token="<|endoftext|>", bos_token=""
@@ -75,9 +75,9 @@ def serve(ctx, model, n_gpu_layers):
 
 @cli.command()
 @click.option("--model", default="ggml-malachite-7b-Q4_K_M", show_default=True)
-@click.option("--num_cpus", default=10, show_default=True)
+@click.option("--num-cpus", default=10, show_default=True)
 @click.option("--taxonomy", default="taxonomy", show_default=True, type=click.Path())
-@click.option("--seed_file", default="./cli/generator/seed_tasks.jsonl", show_default=True, type=click.Path())
+@click.option("--seed-file", default="./cli/generator/seed_tasks.jsonl", show_default=True, type=click.Path())
 @click.pass_context
 def generate(ctx, model, num_cpus, taxonomy, seed_file):
     """Generates synthetic data to enhance your example data"""
