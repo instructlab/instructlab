@@ -31,9 +31,9 @@
     |                                   |
     v                                   |
 +---+--------+                          |
-|lab generate|-=---synthesize data      |
-+---+--------+                          |
-    |                                   | 
+|lab generate|--------------------------+ -=---synthesize data;
++---+--------+                          |      iterate by modifying examples
+    |                                   |      if samples do not look good
     v                                   | 
 +---+-----+                             |
 |lab train|-=---train the model         |
@@ -41,8 +41,8 @@
     |                                   |
     v                                   |
 +---+----+                              |
-|lab test|------------------------------+ -=---iterate if test failed
-+---+----+                              |
+|lab test|------------------------------+ -=---run unit/smoke tests;
++---+----+                              |      iterate if some test failed
     |                                   |
     v                                   |
 +---+---------------+                   |
@@ -56,8 +56,8 @@
     |                                   |
     v                                   |
 +---+----+                              |
-|lab chat|------------------------------+ -=---iterate if not happy with outputs
-+---+----+
+|lab chat|------------------------------+ -=---chat with the model again;
++---+----+                                     iterate if not happy with outputs
     |
     v
 +---+---------------------------+
