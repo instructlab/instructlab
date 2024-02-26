@@ -121,7 +121,19 @@ def chat(ctx, question, model, context, session, qq):
 
 
 @cli.command()
+@click.option(
+    "--repo",
+    default="https://github.com/open-labrador/cli.git",
+    show_default=True,
+    help="Github repository of the hosted models."
+)
+@click.option(
+    "--version",
+    default="v0.0.0",
+    show_default=True,
+    help="Github release of the hosted models."
+)
 @click.pass_context
-def download(ctx):
+def download(ctx, repo, version):
     """Download the model(s) to train"""
-    download_model()
+    download_model(repo, version)
