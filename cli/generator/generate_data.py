@@ -46,7 +46,7 @@ def post_process_gpt3_response(num_prompt_instructions, response):
         # if idx == len(raw_instructions) - 1 and response["finish_reason"] == "length":
         #     continue
         idx += num_prompt_instructions + 1
-        splitted_data = re.split(f"{idx}\.\s+(Instruction|Input|Output):", inst)
+        splitted_data = re.split(fr'{idx}\.\s+(Instruction|Input|Output):', inst)
         if len(splitted_data) != 7:
             continue
         else:
