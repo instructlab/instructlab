@@ -18,10 +18,11 @@ class Lab(object):
 
     def __init__(self):
         self.config = Config()
-        # TODO: change the default loglevel to whatever user specified
         FORMAT = "%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s"
-        logging.basicConfig(format=FORMAT, level=logging.DEBUG)
-        self.logger = logging.getLogger()
+        logging.basicConfig(format=FORMAT)
+        self.logger = logging.getLogger(__name__)
+        # TODO: change the default loglevel to whatever user specified
+        self.logger.setLevel(logging.DEBUG)
 
 
 @click.group(cls=DYMGroup)
@@ -63,7 +64,7 @@ def submit(ctx):
 def serve(ctx, model, gpu_layers):
     """Start a local server"""
     ctx.obj.logger.debug(f"Using model '{model}' with {gpu_layers} gpu-layers")
-    settings = Settings(model=model, n_ctx=4096, n_gpu_layers=gpu_layers)
+    settings = Settings(model=model, n_ctx=4096, n_gpu_layers=gpu_layers, verbose=False)
     app = create_app(settings=settings)
     llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
         template="{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}", eos_token="<|endoftext|>", bos_token=""
@@ -71,7 +72,7 @@ def serve(ctx, model, gpu_layers):
     click.echo("Starting server process")
     click.echo("After application startup complete see http://127.0.0.1:8000/docs for API.")
     click.echo("Press CTRL+C to shutdown server.")
-    uvicorn.run(app, port=8000)  # TODO: host params, etc...
+    uvicorn.run(app, port=8000, log_level=logging.ERROR)  # TODO: host params, etc...
 
 
 @cli.command()
