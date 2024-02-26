@@ -143,12 +143,13 @@ def generate_data(
             output_dir = output_dir or os.path.dirname(os.path.abspath(taxonomy))
             # Walk to gather files
             errors = 0
+            warnings = 0
             for root, dirs, files in os.walk(taxonomy):
                 files = [f for f in files if not f[0] == '.' and splitext(f)[1].lower() in [".yaml", ".yml"]]
                 dirs[:] = [d for d in dirs if not d[0] == '.']
                 for f in files:
                     if splitext(f)[1] != ".yaml":
-                        print(f"WARNING: Skipping {f}! Use lowercase '.yaml' extension instead.")
+                        logger.warn(f"WARNING: Skipping {f}! Use lowercase '.yaml' extension instead.")
                         errors += 1
                         continue
                     file_path = os.path.join(root, f)
@@ -156,13 +157,22 @@ def generate_data(
                         with open(file_path, 'r') as file:
                             contents = yaml.safe_load(file)
                             for t in contents:
+                                q = t["question"]
+                                a = t["answer"]
+                                if not q or not a:
+                                    logger.warn(f"Skipping {file_path} because question and/or answer is empty!")
+                                    warnings += 1
+                                    continue
                                 seed_instruction_data.append(
-                                    {"instruction": t["question"], "input": "", "output": t["answer"]})
+                                    {"instruction": q, "input": "", "output": a})
                     except Exception as e:
                         errors += 1
                         print(e.__repr__, " in ", file_path)
-                        print(e)
+                        logger.error(e)
 
+            if warnings:
+                logger.warn(
+                    f"{warnings} warnings (see above) due to taxonomy files that were not usable.")
             if errors:
                 raise SystemExit(yaml.YAMLError(f"{errors} taxonomy files with YAML errors!  Exiting."))
 
