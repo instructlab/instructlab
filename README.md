@@ -1,8 +1,7 @@
 # Labrador 🐶 command-line interface `cli`
 
 Labrador 🐶 is a novel synthetic data-based alignment tuning method for Large 
-Language Models (LLMs.) The "**lab**" in **Lab**rador 🐶 stands for **L**arge-
-scale **A**lignment for Chat **B**ots.
+Language Models (LLMs.) The "**lab**" in **Lab**rador 🐶 stands for **L**arge-scale **A**lignment for Chat **B**ots.
 
 This command-line interface for Labrador 🐶 (`lab`) will allow you to create models tuned 
 with your data using the Labrador 🐶 method on your laptop or workstation.
@@ -76,9 +75,13 @@ lab
 
 🗒️ **Note:** The instructions below all assume that you are in the root directory of your `cli` git repository checkout or your `<project_dir>`.
 
-Using the Labrador 🐶 method involves a number of steps, supported by various commands:
+Using the Labrador 🐶 method involves a number of steps, supported by various commands. You can see a flow chart showing the order of commands in a typical workflow as well as detailed command documentation below:
+
+![flow diagram](docs/workflow.png)
 
 ## 🏗️ 1. Initial setup
+
+### Initialize environment
 - Initialize a local environment to use Labrador 🐶 via the **init**
 command:
 
@@ -87,6 +90,8 @@ command:
   🚧 **Under construction:** This command isn't ready yet! 😅 If you run it, it will give you instructions to check out [the **taxonomy** repo](https://github.com/open-labrador/taxonomy):
 
   `git clone git@github.com:open-labrador/taxonomy.git`
+
+### Download model
 
 - Download the model to train using the **download** command:
 
@@ -112,6 +117,8 @@ manually; you can also run the command `lab download` to receive instructions.
    - **Generate** with the `--model` argument just requires the file name of the gguf model and assumes the model is located in the `models/` subdirectory of the root `cli/` git checkout directory, e.g.:
 `lab generate --model ggml-malachite-7b-Q4_K_M.gguf`
 *** 
+
+### Serve the model
 - Serve the downloaded model locally via the **serve** command using the 
 [llama.cpp framework](#TODO) and [llama-cpp-python](#TODO) (which provides 
 Python bindings for llama.cpp):
@@ -128,6 +135,16 @@ Python bindings for llama.cpp):
   INFO:     Application startup complete.
   INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
   ```
+
+### Test the model with chat before training
+
+- Before you start tuning your model, test its output to your prompts as a baseline so you can better understand if your training was effective later. You can do this live via a chat interface with **chat**:
+
+  `lab chat`
+
+  Once you are in the chat interface, you can type `/h` for help, which will list out all of the chat commands.
+
+### Generate a dataset
 - Generate a synthetic dataset to enhance your example data set using the 
 **generate** command, in another venv-activated terminal with the server running:
   ```
@@ -137,36 +154,38 @@ Python bindings for llama.cpp):
   ```
 
   ⚠️  **Note:** The `--seed_file` argument will go away; the `--taxonomy` flag will point the command at the `taxonomy` checkout.
+
   📋 **Note:** This takes about **~45 minutes** to complete on an M1 mac with 16 GB RAM. The synthetic data set will be a file starting with the name `regen` ending in a `.jsonl` file extension in the root `cli/` directory of the `cli` git checkout.
+
+### Train the model
 
 - Train the model on your synthetic data-enhanced dataset using **train**:
 
   `lab train {local path to gguf-format model} {path to root directorylocation of dataset}`
 
 ## 👩🏽‍🔬 3. Testing the fine-tuned model
-- Serve the fine-tuned model locally via the **serve** command using the 
-[llama.cpp framework](#TODO) and [llama-cpp-python](#TODO) (which provides 
-Python bindings for llama.cpp):
 
-  `lab serve {local path to fine-tuned model}`
+### Serve the fine-tuned model
+- First, stop the server you have running via `ctrl+c` in the terminal it is running in.
+- Serve the fine-tuned model locally via the **serve** with the `--model` argument to specify your new model.
 
-  🚧 **Under construction:** This command isn´t ready yet! 😅 Pop over to our 
-  [model servingguide](#TODO) for a set of instructions on how to do this 
-  manually.
-- Try the fine-tuned model out live using a chat interface, and see if the 
-results are better than the untrained version of the model with **chat**:
+  `lab serve --model <New model name>`
+
+### Try out the new model
+- Try the fine-tuned model out live using a chat interface, and see if the results are better than the untrained version of the model with **chat**:
 
   `lab chat`
 
-  📋 **Note:** We have [a detailed guide](#TODO) on using the **chat** command.
+  Once you are in the chat interface, you can type `/h` for help, which will list out all of the chat commands.
+
+### Run tests
 - Run tests against the model via the **test** command:
 
   `lab test`
 
 ## 🎁 4. Submit your dataset!
 
-Of course the final step is, if you've improved the model, to share your new 
-dataset by submitting it! You'll submit it via a pull-request process, which 
+Of course the final step is - if you've improved the model - to share your new dataset by submitting it! You'll submit it via a pull-request process, which 
 is documented in the [taxonomy respository](#TODO).
 
 <a name="model-convert-quant"></a>
