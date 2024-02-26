@@ -3,13 +3,15 @@ import subprocess
 import re
 
 
-def download_model(gh_repo='https://github.com/open-labrador/cli.git', gh_version='v0.0.0'):
+def download_model(gh_repo='https://github.com/open-labrador/cli.git', gh_release='latest', dir='.', pattern=''):
     """
     Download and combine the model file from a GitHub repository sourc.
 
     Parameters:
     - gh_repo (str): The URL of the GitHub repository containing the model. Default is the Open Labrador CLI repository.
-    - gh_version (str): The GitHub release version of the model to download. Default is 'v0.0.0'.
+    - gh_release (str): The GitHub release version of the model to download. Default is 'latest'.
+    - dir(str): The local directory to download the model files into
+    - pattern(str): Download only assets that match a glob pattern
 
     Returns:
     - None
@@ -18,10 +20,16 @@ def download_model(gh_repo='https://github.com/open-labrador/cli.git', gh_versio
     model_file_split_keyword = '.split.'
 
     click.secho('\nMake sure the local environment has the "gh" cli. https://cli.github.com', fg="blue")
-    click.echo("\nDownloading Models...\n")
+    click.echo("\nDownloading Models from %s with version %s to local directory %s ...\n" % (gh_repo, gh_release, dir))
 
     # Download Github release
-    download_commands = ['gh', 'release', 'download', gh_version, '--repo', gh_repo]
+    download_commands = ['gh', 'release', 'download', gh_release, '--repo', gh_repo, '--dir', dir]
+    if pattern != '':
+        download_commands.extend(['--pattern', pattern])
+    if gh_release == 'latest':
+        download_commands.pop(3)  # remove gh_release arg to download the latest version
+        if pattern == '':  # Latest release needs to specify the pattern argument to download all files
+            download_commands.extend(['--pattern', '*'])
     gh_result = create_subprocess(download_commands)
     if gh_result.stderr:
         raise Exception('gh command error occurred:\n\n %s' % gh_result.stderr.decode('utf-8'))

@@ -128,12 +128,24 @@ def chat(ctx, question, model, context, session, qq):
     help="Github repository of the hosted models."
 )
 @click.option(
-    "--version",
-    default="v0.0.0",
+    "--release",
+    default="latest",
     show_default=True,
-    help="Github release of the hosted models."
+    help="Github release version of the hosted models."
+)
+@click.option(
+    "--dir",
+    default=".",
+    show_default=True,
+    help="The local directory to download the model files into."
+)
+@click.option(
+    "--pattern",
+    default="",
+    show_default=True,
+    help="Download only assets that match a glob pattern."
 )
 @click.pass_context
-def download(ctx, repo, version):
+def download(ctx, repo, release, dir, pattern):
     """Download the model(s) to train"""
-    download_model(repo, version)
+    download_model(repo, release, dir, pattern)
