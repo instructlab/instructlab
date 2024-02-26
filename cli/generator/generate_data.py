@@ -117,9 +117,9 @@ def generate_data(
     seed_instruction_data = []
     generate_start = time.time()
 
-    if taxonomy:
-        if not os.path.exists(taxonomy):
-            raise SystemExit(f"Error: taxonomy ({taxonomy}) does not exist.")
+    # check taxonomy first then seed_tasks_path
+    # throw an error if both not found
+    if taxonomy and os.path.exists(taxonomy):
 
         is_file = os.path.isfile(taxonomy)
         if is_file:
@@ -166,7 +166,7 @@ def generate_data(
             if errors:
                 raise SystemExit(yaml.YAMLError(f"{errors} taxonomy files with YAML errors!  Exiting."))
 
-    elif seed_tasks_path:
+    elif seed_tasks_path and os.path.exists(seed_tasks_path):
         output_dir = output_dir or os.path.dirname(os.path.abspath(seed_tasks_path))
         seed_tasks = [json.loads(l) for l in open(seed_tasks_path, "r")]
         seed_instruction_data = [
@@ -174,6 +174,8 @@ def generate_data(
              "output": t["instances"][0]["output"]}
             for t in seed_tasks
         ]
+    else:
+        raise SystemExit(f"Error: both taxonomy ({taxonomy}) and ({seed_tasks_path}) do not exist.")
 
     seeds = len(seed_instruction_data)
     logger.debug(f"Loaded {seeds} human-written seed instructions from {taxonomy or seed_tasks_path}")
