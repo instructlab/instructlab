@@ -6,6 +6,7 @@ from llama_cpp.server.app import create_app
 from llama_cpp.server.settings import Settings
 import uvicorn
 import logging
+from git import Repo
 
 from .generator.generate_data import generate_data
 from .download_model import download_model
@@ -45,9 +46,10 @@ def init(ctx):
 @click.pass_context
 def list(ctx, taxonomy):
     """List taxonomy YAML files"""
-    from os import system
-    system(f"find {taxonomy} -iname '*.yaml'")
-
+    repo = Repo('taxonomy')
+    new_or_changed_files =[u for u in repo.untracked_files if u.endswith('.yaml')] + [d.a_path for d in repo.index.diff(None) if d.a_path.endswith('.yaml')]
+    for f in new_or_changed_files:
+        click.echo(f)
 
 @cli.command()
 @click.pass_context
