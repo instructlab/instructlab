@@ -21,8 +21,9 @@ future support for 🐧 Linux and other operating systems as well as for
 ## 📋 Requirements
 
 - 🐍 Python 3.9 or later (CLang dsitribution of Python: 15.0.0 from xcode)
-- 🍎 macOS (14.x with an M1/M2/M3 Metal/GPU) 
-- 📦 A quantized model in GGUF format (or read our [guide](#model-convert-quant) on to convert 
+- 🦀 Rust compiler 1.70 or later
+- 🍎 macOS (14.x with an M1/M2/M3 Metal/GPU)
+- 📦 A quantized model in GGUF format (or read our [guide](#model-convert-quant) on to convert
 models to GGUF format and quantize them.)
   
 🗒️ **Note:** The steps below use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. If you have used [pyenv](https://github.com/pyenv/pyenv), 
