@@ -1,3 +1,4 @@
+from datetime import datetime
 import time
 import json
 import os
@@ -7,6 +8,7 @@ import re
 import string
 from functools import partial
 from multiprocessing import Pool
+from pathlib import Path
 import yaml
 
 import numpy as np
@@ -100,7 +102,7 @@ def find_word_in_string(w, s):
 
 
 def generate_data(
-    output_dir="./",
+    output_dir=None,
     taxonomy="../taxonomy",
     seed_tasks_path="",  # "./cli/generator/seed_tasks.jsonl",
     num_instructions_to_generate=100,
@@ -112,28 +114,58 @@ def generate_data(
     num_cpus=10,
 ):
     seed_instruction_data = []
-    if os.path.exists(taxonomy):
-        errors = 0
-        for root, dirs, files in os.walk(taxonomy):
-            files = [f for f in files if not f[0] == '.' and splitext(f)[1].lower() in [".yaml", ".yml"]]
-            dirs[:] = [d for d in dirs if not d[0] == '.']
-            for f in files:
-                file_path = os.path.join(root, f)
-                try:
-                    with open(file_path, 'r') as file:
-                        contents = yaml.safe_load(file)
-                        for t in contents:
-                            seed_instruction_data.append(
-                                {"instruction": t["question"], "input": "", "output": t["answer"]})
-                except Exception as e:
-                    errors += 1
-                    print(e.__repr__, " in ", file_path)
-                    print(e)
 
-        if errors:
-            raise SystemExit(yaml.YAMLError(f"{errors} taxonomy files with YAML errors!  Exiting."))
+    if taxonomy:
+        if not os.path.exists(taxonomy):
+            raise SystemExit(f"Error: taxonomy ({taxonomy}) does not exist.")
+
+        is_file = os.path.isfile(taxonomy)
+        if is_file:
+            # Default output_dir to taxonomy file's dir
+            output_dir = output_dir or os.path.dirname(os.path.abspath(taxonomy))
+            if splitext(taxonomy)[1] != ".yaml":  # File name standard
+                raise SystemExit(f"Error: taxonomy ({taxonomy}) is not a directory or file with '.yaml' extension.")
+            try:
+                with open(taxonomy, 'r') as file:
+                    contents = yaml.safe_load(file)
+                    for t in contents:
+                        seed_instruction_data.append(
+                            {"instruction": t["question"], "input": "", "output": t["answer"]})
+            except Exception as e:
+                print(e.__repr__, " in ", file)
+                print(e)
+                raise SystemExit(yaml.YAMLError(f"taxonomy file () has YAML errors!  Exiting."))
+
+        else:  # taxonomy is_dir
+            # Default output_dir to taxonomy dir
+            output_dir = output_dir or os.path.dirname(os.path.abspath(taxonomy))
+            # Walk to gather files
+            errors = 0
+            for root, dirs, files in os.walk(taxonomy):
+                files = [f for f in files if not f[0] == '.' and splitext(f)[1].lower() in [".yaml", ".yml"]]
+                dirs[:] = [d for d in dirs if not d[0] == '.']
+                for f in files:
+                    if splitext(f)[1] != ".yaml":
+                        print(f"WARNING: Skipping {f}! Use lowercase '.yaml' extension instead.")
+                        errors += 1
+                        continue
+                    file_path = os.path.join(root, f)
+                    try:
+                        with open(file_path, 'r') as file:
+                            contents = yaml.safe_load(file)
+                            for t in contents:
+                                seed_instruction_data.append(
+                                    {"instruction": t["question"], "input": "", "output": t["answer"]})
+                    except Exception as e:
+                        errors += 1
+                        print(e.__repr__, " in ", file_path)
+                        print(e)
+
+            if errors:
+                raise SystemExit(yaml.YAMLError(f"{errors} taxonomy files with YAML errors!  Exiting."))
 
     elif seed_tasks_path:
+        output_dir = output_dir or os.path.dirname(os.path.abspath(seed_tasks_path))
         seed_tasks = [json.loads(l) for l in open(seed_tasks_path, "r")]
         seed_instruction_data = [
             {"instruction": t["instruction"], "input": t["instances"][0]["input"],
@@ -142,11 +174,14 @@ def generate_data(
         ]
 
     seeds = len(seed_instruction_data)
-    print(f"Loaded {seeds} human-written seed instructions")
+    print(f"Loaded {seeds} human-written seed instructions from {taxonomy or seed_tasks_path}")
     if not seeds:
         raise SystemExit("Nothing to generate. Exiting.")
 
-    os.makedirs(output_dir, exist_ok=True)
+    name = Path(model_name).stem  # Just in case it is a file path
+    output_file = f"generated_{name}_{datetime.now().replace(microsecond=0).isoformat()}.json"
+    print(f"Generating to: {os.path.join(output_dir, output_file)}")
+
     request_idx = 0
     # load the LM-generated instructions
     machine_instruction_data = []
@@ -229,4 +264,4 @@ def generate_data(
         process_duration = time.time() - process_start
         print(f"Request {request_idx} took {request_duration:.2f}s, processing took {process_duration:.2f}s")
         print(f"Generated {total} instructions, kept {keep} instructions")
-        utils.jdump(machine_instruction_data, os.path.join(output_dir, "regen.json"))
+        utils.jdump(machine_instruction_data, os.path.join(output_dir, output_file))
