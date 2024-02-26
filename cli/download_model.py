@@ -45,6 +45,7 @@ def download_model(gh_repo='https://github.com/open-labrador/cli.git', gh_versio
                     splitted_models[model_name] = [file]
 
     # Use the model and file names we captured to minimize the number of bash subprocess creations.
+    combined_model_list = []
     for key, value in splitted_models.items():
         cat_commands = ['cat']
         splitted_model_files = [splitted_model_file for splitted_model_file in value]
@@ -56,8 +57,13 @@ def download_model(gh_repo='https://github.com/open-labrador/cli.git', gh_versio
             rm_commands = ['rm']
             rm_commands.extend(splitted_model_files)
             create_subprocess(rm_commands)
+            combined_model_list.append(key)
 
-    click.echo("\nList of combined models: \n%s " % " ".join(splitted_models.keys()))
+    click.echo("\nDownload Completed.")
+    if combined_model_list:
+        click.echo("\nList of combined models: ")
+        for model_name in combined_model_list:
+            click.echo("%s" % model_name)
 
 def create_subprocess(commands):
     return subprocess.run(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
