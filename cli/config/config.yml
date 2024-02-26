@@ -20,7 +20,10 @@ chat:
 generate:
   model: "ggml-malachite-7b-Q4_K_M"
   num_cpus: 10
+  num_instructions_to_generate: 100
   path_to_taxonomy: "./taxonomy"
+  prompt_file_path: "./cli/generator/prompt.txt"
+  seed_tasks_path: "./cli/generator/seed_tasks.jsonl"
 
 list:
   path_to_taxonomy: "./taxonomy"

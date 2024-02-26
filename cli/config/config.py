@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import logging
+import os
 from typing import Any, Optional
 import yaml
 
@@ -26,6 +27,9 @@ _DEF_NUM_GPUS = 10
 _DEF_NUM_GPU_LAYERS = -1
 _DEF_SESSION = ""
 _DEF_CONTEXT = ""
+_DEF_NUM_INSTRS = 100
+_DEF_SEED_TASK_PATH = "./cli/generator/seed_tasks.jsonl"
+_DEF_PROMPT_FILE_PATH = "./cli/generator/prompt.txt"
 _CHAT_CATEGORY = "chat"
 _GENERATE_CATEGORY = "generate"
 _LIST_CATEGORY = "list"
@@ -39,6 +43,9 @@ _PATH_TO_TAX_SETTING = "path_to_taxonomy"
 _NUM_CPUS_SETTING = "num_cpus"
 _LEVEL_SETTING = "level"
 _NUM_GPUS_LAY_SETTING = "num_gpu_layers"
+_NUM_INSTS_SETTING = "num_instructions_to_generate"
+_SEED_TASK_PATH_SETTING = "seed_tasks_path"
+_PROMPT_FILE_PATH = "prompt_file_path"
 
 
 class Config(object):
@@ -49,6 +56,9 @@ class Config(object):
             cfg_file = config_yml_path
         else:
             cfg_file = _DEF_CFG_FILE
+
+        if not os.path.exists(cfg_file):
+            raise ValueError("Config file doesn't exist: ", cfg_file)
 
         with open(cfg_file, "r") as yamlfile:
             self.cfg = yaml.load(yamlfile, Loader=yaml.FullLoader)
@@ -77,7 +87,16 @@ class Config(object):
     
     def get_generate_taxonomy(self) -> str:
         return self._get_setting(_GENERATE_CATEGORY, _PATH_TO_TAX_SETTING, _DEF_TAXONOMY_PATH)
-    
+
+    def get_generate_num_instructions(self) -> int:
+        return self._get_setting(_GENERATE_CATEGORY, _NUM_INSTS_SETTING, _DEF_NUM_INSTRS)
+
+    def get_generate_seed_task_path(self) -> str:
+        return self._get_setting(_GENERATE_CATEGORY, _SEED_TASK_PATH_SETTING, _DEF_SEED_TASK_PATH)
+
+    def get_generate_prompt_file_path(self) -> str:
+        return self._get_setting(_GENERATE_CATEGORY, _PROMPT_FILE_PATH, _DEF_PROMPT_FILE_PATH)
+
     def get_list_taxonomy(self) -> str:
         return self._get_setting(_LIST_CATEGORY, _PATH_TO_TAX_SETTING, _DEF_TAXONOMY_PATH)
     
