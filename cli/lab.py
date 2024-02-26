@@ -62,6 +62,7 @@ def submit(ctx):
 @click.pass_context
 def serve(ctx, model, gpu_layers):
     """Start a local server"""
+    ctx.obj.logger.debug(f"Using model '{model}' with {gpu_layers} gpu-layers")
     settings = Settings(model=model, n_ctx=4096, n_gpu_layers=gpu_layers)
     app = create_app(settings=settings)
     llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
@@ -76,12 +77,15 @@ def serve(ctx, model, gpu_layers):
 @cli.command()
 @click.option("--model", default="ggml-malachite-7b-Q4_K_M", show_default=True)
 @click.option("--num-cpus", default=10, show_default=True)
+@click.option("--num-instructions", default=100, show_default=True)
 @click.option("--taxonomy", default="taxonomy", show_default=True, type=click.Path())
 @click.option("--seed-file", default="./cli/generator/seed_tasks.jsonl", show_default=True, type=click.Path())
 @click.pass_context
-def generate(ctx, model, num_cpus, taxonomy, seed_file):
+def generate(ctx, model, num_cpus, num_instructions, taxonomy, seed_file):
     """Generates synthetic data to enhance your example data"""
-    generate_data(model_name=model, num_cpus=num_cpus, taxonomy=taxonomy, seed_tasks_path=seed_file)
+    ctx.obj.logger.debug(f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy}' and seed '{seed_file}'")
+    generate_data(logger=ctx.obj.logger, model_name=model, num_cpus=num_cpus,
+                  num_instructions_to_generate=num_instructions, taxonomy=taxonomy, seed_tasks_path=seed_file)
 
 
 @cli.command()
