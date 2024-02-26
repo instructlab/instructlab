@@ -112,7 +112,7 @@ def generate_data(
     num_cpus=10,
 ):
     seed_instruction_data = []
-    if taxonomy:
+    if os.path.exists(taxonomy):
         errors = 0
         for root, dirs, files in os.walk(taxonomy):
             files = [f for f in files if not f[0] == '.' and splitext(f)[1].lower() in [".yaml", ".yml"]]
