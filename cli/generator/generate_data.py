@@ -10,6 +10,7 @@ from functools import partial
 from multiprocessing import Pool
 from pathlib import Path
 import yaml
+from git import Repo
 
 import numpy as np
 import tqdm
@@ -137,33 +138,30 @@ def generate_data(
                 raise SystemExit(yaml.YAMLError(f"taxonomy file () has YAML errors!  Exiting."))
 
         else:  # taxonomy is_dir
-            # Default output_dir to taxonomy dir
-            output_dir = output_dir or os.path.dirname(os.path.abspath(taxonomy))
-            # Walk to gather files
+            # Gather the new or changed YAMLs using git diff
+            repo = Repo("taxonomy")
+            updated_taxonomy_files = [u for u in repo.untracked_files if splitext(u)[1].lower() in [".yaml", ".yml"]] + \
+                [d.a_path for d in repo.index.diff(None) if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
             errors = 0
-            for root, dirs, files in os.walk(taxonomy):
-                files = [f for f in files if not f[0] == '.' and splitext(f)[1].lower() in [".yaml", ".yml"]]
-                dirs[:] = [d for d in dirs if not d[0] == '.']
-                for f in files:
-                    if splitext(f)[1] != ".yaml":
-                        print(f"WARNING: Skipping {f}! Use lowercase '.yaml' extension instead.")
-                        errors += 1
-                        continue
-                    file_path = os.path.join(root, f)
-                    try:
-                        with open(file_path, 'r') as file:
-                            contents = yaml.safe_load(file)
-                            for t in contents:
-                                seed_instruction_data.append(
-                                    {"instruction": t["question"], "input": "", "output": t["answer"]})
-                    except Exception as e:
-                        errors += 1
-                        print(e.__repr__, " in ", file_path)
-                        print(e)
-
+            for f in updated_taxonomy_files:
+                if splitext(f)[1] != ".yaml":
+                    print(f"WARNING: Skipping {f}! Use lowercase '.yaml' extension instead.")
+                    errors += 1
+                    continue
+                file_path = os.path.join("taxonomy", f)
+                try:
+                    with open(file_path, 'r') as file:
+                        contents = yaml.safe_load(file)
+                        for t in contents:
+                            seed_instruction_data.append(
+                                {"instruction": t["question"], "input": "", "output": t["answer"]})
+                except Exception as e:
+                    print(e.__repr__, " in ", file_path)
+                    print(e)
+            
             if errors:
-                raise SystemExit(yaml.YAMLError(f"{errors} taxonomy files with YAML errors!  Exiting."))
-
+                    raise SystemExit(yaml.YAMLError(f"{errors} taxonomy files with YAML errors!  Exiting."))
+    
     elif seed_tasks_path:
         output_dir = output_dir or os.path.dirname(os.path.abspath(seed_tasks_path))
         seed_tasks = [json.loads(l) for l in open(seed_tasks_path, "r")]
@@ -172,7 +170,6 @@ def generate_data(
              "output": t["instances"][0]["output"]}
             for t in seed_tasks
         ]
-
     seeds = len(seed_instruction_data)
     print(f"Loaded {seeds} human-written seed instructions from {taxonomy or seed_tasks_path}")
     if not seeds:
