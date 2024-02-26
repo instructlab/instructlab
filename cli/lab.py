@@ -1,46 +1,66 @@
 import click
+from click_didyoumean import DYMGroup
 import llama_cpp.llama_chat_format as llama_chat_format
 import llama_cpp.server.app as llama_app
 from llama_cpp.server.app import create_app
 from llama_cpp.server.settings import Settings
 import uvicorn
+import logging
 
-from click_didyoumean import DYMGroup
 from .generator.generate_data import generate_data
-from .chat.chat import chat_cli
 from .download_model import download_model
+from .chat.chat import chat_cli
+from .config import Config
+
+
+class Lab(object):
+    """Lab object holds high-level information about lab CLI"""
+
+    def __init__(self):
+        self.config = Config()
+        # TODO: change the default loglevel to whatever user specified
+        FORMAT = "%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s"
+        logging.basicConfig(format=FORMAT, level=logging.DEBUG)
+        self.logger = logging.getLogger()
 
 
 @click.group(cls=DYMGroup)
-def cli():
+@click.pass_context
+def cli(ctx):
     """CLI for interacting with labrador"""
-    pass
+    ctx.obj = Lab()
 
 
 @cli.command()
-def init():
+@click.pass_context
+def init(ctx):
     """Initializes environment for labrador"""
     click.echo("please do\n")
     click.echo("git clone git@github.com:open-labrador/taxonomy.git\n")
     click.echo("to get the taxonomy repo")
 
+
 @cli.command()
 @click.option("--taxonomy", default="taxonomy", show_default=True, type=click.Path())
-def list(taxonomy):
+@click.pass_context
+def list(ctx, taxonomy):
     """List taxonomy YAML files"""
     from os import system
     system(f"find {taxonomy} -iname '*.yaml'")
 
 
 @cli.command()
-def submit():
+@click.pass_context
+def submit(ctx):
     """Initializes environment for labrador"""
     click.echo("please use git commands and GitHub to submit a PR to the taxonomy repo")
+
 
 @cli.command()
 @click.option("--model", default="./models/ggml-malachite-7b-Q4_K_M.gguf", show_default=True)
 @click.option("--n_gpu_layers", default=-1, show_default=True)
-def serve(model, n_gpu_layers):
+@click.pass_context
+def serve(ctx, model, n_gpu_layers):
     """Start a local server"""
     settings = Settings(model=model, n_ctx=4096, n_gpu_layers=n_gpu_layers)
     app = create_app(settings=settings)
@@ -58,19 +78,22 @@ def serve(model, n_gpu_layers):
 @click.option("--num_cpus", default=10, show_default=True)
 @click.option("--taxonomy", default="taxonomy", show_default=True, type=click.Path())
 @click.option("--seed_file", default="./cli/generator/seed_tasks.jsonl", show_default=True, type=click.Path())
-def generate(model, num_cpus, taxonomy, seed_file):
+@click.pass_context
+def generate(ctx, model, num_cpus, taxonomy, seed_file):
     """Generates synthetic data to enhance your example data"""
     generate_data(model_name=model, num_cpus=num_cpus, taxonomy=taxonomy, seed_tasks_path=seed_file)
 
 
 @cli.command()
-def train():
+@click.pass_context
+def train(ctx):
     """Trains labrador model"""
     click.echo("# train TBD")
 
 
 @cli.command()
-def test():
+@click.pass_context
+def test(ctx):
     """Perform rudimentary tests of the model"""
     click.echo("# test TBD")
 
@@ -91,12 +114,14 @@ def test():
 @click.option(
     "-qq", "--quick-question", "qq", help="Exit after answering question", is_flag=True
 )
-def chat(question, model, context, session, qq):
+@click.pass_context
+def chat(ctx, question, model, context, session, qq):
     """Run a chat using the modified model"""
     chat_cli(question, model, context, session, qq)
 
 
 @cli.command()
-def download():
+@click.pass_context
+def download(ctx):
     """Download the model(s) to train"""
     download_model()
