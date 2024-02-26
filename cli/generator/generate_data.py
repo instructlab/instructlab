@@ -47,7 +47,7 @@ def post_process_gpt3_response(num_prompt_instructions, response):
         # if idx == len(raw_instructions) - 1 and response["finish_reason"] == "length":
         #     continue
         idx += num_prompt_instructions + 1
-        splitted_data = re.split(f"{idx}\.\s+(Instruction|Input|Output):", inst)
+        splitted_data = re.split(fr'{idx}\.\s+(Instruction|Input|Output):', inst)
         if len(splitted_data) != 7:
             continue
         else:
@@ -103,22 +103,24 @@ def find_word_in_string(w, s):
 
 
 def generate_data(
+    logger,
     output_dir=None,
     taxonomy="../taxonomy",
     seed_tasks_path="",  # "./cli/generator/seed_tasks.jsonl",
-    num_instructions_to_generate=100,
     model_name="ggml-labrador13B-model-Q4_K_M",
     num_prompt_instructions=2,
     request_batch_size=5,
     temperature=1.0,
     top_p=1.0,
     num_cpus=10,
+    num_instructions_to_generate=100,
 ):
     seed_instruction_data = []
+    generate_start = time.time()
 
-    if taxonomy:
-        if not os.path.exists(taxonomy):
-            raise SystemExit(f"Error: taxonomy ({taxonomy}) does not exist.")
+    # check taxonomy first then seed_tasks_path
+    # throw an error if both not found
+    if taxonomy and os.path.exists(taxonomy):
 
         is_file = os.path.isfile(taxonomy)
         if is_file:
@@ -160,9 +162,9 @@ def generate_data(
                     print(e)
             
             if errors:
-                    raise SystemExit(yaml.YAMLError(f"{errors} taxonomy files with YAML errors!  Exiting."))
+                raise SystemExit(yaml.YAMLError(f"{errors} taxonomy files with YAML errors!  Exiting."))
     
-    elif seed_tasks_path:
+    elif seed_tasks_path and os.path.exists(seed_tasks_path):
         output_dir = output_dir or os.path.dirname(os.path.abspath(seed_tasks_path))
         seed_tasks = [json.loads(l) for l in open(seed_tasks_path, "r")]
         seed_instruction_data = [
@@ -170,21 +172,24 @@ def generate_data(
              "output": t["instances"][0]["output"]}
             for t in seed_tasks
         ]
+    else:
+        raise SystemExit(f"Error: both taxonomy ({taxonomy}) and ({seed_tasks_path}) do not exist.")
+
     seeds = len(seed_instruction_data)
-    print(f"Loaded {seeds} human-written seed instructions from {taxonomy or seed_tasks_path}")
+    logger.debug(f"Loaded {seeds} human-written seed instructions from {taxonomy or seed_tasks_path}")
     if not seeds:
         raise SystemExit("Nothing to generate. Exiting.")
 
     name = Path(model_name).stem  # Just in case it is a file path
     output_file = f"generated_{name}_{datetime.now().replace(microsecond=0).isoformat()}.json"
-    print(f"Generating to: {os.path.join(output_dir, output_file)}")
+    logger.debug(f"Generating to: {os.path.join(output_dir, output_file)}")
 
     request_idx = 0
     # load the LM-generated instructions
     machine_instruction_data = []
     if os.path.exists(os.path.join(output_dir, "regen.json")):
         machine_instruction_data = utils.jload(os.path.join(output_dir, "regen.json"))
-        print(f"Loaded {len(machine_instruction_data)} machine-generated instructions")
+        logger.debug(f"Loaded {len(machine_instruction_data)} machine-generated instructions")
 
     # similarities = {}
     scorer = rouge_scorer.RougeScorer(["rougeL"], use_stemmer=False)
@@ -259,6 +264,9 @@ def generate_data(
             all_instruction_tokens.append(new_instruction_tokens)
             progress_bar.update(1)
         process_duration = time.time() - process_start
-        print(f"Request {request_idx} took {request_duration:.2f}s, processing took {process_duration:.2f}s")
-        print(f"Generated {total} instructions, kept {keep} instructions")
+        logger.debug(f"Request {request_idx} took {request_duration:.2f}s, processing took {process_duration:.2f}s")
+        logger.debug(f"Generated {total} instructions, kept {keep} instructions")
         utils.jdump(machine_instruction_data, os.path.join(output_dir, output_file))
+
+    generate_duration = time.time() - generate_start
+    logger.info(f"Generation took {generate_duration:.2f}s")
