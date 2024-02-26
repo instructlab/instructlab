@@ -6,7 +6,6 @@ rouge_score
 openai
 prompt-toolkit==3.0.38
 rich==13.3.1
-tiktoken==0.3.2
 toml==0.10.2
 tqdm
 transformers>=4.28.1

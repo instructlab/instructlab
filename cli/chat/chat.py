@@ -18,14 +18,9 @@ from rich.text import Text
 from rich.panel import Panel
 from rich.markdown import Markdown
 
-import click
-
 import json
 
 import atexit
-
-from .util import num_tokens_from_messages, calculate_expense
-
 
 HELP_MD = """
 Help / TL;DR
@@ -88,7 +83,6 @@ class ConsoleChatBot():
         if hard:
             self.loaded = {}
         self.info["messages"] = [] if hard or ("messages" not in self.loaded) else [*self.loaded["messages"]]
-        self.info["tokens"] = {"user": 0, "assistant": 0}
 
     def _sys_print(self, *args, **kwargs):
         self.console.print(Panel(*args, title="system", **kwargs))
@@ -97,25 +91,8 @@ class ConsoleChatBot():
         side_info_str = (" (type `/h` for help)" if help else "") + (f" ({session_name})" if new else "")
         self._sys_print(Markdown(f"Welcome to Chat CLI w/ **{self.model.upper()}**" + side_info_str))
 
-    def display_expense(self):
-        # total_expense = calculate_expense(
-        #     self.info["tokens"]["user"],
-        #     self.info["tokens"]["assistant"],
-        #     PRICING_RATE[self.model]["prompt"],
-        #     PRICING_RATE[self.model]["completion"],
-        # )
-        # self._sys_print(
-        #     f"Total tokens used: [green bold]{self._total_tokens}[/green bold]\n"
-        #     f"Estimated expense: [green bold]${total_expense}[/green bold]",
-        # )
-        pass
-
-    @property
-    def _total_tokens(self): return self.info["tokens"]["user"] + self.info["tokens"]["assistant"]
-
     @property
     def _right_prompt(self): return FormattedText([
-        ('#85bb65 bold', f"[{self._total_tokens}]"), # dollar green for tokens
         ('#3f7cac bold', f"[{'M' if self.multiline else 'S'}]"), # info blue for multiple
         *([('bold', f"[{self.loaded['name']}]")] if "name" in self.loaded else []), # loaded context/session file
         # TODO: Fix openai package to fix the openai error.
@@ -136,7 +113,6 @@ class ConsoleChatBot():
         raise KeyboardInterrupt
     
     def _handle_amend(self, content):
-        self.display_expense()
         cs = content.split()
         if len(cs) < 2:
             self._sys_print(Markdown("**WARNING**: The second argument `assistant` is missing in the `/a assistant` command."))
@@ -150,7 +126,6 @@ class ConsoleChatBot():
         if CONTEXTS is None:
             self._sys_print(Markdown("**WARNING**: No contexts loaded from the config file."))
             raise KeyboardInterrupt
-        self.display_expense()
         cs = content.split()
         if len(cs) < 2:
             self._sys_print(Markdown("**WARNING**: The second argument `context` is missing in the `/c context` command."))
@@ -164,7 +139,6 @@ class ConsoleChatBot():
 
     def _handle_new_session(self, content):
         hard = content == "/N"  # hard new ignores loaded context/session
-        self.display_expense()
         self._reset_session(hard=hard)
         self.greet(new=True)
         raise KeyboardInterrupt
@@ -195,7 +169,6 @@ class ConsoleChatBot():
         raise KeyboardInterrupt
 
     def _handle_load_session(self, content):
-        self.display_expense()
         cs = content.split()
         if len(cs) < 2:
             self._sys_print(Markdown("**WARNING**: The second argument `filepath` is missing in the `/l filepath` or `/L filepath` command."))
@@ -221,11 +194,6 @@ class ConsoleChatBot():
         assert role in ("user", "assistant")
         message = {"role": role, "content": content}
         self.info["messages"].append(message)
-        # If it's user, all history are considered as the prompt
-        # If it's assistant, only the recent response is part of completion
-        self.info["tokens"][role] += num_tokens_from_messages(
-            self.info["messages"] if role == "user" else [message]
-        )
 
     def start_prompt(self, content=None, box=True):
         
@@ -369,9 +337,6 @@ def chat_cli(question, model, context, session, qq) -> None:
         ccb.start_prompt(question, box=(not qq))
 
     if not qq:
-        # Run the display expense function when exiting the script
-        atexit.register(ccb.display_expense)
-
         # Start chatting
         while True:
             try:
