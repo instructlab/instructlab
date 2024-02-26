@@ -46,7 +46,7 @@ def post_process_gpt3_response(num_prompt_instructions, response):
         # if idx == len(raw_instructions) - 1 and response["finish_reason"] == "length":
         #     continue
         idx += num_prompt_instructions + 1
-        splitted_data = re.split(f"{idx}\.\s+(Instruction|Input|Output):", inst)
+        splitted_data = re.split(fr'{idx}\.\s+(Instruction|Input|Output):', inst)
         if len(splitted_data) != 7:
             continue
         else:
@@ -102,18 +102,20 @@ def find_word_in_string(w, s):
 
 
 def generate_data(
+    logger,
     output_dir=None,
     taxonomy="../taxonomy",
     seed_tasks_path="",  # "./cli/generator/seed_tasks.jsonl",
-    num_instructions_to_generate=100,
     model_name="ggml-labrador13B-model-Q4_K_M",
     num_prompt_instructions=2,
     request_batch_size=5,
     temperature=1.0,
     top_p=1.0,
     num_cpus=10,
+    num_instructions_to_generate=100,
 ):
     seed_instruction_data = []
+    generate_start = time.time()
 
     if taxonomy:
         if not os.path.exists(taxonomy):
@@ -174,20 +176,20 @@ def generate_data(
         ]
 
     seeds = len(seed_instruction_data)
-    print(f"Loaded {seeds} human-written seed instructions from {taxonomy or seed_tasks_path}")
+    logger.debug(f"Loaded {seeds} human-written seed instructions from {taxonomy or seed_tasks_path}")
     if not seeds:
         raise SystemExit("Nothing to generate. Exiting.")
 
     name = Path(model_name).stem  # Just in case it is a file path
     output_file = f"generated_{name}_{datetime.now().replace(microsecond=0).isoformat()}.json"
-    print(f"Generating to: {os.path.join(output_dir, output_file)}")
+    logger.debug(f"Generating to: {os.path.join(output_dir, output_file)}")
 
     request_idx = 0
     # load the LM-generated instructions
     machine_instruction_data = []
     if os.path.exists(os.path.join(output_dir, "regen.json")):
         machine_instruction_data = utils.jload(os.path.join(output_dir, "regen.json"))
-        print(f"Loaded {len(machine_instruction_data)} machine-generated instructions")
+        logger.debug(f"Loaded {len(machine_instruction_data)} machine-generated instructions")
 
     # similarities = {}
     scorer = rouge_scorer.RougeScorer(["rougeL"], use_stemmer=False)
@@ -262,6 +264,9 @@ def generate_data(
             all_instruction_tokens.append(new_instruction_tokens)
             progress_bar.update(1)
         process_duration = time.time() - process_start
-        print(f"Request {request_idx} took {request_duration:.2f}s, processing took {process_duration:.2f}s")
-        print(f"Generated {total} instructions, kept {keep} instructions")
+        logger.debug(f"Request {request_idx} took {request_duration:.2f}s, processing took {process_duration:.2f}s")
+        logger.debug(f"Generated {total} instructions, kept {keep} instructions")
         utils.jdump(machine_instruction_data, os.path.join(output_dir, output_file))
+
+    generate_duration = time.time() - generate_start
+    logger.info(f"Generation took {generate_duration:.2f}s")

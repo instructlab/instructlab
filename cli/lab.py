@@ -18,10 +18,11 @@ class Lab(object):
 
     def __init__(self):
         self.config = Config()
-        # TODO: change the default loglevel to whatever user specified
         FORMAT = "%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s"
-        logging.basicConfig(format=FORMAT, level=logging.DEBUG)
-        self.logger = logging.getLogger()
+        logging.basicConfig(format=FORMAT)
+        self.logger = logging.getLogger(__name__)
+        # TODO: change the default loglevel to whatever user specified
+        self.logger.setLevel(logging.DEBUG)
 
 
 @click.group(cls=DYMGroup)
@@ -58,11 +59,12 @@ def submit(ctx):
 
 @cli.command()
 @click.option("--model", default="./models/ggml-malachite-7b-Q4_K_M.gguf", show_default=True)
-@click.option("--n_gpu_layers", default=-1, show_default=True)
+@click.option("--gpu-layers", default=-1, show_default=True)
 @click.pass_context
-def serve(ctx, model, n_gpu_layers):
+def serve(ctx, model, gpu_layers):
     """Start a local server"""
-    settings = Settings(model=model, n_ctx=4096, n_gpu_layers=n_gpu_layers)
+    ctx.obj.logger.debug(f"Using model '{model}' with {gpu_layers} gpu-layers")
+    settings = Settings(model=model, n_ctx=4096, n_gpu_layers=gpu_layers, verbose=False)
     app = create_app(settings=settings)
     llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
         template="{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}", eos_token="<|endoftext|>", bos_token=""
@@ -70,18 +72,21 @@ def serve(ctx, model, n_gpu_layers):
     click.echo("Starting server process")
     click.echo("After application startup complete see http://127.0.0.1:8000/docs for API.")
     click.echo("Press CTRL+C to shutdown server.")
-    uvicorn.run(app, port=8000)  # TODO: host params, etc...
+    uvicorn.run(app, port=8000, log_level=logging.ERROR)  # TODO: host params, etc...
 
 
 @cli.command()
 @click.option("--model", default="ggml-malachite-7b-Q4_K_M", show_default=True)
-@click.option("--num_cpus", default=10, show_default=True)
+@click.option("--num-cpus", default=10, show_default=True)
+@click.option("--num-instructions", default=100, show_default=True)
 @click.option("--taxonomy", default="taxonomy", show_default=True, type=click.Path())
-@click.option("--seed_file", default="./cli/generator/seed_tasks.jsonl", show_default=True, type=click.Path())
+@click.option("--seed-file", default="./cli/generator/seed_tasks.jsonl", show_default=True, type=click.Path())
 @click.pass_context
-def generate(ctx, model, num_cpus, taxonomy, seed_file):
+def generate(ctx, model, num_cpus, num_instructions, taxonomy, seed_file):
     """Generates synthetic data to enhance your example data"""
-    generate_data(model_name=model, num_cpus=num_cpus, taxonomy=taxonomy, seed_tasks_path=seed_file)
+    ctx.obj.logger.debug(f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy}' and seed '{seed_file}'")
+    generate_data(logger=ctx.obj.logger, model_name=model, num_cpus=num_cpus,
+                  num_instructions_to_generate=num_instructions, taxonomy=taxonomy, seed_tasks_path=seed_file)
 
 
 @cli.command()
