@@ -139,10 +139,11 @@ def generate_data(
     # check taxonomy first then seed_tasks_path
     # throw an error if both not found
     if taxonomy and os.path.exists(taxonomy):
-        # Default output_dir to taxonomy file's dir
-        output_dir = output_dir or os.path.dirname(os.path.abspath(taxonomy))
+
         is_file = os.path.isfile(taxonomy)
         if is_file:
+            # Default output_dir to taxonomy file's dir
+            output_dir = output_dir or os.path.dirname(os.path.abspath(taxonomy))
             if splitext(taxonomy)[1] != ".yaml":  # File name standard
                 raise SystemExit(f"Error: taxonomy ({taxonomy}) is not a directory or file with '.yaml' extension.")
             try:
@@ -157,6 +158,8 @@ def generate_data(
                 raise SystemExit(yaml.YAMLError(f"taxonomy file () has YAML errors!  Exiting."))
 
         else:  # taxonomy is_dir
+            # Default output_dir to taxonomy dir, using the dir not the parent
+            output_dir = os.path.abspath(taxonomy)
             # Gather the new or changed YAMLs using git diff
             repo = Repo("taxonomy")
             updated_taxonomy_files = [u for u in repo.untracked_files if splitext(u)[1].lower() in [".yaml", ".yml"]] + \
