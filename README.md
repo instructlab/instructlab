@@ -1,4 +1,4 @@
-# Labrador 🐶 command-line interface `cli`
+# Labrador 🐶 command-line interface `lab`
 
 Labrador 🐶 is a novel synthetic data-based alignment tuning method for Large 
 Language Models (LLMs.) The "**lab**" in **Lab**rador 🐶 stands for **L**arge-scale **A**lignment for Chat **B**ots.
@@ -24,6 +24,7 @@ future support for 🐧 Linux and other operating systems as well as for
 - 🍎 macOS (14.x with an M1/M2/M3 Metal/GPU) 
 - 📦 A quantized model in GGUF format (or read our [guide](#model-convert-quant) on to convert 
 models to GGUF format and quantize them.)
+- `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github
   
 🗒️ **Note:** The steps below use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. If you have used [pyenv](https://github.com/pyenv/pyenv), 
 [Conda Miniforge](https://github.com/conda-forge/miniforge), or another tool for Python version management on your laptop, then use the virtual environment with that tool instead. Otherwise, you may have issues with packages installed but modules 

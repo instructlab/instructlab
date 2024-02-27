@@ -1,5 +1,6 @@
 from datetime import datetime
 import time
+from typing import Optional
 import json
 import os
 from os.path import splitext
@@ -17,11 +18,12 @@ import tqdm
 from rouge_score import rouge_scorer
 
 from . import utils
+from ..config.config import Config
 
 
-def encode_prompt(prompt_instructions):
+def encode_prompt(prompt_instructions, prompt_file):
     """Encode multiple prompt instructions into a single string."""
-    prompt = open("cli/generator/prompt.txt").read() + "\n"
+    prompt = open(prompt_file).read() + "\n"
 
     for idx, task_dict in enumerate(prompt_instructions):
         (instruction, input, output) = task_dict["instruction"], task_dict["input"], task_dict["output"]
@@ -104,17 +106,33 @@ def find_word_in_string(w, s):
 
 def generate_data(
     logger,
-    output_dir=None,
-    taxonomy="../taxonomy",
-    seed_tasks_path="",  # "./cli/generator/seed_tasks.jsonl",
-    model_name="ggml-labrador13B-model-Q4_K_M",
+    config: Config,
+    output_dir: Optional[str] = None,
+    taxonomy: Optional[str] = None,
+    seed_tasks_path: Optional[str] = None,
+    prompt_file_path: Optional[str] = None,
+    model_name: Optional[str] = None,
+    num_cpus: Optional[int] = None,
+    num_instructions_to_generate: Optional[int] = None,
     num_prompt_instructions=2,
     request_batch_size=5,
     temperature=1.0,
     top_p=1.0,
-    num_cpus=10,
-    num_instructions_to_generate=100,
 ):
+    # Load generate configuration from config file unless already overwritten by the CLI
+    if not taxonomy:
+        taxonomy = config.get_generate_taxonomy()
+    if not seed_tasks_path:
+        seed_tasks_path = config.get_generate_seed_task_path()
+    if not prompt_file_path:
+        prompt_file_path = config.get_generate_prompt_file_path()
+    if not model_name:
+        model_name = config.get_generate_model()
+    if not num_cpus:
+        num_cpus = config.get_generate_num_cpus()
+    if not num_instructions_to_generate:
+        num_instructions_to_generate = config.get_generate_num_instructions()
+
     seed_instruction_data = []
     generate_start = time.time()
 
@@ -145,9 +163,10 @@ def generate_data(
             updated_taxonomy_files = [u for u in repo.untracked_files if splitext(u)[1].lower() in [".yaml", ".yml"]] + \
                 [d.a_path for d in repo.index.diff(None) if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
             errors = 0
+            warnings = 0
             for f in updated_taxonomy_files:
                 if splitext(f)[1] != ".yaml":
-                    print(f"WARNING: Skipping {f}! Use lowercase '.yaml' extension instead.")
+                    logger.warn(f"WARNING: Skipping {f}! Use lowercase '.yaml' extension instead.")
                     errors += 1
                     continue
                 file_path = os.path.join("taxonomy", f)
@@ -155,12 +174,22 @@ def generate_data(
                     with open(file_path, 'r') as file:
                         contents = yaml.safe_load(file)
                         for t in contents:
+                            q = t["question"]
+                            a = t["answer"]
+                            if not q or not a:
+                                logger.warn(f"Skipping {file_path} because question and/or answer is empty!")
+                                warnings += 1
+                                continue
                             seed_instruction_data.append(
-                                {"instruction": t["question"], "input": "", "output": t["answer"]})
+                                {"instruction": q, "input": "", "output": a})
                 except Exception as e:
+                    errors += 1
                     print(e.__repr__, " in ", file_path)
-                    print(e)
-            
+                    logger.error(e)
+
+            if warnings:
+                logger.warn(
+                    f"{warnings} warnings (see above) due to taxonomy files that were not usable.")
             if errors:
                 raise SystemExit(yaml.YAMLError(f"{errors} taxonomy files with YAML errors!  Exiting."))
     
@@ -212,7 +241,7 @@ def generate_data(
         for _ in range(request_batch_size):
             # only sampling from the seed tasks
             prompt_instructions = random.sample(seed_instruction_data, num_prompt_instructions)
-            prompt = encode_prompt(prompt_instructions)
+            prompt = encode_prompt(prompt_instructions, prompt_file_path)
             batch_inputs.append(prompt)
         decoding_args = utils.OpenAIDecodingArguments(
             temperature=temperature,
