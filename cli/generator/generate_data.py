@@ -150,8 +150,11 @@ def generate_data(
             output_dir = os.path.abspath(taxonomy)
             # Gather the new or changed YAMLs using git diff
             repo = Repo("taxonomy")
-            updated_taxonomy_files = [u for u in repo.untracked_files if splitext(u)[1].lower() in [".yaml", ".yml"]] + \
-                [d.a_path for d in repo.index.diff(None) if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
+            updated_taxonomy_files = [
+                u for u in repo.untracked_files
+                if splitext(u)[1].lower() in [".yaml", ".yml"]] + [
+                    d.a_path for d in repo.index.diff(None)
+                    if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
             errors = 0
             warnings = 0
             for f in updated_taxonomy_files:
@@ -161,7 +164,7 @@ def generate_data(
                     continue
                 file_path = os.path.join("taxonomy", f)
                 try:
-                    with open(file_path, 'r') as file:
+                    with open(file_path, 'r', encoding="utf-8") as file:
                         contents = yaml.safe_load(file)
                         for t in contents:
                             q = t["question"]
@@ -199,7 +202,7 @@ def generate_data(
         f"{taxonomy or seed_tasks_path}")
     if not seeds:
         raise SystemExit("Nothing to generate. Exiting.")
-    
+
     test_data = []
     for seed_example in seed_instruction_data:
         user = seed_example["instruction"]
@@ -310,12 +313,12 @@ def generate_data(
                 {"system": utils.SYSTEM_PROMPT, "user": user, "assistant": synth_example["output"]}
             )
         # utils.jdump(train_data, os.path.join(output_dir, output_file_train))
-        with open(os.path.join(output_dir, output_file_train), 'w') as outfile:
+        with open(os.path.join(output_dir, output_file_train), 'w', encoding='utf-8') as outfile:
             for entry in train_data:
                 json.dump(entry, outfile)
                 outfile.write('\n')
         # utils.jdump(test_data, os.path.join(output_dir, output_file_test))
-        with open(os.path.join(output_dir, output_file_test), 'w') as outfile:
+        with open(os.path.join(output_dir, output_file_test), 'w', encoding='utf-8') as outfile:
             for entry in test_data:
                 json.dump(entry, outfile)
                 outfile.write('\n')

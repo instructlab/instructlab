@@ -14,8 +14,6 @@ from .download_model import download_model
 from .chat.chat import chat_cli
 from .config.config import Config
 
-from os import system
-
 # pylint: disable=unused-argument
 class Lab:
     """Lab object holds high-level information about lab CLI"""
@@ -78,15 +76,18 @@ def init(ctx):
 def list(ctx, taxonomy):
     """List taxonomy YAML files"""
     repo = Repo("taxonomy")
-    updated_taxonomy_files = [u for u in repo.untracked_files if splitext(u)[1].lower() in [".yaml", ".yml"]] + \
-                [d.a_path for d in repo.index.diff(None) if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
+    updated_taxonomy_files = [
+        u for u in repo.untracked_files
+        if splitext(u)[1].lower() in [".yaml", ".yml"]] + [
+            d.a_path for d in repo.index.diff(None)
+            if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
     for f in updated_taxonomy_files:
         if splitext(f)[1] != ".yaml":
-            click.secho(f"WARNING: Found {f}! Use lowercase '.yaml' extension instead.", fg="yellow")
+            click.secho(f"WARNING: Found {f}! Use lowercase '.yaml' instead.", fg="yellow")
             continue
         click.echo(f)
 
-        
+
 @cli.command()
 @click.pass_context
 def submit(ctx):
