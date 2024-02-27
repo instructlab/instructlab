@@ -89,11 +89,12 @@ def submit(ctx):
 @click.option("--model", help="Name of the model used during generation.")
 @click.option("--gpu-layers", help="""The number of layers to put on the GPU.
               The rest will be on the CPU. Defaults to -1 to move all to GPU.""")
+@click.option('--verbose', '-v', is_flag=True, help="Print verbose output.")
 @click.pass_context
-def serve(ctx, model, gpu_layers):
+def serve(ctx, model, gpu_layers, verbose):
     """Start a local server"""
-    ctx.obj.logger.debug(f"Using model '{model}' with {gpu_layers} gpu-layers")
-    settings = Settings(model=model, n_ctx=4096, n_gpu_layers=gpu_layers, verbose=False)
+    ctx.obj.logger.info(f"Using model '{model}' with {gpu_layers} gpu-layers")
+    settings = Settings(model=model, n_ctx=4096, n_gpu_layers=gpu_layers, verbose=verbose)
     app = create_app(settings=settings)
     llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
         template="""{% for message in messages %}\n{% if message['role'] == 'user' %}\n
