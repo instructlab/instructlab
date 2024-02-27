@@ -103,21 +103,22 @@ Using the Labrador 🐶 method involves a number of steps, supported by various 
 - Initialize a local environment to use Labrador 🐶 via the **init**
 command:
 
-  `lab init`
-  
-  🚧 **Under construction:** This command isn't ready yet! 😅 If you run it, it will give you instructions to check out [the **taxonomy** repo](https://github.com/open-labrador/taxonomy):
+  ```ShellSession
+  mkdir proj && cd proj
+  lab init
+  ```
 
-  `git clone git@github.com:open-labrador/taxonomy.git`
+  It will clone the `git@github.com:open-labrador/taxonomy.git` repository and create the `config.yml` in the local directory.
 
 ### Download model
 
 - Download the model to train using the **download** command:
 
-  `lab download {URL to gguf-format model}`
+  `lab download`
 
-  🚧 **Under construction:** This command isn't ready yet! 😅 Pop over to our 
-[model download guide](https://github.com/open-labrador/cli/releases/tag/v0.1.0) for a set of instructions on how to do this 
-manually; you can also run the command `lab download` to receive instructions.
+  It will download all the models from the latest [release](https://github.com/open-labrador/cli/releases) into the local directory.
+
+  Pop over to our [cli releases](https://github.com/open-labrador/cli/releases) to check out the list of available models and a set of instructions on how to do this manually;
 
   📋 **Note:** Once you have the model chunks downloaded and reassembled according to the instructions above, please move the model to a `models/` directory in the root directory of your git checkout of this project (this assumes the model is in your `Downloads/` folder):
   ```

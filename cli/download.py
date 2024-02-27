@@ -2,6 +2,7 @@ import click
 import subprocess
 import re
 import os
+import textwrap
 
 
 def download_model(gh_repo='https://github.com/open-labrador/cli.git', gh_release='latest', dir='.', pattern=''):
@@ -77,7 +78,6 @@ def download_model(gh_repo='https://github.com/open-labrador/cli.git', gh_releas
 
 def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
                    gh_branch='main',
-                   dir_name='taxonomy',
                    git_filter_spec=''):
     """
     Clone the taxonomy repository from a Git repository source.
@@ -85,17 +85,16 @@ def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
     Parameters:
     - gh_repo (str): The URL of the taxonomy Git repository. Default is the Open Labrador taxonomy repository.
     - gh_branch (str): The Github branch of the taxonomy repository. Default is main
-    - dir_name(str): The local directory name to clone the taxonomy repository into
     - git_filter_spec(str): Optional path to the git filter spec for git partial clone
 
     Returns:
     - None
     """
 
-    click.echo('\nCloning repository %s with branch "%s" to %s ...' % (gh_repo, gh_branch, dir_name))
+    click.echo('\nCloning repository %s with branch "%s" ...' % (gh_repo, gh_branch))
 
     # Clone taxonomy repo
-    git_clone_commands = ['git', 'clone', gh_repo, dir_name]
+    git_clone_commands = ['git', 'clone', gh_repo]
     if git_filter_spec != '' and os.path.exists(git_filter_spec):
         # TODO: Add gitfilterspec to sparse clone github repo
         git_filter_arg = ''.join(['--filter=sparse:oid=', gh_branch, ':', git_filter_spec])
@@ -109,6 +108,67 @@ def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
         click.echo('\n%s' % result.stderr.decode('utf-8'))
     click.echo('Git clone completed.')
 
+
+def create_config_file(config_path='.'):
+    """
+    Create default config file. 
+    TODO: Remove this function after config class is updated.
+
+    Parameters:
+    - config_path (str): Path to create the default config.yml
+
+    Returns:
+    - None
+    """
+
+    
+    config_yml_txt = textwrap.dedent(
+    """
+    # Copyright The Authors
+    #
+    # Licensed under the Apache License, Version 2.0 (the "License");
+    # you may not use this file except in compliance with the License.
+    # You may obtain a copy of the License at
+    #
+    #     http://www.apache.org/licenses/LICENSE-2.0
+    #
+    # Unless required by applicable law or agreed to in writing, software
+    # distributed under the License is distributed on an "AS IS" BASIS,
+    # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    # See the License for the specific language governing permissions and
+    # limitations under the License.
+
+    chat:
+      context: ""
+      model: "ggml-malachite-7b-Q4_K_M"
+      session: ""
+
+    generate:
+      model: "ggml-malachite-7b-Q4_K_M"
+      num_cpus: 10
+      num_instructions_to_generate: 100
+      path_to_taxonomy: "./taxonomy"
+      prompt_file_path: "./cli/generator/prompt.txt"
+      seed_tasks_path: "./cli/generator/seed_tasks.jsonl"
+
+    list:
+      path_to_taxonomy: "./taxonomy"
+
+    log:
+      level: info
+
+    serve:
+      model_path: "./models/ggml-malachite-7b-Q4_K_M.gguf"
+      n_gpu_layers: -1
+    """
+    )
+    config_file_path = os.path.normpath(config_path) + '/config.yml'
+    if os.path.isfile(config_file_path):
+        click.echo('Skip config file generation because it already exists at %s' % config_file_path)
+    else:
+        with open(config_file_path, "w") as model_file:
+            model_file.write(config_yml_txt)
+        click.echo('Config file is created at %s' % config_file_path)
 
 def create_subprocess(commands):
     return subprocess.run(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

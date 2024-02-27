@@ -8,7 +8,7 @@ import uvicorn
 import logging
 
 from .generator.generate_data import generate_data
-from .download import download_model, clone_taxonomy
+from .download import download_model, clone_taxonomy, create_config_file
 from .chat.chat import chat_cli
 from .config.config import Config
 
@@ -70,16 +70,11 @@ def cli(ctx, config):
     show_default=True,
     help="The Github branch of the taxonomy repository."
 )
-@click.option(
-    "--dir_name",
-    default="taxonomy",
-    show_default=True,
-    help="The local directory name to clone the taxonomy repository into."
-)
 @click.pass_context
-def init(ctx, repo, branch, dir_name):
+def init(ctx, repo, branch):
     """Initializes environment for labrador"""
-    clone_taxonomy(repo, branch, dir_name)
+    clone_taxonomy(repo, branch)
+    create_config_file()
 
 
 @cli.command()
