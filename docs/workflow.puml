@@ -35,23 +35,33 @@
 +---+--------+                          |      iterate by modifying examples
     |                                   |      if samples do not look good
     v                                   | 
-+---+----------+                        |
-|lab train cYEL|-=---train the model    |
-+---+----------+                        |
++---+------------+                      |
+|colab train cYEL|-=---train the model  |
++---+------------+                      |
     |                                   |
     v                                   |
-+---+---------+                         |
-|lab test cYEL|-------------------------+ -=---run unit/smoke tests;
-+---+---------+                         |      iterate if some test failed
++---+-----------+                       |
+|colab test cYEL|-----------------------+ -=---run unit/smoke tests;
++---+-----------+                       |      iterate if some test failed
+    |                                   |
+    v                                   |
++---+--------------------+              |
+|download new model cPNK |              |
++---+--------------------+              |
+    |                                   |
+    v                                   |
++---+--------+                          |
+|lab quantize|-=---quantize new model   |
++---+--------+                          |
     |                                   |
     v                                   |
 +---+---------------+                   |
-|kill lab serve cPNK|-=---kill server   |
+|kill lab serve cPNK|-=-kill old server |
 +---+---------------+                   |
     |                                   |
     v                                   |
 +---+-----+                             |
-|lab serve|-=---start model server      |
+|lab serve|-=---start new model server  |
 +---+-----+                             |
     |                                   |
     v                                   |
