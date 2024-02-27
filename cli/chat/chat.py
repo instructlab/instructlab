@@ -26,7 +26,7 @@ HELP_MD = """
 Help / TL;DR
 - `/q`: **q**uit
 - `/h`: show **h**elp
-- `/a assistant`: **a**mend **a**ssistant
+- `/a assistant`: **a**mend **a**ssistant (i.e., model)
 - `/c context`: **c**hange **c**ontext
 - `/m`: toggle **m**ultiline (for the next session only)
 - `/M`: toggle **m**ultiline
@@ -38,6 +38,8 @@ Help / TL;DR
 - `/s filepath`: **s**ave current session to `filepath`
 - `/l filepath`: **l**oad `filepath` and start a new session
 - `/L filepath`: **l**oad `filepath` (permanently) and start a new session
+
+Press Meta+Enter or Esc Enter to end multiline input.
 """
 
 CONFIG_FILENAME = "chat-cli.toml"
@@ -199,6 +201,8 @@ class ConsoleChatBot():
         
         handlers = {
             "/q":      self._handle_quit,
+            "quit":    self._handle_quit,
+            "exit":    self._handle_quit,
             "/h":      self._handle_help,
             "/a":      self._handle_amend,
             "/c":      self._handle_context,
