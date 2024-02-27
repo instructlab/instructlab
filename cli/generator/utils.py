@@ -93,7 +93,7 @@ def openai_completion(
 
         messages = [
             {"role": "system",
-             "content": "You are Granite Chat, an AI language model developed by IBM.  You are a cautious assistant.  You carefully follow instructions.  You are helpful and harmless and you follow ethical guidelines and promote positive behavior."},
+             "content": "You are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."},
             {"role": "user", "content": prompt_batch[batch_id]}
         ]
 
