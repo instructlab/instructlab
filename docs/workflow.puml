@@ -24,10 +24,10 @@
 +---+----+
     |
     v
-+---+---------------------+
-|contributor create/update|
-|examples in taxonomy cPNK|<------------+
-+---+---------------------+             |
++---+-----------------------+
+|contributor creates/updates|
+|examples in taxonomy   cPNK|<----------+
++---+-----------------------+           |
     |                                   |
     v                                   |
 +---+--------+                          |
@@ -71,8 +71,8 @@
     |
     v
 +---+---------------------------+
-|contributor uses Git to commits|
-|changes in the taxonomy repo   |
+|contributor uses Git to commit |
+|changes to the taxonomy repo   |
 |and create a PR            cPNK|
 +---+---------------------------+
 @endditaa
