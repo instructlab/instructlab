@@ -11,6 +11,7 @@ from functools import partial
 from multiprocessing import Pool
 from pathlib import Path
 import yaml
+from git import Repo
 
 # import numpy as np
 import tqdm
@@ -145,41 +146,37 @@ def generate_data(
                     yaml.YAMLError("taxonomy file () has YAML errors!  Exiting."))
 
         else:  # taxonomy is_dir
-            # Default output_dir to taxonomy dir
-            output_dir = output_dir or os.path.dirname(os.path.abspath(taxonomy))
-            # Walk to gather files
+            # Default output_dir to taxonomy dir, using the dir not the parent
+            output_dir = os.path.abspath(taxonomy)
+            # Gather the new or changed YAMLs using git diff
+            repo = Repo("taxonomy")
+            updated_taxonomy_files = [u for u in repo.untracked_files if splitext(u)[1].lower() in [".yaml", ".yml"]] + \
+                [d.a_path for d in repo.index.diff(None) if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
             errors = 0
             warnings = 0
-            for root, dirs, files in os.walk(taxonomy):
-                files = [
-                    f for f in files if not f[0] == '.'
-                    and splitext(f)[1].lower() in [".yaml", ".yml"]
-                ]
-                dirs[:] = [d for d in dirs if not d[0] == '.']
-                for f in files:
-                    if splitext(f)[1] != ".yaml":
-                        logger.warn(f"WARNING: Skipping {f}! Use lower case '.yaml' instead.")
-                        errors += 1
-                        continue
-                    file_path = os.path.join(root, f)
-                    try:
-                        with open(file_path, 'r', encoding="utf-8") as file:
-                            contents = yaml.safe_load(file)
-                            for t in contents:
-                                q = t["question"]
-                                a = t["answer"]
-                                if not q or not a:
-                                    logger.warn(f"Skipping {file_path} " +
-                                        "because question and/or answer is empty!")
-                                    warnings += 1
-                                    continue
-                                seed_instruction_data.append(
-                                    {"instruction": q, "input": "", "output": a})
-                    except Exception as e:
-                        errors += 1
-                        print(e.__repr__, " in ", file_path)
-                        logger.error(e)
-
+            for f in updated_taxonomy_files:
+                if splitext(f)[1] != ".yaml":
+                    logger.warn(f"WARNING: Skipping {f}! Use lower case '.yaml' instead.")
+                    errors += 1
+                    continue
+                file_path = os.path.join("taxonomy", f)
+                try:
+                    with open(file_path, 'r') as file:
+                        contents = yaml.safe_load(file)
+                        for t in contents:
+                            q = t["question"]
+                            a = t["answer"]
+                            if not q or not a:
+                                logger.warn(f"Skipping {file_path} " +
+                                    "because question and/or answer is empty!")
+                                warnings += 1
+                                continue
+                            seed_instruction_data.append(
+                                {"instruction": q, "input": "", "output": a})
+                except Exception as e:
+                    errors += 1
+                    print(e.__repr__, " in ", file_path)
+                    logger.error(e)
             if warnings:
                 logger.warn(
                     f"{warnings} warnings (see above) due to taxonomy files that were not usable.")
