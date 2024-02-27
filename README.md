@@ -71,6 +71,23 @@ Then, run `lab` as follows:
 lab
 ```
 
+### Configuration
+
+`lab` currently requires a valid configuration file to run. By default, it
+looks for a `cli/config/config.yml` file in the current directory, but you
+can override that with `--config` flag like so:
+
+```ShellSession
+python -m cli --config=./config.yml generate
+```
+or
+```ShellSession
+lab --config=./config.yml generate
+```
+**Note:** Make sure to pass the `--config` flag after the root command name!
+
+A sample configuration file is available in [cli/config/config.yml](cli/config/config.yml).
+
 <a name="how-to-use"></a>
 # How to use `lab`
 
