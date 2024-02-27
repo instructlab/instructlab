@@ -76,16 +76,16 @@ def serve(ctx, model, gpu_layers):
 
 
 @cli.command()
-@click.option("--model", default="ggml-malachite-7b-Q4_K_M", show_default=True)
-@click.option("--num-cpus", default=10, show_default=True)
-@click.option("--num-instructions", default=100, show_default=True)
-@click.option("--taxonomy", default="taxonomy", show_default=True, type=click.Path())
-@click.option("--seed-file", default="./cli/generator/seed_tasks.jsonl", show_default=True, type=click.Path())
+@click.option("--model")
+@click.option("--num-cpus")
+@click.option("--num-instructions")
+@click.option("--taxonomy")
+@click.option("--seed-file", type=click.Path())
 @click.pass_context
 def generate(ctx, model, num_cpus, num_instructions, taxonomy, seed_file):
     """Generates synthetic data to enhance your example data"""
     ctx.obj.logger.debug(f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy}' and seed '{seed_file}'")
-    generate_data(logger=ctx.obj.logger, model_name=model, num_cpus=num_cpus,
+    generate_data(logger=ctx.obj.logger, config=ctx.obj.config, model_name=model, num_cpus=num_cpus,
                   num_instructions_to_generate=num_instructions, taxonomy=taxonomy, seed_tasks_path=seed_file)
 
 
