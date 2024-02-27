@@ -1,4 +1,4 @@
-# Labrador 🐶 command-line interface `cli`
+# Labrador 🐶 command-line interface `lab`
 
 Labrador 🐶 is a novel synthetic data-based alignment tuning method for Large 
 Language Models (LLMs.) The "**lab**" in **Lab**rador 🐶 stands for **L**arge-scale **A**lignment for Chat **B**ots.
