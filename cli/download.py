@@ -1,11 +1,12 @@
 import click
 import subprocess
 import re
+import os
 
 
 def download_model(gh_repo='https://github.com/open-labrador/cli.git', gh_release='latest', dir='.', pattern=''):
     """
-    Download and combine the model file from a GitHub repository sourc.
+    Download and combine the model file from a GitHub repository source.
 
     Parameters:
     - gh_repo (str): The URL of the GitHub repository containing the model. Default is the Open Labrador CLI repository.
@@ -72,6 +73,42 @@ def download_model(gh_repo='https://github.com/open-labrador/cli.git', gh_releas
         click.echo("\nList of combined models: ")
         for model_name in combined_model_list:
             click.echo("%s" % model_name)
+
+
+def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
+                   gh_branch='main',
+                   dir_name='taxonomy',
+                   git_filter_spec=''):
+    """
+    Clone the taxonomy repository from a Git repository source.
+
+    Parameters:
+    - gh_repo (str): The URL of the taxonomy Git repository. Default is the Open Labrador taxonomy repository.
+    - gh_branch (str): The Github branch of the taxonomy repository. Default is main
+    - dir_name(str): The local directory name to clone the taxonomy repository into
+    - git_filter_spec(str): Optional path to the git filter spec for git partial clone
+
+    Returns:
+    - None
+    """
+
+    click.echo('\nCloning repository %s with branch "%s" to %s ...' % (gh_repo, gh_branch, dir_name))
+
+    # Clone taxonomy repo
+    git_clone_commands = ['git', 'clone', gh_repo, dir_name]
+    if git_filter_spec != '' and os.path.exists(git_filter_spec):
+        # TODO: Add gitfilterspec to sparse clone github repo
+        git_filter_arg = ''.join(['--filter=sparse:oid=', gh_branch, ':', git_filter_spec])
+        git_sparse_clone_flags = ['--sparse', git_filter_arg]
+        git_clone_commands.extend(git_sparse_clone_flags)
+    else:
+        git_clone_commands.extend(['--branch', gh_branch])
+    
+    result = create_subprocess(git_clone_commands)
+    if result.stderr:
+        click.echo('\n%s' % result.stderr.decode('utf-8'))
+    click.echo('Git clone completed.')
+
 
 def create_subprocess(commands):
     return subprocess.run(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
