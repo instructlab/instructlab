@@ -6,6 +6,8 @@ from llama_cpp.server.app import create_app
 from llama_cpp.server.settings import Settings
 import uvicorn
 import logging
+from git import Repo
+from os.path import splitext
 
 from .generator.generate_data import generate_data
 from .download_model import download_model
@@ -71,8 +73,14 @@ def init(ctx):
 @click.pass_context
 def list(ctx, taxonomy):
     """List taxonomy YAML files"""
-    from os import system
-    system(f"find {taxonomy} -iname '*.yaml'")
+    repo = Repo("taxonomy")
+    updated_taxonomy_files = [u for u in repo.untracked_files if splitext(u)[1].lower() in [".yaml", ".yml"]] + \
+                [d.a_path for d in repo.index.diff(None) if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
+    for f in updated_taxonomy_files:
+        if splitext(f)[1] != ".yaml":
+            click.secho(f"WARNING: Found {f}! Use lowercase '.yaml' extension instead.", fg="yellow")
+            continue
+        click.echo(f)
 
 
 @cli.command()
