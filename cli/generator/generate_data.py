@@ -202,14 +202,26 @@ def generate_data(
         f"{taxonomy or seed_tasks_path}")
     if not seeds:
         raise SystemExit("Nothing to generate. Exiting.")
+    
+    test_data = []
+    for seed_example in seed_instruction_data:
+        user = seed_example["instruction"]
+        if len(seed_example["input"]) > 0:
+            user += "\n" + seed_example["input"]
+        test_data.append(
+            {"system": utils.SYSTEM_PROMPT, "user": user, "assistant": seed_example["output"]}
+        )
 
     name = Path(model_name).stem  # Just in case it is a file path
     output_file = f"generated_{name}_{datetime.now().replace(microsecond=0).isoformat()}.json"
+    output_file_train = f"train_{name}_{datetime.now().replace(microsecond=0).isoformat()}.jsonl"
+    output_file_test = f"test_{name}_{datetime.now().replace(microsecond=0).isoformat()}.jsonl"
     logger.debug(f"Generating to: {os.path.join(output_dir, output_file)}")
 
     request_idx = 0
     # load the LM-generated instructions
     machine_instruction_data = []
+    train_data = []
     if os.path.exists(os.path.join(output_dir, "regen.json")):
         machine_instruction_data = utils.jload(os.path.join(output_dir, "regen.json"))
         logger.debug(f"Loaded {len(machine_instruction_data)} machine-generated instructions")
@@ -293,6 +305,23 @@ def generate_data(
             f"processing took {process_duration:.2f}s")
         logger.debug(f"Generated {total} instructions, kept {keep} instructions")
         utils.jdump(machine_instruction_data, os.path.join(output_dir, output_file))
+        for synth_example in machine_instruction_data:
+            user = synth_example["instruction"]
+            if len(synth_example["input"]) > 0:
+                user += "\n" + synth_example["input"]
+            train_data.append(
+                {"system": utils.SYSTEM_PROMPT, "user": user, "assistant": synth_example["output"]}
+            )
+        # utils.jdump(train_data, os.path.join(output_dir, output_file_train))
+        with open(os.path.join(output_dir, output_file_train), 'w') as outfile:
+            for entry in train_data:
+                json.dump(entry, outfile)
+                outfile.write('\n')
+        # utils.jdump(test_data, os.path.join(output_dir, output_file_test))
+        with open(os.path.join(output_dir, output_file_test), 'w') as outfile:
+            for entry in test_data:
+                json.dump(entry, outfile)
+                outfile.write('\n')
 
     generate_duration = time.time() - generate_start
     logger.info(f"Generation took {generate_duration:.2f}s")
