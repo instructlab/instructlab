@@ -13,6 +13,7 @@ import copy
 
 StrOrOpenAIObject = Union[str, object]
 
+SYSTEM_PROMPT = "You are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
 
 @dataclasses.dataclass
 class OpenAIDecodingArguments(object):
@@ -93,7 +94,7 @@ def openai_completion(
 
         messages = [
             {"role": "system",
-             "content": "You are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."},
+             "content": SYSTEM_PROMPT},
             {"role": "user", "content": prompt_batch[batch_id]}
         ]
 
