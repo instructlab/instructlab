@@ -10,7 +10,7 @@
     |                                        +----------+
     v optional                               |colab cYEL| 
 +---+-----+                                  +----------+ 
-|lab serve|-=---optional, start model server 
+|lab serve|-=---start model server 
 +---+-----+
     |
     v
