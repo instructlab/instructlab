@@ -1,16 +1,16 @@
 @startditaa
-+--------+                                    /-------------------------\
-|lab init|-=---taxonomy repo cloned           |legend                   |
-+---+----+                                    | +-------+ +-----------+ |
-    |                                         | |lab cmd| |manual cPNK| |
-    v                                         | +---+---+ +-----------+ |
-+---+--------+                                |                     cFFF|
-|lab download|-=---model weights downloaded   \-------------------------/
-+---+--------+
-    |
-    v
-+---+-----+
-|lab serve|-=---optional, start model server
++--------+                                    
+|lab init|-=---taxonomy repo cloned          legend       
++---+----+                                   +-------+    
+    |                                        |lab CLI|    
+    v                                        +-------+    
++---+--------+                               +-----------+
+|lab download|-=---model weights downloaded  |manual cPNK|
++---+--------+                               +-----------+
+    |                                        +----------+
+    v                                        |colab cYEL| 
++---+-----+                                  +----------+ 
+|lab serve|-=---optional, start model server 
 +---+-----+
     |
     v
@@ -24,7 +24,7 @@
 +---+----+
     |
     v
-+---+---------------------+still magic
++---+---------------------+
 |contributor create/update|
 |examples in taxonomy cPNK|<------------+
 +---+---------------------+             |
@@ -35,14 +35,14 @@
 +---+--------+                          |      iterate by modifying examples
     |                                   |      if samples do not look good
     v                                   | 
-+---+-----+                             |
-|lab train|-=---train the model         |
-+---+-----+                             |
++---+----------+                        |
+|lab train cYEL|-=---train the model    |
++---+----------+                        |
     |                                   |
     v                                   |
-+---+----+                              |
-|lab test|------------------------------+ -=---run unit/smoke tests;
-+---+----+                              |      iterate if some test failed
++---+---------+                         |
+|lab test cYEL|-------------------------+ -=---run unit/smoke tests;
++---+---------+                         |      iterate if some test failed
     |                                   |
     v                                   |
 +---+---------------+                   |
