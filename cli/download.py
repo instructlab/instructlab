@@ -24,7 +24,7 @@ def download_model(gh_repo='https://github.com/open-labrador/cli.git', gh_releas
     click.secho('\nMake sure the local environment has the "gh" cli. https://cli.github.com', fg="blue")
     click.echo("\nDownloading Models from %s with version %s to local directory %s ...\n" % (gh_repo, gh_release, dir))
 
-    # Download Github release
+    # Download GitHub release
     download_commands = ['gh', 'release', 'download', gh_release, '--repo', gh_repo, '--dir', dir]
     if pattern != '':
         download_commands.extend(['--pattern', pattern])
@@ -84,7 +84,7 @@ def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
 
     Parameters:
     - gh_repo (str): The URL of the taxonomy Git repository. Default is the Open Labrador taxonomy repository.
-    - gh_branch (str): The Github branch of the taxonomy repository. Default is main
+    - gh_branch (str): The GitHub branch of the taxonomy repository. Default is main
     - git_filter_spec(str): Optional path to the git filter spec for git partial clone
 
     Returns:
@@ -96,7 +96,7 @@ def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
     # Clone taxonomy repo
     git_clone_commands = ['git', 'clone', gh_repo]
     if git_filter_spec != '' and os.path.exists(git_filter_spec):
-        # TODO: Add gitfilterspec to sparse clone github repo
+        # TODO: Add gitfilterspec to sparse clone GitHub repo
         git_filter_arg = ''.join(['--filter=sparse:oid=', gh_branch, ':', git_filter_spec])
         git_sparse_clone_flags = ['--sparse', git_filter_arg]
         git_clone_commands.extend(git_sparse_clone_flags)
@@ -109,7 +109,7 @@ def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
     click.echo('Git clone completed.')
 
 
-def create_config_file(config_path='.'):
+def create_config_file(config_file_name='./config.yml'):
     """
     Create default config file. 
     TODO: Remove this function after config class is updated.
@@ -162,13 +162,14 @@ def create_config_file(config_path='.'):
       n_gpu_layers: -1
     """
     )
-    config_file_path = os.path.normpath(config_path) + '/config.yml'
-    if os.path.isfile(config_file_path):
-        click.echo('Skip config file generation because it already exists at %s' % config_file_path)
+    if os.path.isfile(config_file_name):
+        click.echo('Skip config file generation because it already exists at %s' % config_file_name)
     else:
-        with open(config_file_path, "w") as model_file:
+        if os.path.dirname(config_file_name) != '':
+            os.makedirs(os.path.dirname(config_file_name), exist_ok=True)
+        with open(config_file_name, "w") as model_file:
             model_file.write(config_yml_txt)
-        click.echo('Config file is created at %s' % config_file_path)
+        click.echo('Config file is created at %s' % config_file_name)
 
 def create_subprocess(commands):
     return subprocess.run(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

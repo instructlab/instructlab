@@ -100,15 +100,14 @@ Using the Labrador 🐶 method involves a number of steps, supported by various 
 ## 🏗️ 1. Initial setup
 
 ### Initialize environment
-- Initialize a local environment to use Labrador 🐶 via the **init**
+- Create an empty directory `project_dir` and change the current directory into `project_dir`. Initialize a local environment to use Labrador 🐶 via the **init**
 command:
 
-  ```ShellSession
-  mkdir proj && cd proj
+  ```shell
   lab init
   ```
 
-  It will clone the `git@github.com:open-labrador/taxonomy.git` repository and create the `config.yml` in the local directory.
+  It will clone the `git@github.com:open-labrador/taxonomy.git` repository.
 
 ### Download model
 

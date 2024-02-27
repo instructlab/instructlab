@@ -25,6 +25,7 @@ class Lab(object):
 
 
 def configure(ctx, param, filename):
+    create_config_file(filename)
     ctx.obj = Lab(filename)
     default_map = dict()
     # options in default_map must match the names of variables
@@ -62,19 +63,18 @@ def cli(ctx, config):
     "--repo",
     default="https://github.com/open-labrador/taxonomy.git",
     show_default=True,
-    help="Labrador Taxonomy Github repository"
+    help="Labrador Taxonomy GitHub repository"
 )
 @click.option(
     "--branch",
     default="main",
     show_default=True,
-    help="The Github branch of the taxonomy repository."
+    help="The GitHub branch of the taxonomy repository."
 )
 @click.pass_context
 def init(ctx, repo, branch):
     """Initializes environment for labrador"""
     clone_taxonomy(repo, branch)
-    create_config_file()
 
 
 @cli.command()
@@ -170,13 +170,13 @@ def chat(ctx, question, model, context, session, qq):
     "--repo",
     default="https://github.com/open-labrador/cli.git",
     show_default=True,
-    help="Github repository of the hosted models."
+    help="GitHub repository of the hosted models."
 )
 @click.option(
     "--release",
     default="latest",
     show_default=True,
-    help="Github release version of the hosted models."
+    help="GitHub release version of the hosted models."
 )
 @click.option(
     "--dir",
