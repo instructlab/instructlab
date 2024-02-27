@@ -105,7 +105,6 @@ def find_word_in_string(w, s):
 
 def generate_data(
     logger,
-    config: Config,
     output_dir: Optional[str] = None,
     taxonomy: Optional[str] = None,
     seed_tasks_path: Optional[str] = None,
@@ -118,20 +117,6 @@ def generate_data(
     temperature=1.0,
     top_p=1.0,
 ):
-    # Load generate configuration from config file unless already overwritten by the CLI
-    if not taxonomy:
-        taxonomy = config.get_generate_taxonomy()
-    if not seed_tasks_path:
-        seed_tasks_path = config.get_generate_seed_task_path()
-    if not prompt_file_path:
-        prompt_file_path = config.get_generate_prompt_file_path()
-    if not model_name:
-        model_name = config.get_generate_model()
-    if not num_cpus:
-        num_cpus = config.get_generate_num_cpus()
-    if not num_instructions_to_generate:
-        num_instructions_to_generate = config.get_generate_num_instructions()
-
     seed_instruction_data = []
     generate_start = time.time()
 

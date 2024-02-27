@@ -16,20 +16,45 @@ from .config.config import Config
 class Lab(object):
     """Lab object holds high-level information about lab CLI"""
 
-    def __init__(self):
-        self.config = Config()
+    def __init__(self, config):
+        self.config = Config(config_yml_path=config)
         FORMAT = "%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s"
         logging.basicConfig(format=FORMAT)
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(self.config.get_log_level())
 
 
+def configure(ctx, param, filename):
+    ctx.obj = Lab(filename)
+    default_map = dict()
+    # options in default_map must match the names of variables
+    default_map["model"] = ctx.obj.config.get_serve_model_path()
+    default_map["taxonomy"] = ctx.obj.config.get_generate_taxonomy()
+    default_map["seed_file"] = ctx.obj.config.get_generate_seed_task_path()
+    default_map["gpu_layers"] = ctx.obj.config.get_serve_n_gpu_layers()
+    default_map["num_cpus"] = ctx.obj.config.get_generate_num_cpus()
+    default_map["num_instructions"] = ctx.obj.config.get_generate_num_instructions()
+    ctx.default_map = default_map
+    # TODO: for now we have to inject values per command, so I'm injecting them all
+    # but ideally we should morph our file to match what click expects
+    cmds = ["init", "list", "submit", "serve", "generate", "train", "test", "chat", "download"]
+    for cmd in cmds:
+        ctx.default_map[cmd] = dict(default_map)
+
 
 @click.group(cls=DYMGroup)
+@click.option(
+    "--config",
+    type=click.Path(),
+    default="./cli/config/config.yml",
+    show_default=True,
+    callback=configure,
+    is_eager=True,
+    help="Path to a configuration file.")
 @click.pass_context
-def cli(ctx):
+def cli(ctx, config):
     """CLI for interacting with labrador"""
-    ctx.obj = Lab()
+    pass
 
 
 @cli.command()
@@ -42,7 +67,7 @@ def init(ctx):
 
 
 @cli.command()
-@click.option("--taxonomy", default="taxonomy", show_default=True, type=click.Path())
+@click.option("--taxonomy", type=click.Path(), help="Path to https://github.com/open-labrador/taxonomy/ checkout.")
 @click.pass_context
 def list(ctx, taxonomy):
     """List taxonomy YAML files"""
@@ -58,8 +83,8 @@ def submit(ctx):
 
 
 @cli.command()
-@click.option("--model", default="./models/ggml-malachite-7b-Q4_K_M.gguf", show_default=True)
-@click.option("--gpu-layers", default=-1, show_default=True)
+@click.option("--model", help="Name of the model used during generation.")
+@click.option("--gpu-layers", help="The number of layers to put on the GPU. The rest will be on the CPU. Defaults to -1 to move all to GPU.")
 @click.pass_context
 def serve(ctx, model, gpu_layers):
     """Start a local server"""
@@ -76,17 +101,21 @@ def serve(ctx, model, gpu_layers):
 
 
 @cli.command()
-@click.option("--model")
-@click.option("--num-cpus")
-@click.option("--num-instructions")
-@click.option("--taxonomy")
-@click.option("--seed-file", type=click.Path())
+@click.option("--model", help="Name of the model used during generation.")
+@click.option("--num-cpus", type=click.INT, help="Number of processes to use. Defaults to 10.")
+@click.option("--num-instructions", type=click.INT, help="Number of instructions to generate. Defaults to 100.")
+@click.option("--taxonomy", type=click.Path(), help="Path to https://github.com/open-labrador/taxonomy/ checkout.")
+@click.option("--seed-file", type=click.Path(), help="Path to a seed file.")
 @click.pass_context
 def generate(ctx, model, num_cpus, num_instructions, taxonomy, seed_file):
     """Generates synthetic data to enhance your example data"""
+    # load not exposed options from config
+    prompt_path = ctx.obj.config.get_generate_prompt_file_path()
+
     ctx.obj.logger.debug(f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy}' and seed '{seed_file}'")
-    generate_data(logger=ctx.obj.logger, config=ctx.obj.config, model_name=model, num_cpus=num_cpus,
-                  num_instructions_to_generate=num_instructions, taxonomy=taxonomy, seed_tasks_path=seed_file)
+    generate_data(logger=ctx.obj.logger, model_name=model, num_cpus=num_cpus,
+                  num_instructions_to_generate=num_instructions, taxonomy=taxonomy,
+                  prompt_file_path=prompt_path, seed_tasks_path=seed_file)
 
 
 @cli.command()
