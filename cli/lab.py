@@ -13,8 +13,8 @@ import uvicorn
 
 # Local
 from .chat.chat import chat_cli
-from .config import Config
-from .download import clone_taxonomy, create_config_file, download_model
+from .config import Config, create_config_file
+from .download import clone_taxonomy, download_model
 from .generator.generate_data import generate_data, get_taxonomy_diff
 
 
