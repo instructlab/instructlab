@@ -47,6 +47,7 @@ CONTEXTS = None
 
 CONFIG_FILEPATHS = [
     os.path.expanduser(f"./cli/chat/{CONFIG_FILENAME}"),
+    os.path.expanduser(f"./cli/{CONFIG_FILENAME}"),
     os.path.expanduser(f"~/.{CONFIG_FILENAME}"),
     os.path.expanduser(f"~/.config/{CONFIG_FILENAME}"),
 ]
