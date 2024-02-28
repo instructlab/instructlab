@@ -1,6 +1,6 @@
 import click
 from click_didyoumean import DYMGroup
-import llama_cpp as llama_chat_format
+from llama_cpp import llama_chat_format
 import llama_cpp.server.app as llama_app
 from llama_cpp.server.app import create_app
 from llama_cpp.server.settings import Settings
