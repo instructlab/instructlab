@@ -1,5 +1,6 @@
 # Standard
-from os.path import basename, dirname, splitext
+from os.path import basename, dirname, exists, splitext
+from os import listdir
 import logging
 
 # Third Party
@@ -75,22 +76,35 @@ def cli(ctx, config):
 
 
 @cli.command()
-@click.option(
-    "--repo",
-    default="https://github.com/open-labrador/taxonomy.git",
-    show_default=True,
-    help="Labrador Taxonomy GitHub repository",
-)
-@click.option(
-    "--branch",
-    default="main",
-    show_default=True,
-    help="The GitHub branch of the taxonomy repository.",
-)
 @click.pass_context
-def init(ctx, repo, branch):
+@click.option("--non-interactive", is_flag=True, help="Initialize the environment assuming defaults.")
+def init(ctx, non_interactive):
     """Initializes environment for labrador"""
-    clone_taxonomy(repo, branch)
+    if exists("config.yaml"):
+        overwrite = click.confirm("Found `config.yaml` in the current directory, do you still want to continue?")
+        if not overwrite:
+            return
+
+    if not non_interactive:
+        click.echo("Welcome to labrador CLI. This guide will help you to setup your environment.")
+        click.echo("Please provide the following values to initiate the environment:")
+
+        models = click.prompt("Path to your model", default="models/ggml-malachite-7b-0226-Q4_K_M.gguf")
+
+        taxonomy = click.prompt("Path to taxonomy repo", default="taxonomy/")
+        try:
+            taxonomy_contents = listdir(taxonomy)
+        except FileNotFoundError:
+            taxonomy_contents = []
+        if len(taxonomy_contents) == 0:
+            clone_taxonomy = click.confirm(f"`{taxonomy}` seems to not exists or is empty. Should I clone https://github.com/open-labrador/taxonomy for you?")
+            if clone_taxonomy:
+                clone_taxonomy("https://github.com/open-labrador/taxonomy", "main")
+
+    click.echo("Generating config.yaml in the current directory...")
+    create_config_file()
+
+    click.echo("Initialization completed successfully, you're ready to start using `lab`. Enjoy!")
 
 
 @cli.command()

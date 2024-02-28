@@ -140,8 +140,7 @@ class Config(object):
         )
 
 
-def create_config_file(config_file_name="./config.yml"):
-    # pylint: disable=line-too-long
+def create_config_file(config_file_name="config.yaml"):
     """
     Create default config file.
     TODO: Remove this function after config class is updated.
