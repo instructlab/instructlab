@@ -43,10 +43,11 @@ def download_model(
         download_commands.pop(3)  # remove gh_release arg to download the latest version
         if pattern == '':  # Latest release needs to specify the pattern argument to download files
             download_commands.extend(['--pattern', '*'])
-    gh_result = create_subprocess(download_commands)
-    if gh_result.stderr:
-        raise subprocess.SubprocessError('gh command error occurred:\n\n %s' %
-                                         gh_result.stderr.decode('utf-8'))
+    try:
+        create_subprocess(download_commands)
+    except (FileNotFoundError, subprocess.CalledProcessError) as e:
+        click.echo('%s' % e)
+        click.echo('\nAn error occurred with gh. Check the traceback for details.\n')
 
     # Get the list of local files
     ls_commands = ['ls', local_dir]
@@ -213,4 +214,4 @@ def create_config_file(config_file_name='./config.yml'):
 
 
 def create_subprocess(commands):
-    return subprocess.run(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False)
+    return subprocess.run(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
