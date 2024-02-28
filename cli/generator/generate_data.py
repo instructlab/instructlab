@@ -19,7 +19,7 @@ from rouge_score import rouge_scorer
 
 from . import utils
 
-DEFAULT_PROMPT = """\
+DEFAULT_PROMPT_TEMPLATE = """\
 You are asked to come up with a set of 20 diverse task instructions. These task instructions will be given to a GPT 
 model and we will evaluate the GPT model for completing the instructions.
 
@@ -46,16 +46,20 @@ List of 20 tasks:
 """
 
 
-def encode_prompt(prompt_instructions, prompt_file):
-    """Encode multiple prompt instructions into a single string."""
-
+def check_prompt_file(prompt_file_path):
+    """Check for prompt file."""
     try:
-        with open(prompt_file, encoding="utf=8") as file:
-            prompt = file.read()
+        with open(prompt_file_path, encoding="utf=8") as file:
+            prompt_template = file.read()
     except FileNotFoundError:
-        print(f"Cannot find {prompt_file}. Using default prompt.")
-        prompt = DEFAULT_PROMPT
-    prompt = prompt + "\n"
+        print(f"Cannot find {prompt_file_path}. Using default prompt.")
+        prompt_template = DEFAULT_PROMPT_TEMPLATE
+    prompt_template = prompt_template + "\n"
+    return prompt_template
+
+
+def encode_prompt(prompt_instructions, prompt):
+    """Encode multiple prompt instructions into a single string."""
     idx = 0
     for idx, task_dict in enumerate(prompt_instructions):
         (instruction, prompt_input, prompt_output) = (
@@ -270,6 +274,7 @@ def generate_data(
     ]
     all_instruction_tokens = [scorer._tokenizer.tokenize(inst) for inst in all_instructions]
 
+    prompt_template = check_prompt_file(prompt_file_path)
     while len(machine_instruction_data) < num_instructions_to_generate:
         request_idx += 1
 
@@ -277,7 +282,7 @@ def generate_data(
         for _ in range(request_batch_size):
             # only sampling from the seed tasks
             prompt_instructions = random.sample(seed_instruction_data, num_prompt_instructions)
-            prompt = encode_prompt(prompt_instructions, prompt_file_path)
+            prompt = encode_prompt(prompt_instructions, prompt_template)
             batch_inputs.append(prompt)
         decoding_args = utils.OpenAIDecodingArguments(
             temperature=temperature,
@@ -360,8 +365,8 @@ def generate_data(
 def get_taxonomy_diff(repo="taxonomy"):
     repo = Repo(repo)
     updated_taxonomy_files = [
-        u for u in repo.untracked_files
-        if splitext(u)[1].lower() in [".yaml", ".yml"]] + [
-        d.a_path for d in repo.index.diff(None)
-        if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
+                                 u for u in repo.untracked_files
+                                 if splitext(u)[1].lower() in [".yaml", ".yml"]] + [
+                                 d.a_path for d in repo.index.diff(None)
+                                 if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
     return updated_taxonomy_files
