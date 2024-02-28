@@ -164,9 +164,7 @@ def create_config_file(config_file_name='./config.yml'):
       n_gpu_layers: -1
     """
     )
-    if os.path.isfile(config_file_name):
-        click.echo('Skip config file generation because it already exists at %s' % config_file_name)
-    else:
+    if not os.path.isfile(config_file_name):
         if os.path.dirname(config_file_name) != '':
             os.makedirs(os.path.dirname(config_file_name), exist_ok=True)
         with open(config_file_name, "w") as model_file:

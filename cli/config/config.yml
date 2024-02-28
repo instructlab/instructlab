@@ -14,11 +14,12 @@
 
 chat:
   context: ""
-  model: "ggml-malachite-7b-Q4_K_M"
+  model: "ggml-malachite-7b-0226-Q4_K_M"
+
   session: ""
 
 generate:
-  model: "ggml-malachite-7b-Q4_K_M"
+  model: "ggml-malachite-7b-0226-Q4_K_M"
   num_cpus: 10
   num_instructions_to_generate: 100
   path_to_taxonomy: "./taxonomy"
@@ -32,5 +33,5 @@ log:
     level: info
 
 serve:
-  model_path: "./models/ggml-malachite-7b-Q4_K_M.gguf"
+  model_path: "./models/ggml-malachite-7b-0226-Q4_K_M.gguf"
   n_gpu_layers: -1
