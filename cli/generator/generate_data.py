@@ -184,12 +184,7 @@ def generate_data(
             # Default output_dir to taxonomy dir, using the dir not the parent
             output_dir = os.path.abspath(taxonomy)
             # Gather the new or changed YAMLs using git diff
-            repo = Repo("taxonomy")
-            updated_taxonomy_files = [
-                                         u for u in repo.untracked_files
-                                         if splitext(u)[1].lower() in [".yaml", ".yml"]] + [
-                                         d.a_path for d in repo.index.diff(None)
-                                         if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
+            updated_taxonomy_files = get_taxonomy_diff(taxonomy)
             errors = 0
             warnings = 0
             for f in updated_taxonomy_files:
@@ -360,3 +355,13 @@ def generate_data(
 
     generate_duration = time.time() - generate_start
     logger.info(f"Generation took {generate_duration:.2f}s")
+
+
+def get_taxonomy_diff(repo="taxonomy"):
+    repo = Repo(repo)
+    updated_taxonomy_files = [
+        u for u in repo.untracked_files
+        if splitext(u)[1].lower() in [".yaml", ".yml"]] + [
+        d.a_path for d in repo.index.diff(None)
+        if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
+    return updated_taxonomy_files
