@@ -73,10 +73,17 @@ def cli(ctx, config):
     show_default=True,
     help="The GitHub branch of the taxonomy repository."
 )
+@click.option(
+    "--min_taxonomy",
+    is_flag=True,
+    help="Shallow clone the taxonomy repository with minimum size. " \
+         "Please do not use this option if you are planning to contribute back " \
+         "using the same taxonomy repository. "
+)
 @click.pass_context
-def init(ctx, repo, branch):
+def init(ctx, repo, branch, min_taxonomy):
     """Initializes environment for labrador"""
-    clone_taxonomy(repo, branch)
+    clone_taxonomy(repo, branch, min_taxonomy)
 
 
 @cli.command()
