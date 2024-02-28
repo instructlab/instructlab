@@ -113,6 +113,7 @@ def clone_taxonomy(
     gh_repo="https://github.com/open-labrador/taxonomy.git",
     gh_branch="main",
     git_filter_spec="",
+    dir='taxonomy'
 ):
     """
     Clone the taxonomy repository from a Git repository source.
@@ -122,6 +123,7 @@ def clone_taxonomy(
         Default is the Open Labrador taxonomy repository.
     - gh_branch (str): The GitHub branch of the taxonomy repository. Default is main
     - git_filter_spec(str): Optional path to the git filter spec for git partial clone
+    - dir(str): Optional path to clone the repo into. Defaults to taxonomy in your current working directory.
 
     Returns:
     - None
@@ -130,7 +132,7 @@ def clone_taxonomy(
     click.echo('\nCloning repository %s with branch "%s" ...' % (gh_repo, gh_branch))
 
     # Clone taxonomy repo
-    git_clone_commands = ["git", "clone", gh_repo]
+    git_clone_commands = ['git', 'clone', gh_repo, dir]
     if git_filter_spec != "" and os.path.exists(git_filter_spec):
         # TODO: Add gitfilterspec to sparse clone GitHub repo
         git_filter_arg = "".join(

@@ -87,10 +87,17 @@ def cli(ctx, config):
     show_default=True,
     help="The GitHub branch of the taxonomy repository.",
 )
+@click.argument(
+    'dir', 
+    required=False,
+    type=click.Path(exists=False)
+)
 @click.pass_context
-def init(ctx, repo, branch):
+def init(ctx, repo, branch, dir):
+    if dir == None:
+        dir = 'taxonomy'
     """Initializes environment for labrador"""
-    clone_taxonomy(repo, branch)
+    clone_taxonomy(repo, branch, '', dir)
 
 
 @cli.command()
