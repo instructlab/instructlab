@@ -84,7 +84,7 @@ def init(ctx, repo, branch):
 @click.pass_context
 def list(ctx, taxonomy):
     """List taxonomy YAML files"""
-    repo = Repo("taxonomy")
+    repo = Repo(taxonomy)
     updated_taxonomy_files = [u for u in repo.untracked_files if splitext(u)[1].lower() in [".yaml", ".yml"]] + \
                 [d.a_path for d in repo.index.diff(None) if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
     for f in updated_taxonomy_files:
