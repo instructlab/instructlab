@@ -7,7 +7,7 @@ from llama_cpp.server.settings import Settings
 import uvicorn
 import logging
 from git import Repo
-from os.path import splitext
+from os.path import splitext, dirname, basename
 
 from .generator.generate_data import generate_data
 from .download import download_model, clone_taxonomy, create_config_file
@@ -189,17 +189,21 @@ def chat(ctx, question, model, context, session, qq):
 )
 @click.option(
     "--dir",
-    default=".",
-    show_default=True,
     help="The local directory to download the model files into."
 )
 @click.option(
     "--pattern",
-    default="",
-    show_default=True,
     help="Download only assets that match a glob pattern."
 )
 @click.pass_context
 def download(ctx, repo, release, dir, pattern):
     """Download the model(s) to train"""
+
+    # Use the serve model path to get the right models in the right place, if needed
+    serve_model_path = ctx.obj.config.get_serve_model_path()
+    if serve_model_path:  # if set in config
+        if not dir:  # --dir takes precedence
+            dir = dirname(serve_model_path)
+        if not pattern:  # --pattern takes precedence
+            pattern = basename(serve_model_path).replace(".gguf", ".*")
     download_model(repo, release, dir, pattern)
