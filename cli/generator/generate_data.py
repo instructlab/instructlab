@@ -166,7 +166,7 @@ def generate_data(
 
         else:  # taxonomy is_dir
             # Default output_dir to taxonomy dir, using the dir not the parent
-            output_dir = os.path.abspath(taxonomy)
+            output_dir = output_dir or os.path.abspath(taxonomy)
             # Gather the new or changed YAMLs using git diff
             repo = Repo("taxonomy")
             updated_taxonomy_files = [u for u in repo.untracked_files if splitext(u)[1].lower() in [".yaml", ".yml"]] + \
