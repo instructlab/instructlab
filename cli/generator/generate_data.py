@@ -19,43 +19,56 @@ from rouge_score import rouge_scorer
 
 from . import utils
 
-
 DEFAULT_PROMPT = """\
-You are asked to come up with a set of 20 diverse task instructions. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
+You are asked to come up with a set of 20 diverse task instructions. These task instructions will be given to a GPT 
+model and we will evaluate the GPT model for completing the instructions.
 
 Here are the requirements:
 1. Try not to repeat the verb for each instruction to maximize diversity.
-2. The language used for the instruction also should be diverse. For example, you should combine questions with imperative instructions.
+2. The language used for the instruction also should be diverse. 
+For example, you should combine questions with imperative instructions.
 3. The type of instructions should not have topic diversity. The list should include follow the same topic and category.
-4. A GPT language model should be able to complete the instruction. For example, do not ask the assistant to create any visual or audio output. For another example, do not ask the assistant to wake you up at 5pm or set a reminder because it cannot perform any action.
+4. A GPT language model should be able to complete the instruction. For example, do not ask the assistant to create any 
+visual or audio output. For another example, do not ask the assistant to wake you up at 5pm or set a reminder 
+because it cannot perform any action.
 5. The instructions should be in English.
 6. The instructions should be 1 to 2 sentences long. Either an imperative sentence or a question is permitted.
-7. You should generate an appropriate input to the instruction. The input field should contain a specific example provided for the instruction. It should involve realistic data and should not contain simple placeholders. The input should provide substantial content to make the instruction challenging but should ideally not exceed 100 words.
-8. Not all instructions require input. For example, when a instruction asks about some general information, "what is the highest peak in the world", it is not necessary to provide a specific context. In this case, we simply put "<noinput>" in the input field.
-9. The output should be an appropriate response to the instruction and the input. Make sure the output is less than 100 words.
+7. You should generate an appropriate input to the instruction. The input field should contain a specific example 
+provided for the instruction. It should involve realistic data and should not contain simple placeholders. 
+The input should provide substantial content to make the instruction challenging but should ideally not exceed 100 words.
+8. Not all instructions require input. For example, when a instruction asks about some general information, 
+"what is the highest peak in the world", it is not necessary to provide a specific context. In this case, we simply put 
+"<noinput>" in the input field.
+9. The output should be an appropriate response to the instruction and the input. Make sure the output is less than 100 
+words.
 
 List of 20 tasks:
 """
 
-# pylint: disable=redefined-builtin
+
 def encode_prompt(prompt_instructions, prompt_file):
     """Encode multiple prompt instructions into a single string."""
+
     try:
-        prompt = open(prompt_file).read()
-    except:
-        print(f"cannot find {prompt_file}. using default prompt")
+        with open(prompt_file, encoding="utf=8") as file:
+            prompt = file.read()
+    except FileNotFoundError:
+        print(f"Cannot find {prompt_file}. Using default prompt.")
         prompt = DEFAULT_PROMPT
     prompt = prompt + "\n"
-
+    idx = 0
     for idx, task_dict in enumerate(prompt_instructions):
-        (instruction, input, output) = task_dict["instruction"], task_dict["input"], task_dict["output"]
+        (instruction, prompt_input, prompt_output) = (
+            task_dict["instruction"],
+            task_dict["input"],
+            task_dict["output"])
         instruction = re.sub(r"\s+", " ", instruction).strip().rstrip(":")
-        input = "<noinput>" if input.lower() == "" else input
-        prompt += f"###\n"
+        prompt_input = "<noinput>" if prompt_input.lower() == "" else prompt_input
+        prompt += "###\n"
         prompt += f"{idx + 1}. Instruction: {instruction}\n"
-        prompt += f"{idx + 1}. Input:\n{input}\n"
-        prompt += f"{idx + 1}. Output:\n{output}\n"
-    prompt += f"###\n"
+        prompt += f"{idx + 1}. Input:\n{prompt_input}\n"
+        prompt += f"{idx + 1}. Output:\n{prompt_output}\n"
+    prompt += "###\n"
     prompt += f"{idx + 2}. Instruction:"
     return prompt
 
@@ -63,7 +76,7 @@ def encode_prompt(prompt_instructions, prompt_file):
 def post_process_gpt3_response(num_prompt_instructions, response):
     if response is None:
         return []
-    raw_instructions = f"{num_prompt_instructions+1}. Instruction:" + response.message.content
+    raw_instructions = f"{num_prompt_instructions + 1}. Instruction:" + response.message.content
     raw_instructions = re.split("###", raw_instructions)
     instructions = []
     for idx, inst in enumerate(raw_instructions):
@@ -75,9 +88,9 @@ def post_process_gpt3_response(num_prompt_instructions, response):
         if len(splitted_data) != 7:
             continue
         inst = splitted_data[2].strip()
-        input = splitted_data[4].strip()
-        input = "" if input.lower() == "<noinput>" else input
-        output = splitted_data[6].strip()
+        prompt_input = splitted_data[4].strip()
+        prompt_input = "" if prompt_input.lower() == "<noinput>" else prompt_input
+        prompt_output = splitted_data[6].strip()
         # filter out too short or too long instructions
         if len(inst.split()) <= 3 or len(inst.split()) > 150:
             continue
@@ -117,7 +130,7 @@ def post_process_gpt3_response(num_prompt_instructions, response):
         # filter those starting with non-english character
         if not inst[0].isascii():
             continue
-        instructions.append({"instruction": inst, "input": input, "output": output})
+        instructions.append({"instruction": inst, "input": prompt_input, "output": prompt_output})
     return instructions
 
 
@@ -126,18 +139,18 @@ def find_word_in_string(w, s):
 
 
 def generate_data(
-    logger,
-    output_dir: Optional[str] = None,
-    taxonomy: Optional[str] = None,
-    seed_tasks_path: Optional[str] = None,
-    prompt_file_path: Optional[str] = None,
-    model_name: Optional[str] = None,
-    num_cpus: Optional[int] = None,
-    num_instructions_to_generate: Optional[int] = None,
-    num_prompt_instructions=2,
-    request_batch_size=5,
-    temperature=1.0,
-    top_p=1.0,
+        logger,
+        output_dir: Optional[str] = None,
+        taxonomy: Optional[str] = None,
+        seed_tasks_path: Optional[str] = None,
+        prompt_file_path: Optional[str] = None,
+        model_name: Optional[str] = None,
+        num_cpus: Optional[int] = None,
+        num_instructions_to_generate: Optional[int] = None,
+        num_prompt_instructions=2,
+        request_batch_size=5,
+        temperature=1.0,
+        top_p=1.0,
 ):
     seed_instruction_data = []
     generate_start = time.time()
@@ -173,10 +186,10 @@ def generate_data(
             # Gather the new or changed YAMLs using git diff
             repo = Repo("taxonomy")
             updated_taxonomy_files = [
-                u for u in repo.untracked_files
-                if splitext(u)[1].lower() in [".yaml", ".yml"]] + [
-                    d.a_path for d in repo.index.diff(None)
-                    if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
+                                         u for u in repo.untracked_files
+                                         if splitext(u)[1].lower() in [".yaml", ".yml"]] + [
+                                         d.a_path for d in repo.index.diff(None)
+                                         if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
             errors = 0
             warnings = 0
             for f in updated_taxonomy_files:
@@ -192,7 +205,7 @@ def generate_data(
                             a = t["answer"]
                             if not q or not a:
                                 logger.warn(f"Skipping {file_path} " +
-                                    "because question and/or answer is empty!")
+                                            "because question and/or answer is empty!")
                                 warnings += 1
                                 continue
                             seed_instruction_data.append(
@@ -209,7 +222,8 @@ def generate_data(
 
     elif seed_tasks_path and os.path.exists(seed_tasks_path):
         output_dir = output_dir or os.path.dirname(os.path.abspath(seed_tasks_path))
-        seed_tasks = [json.loads(l) for l in open(seed_tasks_path, "r", encoding="utf-8")]
+        with open(seed_tasks_path, "r", encoding="utf-8") as seed_tasks_file:
+            seed_tasks = [json.loads(l) for l in seed_tasks_file]
         seed_instruction_data = [
             {"instruction": t["instruction"], "input": t["instances"][0]["input"],
              "output": t["instances"][0]["output"]}
@@ -220,7 +234,7 @@ def generate_data(
 
     seeds = len(seed_instruction_data)
     logger.debug(f"Loaded {seeds} human-written seed instructions from "
-        f"{taxonomy or seed_tasks_path}")
+                 f"{taxonomy or seed_tasks_path}")
     if not seeds:
         raise SystemExit("Nothing to generate. Exiting.")
 
@@ -310,7 +324,7 @@ def generate_data(
             # most_similar_instructions = {
             #    all_instructions[i]: rouge_scores[i] for i in np.argsort(rouge_scores)[-10:][::-1]
             # }
-            KEEP_ROUGE_SCORES_LT = 0.7   # TODO: PARAM
+            KEEP_ROUGE_SCORES_LT = 0.7  # TODO: PARAM
             if max(rouge_scores) > KEEP_ROUGE_SCORES_LT:
                 continue
             keep += 1
@@ -323,7 +337,7 @@ def generate_data(
             progress_bar.update(1)
         process_duration = time.time() - process_start
         logger.debug(f"Request {request_idx} took {request_duration:.2f}s, "
-            f"processing took {process_duration:.2f}s")
+                     f"processing took {process_duration:.2f}s")
         logger.debug(f"Generated {total} instructions, kept {keep} instructions")
         utils.jdump(machine_instruction_data, os.path.join(output_dir, output_file))
         for synth_example in machine_instruction_data:

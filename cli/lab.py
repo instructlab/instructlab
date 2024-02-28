@@ -57,7 +57,6 @@ def configure(ctx, param, filename):
 @click.pass_context
 def cli(ctx, config):
     """CLI for interacting with labrador"""
-    pass
 
 
 @cli.command()
@@ -225,4 +224,3 @@ def download(ctx, repo, release, local_dir, pattern):
         if not pattern:  # --pattern takes precedence
             pattern = basename(serve_model_path).replace(".gguf", ".*")
     download_model(repo, release, local_dir, pattern)
-

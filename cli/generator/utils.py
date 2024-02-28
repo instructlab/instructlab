@@ -13,9 +13,10 @@ import copy
 StrOrOpenAIObject = Union[str, object]
 
 SYSTEM_PROMPT = "You are Labrador, an AI language model developed by" \
-    + "IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant." \
-    + "You carefully follow instructions. You are helpful and harmless and you follow" \
-    + "ethical guidelines and promote positive behavior."
+                + "IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant." \
+                + "You carefully follow instructions. You are helpful and harmless and you follow" \
+                + "ethical guidelines and promote positive behavior."
+
 
 # pylint: disable=too-many-instance-attributes
 @dataclasses.dataclass
@@ -32,18 +33,18 @@ class OpenAIDecodingArguments:
 
 
 def openai_completion(
-    prompts: Union[str, Sequence[str], Sequence[dict[str, str]], dict[str, str]],
-    decoding_args: OpenAIDecodingArguments,
-    model_name="ggml-labrador13B-model-Q4_K_M",
-    batch_size=1,
-    max_instances=sys.maxsize,
-    max_batches=sys.maxsize,
-    return_text=False,
-    **decoding_kwargs,
+        prompts: Union[str, Sequence[str], Sequence[dict[str, str]], dict[str, str]],
+        decoding_args: OpenAIDecodingArguments,
+        model_name="ggml-labrador13B-model-Q4_K_M",
+        batch_size=1,
+        max_instances=sys.maxsize,
+        max_batches=sys.maxsize,
+        return_text=False,
+        **decoding_kwargs,
 ) -> Union[
-        Union[StrOrOpenAIObject],
-        Sequence[StrOrOpenAIObject],
-        Sequence[Sequence[StrOrOpenAIObject]],]:
+    Union[StrOrOpenAIObject],
+    Sequence[StrOrOpenAIObject],
+    Sequence[Sequence[StrOrOpenAIObject]],]:
     """Decode with OpenAI API.
 
     Args:
@@ -81,7 +82,7 @@ def openai_completion(
     prompts = prompts[:max_instances]
     num_prompts = len(prompts)
     prompt_batches = [
-        prompts[batch_id * batch_size : (batch_id + 1) * batch_size]
+        prompts[batch_id * batch_size: (batch_id + 1) * batch_size]
         for batch_id in range(int(math.ceil(num_prompts / batch_size)))
     ]
 
@@ -95,7 +96,7 @@ def openai_completion(
 
         messages = [
             {"role": "system",
-            "content": SYSTEM_PROMPT},
+             "content": SYSTEM_PROMPT},
             {"role": "user", "content": prompt_batch[batch_id]}
         ]
 
@@ -113,9 +114,9 @@ def openai_completion(
         # make a nested list, where each entry is consecutive decoding_args.n of original entries.
         completions = [
             completions[
-                i : i + decoding_args.n]
-                for i in range(0, len(completions), decoding_args.n)
-            ]
+            i: i + decoding_args.n]
+            for i in range(0, len(completions), decoding_args.n)
+        ]
     if is_single_prompt:
         # Return non-tuple if only 1 input and 1 generation.
         (completions,) = completions
@@ -127,14 +128,14 @@ def _make_w_io_base(f, mode: str):
         f_dirname = os.path.dirname(f)
         if f_dirname != "":
             os.makedirs(f_dirname, exist_ok=True)
-        f = open(f, encoding="utf-8", mode=mode)
-    return f
+        with open(f, encoding="utf-8", mode=mode) as file:
+            return file
 
 
 def _make_r_io_base(f, mode: str):
     if not isinstance(f, io.IOBase):
-        f = open(f, encoding="utf-8", mode=mode)
-    return f
+        with open(f, encoding="utf-8", mode=mode) as file:
+            return file
 
 
 def jdump(obj, f, mode="w", indent=4, default=str):
