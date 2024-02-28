@@ -182,7 +182,7 @@ def generate_data(
 
         else:  # taxonomy is_dir
             # Default output_dir to taxonomy dir, using the dir not the parent
-            output_dir = os.path.abspath(taxonomy)
+            output_dir = output_dir or os.path.abspath(taxonomy)
             # Gather the new or changed YAMLs using git diff
             updated_taxonomy_files = get_taxonomy_diff(taxonomy)
             errors = 0
@@ -191,7 +191,7 @@ def generate_data(
                 if splitext(f)[1] != ".yaml":
                     logger.warn(f"WARNING: Skipping {f}! Use lowercase '.yaml' extension instead.")
                     continue
-                file_path = os.path.join("taxonomy", f)
+                file_path = os.path.join(taxonomy, f)
                 try:
                     with open(file_path, 'r', encoding="utf-8") as file:
                         contents = yaml.safe_load(file)
