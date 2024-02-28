@@ -37,9 +37,11 @@ def download_model(gh_repo='https://github.com/open-labrador/cli.git', gh_releas
         raise Exception('gh command error occurred:\n\n %s' % gh_result.stderr.decode('utf-8'))
     
     # Get the list of local files
-    ls_commands = ['ls']
+    ls_commands = ['ls', dir]
     ls_result = create_subprocess(ls_commands)
     file_list = ls_result.stdout.decode('utf-8').split('\n')
+    file_list = [os.path.join(dir, f) for f in file_list]
+
     splitted_models = {}
 
     # Use Regex to capture model and files names that need to combine into one file.
