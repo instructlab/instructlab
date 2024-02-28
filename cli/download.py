@@ -142,11 +142,11 @@ def create_config_file(config_file_name='./config.yml'):
 
     chat:
       context: ""
-      model: "ggml-malachite-7b-Q4_K_M"
+      model: "ggml-malachite-7b-0226-Q4_K_M"
       session: ""
 
     generate:
-      model: "ggml-malachite-7b-Q4_K_M"
+      model: "ggml-malachite-7b-0226-Q4_K_M"
       num_cpus: 10
       num_instructions_to_generate: 100
       path_to_taxonomy: "./taxonomy"
@@ -160,7 +160,7 @@ def create_config_file(config_file_name='./config.yml'):
       level: info
 
     serve:
-      model_path: "./models/ggml-malachite-7b-Q4_K_M.gguf"
+      model_path: "./models/ggml-malachite-7b-0226-Q4_K_M.gguf"
       n_gpu_layers: -1
     """
     )
@@ -187,9 +187,7 @@ def create_config_file(config_file_name='./config.yml'):
     """
     )
     chat_config_file_name = os.path.join(os.path.dirname(config_file_name), "chat-cli.toml")
-    if os.path.isfile(chat_config_file_name):
-        click.echo('Skip config file generation because it already exists at %s' % chat_config_file_name)
-    else:
+    if not os.path.isfile(chat_config_file_name):
         if os.path.dirname(chat_config_file_name) != '':
             os.makedirs(os.path.dirname(chat_config_file_name), exist_ok=True)
         with open(chat_config_file_name, "w") as model_file:
