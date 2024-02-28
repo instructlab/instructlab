@@ -7,10 +7,10 @@ from llama_cpp.server.settings import Settings
 import uvicorn
 import logging
 from git import Repo
-from os.path import splitext
+from os.path import splitext, dirname, basename
 
 from .generator.generate_data import generate_data
-from .download_model import download_model
+from .download import download_model, clone_taxonomy, create_config_file
 from .chat.chat import chat_cli
 from .config.config import Config
 
@@ -27,6 +27,7 @@ class Lab:
 
 
 def configure(ctx, param, filename):
+    create_config_file(filename)
     ctx.obj = Lab(filename)
     default_map = {}
     # options in default_map must match the names of variables
@@ -60,12 +61,22 @@ def cli(ctx, config):
 
 
 @cli.command()
+@click.option(
+    "--repo",
+    default="https://github.com/open-labrador/taxonomy.git",
+    show_default=True,
+    help="Labrador Taxonomy GitHub repository"
+)
+@click.option(
+    "--branch",
+    default="main",
+    show_default=True,
+    help="The GitHub branch of the taxonomy repository."
+)
 @click.pass_context
-def init(ctx):
+def init(ctx, repo, branch):
     """Initializes environment for labrador"""
-    click.echo("please do\n")
-    click.echo("git clone git@github.com:open-labrador/taxonomy.git\n")
-    click.echo("to get the taxonomy repo")
+    clone_taxonomy(repo, branch)
 
 
 @cli.command()
@@ -186,27 +197,32 @@ def chat(ctx, question, model, context, session, qq):
     "--repo",
     default="https://github.com/open-labrador/cli.git",
     show_default=True,
-    help="Github repository of the hosted models."
+    help="GitHub repository of the hosted models."
 )
 @click.option(
     "--release",
     default="latest",
     show_default=True,
-    help="Github release version of the hosted models."
+    help="GitHub release version of the hosted models."
 )
 @click.option(
     "--local_dir",
-    default=".",
-    show_default=True,
     help="The local directory to download the model files into."
 )
 @click.option(
     "--pattern",
-    default="",
-    show_default=True,
     help="Download only assets that match a glob pattern."
 )
 @click.pass_context
 def download(ctx, repo, release, local_dir, pattern):
     """Download the model(s) to train"""
+
+    # Use the serve model path to get the right models in the right place, if needed
+    serve_model_path = ctx.obj.config.get_serve_model_path()
+    if serve_model_path:  # if set in config
+        if not local_dir:  # --local_dir takes precedence
+            local_dir = dirname(serve_model_path)
+        if not pattern:  # --pattern takes precedence
+            pattern = basename(serve_model_path).replace(".gguf", ".*")
     download_model(repo, release, local_dir, pattern)
+

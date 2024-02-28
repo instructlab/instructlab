@@ -8,9 +8,9 @@
 |lab download|-=---model weights downloaded  |manual cPNK|
 +---+--------+                               +-----------+
     |                                        +----------+
-    v                                        |colab cYEL| 
+    v optional                               |colab cYEL| 
 +---+-----+                                  +----------+ 
-|lab serve|-=---optional, start model server 
+|lab serve|-=---start model server 
 +---+-----+
     |
     v
@@ -44,27 +44,22 @@
 |colab test cYEL|-----------------------+ -=---run unit/smoke tests;
 +---+-----------+                       |      iterate if some test failed
     |                                   |
-    v                                   |
-+---+--------------------+              |
-|download new model cPNK |              |
-+---+--------------------+              |
+    v optional                          |
++---+--------------------------------+  |
+|download new model (quantized) cPNK |  |
++---+--------------------------------+  |
     |                                   |
-    v                                   |
-+---+--------+                          |
-|lab quantize|-=---quantize new model   |
-+---+--------+                          |
-    |                                   |
-    v                                   |
+    v optional                          |
 +---+---------------+                   |
 |kill lab serve cPNK|-=-kill old server |
 +---+---------------+                   |
     |                                   |
-    v                                   |
+    v optional                          |
 +---+-----+                             |
 |lab serve|-=---start new model server  |
 +---+-----+                             |
     |                                   |
-    v                                   |
+    v optional                          |
 +---+----+                              |
 |lab chat|------------------------------+ -=---chat with the model again;
 +---+----+                                     iterate if not happy with outputs

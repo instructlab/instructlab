@@ -19,22 +19,44 @@ from rouge_score import rouge_scorer
 
 from . import utils
 
+
+DEFAULT_PROMPT = """\
+You are asked to come up with a set of 20 diverse task instructions. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
+
+Here are the requirements:
+1. Try not to repeat the verb for each instruction to maximize diversity.
+2. The language used for the instruction also should be diverse. For example, you should combine questions with imperative instructions.
+3. The type of instructions should not have topic diversity. The list should include follow the same topic and category.
+4. A GPT language model should be able to complete the instruction. For example, do not ask the assistant to create any visual or audio output. For another example, do not ask the assistant to wake you up at 5pm or set a reminder because it cannot perform any action.
+5. The instructions should be in English.
+6. The instructions should be 1 to 2 sentences long. Either an imperative sentence or a question is permitted.
+7. You should generate an appropriate input to the instruction. The input field should contain a specific example provided for the instruction. It should involve realistic data and should not contain simple placeholders. The input should provide substantial content to make the instruction challenging but should ideally not exceed 100 words.
+8. Not all instructions require input. For example, when a instruction asks about some general information, "what is the highest peak in the world", it is not necessary to provide a specific context. In this case, we simply put "<noinput>" in the input field.
+9. The output should be an appropriate response to the instruction and the input. Make sure the output is less than 100 words.
+
+List of 20 tasks:
+"""
+
 # pylint: disable=redefined-builtin
 def encode_prompt(prompt_instructions, prompt_file):
     """Encode multiple prompt instructions into a single string."""
-    with open(prompt_file, encoding="utf=8").read() + "\n" as prompt:
-        idx=0
-        for idx, task_dict in enumerate(prompt_instructions):
-            (instruction, input, output) = \
-                task_dict["instruction"], task_dict["input"], task_dict["output"]
-            instruction = re.sub(r"\s+", " ", instruction).strip().rstrip(":")
-            input = "<noinput>" if input.lower() == "" else input
-            prompt += "###\n"
-            prompt += f"{idx + 1}. Instruction: {instruction}\n"
-            prompt += f"{idx + 1}. Input:\n{input}\n"
-            prompt += f"{idx + 1}. Output:\n{output}\n"
-        prompt += "###\n"
-        prompt += f"{idx + 2}. Instruction:"
+    try:
+        prompt = open(prompt_file).read()
+    except:
+        print(f"cannot find {prompt_file}. using default prompt")
+        prompt = DEFAULT_PROMPT
+    prompt = prompt + "\n"
+
+    for idx, task_dict in enumerate(prompt_instructions):
+        (instruction, input, output) = task_dict["instruction"], task_dict["input"], task_dict["output"]
+        instruction = re.sub(r"\s+", " ", instruction).strip().rstrip(":")
+        input = "<noinput>" if input.lower() == "" else input
+        prompt += f"###\n"
+        prompt += f"{idx + 1}. Instruction: {instruction}\n"
+        prompt += f"{idx + 1}. Input:\n{input}\n"
+        prompt += f"{idx + 1}. Output:\n{output}\n"
+    prompt += f"###\n"
+    prompt += f"{idx + 2}. Instruction:"
     return prompt
 
 
@@ -159,8 +181,7 @@ def generate_data(
             warnings = 0
             for f in updated_taxonomy_files:
                 if splitext(f)[1] != ".yaml":
-                    logger.warn(f"WARNING: Skipping {f}! Use lower case '.yaml' instead.")
-                    errors += 1
+                    logger.warn(f"WARNING: Skipping {f}! Use lowercase '.yaml' extension instead.")
                     continue
                 file_path = os.path.join("taxonomy", f)
                 try:
