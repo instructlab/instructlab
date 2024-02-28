@@ -37,9 +37,11 @@ def download_model(gh_repo='https://github.com/open-labrador/cli.git', gh_releas
         raise Exception('gh command error occurred:\n\n %s' % gh_result.stderr.decode('utf-8'))
     
     # Get the list of local files
-    ls_commands = ['ls']
+    ls_commands = ['ls', dir]
     ls_result = create_subprocess(ls_commands)
     file_list = ls_result.stdout.decode('utf-8').split('\n')
+    file_list = [os.path.join(dir, f) for f in file_list]
+
     splitted_models = {}
 
     # Use Regex to capture model and files names that need to combine into one file.
@@ -170,6 +172,31 @@ def create_config_file(config_file_name='./config.yml'):
         with open(config_file_name, "w") as model_file:
             model_file.write(config_yml_txt)
         click.echo('Config file is created at %s' % config_file_name)
+    
+
+    chat_config_toml_txt = textwrap.dedent(
+    """
+    api_base = "http://localhost:8000/v1"
+    api_key = "no_api_key"
+    model = "malachite-7b"
+    vi_mode = false
+    visible_overflow = true
+
+    [contexts]
+    default = "You are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
+    cli_helper = "You are an expert for command line interface and know all common commands. Answer the command to execute as it without any explanation."
+    dictionary = "You are a professional English-Chinese translator. Translate the input to the other language by providing its part of speech (POS) followed by up-to 5 common but distinct translations in this format: `[{POS}] {translation 1}; {translation 2}; ...`. Do not provide nonexistent results."
+    """
+    )
+    chat_config_file_name = os.path.join(os.path.dirname(config_file_name), "chat-cli.toml")
+    if os.path.isfile(chat_config_file_name):
+        click.echo('Skip config file generation because it already exists at %s' % chat_config_file_name)
+    else:
+        if os.path.dirname(chat_config_file_name) != '':
+            os.makedirs(os.path.dirname(chat_config_file_name), exist_ok=True)
+        with open(chat_config_file_name, "w") as model_file:
+            model_file.write(chat_config_toml_txt)
+        click.echo('Chat config file for is created at %s' % chat_config_file_name)
 
 def create_subprocess(commands):
     return subprocess.run(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
