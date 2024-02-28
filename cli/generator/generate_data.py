@@ -181,47 +181,9 @@ def generate_data(
     # throw an error if both not found
     # pylint: disable=broad-exception-caught,raise-missing-from
     if taxonomy and os.path.exists(taxonomy):
+        seed_instruction_data, tax_dir = read_taxonomy(logger, taxonomy)
+        output_dir = output_dir or tax_dir
 
-        is_file = os.path.isfile(taxonomy)
-        if is_file:
-            # Default output_dir to taxonomy file's dir
-            output_dir = output_dir or os.path.dirname(os.path.abspath(taxonomy))
-            seed_instruction_data, warnings, errors = read_taxonomy_file(
-                logger, taxonomy
-            )
-            if warnings:
-                logger.warn(
-                    f"{warnings} warnings (see above) due to taxonomy file not (fully) usable."
-                )
-            if errors:
-                raise SystemExit(yaml.YAMLError("Taxonomy file with errors! Exiting."))
-        else:  # taxonomy is_dir
-            # Default output_dir to taxonomy dir, using the dir not the parent
-            output_dir = output_dir or os.path.abspath(taxonomy)
-            # Gather the new or changed YAMLs using git diff
-            try:
-                updated_taxonomy_files = get_taxonomy_diff(taxonomy)
-            except NameError as exc:
-                raise GenerateException("`git` binary not found") from exc
-            total_errors = 0
-            total_warnings = 0
-            for f in updated_taxonomy_files:
-                file_path = os.path.join(taxonomy, f)
-                data, warnings, errors = read_taxonomy_file(logger, file_path)
-                total_warnings += warnings
-                total_errors += errors
-                if data:
-                    seed_instruction_data.extend(data)
-            if total_warnings:
-                logger.warn(
-                    f"{total_warnings} warnings (see above) due to taxonomy files that were not (fully) usable."
-                )
-            if total_errors:
-                raise SystemExit(
-                    yaml.YAMLError(
-                        f"{total_errors} taxonomy files with errors! Exiting."
-                    )
-                )
     elif seed_tasks_path and os.path.exists(seed_tasks_path):
         output_dir = output_dir or os.path.dirname(os.path.abspath(seed_tasks_path))
         with open(seed_tasks_path, "r", encoding="utf-8") as seed_tasks_file:
@@ -470,3 +432,45 @@ def read_taxonomy_file(logger, file_path):
         logger.error(e)
 
     return seed_instruction_data, warnings, errors
+
+
+def read_taxonomy(logger, taxonomy):
+    seed_instruction_data = []
+    output_dir = None
+    is_file = os.path.isfile(taxonomy)
+    if is_file:
+        # Default output_dir to taxonomy file's dir
+        output_dir = os.path.dirname(os.path.abspath(taxonomy))
+        seed_instruction_data, warnings, errors = read_taxonomy_file(logger, taxonomy)
+        if warnings:
+            logger.warn(
+                f"{warnings} warnings (see above) due to taxonomy file not (fully) usable."
+            )
+        if errors:
+            raise SystemExit(yaml.YAMLError("Taxonomy file with errors! Exiting."))
+    else:  # taxonomy is_dir
+        # Default output_dir to taxonomy dir, using the dir not the parent
+        output_dir = os.path.abspath(taxonomy)
+        # Gather the new or changed YAMLs using git diff
+        try:
+            updated_taxonomy_files = get_taxonomy_diff(taxonomy)
+        except NameError as exc:
+            raise GenerateException("`git` binary not found") from exc
+        total_errors = 0
+        total_warnings = 0
+        for f in updated_taxonomy_files:
+            file_path = os.path.join(taxonomy, f)
+            data, warnings, errors = read_taxonomy_file(logger, file_path)
+            total_warnings += warnings
+            total_errors += errors
+            if data:
+                seed_instruction_data.extend(data)
+        if total_warnings:
+            logger.warn(
+                f"{total_warnings} warnings (see above) due to taxonomy files that were not (fully) usable."
+            )
+        if total_errors:
+            raise SystemExit(
+                yaml.YAMLError(f"{total_errors} taxonomy files with errors! Exiting.")
+            )
+    return seed_instruction_data, output_dir
