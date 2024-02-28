@@ -30,15 +30,6 @@ def download_model(
 
     model_file_split_keyword = ".split."
 
-    click.secho(
-        '\nMake sure the local environment has the "gh" cli. https://cli.github.com',
-        fg="blue",
-    )
-    click.echo(
-        "\nDownloading Models from %s with version %s to local directory %s ...\n"
-        % (gh_repo, gh_release, model_dir)
-    )
-
     # Download GitHub release
     download_commands = [
         "gh",
@@ -125,9 +116,6 @@ def clone_taxonomy(
     Returns:
     - None
     """
-
-    click.echo('\nCloning repository %s with branch "%s" ...' % (gh_repo, gh_branch))
-
     # Clone taxonomy repo
     git_clone_commands = ["git", "clone", gh_repo]
     if git_filter_spec != "" and os.path.exists(git_filter_spec):
@@ -142,8 +130,7 @@ def clone_taxonomy(
 
     result = create_subprocess(git_clone_commands)
     if result.stderr:
-        click.echo("\n%s" % result.stderr.decode("utf-8"))
-    click.echo("Git clone completed.")
+        return result.stderr
 
 
 def create_subprocess(commands):
