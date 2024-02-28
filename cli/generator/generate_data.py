@@ -21,7 +21,7 @@ from . import utils
 from ..config.config import Config
 
 
-DEFAULT_PROMPT = """\
+DEFAULT_PROMPT_TEMPLATE = """\
 You are asked to come up with a set of 20 diverse task instructions. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
 
 Here are the requirements:
@@ -41,12 +41,12 @@ List of 20 tasks:
 def check_prompt_file(prompt_file_path):
     """Check for prompt file."""
     try:
-        prompt_file = open(prompt_file_path).read()
+        prompt_template = open(prompt_file_path).read()
     except:
         print(f"cannot find {prompt_file_path}. using default prompt")
-        prompt_file = DEFAULT_PROMPT
-    prompt_file = prompt_file + "\n"
-    return prompt_file
+        prompt_template = DEFAULT_PROMPT_TEMPLATE
+    prompt_template = prompt_template + "\n"
+    return prompt_template
 
 def encode_prompt(prompt_instructions, prompt):
     """Encode multiple prompt instructions into a single string."""
@@ -257,7 +257,7 @@ def generate_data(
     ]
     all_instruction_tokens = [scorer._tokenizer.tokenize(inst) for inst in all_instructions]
 
-    prompt_file = check_prompt_file(prompt_file_path)
+    prompt_template = check_prompt_file(prompt_file_path)
     while len(machine_instruction_data) < num_instructions_to_generate:
         request_idx += 1
 
@@ -265,7 +265,7 @@ def generate_data(
         for _ in range(request_batch_size):
             # only sampling from the seed tasks
             prompt_instructions = random.sample(seed_instruction_data, num_prompt_instructions)
-            prompt = encode_prompt(prompt_instructions, prompt_file)
+            prompt = encode_prompt(prompt_instructions, prompt_template)
             batch_inputs.append(prompt)
         decoding_args = utils.OpenAIDecodingArguments(
             temperature=temperature,
