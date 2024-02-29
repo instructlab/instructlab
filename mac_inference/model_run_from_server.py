@@ -1,9 +1,13 @@
+# Standard
 import os
+
+# Third Party
 from openai import OpenAI
+
 client = OpenAI(base_url="http://localhost:8000/v1", api_key="foo")
 
 # Get model_path from env
-MODEL_FILE_NAME=os.getenv("MODEL_FILE_NAME")
+MODEL_FILE_NAME = os.getenv("MODEL_FILE_NAME")
 
 stream_enabled = True
 
@@ -18,31 +22,30 @@ respond to greetings (for example, hi, hello, g'day, morning, afternoon, evening
 nice to meet you, sup, etc) with "Hello! I am Granite Chat, created by the IBM DMF Alignment Team. 
 How can I help you today?". Please do not say anything else and do not start a conversation."""
 usr_prompt = "what is ibm?"
-messages=[
-  {"role": "system", "content": sys_prompt},
-  {"role": "user", "content": usr_prompt}
+messages = [
+    {"role": "system", "content": sys_prompt},
+    {"role": "user", "content": usr_prompt},
 ]
 
 # Inference the model
 response = client.chat.completions.create(
-  model=MODEL_FILE_NAME,
-  # response_format={ "type": "json_object" },
-  messages=messages,
-  stream=stream_enabled  # Toggle streaming
+    model=MODEL_FILE_NAME,
+    # response_format={ "type": "json_object" },
+    messages=messages,
+    stream=stream_enabled,  # Toggle streaming
 )
 
 for msg in messages:
-  print(f"<|{msg['role']}|>")
-  print(msg["content"])
+    print(f"<|{msg['role']}|>")
+    print(msg["content"])
 
 if not stream_enabled:
-  print(f"<|{response.choices[0].message.role}|>")
-  print(response.choices[0].message.content)
+    print(f"<|{response.choices[0].message.role}|>")
+    print(response.choices[0].message.content)
 else:
-  for chunk in response:
-    if chunk.choices[0].delta.role is not None: 
-      print(f"<|{chunk.choices[0].delta.role}|>")
-    if chunk.choices[0].delta.content is not None: 
-      print(chunk.choices[0].delta.content, end="", flush=True)
+    for chunk in response:
+        if chunk.choices[0].delta.role is not None:
+            print(f"<|{chunk.choices[0].delta.role}|>")
+        if chunk.choices[0].delta.content is not None:
+            print(chunk.choices[0].delta.content, end="", flush=True)
 print("\n")
-

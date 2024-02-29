@@ -1,8 +1,11 @@
+# Standard
 import os
+
+# Third Party
 from llama_cpp import Llama
 
 # Get model_path from env
-MODEL_FILE=os.getenv("MODEL_FILE")
+MODEL_FILE = os.getenv("MODEL_FILE")
 
 # Load the model
 #   n_gpu_layers=0 to use CPU only
@@ -27,9 +30,9 @@ prompt = "<|system|>\n" + sys_prompt + "\n<|user|>\n" + usr_prompt + "\n<|assist
 # Inference the model
 result = model(prompt, max_tokens=200, echo=True, stop="<|endoftext|>")
 
-print("\nJSON Output") 
-print(result) 
-print("\n\n\nText Output") 
-final_result = result["choices"][0]["text"].strip() 
+print("\nJSON Output")
+print(result)
+print("\n\n\nText Output")
+final_result = result["choices"][0]["text"].strip()
 print(final_result)
 print("\n")

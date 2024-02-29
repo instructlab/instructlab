@@ -15,7 +15,7 @@ if [ "$RETURN_CODE" -ne 0 ]; then
     echoWarning "Make a new commit with these changes before making a pull request."
   else
     echoWarning "This test failed because your code isn't formatted correctly."
-    echoWarning 'Locally, run `make run fmt`, it will appear to fail, but change files.'
+    echoWarning 'Locally, run `tox -e fmt`, it will appear to fail, but change files.'
     echoWarning "Add the changed files to your commit and this stage will pass."
   fi
 
