@@ -328,9 +328,14 @@ def generate_data(
         batch_inputs = []
         for _ in range(request_batch_size):
             # only sampling from the seed tasks
-            prompt_instructions = random.sample(
-                seed_instruction_data, num_prompt_instructions
-            )
+            try:
+                prompt_instructions = random.sample(
+                    seed_instruction_data, num_prompt_instructions
+                )
+            except ValueError as exc:
+                raise GenerateException(
+                    "There was a problem with provided sample, please double check its format"
+                ) from exc
             prompt = encode_prompt(prompt_instructions, prompt_template)
             batch_inputs.append(prompt)
         decoding_args = utils.OpenAIDecodingArguments(
