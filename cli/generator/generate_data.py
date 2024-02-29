@@ -12,8 +12,12 @@ import re
 import string
 import time
 
+try:
+    # Third Party
+    import git
+except ImportError:
+    pass
 # Third Party
-from git import Repo
 from rouge_score import rouge_scorer
 
 # import numpy as np
@@ -39,6 +43,10 @@ Here are the requirements:
 
 List of 20 tasks:
 """
+
+
+class GenerateException(Exception):
+    """An exception raised during generate step."""
 
 
 def check_prompt_file(prompt_file_path):
@@ -195,7 +203,10 @@ def generate_data(
             # Default output_dir to taxonomy dir, using the dir not the parent
             output_dir = output_dir or os.path.abspath(taxonomy)
             # Gather the new or changed YAMLs using git diff
-            updated_taxonomy_files = get_taxonomy_diff(taxonomy)
+            try:
+                updated_taxonomy_files = get_taxonomy_diff(taxonomy)
+            except NameError as exc:
+                raise GenerateException("`git` binary not found") from exc
             errors = 0
             warnings = 0
             for f in updated_taxonomy_files:
@@ -413,7 +424,7 @@ def generate_data(
 
 
 def get_taxonomy_diff(repo="taxonomy"):
-    repo = Repo(repo)
+    repo = git.Repo(repo)
     untracked_files = [
         u for u in repo.untracked_files if splitext(u)[1].lower() in [".yaml", ".yml"]
     ]

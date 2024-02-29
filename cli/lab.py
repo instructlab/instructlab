@@ -17,7 +17,7 @@ import uvicorn
 from . import config
 from .chat.chat import chat_cli
 from .download import DownloadException, clone_taxonomy, download_model
-from .generator.generate_data import generate_data, get_taxonomy_diff
+from .generator.generate_data import GenerateException, generate_data, get_taxonomy_diff
 
 
 # pylint: disable=unused-argument
@@ -235,15 +235,21 @@ def generate(ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file):
     ctx.obj.logger.info(
         f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}'"
     )
-    generate_data(
-        logger=ctx.obj.logger,
-        model_name=model,
-        num_cpus=num_cpus,
-        num_instructions_to_generate=num_instructions,
-        taxonomy=taxonomy_path,
-        prompt_file_path=ctx.obj.config.generate.prompt_file,
-        seed_tasks_path=seed_file,
-    )
+    try:
+        generate_data(
+            logger=ctx.obj.logger,
+            model_name=model,
+            num_cpus=num_cpus,
+            num_instructions_to_generate=num_instructions,
+            taxonomy=taxonomy_path,
+            prompt_file_path=ctx.obj.config.generate.prompt_file,
+            seed_tasks_path=seed_file,
+        )
+    except GenerateException as exc:
+        click.secho(
+            f"Generating dataset failed with the following error: {exc}",
+            fg="red",
+        )
 
 
 @cli.command()
