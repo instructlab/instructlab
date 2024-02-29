@@ -194,7 +194,14 @@ def serve(ctx, model_path, gpu_layers):
         n_gpu_layers=gpu_layers,
         verbose=ctx.obj.logger.level == logging.DEBUG,
     )
-    app = create_app(settings=settings)
+    try:
+        app = create_app(settings=settings)
+    except ValueError as err:
+        click.secho(
+            f"Creating App using model failed with following value error: {err}",
+            fg="red"
+        )
+    
     llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
         template="{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}",
         eos_token="<|endoftext|>",
