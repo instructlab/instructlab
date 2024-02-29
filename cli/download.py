@@ -2,10 +2,10 @@
 import os
 import re
 import subprocess
-import textwrap
 
-# Third Party
-import click
+
+class DownloadException(Exception):
+    """An exception raised during downloading artifacts necessary to run lab."""
 
 
 def download_model(
@@ -26,19 +26,10 @@ def download_model(
     - pattern(str): Download only assets that match a glob pattern
 
     Returns:
-    - None
+    - a list of downloaded models
     """
 
     model_file_split_keyword = ".split."
-
-    click.secho(
-        '\nMake sure the local environment has the "gh" cli. https://cli.github.com',
-        fg="blue",
-    )
-    click.echo(
-        "\nDownloading Models from %s with version %s to local directory %s ...\n"
-        % (gh_repo, gh_release, model_dir)
-    )
 
     # Download GitHub release
     download_commands = [
@@ -61,9 +52,9 @@ def download_model(
             download_commands.extend(["--pattern", "*"])
     try:
         create_subprocess(download_commands)
-    except (FileNotFoundError, subprocess.CalledProcessError) as e:
-        click.echo("%s" % e)
-        click.echo("\nAn error occurred with gh. Check the traceback for details.\n")
+    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+        # TODO improve this error message
+        raise DownloadException("An error occurred while downloading models.") from exc
 
     # Get the list of local files
     ls_commands = ["ls", model_dir]
@@ -102,11 +93,7 @@ def download_model(
             create_subprocess(rm_commands)
             combined_model_list.append(key)
 
-    click.echo("\nDownload Completed.")
-    if combined_model_list:
-        click.echo("\nList of combined models: ")
-        for model_name in combined_model_list:
-            click.echo("%s" % model_name)
+    return combined_model_list
 
 
 def clone_taxonomy(
@@ -126,9 +113,6 @@ def clone_taxonomy(
     Returns:
     - None
     """
-
-    click.echo('\nCloning repository %s with branch "%s" ...' % (gh_repo, gh_branch))
-
     # Clone taxonomy repo
     git_clone_commands = ["git", "clone", gh_repo]
     if git_filter_spec != "" and os.path.exists(git_filter_spec):
@@ -141,95 +125,11 @@ def clone_taxonomy(
     else:
         git_clone_commands.extend(["--branch", gh_branch])
 
-    result = create_subprocess(git_clone_commands)
-    if result.stderr:
-        click.echo("\n%s" % result.stderr.decode("utf-8"))
-    click.echo("Git clone completed.")
-
-
-def create_config_file(config_file_name="./config.yml"):
-    # pylint: disable=line-too-long
-    """
-    Create default config file.
-    TODO: Remove this function after config class is updated.
-
-    Parameters:
-    - config_path (str): Path to create the default config.yml
-
-    Returns:
-    - None
-    """
-
-    config_yml_txt = textwrap.dedent(
-        """
-    # Copyright The Authors
-    #
-    # Licensed under the Apache License, Version 2.0 (the "License");
-    # you may not use this file except in compliance with the License.
-    # You may obtain a copy of the License at
-    #
-    #     http://www.apache.org/licenses/LICENSE-2.0
-    #
-    # Unless required by applicable law or agreed to in writing, software
-    # distributed under the License is distributed on an "AS IS" BASIS,
-    # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    # See the License for the specific language governing permissions and
-    # limitations under the License.
-
-    chat:
-      context: ""
-      model: "ggml-malachite-7b-0226-Q4_K_M"
-      session: ""
-
-    generate:
-      model: "ggml-malachite-7b-0226-Q4_K_M"
-      num_cpus: 10
-      num_instructions_to_generate: 100
-      path_to_taxonomy: "./taxonomy"
-      prompt_file_path: "./cli/generator/prompt.txt"
-      seed_tasks_path: "./cli/generator/seed_tasks.jsonl"
-
-    list:
-      path_to_taxonomy: "./taxonomy"
-
-    log:
-      level: info
-
-    serve:
-      model_path: "./models/ggml-malachite-7b-0226-Q4_K_M.gguf"
-      n_gpu_layers: -1
-    """
-    )
-    if not os.path.isfile(config_file_name):
-        if os.path.dirname(config_file_name) != "":
-            os.makedirs(os.path.dirname(config_file_name), exist_ok=True)
-        with open(config_file_name, "w", encoding="utf-8") as model_file:
-            model_file.write(config_yml_txt)
-        click.echo("Config file is created at %s" % config_file_name)
-
-    chat_config_toml_txt = textwrap.dedent(
-        """
-    api_base = "http://localhost:8000/v1"
-    api_key = "no_api_key"
-    model = "malachite-7b"
-    vi_mode = false
-    visible_overflow = true
-
-    [contexts]
-    default = "You are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
-    cli_helper = "You are an expert for command line interface and know all common commands. Answer the command to execute as it without any explanation."
-    dictionary = "You are a professional English-Chinese translator. Translate the input to the other language by providing its part of speech (POS) followed by up-to 5 common but distinct translations in this format: `[{POS}] {translation 1}; {translation 2}; ...`. Do not provide nonexistent results."
-    """
-    )
-    chat_config_file_name = os.path.join(
-        os.path.dirname(config_file_name), "chat-cli.toml"
-    )
-    if not os.path.isfile(chat_config_file_name):
-        if os.path.dirname(chat_config_file_name) != "":
-            os.makedirs(os.path.dirname(chat_config_file_name), exist_ok=True)
-        with open(chat_config_file_name, "w", encoding="utf-8") as model_file:
-            model_file.write(chat_config_toml_txt)
-        click.echo("Chat config file for is created at %s" % chat_config_file_name)
+    try:
+        create_subprocess(git_clone_commands)
+    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+        # TODO improve this error message
+        raise DownloadException("An error occurred during cloning taxonomy.") from exc
 
 
 def create_subprocess(commands):

@@ -44,10 +44,8 @@ CONFIG_FILENAME = "chat-cli.toml"
 CONTEXTS = None
 
 CONFIG_FILEPATHS = [
-    os.path.expanduser(f"./cli/chat/{CONFIG_FILENAME}"),
-    os.path.expanduser(f"./cli/config/{CONFIG_FILENAME}"),
-    os.path.expanduser(f"~/.{CONFIG_FILENAME}"),
-    os.path.expanduser(f"~/.config/{CONFIG_FILENAME}"),
+    # TODO: rather than defaults use proper paths here and below as well
+    CONFIG_FILENAME,
 ]
 
 PROMPT_HISTORY_FILEPATH = os.path.expanduser("~/.local/chat-cli.history")
@@ -72,7 +70,6 @@ class ConsoleChatBot:
         vertical_overflow="ellipsis",
         loaded={},
     ):
-
         self.client = client
         self.model = model
         self.vi_mode = vi_mode
