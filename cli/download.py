@@ -100,15 +100,17 @@ def download_model(
 def clone_taxonomy(
     repository="https://github.com/open-labrador/taxonomy.git",
     branch="main",
+    directory="taxonomy",
     filter_spec="",
 ):
     """
     Clone the taxonomy repository from a Git repository source.
 
     Parameters:
-    - gh_repo (str): The URL of the taxonomy Git repository.
+    - repository (str): URL of the taxonomy git repository.
         Default is the Open Labrador taxonomy repository.
-    - gh_branch (str): The GitHub branch of the taxonomy repository. Default is main
+    - branch (str): Git branch of the taxonomy repository. Default is main.
+    - directory (str): Target directory where to clone the repository. Default is taxonomy.
     - filter_spec(str): Optional path to the git filter spec for git partial clone
 
     Returns:
@@ -123,6 +125,7 @@ def clone_taxonomy(
         git_clone_commands.extend(git_sparse_clone_flags)
     else:
         git_clone_commands.extend(["--branch", branch])
+    git_clone_commands.extend([directory])
     try:
         create_subprocess(git_clone_commands)
     except FileNotFoundError as exc:
