@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Lint
+name: Lint and Format
 
 on:
   push:
@@ -39,5 +39,8 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements-dev.txt
       
-      - name: Run lint
+      - name: Run formatting
+        run: tox -e fmt
+
+      - name: Run linting
         run: tox -e lint

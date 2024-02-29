@@ -1,17 +1,22 @@
-import click
+# Standard
+from os.path import basename, dirname, splitext
+import logging
+
+# Third Party
 from click_didyoumean import DYMGroup
 from llama_cpp import llama_chat_format
-import llama_cpp.server.app as llama_app
 from llama_cpp.server.app import create_app
 from llama_cpp.server.settings import Settings
+import click
+import llama_cpp.server.app as llama_app
 import uvicorn
-import logging
-from os.path import splitext, dirname, basename
 
-from .generator.generate_data import generate_data, get_taxonomy_diff
-from .download import download_model, clone_taxonomy, create_config_file
+# Local
 from .chat.chat import chat_cli
 from .config.config import Config
+from .download import clone_taxonomy, create_config_file, download_model
+from .generator.generate_data import generate_data, get_taxonomy_diff
+
 
 # pylint: disable=unused-argument
 class Lab:
@@ -39,7 +44,17 @@ def configure(ctx, param, filename):
     ctx.default_map = default_map
     # TODO: for now we have to inject values per command, so I'm injecting them all
     # but ideally we should morph our file to match what click expects
-    cmds = ["init", "list", "submit", "serve", "generate", "train", "test", "chat", "download"]
+    cmds = [
+        "init",
+        "list",
+        "submit",
+        "serve",
+        "generate",
+        "train",
+        "test",
+        "chat",
+        "download",
+    ]
     for cmd in cmds:
         ctx.default_map[cmd] = dict(default_map)
 
@@ -52,7 +67,8 @@ def configure(ctx, param, filename):
     show_default=True,
     callback=configure,
     is_eager=True,
-    help="Path to a configuration file.")
+    help="Path to a configuration file.",
+)
 @click.pass_context
 def cli(ctx, config):
     """CLI for interacting with labrador"""
@@ -63,13 +79,13 @@ def cli(ctx, config):
     "--repo",
     default="https://github.com/open-labrador/taxonomy.git",
     show_default=True,
-    help="Labrador Taxonomy GitHub repository"
+    help="Labrador Taxonomy GitHub repository",
 )
 @click.option(
     "--branch",
     default="main",
     show_default=True,
-    help="The GitHub branch of the taxonomy repository."
+    help="The GitHub branch of the taxonomy repository.",
 )
 @click.pass_context
 def init(ctx, repo, branch):
@@ -78,8 +94,11 @@ def init(ctx, repo, branch):
 
 
 @cli.command()
-@click.option("--taxonomy", type=click.Path(),
-              help="Path to https://github.com/open-labrador/taxonomy/ checkout.")
+@click.option(
+    "--taxonomy",
+    type=click.Path(),
+    help="Path to https://github.com/open-labrador/taxonomy/ checkout.",
+)
 @click.pass_context
 # pylint: disable=redefined-builtin
 def list(ctx, taxonomy):
@@ -87,7 +106,9 @@ def list(ctx, taxonomy):
     updated_taxonomy_files = get_taxonomy_diff(taxonomy)
     for f in updated_taxonomy_files:
         if splitext(f)[1] != ".yaml":
-            click.secho(f"WARNING: Found {f}! Use lowercase '.yaml' instead.", fg="yellow")
+            click.secho(
+                f"WARNING: Found {f}! Use lowercase '.yaml' instead.", fg="yellow"
+            )
             continue
         click.echo(f)
 
@@ -101,34 +122,50 @@ def submit(ctx):
 
 @cli.command()
 @click.option("--model", help="Name of the model used during generation.")
-@click.option("--gpu-layers", help="""The number of layers to put on the GPU.
-              The rest will be on the CPU. Defaults to -1 to move all to GPU.""")
-@click.option('--verbose', '-v', is_flag=True, help="Print verbose output.")
+@click.option(
+    "--gpu-layers",
+    help="""The number of layers to put on the GPU.
+              The rest will be on the CPU. Defaults to -1 to move all to GPU.""",
+)
+@click.option("--verbose", "-v", is_flag=True, help="Print verbose output.")
 @click.pass_context
 def serve(ctx, model, gpu_layers, verbose):
 
     """Start a local server"""
     # pylint: disable=line-too-long
     ctx.obj.logger.info(f"Using model '{model}' with {gpu_layers} gpu-layers")
-    settings = Settings(model=model, n_ctx=4096, n_gpu_layers=gpu_layers, verbose=verbose)
+    settings = Settings(
+        model=model, n_ctx=4096, n_gpu_layers=gpu_layers, verbose=verbose
+    )
     app = create_app(settings=settings)
     llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
-        template="{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}", eos_token="<|endoftext|>", bos_token=""
+        template="{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}",
+        eos_token="<|endoftext|>",
+        bos_token="",
     ).to_chat_handler()
     click.echo("Starting server process")
-    click.echo("After application startup complete see http://127.0.0.1:8000/docs for API.")
+    click.echo(
+        "After application startup complete see http://127.0.0.1:8000/docs for API."
+    )
     click.echo("Press CTRL+C to shutdown server.")
     uvicorn.run(app, port=8000, log_level=logging.ERROR)  # TODO: host params, etc...
 
 
 @cli.command()
 @click.option("--model", help="Name of the model used during generation.")
-@click.option("--num-cpus", type=click.INT,
-                help="Number of processes to use. Defaults to 10.")
-@click.option("--num-instructions", type=click.INT,
-                help="Number of instructions to generate. Defaults to 100.")
-@click.option("--taxonomy", type=click.Path(),
-                help="Path to https://github.com/open-labrador/taxonomy/ checkout.")
+@click.option(
+    "--num-cpus", type=click.INT, help="Number of processes to use. Defaults to 10."
+)
+@click.option(
+    "--num-instructions",
+    type=click.INT,
+    help="Number of instructions to generate. Defaults to 100.",
+)
+@click.option(
+    "--taxonomy",
+    type=click.Path(),
+    help="Path to https://github.com/open-labrador/taxonomy/ checkout.",
+)
 @click.option("--seed-file", type=click.Path(), help="Path to a seed file.")
 @click.pass_context
 def generate(ctx, model, num_cpus, num_instructions, taxonomy, seed_file):
@@ -136,11 +173,19 @@ def generate(ctx, model, num_cpus, num_instructions, taxonomy, seed_file):
     # load not exposed options from config
     prompt_path = ctx.obj.config.get_generate_prompt_file_path()
 
-    ctx.obj.logger.debug(f"Generating model '{model}' using {num_cpus} cpus, + \
-        taxonomy: '{taxonomy}' + and seed '{seed_file}'")
-    generate_data(logger=ctx.obj.logger, model_name=model, num_cpus=num_cpus,
-                  num_instructions_to_generate=num_instructions, taxonomy=taxonomy,
-                  prompt_file_path=prompt_path, seed_tasks_path=seed_file)
+    ctx.obj.logger.debug(
+        f"Generating model '{model}' using {num_cpus} cpus, + \
+        taxonomy: '{taxonomy}' + and seed '{seed_file}'"
+    )
+    generate_data(
+        logger=ctx.obj.logger,
+        model_name=model,
+        num_cpus=num_cpus,
+        num_instructions_to_generate=num_instructions,
+        taxonomy=taxonomy,
+        prompt_file_path=prompt_path,
+        seed_tasks_path=seed_file,
+    )
 
 
 @cli.command()
@@ -158,17 +203,21 @@ def test(ctx):
 
 
 @cli.command()
-@click.argument(
-    "question", nargs=-1, type=click.UNPROCESSED
+@click.argument("question", nargs=-1, type=click.UNPROCESSED)
+@click.option("-m", "--model", "model", help="Model to use")
+@click.option(
+    "-c",
+    "--context",
+    "context",
+    help="Name of system context in config file",
+    default="default",
 )
 @click.option(
-    "-m", "--model", "model", help="Model to use"
-)
-@click.option(
-    "-c", "--context", "context", help="Name of system context in config file", default="default"
-)
-@click.option(
-    "-s", "--session", "session", help="Filepath of a dialog session file", type=click.File("r")
+    "-s",
+    "--session",
+    "session",
+    help="Filepath of a dialog session file",
+    type=click.File("r"),
 )
 @click.option(
     "-qq", "--quick-question", "qq", help="Exit after answering question", is_flag=True
@@ -184,22 +233,18 @@ def chat(ctx, question, model, context, session, qq):
     "--repo",
     default="https://github.com/open-labrador/cli.git",
     show_default=True,
-    help="GitHub repository of the hosted models."
+    help="GitHub repository of the hosted models.",
 )
 @click.option(
     "--release",
     default="latest",
     show_default=True,
-    help="GitHub release version of the hosted models."
+    help="GitHub release version of the hosted models.",
 )
 @click.option(
-    "--model_dir",
-    help="The local directory to download the model files into."
+    "--model_dir", help="The local directory to download the model files into."
 )
-@click.option(
-    "--pattern",
-    help="Download only assets that match a glob pattern."
-)
+@click.option("--pattern", help="Download only assets that match a glob pattern.")
 @click.pass_context
 def download(ctx, repo, release, model_dir, pattern):
     """Download the model(s) to train"""

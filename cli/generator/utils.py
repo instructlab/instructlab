@@ -1,14 +1,16 @@
+# Standard
+from typing import Optional, Sequence, Union
+import copy
 import dataclasses
+import io
+import json
 import logging
 import math
 import os
-import io
 import sys
-import json
-from typing import Optional, Sequence, Union
 
+# Third Party
 from openai import OpenAI
-import copy
 
 StrOrOpenAIObject = Union[str, object]
 
@@ -30,24 +32,25 @@ class OpenAIDecodingArguments:
 
 
 def openai_completion(
-        prompts: Union[str, Sequence[str], Sequence[dict[str, str]], dict[str, str]],
-        decoding_args: OpenAIDecodingArguments,
-        model_name="ggml-labrador13B-model-Q4_K_M",
-        batch_size=1,
-        max_instances=sys.maxsize,
-        max_batches=sys.maxsize,
-        return_text=False,
-        **decoding_kwargs,
+    prompts: Union[str, Sequence[str], Sequence[dict[str, str]], dict[str, str]],
+    decoding_args: OpenAIDecodingArguments,
+    model_name="ggml-labrador13B-model-Q4_K_M",
+    batch_size=1,
+    max_instances=sys.maxsize,
+    max_batches=sys.maxsize,
+    return_text=False,
+    **decoding_kwargs,
 ) -> Union[
     Union[StrOrOpenAIObject],
     Sequence[StrOrOpenAIObject],
-    Sequence[Sequence[StrOrOpenAIObject]],]:
+    Sequence[Sequence[StrOrOpenAIObject]],
+]:
     """Decode with OpenAI API.
 
     Args:
-        prompts: A string or a list of strings to complete. If it is a chat model the strings 
-            should be formatted as explained here: 
-            https://github.com/openai/openai-python/blob/main/chatml.md. 
+        prompts: A string or a list of strings to complete. If it is a chat model the strings
+            should be formatted as explained here:
+            https://github.com/openai/openai-python/blob/main/chatml.md.
             If it is a chat model it can also be a dictionary (or list thereof) as explained here:
             https://github.com/openai/openai-cookbook/blob/main/examples/How_to_format_inputs_to_ChatGPT_models.ipynb
         decoding_args: Decoding arguments.
@@ -59,7 +62,7 @@ def openai_completion(
         decoding_kwargs: Extra decoding arguments. Pass in `best_of` and `logit_bias` if needed.
 
     Returns:
-        A completion or a list of completions. Depending on return_text, return_openai_object, 
+        A completion or a list of completions. Depending on return_text, return_openai_object,
         and decoding_args.n, the completion type can be one of:
             - a string (if return_text is True)
             - an openai_object.OpenAIObject object (if return_text is False)
@@ -79,7 +82,7 @@ def openai_completion(
     prompts = prompts[:max_instances]
     num_prompts = len(prompts)
     prompt_batches = [
-        prompts[batch_id * batch_size: (batch_id + 1) * batch_size]
+        prompts[batch_id * batch_size : (batch_id + 1) * batch_size]
         for batch_id in range(int(math.ceil(num_prompts / batch_size)))
     ]
 
@@ -87,14 +90,17 @@ def openai_completion(
     for batch_id, prompt_batch in enumerate(prompt_batches):
         batch_decoding_args = copy.deepcopy(decoding_args)  # cloning the decoding_args
 
-        shared_kwargs = {"model": model_name, **batch_decoding_args.__dict__, **decoding_kwargs, }
+        shared_kwargs = {
+            "model": model_name,
+            **batch_decoding_args.__dict__,
+            **decoding_kwargs,
+        }
 
         client = OpenAI(base_url="http://localhost:8000/v1", api_key="foo")
 
         messages = [
-            {"role": "system",
-             "content": SYSTEM_PROMPT},
-            {"role": "user", "content": prompt_batch[batch_id]}
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": prompt_batch[batch_id]},
         ]
 
         # Inference the model
@@ -110,8 +116,7 @@ def openai_completion(
     if decoding_args.n > 1:
         # make a nested list, where each entry is consecutive decoding_args.n of original entries.
         completions = [
-            completions[
-            i: i + decoding_args.n]
+            completions[i : i + decoding_args.n]
             for i in range(0, len(completions), decoding_args.n)
         ]
     if is_single_prompt:

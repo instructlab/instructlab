@@ -1,15 +1,19 @@
-import click
-import subprocess
-import re
+# Standard
 import os
+import re
+import subprocess
 import textwrap
+
+# Third Party
+import click
 
 
 def download_model(
-        gh_repo='https://github.com/open-labrador/cli.git',
-        gh_release='latest',
-        model_dir='.',
-        pattern=''):
+    gh_repo="https://github.com/open-labrador/cli.git",
+    gh_release="latest",
+    model_dir=".",
+    pattern="",
+):
     """
     Download and combine the model file from a GitHub repository source.
 
@@ -25,34 +29,46 @@ def download_model(
     - None
     """
 
-    model_file_split_keyword = '.split.'
+    model_file_split_keyword = ".split."
 
     click.secho(
         '\nMake sure the local environment has the "gh" cli. https://cli.github.com',
-        fg="blue")
+        fg="blue",
+    )
     click.echo(
         "\nDownloading Models from %s with version %s to local directory %s ...\n"
-        % (gh_repo, gh_release, model_dir))
+        % (gh_repo, gh_release, model_dir)
+    )
 
     # Download GitHub release
     download_commands = [
-        'gh', 'release', 'download', gh_release, '--repo', gh_repo, '--dir', model_dir]
-    if pattern != '':
-        download_commands.extend(['--pattern', pattern])
-    if gh_release == 'latest':
+        "gh",
+        "release",
+        "download",
+        gh_release,
+        "--repo",
+        gh_repo,
+        "--dir",
+        model_dir,
+    ]
+    if pattern != "":
+        download_commands.extend(["--pattern", pattern])
+    if gh_release == "latest":
         download_commands.pop(3)  # remove gh_release arg to download the latest version
-        if pattern == '':  # Latest release needs to specify the pattern argument to download files
-            download_commands.extend(['--pattern', '*'])
+        if (
+            pattern == ""
+        ):  # Latest release needs to specify the pattern argument to download files
+            download_commands.extend(["--pattern", "*"])
     try:
         create_subprocess(download_commands)
     except (FileNotFoundError, subprocess.CalledProcessError) as e:
-        click.echo('%s' % e)
-        click.echo('\nAn error occurred with gh. Check the traceback for details.\n')
+        click.echo("%s" % e)
+        click.echo("\nAn error occurred with gh. Check the traceback for details.\n")
 
     # Get the list of local files
-    ls_commands = ['ls', model_dir]
+    ls_commands = ["ls", model_dir]
     ls_result = create_subprocess(ls_commands)
-    file_list = ls_result.stdout.decode('utf-8').split('\n')
+    file_list = ls_result.stdout.decode("utf-8").split("\n")
     file_list = [os.path.join(model_dir, f) for f in file_list]
 
     splitted_models = {}
@@ -60,7 +76,9 @@ def download_model(
     # Use Regex to capture model and files names that need to combine into one file.
     for file in file_list:
         if model_file_split_keyword in file:
-            model_name_regex = "".join(["([^ \t\n,]+)", model_file_split_keyword, "[^ \t\n,]+"])
+            model_name_regex = "".join(
+                ["([^ \t\n,]+)", model_file_split_keyword, "[^ \t\n,]+"]
+            )
             regex_result = re.findall(model_name_regex, file)
             if regex_result:
                 model_name = regex_result[0]
@@ -72,14 +90,14 @@ def download_model(
     # Use the model and file names we captured to minimize the number of bash subprocess creations.
     combined_model_list = []
     for key, value in splitted_models.items():
-        cat_commands = ['cat']
+        cat_commands = ["cat"]
         splitted_model_files = list(value)
         cat_commands.extend(splitted_model_files)
         cat_result = create_subprocess(cat_commands)
-        if cat_result.stdout not in (None, b''):
+        if cat_result.stdout not in (None, b""):
             with open(key, "wb") as model_file:
                 model_file.write(cat_result.stdout)
-            rm_commands = ['rm']
+            rm_commands = ["rm"]
             rm_commands.extend(splitted_model_files)
             create_subprocess(rm_commands)
             combined_model_list.append(key)
@@ -91,9 +109,11 @@ def download_model(
             click.echo("%s" % model_name)
 
 
-def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
-                   gh_branch='main',
-                   git_filter_spec=''):
+def clone_taxonomy(
+    gh_repo="https://github.com/open-labrador/taxonomy.git",
+    gh_branch="main",
+    git_filter_spec="",
+):
     """
     Clone the taxonomy repository from a Git repository source.
 
@@ -110,25 +130,27 @@ def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
     click.echo('\nCloning repository %s with branch "%s" ...' % (gh_repo, gh_branch))
 
     # Clone taxonomy repo
-    git_clone_commands = ['git', 'clone', gh_repo]
-    if git_filter_spec != '' and os.path.exists(git_filter_spec):
+    git_clone_commands = ["git", "clone", gh_repo]
+    if git_filter_spec != "" and os.path.exists(git_filter_spec):
         # TODO: Add gitfilterspec to sparse clone GitHub repo
-        git_filter_arg = ''.join(['--filter=sparse:oid=', gh_branch, ':', git_filter_spec])
-        git_sparse_clone_flags = ['--sparse', git_filter_arg]
+        git_filter_arg = "".join(
+            ["--filter=sparse:oid=", gh_branch, ":", git_filter_spec]
+        )
+        git_sparse_clone_flags = ["--sparse", git_filter_arg]
         git_clone_commands.extend(git_sparse_clone_flags)
     else:
-        git_clone_commands.extend(['--branch', gh_branch])
+        git_clone_commands.extend(["--branch", gh_branch])
 
     result = create_subprocess(git_clone_commands)
     if result.stderr:
-        click.echo('\n%s' % result.stderr.decode('utf-8'))
-    click.echo('Git clone completed.')
+        click.echo("\n%s" % result.stderr.decode("utf-8"))
+    click.echo("Git clone completed.")
 
 
-def create_config_file(config_file_name='./config.yml'):
+def create_config_file(config_file_name="./config.yml"):
     # pylint: disable=line-too-long
     """
-    Create default config file. 
+    Create default config file.
     TODO: Remove this function after config class is updated.
 
     Parameters:
@@ -179,14 +201,14 @@ def create_config_file(config_file_name='./config.yml'):
     """
     )
     if not os.path.isfile(config_file_name):
-        if os.path.dirname(config_file_name) != '':
+        if os.path.dirname(config_file_name) != "":
             os.makedirs(os.path.dirname(config_file_name), exist_ok=True)
         with open(config_file_name, "w", encoding="utf-8") as model_file:
             model_file.write(config_yml_txt)
-        click.echo('Config file is created at %s' % config_file_name)
+        click.echo("Config file is created at %s" % config_file_name)
 
     chat_config_toml_txt = textwrap.dedent(
-    """
+        """
     api_base = "http://localhost:8000/v1"
     api_key = "no_api_key"
     model = "malachite-7b"
@@ -199,14 +221,18 @@ def create_config_file(config_file_name='./config.yml'):
     dictionary = "You are a professional English-Chinese translator. Translate the input to the other language by providing its part of speech (POS) followed by up-to 5 common but distinct translations in this format: `[{POS}] {translation 1}; {translation 2}; ...`. Do not provide nonexistent results."
     """
     )
-    chat_config_file_name = os.path.join(os.path.dirname(config_file_name), "chat-cli.toml")
+    chat_config_file_name = os.path.join(
+        os.path.dirname(config_file_name), "chat-cli.toml"
+    )
     if not os.path.isfile(chat_config_file_name):
-        if os.path.dirname(chat_config_file_name) != '':
+        if os.path.dirname(chat_config_file_name) != "":
             os.makedirs(os.path.dirname(chat_config_file_name), exist_ok=True)
         with open(chat_config_file_name, "w", encoding="utf-8") as model_file:
             model_file.write(chat_config_toml_txt)
-        click.echo('Chat config file for is created at %s' % chat_config_file_name)
+        click.echo("Chat config file for is created at %s" % chat_config_file_name)
 
 
 def create_subprocess(commands):
-    return subprocess.run(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+    return subprocess.run(
+        commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True
+    )

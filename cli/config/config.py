@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Standard
+from typing import Any, Optional
 import logging
 import os
-from typing import Any, Optional
-import yaml
 
+# Third Party
+import yaml
 
 _DEF_CFG_FILE = "./cli/config/config.yml"
 _DEF_MODEL_NAME = "ggml-malachite-7b-Q4_K_M"
@@ -68,38 +70,48 @@ class Config(object):
             value = default_value
         else:
             value = self.cfg.get(category).get(setting, default_value)
-        return value 
+        return value
 
     def get_chat_context(self) -> str:
         return self._get_setting(_CHAT_CATEGORY, _CTX_SETTING, _DEF_CONTEXT)
-    
+
     def get_chat_model(self) -> str:
         return self._get_setting(_CHAT_CATEGORY, _MODEL_SETTING, _DEF_MODEL_NAME)
-    
+
     def get_chat_session(self) -> str:
         return self._get_setting(_CHAT_CATEGORY, _SESSION_SETTING, _DEF_SESSION)
-    
+
     def get_generate_model(self) -> str:
         return self._get_setting(_GENERATE_CATEGORY, _MODEL_SETTING, _DEF_MODEL_NAME)
-    
+
     def get_generate_num_cpus(self) -> int:
         return self._get_setting(_GENERATE_CATEGORY, _NUM_CPUS_SETTING, _DEF_NUM_GPUS)
-    
+
     def get_generate_taxonomy(self) -> str:
-        return self._get_setting(_GENERATE_CATEGORY, _PATH_TO_TAX_SETTING, _DEF_TAXONOMY_PATH)
+        return self._get_setting(
+            _GENERATE_CATEGORY, _PATH_TO_TAX_SETTING, _DEF_TAXONOMY_PATH
+        )
 
     def get_generate_num_instructions(self) -> int:
-        return self._get_setting(_GENERATE_CATEGORY, _NUM_INSTS_SETTING, _DEF_NUM_INSTRS)
+        return self._get_setting(
+            _GENERATE_CATEGORY, _NUM_INSTS_SETTING, _DEF_NUM_INSTRS
+        )
 
     def get_generate_seed_task_path(self) -> str:
-        return self._get_setting(_GENERATE_CATEGORY, _SEED_TASK_PATH_SETTING, _DEF_SEED_TASK_PATH)
+        return self._get_setting(
+            _GENERATE_CATEGORY, _SEED_TASK_PATH_SETTING, _DEF_SEED_TASK_PATH
+        )
 
     def get_generate_prompt_file_path(self) -> str:
-        return self._get_setting(_GENERATE_CATEGORY, _PROMPT_FILE_PATH, _DEF_PROMPT_FILE_PATH)
+        return self._get_setting(
+            _GENERATE_CATEGORY, _PROMPT_FILE_PATH, _DEF_PROMPT_FILE_PATH
+        )
 
     def get_list_taxonomy(self) -> str:
-        return self._get_setting(_LIST_CATEGORY, _PATH_TO_TAX_SETTING, _DEF_TAXONOMY_PATH)
-    
+        return self._get_setting(
+            _LIST_CATEGORY, _PATH_TO_TAX_SETTING, _DEF_TAXONOMY_PATH
+        )
+
     def get_log_level(self) -> int:
         level = self._get_setting(_LOG_CATEGORY, _LEVEL_SETTING, _DEF_LOG_LEVEL)
 
@@ -117,11 +129,11 @@ class Config(object):
             return logging.CRITICAL
         else:
             raise ValueError("Config: Unknown logging level")
-    
+
     def get_serve_model_path(self) -> str:
         return self._get_setting(_SERVE_CATEGORY, _MODEL_PATH_SETTING, _DEF_MODEL_PATH)
-    
-    def get_serve_n_gpu_layers(self) -> int:
-        return self._get_setting(_SERVE_CATEGORY, _NUM_GPUS_LAY_SETTING, _DEF_NUM_GPU_LAYERS)
-       
 
+    def get_serve_n_gpu_layers(self) -> int:
+        return self._get_setting(
+            _SERVE_CATEGORY, _NUM_GPUS_LAY_SETTING, _DEF_NUM_GPU_LAYERS
+        )
