@@ -75,6 +75,12 @@ You can setup your dev environment using [tox](https://tox.wiki/en/latest/), an 
 pip install -r requirements-dev.txt
 ```
 
+Install project requirements with:
+
+```sh
+pip install -r requirements.txt
+```
+
 If you want to manage your own virtual environment instead of using `tox`, you can install `cli` and all dependencies with:
 
 ```sh
@@ -101,13 +107,13 @@ tox -e py
 
 Cli follows the python [pep8](https://peps.python.org/pep-0008/) coding style. The coding style is enforced by the CI system, and your PR will fail until the style has been applied correctly.
 
-<!--We use [pre-commit](https://pre-commit.com/) to enforce coding style using [black](https://github.com/psf/black), [prettier](https://github.com/prettier/prettier) and [isort](https://pycqa.github.io/isort/).
+We use [pre-commit](https://pre-commit.com/) to enforce coding style using [black](https://github.com/psf/black), and [isort](https://pycqa.github.io/isort/).
 
 You can invoke formatting with:
 
 ```sh
 tox -e fmt
-```-->
+```
 
 In addition, we use [pylint](https://www.pylint.org) to perform static code analysis of the code.
 
