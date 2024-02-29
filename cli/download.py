@@ -52,9 +52,10 @@ def download_model(
             download_commands.extend(["--pattern", "*"])
     try:
         create_subprocess(download_commands)
-    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-        # TODO improve this error message
-        raise DownloadException("An error occurred while downloading models.") from exc
+    except FileNotFoundError as exc:
+        raise DownloadException("`gh` binary not found") from exc
+    except subprocess.CalledProcessError as exc:
+        raise DownloadException(f"error invoking `gh` command: {exc}") from exc
 
     # Get the list of local files
     ls_commands = ["ls", model_dir]
@@ -97,39 +98,40 @@ def download_model(
 
 
 def clone_taxonomy(
-    gh_repo="https://github.com/open-labrador/taxonomy.git",
-    gh_branch="main",
-    git_filter_spec="",
+    repository="https://github.com/open-labrador/taxonomy.git",
+    branch="main",
+    directory="taxonomy",
+    filter_spec="",
 ):
     """
     Clone the taxonomy repository from a Git repository source.
 
     Parameters:
-    - gh_repo (str): The URL of the taxonomy Git repository.
+    - repository (str): URL of the taxonomy git repository.
         Default is the Open Labrador taxonomy repository.
-    - gh_branch (str): The GitHub branch of the taxonomy repository. Default is main
-    - git_filter_spec(str): Optional path to the git filter spec for git partial clone
+    - branch (str): Git branch of the taxonomy repository. Default is main.
+    - directory (str): Target directory where to clone the repository. Default is taxonomy.
+    - filter_spec(str): Optional path to the git filter spec for git partial clone
 
     Returns:
     - None
     """
     # Clone taxonomy repo
-    git_clone_commands = ["git", "clone", gh_repo]
-    if git_filter_spec != "" and os.path.exists(git_filter_spec):
+    git_clone_commands = ["git", "clone", repository]
+    if filter_spec != "" and os.path.exists(filter_spec):
         # TODO: Add gitfilterspec to sparse clone GitHub repo
-        git_filter_arg = "".join(
-            ["--filter=sparse:oid=", gh_branch, ":", git_filter_spec]
-        )
+        git_filter_arg = "".join(["--filter=sparse:oid=", branch, ":", filter_spec])
         git_sparse_clone_flags = ["--sparse", git_filter_arg]
         git_clone_commands.extend(git_sparse_clone_flags)
     else:
-        git_clone_commands.extend(["--branch", gh_branch])
-
+        git_clone_commands.extend(["--branch", branch])
+    git_clone_commands.extend([directory])
     try:
         create_subprocess(git_clone_commands)
-    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-        # TODO improve this error message
-        raise DownloadException("An error occurred during cloning taxonomy.") from exc
+    except FileNotFoundError as exc:
+        raise DownloadException("`git` binary not found") from exc
+    except subprocess.CalledProcessError as exc:
+        raise DownloadException("error cloning {repository}@{branch}: {exc}") from exc
 
 
 def create_subprocess(commands):

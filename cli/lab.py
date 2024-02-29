@@ -17,7 +17,7 @@ import uvicorn
 from . import config
 from .chat.chat import chat_cli
 from .download import DownloadException, clone_taxonomy, download_model
-from .generator.generate_data import generate_data, get_taxonomy_diff
+from .generator.generate_data import GenerateException, generate_data, get_taxonomy_diff
 
 
 # pylint: disable=unused-argument
@@ -105,8 +105,6 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
         )
         click.echo("Please provide the following values to initiate the environment:")
 
-        model_path = click.prompt("Path to your model", default=model_path)
-
         taxonomy_path = click.prompt("Path to taxonomy repo", default=taxonomy_path)
         try:
             taxonomy_contents = listdir(taxonomy_path)
@@ -119,13 +117,19 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
             if do_clone:
                 click.echo(f"Cloning {repository}...")
                 try:
-                    clone_taxonomy(repository, "main")
+                    clone_taxonomy(repository, "main", taxonomy_path)
                 except DownloadException as exc:
                     click.secho(
-                        f"Cloning {repository} failed with the following error: {exc.message}",
+                        f"Cloning {repository} failed with the following error: {exc}",
                         fg="red",
                     )
 
+        # check if models dir exists, and if so ask for which model to use
+        models_dir = dirname(model_path)
+        if exists(models_dir):
+            model_path = click.prompt("Path to your model", default=model_path)
+
+    # non-interactive part of the generation
     click.echo(f"Generating `{config.DEFAULT_CONFIG}` in the current directory...")
     cfg = config.get_default_config()
     model = splitext(basename(model_path))[0]
@@ -235,15 +239,21 @@ def generate(ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file):
     ctx.obj.logger.info(
         f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}'"
     )
-    generate_data(
-        logger=ctx.obj.logger,
-        model_name=model,
-        num_cpus=num_cpus,
-        num_instructions_to_generate=num_instructions,
-        taxonomy=taxonomy_path,
-        prompt_file_path=ctx.obj.config.generate.prompt_file,
-        seed_tasks_path=seed_file,
-    )
+    try:
+        generate_data(
+            logger=ctx.obj.logger,
+            model_name=model,
+            num_cpus=num_cpus,
+            num_instructions_to_generate=num_instructions,
+            taxonomy=taxonomy_path,
+            prompt_file_path=ctx.obj.config.generate.prompt_file,
+            seed_tasks_path=seed_file,
+        )
+    except GenerateException as exc:
+        click.secho(
+            f"Generating dataset failed with the following error: {exc}",
+            fg="red",
+        )
 
 
 @cli.command()
@@ -330,4 +340,10 @@ def download(ctx, repository, release, model_dir, pattern):
         "Make sure the local environment has the `gh` cli: https://cli.github.com"
     )
     click.echo(f"Downloading models from {repository}@{release} to {model_dir}...")
-    download_model(repository, release, model_dir, pattern)
+    try:
+        download_model(repository, release, model_dir, pattern)
+    except DownloadException as exc:
+        click.secho(
+            f"Downloading models failed with the following error: {exc}",
+            fg="red",
+        )
