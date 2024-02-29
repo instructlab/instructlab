@@ -62,7 +62,8 @@ def configure(ctx, param, filename):
 def cli(ctx, config):
     """CLI for interacting with labrador.
 
-    If this is your first time running lab, it's best to start with `lab init` to create the environment"""
+    If this is your first time running lab, it's best to start with `lab init` to create the environment
+    """
 
 
 @cli.command()
@@ -155,7 +156,10 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
 @click.pass_context
 # pylint: disable=redefined-builtin
 def list(ctx, taxonomy_path):
-    """List taxonomy YAML files"""
+    """
+    Lists taxonomy files that have changed (modified or untracked).
+    Similar to 'git diff'
+    """
     updated_taxonomy_files = get_taxonomy_diff(taxonomy_path)
     for f in updated_taxonomy_files:
         if splitext(f)[1] != ".yaml":
