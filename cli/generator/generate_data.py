@@ -334,7 +334,7 @@ def generate_data(
                 )
             except ValueError as exc:
                 raise GenerateException(
-                    "There was a problem with provided sample, please double check its format"
+                    f"There was a problem with the new data, please make sure the yaml is formatted correctly, and there is enough new data({num_prompt_instructions}+ Q&A) or decrease `num_prompt_instructions`, (currently {num_prompt_instructions})"
                 ) from exc
             prompt = encode_prompt(prompt_instructions, prompt_template)
             batch_inputs.append(prompt)
