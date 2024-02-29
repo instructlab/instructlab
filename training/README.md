@@ -4,7 +4,7 @@ You're now at the training phase. So far you have hand crafted some prompts and 
 
 Pre-requisites: 
 * [Google Colab](https://research.google.com/colaboratory/faq.html)
-* A Gmail account that you're logged into, this will allow yout to use Google Colab, which in the free tier will give you access to an NVidia T4 x 15GB GPU
+* A Gmail account that you're logged into, this will allow you to use Google Colab, which in the free tier will give you access to an NVidia T4 x 15GB GPU
 
 
 **NOTE: At present, you'll need to download the notebook and upload it to Google Colab, once this repository is open sourced we will make an 'Open in Colab' button**
