@@ -8,7 +8,7 @@ import textwrap
 def download_model(
         gh_repo='https://github.com/open-labrador/cli.git',
         gh_release='latest',
-        local_dir='.',
+        model_dir='.',
         pattern=''):
     """
     Download and combine the model file from a GitHub repository source.
@@ -18,7 +18,7 @@ def download_model(
         Default: Open Labrador CLI repository.
     - gh_release (str): The GitHub release version of the model to download.
         Default is 'latest'.
-    - local_dir(str): The local directory to download the model files into
+    - model_dir(str): The local directory to download the model files into
     - pattern(str): Download only assets that match a glob pattern
 
     Returns:
@@ -32,11 +32,11 @@ def download_model(
         fg="blue")
     click.echo(
         "\nDownloading Models from %s with version %s to local directory %s ...\n"
-        % (gh_repo, gh_release, local_dir))
+        % (gh_repo, gh_release, model_dir))
 
     # Download GitHub release
     download_commands = [
-        'gh', 'release', 'download', gh_release, '--repo', gh_repo, '--dir', local_dir]
+        'gh', 'release', 'download', gh_release, '--repo', gh_repo, '--dir', model_dir]
     if pattern != '':
         download_commands.extend(['--pattern', pattern])
     if gh_release == 'latest':
@@ -50,10 +50,10 @@ def download_model(
         click.echo('\nAn error occurred with gh. Check the traceback for details.\n')
 
     # Get the list of local files
-    ls_commands = ['ls', local_dir]
+    ls_commands = ['ls', model_dir]
     ls_result = create_subprocess(ls_commands)
     file_list = ls_result.stdout.decode('utf-8').split('\n')
-    file_list = [os.path.join(local_dir, f) for f in file_list]
+    file_list = [os.path.join(model_dir, f) for f in file_list]
 
     splitted_models = {}
 
@@ -126,6 +126,7 @@ def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
 
 
 def create_config_file(config_file_name='./config.yml'):
+    # pylint: disable=line-too-long
     """
     Create default config file. 
     TODO: Remove this function after config class is updated.

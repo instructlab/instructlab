@@ -193,7 +193,7 @@ def chat(ctx, question, model, context, session, qq):
     help="GitHub release version of the hosted models."
 )
 @click.option(
-    "--local_dir",
+    "--model_dir",
     help="The local directory to download the model files into."
 )
 @click.option(
@@ -201,14 +201,14 @@ def chat(ctx, question, model, context, session, qq):
     help="Download only assets that match a glob pattern."
 )
 @click.pass_context
-def download(ctx, repo, release, local_dir, pattern):
+def download(ctx, repo, release, model_dir, pattern):
     """Download the model(s) to train"""
 
     # Use the serve model path to get the right models in the right place, if needed
     serve_model_path = ctx.obj.config.get_serve_model_path()
     if serve_model_path:  # if set in config
-        if not local_dir:  # --local_dir takes precedence
-            local_dir = dirname(serve_model_path)
+        if not model_dir:  # --model_dir takes precedence
+            model_dir = dirname(serve_model_path)
         if not pattern:  # --pattern takes precedence
             pattern = basename(serve_model_path).replace(".gguf", ".*")
-    download_model(repo, release, local_dir, pattern)
+    download_model(repo, release, model_dir, pattern)
