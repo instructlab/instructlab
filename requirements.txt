@@ -1,4 +1,4 @@
-click
+click>=8.1.0
 click_didyoumean
 llama_cpp_python[server]
 numpy

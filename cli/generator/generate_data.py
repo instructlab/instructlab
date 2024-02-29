@@ -1,27 +1,29 @@
+# Standard
 from datetime import datetime
-import time
+from functools import partial
+from multiprocessing import Pool
+from os.path import splitext
+from pathlib import Path
 from typing import Optional
 import json
 import os
-from os.path import splitext
 import random
 import re
 import string
-from functools import partial
-from multiprocessing import Pool
-from pathlib import Path
-import yaml
-from git import Repo
+import time
 
-import numpy as np
-import tqdm
+# Third Party
+from git import Repo
 from rouge_score import rouge_scorer
 
+# import numpy as np
+import tqdm
+import yaml
+
+# Local
 from . import utils
-from ..config.config import Config
 
-
-DEFAULT_PROMPT = """\
+DEFAULT_PROMPT_TEMPLATE = """\
 You are asked to come up with a set of 20 diverse task instructions. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
 
 Here are the requirements:
@@ -38,24 +40,35 @@ Here are the requirements:
 List of 20 tasks:
 """
 
-def encode_prompt(prompt_instructions, prompt_file):
-    """Encode multiple prompt instructions into a single string."""
-    try:
-        prompt = open(prompt_file).read()
-    except:
-        print(f"cannot find {prompt_file}. using default prompt")
-        prompt = DEFAULT_PROMPT
-    prompt = prompt + "\n"
 
+def check_prompt_file(prompt_file_path):
+    """Check for prompt file."""
+    try:
+        with open(prompt_file_path, encoding="utf=8") as file:
+            prompt_template = file.read()
+    except FileNotFoundError:
+        print(f"Cannot find {prompt_file_path}. Using default prompt.")
+        prompt_template = DEFAULT_PROMPT_TEMPLATE
+    prompt_template = prompt_template + "\n"
+    return prompt_template
+
+
+def encode_prompt(prompt_instructions, prompt):
+    """Encode multiple prompt instructions into a single string."""
+    idx = 0
     for idx, task_dict in enumerate(prompt_instructions):
-        (instruction, input, output) = task_dict["instruction"], task_dict["input"], task_dict["output"]
+        (instruction, prompt_input, prompt_output) = (
+            task_dict["instruction"],
+            task_dict["input"],
+            task_dict["output"],
+        )
         instruction = re.sub(r"\s+", " ", instruction).strip().rstrip(":")
-        input = "<noinput>" if input.lower() == "" else input
-        prompt += f"###\n"
+        prompt_input = "<noinput>" if prompt_input.lower() == "" else prompt_input
+        prompt += "###\n"
         prompt += f"{idx + 1}. Instruction: {instruction}\n"
-        prompt += f"{idx + 1}. Input:\n{input}\n"
-        prompt += f"{idx + 1}. Output:\n{output}\n"
-    prompt += f"###\n"
+        prompt += f"{idx + 1}. Input:\n{prompt_input}\n"
+        prompt += f"{idx + 1}. Output:\n{prompt_output}\n"
+    prompt += "###\n"
     prompt += f"{idx + 2}. Instruction:"
     return prompt
 
@@ -63,7 +76,9 @@ def encode_prompt(prompt_instructions, prompt_file):
 def post_process_gpt3_response(num_prompt_instructions, response):
     if response is None:
         return []
-    raw_instructions = f"{num_prompt_instructions+1}. Instruction:" + response.message.content
+    raw_instructions = (
+        f"{num_prompt_instructions + 1}. Instruction:" + response.message.content
+    )
     raw_instructions = re.split("###", raw_instructions)
     instructions = []
     for idx, inst in enumerate(raw_instructions):
@@ -71,14 +86,13 @@ def post_process_gpt3_response(num_prompt_instructions, response):
         # if idx == len(raw_instructions) - 1 and response["finish_reason"] == "length":
         #     continue
         idx += num_prompt_instructions + 1
-        splitted_data = re.split(fr'{idx}\.\s+(Instruction|Input|Output):', inst)
+        splitted_data = re.split(rf"{idx}\.\s+(Instruction|Input|Output):", inst)
         if len(splitted_data) != 7:
             continue
-        else:
-            inst = splitted_data[2].strip()
-            input = splitted_data[4].strip()
-            input = "" if input.lower() == "<noinput>" else input
-            output = splitted_data[6].strip()
+        inst = splitted_data[2].strip()
+        prompt_input = splitted_data[4].strip()
+        prompt_input = "" if prompt_input.lower() == "<noinput>" else prompt_input
+        prompt_output = splitted_data[6].strip()
         # filter out too short or too long instructions
         if len(inst.split()) <= 3 or len(inst.split()) > 150:
             continue
@@ -106,10 +120,10 @@ def post_process_gpt3_response(num_prompt_instructions, response):
         blacklist += []
         if any(find_word_in_string(word, inst) for word in blacklist):
             continue
-        # We found that the model tends to add "write a program" to some existing instructions, which lead to a lot of such instructions.
-        # And it's a bit comfusing whether the model need to write a program or directly output the result.
-        # Here we filter them out.
-        # Note this is not a comprehensive filtering for all programming instructions.
+        # We found that the model tends to add "write a program" to some existing instructions
+        # which lead to a lot of such instructions and it's confusing whether the model needs
+        # to write a program or directly output the result, so here we filter them out.
+        # NOTE: this is not a comprehensive filtering for all programming instructions.
         if inst.startswith("Write a program"):
             continue
         # filter those starting with punctuation
@@ -118,7 +132,9 @@ def post_process_gpt3_response(num_prompt_instructions, response):
         # filter those starting with non-english character
         if not inst[0].isascii():
             continue
-        instructions.append({"instruction": inst, "input": input, "output": output})
+        instructions.append(
+            {"instruction": inst, "input": prompt_input, "output": prompt_output}
+        )
     return instructions
 
 
@@ -145,6 +161,7 @@ def generate_data(
 
     # check taxonomy first then seed_tasks_path
     # throw an error if both not found
+    # pylint: disable=broad-exception-caught,raise-missing-from
     if taxonomy and os.path.exists(taxonomy):
 
         is_file = os.path.isfile(taxonomy)
@@ -152,84 +169,119 @@ def generate_data(
             # Default output_dir to taxonomy file's dir
             output_dir = output_dir or os.path.dirname(os.path.abspath(taxonomy))
             if splitext(taxonomy)[1] != ".yaml":  # File name standard
-                raise SystemExit(f"Error: taxonomy ({taxonomy}) is not a directory or file with '.yaml' extension.")
+                raise SystemExit(
+                    f"Error: taxonomy ({taxonomy}) "
+                    "is not a directory or file with '.yaml' extension."
+                )
             try:
-                with open(taxonomy, 'r') as file:
+                with open(taxonomy, "r", encoding="utf-8") as file:
                     contents = yaml.safe_load(file)
                     for t in contents:
                         seed_instruction_data.append(
-                            {"instruction": t["question"], "input": "", "output": t["answer"]})
+                            {
+                                "instruction": t["question"],
+                                "input": "",
+                                "output": t["answer"],
+                            }
+                        )
             except Exception as e:
                 print(e.__repr__, " in ", file)
                 print(e)
-                raise SystemExit(yaml.YAMLError(f"taxonomy file () has YAML errors!  Exiting."))
+                raise SystemExit(
+                    yaml.YAMLError("taxonomy file () has YAML errors!  Exiting.")
+                )
 
         else:  # taxonomy is_dir
             # Default output_dir to taxonomy dir, using the dir not the parent
             output_dir = output_dir or os.path.abspath(taxonomy)
             # Gather the new or changed YAMLs using git diff
-            repo = Repo(taxonomy)
-            updated_taxonomy_files = [u for u in repo.untracked_files if splitext(u)[1].lower() in [".yaml", ".yml"]] + \
-                [d.a_path for d in repo.index.diff(None) if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
+            updated_taxonomy_files = get_taxonomy_diff(taxonomy)
             errors = 0
             warnings = 0
             for f in updated_taxonomy_files:
                 if splitext(f)[1] != ".yaml":
-                    logger.warn(f"WARNING: Skipping {f}! Use lowercase '.yaml' extension instead.")
+                    logger.warn(
+                        f"WARNING: Skipping {f}! Use lowercase '.yaml' extension instead."
+                    )
                     continue
                 file_path = os.path.join(taxonomy, f)
                 try:
-                    with open(file_path, 'r') as file:
+                    with open(file_path, "r", encoding="utf-8") as file:
                         contents = yaml.safe_load(file)
                         for t in contents:
                             q = t["question"]
                             a = t["answer"]
                             if not q or not a:
-                                logger.warn(f"Skipping {file_path} because question and/or answer is empty!")
+                                logger.warn(
+                                    f"Skipping {file_path} "
+                                    + "because question and/or answer is empty!"
+                                )
                                 warnings += 1
                                 continue
                             seed_instruction_data.append(
-                                {"instruction": q, "input": "", "output": a})
+                                {"instruction": q, "input": "", "output": a}
+                            )
                 except Exception as e:
                     errors += 1
                     print(e.__repr__, " in ", file_path)
                     logger.error(e)
-
             if warnings:
                 logger.warn(
-                    f"{warnings} warnings (see above) due to taxonomy files that were not usable.")
+                    f"{warnings} warnings (see above) due to taxonomy files that were not usable."
+                )
             if errors:
-                raise SystemExit(yaml.YAMLError(f"{errors} taxonomy files with YAML errors!  Exiting."))
-    
+                raise SystemExit(
+                    yaml.YAMLError(f"{errors} taxonomy files with errors! Exiting.")
+                )
+
     elif seed_tasks_path and os.path.exists(seed_tasks_path):
         output_dir = output_dir or os.path.dirname(os.path.abspath(seed_tasks_path))
-        seed_tasks = [json.loads(l) for l in open(seed_tasks_path, "r")]
+        with open(seed_tasks_path, "r", encoding="utf-8") as seed_tasks_file:
+            seed_tasks = [json.loads(l) for l in seed_tasks_file]
         seed_instruction_data = [
-            {"instruction": t["instruction"], "input": t["instances"][0]["input"],
-             "output": t["instances"][0]["output"]}
+            {
+                "instruction": t["instruction"],
+                "input": t["instances"][0]["input"],
+                "output": t["instances"][0]["output"],
+            }
             for t in seed_tasks
         ]
     else:
-        raise SystemExit(f"Error: both taxonomy ({taxonomy}) and ({seed_tasks_path}) do not exist.")
+        raise SystemExit(
+            f"Error: both taxonomy ({taxonomy}) and ({seed_tasks_path}) do not exist."
+        )
 
     seeds = len(seed_instruction_data)
-    logger.debug(f"Loaded {seeds} human-written seed instructions from {taxonomy or seed_tasks_path}")
+    logger.debug(
+        f"Loaded {seeds} human-written seed instructions from "
+        f"{taxonomy or seed_tasks_path}"
+    )
     if not seeds:
         raise SystemExit("Nothing to generate. Exiting.")
-    
+
     test_data = []
     for seed_example in seed_instruction_data:
         user = seed_example["instruction"]
         if len(seed_example["input"]) > 0:
             user += "\n" + seed_example["input"]
         test_data.append(
-            {"system": utils.SYSTEM_PROMPT, "user": user, "assistant": seed_example["output"]}
+            {
+                "system": utils.SYSTEM_PROMPT,
+                "user": user,
+                "assistant": seed_example["output"],
+            }
         )
 
     name = Path(model_name).stem  # Just in case it is a file path
-    output_file = f"generated_{name}_{datetime.now().replace(microsecond=0).isoformat()}.json"
-    output_file_train = f"train_{name}_{datetime.now().replace(microsecond=0).isoformat()}.jsonl"
-    output_file_test = f"test_{name}_{datetime.now().replace(microsecond=0).isoformat()}.jsonl"
+    output_file = (
+        f"generated_{name}_{datetime.now().replace(microsecond=0).isoformat()}.json"
+    )
+    output_file_train = (
+        f"train_{name}_{datetime.now().replace(microsecond=0).isoformat()}.jsonl"
+    )
+    output_file_test = (
+        f"test_{name}_{datetime.now().replace(microsecond=0).isoformat()}.jsonl"
+    )
     logger.debug(f"Generating to: {os.path.join(output_dir, output_file)}")
 
     request_idx = 0
@@ -238,7 +290,9 @@ def generate_data(
     train_data = []
     if os.path.exists(os.path.join(output_dir, "regen.json")):
         machine_instruction_data = utils.jload(os.path.join(output_dir, "regen.json"))
-        logger.debug(f"Loaded {len(machine_instruction_data)} machine-generated instructions")
+        logger.debug(
+            f"Loaded {len(machine_instruction_data)} machine-generated instructions"
+        )
 
     # similarities = {}
     scorer = rouge_scorer.RougeScorer(["rougeL"], use_stemmer=False)
@@ -252,21 +306,27 @@ def generate_data(
     all_instructions = [d["instruction"] for d in seed_instruction_data] + [
         d["instruction"] for d in machine_instruction_data
     ]
-    all_instruction_tokens = [scorer._tokenizer.tokenize(inst) for inst in all_instructions]
+    all_instruction_tokens = [
+        scorer._tokenizer.tokenize(inst) for inst in all_instructions
+    ]
 
+    prompt_template = check_prompt_file(prompt_file_path)
     while len(machine_instruction_data) < num_instructions_to_generate:
         request_idx += 1
 
         batch_inputs = []
         for _ in range(request_batch_size):
             # only sampling from the seed tasks
-            prompt_instructions = random.sample(seed_instruction_data, num_prompt_instructions)
-            prompt = encode_prompt(prompt_instructions, prompt_file_path)
+            prompt_instructions = random.sample(
+                seed_instruction_data, num_prompt_instructions
+            )
+            prompt = encode_prompt(prompt_instructions, prompt_template)
             batch_inputs.append(prompt)
         decoding_args = utils.OpenAIDecodingArguments(
             temperature=temperature,
             n=1,
-            max_tokens=3072,  # hard-code to maximize the length. the requests will be automatically adjusted
+            # Hard-coded to maximize length. Requests will be automatically adjusted.
+            max_tokens=3072,
             top_p=top_p,
             stop=["\n20", "20.", "20."],
         )
@@ -282,14 +342,18 @@ def generate_data(
         process_start = time.time()
         instruction_data = []
         for result in results:
-            new_instructions = post_process_gpt3_response(num_prompt_instructions, result)
+            new_instructions = post_process_gpt3_response(
+                num_prompt_instructions, result
+            )
             instruction_data += new_instructions
 
         total = len(instruction_data)
         keep = 0
         for instruction_data_entry in instruction_data:
             # computing similarity with the pre-tokenzied instructions
-            new_instruction_tokens = scorer._tokenizer.tokenize(instruction_data_entry["instruction"])
+            new_instruction_tokens = scorer._tokenizer.tokenize(
+                instruction_data_entry["instruction"]
+            )
             with Pool(num_cpus) as p:
                 rouge_scores = p.map(
                     partial(rouge_scorer._score_lcs, new_instruction_tokens),
@@ -300,11 +364,10 @@ def generate_data(
             # most_similar_instructions = {
             #    all_instructions[i]: rouge_scores[i] for i in np.argsort(rouge_scores)[-10:][::-1]
             # }
-            KEEP_ROUGE_SCORES_LT = 0.7   # TODO: PARAM
+            KEEP_ROUGE_SCORES_LT = 0.7  # TODO: PARAM
             if max(rouge_scores) > KEEP_ROUGE_SCORES_LT:
                 continue
-            else:
-                keep += 1
+            keep += 1
             # Comment out extra info not currently being used:
             # instruction_data_entry["most_similar_instructions"] = most_similar_instructions
             # instruction_data_entry["avg_similarity_score"] = float(np.mean(rouge_scores))
@@ -313,7 +376,10 @@ def generate_data(
             all_instruction_tokens.append(new_instruction_tokens)
             progress_bar.update(1)
         process_duration = time.time() - process_start
-        logger.debug(f"Request {request_idx} took {request_duration:.2f}s, processing took {process_duration:.2f}s")
+        logger.debug(
+            f"Request {request_idx} took {request_duration:.2f}s, "
+            f"processing took {process_duration:.2f}s"
+        )
         logger.debug(f"Generated {total} instructions, kept {keep} instructions")
         utils.jdump(machine_instruction_data, os.path.join(output_dir, output_file))
         for synth_example in machine_instruction_data:
@@ -321,18 +387,41 @@ def generate_data(
             if len(synth_example["input"]) > 0:
                 user += "\n" + synth_example["input"]
             train_data.append(
-                {"system": utils.SYSTEM_PROMPT, "user": user, "assistant": synth_example["output"]}
+                {
+                    "system": utils.SYSTEM_PROMPT,
+                    "user": user,
+                    "assistant": synth_example["output"],
+                }
             )
         # utils.jdump(train_data, os.path.join(output_dir, output_file_train))
-        with open(os.path.join(output_dir, output_file_train), 'w') as outfile:
+        with open(
+            os.path.join(output_dir, output_file_train), "w", encoding="utf-8"
+        ) as outfile:
             for entry in train_data:
                 json.dump(entry, outfile)
-                outfile.write('\n')
+                outfile.write("\n")
         # utils.jdump(test_data, os.path.join(output_dir, output_file_test))
-        with open(os.path.join(output_dir, output_file_test), 'w') as outfile:
+        with open(
+            os.path.join(output_dir, output_file_test), "w", encoding="utf-8"
+        ) as outfile:
             for entry in test_data:
                 json.dump(entry, outfile)
-                outfile.write('\n')
+                outfile.write("\n")
 
     generate_duration = time.time() - generate_start
     logger.info(f"Generation took {generate_duration:.2f}s")
+
+
+def get_taxonomy_diff(repo="taxonomy"):
+    repo = Repo(repo)
+    untracked_files = [
+        u for u in repo.untracked_files if splitext(u)[1].lower() in [".yaml", ".yml"]
+    ]
+    modified_files = [
+        d.a_path
+        for d in repo.index.diff(None)
+        if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]
+    ]
+    updated_taxonomy_files = untracked_files + modified_files
+
+    return updated_taxonomy_files

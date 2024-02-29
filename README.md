@@ -106,6 +106,11 @@ command:
   ```shell
   lab init
   ```
+  
+  To initialize the Taxonomy from a private repository source, please use the git SSH endpoint of the private repository:
+  ```shell
+  lab init --repo git@github.com:open-labrador/taxonomy.git
+  ```
 
   It will clone the `git@github.com:open-labrador/taxonomy.git` repository.
 
@@ -284,7 +289,11 @@ For example, the following command converts the f16 GGUF model to a Q4_K_M quant
 
 > Tip: Use `./quantize help` for a list of quantization types with their relative size and output quality along with additional usage parameters.
 
-# Other stuffs
+## Contributing
+
+Check out our [contributing](CONTRIBUTING.md) guide to learn how to contribute to the Labrador CLI.
+
+## Other stuffs
 
 Hosted training environment:
 [This jupyter notebook hosted on Google Colab](https://colab.research.google.com/drive/1qQr7X9Js6RTuXV12mRJtDHZU-bk4WgSU?usp=sharing)
