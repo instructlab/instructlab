@@ -1,3 +1,3 @@
 from cli import lab
 
-lab.cli()
+lab.cli(None, None)

@@ -5,14 +5,20 @@ import os
 import textwrap
 
 
-def download_model(gh_repo='https://github.com/open-labrador/cli.git', gh_release='latest', dir='.', pattern=''):
+def download_model(
+        gh_repo='https://github.com/open-labrador/cli.git',
+        gh_release='latest',
+        model_dir='.',
+        pattern=''):
     """
     Download and combine the model file from a GitHub repository source.
 
     Parameters:
-    - gh_repo (str): The URL of the GitHub repository containing the model. Default is the Open Labrador CLI repository.
-    - gh_release (str): The GitHub release version of the model to download. Default is 'latest'.
-    - dir(str): The local directory to download the model files into
+    - gh_repo (str): The URL of the GitHub repository containing the model.
+        Default: Open Labrador CLI repository.
+    - gh_release (str): The GitHub release version of the model to download.
+        Default is 'latest'.
+    - model_dir(str): The local directory to download the model files into
     - pattern(str): Download only assets that match a glob pattern
 
     Returns:
@@ -21,26 +27,33 @@ def download_model(gh_repo='https://github.com/open-labrador/cli.git', gh_releas
 
     model_file_split_keyword = '.split.'
 
-    click.secho('\nMake sure the local environment has the "gh" cli. https://cli.github.com', fg="blue")
-    click.echo("\nDownloading Models from %s with version %s to local directory %s ...\n" % (gh_repo, gh_release, dir))
+    click.secho(
+        '\nMake sure the local environment has the "gh" cli. https://cli.github.com',
+        fg="blue")
+    click.echo(
+        "\nDownloading Models from %s with version %s to local directory %s ...\n"
+        % (gh_repo, gh_release, model_dir))
 
     # Download GitHub release
-    download_commands = ['gh', 'release', 'download', gh_release, '--repo', gh_repo, '--dir', dir]
+    download_commands = [
+        'gh', 'release', 'download', gh_release, '--repo', gh_repo, '--dir', model_dir]
     if pattern != '':
         download_commands.extend(['--pattern', pattern])
     if gh_release == 'latest':
         download_commands.pop(3)  # remove gh_release arg to download the latest version
-        if pattern == '':  # Latest release needs to specify the pattern argument to download all files
+        if pattern == '':  # Latest release needs to specify the pattern argument to download files
             download_commands.extend(['--pattern', '*'])
-    gh_result = create_subprocess(download_commands)
-    if gh_result.stderr:
-        raise Exception('gh command error occurred:\n\n %s' % gh_result.stderr.decode('utf-8'))
-    
+    try:
+        create_subprocess(download_commands)
+    except (FileNotFoundError, subprocess.CalledProcessError) as e:
+        click.echo('%s' % e)
+        click.echo('\nAn error occurred with gh. Check the traceback for details.\n')
+
     # Get the list of local files
-    ls_commands = ['ls', dir]
+    ls_commands = ['ls', model_dir]
     ls_result = create_subprocess(ls_commands)
     file_list = ls_result.stdout.decode('utf-8').split('\n')
-    file_list = [os.path.join(dir, f) for f in file_list]
+    file_list = [os.path.join(model_dir, f) for f in file_list]
 
     splitted_models = {}
 
@@ -60,10 +73,10 @@ def download_model(gh_repo='https://github.com/open-labrador/cli.git', gh_releas
     combined_model_list = []
     for key, value in splitted_models.items():
         cat_commands = ['cat']
-        splitted_model_files = [splitted_model_file for splitted_model_file in value]
+        splitted_model_files = list(value)
         cat_commands.extend(splitted_model_files)
         cat_result = create_subprocess(cat_commands)
-        if cat_result.stdout != None and cat_result.stdout != b'':
+        if cat_result.stdout not in (None, b''):
             with open(key, "wb") as model_file:
                 model_file.write(cat_result.stdout)
             rm_commands = ['rm']
@@ -85,7 +98,8 @@ def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
     Clone the taxonomy repository from a Git repository source.
 
     Parameters:
-    - gh_repo (str): The URL of the taxonomy Git repository. Default is the Open Labrador taxonomy repository.
+    - gh_repo (str): The URL of the taxonomy Git repository.
+        Default is the Open Labrador taxonomy repository.
     - gh_branch (str): The GitHub branch of the taxonomy repository. Default is main
     - git_filter_spec(str): Optional path to the git filter spec for git partial clone
 
@@ -104,7 +118,7 @@ def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
         git_clone_commands.extend(git_sparse_clone_flags)
     else:
         git_clone_commands.extend(['--branch', gh_branch])
-    
+
     result = create_subprocess(git_clone_commands)
     if result.stderr:
         click.echo('\n%s' % result.stderr.decode('utf-8'))
@@ -112,6 +126,7 @@ def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
 
 
 def create_config_file(config_file_name='./config.yml'):
+    # pylint: disable=line-too-long
     """
     Create default config file. 
     TODO: Remove this function after config class is updated.
@@ -123,9 +138,8 @@ def create_config_file(config_file_name='./config.yml'):
     - None
     """
 
-    
     config_yml_txt = textwrap.dedent(
-    """
+        """
     # Copyright The Authors
     #
     # Licensed under the Apache License, Version 2.0 (the "License");
@@ -167,10 +181,9 @@ def create_config_file(config_file_name='./config.yml'):
     if not os.path.isfile(config_file_name):
         if os.path.dirname(config_file_name) != '':
             os.makedirs(os.path.dirname(config_file_name), exist_ok=True)
-        with open(config_file_name, "w") as model_file:
+        with open(config_file_name, "w", encoding="utf-8") as model_file:
             model_file.write(config_yml_txt)
         click.echo('Config file is created at %s' % config_file_name)
-    
 
     chat_config_toml_txt = textwrap.dedent(
     """
@@ -190,9 +203,10 @@ def create_config_file(config_file_name='./config.yml'):
     if not os.path.isfile(chat_config_file_name):
         if os.path.dirname(chat_config_file_name) != '':
             os.makedirs(os.path.dirname(chat_config_file_name), exist_ok=True)
-        with open(chat_config_file_name, "w") as model_file:
+        with open(chat_config_file_name, "w", encoding="utf-8") as model_file:
             model_file.write(chat_config_toml_txt)
         click.echo('Chat config file for is created at %s' % chat_config_file_name)
 
+
 def create_subprocess(commands):
-    return subprocess.run(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    return subprocess.run(commands, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)

@@ -1,21 +1,20 @@
 import click
 from click_didyoumean import DYMGroup
-import llama_cpp.llama_chat_format as llama_chat_format
+from llama_cpp import llama_chat_format
 import llama_cpp.server.app as llama_app
 from llama_cpp.server.app import create_app
 from llama_cpp.server.settings import Settings
 import uvicorn
 import logging
-from git import Repo
 from os.path import splitext, dirname, basename
 
-from .generator.generate_data import generate_data
+from .generator.generate_data import generate_data, get_taxonomy_diff
 from .download import download_model, clone_taxonomy, create_config_file
 from .chat.chat import chat_cli
 from .config.config import Config
 
-
-class Lab(object):
+# pylint: disable=unused-argument
+class Lab:
     """Lab object holds high-level information about lab CLI"""
 
     def __init__(self, config):
@@ -29,7 +28,7 @@ class Lab(object):
 def configure(ctx, param, filename):
     create_config_file(filename)
     ctx.obj = Lab(filename)
-    default_map = dict()
+    default_map = {}
     # options in default_map must match the names of variables
     default_map["model"] = ctx.obj.config.get_serve_model_path()
     default_map["taxonomy"] = ctx.obj.config.get_generate_taxonomy()
@@ -57,7 +56,6 @@ def configure(ctx, param, filename):
 @click.pass_context
 def cli(ctx, config):
     """CLI for interacting with labrador"""
-    pass
 
 
 @cli.command()
@@ -80,16 +78,16 @@ def init(ctx, repo, branch):
 
 
 @cli.command()
-@click.option("--taxonomy", type=click.Path(), help="Path to https://github.com/open-labrador/taxonomy/ checkout.")
+@click.option("--taxonomy", type=click.Path(),
+              help="Path to https://github.com/open-labrador/taxonomy/ checkout.")
 @click.pass_context
+# pylint: disable=redefined-builtin
 def list(ctx, taxonomy):
     """List taxonomy YAML files"""
-    repo = Repo(taxonomy)
-    updated_taxonomy_files = [u for u in repo.untracked_files if splitext(u)[1].lower() in [".yaml", ".yml"]] + \
-                [d.a_path for d in repo.index.diff(None) if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
+    updated_taxonomy_files = get_taxonomy_diff(taxonomy)
     for f in updated_taxonomy_files:
         if splitext(f)[1] != ".yaml":
-            click.secho(f"WARNING: Found {f}! Use lowercase '.yaml' extension instead.", fg="yellow")
+            click.secho(f"WARNING: Found {f}! Use lowercase '.yaml' instead.", fg="yellow")
             continue
         click.echo(f)
 
@@ -103,11 +101,14 @@ def submit(ctx):
 
 @cli.command()
 @click.option("--model", help="Name of the model used during generation.")
-@click.option("--gpu-layers", help="The number of layers to put on the GPU. The rest will be on the CPU. Defaults to -1 to move all to GPU.")
+@click.option("--gpu-layers", help="""The number of layers to put on the GPU.
+              The rest will be on the CPU. Defaults to -1 to move all to GPU.""")
 @click.option('--verbose', '-v', is_flag=True, help="Print verbose output.")
 @click.pass_context
 def serve(ctx, model, gpu_layers, verbose):
+
     """Start a local server"""
+    # pylint: disable=line-too-long
     ctx.obj.logger.info(f"Using model '{model}' with {gpu_layers} gpu-layers")
     settings = Settings(model=model, n_ctx=4096, n_gpu_layers=gpu_layers, verbose=verbose)
     app = create_app(settings=settings)
@@ -122,9 +123,12 @@ def serve(ctx, model, gpu_layers, verbose):
 
 @cli.command()
 @click.option("--model", help="Name of the model used during generation.")
-@click.option("--num-cpus", type=click.INT, help="Number of processes to use. Defaults to 10.")
-@click.option("--num-instructions", type=click.INT, help="Number of instructions to generate. Defaults to 100.")
-@click.option("--taxonomy", type=click.Path(), help="Path to https://github.com/open-labrador/taxonomy/ checkout.")
+@click.option("--num-cpus", type=click.INT,
+                help="Number of processes to use. Defaults to 10.")
+@click.option("--num-instructions", type=click.INT,
+                help="Number of instructions to generate. Defaults to 100.")
+@click.option("--taxonomy", type=click.Path(),
+                help="Path to https://github.com/open-labrador/taxonomy/ checkout.")
 @click.option("--seed-file", type=click.Path(), help="Path to a seed file.")
 @click.pass_context
 def generate(ctx, model, num_cpus, num_instructions, taxonomy, seed_file):
@@ -132,7 +136,8 @@ def generate(ctx, model, num_cpus, num_instructions, taxonomy, seed_file):
     # load not exposed options from config
     prompt_path = ctx.obj.config.get_generate_prompt_file_path()
 
-    ctx.obj.logger.debug(f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy}' and seed '{seed_file}'")
+    ctx.obj.logger.debug(f"Generating model '{model}' using {num_cpus} cpus, + \
+        taxonomy: '{taxonomy}' + and seed '{seed_file}'")
     generate_data(logger=ctx.obj.logger, model_name=model, num_cpus=num_cpus,
                   num_instructions_to_generate=num_instructions, taxonomy=taxonomy,
                   prompt_file_path=prompt_path, seed_tasks_path=seed_file)
@@ -188,7 +193,7 @@ def chat(ctx, question, model, context, session, qq):
     help="GitHub release version of the hosted models."
 )
 @click.option(
-    "--dir",
+    "--model_dir",
     help="The local directory to download the model files into."
 )
 @click.option(
@@ -196,14 +201,14 @@ def chat(ctx, question, model, context, session, qq):
     help="Download only assets that match a glob pattern."
 )
 @click.pass_context
-def download(ctx, repo, release, dir, pattern):
+def download(ctx, repo, release, model_dir, pattern):
     """Download the model(s) to train"""
 
     # Use the serve model path to get the right models in the right place, if needed
     serve_model_path = ctx.obj.config.get_serve_model_path()
     if serve_model_path:  # if set in config
-        if not dir:  # --dir takes precedence
-            dir = dirname(serve_model_path)
+        if not model_dir:  # --model_dir takes precedence
+            model_dir = dirname(serve_model_path)
         if not pattern:  # --pattern takes precedence
             pattern = basename(serve_model_path).replace(".gguf", ".*")
-    download_model(repo, release, dir, pattern)
+    download_model(repo, release, model_dir, pattern)
