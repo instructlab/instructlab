@@ -3,8 +3,9 @@ import os
 import re
 import subprocess
 
-# Third Party
-import click
+
+class DownloadException(Exception):
+    """An exception raised during downloading artifacts necessary to run lab."""
 
 
 def download_model(
@@ -25,7 +26,7 @@ def download_model(
     - pattern(str): Download only assets that match a glob pattern
 
     Returns:
-    - None
+    - a list of downloaded models
     """
 
     model_file_split_keyword = ".split."
@@ -51,9 +52,9 @@ def download_model(
             download_commands.extend(["--pattern", "*"])
     try:
         create_subprocess(download_commands)
-    except (FileNotFoundError, subprocess.CalledProcessError) as e:
-        click.echo("%s" % e)
-        click.echo("\nAn error occurred with gh. Check the traceback for details.\n")
+    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+        # TODO improve this error message
+        raise DownloadException("An error occurred while downloading models.") from exc
 
     # Get the list of local files
     ls_commands = ["ls", model_dir]
@@ -92,11 +93,7 @@ def download_model(
             create_subprocess(rm_commands)
             combined_model_list.append(key)
 
-    click.echo("\nDownload Completed.")
-    if combined_model_list:
-        click.echo("\nList of combined models: ")
-        for model_name in combined_model_list:
-            click.echo("%s" % model_name)
+    return combined_model_list
 
 
 def clone_taxonomy(
@@ -128,9 +125,11 @@ def clone_taxonomy(
     else:
         git_clone_commands.extend(["--branch", gh_branch])
 
-    result = create_subprocess(git_clone_commands)
-    if result.stderr:
-        return result.stderr
+    try:
+        create_subprocess(git_clone_commands)
+    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
+        # TODO improve this error message
+        raise DownloadException("An error occurred during cloning taxonomy.") from exc
 
 
 def create_subprocess(commands):
