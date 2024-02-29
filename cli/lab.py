@@ -209,7 +209,7 @@ def serve(ctx, model_path, gpu_layers, port):
     ).to_chat_handler()
     click.echo("Starting server process")
     click.echo(
-        "After application startup complete see http://127.0.0.1:8000/docs for API."
+        f"After application startup complete see http://127.0.0.1:{port}/docs for API."
     )
     click.echo("Press CTRL+C to shutdown server.")
     uvicorn.run(app, port=port, log_level=logging.ERROR)  # TODO: host params, etc...
@@ -306,10 +306,17 @@ def test(ctx):
     is_flag=True,
     help="Exit after answering question",
 )
+@click.option(
+    "--port",
+    default=8000,
+    show_default=True,
+    type=click.INT,
+    help="Specifies which port expect model API. Defaults to 8000",
+)
 @click.pass_context
-def chat(ctx, question, model, context, session, quick_question):
+def chat(ctx, question, model, context, session, quick_question, port):
     """Run a chat using the modified model"""
-    chat_cli(question, model, context, session, quick_question)
+    chat_cli(question, model, context, session, quick_question, port)
 
 
 @cli.command()

@@ -59,6 +59,7 @@ PRICING_RATE = {
 
 PROMPT_PREFIX = ">>> "
 
+
 # TODO Autosave chat history
 class ConsoleChatBot:
     def __init__(
@@ -341,7 +342,7 @@ class ConsoleChatBot:
         self._update_conversation(response_content.plain, "assistant")
 
 
-def chat_cli(question, model, context, session, qq) -> None:
+def chat_cli(question, model, context, session, qq, port=None) -> None:
     assert (context is None) or (
         session is None
     ), "Cannot load context and session in the same time"
@@ -363,7 +364,11 @@ def chat_cli(question, model, context, session, qq) -> None:
 
     # Read API key
     api_key = os.environ.get("OAI_SECRET_KEY", config.get("api_key", "no-api-key"))
+
+    # TODO shimming this is pulls config into codebase. Should update config requirement.
     base_url = config.get("api_base")
+    if port:
+        base_url = f"http://localhost:{port}/v1"
 
     if api_key is None:
         print(
