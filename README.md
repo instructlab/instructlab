@@ -54,7 +54,7 @@ mkdir <project_dir>
 cd <project_dir>
 python3 -m venv venv
 source venv/bin/activate
-pip install git+https://github.com/open-labrador/cli.git
+pip install git+ssh://git@github.com/open-labrador/cli.git
 ```
 
 ## 🚀 Running `lab`
