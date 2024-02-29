@@ -364,9 +364,12 @@ def generate_data(
 
 def get_taxonomy_diff(repo="taxonomy"):
     repo = Repo(repo)
-    updated_taxonomy_files = [
-                                 u for u in repo.untracked_files
-                                 if splitext(u)[1].lower() in [".yaml", ".yml"]] + [
-                                 d.a_path for d in repo.index.diff(None)
-                                 if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]]
+    untracked_files = [
+        u for u in repo.untracked_files if splitext(u)[1].lower() in [".yaml", ".yml"]]
+    modified_files = [
+        d.a_path for d in repo.index.diff(None)
+        if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]
+    ]
+    updated_taxonomy_files = untracked_files + modified_files
+
     return updated_taxonomy_files
