@@ -122,7 +122,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
                     clone_taxonomy(repository, "main")
                 except DownloadException as exc:
                     click.secho(
-                        f"Cloning {repository} failed with the following error: {exc.message}",
+                        f"Cloning {repository} failed with the following error: {exc}",
                         fg="red",
                     )
 
@@ -330,4 +330,10 @@ def download(ctx, repository, release, model_dir, pattern):
         "Make sure the local environment has the `gh` cli: https://cli.github.com"
     )
     click.echo(f"Downloading models from {repository}@{release} to {model_dir}...")
-    download_model(repository, release, model_dir, pattern)
+    try:
+        download_model(repository, release, model_dir, pattern)
+    except DownloadException as exc:
+        click.secho(
+            f"Downloading models failed with the following error: {exc}",
+            fg="red",
+        )
