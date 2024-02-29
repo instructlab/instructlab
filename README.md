@@ -106,13 +106,14 @@ command:
   ```shell
   lab init
   ```
-  
-  If there is no SSH credential in the local git client, please use the HTTPS endpoint of the Taxonomy repository:
-  ```shell
-  lab init --repository https://github.com/open-labrador/taxonomy.git
-  ```
 
   It will clone the `git@github.com:open-labrador/taxonomy.git` repository.
+
+  #### Troubleshooting
+    If cloning `git@github.com:open-labrador/taxonomy.git` failed because there is no SSH credential in the local git client, please use the HTTPS endpoint of the Taxonomy repository:
+    ```shell
+    lab init --repository https://github.com/open-labrador/taxonomy.git
+    ```
 
 ### Download model
 
