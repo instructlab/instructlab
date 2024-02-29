@@ -1,6 +1,6 @@
 # Standard
-from os.path import basename, dirname, exists, splitext
 from os import listdir
+from os.path import basename, dirname, exists, splitext
 import logging
 import sys
 
@@ -14,9 +14,9 @@ import llama_cpp.server.app as llama_app
 import uvicorn
 
 # Local
+from . import config
 from .chat.chat import chat_cli
-from .config import create_config_file, read_config, write_config, get_dict, get_default_config, DEFAULT_CONFIG
-from .download import clone_taxonomy, download_model
+from .download import DownloadException, clone_taxonomy, download_model
 from .generator.generate_data import generate_data, get_taxonomy_diff
 
 
@@ -25,11 +25,12 @@ class Lab:
     """Lab object holds high-level information about lab CLI"""
 
     def __init__(self, filename):
-        self.config = read_config(filename)
+        self.config = config.read_config(filename)
         FORMAT = "%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s"
         logging.basicConfig(format=FORMAT)
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(self.config.general.log_level.upper())
+
 
 def configure(ctx, param, filename):
     # skip configuration reading when invoked command is `init`
@@ -37,24 +38,27 @@ def configure(ctx, param, filename):
         return
 
     if not exists(filename):
-        raise click.ClickException(f"`{filename}` does not exists, please run `lab init` or point to a valid configuration file using `--config=<path>`.")
+        raise click.ClickException(
+            f"`{filename}` does not exists, please run `lab init` or point to a valid configuration file using `--config=<path>`."
+        )
 
     ctx.obj = Lab(filename)
     # default_map holds a dictionary with default values for each command parameters
-    ctx.default_map = get_dict(ctx.obj.config)
+    ctx.default_map = config.get_dict(ctx.obj.config)
 
 
 @click.group(cls=DYMGroup)
 @click.option(
     "--config",
     type=click.Path(),
-    default=DEFAULT_CONFIG,
+    default=config.DEFAULT_CONFIG,
     show_default=True,
     callback=configure,
     is_eager=True,
     help="Path to a configuration file.",
 )
 @click.pass_context
+# pylint: disable=redefined-outer-name
 def cli(ctx, config):
     """CLI for interacting with labrador.
 
@@ -64,56 +68,85 @@ def cli(ctx, config):
 @cli.command()
 @click.pass_context
 @click.option(
-    "--non-interactive",
+    "--interactive",
     is_flag=True,
+    default=True,
     help="Initialize the environment assuming defaults.",
 )
-def init(ctx, non_interactive):
+@click.option(
+    "--model-path",
+    type=click.Path(),
+    default=config.DEFAULT_MODEL_PATH,
+    help="Path to the model used during generation.",
+)
+@click.option(
+    "--taxonomy-path",
+    type=click.Path(),
+    default=config.DEFAULT_TAXONOMY_PATH,
+    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
+)
+@click.option(
+    "--repository",
+    default=config.DEFAULT_TAXONOMY_REPO,
+    help="Taxonomy repository location.",
+)
+def init(ctx, interactive, model_path, taxonomy_path, repository):
     """Initializes environment for labrador"""
-    if exists(DEFAULT_CONFIG):
-        overwrite = click.confirm("Found `config.yaml` in the current directory, do you still want to continue?")
+    if exists(config.DEFAULT_CONFIG):
+        overwrite = click.confirm(
+            f"Found {config.DEFAULT_CONFIG} in the current directory, do you still want to continue?"
+        )
         if not overwrite:
             return
 
-    if not non_interactive:
-        click.echo("Welcome to labrador CLI. This guide will help you to setup your environment.")
+    if interactive:
+        click.echo(
+            "Welcome to labrador CLI. This guide will help you to setup your environment."
+        )
         click.echo("Please provide the following values to initiate the environment:")
 
-        model_path = click.prompt("Path to your model", default="models/ggml-malachite-7b-0226-Q4_K_M.gguf")
+        model_path = click.prompt("Path to your model", default=model_path)
 
-        taxonomy_path = click.prompt("Path to taxonomy repo", default="taxonomy/")
+        taxonomy_path = click.prompt("Path to taxonomy repo", default=taxonomy_path)
         try:
             taxonomy_contents = listdir(taxonomy_path)
         except FileNotFoundError:
             taxonomy_contents = []
         if len(taxonomy_contents) == 0:
-            repository="https://github.com/open-labrador/taxonomy"
-            do_clone = click.confirm(f"`{taxonomy_path}` seems to not exists or is empty. Should I clone {repository} for you?")
+            do_clone = click.confirm(
+                f"`{taxonomy_path}` seems to not exists or is empty. Should I clone {repository} for you?"
+            )
             if do_clone:
                 click.echo(f"Cloning {repository}...")
-                err = clone_taxonomy(repository, "main")
-                if err:
-                    click.secho("Cloning {repository} failed with the following error: {err}", fg="red")
+                try:
+                    clone_taxonomy(repository, "main")
+                except DownloadException as exc:
+                    click.secho(
+                        f"Cloning {repository} failed with the following error: {exc.message}",
+                        fg="red",
+                    )
 
-    click.echo(f"Generating `{DEFAULT_CONFIG}` in the current directory...")
-    cfg = get_default_config()
+    click.echo(f"Generating `{config.DEFAULT_CONFIG}` in the current directory...")
+    cfg = config.get_default_config()
     model = splitext(basename(model_path))[0]
     cfg.chat.model = model
     cfg.generate.model = model
     cfg.serve.model_path = model_path
     cfg.generate.taxonomy_path = taxonomy_path
     cfg.list.taxonomy_path = taxonomy_path
-    write_config(cfg)
-    create_config_file()
+    config.write_config(cfg)
+    config.create_config_file()
 
-    click.echo("Initialization completed successfully, you're ready to start using `lab`. Enjoy!")
+    click.echo(
+        "Initialization completed successfully, you're ready to start using `lab`. Enjoy!"
+    )
 
 
 @cli.command()
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
-    help="Path to https://github.com/open-labrador/taxonomy/ checkout.",
+    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
 )
 @click.pass_context
 # pylint: disable=redefined-builtin
@@ -139,6 +172,7 @@ def submit(ctx):
 @cli.command()
 @click.option(
     "--model-path",
+    type=click.Path(),
     help="Path to the model used during generation.",
 )
 @click.option(
@@ -150,7 +184,12 @@ def submit(ctx):
 def serve(ctx, model_path, gpu_layers):
     """Start a local server"""
     ctx.obj.logger.info(f"Using model '{model_path}' with {gpu_layers} gpu-layers")
-    settings = Settings(model=model_path, n_ctx=4096, n_gpu_layers=gpu_layers, verbose=ctx.obj.logger.level==logging.DEBUG)
+    settings = Settings(
+        model=model_path,
+        n_ctx=4096,
+        n_gpu_layers=gpu_layers,
+        verbose=ctx.obj.logger.level == logging.DEBUG,
+    )
     app = create_app(settings=settings)
     llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
         template="{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}",
@@ -183,7 +222,7 @@ def serve(ctx, model_path, gpu_layers):
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
-    help="Path to https://github.com/open-labrador/taxonomy/ checkout.",
+    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
 )
 @click.option(
     "--seed-file",
@@ -193,10 +232,18 @@ def serve(ctx, model_path, gpu_layers):
 @click.pass_context
 def generate(ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file):
     """Generates synthetic data to enhance your example data"""
-    ctx.obj.logger.info(f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}'")
-    generate_data(logger=ctx.obj.logger, model_name=model, num_cpus=num_cpus,
-                  num_instructions_to_generate=num_instructions, taxonomy=taxonomy_path,
-                  prompt_file_path=ctx.obj.config.generate.prompt_file, seed_tasks_path=seed_file)
+    ctx.obj.logger.info(
+        f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}'"
+    )
+    generate_data(
+        logger=ctx.obj.logger,
+        model_name=model,
+        num_cpus=num_cpus,
+        num_instructions_to_generate=num_instructions,
+        taxonomy=taxonomy_path,
+        prompt_file_path=ctx.obj.config.generate.prompt_file,
+        seed_tasks_path=seed_file,
+    )
 
 
 @cli.command()
@@ -208,7 +255,7 @@ def train(ctx):
 
 @cli.command()
 @click.pass_context
-def test(ctx, config):
+def test(ctx):
     """Perform rudimentary tests of the model"""
     click.echo("# test TBD")
 
@@ -220,21 +267,25 @@ def test(ctx, config):
     type=click.UNPROCESSED,
 )
 @click.option(
-    "-m", "--model",
+    "-m",
+    "--model",
     help="Model to use",
 )
 @click.option(
-    "-c", "--context",
+    "-c",
+    "--context",
     default="default",
     help="Name of system context in config file",
 )
 @click.option(
-    "-s", "--session",
+    "-s",
+    "--session",
     type=click.File("r"),
     help="Filepath of a dialog session file",
 )
 @click.option(
-    "-qq", "--quick-question",
+    "-qq",
+    "--quick-question",
     is_flag=True,
     help="Exit after answering question",
 )
@@ -246,7 +297,7 @@ def chat(ctx, question, model, context, session, quick_question):
 
 @cli.command()
 @click.option(
-    "--repo",
+    "--repository",
     default="https://github.com/open-labrador/cli.git",
     show_default=True,
     help="GitHub repository of the hosted models.",
@@ -258,8 +309,7 @@ def chat(ctx, question, model, context, session, quick_question):
     help="GitHub release version of the hosted models.",
 )
 @click.option(
-    "--model-dir",
-    help="The local directory to download the model files into."
+    "--model-dir", help="The local directory to download the model files into."
 )
 @click.option(
     "--pattern",
@@ -267,7 +317,7 @@ def chat(ctx, question, model, context, session, quick_question):
 )
 @click.option("--pattern", help="Download only assets that match a glob pattern.")
 @click.pass_context
-def download(ctx, repo, release, model_dir, pattern):
+def download(ctx, repository, release, model_dir, pattern):
     """Download the model(s) to train"""
     # Use the serve model path to get the right models in the right place, if needed
     serve_model_path = ctx.obj.config.serve.model_path
@@ -276,6 +326,8 @@ def download(ctx, repo, release, model_dir, pattern):
             model_dir = dirname(serve_model_path)
         if not pattern:  # --pattern takes precedence
             pattern = basename(serve_model_path).replace(".gguf", ".*")
-    click.echo("Make sure the local environment has the `gh` cli: https://cli.github.com")
-    click.echo(f"Downloading models from {repo}@{release} to {model_dir}...")
-    download_model(repo, release, model_dir, pattern)
+    click.echo(
+        "Make sure the local environment has the `gh` cli: https://cli.github.com"
+    )
+    click.echo(f"Downloading models from {repository}@{release} to {model_dir}...")
+    download_model(repository, release, model_dir, pattern)
