@@ -23,8 +23,6 @@ import yaml
 # Local
 from . import utils
 
-
-# pylint: disable=line-too-long
 DEFAULT_PROMPT_TEMPLATE = """\
 You are asked to come up with a set of 20 diverse task instructions. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
 

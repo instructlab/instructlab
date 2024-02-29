@@ -149,7 +149,6 @@ def submit(ctx):
 @click.pass_context
 def serve(ctx, model_path, gpu_layers):
     """Start a local server"""
-    # pylint: disable=line-too-long
     ctx.obj.logger.info(f"Using model '{model_path}' with {gpu_layers} gpu-layers")
     settings = Settings(model=model_path, n_ctx=4096, n_gpu_layers=gpu_layers, verbose=ctx.obj.logger.level==logging.DEBUG)
     app = create_app(settings=settings)
