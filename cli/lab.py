@@ -272,9 +272,21 @@ def serve(ctx, model_path, gpu_layers):
     default=0.9,
     help="Threshold of (max) Rouge score to keep samples; 1.0 means accept all samples.",
 )
+@click.option(
+    "--quiet",
+    is_flag=True,
+    help="Suppress output of synthesized instructions",
+)
 @click.pass_context
 def generate(
-    ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file, rouge_threshold
+    ctx,
+    model,
+    num_cpus,
+    num_instructions,
+    taxonomy_path,
+    seed_file,
+    rouge_threshold,
+    quiet,
 ):
     """Generates synthetic data to enhance your example data"""
     ctx.obj.logger.info(
@@ -290,6 +302,7 @@ def generate(
             prompt_file_path=ctx.obj.config.generate.prompt_file,
             seed_tasks_path=seed_file,
             rouge_threshold=rouge_threshold,
+            console_output=not quiet,
         )
     except GenerateException as exc:
         click.secho(

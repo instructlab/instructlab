@@ -173,6 +173,7 @@ def generate_data(
     temperature=1.0,
     top_p=1.0,
     rouge_threshold: Optional[float] = None,
+    console_output=True,
 ):
     seed_instruction_data = []
     generate_start = time.time()
@@ -299,6 +300,10 @@ def generate_data(
     ]
 
     prompt_template = check_prompt_file(prompt_file_path)
+    if console_output:
+        print(
+            "Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help."
+        )
     while len(machine_instruction_data) < num_instructions_to_generate:
         request_idx += 1
 
@@ -385,6 +390,8 @@ def generate_data(
                     "assistant": synth_example["output"],
                 }
             )
+            if console_output:
+                print(f"{user}\n{synth_example['output']}\n")
         # utils.jdump(train_data, os.path.join(output_dir, output_file_train))
         with open(
             os.path.join(output_dir, output_file_train), "w", encoding="utf-8"
