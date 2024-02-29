@@ -105,8 +105,6 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
         )
         click.echo("Please provide the following values to initiate the environment:")
 
-        model_path = click.prompt("Path to your model", default=model_path)
-
         taxonomy_path = click.prompt("Path to taxonomy repo", default=taxonomy_path)
         try:
             taxonomy_contents = listdir(taxonomy_path)
@@ -126,6 +124,12 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
                         fg="red",
                     )
 
+        # check if models dir exists, and if so ask for which model to use
+        models_dir = dirname(model_path)
+        if exists(models_dir):
+            model_path = click.prompt("Path to your model", default=model_path)
+
+    # non-interactive part of the generation
     click.echo(f"Generating `{config.DEFAULT_CONFIG}` in the current directory...")
     cfg = config.get_default_config()
     model = splitext(basename(model_path))[0]
