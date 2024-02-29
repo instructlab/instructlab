@@ -109,7 +109,7 @@ command:
   
   To initialize the Taxonomy from a private repository source, please use the git SSH endpoint of the private repository:
   ```shell
-  lab init --repo git@github.com:open-labrador/taxonomy.git
+  lab init --repository git@github.com:open-labrador/taxonomy.git
   ```
 
   It will clone the `git@github.com:open-labrador/taxonomy.git` repository.
