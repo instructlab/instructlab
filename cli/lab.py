@@ -62,7 +62,8 @@ def configure(ctx, param, filename):
 def cli(ctx, config):
     """CLI for interacting with labrador.
 
-    If this is your first time running lab, it's best to start with `lab init` to create the environment"""
+    If this is your first time running lab, it's best to start with `lab init` to create the environment
+    """
 
 
 @cli.command()
@@ -184,8 +185,14 @@ def submit(ctx):
     type=click.INT,
     help="The number of layers to put on the GPU. The rest will be on the CPU. Defaults to -1 to move all to GPU.",
 )
+@click.option(
+    "--port",
+    type=click.INT,
+    help="Specifies which port to serve model on. Defaults to 8000",
+    default=8000,
+)
 @click.pass_context
-def serve(ctx, model_path, gpu_layers):
+def serve(ctx, model_path, gpu_layers, port):
     """Start a local server"""
     ctx.obj.logger.info(f"Using model '{model_path}' with {gpu_layers} gpu-layers")
     settings = Settings(
@@ -205,7 +212,7 @@ def serve(ctx, model_path, gpu_layers):
         "After application startup complete see http://127.0.0.1:8000/docs for API."
     )
     click.echo("Press CTRL+C to shutdown server.")
-    uvicorn.run(app, port=8000, log_level=logging.ERROR)  # TODO: host params, etc...
+    uvicorn.run(app, port=port, log_level=logging.ERROR)  # TODO: host params, etc...
 
 
 @cli.command()
