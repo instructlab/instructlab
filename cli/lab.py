@@ -106,20 +106,14 @@ def submit(ctx):
 @click.option('--verbose', '-v', is_flag=True, help="Print verbose output.")
 @click.pass_context
 def serve(ctx, model, gpu_layers, verbose):
+
     """Start a local server"""
+    # pylint: disable=line-too-long
     ctx.obj.logger.info(f"Using model '{model}' with {gpu_layers} gpu-layers")
     settings = Settings(model=model, n_ctx=4096, n_gpu_layers=gpu_layers, verbose=verbose)
     app = create_app(settings=settings)
     llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
-        template="""{% for message in messages %}\n{% if message['role'] == 'user' %}\n
-                {{ '<|user|>\n' + message['content'] }}\n
-                {% elif message['role'] == 'system' %}\n
-                {{ '<|system|>\n' + message['content'] }}\n
-                {% elif message['role'] == 'assistant' %}\n
-                {{ '<|assistant|>\n' + message['content'] + eos_token }}\n
-                {% endif %}\n{% if loop.last and add_generation_prompt %}\n
-                {{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}""",
-                eos_token="<|endoftext|>", bos_token=""
+        template="{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}", eos_token="<|endoftext|>", bos_token=""
     ).to_chat_handler()
     click.echo("Starting server process")
     click.echo("After application startup complete see http://127.0.0.1:8000/docs for API.")

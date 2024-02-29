@@ -73,10 +73,10 @@ def download_model(
     combined_model_list = []
     for key, value in splitted_models.items():
         cat_commands = ['cat']
-        splitted_model_files = set(value)
+        splitted_model_files = list(value)
         cat_commands.extend(splitted_model_files)
         cat_result = create_subprocess(cat_commands)
-        if cat_result.stdout is not None and cat_result.stdout != b'':
+        if cat_result.stdout not in (None, b''):
             with open(key, "wb") as model_file:
                 model_file.write(cat_result.stdout)
             rm_commands = ['rm']

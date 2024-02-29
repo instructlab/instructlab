@@ -121,18 +121,20 @@ def openai_completion(
 
 
 def _make_w_io_base(f, mode: str):
+    # pylint: disable=consider-using-with
     if not isinstance(f, io.IOBase):
         f_dirname = os.path.dirname(f)
         if f_dirname != "":
             os.makedirs(f_dirname, exist_ok=True)
-        with open(f, encoding="utf-8", mode=mode) as file:
-            return file
+        f = open(f, mode=mode, encoding="utf-8")
+    return f
 
 
 def _make_r_io_base(f, mode: str):
+    # pylint: disable=consider-using-with
     if not isinstance(f, io.IOBase):
-        with open(f, encoding="utf-8", mode=mode) as file:
-            return file
+        f = open(f, mode=mode, encoding="utf-8")
+    return f
 
 
 def jdump(obj, f, mode="w", indent=4, default=str):
