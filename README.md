@@ -100,16 +100,12 @@ Using the Labrador 🐶 method involves a number of steps, supported by various 
 ## 🏗️ 1. Initial setup
 
 ### Initialize environment
+
 - Create an empty directory `project_dir` and change the current directory into `project_dir`. Initialize a local environment to use Labrador 🐶 via the **init**
 command:
 
   ```shell
   lab init
-  ```
-  
-  To initialize the Taxonomy from a private repository source, please use the git SSH endpoint of the private repository:
-  ```shell
-  lab init --repo git@github.com:open-labrador/taxonomy.git
   ```
 
   It will clone the `git@github.com:open-labrador/taxonomy.git` repository.
