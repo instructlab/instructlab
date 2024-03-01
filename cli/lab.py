@@ -327,12 +327,9 @@ def test(ctx):
 def chat(ctx, question, model, context, session, quick_question):
     """Run a chat using the modified model"""
     try:
-        chat_cli(ctx, question, model, context, session, quick_question)
-    except ChatException as e:
-        click.secho(
-            f"Executing chat failed with: {e.__cause__}",
-            fg="red",
-        )
+        chat_cli(ctx.obj.config.chat, ctx.obj.logger, question, model, context, session, quick_question)
+    except ChatException as exc:
+        click.secho(f"Executing chat failed with: {exc}",fg="red")
 
 
 @cli.command()
