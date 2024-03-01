@@ -97,10 +97,12 @@ def download_model(
     return combined_model_list
 
 
-def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
-                   gh_branch='main',
-                   directory='taxonomy',
-                   min_taxonomy=False):
+def clone_taxonomy(
+    gh_repo="https://github.com/open-labrador/taxonomy.git",
+    gh_branch="main",
+    directory="taxonomy",
+    min_taxonomy=False,
+):
     """
     Clone the taxonomy repository from a Git repository source.
 
@@ -115,9 +117,9 @@ def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
     - None
     """
     # Clone taxonomy repo
-    git_clone_commands = ['git', 'clone', gh_repo, '--branch', gh_branch]
+    git_clone_commands = ["git", "clone", gh_repo, "--branch", gh_branch]
     if min_taxonomy:
-        git_clone_commands.append('--depth=1')
+        git_clone_commands.append("--depth=1")
     git_clone_commands.extend([directory])
 
     try:

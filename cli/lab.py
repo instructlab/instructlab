@@ -15,7 +15,7 @@ import uvicorn
 
 # Local
 from . import config
-from .chat.chat import chat_cli
+from .chat.chat import ChatException, chat_cli
 from .download import DownloadException, clone_taxonomy, download_model
 from .generator.generate_data import GenerateException, generate_data, get_taxonomy_diff
 
@@ -95,9 +95,9 @@ def cli(ctx, config):
 @click.option(
     "--min_taxonomy",
     is_flag=True,
-    help="Shallow clone the taxonomy repository with minimum size. " \
-         "Please do not use this option if you are planning to contribute back " \
-         "using the same taxonomy repository. "
+    help="Shallow clone the taxonomy repository with minimum size. "
+    "Please do not use this option if you are planning to contribute back "
+    "using the same taxonomy repository. ",
 )
 def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
     """Initializes environment for labrador"""
@@ -212,12 +212,18 @@ def serve(ctx, model_path, gpu_layers):
             f"Creating App using model failed with following value error: {err}",
             fg="red",
         )
-
-    llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
-        template="{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}",
-        eos_token="<|endoftext|>",
-        bos_token="",
-    ).to_chat_handler()
+    try:
+        llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
+            template="{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}",
+            eos_token="<|endoftext|>",
+            bos_token="",
+        ).to_chat_handler()
+    # pylint: disable=broad-exception-caught
+    except Exception as e:
+        click.secho(
+            f"Error creating chat handler: {e}",
+            fg="red",
+        )
     click.echo("Starting server process")
     click.echo(
         "After application startup complete see http://127.0.0.1:8000/docs for API."
@@ -320,7 +326,18 @@ def test(ctx):
 @click.pass_context
 def chat(ctx, question, model, context, session, quick_question):
     """Run a chat using the modified model"""
-    chat_cli(ctx, question, model, context, session, quick_question)
+    try:
+        chat_cli(
+            ctx.obj.config.chat,
+            ctx.obj.logger,
+            question,
+            model,
+            context,
+            session,
+            quick_question,
+        )
+    except ChatException as exc:
+        click.secho(f"Executing chat failed with: {exc}", fg="red")
 
 
 @cli.command()

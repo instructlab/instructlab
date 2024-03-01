@@ -19,9 +19,6 @@ from rich.panel import Panel
 from rich.text import Text
 import openai
 
-# Local
-from ..config import get_dict
-
 HELP_MD = """
 Help / TL;DR
 - `/q`: **q**uit
@@ -57,6 +54,11 @@ PRICING_RATE = {
 }
 
 PROMPT_PREFIX = ">>> "
+
+
+class ChatException(Exception):
+    """An exception raised during chat step."""
+
 
 # TODO Autosave chat history
 class ConsoleChatBot:
@@ -248,7 +250,6 @@ class ConsoleChatBot:
         self.info["messages"].append(message)
 
     def start_prompt(self, content=None, box=True):
-
         handlers = {
             "/q": self._handle_quit,
             "quit": self._handle_quit,
@@ -298,22 +299,24 @@ class ConsoleChatBot:
             assert (
                 next(response).choices[0].delta.role == "assistant"
             ), 'first response should be {"role": "assistant"}'
-        except openai.AuthenticationError:
-            self.console.print("Invalid API Key", style="bold red")
-            raise EOFError
-        except openai.RateLimitError:
+        except openai.AuthenticationError as e:
+            self.console.print(
+                "Invalid API Key. Please set it in your config file.", style="bold red"
+            )
+            raise ChatException("API Key Error") from e
+        except openai.RateLimitError as e:
             self.console.print(
                 "Rate limit or maximum monthly limit exceeded", style="bold red"
             )
             self.info["messages"].pop()
-            raise KeyboardInterrupt
-        except openai.APIConnectionError:
+            raise ChatException("Rate limit exceeded") from e
+        except openai.APIConnectionError as e:
             self.console.print("Connection error, try again...", style="red bold")
             self.info["messages"].pop()
             raise KeyboardInterrupt
         except:
             self.console.print("Unknown error", style="bold red")
-            raise
+            raise ChatException(f"Unknown error: {sys.exc_info()[0]}")
 
         response_content = Text()
         panel = (
@@ -340,32 +343,20 @@ class ConsoleChatBot:
         self._update_conversation(response_content.plain, "assistant")
 
 
-def chat_cli(ctx, question, model, context, session, qq) -> None:
-    config_filepath = ctx.obj.config_file
-    config = ctx.obj.config.chat
-
-    config = get_dict(config)
-
+def chat_cli(config, logger, question, model, context, session, qq) -> None:
     assert (context is None) or (
         session is None
     ), "Cannot load context and session in the same time"
 
-    # Read API key
-    api_key = os.environ.get("OAI_SECRET_KEY", config.get("api_key", "no-api-key"))
-    base_url = config.get("api_base")
-
-    if api_key is None:
-        print(
-            f"API key not found. Please set it in the config file ({config_filepath}) or via environment variable `OAI_SECRET_KEY` (higher priority)."
-        )
-        sys.exit(1)
+    if not config.api_key:
+        raise ChatException("Invalid API Key. Please set it in your config file.")
 
     # proxy = config.get("proxy")
     # if proxy is not None:
     # TODO: The 'openai.proxy' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(proxy={"http": proxy, "https": proxy})'
     # openai.proxy = {"http": proxy, "https": proxy}
 
-    client = OpenAI(base_url=base_url, api_key=api_key)
+    client = OpenAI(base_url=config.api_base, api_key=config.api_key)
 
     # Load context/session
     loaded = {}
@@ -374,9 +365,7 @@ def chat_cli(ctx, question, model, context, session, qq) -> None:
     # global CONTEXTS
     # CONTEXTS = config["contexts"]
     if context not in CONTEXTS:
-        print(
-            f"Context {context} not found in the config file ({config_filepath}). Using default."
-        )
+        logger.info(f"Context {context} not found in the config file. Using default.")
         context = "default"
     loaded["name"] = context
     loaded["messages"] = [{"role": "system", "content": CONTEXTS[context]}]
@@ -389,13 +378,11 @@ def chat_cli(ctx, question, model, context, session, qq) -> None:
 
     # Initialize chat bot
     ccb = ConsoleChatBot(
-        config["model"] if model is None else model,
+        config.model if model is None else model,
         client=client,
-        vi_mode=config.get("vi_mode", False),
+        vi_mode=config.vi_mode,
         prompt=not qq,
-        vertical_overflow=(
-            "visible" if config.get("visible_overflow", False) else "ellipsis"
-        ),
+        vertical_overflow=("visible" if config.visible_overflow else "ellipsis"),
         loaded=loaded,
     )
 
@@ -408,17 +395,21 @@ def chat_cli(ctx, question, model, context, session, qq) -> None:
         question = " ".join(question)
         if not qq:
             print(f"{PROMPT_PREFIX}{question}")
-        ccb.start_prompt(question, box=(not qq))
+        try:
+            ccb.start_prompt(question, box=(not qq))
+        except ChatException as exc:
+            raise ChatException(f"API issue found while executing chat: {exc}")
+        except KeyboardInterrupt:
+            return
 
-    if not qq:
-        # Start chatting
-        while True:
-            try:
-                ccb.start_prompt()
-            except KeyboardInterrupt:
-                continue
-            except EOFError:
-                break
-    else:
-        # TODO Autosave session in QQ mode
-        pass
+    if qq:
+        return
+
+    # Start chatting
+    while True:
+        try:
+            ccb.start_prompt()
+        except KeyboardInterrupt:
+            continue
+        except ChatException as exc:
+            raise ChatException(f"API issue found while executing chat: {exc}")
