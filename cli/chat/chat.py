@@ -340,8 +340,9 @@ class ConsoleChatBot:
         self._update_conversation(response_content.plain, "assistant")
 
 
-def chat_cli(question, model, context, session, qq, config) -> None:
-    config_filepath = "TODO: figure out how to fetch this"
+def chat_cli(ctx, question, model, context, session, qq) -> None:
+    config_filepath = ctx.obj.config_file
+    config = ctx.obj.config.chat
 
     config = get_dict(config)
 

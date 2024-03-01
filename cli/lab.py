@@ -25,6 +25,7 @@ class Lab:
     """Lab object holds high-level information about lab CLI"""
 
     def __init__(self, filename):
+        self.config_file = filename
         self.config = config.read_config(filename)
         FORMAT = "%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s"
         logging.basicConfig(format=FORMAT)
@@ -312,7 +313,7 @@ def test(ctx):
 @click.pass_context
 def chat(ctx, question, model, context, session, quick_question):
     """Run a chat using the modified model"""
-    chat_cli(question, model, context, session, quick_question, ctx.obj.config.chat)
+    chat_cli(ctx, question, model, context, session, quick_question)
 
 
 @cli.command()
