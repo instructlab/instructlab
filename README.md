@@ -14,11 +14,12 @@ future support for 🐧 Linux and other operating systems as well as for
 
 - [Labrador 🐶 command-line interface `lab`](#labrador--command-line-interface-lab)
   - [Contents:](#contents)
+  - [What is `lab`?](#what-is-lab)
 - [Getting `lab`](#getting-lab)
   - [📋 Requirements](#-requirements)
   - [🧰 Installing `lab`](#-installing-lab)
     - [Installing from GitHub (I just want it to work! 🚀)](#installing-from-github-i-just-want-it-to-work-)
-    - [Installing from Source (I want to start developing! 🛠️)](#installing-from-source-i-want-to-start-developing-️)
+    - [Installing from Source (I want to contribute to `lab` CLI! 🛠️)](#installing-from-source-i-want-to-contribute-to-lab-cli-️)
   - [🚀 Verifying `lab` installation](#-verifying-lab-installation)
 - [How to use `lab`](#how-to-use-lab)
   - [🏗️ 1. Initial setup](#️-1-initial-setup)
@@ -37,6 +38,24 @@ future support for 🐧 Linux and other operating systems as well as for
   - [🎁 4. Submit your dataset!](#-4-submit-your-dataset)
   - [Contributing](#contributing)
   - [Other stuffs](#other-stuffs)
+
+## What is `lab`?
+
+`lab` is a Command-Line Interface (CLI) that will minimally allow you to:
+
+1. Download a pretrained LLM from [`lab`'s GitHub repo](https://github.com/open-labrador/cli/releases).
+2. Chat with the LLM as-downloaded from GitHub.
+
+`lab`'s most interesting feature, however, is to allow _you_ to **add new knowledge and skills to the pre-trained LLM**.
+
+How is this done? First, you have to add new information to the companion [taxonomy](https://github.com/open-labrador/taxonomy.git) repository. Please read the docs there to see how this can be done.
+
+After you've added some skills or knowledge (when knowledge contributions are accepted) to `taxonomy`, you can:
+
+3. Use `lab` to synthesize a large amount of new training data from your locally-cloned `taxonomy` repository.
+4. Re-train the LLM that you initially downloaded with this new training data.
+
+Finally, you can run the retrained model and make use of its new talents!
 
 # Getting `lab`
 
@@ -81,7 +100,7 @@ These are the steps that we're executing above, in plain language:
 
 **NOTE**: You're free to name the new directory that we called `labrador` anything you want!
 
-### Installing from Source (I want to start developing! 🛠️)
+### Installing from Source (I want to contribute to `lab` CLI! 🛠️)
 
 We're keeping these detailed instructions in `CONTRIBUTING.MD` to keep this `README.MD` brief.
 
@@ -223,7 +242,7 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
 - Train the model on your synthetic data-enhanced dataset using **train**:
 
-  `lab train {local path to gguf-format model} {path to root directorylocation of dataset}`
+  `lab train {local path to gguf-format model} {path to root directory location of dataset}`
 
 ## 👩🏽‍🔬 3. Testing the fine-tuned model
 
