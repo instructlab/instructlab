@@ -149,6 +149,11 @@ def post_process_gpt3_response(num_prompt_instructions, response):
 def find_word_in_string(w, s):
     return re.compile(r"\b({0})\b".format(w), flags=re.IGNORECASE).search(s)
 
+def get_seed_examples(contents):
+    if "seed_examples" in contents:
+        return contents["seed_examples"]
+    else:
+        return contents
 
 def generate_data(
     logger,
@@ -184,7 +189,7 @@ def generate_data(
             try:
                 with open(taxonomy, "r", encoding="utf-8") as file:
                     contents = yaml.safe_load(file)
-                    for t in contents:
+                    for t in get_seed_examples(contents):
                         seed_instruction_data.append(
                             {
                                 "instruction": t["question"],
@@ -219,7 +224,7 @@ def generate_data(
                 try:
                     with open(file_path, "r", encoding="utf-8") as file:
                         contents = yaml.safe_load(file)
-                        for t in contents:
+                        for t in get_seed_examples(contents):
                             q = t["question"]
                             a = t["answer"]
                             if not q or not a:
