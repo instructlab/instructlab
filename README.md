@@ -270,7 +270,7 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 ## 🎁 4. Submit your dataset!
 
 Of course the final step is - if you've improved the model - to share your new dataset by submitting it! You'll submit it via a pull-request process, which
-is documented in the [taxonomy respository](#TODO).
+is documented in the [taxonomy respository](https://github.com/open-labrador/taxonomy).
 
 ## Contributing
 
