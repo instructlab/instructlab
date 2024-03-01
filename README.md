@@ -6,7 +6,7 @@ Language Models (LLMs.) The "**lab**" in **Lab**rador 🐶 stands for **L**arge-
 This command-line interface for Labrador 🐶 (`lab`) will allow you to create models tuned
 with your data using the Labrador 🐶 method on your laptop or workstation.
 
-_This is currently a tool that **requires an M1/M2/M3 Mac** to use; we anticipate
+_`lab` currently **requires an Apple M1/M2/M3 Mac** to use. We anticipate
 future support for 🐧 Linux and other operating systems as well as for
 💻 additional hardware._
 
@@ -16,7 +16,7 @@ future support for 🐧 Linux and other operating systems as well as for
   - [Contents:](#contents)
 - [Getting `lab`](#getting-lab)
   - [📋 Requirements](#-requirements)
-  - [🧰 Program Installation](#-program-installation)
+  - [🧰 Installing `lab`](#-installing-lab)
     - [Installing from GitHub (I just want it to work! 🚀)](#installing-from-github-i-just-want-it-to-work-)
     - [Installing from Source (I want to start developing! 🛠️)](#installing-from-source-i-want-to-start-developing-️)
   - [🚀 Verifying `lab` installation](#-verifying-lab-installation)
@@ -38,15 +38,13 @@ future support for 🐧 Linux and other operating systems as well as for
   - [Contributing](#contributing)
   - [Other stuffs](#other-stuffs)
 
-<a name="getting"></a>
-
 # Getting `lab`
 
 ## 📋 Requirements
 
 - 🐍 Python 3.9 or later (CLang dsitribution of Python: 15.0.0 from xcode)
 - 🍎 macOS (14.x with an M1/M2/M3 Metal/GPU)
-- 📦 A quantized model in GGUF format (or read our [guide](#model-convert-quant) on to convert
+- 📦 A quantized model in GGUF format (or read our [guide](<(https://github.com/open-labrador/cli/docs/converting_GGUF.md)>) on to convert
   models to GGUF format and quantize them.)
 - `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github
 
@@ -54,7 +52,7 @@ future support for 🐧 Linux and other operating systems as well as for
 [Conda Miniforge](https://github.com/conda-forge/miniforge), or another tool for Python version management on your laptop, then use the virtual environment with that tool instead. Otherwise, you may have issues with packages installed but modules
 from that package not found as they are linked to your Python version management tool and not `venv`.
 
-## 🧰 Program Installation
+## 🧰 Installing `lab`
 
 The `lab` CLI will be available from PyPI using `pip3 install lab-cli` in the future.
 For now, we offer two ways to get started:
@@ -81,7 +79,7 @@ These are the steps that we're executing above, in plain language:
 4. Turn the virtual environment on.
 5. Install the latest main-branch labrador cli program from GitHub in the new virtual environment.
 
-**NOTE**: You're free to name your new directory, that we called `labrador`, anything you want!
+**NOTE**: You're free to name the new directory that we called `labrador` anything you want!
 
 ### Installing from Source (I want to start developing! 🛠️)
 
@@ -110,7 +108,7 @@ Congrats! You're ready to get started 😁
 
 **NOTE**: The following instructions assume that you've followed the "Installation" instructions above, including installing `lab` from GitHub into a Python virtual environment.
 
-The Labrador 🐶 CLI `lab` requires a few setup steps- in these instructions, we'll guide you through getting started.
+The Labrador 🐶 CLI `lab` requires a few setup steps. In these instructions, we'll guide you through getting started.
 You can see a flow chart showing the order of commands in a typical workflow as well as detailed command documentation below:
 
 ![flow diagram](docs/workflow.png)
@@ -165,7 +163,7 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 ### Serve the model
 
 - Serve the downloaded model locally via the **serve** command using the
-  [llama.cpp framework](#TODO) and [llama-cpp-python](#TODO) (which provides
+  [llama.cpp framework](https://github.com/ggerganov/llama.cpp) and [llama-cpp-python](https://github.com/abetlen/llama-cpp-python) (which provides
   Python bindings for llama.cpp):
 
   ```shell
@@ -186,7 +184,7 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
 ### Chat with the model
 
-- Before you start tuning your model and adding new Skills and Knowledge, check out it's baseline performance.
+- Before you start tuning your model and adding new Skills and Knowledge, check out its baseline performance.
   This way, you'll be able to tell whether the model has learned from your contributions!
 
   **Note:** Because you're serving the model in one terminal window, you'll likely have to create a new window and re-activate your Python virtual environment to run the following command:
@@ -199,8 +197,7 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
 ### Generate a dataset
 
-- Generate a synthetic dataset to enhance your example data set using the
-  **generate** command. If you haven't made any changes to your `/taxonomy` directory yet, nothing should happen.
+- Generate a synthetic dataset to enhance your example data set using the **generate** command. If you haven't made any changes to your `/taxonomy` directory yet, nothing should happen.
 
   ```
   lab generate
@@ -208,27 +205,17 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
   **Note:** Make sure you're in a terminal window with your Python virtual environment enabled!
 
-  📋 **Note:** This takes about **~45 minutes** to complete on an M1 mac with 16 GB RAM. The synthetic data set will be a file starting with the name `generated` ending in a `.json` file extension in the directory of your taxonomy. The file name includes model used and date time of generation.
-
-  > Tip: If you want to pickup where you left off, copy a generated JSON file into a file named `regen.json`. `regen.json` will be picked up at the start of `lab generate` when available.
+  📋 **Note:** This takes about **~45 minutes** to complete on an M1 mac with 16 GB RAM. The synthetic data set will be three files that are named like: `generate*.json`, `test*.json`, and `train*.json`. The file names will include the model used and date and time of generation.
 
   #### Configuration
 
-  `lab` currently requires a valid configuration file to run. By default, it
-  looks for a `cli/config/config.yml` file in the current directory, but you
-  can override that with `--config` flag like so:
-
-  ```ShellSession
-  python -m cli --config=./config.yml generate
-  ```
-
-  or
+  `lab` will use a default configuration file unless otherwise specified. You can override this behavior with the `--config` parameter.
 
   ```ShellSession
   lab --config=./config.yml generate
   ```
 
-  **Note:** Make sure to pass the `--config` flag after the root command name!
+  **Note:** Make sure to pass the `--config` flag after `lab` and not after `generate`.
 
   A sample configuration file is available in [cli/config/config.yml](cli/config/config.yml).
 
