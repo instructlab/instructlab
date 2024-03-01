@@ -52,9 +52,10 @@ def download_model(
             download_commands.extend(["--pattern", "*"])
     try:
         create_subprocess(download_commands)
-    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-        # TODO improve this error message
-        raise DownloadException("An error occurred while downloading models.") from exc
+    except FileNotFoundError as exc:
+        raise DownloadException("`gh` binary not found") from exc
+    except subprocess.CalledProcessError as exc:
+        raise DownloadException(f"error invoking `gh` command: {exc}") from exc
 
     # Get the list of local files
     ls_commands = ["ls", model_dir]
@@ -103,7 +104,7 @@ def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
     Clone the taxonomy repository from a Git repository source.
 
     Parameters:
-    - gh_repo (str): The URL of the taxonomy Git repository.
+    - repository (str): URL of the taxonomy git repository.
         Default is the Open Labrador taxonomy repository.
     - gh_branch (str): The GitHub branch of the taxonomy repository. Default is main
     - min_taxonomy(bool): Shallow clone the taxonomy repository with minimum size.
@@ -118,9 +119,10 @@ def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
 
     try:
         create_subprocess(git_clone_commands)
-    except (FileNotFoundError, subprocess.CalledProcessError) as exc:
-        # TODO improve this error message
-        raise DownloadException("An error occurred during cloning taxonomy.") from exc
+    except FileNotFoundError as exc:
+        raise DownloadException("`git` binary not found") from exc
+    except subprocess.CalledProcessError as exc:
+        raise DownloadException("error cloning {repository}@{branch}: {exc}") from exc
 
 
 def create_subprocess(commands):
