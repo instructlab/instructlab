@@ -140,7 +140,6 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
     cfg.generate.taxonomy_path = taxonomy_path
     cfg.list.taxonomy_path = taxonomy_path
     config.write_config(cfg)
-    config.create_config_file()
 
     click.echo(
         "Initialization completed successfully, you're ready to start using `lab`. Enjoy!"
@@ -313,7 +312,7 @@ def test(ctx):
 @click.pass_context
 def chat(ctx, question, model, context, session, quick_question):
     """Run a chat using the modified model"""
-    chat_cli(question, model, context, session, quick_question)
+    chat_cli(question, model, context, session, quick_question, ctx.obj.config.chat)
 
 
 @cli.command()

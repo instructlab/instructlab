@@ -18,7 +18,7 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.text import Text
 import openai
-import toml
+from ..config import get_dict
 
 HELP_MD = """
 Help / TL;DR
@@ -40,13 +40,11 @@ Help / TL;DR
 Press Meta+Enter or Esc Enter to end multiline input.
 """
 
-CONFIG_FILENAME = "chat-cli.toml"
-CONTEXTS = None
-
-CONFIG_FILEPATHS = [
-    # TODO: rather than defaults use proper paths here and below as well
-    CONFIG_FILENAME,
-]
+CONTEXTS = {
+    "default": "You are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior.",
+    "cli_helper": "You are an expert for command line interface and know all common commands. Answer the command to execute as it without any explanation.",
+    "dictionary": "You are a professional English-Chinese translator. Translate the input to the other language by providing its part of speech (POS) followed by up-to 5 common but distinct translations in this format: `[{POS}] {translation 1}; {translation 2}; ...`. Do not provide nonexistent results.",
+}
 
 PROMPT_HISTORY_FILEPATH = os.path.expanduser("~/.local/chat-cli.history")
 
@@ -341,25 +339,14 @@ class ConsoleChatBot:
         self._update_conversation(response_content.plain, "assistant")
 
 
-def chat_cli(question, model, context, session, qq) -> None:
+def chat_cli(question, model, context, session, qq, config) -> None:
+    config_filepath = "TODO: figure out how to fetch this"
+
+    config = get_dict(config)
+
     assert (context is None) or (
         session is None
     ), "Cannot load context and session in the same time"
-
-    # Load config file
-    config = None
-    config_filepath = None
-    for config_filepath in CONFIG_FILEPATHS:
-        file_exists = os.path.isfile(config_filepath)
-        if file_exists:
-            with open(config_filepath) as file:
-                config = toml.load(file)
-            break
-    if config is None:
-        print(
-            f"Config file not found. Please copy {CONFIG_FILENAME} from the repo to any path in {CONFIG_FILEPATHS}."
-        )
-        sys.exit(1)
 
     # Read API key
     api_key = os.environ.get("OAI_SECRET_KEY", config.get("api_key", "no-api-key"))
@@ -382,20 +369,15 @@ def chat_cli(question, model, context, session, qq) -> None:
     loaded = {}
 
     # Context config file
-    if "contexts" in config:
-        global CONTEXTS
-        CONTEXTS = config["contexts"]
-        if context not in config["contexts"]:
-            print(
-                f"Context {context} not found in the config file ({config_filepath}). Using default."
-            )
-            context = "default"
-        loaded["name"] = context
-        loaded["messages"] = [{"role": "system", "content": CONTEXTS[context]}]
-    else:
+    # global CONTEXTS
+    # CONTEXTS = config["contexts"]
+    if context not in CONTEXTS:
         print(
-            f"No contexts section found in the config file ({config_filepath}). Starting without context."
+            f"Context {context} not found in the config file ({config_filepath}). Using default."
         )
+        context = "default"
+    loaded["name"] = context
+    loaded["messages"] = [{"role": "system", "content": CONTEXTS[context]}]
 
     # Session from CLI
     # TODO Print history in session when loaded
