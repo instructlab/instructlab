@@ -1,0 +1,18 @@
+chat:
+  context: default
+  model: ggml-malachite-7b-0226-Q4_K_M
+  session: null
+general:
+  log_level: INFO
+generate:
+  model: ggml-malachite-7b-0226-Q4_K_M
+  num_cpus: 10
+  num_instructions: 100
+  prompt_file: prompt.txt
+  seed_file: seed_tasks.json
+  taxonomy_path: taxonomy
+list:
+  taxonomy_path: taxonomy
+serve:
+  gpu_layers: -1
+  model_path: models/ggml-malachite-7b-0226-Q4_K_M.gguf

@@ -58,6 +58,9 @@ PRICING_RATE = {
 
 PROMPT_PREFIX = ">>> "
 
+class ChatException(Exception):
+    """An exception raised during chat step."""
+
 # TODO Autosave chat history
 class ConsoleChatBot:
     def __init__(
@@ -298,16 +301,16 @@ class ConsoleChatBot:
             assert (
                 next(response).choices[0].delta.role == "assistant"
             ), 'first response should be {"role": "assistant"}'
-        except openai.AuthenticationError:
+        except openai.AuthenticationError as e:
             self.console.print("Invalid API Key", style="bold red")
-            raise EOFError
-        except openai.RateLimitError:
+            raise ChatException("API Key Error") from e
+        except openai.RateLimitError as e:
             self.console.print(
                 "Rate limit or maximum monthly limit exceeded", style="bold red"
             )
             self.info["messages"].pop()
-            raise KeyboardInterrupt
-        except openai.APIConnectionError:
+            raise ChatException("Rate limit exceeded") from e
+        except openai.APIConnectionError as e:
             self.console.print("Connection error, try again...", style="red bold")
             self.info["messages"].pop()
             raise KeyboardInterrupt
@@ -408,7 +411,13 @@ def chat_cli(ctx, question, model, context, session, qq) -> None:
         question = " ".join(question)
         if not qq:
             print(f"{PROMPT_PREFIX}{question}")
-        ccb.start_prompt(question, box=(not qq))
+        try:
+            ccb.start_prompt(question, box=(not qq))
+        except ChatException as e:
+             raise ChatException(f"API issue found while executing chat: {e.__cause___}")
+        except:
+            raise
+
 
     if not qq:
         # Start chatting
@@ -417,8 +426,10 @@ def chat_cli(ctx, question, model, context, session, qq) -> None:
                 ccb.start_prompt()
             except KeyboardInterrupt:
                 continue
-            except EOFError:
-                break
+            except ChatException as e:
+                raise ChatException(f"API issue found while executing chat: {e.__cause___}")
+            except:
+                raise
     else:
         # TODO Autosave session in QQ mode
         pass
