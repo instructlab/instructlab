@@ -99,6 +99,7 @@ def download_model(
 
 def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
                    gh_branch='main',
+                   directory='taxonomy',
                    min_taxonomy=False):
     """
     Clone the taxonomy repository from a Git repository source.
@@ -107,6 +108,7 @@ def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
     - repository (str): URL of the taxonomy git repository.
         Default is the Open Labrador taxonomy repository.
     - gh_branch (str): The GitHub branch of the taxonomy repository. Default is main
+    - directory (str): Target directory where to clone the repository. Default is taxonomy.
     - min_taxonomy(bool): Shallow clone the taxonomy repository with minimum size.
 
     Returns:
@@ -116,6 +118,7 @@ def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
     git_clone_commands = ['git', 'clone', gh_repo, '--branch', gh_branch]
     if min_taxonomy:
         git_clone_commands.append('--depth=1')
+    git_clone_commands.extend([directory])
 
     try:
         create_subprocess(git_clone_commands)
