@@ -148,8 +148,20 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
 - `lab` will **automatically** download a pre-trained model from GitHub and store it in the `labrador/models/` directory.
 
-  ```shell
+```shell
   lab download
+```
+
+  It will download all the models from the latest [release](https://github.com/open-labrador/cli/releases) into the local directory.
+
+  Pop over to our [cli releases](https://github.com/open-labrador/cli/releases) to check out the list of available models and a set of instructions on how to do this manually;
+
+  **Note:** Users should make sure they are either logged in to their github accounts via the `gh` CLI (which can be achieved by running `gh auth login` and following the prompts/instructions), or if using macOS, users can add their SSH keys to their apple-keychain by running:
+  ```
+  ssh-add --apple-use-keychain ~/.ssh/[your-private-key]
+  ```
+
+  📋 **Note:** Once you have the model chunks downloaded and reassembled according to the instructions above, please move the model to a `models/` directory in the root directory of your git checkout of this project (this assumes the model is in your `Downloads/` folder):
   ```
 
   The model will come from the latest [release](https://github.com/open-labrador/cli/releases).
