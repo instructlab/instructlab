@@ -325,7 +325,7 @@ def chat(ctx, question, model, context, session, quick_question):
 )
 @click.option(
     "--release",
-    default="latest",
+    default=config.DEFAULT_DOWNLOAD_TAG,
     show_default=True,
     help="GitHub release version of the hosted models.",
 )
