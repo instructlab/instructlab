@@ -97,35 +97,26 @@ def download_model(
     return combined_model_list
 
 
-def clone_taxonomy(
-    repository="https://github.com/open-labrador/taxonomy.git",
-    branch="main",
-    directory="taxonomy",
-    filter_spec="",
-):
+def clone_taxonomy(gh_repo='https://github.com/open-labrador/taxonomy.git',
+                   gh_branch='main',
+                   min_taxonomy=False):
     """
     Clone the taxonomy repository from a Git repository source.
 
     Parameters:
     - repository (str): URL of the taxonomy git repository.
         Default is the Open Labrador taxonomy repository.
-    - branch (str): Git branch of the taxonomy repository. Default is main.
-    - directory (str): Target directory where to clone the repository. Default is taxonomy.
-    - filter_spec(str): Optional path to the git filter spec for git partial clone
+    - gh_branch (str): The GitHub branch of the taxonomy repository. Default is main
+    - min_taxonomy(bool): Shallow clone the taxonomy repository with minimum size.
 
     Returns:
     - None
     """
     # Clone taxonomy repo
-    git_clone_commands = ["git", "clone", repository]
-    if filter_spec != "" and os.path.exists(filter_spec):
-        # TODO: Add gitfilterspec to sparse clone GitHub repo
-        git_filter_arg = "".join(["--filter=sparse:oid=", branch, ":", filter_spec])
-        git_sparse_clone_flags = ["--sparse", git_filter_arg]
-        git_clone_commands.extend(git_sparse_clone_flags)
-    else:
-        git_clone_commands.extend(["--branch", branch])
-    git_clone_commands.extend([directory])
+    git_clone_commands = ['git', 'clone', gh_repo, '--branch', gh_branch]
+    if min_taxonomy:
+        git_clone_commands.append('--depth=1')
+
     try:
         create_subprocess(git_clone_commands)
     except FileNotFoundError as exc:

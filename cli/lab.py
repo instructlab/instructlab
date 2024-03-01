@@ -92,7 +92,14 @@ def cli(ctx, config):
     default=config.DEFAULT_TAXONOMY_REPO,
     help="Taxonomy repository location.",
 )
-def init(ctx, interactive, model_path, taxonomy_path, repository):
+@click.option(
+    "--min_taxonomy",
+    is_flag=True,
+    help="Shallow clone the taxonomy repository with minimum size. " \
+         "Please do not use this option if you are planning to contribute back " \
+         "using the same taxonomy repository. "
+)
+def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
     """Initializes environment for labrador"""
     if exists(config.DEFAULT_CONFIG):
         overwrite = click.confirm(
@@ -119,7 +126,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
             if do_clone:
                 click.echo(f"Cloning {repository}...")
                 try:
-                    clone_taxonomy(repository, "main", taxonomy_path)
+                    clone_taxonomy(repository, "main", min_taxonomy)
                 except DownloadException as exc:
                     click.secho(
                         f"Cloning {repository} failed with the following error: {exc}",
