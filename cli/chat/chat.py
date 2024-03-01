@@ -18,6 +18,8 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.text import Text
 import openai
+
+# Local
 from ..config import get_dict
 
 HELP_MD = """

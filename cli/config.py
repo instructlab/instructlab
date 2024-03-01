@@ -109,7 +109,15 @@ def write_config(cfg, config_file=DEFAULT_CONFIG):
 def get_default_config():
     """Generates default configuration for CLI"""
     general = _general(log_level="INFO")
-    chat = _chat(api_base=DEFAULT_API_BASE, api_key=DEFAULT_API_KEY, model=DEFAULT_MODEL, vi_mode=DEFAULT_VI_MODE, visible_overflow=DEFAULT_VISIBLE_OVERFLOW, context="default", session=None)
+    chat = _chat(
+        api_base=DEFAULT_API_BASE,
+        api_key=DEFAULT_API_KEY,
+        model=DEFAULT_MODEL,
+        vi_mode=DEFAULT_VI_MODE,
+        visible_overflow=DEFAULT_VISIBLE_OVERFLOW,
+        context="default",
+        session=None,
+    )
     generate = _generate(
         model=DEFAULT_MODEL,
         num_cpus=10,
