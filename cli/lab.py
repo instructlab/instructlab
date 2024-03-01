@@ -437,4 +437,7 @@ def train_mlx(models_dir):
     #   python ./models/mlx_scripts/lora.py --model mlx_model --train --data data_puns --lora-layers 32 --iters 300 --save-every 10 --steps-per-eval 10
     #   Can this target a directory or does it overwrite the model on the --model directory?
 
+    # TODO Kai, need to put your vetted process in here.
+    print(f"hello world {models_dir}")
+
     pass
