@@ -393,7 +393,7 @@ def download(ctx, repository, release, model_dir, pattern):
 def chat_mlx(prompt, models_dir):
     """
     Usage:
-        lab chatmlx --prompt 'something' --model ./models/lbdr_2_model
+        lab chatmlx --prompt 'something' --models-dir ./models/lbdr_2_model
 
     Works like:
         lab chat -qq 'some prompt'
@@ -420,9 +420,20 @@ def chat_mlx(prompt, models_dir):
 def train_mlx(models_dir):
     """
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
-
     On success, writes newly learned model to {models_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
-    # TODO Kai, need to put your vetted process in here.
-    print(f"hello world {models_dir}")
+
+    # prepare model
+    #   python ./models/mlx_scripts/prepare_model.py
+
+    # convert model
+    #   python ./models/mlx_scripts/convert.py --hf-path malachite-7b
+
+    # make data
+    #   python ./models/mlx_scripts/make_data.py
+
+    # train model
+    #   python ./models/mlx_scripts/lora.py --model mlx_model --train --data data_puns --lora-layers 32 --iters 300 --save-every 10 --steps-per-eval 10
+    #   Can this target a directory or does it overwrite the model on the --model directory?
+
     pass
