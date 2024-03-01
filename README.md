@@ -258,7 +258,7 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
 ### Train the model
 
-Train the model on your synthetic data-enhanced dataset by following the instructions in [Training](./notebooks/Training_a_LoRA_With_Labrador.ipynb)
+Train the model on your synthetic data-enhanced dataset by following the instructions in [Training](./notebooks/README.md)
 
 ## 👩🏽‍🔬 3. Testing the fine-tuned model
 
