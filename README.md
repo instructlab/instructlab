@@ -12,17 +12,30 @@ future support for 🐧 Linux and other operating systems as well as for
 
 ## Contents:
 
-- [Getting lab](#getting-lab)
-  - [📋 Requirements](#📋-requirements)
-  - [🧰 Installation](#🧰-installation)
-  - [🚀 Running lab](#🚀-running-lab)
+- [Labrador 🐶 command-line interface `lab`](#labrador--command-line-interface-lab)
+  - [Contents:](#contents)
+- [Getting `lab`](#getting-lab)
+  - [📋 Requirements](#-requirements)
+  - [🧰 Program Installation](#-program-installation)
+    - [Installing from GitHub (I just want it to work! 🚀)](#installing-from-github-i-just-want-it-to-work-)
+    - [Installing from Source (I want to start developing! 🛠️)](#installing-from-source-i-want-to-start-developing-️)
+  - [🚀 Verifying `lab` installation](#-verifying-lab-installation)
 - [How to use `lab`](#how-to-use-lab)
-  - [🏗️ 1. Initial set up](#🏗️-1-initial-setup)
-  - [🧑‍🏫 2. Model training](#🧑‍🏫-2-model-training)
-  - [👩🏽‍🔬 3. Testing the fine-tuned model](#👩🏽‍🔬-3-testing-the-fine-tuned-model)
-  - [🎁 4. Submit your dataset!](#🎁-4-submit-your-dataset)
-- [Contributing](#contributing)
-- [Other Stuffs](#other-stuffs)
+  - [🏗️ 1. Initial setup](#️-1-initial-setup)
+    - [Prepare the CLI's configuration](#prepare-the-clis-configuration)
+    - [Download model](#download-model)
+  - [🧑‍🏫 2. Model training](#-2-model-training)
+    - [Serve the model](#serve-the-model)
+    - [Test the model with chat before training](#test-the-model-with-chat-before-training)
+    - [Generate a dataset](#generate-a-dataset)
+    - [Train the model](#train-the-model)
+  - [👩🏽‍🔬 3. Testing the fine-tuned model](#-3-testing-the-fine-tuned-model)
+    - [Serve the fine-tuned model](#serve-the-fine-tuned-model)
+    - [Try out the new model](#try-out-the-new-model)
+    - [Run tests](#run-tests)
+  - [🎁 4. Submit your dataset!](#-4-submit-your-dataset)
+  - [Contributing](#contributing)
+  - [Other stuffs](#other-stuffs)
 
 <a name="getting"></a>
 
@@ -92,58 +105,40 @@ lab
 
 Congrats! You're ready to get started 😁
 
-### Configuration
-
-`lab` currently requires a valid configuration file to run. By default, it
-looks for a `cli/config/config.yml` file in the current directory, but you
-can override that with `--config` flag like so:
-
-```ShellSession
-python -m cli --config=./config.yml generate
-```
-
-or
-
-```ShellSession
-lab --config=./config.yml generate
-```
-
-**Note:** Make sure to pass the `--config` flag after the root command name!
-
-A sample configuration file is available in [cli/config/config.yml](cli/config/config.yml).
-
-<a name="how-to-use"></a>
-
 # How to use `lab`
 
-🗒️ **Note:** The instructions below all assume that you are in the root directory of your `cli` git repository checkout or your `<project_dir>`.
+**NOTE**: The following instructions assume that you've followed the "Installation" instructions above, including installing `lab` from GitHub into a Python virtual environment.
 
-Using the Labrador 🐶 method involves a number of steps, supported by various commands. You can see a flow chart showing the order of commands in a typical workflow as well as detailed command documentation below:
+The Labrador 🐶 CLI `lab` requires a few setup steps- in these instructions, we'll guide you through getting started.
+You can see a flow chart showing the order of commands in a typical workflow as well as detailed command documentation below:
 
 ![flow diagram](docs/workflow.png)
 
 ## 🏗️ 1. Initial setup
 
-### Initialize environment
+### Prepare the CLI's configuration
 
-- Create an empty directory `project_dir` and change the current directory into `project_dir`. Initialize a local environment to use Labrador 🐶 via the **init**
-  command:
+- Inside the `labrador` directory that we created in the installation step, run the following:
 
   ```shell
   lab init
   ```
 
-  It will clone the `git@github.com:open-labrador/taxonomy.git` repository.
+  This will add a new, default `config.yaml` file, and clone the `git@github.com:open-labrador/taxonomy.git` repository into the `labrador` directory.
 
 ### Download model
 
 - Download the model to train using the **download** command:
 
-  `lab download`
+  ```shell
+  lab download
+  ```
 
-  It will download all the models from the latest [release](https://github.com/open-labrador/cli/releases) into the local directory.
+  This will download all the pre-trained models from the latest [release](https://github.com/open-labrador/cli/releases) into the `/models` directory.
 
-  Pop over to our [cli releases](https://github.com/open-labrador/cli/releases) to check out the list of available models and a set of instructions on how to do this manually;
+- Manually download models:
+
+  Pop over to our [cli releases](https://github.com/open-labrador/cli/releases) to check out the list of available models and a set of instructions on how to do this manually if necessary.
 
   📋 **Note:** Once you have the model chunks downloaded and reassembled according to the instructions above, please move the model to a `models/` directory in the root directory of your git checkout of this project (this assumes the model is in your `Downloads/` folder):
 
@@ -156,7 +151,7 @@ Using the Labrador 🐶 method involves a number of steps, supported by various 
 
 ---
 
-📋 **Note:** By default, the serve and generate commands assuming use of `ggml-malachite-7b-Q4_K_M.gguf` - this is a lightweight, fast model based on [Mistral](https://mistral.ai/news/announcing-mistral-7b/) that takes about ~45 min for synthetic data generation on an M1 / 16GB mac. If you have another quantized, gguf-format model you would like to use instead, there is a `--model` argument you can add to the **serve** and **generate** commands to indicate which model to use:
+📋 **Note:** By default, the serve and generate commands assuming that we're using `ggml-malachite-7b-Q4_K_M.gguf` - this is a lightweight, fast model based on [Mistral](https://mistral.ai/news/announcing-mistral-7b/) that takes about ~45 min for synthetic data generation on an M1 / 16GB mac. If you have another quantized, gguf-format model you would like to use instead, there is a `--model` argument you can add to the **serve** and **generate** commands to indicate which model to use:
 
 - **Serve** with the `--model` argument requires indicating the directory path to the model file, e.g.:
   `lab serve --model models/ggml-malachite-7b-Q4_K_M.gguf`
