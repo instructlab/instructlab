@@ -85,18 +85,30 @@ We'll create a new directory called `labrador` to store the files that this CLI 
 ```ShellSession
 mkdir labrador
 cd labrador
+pip3 install --user git+ssh://git@github.com/open-labrador/cli.git@release-v0.3.0
+```
+**NOTE**: On MacOS you might run into a warning `error: externally-managed-environment`
+in which case you need to pass `--break-system-packages` which allows you to install
+packages in `$HOME/Local/Python` directory.
+
+Alternatively, you can create [a virtual environment](#python-virtual-environment):
+```ShellSession
+mkdir labrador
+cd labrador
 python3 -m venv venv
 source venv/bin/activate
-pip install git+ssh://git@github.com/open-labrador/cli.git
+pip3 install git+ssh://git@github.com/open-labrador/cli.git@release-v0.3.0
 ```
+
+Once finished you should be able to run `lab` binary.
 
 These are the steps that we're executing above, in plain language:
 
 1. Create the new `labrador` directory.
 2. `cd` into that directory.
-3. In the `labrador` directory, created a new Python virtual environment.
+3. In the `labrador` directory, create a new Python virtual environment.
 4. Turn the virtual environment on.
-5. Install the latest main-branch labrador cli program from GitHub in the new virtual environment.
+5. Install the v0.3.0 labrador cli program from GitHub in the new virtual environment.
 
 **NOTE**: You're free to name the new directory that we called `labrador` anything you want!
 
@@ -287,6 +299,24 @@ is documented in the [taxonomy respository](https://github.com/open-labrador/tax
 ## Contributing
 
 Check out our [contributing](CONTRIBUTING.md) guide to learn how to contribute to the Labrador CLI.
+
+## Python virtual environment
+
+Python has this nice idea of a lightweight "virtual environments" (venv), which allow you
+to isolate all the dependencies from interacting with one another. You can think
+of it almost like small containers.
+
+The benefits are:
+- dependency isolation
+- dependency consistency
+- reproducible builds
+
+The downside are:
+- remembering where the venv directory is located
+- enabling venv every single time
+- managing venv
+
+Check out the [official documentation](https://docs.python.org/3/library/venv.html) to learn more about it.
 
 ## Other stuffs
 
