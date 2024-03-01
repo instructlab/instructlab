@@ -50,7 +50,7 @@ future support for 🐧 Linux and other operating systems as well as for
 
 How is this done? First, you have to add new information to the companion [taxonomy](https://github.com/open-labrador/taxonomy.git) repository. Please read the docs there to see how this can be done.
 
-After you've added some skills or knowledge (when knowledge contributions are accepted) to `taxonomy`, you can:
+After you've added some skills or knowledge to `taxonomy`, you can:
 
 3. Use `lab` to synthesize a large amount of new training data from your locally-cloned `taxonomy` repository.
 4. Re-train the LLM that you initially downloaded with this new training data.
@@ -63,9 +63,9 @@ Finally, you can run the retrained model and make use of its new talents!
 
 - 🐍 Python 3.9 or later (CLang dsitribution of Python: 15.0.0 from xcode)
 - 🍎 macOS (14.x with an M1/M2/M3 Metal/GPU)
-- 📦 A quantized model in GGUF format (or read our [guide](<(https://github.com/open-labrador/cli/docs/converting_GGUF.md)>) on to convert
+- 📦 A quantized model in GGUF format (or read our [guide](./docs/converting_GGUF.md) on to convert
   models to GGUF format and quantize them.)
-- `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github
+- `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github (optional if you download the models yourself)
 
 🗒️ **Note:** The steps below use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. If you have used [pyenv](https://github.com/pyenv/pyenv),
 [Conda Miniforge](https://github.com/conda-forge/miniforge), or another tool for Python version management on your laptop, then use the virtual environment with that tool instead. Otherwise, you may have issues with packages installed but modules
@@ -76,7 +76,7 @@ from that package not found as they are linked to your Python version management
 The `lab` CLI will be available from PyPI using `pip3 install lab-cli` in the future.
 For now, we offer two ways to get started:
 
-### Installing from GitHub (I just want it to work! 🚀)
+### Installing from GitHub (I just want it to use it! 🚀)
 
 Let's start at an example folder `~/Documents/github` on your computer.
 
@@ -96,18 +96,17 @@ These are the steps that we're executing above, in plain language:
 2. `cd` into that directory.
 3. In the `labrador` directory, created a new Python virtual environment.
 4. Turn the virtual environment on.
-5. Install the latest main-branch labrador cli program from GitHub in the new virtual environment.
+5. Install the latest `main` branch of labrador cli program from GitHub in the new virtual environment.
 
 **NOTE**: You're free to name the new directory that we called `labrador` anything you want!
 
 ### Installing from Source (I want to contribute to `lab` CLI! 🛠️)
 
-We're keeping these detailed instructions in `CONTRIBUTING.MD` to keep this `README.MD` brief.
+Go to the [contributors guide]( CONTRIBUTING.md ) for more details on contributing to the project.
 
 ## 🚀 Verifying `lab` installation
 
-In order for `lab` to run correctly in your terminal (or shell) window, you'll always need the Python
-virtual environment, with `lab` installed, to be turned on.
+In order for `lab` to run correctly in your terminal (or shell) window, you'll always need the Python virtual environment, where `lab` was installed in to be turned on. You can check if it is enabled as it will show virtual env name (e.g. `venv` ) at the terminal prompt prefix or at the end depending on your shell. If you start a new terminal or its not initialised then run:
 
 ```ShellSession
 source venv/bin/activate
@@ -118,7 +117,28 @@ See "Installing" above if you haven't completed that step already!
 If `lab` is installed correctly, you should be able to run:
 
 ```ShellSession
-lab
+$ lab
+Usage: lab [OPTIONS] COMMAND [ARGS]...
+
+  CLI for interacting with labrador.
+
+  If this is your first time running lab, it's best to start with `lab init`
+  to create the environment
+
+Options:
+  --config PATH  Path to a configuration file.  [default: config.yaml]
+  --help         Show this message and exit.
+
+Commands:
+  chat      Run a chat using the modified model
+  download  Download the model(s) to train
+  generate  Generates synthetic data to enhance your example data
+  init      Initializes environment for labrador
+  list      Lists taxonomy files that have changed (modified or untracked).
+  serve     Start a local server
+  submit    Initializes environment for labrador
+  test      Perform rudimentary tests of the model
+  train     Trains labrador model
 ```
 
 Congrats! You're ready to get started 😁
@@ -146,7 +166,7 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
 ### Download model
 
-- `lab` will **automatically** download a pre-trained model from GitHub and store it in the `labrador/models/` directory.
+- `lab` will **automatically** download a pre-trained model from GitHub and store it in the `labrador/models/` directory. (requires [gh](https://cli.github.com/))
 
   ```shell
   lab download
@@ -156,7 +176,7 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
 - Manually downloading models:
 
-  If you'd like to, you can use a different model, also available on GitHub in [cli releases](https://github.com/open-labrador/cli/releases). Instructions for downloading other models manually can be found there.
+  If you'd like to, you can use a different model, also available on GitHub in [cli releases]( https://github.com/open-labrador/cli/releases/tag/v0.2.0). Instructions for downloading other models manually can be found there.
 
   📋 **Note:** Once you have the model chunks downloaded and reassembled according to the instructions above, please move the model to a `models/` directory.
 
@@ -169,7 +189,7 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
 ---
 
-📋 **Note:** By default, the serve and generate commands assuming that we're using `ggml-malachite-7b-0226-Q4_K_M.gguf` - this is a lightweight, fast model based on [Mistral](https://mistral.ai/news/announcing-mistral-7b/) that takes about ~45 min for synthetic data generation on an M1 / 16GB mac. If you have another quantized, gguf-format model you would like to use instead, there is a `--model` argument you can add to the **serve** and **generate** commands to indicate which model to use:
+📋 **Note:** By default, the serve and generate commands assume that we're using `ggml-malachite-7b-0226-Q4_K_M.gguf` - this is a lightweight, fast model based on [Mistral](https://mistral.ai/news/announcing-mistral-7b/) that takes about ~45 min for synthetic data generation on an M1 / 16GB mac. If you have another quantized, gguf-format model you would like to use instead, there is a `--model` argument you can add to the **serve** and **generate** commands to indicate which model to use:
 
 - **Serve** with the `--model` argument requires indicating the directory path to the model file, e.g.:
   `lab serve --model models/ggml-malachite-7b-0226-Q4_K_M.gguf`
@@ -181,9 +201,9 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
 ### Serve the model
 
-- Serve the downloaded model locally via the **serve** command using the
-  [llama.cpp framework](https://github.com/ggerganov/llama.cpp) and [llama-cpp-python](https://github.com/abetlen/llama-cpp-python) (which provides
-  Python bindings for llama.cpp):
+- Serve the downloaded model locally via the **serve** command using
+  [llama-cpp-python](https://github.com/abetlen/llama-cpp-python) (which provides
+  Python bindings for the [llama.cpp framework](https://github.com/ggerganov/llama.cpp)):
 
   ```shell
   lab serve
@@ -224,7 +244,7 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
   **Note:** Make sure you're in a terminal window with your Python virtual environment enabled!
 
-  📋 **Note:** This takes about **~45 minutes** to complete on an M1 mac with 16 GB RAM. The synthetic data set will be three files that are named like: `generate*.json`, `test*.json`, and `train*.json`. The file names will include the model used and date and time of generation.
+  📋 **Note:** This takes about **~45 minutes** to complete on an M1 mac with 16 GB RAM. The synthetic data set will be three files that are named like: `generated*.json`, `test*.jsonl`, and `train*.jsonl`. The file names will include the model used and date and time of generation.
 
   #### Configuration
 
@@ -236,13 +256,9 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
   **Note:** Make sure to pass the `--config` flag after `lab` and not after `generate`.
 
-  A sample configuration file is available in [cli/config/config.yml](cli/config/config.yml).
-
 ### Train the model
 
-- Train the model on your synthetic data-enhanced dataset using **train**:
-
-  `lab train {local path to gguf-format model} {path to root directory location of dataset}`
+Train the model on your synthetic data-enhanced dataset by following the instructions in [Training](./notebooks/README.md)
 
 ## 👩🏽‍🔬 3. Testing the fine-tuned model
 
@@ -275,10 +291,3 @@ is documented in the [taxonomy respository](https://github.com/open-labrador/tax
 ## Contributing
 
 Check out our [contributing](CONTRIBUTING.md) guide to learn how to contribute to the Labrador CLI.
-
-## Other stuffs
-
-Hosted training environment:
-[This jupyter notebook hosted on Google Colab](https://colab.research.google.com/drive/1qQr7X9Js6RTuXV12mRJtDHZU-bk4WgSU?usp=sharing)
-
-[Converting a Model to GGUF and Quantizing](https://github.com/open-labrador/cli/docs/converting_GGUF.md)
