@@ -82,7 +82,7 @@ Let's start at an example folder `~/Documents/github` on your computer.
 
 We'll create a new directory called `labrador` to store the files that this CLI needs when it runs.
 
-```ShellSession
+```shell
 mkdir labrador
 cd labrador
 python3 -m venv venv
@@ -108,7 +108,7 @@ Go to the [contributors guide]( CONTRIBUTING.md ) for more details on contributi
 
 In order for `lab` to run correctly in your terminal (or shell) window, you'll always need the Python virtual environment, where `lab` was installed in to be turned on. You can check if it is enabled as it will show virtual env name (e.g. `venv` ) at the terminal prompt prefix or at the end depending on your shell. If you start a new terminal or its not initialised then run:
 
-```ShellSession
+```shell
 source venv/bin/activate
 ```
 

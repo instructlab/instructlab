@@ -71,19 +71,19 @@ The following tools are required:
 
 You can setup your dev environment using [tox](https://tox.wiki/en/latest/), an environment orchestrator which allows for setting up environments for and invoking builds, unit tests, formatting, linting, etc. Install tox with:
 
-```sh
+```shell
 pip install -r requirements-dev.txt
 ```
 
 Install project requirements with:
 
-```sh
+```shell
 pip install -r requirements.txt
 ```
 
 If you want to manage your own virtual environment instead of using `tox`, you can install `cli` and all dependencies with:
 
-```sh
+```shell
 pip install .
 ```
 
@@ -93,13 +93,13 @@ Unit tests are enforced by the CI system. When making changes, run the tests bef
 
 Running unit tests against all supported Python versions is as simple as:
 
-```sh
+```shell
 tox
 ```
 
 Running tests against a single Python version can be done with:
 
-```sh
+```shell
 tox -e py
 ```-->
 
@@ -111,7 +111,7 @@ We use [pre-commit](https://pre-commit.com/) to enforce coding style using [blac
 
 You can invoke formatting with:
 
-```sh
+```shell
 tox -e fmt
 ```
 
@@ -119,7 +119,7 @@ In addition, we use [pylint](https://www.pylint.org) to perform static code anal
 
 You can invoke the linting with the following command
 
-```sh
+```shell
 tox -e lint
 ```
 
