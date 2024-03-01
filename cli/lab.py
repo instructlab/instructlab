@@ -3,6 +3,7 @@ from os import listdir
 from os.path import basename, dirname, exists, splitext
 import logging
 import sys
+import subprocess
 
 # Third Party
 from click_didyoumean import DYMGroup
@@ -382,3 +383,46 @@ def download(ctx, repository, release, model_dir, pattern):
             f"Downloading models failed with the following error: {exc}",
             fg="red",
         )
+
+
+@cli.command()
+@click.option("--prompt", default="What should your new model infer on?", help="")
+@click.option(
+    "--models-dir", help="Base directory where models are stored.", default="./models"
+)
+def chat_mlx(prompt, models_dir):
+    """
+    Usage:
+        lab chatmlx --prompt 'something' --model ./models/lbdr_2_model
+
+    Works like:
+        lab chat -qq 'some prompt'
+    """
+
+    # run 'python -m mlx_lm --model {model} --prompt {prompt}' and stream response to standard out.
+
+    # Will take a single prompt, give output.
+
+    # Probably creates a subprocess with the above command line program and directs output to standard out.
+
+    result = subprocess.run(
+        ["python3", "-m", "mlx_lm.generate", "--prompt", prompt, "--model", models_dir],
+        stdout=subprocess.PIPE,
+    )
+
+    print(result.stdout.decode("utf-8"))
+
+
+@cli.command()
+@click.option(
+    "--models-dir", help="Base directory where models are stored.", default="./models"
+)
+def train_mlx(models_dir):
+    """
+    Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
+
+    On success, writes newly learned model to {models_dir}/mlx_model, which is where `chatmlx` will look for a model.
+    """
+    # TODO Kai, need to put your vetted process in here.
+    print(f"hello world {models_dir}")
+    pass
