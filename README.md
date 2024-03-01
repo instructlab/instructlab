@@ -12,8 +12,16 @@ future support for 🐧 Linux and other operating systems as well as for
 
 ## Contents:
 * [Getting `lab`](#getting)
+  * [📋 Requirements](#📋-requirements)
+  * [🧰 Installation](#🧰-installation)
+  * [🚀 Running labs](#running-lab)
 * [How to use `lab`](#how-to-use)
-* [How to convert and quantize a model (Optional)](#model-convert-quant)
+  * [🏗️ 1. Initial set up](#🏗️-1-initial-setup)
+  * [🧑‍🏫 2. Model training](#🧑‍🏫-2-model-training)
+  * [👩🏽‍🔬 3. Testing the fine-tuned model](#👩🏽‍🔬-3-testing-the-fine-tuned-model)
+  * [🎁 4. Submit your dataset!](#🎁-4-submit-your-dataset)
+* [Contributing](#Contributing)
+* [Other Stuffs](#other-stuffs)
 
 <a name="getting"></a>
 # Getting `lab`
