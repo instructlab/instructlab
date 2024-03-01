@@ -25,6 +25,7 @@ class Lab:
     """Lab object holds high-level information about lab CLI"""
 
     def __init__(self, filename):
+        self.config_file = filename
         self.config = config.read_config(filename)
         FORMAT = "%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s"
         logging.basicConfig(format=FORMAT)
@@ -62,7 +63,8 @@ def configure(ctx, param, filename):
 def cli(ctx, config):
     """CLI for interacting with labrador.
 
-    If this is your first time running lab, it's best to start with `lab init` to create the environment"""
+    If this is your first time running lab, it's best to start with `lab init` to create the environment
+    """
 
 
 @cli.command()
@@ -90,7 +92,14 @@ def cli(ctx, config):
     default=config.DEFAULT_TAXONOMY_REPO,
     help="Taxonomy repository location.",
 )
-def init(ctx, interactive, model_path, taxonomy_path, repository):
+@click.option(
+    "--min_taxonomy",
+    is_flag=True,
+    help="Shallow clone the taxonomy repository with minimum size. " \
+         "Please do not use this option if you are planning to contribute back " \
+         "using the same taxonomy repository. "
+)
+def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
     """Initializes environment for labrador"""
     if exists(config.DEFAULT_CONFIG):
         overwrite = click.confirm(
@@ -117,7 +126,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
             if do_clone:
                 click.echo(f"Cloning {repository}...")
                 try:
-                    clone_taxonomy(repository, "main", taxonomy_path)
+                    clone_taxonomy(repository, "main", taxonomy_path, min_taxonomy)
                 except DownloadException as exc:
                     click.secho(
                         f"Cloning {repository} failed with the following error: {exc}",
@@ -139,7 +148,6 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
     cfg.generate.taxonomy_path = taxonomy_path
     cfg.list.taxonomy_path = taxonomy_path
     config.write_config(cfg)
-    config.create_config_file()
 
     click.echo(
         "Initialization completed successfully, you're ready to start using `lab`. Enjoy!"
@@ -155,7 +163,10 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
 @click.pass_context
 # pylint: disable=redefined-builtin
 def list(ctx, taxonomy_path):
-    """List taxonomy YAML files"""
+    """
+    Lists taxonomy files that have changed (modified or untracked).
+    Similar to 'git diff'
+    """
     updated_taxonomy_files = get_taxonomy_diff(taxonomy_path)
     for f in updated_taxonomy_files:
         if splitext(f)[1] != ".yaml":
@@ -309,7 +320,7 @@ def test(ctx):
 @click.pass_context
 def chat(ctx, question, model, context, session, quick_question):
     """Run a chat using the modified model"""
-    chat_cli(question, model, context, session, quick_question)
+    chat_cli(ctx, question, model, context, session, quick_question)
 
 
 @cli.command()
@@ -321,7 +332,7 @@ def chat(ctx, question, model, context, session, quick_question):
 )
 @click.option(
     "--release",
-    default="latest",
+    default=config.DEFAULT_DOWNLOAD_TAG,
     show_default=True,
     help="GitHub release version of the hosted models.",
 )
