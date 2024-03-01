@@ -454,6 +454,11 @@ def get_taxonomy_diff(repo="taxonomy"):
         for d in repo.index.diff(None)
         if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]
     ]
-    updated_taxonomy_files = untracked_files + modified_files
+    staged_files = [
+        d.a_path
+        for d in repo.index.diff(repo.head.commit)
+        if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]
+    ]
+    updated_taxonomy_files = untracked_files + modified_files + staged_files
 
     return updated_taxonomy_files
