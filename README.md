@@ -87,7 +87,7 @@ mkdir labrador
 cd labrador
 python3 -m venv venv
 source venv/bin/activate
-pip install git+ssh://git@github.com/open-labrador/cli.git
+pip install git+ssh://git@github.com/open-labrador/cli.git@stable
 ```
 
 These are the steps that we're executing above, in plain language:
@@ -96,7 +96,7 @@ These are the steps that we're executing above, in plain language:
 2. `cd` into that directory.
 3. In the `labrador` directory, created a new Python virtual environment.
 4. Turn the virtual environment on.
-5. Install the latest `main` branch of labrador cli program from GitHub in the new virtual environment.
+5. Install the latest stable tag of labrador cli program from GitHub in the new virtual environment.
 
 **NOTE**: You're free to name the new directory that we called `labrador` anything you want!
 
