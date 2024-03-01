@@ -15,10 +15,9 @@ import uvicorn
 
 # Local
 from . import config
-from .chat.chat import chat_cli
+from .chat.chat import ChatException, chat_cli
 from .download import DownloadException, clone_taxonomy, download_model
 from .generator.generate_data import GenerateException, generate_data, get_taxonomy_diff
-from .chat.chat import ChatException
 
 
 # pylint: disable=unused-argument
@@ -96,9 +95,9 @@ def cli(ctx, config):
 @click.option(
     "--min_taxonomy",
     is_flag=True,
-    help="Shallow clone the taxonomy repository with minimum size. " \
-         "Please do not use this option if you are planning to contribute back " \
-         "using the same taxonomy repository. "
+    help="Shallow clone the taxonomy repository with minimum size. "
+    "Please do not use this option if you are planning to contribute back "
+    "using the same taxonomy repository. ",
 )
 def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
     """Initializes environment for labrador"""
@@ -219,6 +218,7 @@ def serve(ctx, model_path, gpu_layers):
             eos_token="<|endoftext|>",
             bos_token="",
         ).to_chat_handler()
+    # pylint: disable=broad-exception-caught
     except Exception as e:
         click.secho(
             f"Error creating chat handler: {e}",
@@ -327,9 +327,17 @@ def test(ctx):
 def chat(ctx, question, model, context, session, quick_question):
     """Run a chat using the modified model"""
     try:
-        chat_cli(ctx.obj.config.chat, ctx.obj.logger, question, model, context, session, quick_question)
+        chat_cli(
+            ctx.obj.config.chat,
+            ctx.obj.logger,
+            question,
+            model,
+            context,
+            session,
+            quick_question,
+        )
     except ChatException as exc:
-        click.secho(f"Executing chat failed with: {exc}",fg="red")
+        click.secho(f"Executing chat failed with: {exc}", fg="red")
 
 
 @cli.command()

@@ -19,7 +19,6 @@ from rich.panel import Panel
 from rich.text import Text
 import openai
 
-
 HELP_MD = """
 Help / TL;DR
 - `/q`: **q**uit
@@ -56,8 +55,10 @@ PRICING_RATE = {
 
 PROMPT_PREFIX = ">>> "
 
+
 class ChatException(Exception):
     """An exception raised during chat step."""
+
 
 # TODO Autosave chat history
 class ConsoleChatBot:
@@ -299,7 +300,9 @@ class ConsoleChatBot:
                 next(response).choices[0].delta.role == "assistant"
             ), 'first response should be {"role": "assistant"}'
         except openai.AuthenticationError as e:
-            self.console.print("Invalid API Key. Please set it in your config file.", style="bold red")
+            self.console.print(
+                "Invalid API Key. Please set it in your config file.", style="bold red"
+            )
             raise ChatException("API Key Error") from e
         except openai.RateLimitError as e:
             self.console.print(
@@ -379,9 +382,7 @@ def chat_cli(config, logger, question, model, context, session, qq) -> None:
         client=client,
         vi_mode=config.vi_mode,
         prompt=not qq,
-        vertical_overflow=(
-            "visible" if config.visible_overflow else "ellipsis"
-        ),
+        vertical_overflow=("visible" if config.visible_overflow else "ellipsis"),
         loaded=loaded,
     )
 
@@ -397,7 +398,7 @@ def chat_cli(config, logger, question, model, context, session, qq) -> None:
         try:
             ccb.start_prompt(question, box=(not qq))
         except ChatException as exc:
-             raise ChatException(f"API issue found while executing chat: {exc}")
+            raise ChatException(f"API issue found while executing chat: {exc}")
         except KeyboardInterrupt:
             return
 
