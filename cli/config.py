@@ -8,7 +8,11 @@ import yaml
 
 DEFAULT_CONFIG = "config.yaml"
 DEFAULT_MODEL_PATH = "models/ggml-malachite-7b-0226-Q4_K_M.gguf"
+DEFAULT_API_BASE = "http://localhost:8000/v1"
+DEFAULT_API_KEY = "no_api_key"
 DEFAULT_MODEL = "ggml-malachite-7b-0226-Q4_K_M"
+DEFAULT_VI_MODE = False
+DEFAULT_VISIBLE_OVERFLOW = True
 DEFAULT_TAXONOMY_REPO = "git@github.com:open-labrador/taxonomy.git"
 DEFAULT_TAXONOMY_PATH = "taxonomy"
 DEFAULT_PROMPT_FILE = "prompt.txt"
@@ -31,7 +35,11 @@ class _general:
 
 @dataclass
 class _chat:
+    api_base: str
+    api_key: str
     model: str
+    vi_mode: bool
+    visible_overflow: bool
     context: str
     session: str
 
@@ -101,7 +109,15 @@ def write_config(cfg, config_file=DEFAULT_CONFIG):
 def get_default_config():
     """Generates default configuration for CLI"""
     general = _general(log_level="INFO")
-    chat = _chat(model=DEFAULT_MODEL, context="default", session=None)
+    chat = _chat(
+        api_base=DEFAULT_API_BASE,
+        api_key=DEFAULT_API_KEY,
+        model=DEFAULT_MODEL,
+        vi_mode=DEFAULT_VI_MODE,
+        visible_overflow=DEFAULT_VISIBLE_OVERFLOW,
+        context="default",
+        session=None,
+    )
     generate = _generate(
         model=DEFAULT_MODEL,
         num_cpus=10,
@@ -114,26 +130,3 @@ def get_default_config():
     list = _list(taxonomy_path=DEFAULT_TAXONOMY_PATH)
     serve = _serve(model_path=DEFAULT_MODEL_PATH, gpu_layers=-1)
     return Config(general=general, chat=chat, generate=generate, list=list, serve=serve)
-
-
-def create_config_file():
-    chat_config_toml_txt = textwrap.dedent(
-        """
-    api_base = "http://localhost:8000/v1"
-    api_key = "no_api_key"
-    model = "malachite-7b"
-    vi_mode = false
-    visible_overflow = true
-
-    [contexts]
-    default = "You are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
-    cli_helper = "You are an expert for command line interface and know all common commands. Answer the command to execute as it without any explanation."
-    dictionary = "You are a professional English-Chinese translator. Translate the input to the other language by providing its part of speech (POS) followed by up-to 5 common but distinct translations in this format: `[{POS}] {translation 1}; {translation 2}; ...`. Do not provide nonexistent results."
-    """
-    )
-    chat_config_file_name = "chat-cli.toml"
-    if not os.path.isfile(chat_config_file_name):
-        if os.path.dirname(chat_config_file_name) != "":
-            os.makedirs(os.path.dirname(chat_config_file_name), exist_ok=True)
-        with open(chat_config_file_name, "w", encoding="utf-8") as model_file:
-            model_file.write(chat_config_toml_txt)
