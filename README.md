@@ -150,13 +150,13 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
 ---
 
-📋 **Note:** By default, the serve and generate commands assuming that we're using `ggml-malachite-7b-Q4_K_M.gguf` - this is a lightweight, fast model based on [Mistral](https://mistral.ai/news/announcing-mistral-7b/) that takes about ~45 min for synthetic data generation on an M1 / 16GB mac. If you have another quantized, gguf-format model you would like to use instead, there is a `--model` argument you can add to the **serve** and **generate** commands to indicate which model to use:
+📋 **Note:** By default, the serve and generate commands assuming that we're using `ggml-malachite-7b-0226-Q4_K_M.gguf` - this is a lightweight, fast model based on [Mistral](https://mistral.ai/news/announcing-mistral-7b/) that takes about ~45 min for synthetic data generation on an M1 / 16GB mac. If you have another quantized, gguf-format model you would like to use instead, there is a `--model` argument you can add to the **serve** and **generate** commands to indicate which model to use:
 
 - **Serve** with the `--model` argument requires indicating the directory path to the model file, e.g.:
-  `lab serve --model models/ggml-malachite-7b-Q4_K_M.gguf`
+  `lab serve --model models/ggml-malachite-7b-0226-Q4_K_M.gguf`
 
 - **Generate** with the `--model` argument just requires the file name of the gguf model and assumes the model is located in the `models/` subdirectory of the root `cli/` git checkout directory, e.g.:
-  `lab generate --model ggml-malachite-7b-Q4_K_M.gguf`
+  `lab generate --model ggml-malachite-7b-0226-Q4_K_M.gguf`
 
 ---
 
