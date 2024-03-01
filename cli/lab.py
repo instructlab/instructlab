@@ -188,8 +188,14 @@ def submit(ctx):
     type=click.INT,
     help="The number of layers to put on the GPU. The rest will be on the CPU. Defaults to -1 to move all to GPU.",
 )
+@click.option(
+    "--port",
+    type=click.INT,
+    help="Specifies which port to serve model on. Defaults to 8000",
+    default=8000,
+)
 @click.pass_context
-def serve(ctx, model_path, gpu_layers):
+def serve(ctx, model_path, gpu_layers, port):
     """Start a local server"""
     ctx.obj.logger.info(f"Using model '{model_path}' with {gpu_layers} gpu-layers")
     settings = Settings(
@@ -213,10 +219,10 @@ def serve(ctx, model_path, gpu_layers):
     ).to_chat_handler()
     click.echo("Starting server process")
     click.echo(
-        "After application startup complete see http://127.0.0.1:8000/docs for API."
+        f"After application startup complete see http://127.0.0.1:{port}/docs for API."
     )
     click.echo("Press CTRL+C to shutdown server.")
-    uvicorn.run(app, port=8000, log_level=logging.ERROR)  # TODO: host params, etc...
+    uvicorn.run(app, port=port, log_level=logging.ERROR)  # TODO: host params, etc...
 
 
 @cli.command()
@@ -310,10 +316,17 @@ def test(ctx):
     is_flag=True,
     help="Exit after answering question",
 )
+@click.option(
+    "--port",
+    default=8000,
+    show_default=True,
+    type=click.INT,
+    help="Specifies which port expect model API. Defaults to 8000",
+)
 @click.pass_context
-def chat(ctx, question, model, context, session, quick_question):
+def chat(ctx, question, model, context, session, quick_question, port):
     """Run a chat using the modified model"""
-    chat_cli(question, model, context, session, quick_question)
+    chat_cli(question, model, context, session, quick_question, port)
 
 
 @cli.command()
