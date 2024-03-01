@@ -73,7 +73,7 @@ from that package not found as they are linked to your Python version management
 ## 🧰 Installing `lab`
 
 The `lab` CLI will be available from PyPI using `pip3 install lab-cli` in the future.
-For now, we offer two ways to get started:
+For the moment, we'll be installing from GitHub!
 
 ### Installing from GitHub (I just want it to use it! 🚀)
 
