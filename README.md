@@ -24,10 +24,11 @@ future support for 🐧 Linux and other operating systems as well as for
   - [🏗️ 1. Initial setup](#️-1-initial-setup)
     - [Prepare the CLI's configuration](#prepare-the-clis-configuration)
     - [Download model](#download-model)
-  - [🧑‍🏫 2. Model training](#-2-model-training)
+  - [🧑‍🏫 2. Running the downloaded model](#-2-running-the-downloaded-model)
     - [Serve the model](#serve-the-model)
-    - [Test the model with chat before training](#test-the-model-with-chat-before-training)
+    - [Chat with the model](#chat-with-the-model)
     - [Generate a dataset](#generate-a-dataset)
+      - [Configuration](#configuration)
     - [Train the model](#train-the-model)
   - [👩🏽‍🔬 3. Testing the fine-tuned model](#-3-testing-the-fine-tuned-model)
     - [Serve the fine-tuned model](#serve-the-fine-tuned-model)
@@ -128,26 +129,26 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
 ### Download model
 
-- Download the model to train using the **download** command:
+- `lab` will **automatically** download a pre-trained model from GitHub and store it in the `labrador/models/` directory.
 
   ```shell
   lab download
   ```
 
-  This will download all the pre-trained models from the latest [release](https://github.com/open-labrador/cli/releases) into the `/models` directory.
+  The model will come from the latest [release](https://github.com/open-labrador/cli/releases).
 
-- Manually download models:
+- Manually downloading models:
 
-  Pop over to our [cli releases](https://github.com/open-labrador/cli/releases) to check out the list of available models and a set of instructions on how to do this manually if necessary.
+  If you'd like to, you can use a different model, also available on GitHub in [cli releases](https://github.com/open-labrador/cli/releases). Instructions for downloading other models manually can be found there.
 
-  📋 **Note:** Once you have the model chunks downloaded and reassembled according to the instructions above, please move the model to a `models/` directory in the root directory of your git checkout of this project (this assumes the model is in your `Downloads/` folder):
+  📋 **Note:** Once you have the model chunks downloaded and reassembled according to the instructions above, please move the model to a `models/` directory.
 
-  ```
+  ```shell
   mkdir models
   mv ~/Downloads/ggml-labrador13B-model-Q4_K_M.gguf models
   ```
 
-## 🧑‍🏫 2. Model training
+## 🧑‍🏫 2. Running the downloaded model
 
 ---
 
@@ -167,7 +168,9 @@ You can see a flow chart showing the order of commands in a typical workflow as 
   [llama.cpp framework](#TODO) and [llama-cpp-python](#TODO) (which provides
   Python bindings for llama.cpp):
 
-  `lab serve`
+  ```shell
+  lab serve
+  ```
 
   Once the model is being served and ready (takes less than 1 minute on an M1 mac), you'll see the following output:
 
@@ -181,26 +184,53 @@ You can see a flow chart showing the order of commands in a typical workflow as 
   INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
   ```
 
-### Test the model with chat before training
+### Chat with the model
 
-- Before you start tuning your model, test its output to your prompts as a baseline so you can better understand if your training was effective later. You can do this live via a chat interface with **chat**:
+- Before you start tuning your model and adding new Skills and Knowledge, check out it's baseline performance.
+  This way, you'll be able to tell whether the model has learned from your contributions!
 
-  `lab chat`
+  **Note:** Because you're serving the model in one terminal window, you'll likely have to create a new window and re-activate your Python virtual environment to run the following command:
+
+  ```shell
+  lab chat
+  ```
 
   Once you are in the chat interface, you can type `/h` for help, which will list out all of the chat commands.
 
 ### Generate a dataset
 
 - Generate a synthetic dataset to enhance your example data set using the
-  **generate** command, in another venv-activated terminal with the server running:
+  **generate** command. If you haven't made any changes to your `/taxonomy` directory yet, nothing should happen.
 
   ```
   lab generate
   ```
 
+  **Note:** Make sure you're in a terminal window with your Python virtual environment enabled!
+
   📋 **Note:** This takes about **~45 minutes** to complete on an M1 mac with 16 GB RAM. The synthetic data set will be a file starting with the name `generated` ending in a `.json` file extension in the directory of your taxonomy. The file name includes model used and date time of generation.
 
   > Tip: If you want to pickup where you left off, copy a generated JSON file into a file named `regen.json`. `regen.json` will be picked up at the start of `lab generate` when available.
+
+  #### Configuration
+
+  `lab` currently requires a valid configuration file to run. By default, it
+  looks for a `cli/config/config.yml` file in the current directory, but you
+  can override that with `--config` flag like so:
+
+  ```ShellSession
+  python -m cli --config=./config.yml generate
+  ```
+
+  or
+
+  ```ShellSession
+  lab --config=./config.yml generate
+  ```
+
+  **Note:** Make sure to pass the `--config` flag after the root command name!
+
+  A sample configuration file is available in [cli/config/config.yml](cli/config/config.yml).
 
 ### Train the model
 
