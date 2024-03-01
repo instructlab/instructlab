@@ -50,7 +50,7 @@ future support for 🐧 Linux and other operating systems as well as for
 
 How is this done? First, you have to add new information to the companion [taxonomy](https://github.com/open-labrador/taxonomy.git) repository. Please read the docs there to see how this can be done.
 
-After you've added some skills or knowledge to `taxonomy`, you can:
+After you've added some skills or knowledge (when knowledge contributions are accepted) to `taxonomy`, you can:
 
 3. Use `lab` to synthesize a large amount of new training data from your locally-cloned `taxonomy` repository.
 4. Re-train the LLM that you initially downloaded with this new training data.
@@ -201,9 +201,7 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
 ### Serve the model
 
-- Serve the downloaded model locally via the **serve** command using
-  [llama-cpp-python](https://github.com/abetlen/llama-cpp-python) (which provides
-  Python bindings for the [llama.cpp framework](https://github.com/ggerganov/llama.cpp)):
+- Serve the downloaded model locally via the **serve** command using [llama-cpp-python](https://github.com/abetlen/llama-cpp-python) (which provides Python bindings for the [llama.cpp framework](https://github.com/ggerganov/llama.cpp)):
 
   ```shell
   lab serve
