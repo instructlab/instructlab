@@ -9,8 +9,8 @@
 
 ### Command line interface
 
-```sh
-❯ python -m cli chat --help
+```shell
+python -m cli chat --help
 ```
 
 ```
@@ -26,8 +26,8 @@ Options:
 
 ### Start chatting
 
-```sh
-❯ python -m cli chat
+```shell
+python -m cli chat
 ```
 
 ```
@@ -66,7 +66,7 @@ Options:
 1. Make `./bin/chat` and `./bin/ask-cl` avaiable from your PATH (e.g. by making symlinks)
 2. `ask-cl some natural langauge` will convert the natural language to the command line
 3. Optionally, if you are using the Fish shell, add below to your config file
-```fish
+```shell
 function acl
     if isatty stdin
         set cmd (ask-cl $argv)
@@ -79,7 +79,7 @@ end
 ```
 and you can use `acl some natural langauge` which will do the same *AND* copy paste the command to your shell for you.
 4. Both `ask-cl` or `acl` accepts stdin so you can pipe commands to them, e.g.
-``` fish
+```shell
 ls | acl back up the TOML file with a prefix "old"
 ```
 
