@@ -384,56 +384,111 @@ def download(ctx, repository, release, model_dir, pattern):
             fg="red",
         )
 
-
-@cli.command()
-@click.option("--prompt", default="What should your new model infer on?", help="")
-@click.option(
-    "--models-dir", help="Base directory where models are stored.", default="./models"
-)
-def chat_mlx(prompt, models_dir):
-    """
-    Usage:
-        lab chatmlx --prompt 'something' --models-dir ./models/lbdr_2_model
-
-    Works like:
-        lab chat -qq 'some prompt'
-    """
-
-    # run 'python -m mlx_lm --model {model} --prompt {prompt}' and stream response to standard out.
-
-    # Will take a single prompt, give output.
-
-    # Probably creates a subprocess with the above command line program and directs output to standard out.
-
-    result = subprocess.run(
-        ["python3", "-m", "mlx_lm.generate", "--prompt", prompt, "--model", models_dir],
-        stdout=subprocess.PIPE,
-    )
-
-    print(result.stdout.decode("utf-8"))
-
-
+# TODO merge requirements.txt
+# copy-files target-dir:
+#     cp ~/artifacts/merlinite-7b/added_tokens.json {{target-dir}}
 @cli.command()
 @click.option(
-    "--models-dir", help="Base directory where models are stored.", default="./models"
+    "--data-dir", help="Base directory where data is stored."
 )
-def train_mlx(models_dir):
+@click.option(
+    "--model-dir", help="Base directory where model is stored.", default="ibm-merlinite-7b"
+)
+@click.option(
+    "--remote",
+    is_flag=True,
+    help="Whether or not `model_dir` is remote from HuggingFace.",
+)
+def train(data_dir, model_dir, remote):
     """
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
-    On success, writes newly learned model to {models_dir}/mlx_model, which is where `chatmlx` will look for a model.
+    On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
 
-    # prepare model
-    #   python ./models/mlx_scripts/prepare_model.py
+    is_macos = True # TODO detect OS
+    if is_macos:
+        model_dir_mlx = f"{model_dir}-mlx"
 
-    # convert model
-    #   python ./models/mlx_scripts/convert.py --hf-path malachite-7b
+        # NOTE we can skip this if we have a way ship MLX
+        # TODO convert the model from PyTorch to MLX
+        # PyTorch safetensors to MLX safetensors
+        if remote:
+            # python convert.py --hf-path ibm/merlinite-7b --mlx-path ibm-merlinite-7b-mlx
+            pass
+        else:
+            # python convert.py --hf-path ibm-merlinite-7b --mlx-path ibm-merlinite-7b-mlx --local
+            pass
+    
+        # TODO convert data from `lab generate` to `lab train`
+        # python make_data.py
 
-    # make data
-    #   python ./models/mlx_scripts/make_data.py
+        # TODO train the model with LoRA
+        # python lora.py --model {{model_dir_mlx}} --train --data data_puns_shiv --adapter-file {{model_dir_mlx}}/adapters.npz --iters 300 --save-every 10 --steps-per-eval 10
+        # exact command:
+        # python lora.py --model ibm-merlinite-7b-mlx --train --data data_puns_shiv --adapter-file ibm-merlinite-7b-mlx/adapters.npz --iters 100 --save-every 10 --steps-per-eval 10
 
-    # train model
-    #   python ./models/mlx_scripts/lora.py --model mlx_model --train --data data_puns --lora-layers 32 --iters 300 --save-every 10 --steps-per-eval 10
+        # TODO copy some downloaded files from the PyTorch model folder
+        # Seems to be not a problem if working with a remote download with convert.py
+        # just copy-files ibm-merlinite-7b-mlx
+
+    else:
+        click.secho(
+            f"`lab train` is only implemented for macOS with M-series chips",
+            fg="red",
+        )
+
     #   Can this target a directory or does it overwrite the model on the --model directory?
 
     pass
+
+@cli.command()
+@click.option(
+    "--data-dir", help="Base directory where data is stored."
+)
+@click.option(
+    "--model-dir", help="Base directory where model is stored."
+)
+@click.option(
+    "--adapter-file", help="LoRA adapter to use for test."
+)
+def test(data_dir, model_dir, adapter_file):
+    """
+    TODO
+    """
+
+    # _generate-no-lora model prompt:
+    #     python lora.py --model {{model}} --no-adapter --max-tokens 100 --prompt "<|system|>\nYou are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior.\n<|user|>\n{{prompt}}\n<|assistant|>\n"
+    # _generate model adapter prompt:
+    #     python lora.py --model {{model}} --adapter-file {{model}}/{{adapter}} --max-tokens 100 --prompt "<|system|>\nYou are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior.\n<|user|>\n{{prompt}}\n<|assistant|>\n"
+
+    test_data = None # TODO read test data from `data_dir`
+    for example in test_data:
+        user = example["user"]
+        print("expected:", example["assistant"])
+        # just _generate ibm-merlinite-7b-mlx {{user}}
+        # just _generate ibm-merlinite-7b-mlx adapters-100.npz {{user}}
+
+@cli.command()
+@click.option(
+    "--model-dir", help="Base directory where model is stored."
+)
+@click.option(
+    "--adapter-file", help="LoRA adapter to fuse."
+)
+def convert(model_dir, adapter_file):
+    """
+    TODO
+    """
+    # this combines adapter with the original model to produce the updated model
+    # python fuse.py --model {{model}} --save-path {{model}}-fused --adapter-file {{model}}/adapters-100.npz
+    # just copy-files {{model}}-fused
+
+    # this converts MLX to PyTorch
+    # python convert.py --hf-path {{model}} --local --mlx-path {{model}}-pt --to-pt
+    # just copy-files {{model}}-pt
+
+    # use llama.cpp to convert back to GGUF
+    # python $HOME/src/open-labrador/llama.cpp/convert.py {{model_dir}} --pad-vocab
+
+    # quantize 4-bi GGUF (optional)
+    # $HOME/src/open-labrador/llama.cpp/quantize {{model_dir}}/ggml-model-f16.gguf {{model_dir}}/ggml-model-Q4_K_M.gguf Q4_K_M
