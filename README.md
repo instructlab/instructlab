@@ -182,7 +182,6 @@ You can see a flow chart showing the order of commands in a typical workflow as 
   ```
 
   📋 **Note:** Once you have the model chunks downloaded and reassembled according to the instructions above, please move the model to a `models/` directory in the root directory of your git checkout of this project (this assumes the model is in your `Downloads/` folder):
-  ```
 
   The model will come from the latest [release](https://github.com/open-labrador/cli/releases).
 
