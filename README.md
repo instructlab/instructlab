@@ -18,7 +18,7 @@ future support for 🐧 Linux and other operating systems as well as for
 - [Getting `lab`](#getting-lab)
   - [📋 Requirements](#-requirements)
   - [🧰 Installing `lab`](#-installing-lab)
-    - [Installing from GitHub (I just want it to work! 🚀)](#installing-from-github-i-just-want-it-to-work-)
+    - [Installing from GitHub (I just want it to use it! 🚀)](#installing-from-github-i-just-want-it-to-use-it-)
     - [Installing from Source (I want to contribute to `lab` CLI! 🛠️)](#installing-from-source-i-want-to-contribute-to-lab-cli-️)
   - [🚀 Verifying `lab` installation](#-verifying-lab-installation)
 - [How to use `lab`](#how-to-use-lab)
@@ -37,7 +37,6 @@ future support for 🐧 Linux and other operating systems as well as for
     - [Run tests](#run-tests)
   - [🎁 4. Submit your dataset!](#-4-submit-your-dataset)
   - [Contributing](#contributing)
-  - [Other stuffs](#other-stuffs)
 
 ## What is `lab`?
 
@@ -245,6 +244,7 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
 ### Generate a dataset
 
+- Create a new example skill and contribute it to the existing taxonomy tree. Instructions to do this can be found at https://github.com/open-labrador/taxonomy?tab=readme-ov-file#knowledge-vs-skills under the 'Skills' section
 - Generate a synthetic dataset to enhance your example data set using the **generate** command. If you haven't made any changes to your `/taxonomy` directory yet, nothing should happen.
 
   ```shell
