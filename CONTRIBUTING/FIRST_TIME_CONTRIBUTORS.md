@@ -6,6 +6,8 @@ This guide should teach you how to set up your development environment to start 
 
 # Installing `lab` from source
 
+Here we install from the upstream repo, but you may want to fork the repo and replace the git clone URL below with the URL for your fork:
+
 ```ShellSession
 git clone https://github.com/open-labrador/cli.git
 cd cli
