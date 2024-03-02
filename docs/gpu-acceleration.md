@@ -20,7 +20,7 @@ Unfortunately, at the time of writing, `torch` does not have GPU-specific suppor
   source venv/bin/activate
 
   # Install lab (assumes a locally-cloned repo)
-  pip install .
+  pip3 install .
   ```
 
 With Python 3.11 installed, it's time to replace some packages!
@@ -29,13 +29,13 @@ With Python 3.11 installed, it's time to replace some packages!
 
 `torch` should already ship with CUDA support, so you only have to replace `llama-cpp-python`.
 
-Go to the project's Github to see the [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends). Find the `cuBLAS (CUDA)` backend. You'll see a `pip install` command. You'll want to add a few options to ensure it gets installed over the existing package: `--force-reinstall` and `--no-cache-dir`. Your final command should look like so:
+Go to the project's Github to see the [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends). Find the `cuBLAS (CUDA)` backend. You'll see a `pip3 install` command. You'll want to add a few options to ensure it gets installed over the existing package: `--force-reinstall` and `--no-cache-dir`. Your final command should look like so:
 
 ```shell
-CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install --force-reinstall --no-cache-dir llama-cpp-python
+CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip3 install --force-reinstall --no-cache-dir llama-cpp-python
 ```
 
-Once that package is installed, recompile `lab` with `pip install .` and skip to the `Testing` section.
+Once that package is installed, recompile `lab` with `pip3 install .` and skip to the `Testing` section.
 
 ### AMD/ROCm
 
@@ -57,25 +57,25 @@ With that done, it's time to move on to `llama-cpp-python`.
 
 Go to the project's Github to see the [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends). There are several possible backends that may work on AMD; `CLBlast (OpenCL)` has been tested to work. It may be worth installing others to see if they work for you, but your mileage may vary.
 
-Whichever backend you choose, you'll see a `pip install` command. You'll want to add a few options to ensure it gets installed over the existing package: `--force-reinstall` and `--no-cache-dir`. Your final command should look like so (this uses `CLBlast`):
+Whichever backend you choose, you'll see a `pip3 install` command. You'll want to add a few options to ensure it gets installed over the existing package: `--force-reinstall` and `--no-cache-dir`. Your final command should look like so (this uses `CLBlast`):
 
 ```shell
-CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip install --force-reinstall --no-cache-dir llama-cpp-python
+CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip3 install --force-reinstall --no-cache-dir llama-cpp-python
 ```
 
-Once that package is installed, recompile `lab` with `pip install .` and skip to the `Testing` section.
+Once that package is installed, recompile `lab` with `pip3 install .` and skip to the `Testing` section.
 
 ### Metal/Apple Silicon
 
 The `lab` default installation should have Metal support by default. If that isn't the case, these steps might help to enable it. 
 
-`torch` should already ship with Metal support, so you only have to replace `llama-cpp-python`. Go to the project's Github to see the [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends). Find the `Metal` backend. You'll see a `pip install` command. You'll want to add a few options to ensure it gets installed over the existing package: `--force-reinstall` and `--no-cache-dir`. Your final command should look like so:
+`torch` should already ship with Metal support, so you only have to replace `llama-cpp-python`. Go to the project's Github to see the [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends). Find the `Metal` backend. You'll see a `pip3 install` command. You'll want to add a few options to ensure it gets installed over the existing package: `--force-reinstall` and `--no-cache-dir`. Your final command should look like so:
 
 ```shell
-CMAKE_ARGS="-DLLAMA_METAL=on" pip install --force-reinstall --no-cache-dir llama-cpp-python
+CMAKE_ARGS="-DLLAMA_METAL=on" pip3 install --force-reinstall --no-cache-dir llama-cpp-python
 ```
 
-Once that package is installed, recompile `lab` with `pip install .` and skip to the `Testing` section.
+Once that package is installed, recompile `lab` with `pip3 install .` and skip to the `Testing` section.
 
 ### Testing
 
