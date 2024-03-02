@@ -1,0 +1,57 @@
+copy-files target-dir:
+    cp ~/artifacts/merlinite-7b/added_tokens.json {{target-dir}}
+
+prepare:
+    python prepare_model.py ~/artifacts/malachite-7b-0223 malachite-7b
+    just copy-files malachite-7b
+
+data:
+    python make_data.py
+
+convert:
+    python convert.py --hf-path ibm/merlinite-7b --mlx-path merlinite-7b-mlx
+    just copy-files merlinite-7b-mlx
+convert-q:
+    python convert.py --hf-path ibm/merlinite-7b --mlx-path merlinite-7b-mlx-q -q
+    just copy-files merlinite-7b-mlx-q
+convert-local:
+    python convert.py --hf-path malachite-7b --local --mlx-path malachite-7b-mlx
+    just copy-files malachite-7b-mlx
+convert-q-local:
+    python convert.py --hf-path malachite-7b --local --mlx-path malachite-7b-mlx-q -q
+    just copy-files malachite-7b-mlx-q
+
+train model:
+    python lora.py --model {{model}} --train --data data_puns_shiv --lora-layers 32 --adapter-file {{model}}/adapters.npz --iters 300 --save-every 10 --steps-per-eval 10
+
+_generate-no-lora model prompt:
+    python lora.py --model {{model}} --no-adapter --max-tokens 100 --prompt "<|system|>\nYou are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior.\n<|user|>\n{{prompt}}\n<|assistant|>\n"
+_generate model adapter prompt:
+    python lora.py --model {{model}} --adapter-file {{model}}/{{adapter}} --max-tokens 100 --prompt "<|system|>\nYou are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior.\n<|user|>\n{{prompt}}\n<|assistant|>\n"
+generate:
+    just _generate merlinite-7b-mlx adapters-100.npz "hi"
+generate-q:
+    just _generate merlinite-7b-mlx-q adapters-100.npz "hi"
+
+compare-prompt model prompt:
+    just _generate-no-lora {{model}} "{{prompt}}"
+    just _generate {{model}} adapters-100.npz "{{prompt}}"
+
+test-1 model:
+    just compare-prompt {{model}} "Tell me a joke about trees."
+
+test-2 model:
+    just compare-prompt {{model}} "What's a clever pun about the ocean?"
+
+_fuse model adapter:
+    
+fuse model:
+    python fuse.py --model {{model}} --save-path {{model}}-fused --adapter-file {{model}}/adapters-100.npz
+    just copy-files {{model}}-fused
+fuse-q model:
+    python fuse.py --model {{model}} --save-path {{model}}-fused --adapter-file {{model}}/adapters-100.npz --de-quantize
+    just copy-files {{model}}-fused
+
+convert-back model:
+    python convert.py --hf-path {{model}} --local --mlx-path {{model}}-pt --to-pt
+    just copy-files {{model}}-pt
