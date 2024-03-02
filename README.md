@@ -248,7 +248,7 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
 - Generate a synthetic dataset to enhance your example data set using the **generate** command. If you haven't made any changes to your `/taxonomy` directory yet, nothing should happen.
 
-  ```
+  ```shell
   lab generate
   ```
 
@@ -277,13 +277,17 @@ Train the model on your synthetic data-enhanced dataset by following the instruc
 - First, stop the server you have running via `ctrl+c` in the terminal it is running in.
 - Serve the fine-tuned model locally via the **serve** with the `--model` argument to specify your new model.
 
-  `lab serve --model <New model name>`
+  ```shell
+  lab serve --model <New model name>
+  ```
 
 ### Try out the new model
 
 - Try the fine-tuned model out live using a chat interface, and see if the results are better than the untrained version of the model with **chat**:
 
-  `lab chat`
+  ```shell
+  lab chat
+  ```
 
   Once you are in the chat interface, you can type `/h` for help, which will list out all of the chat commands.
 
@@ -291,7 +295,9 @@ Train the model on your synthetic data-enhanced dataset by following the instruc
 
 - Run tests against the model via the **test** command:
 
-  `lab test`
+  ```shell
+  lab test
+  ```
 
 ## 🎁 4. Submit your dataset!
 
