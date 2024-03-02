@@ -35,7 +35,7 @@ class Lab:
 
 def configure(ctx, param, filename):
     # skip configuration reading when invoked command is `init`
-    if len(sys.argv) > 0 and sys.argv[-1] == "init":
+    if len(sys.argv) > 0 and sys.argv[1] == "init":
         return
 
     if not exists(filename):
