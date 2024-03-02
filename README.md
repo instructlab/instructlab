@@ -101,7 +101,7 @@ These are the steps that we're executing above, in plain language:
 
 ### Installing from Source (I want to contribute to `lab` CLI! 🛠️)
 
-Go to the [contributors guide]( CONTRIBUTING.md ) for more details on contributing to the project.
+Go to the [contributors guide]( CONTRIBUTING/CONTRIBUTING.md ) for more details on contributing to the project.
 
 ## 🚀 Verifying `lab` installation
 
