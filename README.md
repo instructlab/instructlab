@@ -61,10 +61,10 @@ Finally, you can run the retrained model and make use of its new talents!
 ## 📋 Requirements
 
 - 🐍 Python 3.9 or later (CLang dsitribution of Python: 15.0.0 from xcode)
-- 🍎 macOS (14.x with an M1/M2/M3 Metal/GPU)
+- 🍎 macOS (14.x with an M1/M2/M3 Metal/GPU) or 🐧 Linux (tested on Fedora)
 - 📦 A quantized model in GGUF format (or read our [guide](./docs/converting_GGUF.md) on to convert
   models to GGUF format and quantize them.)
-- `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github (optional if you download the models yourself)
+- 🐱 `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github (optional if you download the models yourself)
 
 🗒️ **Note:** The steps below use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. If you have used [pyenv](https://github.com/pyenv/pyenv),
 [Conda Miniforge](https://github.com/conda-forge/miniforge), or another tool for Python version management on your laptop, then use the virtual environment with that tool instead. Otherwise, you may have issues with packages installed but modules
@@ -206,6 +206,8 @@ You can see a flow chart showing the order of commands in a typical workflow as 
 
 - **Generate** with the `--model` argument just requires the file name of the gguf model and assumes the model is located in the `models/` subdirectory of the root `cli/` git checkout directory, e.g.:
   `lab generate --model ggml-malachite-7b-0226-Q4_K_M.gguf`
+
+📋 **Note:** If you're on a less-common configuration, it's possible GPU acceleration won't work out of the box. Advanced users willing to tinker might want to look at [the GPU documentation](docs/gpu-acceleration.md) for tips on how to re-enable GPU acceleration.
 
 ---
 
