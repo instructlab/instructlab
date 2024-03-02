@@ -1,122 +1,42 @@
-# Labrador 🐶 command-line interface `lab`
+# Labrador (`lab`)
 
-Labrador 🐶 is a novel synthetic data-based alignment tuning method for Large
-Language Models (LLMs.) The "**lab**" in **Lab**rador 🐶 stands for **L**arge-scale **A**lignment for Chat **B**ots.
+## What is `lab`
 
-This command-line interface for Labrador 🐶 (`lab`) will allow you to create models tuned
-with your data using the Labrador 🐶 method on your laptop or workstation.
+`lab` is a Command-Line Interface (CLI) tool that allows you to:
 
-_`lab` currently **requires an Apple M1/M2/M3 Mac** to use. We anticipate
-future support for 🐧 Linux and other operating systems as well as for
-💻 additional hardware._
+1. Download a pre-trained LLM.
+2. Chat with the LLM.
 
-## Contents:
+To add new knowledge and skills to the pre-trained LLM you have to add new information to the companion [taxonomy](https://github.com/open-labrador/taxonomy.git) repository.
+After that is done you can:
 
-- [Labrador 🐶 command-line interface `lab`](#labrador--command-line-interface-lab)
-  - [Contents:](#contents)
-  - [What is `lab`?](#what-is-lab)
-- [Getting `lab`](#getting-lab)
-  - [📋 Requirements](#-requirements)
-  - [🧰 Installing `lab`](#-installing-lab)
-    - [Installing from GitHub (I just want it to use it! 🚀)](#installing-from-github-i-just-want-it-to-use-it-)
-    - [Installing from Source (I want to contribute to `lab` CLI! 🛠️)](#installing-from-source-i-want-to-contribute-to-lab-cli-️)
-  - [🚀 Verifying `lab` installation](#-verifying-lab-installation)
-- [How to use `lab`](#how-to-use-lab)
-  - [🏗️ 1. Initial setup](#️-1-initial-setup)
-    - [Prepare the CLI's configuration](#prepare-the-clis-configuration)
-    - [Download model](#download-model)
-  - [🧑‍🏫 2. Running the downloaded model](#-2-running-the-downloaded-model)
-    - [Serve the model](#serve-the-model)
-    - [Chat with the model](#chat-with-the-model)
-    - [Generate a dataset](#generate-a-dataset)
-      - [Configuration](#configuration)
-    - [Train the model](#train-the-model)
-  - [👩🏽‍🔬 3. Testing the fine-tuned model](#-3-testing-the-fine-tuned-model)
-    - [Serve the fine-tuned model](#serve-the-fine-tuned-model)
-    - [Try out the new model](#try-out-the-new-model)
-    - [Run tests](#run-tests)
-  - [🎁 4. Submit your dataset!](#-4-submit-your-dataset)
-  - [Contributing](#contributing)
+1. Use `lab` to generate new synthetic training data based on the changes to your local `taxonomy` repository.
+2. Re-train the LLM that you initially downloaded with this new training data.
+3. Chat with the re-trained LLM to see the results.
 
-## What is `lab`?
+## Requirements
 
-`lab` is a Command-Line Interface (CLI) that will minimally allow you to:
+- Apple M1/M2/M3 Mac or Linux system (tested on Fedora). We anticipate future support for other operating systems in the future.
+- Python 3.9 or later
+- `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github
 
-1. Download a pretrained LLM from [`lab`'s GitHub repo](https://github.com/open-labrador/cli/releases).
-2. Chat with the LLM as-downloaded from GitHub.
+## Installing `lab`
 
-`lab`'s most interesting feature, however, is to allow _you_ to **add new knowledge and skills to the pre-trained LLM**.
+To start we'll create a new directory called `labrador` to store the files that this CLI needs when it runs.
 
-How is this done? First, you have to add new information to the companion [taxonomy](https://github.com/open-labrador/taxonomy.git) repository. Please read the docs there to see how this can be done.
-
-After you've added some skills or knowledge (when knowledge contributions are accepted) to `taxonomy`, you can:
-
-3. Use `lab` to synthesize a large amount of new training data from your locally-cloned `taxonomy` repository.
-4. Re-train the LLM that you initially downloaded with this new training data.
-
-Finally, you can run the retrained model and make use of its new talents!
-
-# Getting `lab`
-
-## 📋 Requirements
-
-- 🐍 Python 3.9 or later (CLang dsitribution of Python: 15.0.0 from xcode)
-- 🍎 macOS (14.x with an M1/M2/M3 Metal/GPU) or 🐧 Linux (tested on Fedora)
-- 📦 A quantized model in GGUF format (or read our [guide](./docs/converting_GGUF.md) on to convert
-  models to GGUF format and quantize them.)
-- 🐱 `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github (optional if you download the models yourself)
-
-🗒️ **Note:** The steps below use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. If you have used [pyenv](https://github.com/pyenv/pyenv),
-[Conda Miniforge](https://github.com/conda-forge/miniforge), or another tool for Python version management on your laptop, then use the virtual environment with that tool instead. Otherwise, you may have issues with packages installed but modules
-from that package not found as they are linked to your Python version management tool and not `venv`.
-
-## 🧰 Installing `lab`
-
-The `lab` CLI will be available from PyPI using `pip3 install lab-cli` in the future.
-For the moment, we'll be installing from GitHub!
-
-### Installing from GitHub (I just want it to use it! 🚀)
-
-Let's start at an example folder `~/Documents/github` on your computer.
-
-We'll create a new directory called `labrador` to store the files that this CLI needs when it runs.
-
-```shell
+```
 mkdir labrador
 cd labrador
 python3 -m venv venv
 source venv/bin/activate
 pip install git+ssh://git@github.com/open-labrador/cli.git@stable
 ```
+`pip install` may take some time, depending on your internet connection.
 
-These are the steps that we're executing above, in plain language:
+If `lab` is installed correctly, you should be able to test the lab command:
 
-1. Create the new `labrador` directory.
-2. `cd` into that directory.
-3. In the `labrador` directory, created a new Python virtual environment.
-4. Turn the virtual environment on.
-5. Install the latest stable tag of labrador cli program from GitHub in the new virtual environment.
-
-**NOTE**: You're free to name the new directory that we called `labrador` anything you want!
-
-### Installing from Source (I want to contribute to `lab` CLI! 🛠️)
-
-Go to the [contributors guide]( CONTRIBUTING/CONTRIBUTING.md ) for more details on contributing to the project.
-
-## 🚀 Verifying `lab` installation
-
-In order for `lab` to run correctly in your terminal (or shell) window, you'll always need the Python virtual environment, where `lab` was installed in to be turned on. You can check if it is enabled as it will show virtual env name (e.g. `venv` ) at the terminal prompt prefix or at the end depending on your shell. If you start a new terminal or its not initialised then run:
-
-```shell
-source venv/bin/activate
 ```
-
-See "Installing" above if you haven't completed that step already!
-
-If `lab` is installed correctly, you should be able to run:
-
-```ShellSession
-$ lab
+(venv) $ lab
 Usage: lab [OPTIONS] COMMAND [ARGS]...
 
   CLI for interacting with labrador.
@@ -136,175 +56,181 @@ Commands:
   list      Lists taxonomy files that have changed (modified or untracked).
   serve     Start a local server
   submit    Initializes environment for labrador
+
   test      Perform rudimentary tests of the model
   train     Trains labrador model
 ```
 
-Congrats! You're ready to get started 😁
+Every lab command needs to be run from within your Python virtual environment:
 
-# How to use `lab`
-
-**NOTE**: The following instructions assume that you've followed the "Installation" instructions above, including installing `lab` from GitHub into a Python virtual environment.
-
-The Labrador 🐶 CLI `lab` requires a few setup steps. In these instructions, we'll guide you through getting started.
-You can see a flow chart showing the order of commands in a typical workflow as well as detailed command documentation below:
-
-![flow diagram](docs/workflow.png)
-
-## 🏗️ 1. Initial setup
-
-### Prepare the CLI's configuration
-
-- Inside the `labrador` directory that we created in the installation step, run the following:
-
-  ```shell
-  lab init
-  ```
-
-  This will add a new, default `config.yaml` file, and clone the `git@github.com:open-labrador/taxonomy.git` repository into the `labrador` directory.
-
-### Download model
-
-- `lab` will **automatically** download a pre-trained model from GitHub and store it in the `labrador/models/` directory. (requires [gh](https://cli.github.com/))
-
-```shell
-  lab download
+```
+source venv/bin/activate
 ```
 
-  It will download all the models from the latest [release](https://github.com/open-labrador/cli/releases) into the local directory.
+## Initialize `lab`
 
-  Pop over to our [cli releases](https://github.com/open-labrador/cli/releases) to check out the list of available models and a set of instructions on how to do this manually;
+```
+lab init
+```
+Initializing `lab` will:
+1. Add a new, default `config.yaml` file. 
+2. Clone the `git@github.com:open-labrador/taxonomy.git` repository into the current directory.
 
-  **Note:** Users should make sure they are either logged in to their github accounts via the `gh` CLI (which can be achieved by running `gh auth login` and following the prompts/instructions), or if using macOS, users can add their SSH keys to their apple-keychain by running:
-  ```
-  ssh-add --apple-use-keychain ~/.ssh/[your-private-key]
-  ```
+```
+(venv) $ lab init
+Welcome to labrador CLI. This guide will help you to setup your environment.
+Please provide the following values to initiate the environment:
+Path to taxonomy repo [taxonomy]: <ENTER>
+`taxonomy` seems to not exists or is empty. Should I clone git@github.com:open-labrador/taxonomy.git for you? [y/N]: y
+Cloning git@github.com:open-labrador/taxonomy.git...
+Path to your model [models/ggml-malachite-7b-0226-Q4_K_M.gguf]: <ENTER>
+Generating `config.yaml` in the current directory...
+Initialization completed successfully, you're ready to start using `lab`. Enjoy!
+```
 
-  📋 **Note:** Once you have the model chunks downloaded and reassembled according to the instructions above, please move the model to a `models/` directory in the root directory of your git checkout of this project (this assumes the model is in your `Downloads/` folder):
+`lab` will use the default configuration file unless otherwise specified.
+You can override this behavior for any `lab` command with the `--config` parameter.
 
-  The model will come from the latest [release](https://github.com/open-labrador/cli/releases).
+## Download the model
 
-- Manually downloading models:
+Users should make sure they are logged in to their github accounts via the `gh` CLI and following the promths/instructions:
 
-  If you'd like to, you can use a different model, also available on GitHub in [cli releases]( https://github.com/open-labrador/cli/releases/tag/v0.2.0). Instructions for downloading other models manually can be found there.
+```
+gh auth login
+```
 
-  📋 **Note:** Once you have the model chunks downloaded and reassembled according to the instructions above, please move the model to a `models/` directory.
+Please review [lab-troubleshoot.md](./lab-troubleshoot.md) for troubleshooting tips related to `gh`.
 
-  ```shell
-  mkdir models
-  mv ~/Downloads/ggml-labrador13B-model-Q4_K_M.gguf models
-  ```
+```
+lab download
+```
 
-## 🧑‍🏫 2. Running the downloaded model
+`lab download` will download a pre-trained model from GitHub and store it in a `models` directory:
 
----
+```
+(venv) $ lab download
+Make sure the local environment has the `gh` cli: https://cli.github.com
+Downloading models from https://github.com/open-labrador/cli.git@v0.2.0 to models...
+(venv) $ ls models
+ggml-malachite-7b-0226-Q4_K_M.gguf
+```
 
-📋 **Note:** By default, the serve and generate commands assume that we're using `ggml-malachite-7b-0226-Q4_K_M.gguf` - this is a lightweight, fast model based on [Mistral](https://mistral.ai/news/announcing-mistral-7b/) that takes about ~45 min for synthetic data generation on an M1 / 16GB mac. If you have another quantized, gguf-format model you would like to use instead, there is a `--model` argument you can add to the **serve** and **generate** commands to indicate which model to use:
+This command can take 5+ minutes depending on your internet connection.
 
-- **Serve** with the `--model` argument requires indicating the directory path to the model file, e.g.:
-  `lab serve --model models/ggml-malachite-7b-0226-Q4_K_M.gguf`
+## Serving the model
 
-- **Generate** with the `--model` argument just requires the file name of the gguf model and assumes the model is located in the `models/` subdirectory of the root `cli/` git checkout directory, e.g.:
-  `lab generate --model ggml-malachite-7b-0226-Q4_K_M.gguf`
+```
+lab serve
+```
 
-📋 **Note:** If you're on a less-common configuration, it's possible GPU acceleration won't work out of the box. Advanced users willing to tinker might want to look at [the GPU documentation](docs/gpu-acceleration.md) for tips on how to re-enable GPU acceleration.
+Once the model is being served and ready, you'll see the following output:
 
----
+```
+(venv) $ lab serve
+INFO 2024-03-02 02:21:11,352 lab.py:201 Using model 'models/ggml-malachite-7b-0226-Q4_K_M.gguf' with -1 gpu-layers
+Starting server process
+After application startup complete see http://127.0.0.1:8000/docs for API.
+Press CTRL+C to shutdown server.
+```
 
-### Serve the model
+## Chat with the model (optional)
 
-- Serve the downloaded model locally via the **serve** command using [llama-cpp-python](https://github.com/abetlen/llama-cpp-python) (which provides Python bindings for the [llama.cpp framework](https://github.com/ggerganov/llama.cpp)):
+Because you're serving the model in one terminal window, you'll likely have to create a new window and re-activate your Python virtual environment to run `lab chat`:
+```
+source venv/bin/activate
+lab chat
+```
 
-  ```shell
-  lab serve
-  ```
+Before you start adding new skills and knowledge to your knowledge, you can check out its baseline performance:
 
-  Once the model is being served and ready (takes less than 1 minute on an M1 mac), you'll see the following output:
+```
+(venv) $ lab chat
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────── system ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ Welcome to Chat CLI w/ GGML-MALACHITE-7B-0226-Q4_K_M (type /h for help)                                                                                                                                                                    │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+>>> what is the capital of canada                                                                                                                                                                                                 [S][default]
+╭────────────────────────────────────────────────────────────────────────────────────────────────────── ggml-malachite-7b-0226-Q4_K_M ───────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ The capital city of Canada is Ottawa. It is located in the province of Ontario, on the southern banks of the Ottawa River in the eastern portion of southern Ontario. The city serves as the political center for Canada, as it is home to │
+│ Parliament Hill, which houses the House of Commons, Senate, Supreme Court, and Cabinet of Canada. Ottawa has a rich history and cultural significance, making it an essential part of Canada's identity.                                   │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── elapsed 12.008 seconds ─╯
+>>>                                                                                                                                                                                                                               [S][default]
+```
 
-  ```
-  Starting server process
-  After application startup complete see http://127.0.0.1:8000/docs for API.
-  Press CTRL+C to shutdown server.
-  INFO:     Started server process [4295]
-  INFO:     Waiting for application startup.
-  INFO:     Application startup complete.
-  INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
-  ```
+## Contribute knowledge or compositional skills
 
-### Chat with the model
+Locally contribute new knowledge or compositional skills to your local [taxonomy](https://github.com/open-labrador/taxonomy.git) repository.
 
-- Before you start tuning your model and adding new Skills and Knowledge, check out its baseline performance.
-  This way, you'll be able to tell whether the model has learned from your contributions!
+Detailed contribution instructions can be found on the [taxonomy github](https://github.com/open-labrador/taxonomy/blob/main/README.md).
 
-  **Note:** Because you're serving the model in one terminal window, you'll likely have to create a new window and re-activate your Python virtual environment to run the following command:
+## List your new knowledge
 
-  ```shell
-  lab chat
-  ```
+```
+lab list
+```
 
-  Once you are in the chat interface, you can type `/h` for help, which will list out all of the chat commands.
+To ensure `lab` is registering your new knowledge you can run `lab list`.
 
-### Generate a dataset
+Here is the expected result after adding the new compositional skill foo-lang:
+```
+(venv) $ lab list
+compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
+```
 
-- Create a new example skill and contribute it to the existing taxonomy tree. Instructions to do this can be found at https://github.com/open-labrador/taxonomy?tab=readme-ov-file#knowledge-vs-skills under the 'Skills' section
-- Generate a synthetic dataset to enhance your example data set using the **generate** command. If you haven't made any changes to your `/taxonomy` directory yet, nothing should happen.
+## Generate a synthetic dataset
 
-  ```shell
-  lab generate
-  ```
+```
+lab generate
+```
 
-  **Note:** Make sure you're in a terminal window with your Python virtual environment enabled!
+The next step is to generate a synthetic dataset based on your newly added knowledge set in the [taxonomy](https://github.com/open-labrador/taxonomy.git) repository:
 
-  📋 **Note:** This takes about **~45 minutes** to complete on an M1 mac with 16 GB RAM. The synthetic data set will be three files that are named like: `generated*.json`, `test*.jsonl`, and `train*.jsonl`. The file names will include the model used and date and time of generation.
+```
+(venv) $ lab generate
+INFO 2024-02-29 19:09:48,804 lab.py:250 Generating model 'ggml-malachite-7b-0226-Q4_K_M' using 10 cpus,
+taxonomy: '/home/username/labrador/taxonomy' and seed 'seed_tasks.json'
 
-  #### Configuration
+0%|##########| 0/100 Cannot find prompt.txt. Using default prompt.
+98%|##########| 98/100 INFO 2024-02-29 20:49:27,582 generate_data.py:428 Generation took 5978.78s
+```
 
-  `lab` will use a default configuration file unless otherwise specified. You can override this behavior with the `--config` parameter.
 
-  ```ShellSession
-  lab --config=./config.yml generate
-  ```
+The synthetic data set will be three files in the `taxonomy` repository that are named like: `generated*.json`, `test*.jsonl`, and `train*.jsonl`:
+```
+(venv) $ ls taxonomy/
+ CODE_OF_CONDUCT.md     CONTRIBUTING.md  'generated_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.json'   README.md                                                      'train_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
+ compositional_skills   docs              MAINTAINERS.md                                                     'test_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
+```
 
-  **Note:** Make sure to pass the `--config` flag after `lab` and not after `generate`.
+This can take over **1 hour+** to complete depending on your computing resources.
 
-### Train the model
+## Train the model
 
 Train the model on your synthetic data-enhanced dataset by following the instructions in [Training](./notebooks/README.md)
 
-## 👩🏽‍🔬 3. Testing the fine-tuned model
+This takes about **0.5-2.5 hours** to complete in the free tier of Google Colab.
 
-### Serve the fine-tuned model
+After that's done, download the newly trained model from Google Colab and put it in the `models` directory created by the `lab download` command.
 
-- First, stop the server you have running via `ctrl+c` in the terminal it is running in.
-- Serve the fine-tuned model locally via the **serve** with the `--model` argument to specify your new model.
+## Serve the newly trained model
 
-  ```shell
-  lab serve --model <New model name>
-  ```
+Stop the server you have running via `ctrl+c` in the terminal it is running in.
+Serve the newly trained model locally via `lab serve` with the `--model` argument to specify your new model:
 
-### Try out the new model
+```
+lab serve --model <New model name>
+```
 
-- Try the fine-tuned model out live using a chat interface, and see if the results are better than the untrained version of the model with **chat**:
+## Chat with the new model (not optional this time)
 
-  ```shell
-  lab chat
-  ```
+Try the fine-tuned model out live using the chat interface, and see if the results are better than the untrained version of the model with chat.
 
-  Once you are in the chat interface, you can type `/h` for help, which will list out all of the chat commands.
+```
+lab chat
+```
+## Submit your new knowledge
 
-### Run tests
-
-- Run tests against the model via the **test** command:
-
-  ```shell
-  lab test
-  ```
-
-## 🎁 4. Submit your dataset!
-
-Of course the final step is - if you've improved the model - to share your new dataset by submitting it! You'll submit it via a pull-request process, which
-is documented in the [taxonomy respository](https://github.com/open-labrador/taxonomy).
+Of course the final step is - if you've improved the model - to open up a a pull-request in the [taxonomy respository](https://github.com/open-labrador/taxonomy).
 
 ## Contributing
 
-Check out our [contributing](CONTRIBUTING.md) guide to learn how to contribute to the Labrador CLI.
+Check out our [contributing](CONTRIBUTING/CONTRIBUTING.md) guide to learn how to contribute to the Labrador CLI.
