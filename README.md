@@ -6,7 +6,7 @@ Language Models (LLMs.) The "**lab**" in **Lab**rador 🐶 stands for **L**arge-
 This command-line interface for Labrador 🐶 (`lab`) will allow you to create models tuned
 with your data using the Labrador 🐶 method on your laptop or workstation.
 
-_`lab` currently **requires an 🍎 Apple M1/M2/M3 Mac** or 🐧 Linux system (tested on Fedora) to use. We anticipate
+_`lab` currently **requires an 🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora) to use. We anticipate
 future support for other operating systems in the future._
 
 ## Contents:
