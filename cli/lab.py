@@ -402,6 +402,10 @@ def download(ctx, repository, release, model_dir, pattern):
     default="./taxonomy"
 )
 @click.option(
+    "--skip-preprocessing",
+    is_flag=True,
+)
+@click.option(
     "--model-dir", help="Base directory where model is stored.", default="ibm/merlinite-7b"
 )
 @click.option(
@@ -413,12 +417,12 @@ def download(ctx, repository, release, model_dir, pattern):
     help="Whether or not `model_dir` is remote from HuggingFace.",
 )
 @click.option(
-    "-nq",
-    "--not-quantized",
+    "-sq",
+    "--skip-quantize",
     is_flag=True,
-    help="Whether to do quantization while converting to MLX.",
+    help="Whether to skip quantization while converting to MLX.",
 )
-def train(data_dir, taxonomy_path, model_dir, iters, local, not_quantized):
+def train(data_dir, taxonomy_path, skip_preprocessing, model_dir, iters, local, skip_quantize):
     """
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
@@ -450,9 +454,10 @@ def train(data_dir, taxonomy_path, model_dir, iters, local, not_quantized):
                 fg="red",
             )
             sys.exit() 
-    script = os.path.join(cli_dir, "train/lora-mlx/make_data.py")
-    cmd = f"{script} --data-dir {data_dir}"
-    os.system('python {}'.format(cmd))
+    if not skip_preprocessing:
+        script = os.path.join(cli_dir, "train/lora-mlx/make_data.py")
+        cmd = f"{script} --data-dir {data_dir}"
+        os.system('python {}'.format(cmd))
 
     is_macos = True # TODO detect OS
     if is_macos:
@@ -466,7 +471,7 @@ def train(data_dir, taxonomy_path, model_dir, iters, local, not_quantized):
         dest_model_dir = ""
         quantize_arg = ""
         
-        if not not_quantized:
+        if not skip_quantize:
             dest_model_dir = model_dir_mlx_quantized
             quantize_arg =  "-q"
         else:
@@ -552,13 +557,13 @@ def test(data_dir, model_dir, adapter_file):
     "--adapter-file", help="LoRA adapter to fuse.", default=None
 )
 @click.option(
-    "-nd",
+    "-sd",
     "--skip-de-quantize",
     help="Skip de-quantization.",
     is_flag=True,
 )
 @click.option(
-    "-nq",
+    "-sq",
     "--skip-quantize",
     is_flag=True,
     help="Whether to skip quantization while converting to GGUF.",
