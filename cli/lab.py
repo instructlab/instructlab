@@ -5,6 +5,7 @@ from os.path import basename, dirname, exists, splitext
 import logging
 import sys
 import subprocess
+import json
 
 # Third Party
 from click_didyoumean import DYMGroup
@@ -431,15 +432,15 @@ def train(data_dir, model_dir, iters, remote, quantize):
 
         dest_model_dir = ""
         quantize_arg = ""
-        local_arg = ""
+        local_arg = "--local"
         if quantize:
             dest_model_dir = model_dir_mlx_quantized
             quantize_arg =  "-q"
         else:
             dest_model_dir = model_dir_mlx
 
-        if not remote:
-            local_arg = "--local"
+        if remote:
+            local_arg = ""
 
         script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
         cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
@@ -483,21 +484,34 @@ def test(data_dir, model_dir, adapter_file):
     """
     TODO
     """
-
-    script = os.path.join(os.getcwd(), "train/lora-mlx/lora.py")
-    cmd = f"{script} --model {model_dir} --adapter-file {adapter_file} --max-tokens 100 --prompt \"<|system|>\nYou are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior.\n<|user|>\n{{prompt}}\n<|assistant|>\n\""
+    cli_dir = os.path.dirname(os.path.abspath(__file__))
+    script = os.path.join(cli_dir, "train/lora-mlx/lora.py")
     # _generate-no-lora model prompt:
     #     python lora.py --model {{model}} --no-adapter --max-tokens 100 --prompt "<|system|>\nYou are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior.\n<|user|>\n{{prompt}}\n<|assistant|>\n"
     # _generate model adapter prompt:
     #     python lora.py --model {{model}} --adapter-file {{model}}/{{adapter}} --max-tokens 100 --prompt "<|system|>\nYou are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior.\n<|user|>\n{{prompt}}\n<|assistant|>\n"
-    os.system('python {}'.format(cmd))
 
-    test_data = None # TODO read test data from `data_dir`
+
+    # Load the JSON Lines file
+    test_data_dir = f"{data_dir}/test.jsonl"
+    with open(test_data_dir, 'r') as f:
+        test_data = [json.loads(line) for line in f]
+    
+    SYS_PROMPT = "You are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
+    print("system prompt:", SYS_PROMPT)
     for example in test_data:
+        system = example["system"]
         user = example["user"]
-        print("expected:", example["assistant"])
-        # just _generate ibm-merlinite-7b-mlx {{user}}
+        print("user prompt:", user)
+        print("expected output:", example["assistant"])
+        print("\n-----model output BEFORE training----:\n")
+         # just _generate ibm-merlinite-7b-mlx {{user}}
+        cmd = f"{script} --model {model_dir} --no-adapter --max-tokens 100 --prompt \"<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>\n\""
+        os.system('python {}'.format(cmd))
+        print("\n-----model output AFTER training----:\n")
         # just _generate ibm-merlinite-7b-mlx adapters-100.npz {{user}}
+        cmd = f"{script} --model {model_dir} --adapter-file {adapter_file} --max-tokens 100 --prompt \"<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>\n\""
+        os.system('python {}'.format(cmd))
 
 @cli.command()
 @click.option(
