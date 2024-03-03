@@ -10,7 +10,7 @@ lab init
 lab download
 lab serve
 
-# session 2
+# session 2 (also in workspace-mlx)
 cp -r taxonomy/compositional_skills/writing/freeform/jokes/puns taxonomy/compositional_skills/writing/freeform/jokes/puns-copy
 lab generate --num-instructions 10
 mkdir data_puns
