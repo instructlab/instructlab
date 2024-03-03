@@ -15,4 +15,8 @@ sentencepiece
 tokenizers>=0.13.3
 wandb
 gitpython
-gguf
+gguf==0.6.0
+mlx>=0.0.7
+transformers
+numpy
+torch
