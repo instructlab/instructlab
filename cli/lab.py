@@ -6,6 +6,8 @@ import logging
 import sys
 import subprocess
 import json
+import shutil
+from glob import glob
 
 # Third Party
 from click_didyoumean import DYMGroup
@@ -391,32 +393,63 @@ def download(ctx, repository, release, model_dir, pattern):
 #     cp ~/artifacts/merlinite-7b/added_tokens.json {{target-dir}}
 @cli.command()
 @click.option(
-    "--data-dir", help="Base directory where data is stored."
+    "--data-dir", help="Base directory where data is stored.", default=None
 )
 @click.option(
-    "--model-dir", help="Base directory where model is stored.", default="ibm-merlinite-7b"
+    "--taxonomy-path",
+    type=click.Path(),
+    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
+    default="./taxonomy"
+)
+@click.option(
+    "--model-dir", help="Base directory where model is stored.", default="ibm/merlinite-7b"
 )
 @click.option(
     "--iters", help="Number of iterations to train LoRA", default=100
 )
 @click.option(
-    "--remote",
+    "--local",
     is_flag=True,
     help="Whether or not `model_dir` is remote from HuggingFace.",
 )
 @click.option(
-    "-q",
-    "--quantize",
+    "-nq",
+    "--not-quantized",
     is_flag=True,
     help="Whether to do quantization while converting to MLX.",
 )
-def train(data_dir, model_dir, iters, remote, quantize):
+def train(data_dir, taxonomy_path, model_dir, iters, local, not_quantized):
     """
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
     cli_dir = os.path.dirname(os.path.abspath(__file__))
 
+    if data_dir is None:
+        try:
+            os.listdir(taxonomy_path)
+            data_dir="./taxonomy_data"
+            os.mkdir(data_dir)
+            shutil.copy(glob(taxonomy_path+"/train_*")[0], data_dir+"/train_gen.jsonl")
+            shutil.copy(glob(taxonomy_path+"/test_*")[0], data_dir+"/test_gen.jsonl")
+        except FileNotFoundError as exc:
+            click.secho(
+                    f"Could not read taxonomy directory: {exc}",
+                    fg="red",
+                )
+            sys.exit()
+        except OSError as exc: 
+            click.secho(
+                f"Could not create data dir: {exc}",
+                fg="red",
+            )
+            sys.exit()
+        except IndexError as exc:
+            click.secho(
+                f"Could not copy into data directory: {exc}",
+                fg="red",
+            )
+            sys.exit() 
     script = os.path.join(cli_dir, "train/lora-mlx/make_data.py")
     cmd = f"{script} --data-dir {data_dir}"
     os.system('python {}'.format(cmd))
@@ -433,13 +466,13 @@ def train(data_dir, model_dir, iters, remote, quantize):
         dest_model_dir = ""
         quantize_arg = ""
         
-        if quantize:
+        if not not_quantized:
             dest_model_dir = model_dir_mlx_quantized
             quantize_arg =  "-q"
         else:
             dest_model_dir = model_dir_mlx
 
-        local_arg = "" if remote else "--local"
+        local_arg = "--local" if local else "" 
 
         script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
         cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
@@ -449,10 +482,7 @@ def train(data_dir, model_dir, iters, remote, quantize):
 
         adapter_file_path = f"{dest_model_dir}/adapters.npz"
         script = os.path.join(cli_dir, "train/lora-mlx/lora.py")
-        # TODO train the model with LoRA
-        # python lora.py --model {{model_dir_mlx}} --train --data data_puns_shiv --adapter-file {{model_dir_mlx}}/adapters.npz --iters 300 --save-every 10 --steps-per-eval 10
-        # exact command:
-        # python lora.py --model ibm-merlinite-7b-mlx --train --data data_puns_shiv --adapter-file ibm-merlinite-7b-mlx/adapters.npz --iters 100 --save-every 10 --steps-per-eval 10
+        # train the model with LoRA
         cmd = f"{script} --model {dest_model_dir} --train --data {data_dir} --adapter-file {adapter_file_path} --iters {iters} --save-every 10 --steps-per-eval 10"
         os.system('python {}'.format(cmd))
 
@@ -471,18 +501,20 @@ def train(data_dir, model_dir, iters, remote, quantize):
 
 @cli.command()
 @click.option(
-    "--data-dir", help="Base directory where data is stored."
+    "--data-dir", help="Base directory where data is stored.", default="./taxonomy_data"
 )
 @click.option(
-    "--model-dir", help="Base directory where model is stored."
+    "--model-dir", help="Base directory where model is stored.", default="ibm-merlinite-7b-mlx-q"
 )
 @click.option(
-    "--adapter-file", help="LoRA adapter to use for test."
+    "--adapter-file", help="LoRA adapter to use for test.", default=None
 )
 def test(data_dir, model_dir, adapter_file):
     """
     TODO
     """
+    if adapter_file is None:
+        adapter_file = os.path.join(model_dir, "adapters.npz")
     cli_dir = os.path.dirname(os.path.abspath(__file__))
     script = os.path.join(cli_dir, "train/lora-mlx/lora.py")
     # _generate-no-lora model prompt:
@@ -514,32 +546,34 @@ def test(data_dir, model_dir, adapter_file):
 
 @cli.command()
 @click.option(
-    "--model-dir", help="Base directory where model is stored."
+    "--model-dir", help="Base directory where model is stored.", default="ibm-merlinite-7b-mlx-q"
 )
 @click.option(
-    "--adapter-file", help="LoRA adapter to fuse."
+    "--adapter-file", help="LoRA adapter to fuse.", default=None
 )
 @click.option(
-    "-d",
-    "--de-quantize",
-    help="Generate a de-quantized model.",
+    "-nd",
+    "--skip-de-quantize",
+    help="Skip de-quantization.",
     is_flag=True,
 )
 @click.option(
-    "-q",
-    "--quantize",
+    "-nq",
+    "--skip-quantize",
     is_flag=True,
-    help="Whether to do quantization while converting to GGUF.",
+    help="Whether to skip quantization while converting to GGUF.",
 )
-def convert(model_dir, adapter_file, de_quantize, quantize):
+def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
     """
     TODO
     """
+    if adapter_file is None:
+        adapter_file = os.path.join(model_dir, "adapters.npz")
     cli_dir = os.path.dirname(os.path.abspath(__file__))
 
     dequantize_arg = ""
     source_model_dir = model_dir
-    if de_quantize:
+    if not skip_de_quantize:
         dequantize_arg = " -d "
 
     model_dir_fused= f"{source_model_dir}-fused"
@@ -572,7 +606,7 @@ def convert(model_dir, adapter_file, de_quantize, quantize):
     # quantize 4-bi GGUF (optional)
     # $HOME/src/open-labrador/llama.cpp/quantize {{model_dir}}/ggml-model-f16.gguf {{model_dir}}/ggml-model-Q4_K_M.gguf Q4_K_M
     # TO DO: fix this to execute function instead
-    if quantize:
+    if not skip_quantize:
         gguf_model_dir = f"{model_dir_fused_pt}/ggml-model-f16.gguf" 
         gguf_model_q_dir = f"{model_dir_fused_pt}/ggml-model-Q4_K_M.gguf"
         script = os.path.join(cli_dir, "llamacpp/quantize")
