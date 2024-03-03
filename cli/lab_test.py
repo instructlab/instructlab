@@ -1,16 +1,16 @@
-import test_lab
+import temp_lab
 
 def test_convert(model_dir, adapter_file, quantized):
     print("tesing convert")
-    test_lab.convert(model_dir, adapter_file, quantized)
+    temp_lab.convert(model_dir, adapter_file, quantized)
 
 def test_test(model_dir, adapter_file):
-     print("tesing test")
-    test_lab.test(model_dir, adapter_file)
+    print("tesing test")
+    temp_lab.test(model_dir, adapter_file)
 
 def test_train(data_dir, model_dir, remote, quantize):
-     print("tesing train")
-    test_lab.train(data_dir, model_dir, remote, quantize)
+    print("tesing train")
+    temp_lab.train(data_dir, model_dir, remote, quantize)
 
 if __name__ == "__main__":
     train_model_dir = "train/lora-mlx/ibm-merlinite-7b"
