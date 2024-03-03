@@ -38,4 +38,4 @@ where = [""]
 include = ["cli", "cli.chat", "cli.generator", "cli.train", "cli.train.lora-mlx", "cli.train.lora-mlx.models", "cli.llamacpp"]
 
 [tool.setuptools.package-data]
-cli.llamacpp = ["quantize"]
+"*" = ["quantize"]
