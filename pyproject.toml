@@ -37,8 +37,5 @@ lab = "cli.lab:cli"
 where = [""]
 include = ["cli", "cli.chat", "cli.generator", "cli.train", "cli.train.lora-mlx", "cli.train.lora-mlx.models"]
 
-[tool.setuptools]
-include-package-data = true
-
 [tool.setuptools.package-data]
-cli = ["cli/llamacpp"/*"]
+cli = ["cli/llamacpp/*"]
