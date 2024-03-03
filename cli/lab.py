@@ -432,15 +432,14 @@ def train(data_dir, model_dir, iters, remote, quantize):
 
         dest_model_dir = ""
         quantize_arg = ""
-        local_arg = "--local"
+        
         if quantize:
             dest_model_dir = model_dir_mlx_quantized
             quantize_arg =  "-q"
         else:
             dest_model_dir = model_dir_mlx
 
-        if remote:
-            local_arg = ""
+        local_arg = "" if remote else "--local"
 
         script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
         cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
