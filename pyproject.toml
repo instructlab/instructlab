@@ -24,6 +24,10 @@ Issues = "https://github.com/open-labrador/cli/issues"
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
 
+[project.optional-dependencies]
+train = ["mlx>=0.0.7", "transformers", "numpy", "torch"]
+convert = ["gguf==0.6.0"]
+
 [project.scripts]
 # defines lab executable
 lab = "cli.lab:cli"

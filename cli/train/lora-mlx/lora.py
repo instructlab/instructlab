@@ -291,6 +291,9 @@ def train(model, train_set, val_set, optimizer, loss, tokenizer, args):
 
         # Save adapter weights if needed
         if (it + 1) % args.save_every == 0:
+            mx.savez(
+                args.adapter_file, **dict(tree_flatten(model.trainable_parameters()))
+            )
             a, b = args.adapter_file.split(".")
             fn = f"{a}-{it+1:03d}.{b}"
             mx.savez(

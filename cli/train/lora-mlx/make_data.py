@@ -1,3 +1,4 @@
+import click
 import json
 
 SYS_PROMPT = "You are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
@@ -12,12 +13,14 @@ def format_text(obj):
 {obj['assistant']}<|endoftext|>\
 """
 
-def make_data():
+@click.command()
+@click.option("--data-dir")
+def make_data(data_dir):
     is_lab_gen = True
     if is_lab_gen:
         # This branch uses data from `lab generate`
         # train_gen.jsonl and test_gen.jsonl are the two files produced by `lab generate`
-        for fn in ['data_puns/train_gen.jsonl', 'data_puns/test_gen.jsonl']:
+        for fn in [f'{data_dir}/train_gen.jsonl', f'{data_dir}/test_gen.jsonl']:
 
             # Load the JSON Lines file
             with open(fn, 'r') as f:
@@ -29,23 +32,22 @@ def make_data():
                 data_new.append({'text': format_text(obj)})
 
             # Save the modified objects back to the JSON Lines file
-            # TODO make the naming conversion more robust
-            if "train" in fn:
+            if "train_gen" in fn:
                 n = len(data_new) // 10 * 8
-                with open(fn.replace("_gen", ""), 'w') as f:
+                with open(f'{data_dir}/train.jsonl', 'w') as f:
                     for obj in data_new[:n]:
                         f.write(json.dumps(obj) + '\n')
-                with open(fn.replace("_gen", "").replace("train", "valid"), 'w') as f:
+                with open(f'{data_dir}/valid.jsonl', 'w') as f:
                     for obj in data_new[n:]:
                         f.write(json.dumps(obj) + '\n')
-            else:
-                with open(fn.replace("_gen", ""), 'w') as f:
+            if "test_gen" in fn:
+                with open(f'{data_dir}/test.jsonl', 'w') as f:
                     for obj in data_new:
                         f.write(json.dumps(obj) + '\n')
     else:
         # This branch is to use Shiv generated data
         # You can ignore for now
-        fn = "data_puns_shiv/raw.jsonl"
+        fn = f"{data_dir}/raw.jsonl"
 
         # Load the JSON Lines file
         with open(fn, 'r') as f:
