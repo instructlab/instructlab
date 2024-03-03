@@ -12,7 +12,7 @@ lab serve
 
 # session 2
 cp -r taxonomy/compositional_skills/writing/freeform/jokes/puns taxonomy/compositional_skills/writing/freeform/jokes/puns-copy
-lab generate --num-instructions 5
+lab generate --num-instructions 10
 mkdir data_puns
 cp taxonomy/train_* data_puns/train_gen.jsonl
 cp taxonomy/test_* data_puns/test_gen.jsonl
