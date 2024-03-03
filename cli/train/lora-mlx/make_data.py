@@ -15,9 +15,9 @@ def format_text(obj):
 
 @click.command()
 @click.option("--data-dir")
-def make_data(data_dir):
-    is_lab_gen = True
-    if is_lab_gen:
+@click.option("--is-shiv", is_flag=True)
+def make_data(data_dir, is_shiv):
+    if not is_shiv:
         # This branch uses data from `lab generate`
         # train_gen.jsonl and test_gen.jsonl are the two files produced by `lab generate`
         for fn in [f'{data_dir}/train_gen.jsonl', f'{data_dir}/test_gen.jsonl']:
@@ -69,13 +69,13 @@ def make_data(data_dir):
         # Save the modified objects back to the JSON Lines file
         n = len(data_new) // 10 * 7
         m = len(data_new) // 10 * 2 + n
-        with open(fn.replace("raw.jsonl", "train.jsonl"), 'w') as f:
+        with open(f"{data_dir}/train.jsonl", 'w') as f:
             for obj in data_new[:n]:
                 f.write(json.dumps(obj) + '\n')
-        with open(fn.replace("raw.jsonl", "valid.jsonl"), 'w') as f:
+        with open(f"{data_dir}/valid.jsonl", 'w') as f:
             for obj in data_new[n:m]:
                 f.write(json.dumps(obj) + '\n')
-        with open(fn.replace("raw.jsonl", "test.jsonl"), 'w') as f:
+        with open(f"{data_dir}/test.jsonl", 'w') as f:
             for obj in data_new[:m]:
                 f.write(json.dumps(obj) + '\n')
 
