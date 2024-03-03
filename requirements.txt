@@ -15,3 +15,4 @@ sentencepiece
 tokenizers>=0.13.3
 wandb
 gitpython
+-r cli/train/lora-mlx/requirements.txt
