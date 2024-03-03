@@ -498,10 +498,10 @@ def test(data_dir, model_dir, adapter_file):
     
     SYS_PROMPT = "You are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
     print("system prompt:", SYS_PROMPT)
-    for example in test_data:
+    for (idx, example) in enumerate(test_data):
         system = example["system"]
         user = example["user"]
-        print("user prompt:", user)
+        print("[{}] user prompt: {}".format(idx + 1, user))
         print("expected output:", example["assistant"])
         print("\n-----model output BEFORE training----:\n")
          # just _generate ibm-merlinite-7b-mlx {{user}}
