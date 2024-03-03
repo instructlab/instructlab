@@ -16,3 +16,4 @@ tokenizers>=0.13.3
 wandb
 gitpython
 mlx_lm
+gguf>=0.1.0
