@@ -17,6 +17,7 @@ mkdir data_puns
 cp taxonomy/train_* data_puns/train_gen.jsonl
 cp taxonomy/test_* data_puns/test_gen.jsonl
 lab train --data-dir data_puns --model-dir ibm/merlinite-7b --remote -q --iters 10
+lab test --data-dir data_puns --model-dir ibm/merlinite-7b-mlx-q --adapter-file ibm-merlinite-7b-mlx-q/adapters.npz 
 lab convert --model-dir ibm-merlinite-7b-mlx-q --adapter-file ibm-merlinite-7b-mlx-q/adapters.npz -d -q
 
 # session 1
