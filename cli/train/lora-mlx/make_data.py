@@ -29,7 +29,11 @@ def make_data(data_dir):
             # Add the "text" field with value "x" to each object
             data_new = []
             for obj in data:
-                data_new.append({'text': format_text(obj)})
+                obj_new = {}
+                obj_new["system"] = SYS_PROMPT
+                obj_new["user"] = obj["user"]
+                obj_new["assistant"] = obj["assistant"]
+                data_new.append(obj_new | {'text': format_text(obj_new)})
 
             # Save the modified objects back to the JSON Lines file
             if "train_gen" in fn:
