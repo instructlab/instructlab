@@ -6,9 +6,8 @@ Language Models (LLMs.) The "**lab**" in **Lab**rador 🐶 stands for **L**arge-
 This command-line interface for Labrador 🐶 (`lab`) will allow you to create models tuned
 with your data using the Labrador 🐶 method on your laptop or workstation.
 
-_`lab` currently **requires an Apple M1/M2/M3 Mac** to use. We anticipate
-future support for 🐧 Linux and other operating systems as well as for
-💻 additional hardware._
+_`lab` currently **requires an 🍎 Apple M1/M2/M3 Mac** or 🐧 Linux system (tested on Fedora) to use. We anticipate
+future support for other operating systems in the future._
 
 ## Contents:
 
@@ -62,8 +61,6 @@ Finally, you can run the retrained model and make use of its new talents!
 
 - 🐍 Python 3.9 or later (CLang dsitribution of Python: 15.0.0 from xcode)
 - 🍎 macOS (14.x with an M1/M2/M3 Metal/GPU) or 🐧 Linux (tested on Fedora)
-- 📦 A quantized model in GGUF format (or read our [guide](./docs/converting_GGUF.md) on to convert
-  models to GGUF format and quantize them.)
 - 🐱 `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github (optional if you download the models yourself)
 
 🗒️ **Note:** The steps below use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. If you have used [pyenv](https://github.com/pyenv/pyenv),
