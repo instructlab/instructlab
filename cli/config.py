@@ -14,6 +14,7 @@ DEFAULT_VI_MODE = False
 DEFAULT_VISIBLE_OVERFLOW = True
 DEFAULT_TAXONOMY_REPO = "git@github.com:open-labrador/taxonomy.git"
 DEFAULT_TAXONOMY_PATH = "taxonomy"
+DEFAULT_TAXONOMY_BRANCH = "main"
 DEFAULT_PROMPT_FILE = "prompt.txt"
 DEFAULT_SEED_FILE = "seed_tasks.json"
 
