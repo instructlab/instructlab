@@ -35,4 +35,8 @@ lab = "cli.lab:cli"
 [tool.setuptools.packages.find]
 # defines where to look for sub-packages
 where = [""]
-include = ["cli", "cli.chat", "cli.generator", "cli.train", "cli.train.lora-mlx", "cli.train.lora-mlx.models", "cli.llamacpp"]
+include = ["cli", "cli.chat", "cli.generator", "cli.train", "cli.train.lora-mlx", "cli.train.lora-mlx.models"]
+
+[tool.setuptools]
+package_data = { "cli": [", "cli/llamacpp"/*"] }
+include_package_data = true
