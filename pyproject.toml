@@ -35,4 +35,4 @@ lab = "cli.lab:cli"
 [tool.setuptools.packages.find]
 # defines where to look for sub-packages
 where = [""]
-include = ["cli", "cli.chat", "cli.generator"]
+include = ["cli", "cli.chat", "cli.generator", "cli.train"]
