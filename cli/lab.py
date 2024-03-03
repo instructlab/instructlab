@@ -15,10 +15,10 @@ import llama_cpp.server.app as llama_app
 import uvicorn
 
 # Local
-import config
-from chat.chat import ChatException, chat_cli
-from download import DownloadException, clone_taxonomy, download_model
-from generator.generate_data import GenerateException, generate_data, get_taxonomy_diff
+from . import config
+from .chat.chat import ChatException, chat_cli
+from .download import DownloadException, clone_taxonomy, download_model
+from .generator.generate_data import GenerateException, generate_data, get_taxonomy_diff
 
 
 # pylint: disable=unused-argument
