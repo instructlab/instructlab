@@ -14,7 +14,7 @@ from openai import OpenAI
 
 StrOrOpenAIObject = Union[str, object]
 
-SYSTEM_PROMPT = "You are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
+SYSTEM_PROMPT = "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
 
 # pylint: disable=too-many-instance-attributes
 @dataclasses.dataclass
@@ -33,7 +33,7 @@ class OpenAIDecodingArguments:
 def openai_completion(
     prompts: Union[str, Sequence[str], Sequence[dict[str, str]], dict[str, str]],
     decoding_args: OpenAIDecodingArguments,
-    model_name="ggml-labrador13B-model-Q4_K_M",
+    model_name="ggml-merlinite-7b-0302-Q4_K_M",
     batch_size=1,
     max_instances=sys.maxsize,
     max_batches=sys.maxsize,
