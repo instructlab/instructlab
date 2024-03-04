@@ -199,8 +199,14 @@ def list(ctx, taxonomy_path):
     type=click.INT,
     help="The number of layers to put on the GPU. The rest will be on the CPU. Defaults to -1 to move all to GPU.",
 )
+@click.option(
+    "--port",
+    "-p",
+    default=8000,
+    help="Port that `lab serve` will target."
+)
 @click.pass_context
-def serve(ctx, model_path, gpu_layers):
+def serve(ctx, model_path, gpu_layers, port):
     """Start a local server"""
     ctx.obj.logger.info(f"Using model '{model_path}' with {gpu_layers} gpu-layers")
     settings = Settings(
@@ -230,10 +236,10 @@ def serve(ctx, model_path, gpu_layers):
         )
     click.echo("Starting server process")
     click.echo(
-        "After application startup complete see http://127.0.0.1:8000/docs for API."
+        f"After application startup complete see http://127.0.0.1:{port}/docs for API."
     )
     click.echo("Press CTRL+C to shutdown server.")
-    uvicorn.run(app, port=8000, log_level=logging.ERROR)  # TODO: host params, etc...
+    uvicorn.run(app, port=port, log_level=logging.ERROR)  # TODO: host params, etc...
 
 
 @cli.command()
@@ -320,8 +326,14 @@ def test(ctx):
     is_flag=True,
     help="Exit after answering question",
 )
+@click.option(
+    "--port",
+    "-p",
+    default=8000,
+    help="Port that `lab chat` will target."
+)
 @click.pass_context
-def chat(ctx, question, model, context, session, quick_question):
+def chat(ctx, question, model, context, session, quick_question, port):
     """Run a chat using the modified model"""
     try:
         chat_cli(
@@ -332,6 +344,7 @@ def chat(ctx, question, model, context, session, quick_question):
             context,
             session,
             quick_question,
+            port=port
         )
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
