@@ -22,7 +22,7 @@ pip install -r requirements.txt
 
 ## Modify the conversion script
 
-The conversion script has a bug when converting the Labrador 🐶 model.
+The conversion script has a bug when converting the InstructLab 🥼 model.
 
 In `convert-hf-to-gguf.py`, add the following lines (with `+`):
 

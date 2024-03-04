@@ -35,7 +35,7 @@ pip install -r requirements.txt
 
 ### Modify the conversion script
 
-The conversion script has a bug when converting the labrador model.
+The conversion script has a bug when converting the model.
 
 In `convert-hf-to-gguf.py`, add the following lines (with `+`):
 
@@ -126,7 +126,7 @@ MODEL_FILE=os.getenv("MODEL_FILE")
 #   Specify the number of layers if needed to fit smaller GPUs
 model = Llama(model_path=MODEL_FILE, n_gpu_layers=-1)
 
-# Labrador prompt template
+# Prompt template
 sys_prompt = """You are Granite Chat, an AI language model developed by the IBM DMF Alignment Team. 
 You are a cautious assistant that carefully follows instructions. You are helpful and harmless and you 
 follow ethical guidelines and promote positive behavior. You respond in a comprehensive manner unless 
