@@ -206,7 +206,12 @@ The synthetic data set will be three files in the `taxonomy` repository that are
 
 ### Traing the model locally on an M-series Mac
 
-Instructions on how to train your instruct-lab model locally on an M-series Mac are in [mlx-training.md](./cli/train/mlx-training.md)
+```
+lab train
+lab convert
+```
+
+**Every** `lab` command needs to be run from within your Python virtual environment:
 
 ### Traing the model in Co Lab
 
@@ -222,7 +227,7 @@ Stop the server you have running via `ctrl+c` in the terminal it is running in.
 Serve the newly trained model locally via `lab serve` with the `--model` argument to specify your new model:
 
 ```
-lab serve --model <New model name>
+lab serve --model-path <New model name>
 ```
 
 ## 📣 Chat with the new model (not optional this time)
