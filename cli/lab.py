@@ -593,7 +593,7 @@ def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
     """
     if not is_macos_with_m_chip():
         click.secho(
-            f"`lab train` is only implemented for macOS with M-series chips",
+            f"`lab convert` is only implemented for macOS with M-series chips",
             fg="red",
         )
         sys.exit()
