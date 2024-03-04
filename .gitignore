@@ -3,6 +3,8 @@ models/
 !cli/train/lora-mlx/models
 # We recommend using taxonomy here, but not a submodule. Just a work dir.
 taxonomy/
+# We recommend putting generated files here, but PLEASE don't commit them.
+generated/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

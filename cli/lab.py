@@ -285,6 +285,11 @@ def serve(ctx, model_path, gpu_layers):
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
 )
 @click.option(
+    "--output-dir",
+    type=click.Path(),
+    help=f"Path to output generated files",
+)
+@click.option(
     "--seed-file",
     type=click.Path(),
     help="Path to a seed file.",
@@ -307,6 +312,7 @@ def generate(
     num_cpus,
     num_instructions,
     taxonomy_path,
+    output_dir,
     seed_file,
     rouge_threshold,
     quiet,
@@ -322,6 +328,7 @@ def generate(
             num_cpus=num_cpus,
             num_instructions_to_generate=num_instructions,
             taxonomy=taxonomy_path,
+            output_dir=output_dir,
             prompt_file_path=ctx.obj.config.generate.prompt_file,
             seed_tasks_path=seed_file,
             rouge_threshold=rouge_threshold,

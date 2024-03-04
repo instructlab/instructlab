@@ -178,15 +178,15 @@ def generate_data(
     seed_instruction_data = []
     generate_start = time.time()
 
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+
     # check taxonomy first then seed_tasks_path
     # throw an error if both not found
     # pylint: disable=broad-exception-caught,raise-missing-from
     if taxonomy and os.path.exists(taxonomy):
         seed_instruction_data, tax_dir = read_taxonomy(logger, taxonomy)
-        output_dir = output_dir or tax_dir
-
     elif seed_tasks_path and os.path.exists(seed_tasks_path):
-        output_dir = output_dir or os.path.dirname(os.path.abspath(seed_tasks_path))
         with open(seed_tasks_path, "r", encoding="utf-8") as seed_tasks_file:
             seed_tasks = [json.loads(l) for l in seed_tasks_file]
         seed_instruction_data = [
