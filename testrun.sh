@@ -6,7 +6,7 @@ if [ -z "$1" ]
     echo "No argument for branch, assuming from clone."
     INSTALL_FROM=".."
   else
-    INSTALL_FROM="git+https://github.com/open-labrador/cli@$1"
+    INSTALL_FROM="git+https://github.com/instruct-lab/cli@$1"
 fi
 
 

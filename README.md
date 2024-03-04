@@ -7,7 +7,7 @@
 1. Download a pre-trained LLM.
 2. Chat with the LLM.
 
-To add new knowledge and skills to the pre-trained LLM you have to add new information to the companion [taxonomy](https://github.com/open-labrador/taxonomy.git) repository.
+To add new knowledge and skills to the pre-trained LLM you have to add new information to the companion [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository.
 After that is done you can:
 
 1. Use `lab` to generate new synthetic training data based on the changes to your local `taxonomy` repository.
@@ -29,7 +29,7 @@ mkdir labrador
 cd labrador
 python3 -m venv venv
 source venv/bin/activate
-pip install git+ssh://git@github.com/open-labrador/cli.git@stable
+pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
 ```
 ⏳ `pip install` may take some time, depending on your internet connection.
 
@@ -74,15 +74,15 @@ lab init
 ```
 Initializing `lab` will:
 1. Add a new, default `config.yaml` file. 
-2. Clone the `git@github.com:open-labrador/taxonomy.git` repository into the current directory.
+2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory.
 
 ```
 (venv) $ lab init
 Welcome to labrador CLI. This guide will help you to setup your environment.
 Please provide the following values to initiate the environment:
 Path to taxonomy repo [taxonomy]: <ENTER>
-`taxonomy` seems to not exists or is empty. Should I clone git@github.com:open-labrador/taxonomy.git for you? [y/N]: y
-Cloning git@github.com:open-labrador/taxonomy.git...
+`taxonomy` seems to not exists or is empty. Should I clone git@github.com:instruct-lab/taxonomy.git for you? [y/N]: y
+Cloning git@github.com:instruct-lab/taxonomy.git...
 Path to your model [models/ggml-malachite-7b-0226-Q4_K_M.gguf]: <ENTER>
 Generating `config.yaml` in the current directory...
 Initialization completed successfully, you're ready to start using `lab`. Enjoy!
@@ -110,7 +110,7 @@ lab download
 ```
 (venv) $ lab download
 Make sure the local environment has the `gh` cli: https://cli.github.com
-Downloading models from https://github.com/open-labrador/cli.git@v0.2.0 to models...
+Downloading models from https://github.com/instruct-lab/cli.git@v0.2.0 to models...
 (venv) $ ls models
 ggml-malachite-7b-0226-Q4_K_M.gguf
 ```
@@ -158,9 +158,9 @@ Before you start adding new skills and knowledge to your knowledge, you can chec
 
 ## 🎁 Contribute knowledge or compositional skills
 
-Locally contribute new knowledge or compositional skills to your local [taxonomy](https://github.com/open-labrador/taxonomy.git) repository.
+Locally contribute new knowledge or compositional skills to your local [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository.
 
-Detailed contribution instructions can be found on the [taxonomy github](https://github.com/open-labrador/taxonomy/blob/main/README.md).
+Detailed contribution instructions can be found on the [taxonomy github](https://github.com/instruct-lab/taxonomy/blob/main/README.md).
 
 ## 📜 List your new knowledge
 
@@ -182,7 +182,7 @@ compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
 lab generate
 ```
 
-The next step is to generate a synthetic dataset based on your newly added knowledge set in the [taxonomy](https://github.com/open-labrador/taxonomy.git) repository:
+The next step is to generate a synthetic dataset based on your newly added knowledge set in the [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository:
 
 ```
 (venv) $ lab generate
@@ -228,7 +228,7 @@ lab chat
 ```
 ## 🎁 Submit your new knowledge
 
-Of course the final step is - if you've improved the model - to open a pull-request in the [taxonomy respository](https://github.com/open-labrador/taxonomy).
+Of course the final step is - if you've improved the model - to open up a a pull-request in the [taxonomy respository](https://github.com/instruct-lab/taxonomy).
 
 ## Contributing
 
