@@ -132,7 +132,12 @@ def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
             if do_clone:
                 click.echo(f"Cloning {repository}...")
                 try:
-                    clone_taxonomy(repository, config.DEFAULT_TAXONOMY_BRANCH, taxonomy_path, min_taxonomy)
+                    clone_taxonomy(
+                        repository,
+                        config.DEFAULT_TAXONOMY_BRANCH,
+                        taxonomy_path,
+                        min_taxonomy,
+                    )
                 except DownloadException as exc:
                     click.secho(
                         f"Cloning {repository} failed with the following error: {exc}",
