@@ -1,4 +1,4 @@
-# InstructLab 🐶 (`lab`)
+# InstructLab 🥼 (`lab`)
 
 ## ❓ What is `lab`
 

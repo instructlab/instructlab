@@ -1,4 +1,4 @@
-# Welcome to Labrador 🐶!
+# Welcome to InstructLab 🥼!
 
 This guide should teach you how to set up your development environment to start contributing to the `lab` CLI tool.
 
