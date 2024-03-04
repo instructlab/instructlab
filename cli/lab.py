@@ -447,22 +447,29 @@ def train(data_dir, taxonomy_path, skip_preprocessing, model_dir, iters, local, 
             f"`lab train` is only implemented for macOS with M-series chips",
             fg="red",
         )
-        return
+        sys.exit()
     
     cli_dir = os.path.dirname(os.path.abspath(__file__))
 
     if data_dir is None:
+        data_dir = "./taxonomy_data"
         try:
             os.listdir(taxonomy_path)
-            data_dir="./taxonomy_data"
-            os.mkdir(data_dir)
-            shutil.copy(glob(taxonomy_path+"/train_*")[0], data_dir+"/train_gen.jsonl")
-            shutil.copy(glob(taxonomy_path+"/test_*")[0], data_dir+"/test_gen.jsonl")
+            if not os.path.isdir(data_dir):
+                os.mkdir(data_dir)
+            train_files = glob(taxonomy_path+"/train_*")
+            test_files = glob(taxonomy_path+"/test_*")
+            if len(train_files) > 1 or len(test_files) > 1:
+                click.secho(
+                    f"Found multiple files from `lab generate`. Using the first one.", fg="yellow",
+                )
+            shutil.copy(train_files[0], data_dir+"/train_gen.jsonl")
+            shutil.copy(test_files[0], data_dir+"/test_gen.jsonl")
         except FileNotFoundError as exc:
             click.secho(
-                    f"Could not read taxonomy directory: {exc}",
-                    fg="red",
-                )
+                f"Could not read taxonomy directory: {exc}",
+                fg="red",
+            )
             sys.exit()
         except OSError as exc: 
             click.secho(
@@ -476,6 +483,7 @@ def train(data_dir, taxonomy_path, skip_preprocessing, model_dir, iters, local, 
                 fg="red",
             )
             sys.exit() 
+    
     if not skip_preprocessing:
         script = os.path.join(cli_dir, "train/lora-mlx/make_data.py")
         cmd = f"{script} --data-dir {data_dir}"
@@ -531,7 +539,7 @@ def test(data_dir, model_dir, adapter_file):
             f"`lab train` is only implemented for macOS with M-series chips",
             fg="red",
         )
-        return
+        sys.exit()
     
     if adapter_file is None:
         adapter_file = os.path.join(model_dir, "adapters.npz")
