@@ -16,7 +16,7 @@ If you see this `error invoking gh command` there is a `quick fix` and `longer f
 Make sure the local environment has the `gh` cli: https://cli.github.com
 Downloading models from https://github.com/instruct-lab/cli.git@v0.2.0 to models...
 Downloading models failed with the following error: error invoking `gh` command: Command '['gh', 'release', 'download', 'v0.2.0',
- '--repo', 'https://github.com/instruct-lab/cli.git', '--dir', 'models', '--pattern', 'ggml-malachite-7b-0226-Q4_K_M.*']' returned non-zero exit status 4.
+ '--repo', 'https://github.com/instruct-lab/cli.git', '--dir', 'models', '--pattern', 'ggml-merlinite-7b-0302-Q4_K_M.*']' returned non-zero exit status 4.
 it is time to look at your gh settings - and make sure you can run 'gh auth login'
 ```
 
@@ -85,7 +85,7 @@ Please provide the following values to initiate the environment:
 Path to taxonomy repo [taxonomy]: <ENTER>
 `taxonomy` seems to not exists or is empty. Should I clone git@github.com:instruct-lab/taxonomy.git for you? [y/N]: y
 Cloning git@github.com:instruct-lab/taxonomy.git...
-Path to your model [models/ggml-malachite-7b-0226-Q4_K_M.gguf]: <ENTER>
+Path to your model [models/ggml-merlinite-7b-0302-Q4_K_M.gguf]: <ENTER>
 Generating `config.yaml` in the current directory...
 Initialization completed successfully, you're ready to start using `lab`. Enjoy!
 ```
@@ -100,5 +100,5 @@ Ensure a model is downloaded.
 
 ```
 $ ls models
-ggml-malachite-7b-0226-Q4_K_M.gguf
+ggml-merlinite-7b-0302-Q4_K_M.gguf
 ```

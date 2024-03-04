@@ -83,7 +83,7 @@ Please provide the following values to initiate the environment:
 Path to taxonomy repo [taxonomy]: <ENTER>
 `taxonomy` seems to not exists or is empty. Should I clone git@github.com:instruct-lab/taxonomy.git for you? [y/N]: y
 Cloning git@github.com:instruct-lab/taxonomy.git...
-Path to your model [models/ggml-malachite-7b-0226-Q4_K_M.gguf]: <ENTER>
+Path to your model [models/ggml-merlinite-7b-0302-Q4_K_M.gguf]: <ENTER>
 Generating `config.yaml` in the current directory...
 Initialization completed successfully, you're ready to start using `lab`. Enjoy!
 ```
@@ -112,7 +112,7 @@ lab download
 Make sure the local environment has the `gh` cli: https://cli.github.com
 Downloading models from https://github.com/instruct-lab/cli.git@v0.2.0 to models...
 (venv) $ ls models
-ggml-malachite-7b-0226-Q4_K_M.gguf
+ggml-merlinite-7b-0302-Q4_K_M.gguf
 ```
 
 ⏳ This command can take 5+ minutes depending on your internet connection.
@@ -127,7 +127,7 @@ Once the model is being served and ready, you'll see the following output:
 
 ```
 (venv) $ lab serve
-INFO 2024-03-02 02:21:11,352 lab.py:201 Using model 'models/ggml-malachite-7b-0226-Q4_K_M.gguf' with -1 gpu-layers
+INFO 2024-03-02 02:21:11,352 lab.py:201 Using model 'models/ggml-merlinite-7b-0302-Q4_K_M.gguf' with -1 gpu-layers
 Starting server process
 After application startup complete see http://127.0.0.1:8000/docs for API.
 Press CTRL+C to shutdown server.
@@ -146,10 +146,10 @@ Before you start adding new skills and knowledge to your knowledge, you can chec
 ```
 (venv) $ lab chat
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────── system ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ Welcome to Chat CLI w/ GGML-MALACHITE-7B-0226-Q4_K_M (type /h for help)                                                                                                                                                                    │
+│ Welcome to Chat CLI w/ GGML-MERLINITE-7B-0302-Q4_K_M (type /h for help)                                                                                                                                                                    │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 >>> what is the capital of canada                                                                                                                                                                                                 [S][default]
-╭────────────────────────────────────────────────────────────────────────────────────────────────────── ggml-malachite-7b-0226-Q4_K_M ───────────────────────────────────────────────────────────────────────────────────────────────────────╮
+╭────────────────────────────────────────────────────────────────────────────────────────────────────── ggml-merlinite-7b-0302-Q4_K_M ───────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ The capital city of Canada is Ottawa. It is located in the province of Ontario, on the southern banks of the Ottawa River in the eastern portion of southern Ontario. The city serves as the political center for Canada, as it is home to │
 │ Parliament Hill, which houses the House of Commons, Senate, Supreme Court, and Cabinet of Canada. Ottawa has a rich history and cultural significance, making it an essential part of Canada's identity.                                   │
 ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── elapsed 12.008 seconds ─╯
@@ -186,7 +186,7 @@ The next step is to generate a synthetic dataset based on your newly added knowl
 
 ```
 (venv) $ lab generate
-INFO 2024-02-29 19:09:48,804 lab.py:250 Generating model 'ggml-malachite-7b-0226-Q4_K_M' using 10 cpus,
+INFO 2024-02-29 19:09:48,804 lab.py:250 Generating model 'ggml-merlinite-7b-0302-Q4_K_M' using 10 cpus,
 taxonomy: '/home/username/labrador/taxonomy' and seed 'seed_tasks.json'
 
 0%|##########| 0/100 Cannot find prompt.txt. Using default prompt.
@@ -196,8 +196,8 @@ taxonomy: '/home/username/labrador/taxonomy' and seed 'seed_tasks.json'
 The synthetic data set will be three files in the `taxonomy` repository that are named like: `generated*.json`, `test*.jsonl`, and `train*.jsonl`:
 ```
 (venv) $ ls taxonomy/
- CODE_OF_CONDUCT.md     CONTRIBUTING.md  'generated_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.json'   README.md                                                      'train_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
- compositional_skills   docs              MAINTAINERS.md                                                     'test_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
+ CODE_OF_CONDUCT.md     CONTRIBUTING.md  'generated_ggml-merlinite-7b-0302-Q4_K_M_2024-02-29T19 09 48.json'   README.md                                                      'train_ggml-merlinite-7b-0302-Q4_K_M_2024-02-29T19 09 48.jsonl'
+ compositional_skills   docs              MAINTAINERS.md                                                     'test_ggml-merlinite-7b-0302-Q4_K_M_2024-02-29T19 09 48.jsonl'
 ```
 
 ⏳ This can take over **1 hour+** to complete depending on your computing resources.
