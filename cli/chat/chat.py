@@ -343,7 +343,7 @@ class ConsoleChatBot:
         self._update_conversation(response_content.plain, "assistant")
 
 
-def chat_cli(config, logger, question, model, context, session, qq) -> None:
+def chat_cli(config, logger, question, model, context, session, qq, port: int=None) -> None:
     assert (context is None) or (
         session is None
     ), "Cannot load context and session in the same time"
@@ -356,7 +356,13 @@ def chat_cli(config, logger, question, model, context, session, qq) -> None:
     # TODO: The 'openai.proxy' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(proxy={"http": proxy, "https": proxy})'
     # openai.proxy = {"http": proxy, "https": proxy}
 
-    client = OpenAI(base_url=config.api_base, api_key=config.api_key)
+    base_url = config.api_base
+    if port:
+        # TODO: shouldn't use hard-coded route. Should read host from config and add port
+        base_url = f"http://localhost:{port}/v1"
+        
+
+    client = OpenAI(base_url=base_url, api_key=config.api_key)
 
     # Load context/session
     loaded = {}
