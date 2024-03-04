@@ -288,13 +288,6 @@ def generate(ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file):
 
 @cli.command()
 @click.pass_context
-def train(ctx):
-    """Trains labrador model"""
-    click.echo("# train TBD")
-
-
-@cli.command()
-@click.pass_context
 def test(ctx):
     """Perform rudimentary tests of the model"""
     click.echo("# test TBD")
