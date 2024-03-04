@@ -588,8 +588,16 @@ def test(data_dir, model_dir, adapter_file):
 )
 def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
     """
-    TODO
+    Takes the trained model, optionally de-quantizes the adapter file, fuses the adapter with the trained model,
+    converts the MLX model to pyTorch safetensors, then converts it to GGUF format and finally (optionally) quantizes the model 
     """
+    if not is_macos_with_m_chip():
+        click.secho(
+            f"`lab train` is only implemented for macOS with M-series chips",
+            fg="red",
+        )
+        sys.exit()
+
     if adapter_file is None:
         adapter_file = os.path.join(model_dir, "adapters.npz")
     cli_dir = os.path.dirname(os.path.abspath(__file__))
