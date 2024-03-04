@@ -61,7 +61,7 @@ def configure(ctx, param, filename):
 @click.pass_context
 # pylint: disable=redefined-outer-name
 def cli(ctx, config):
-    """CLI for interacting with labrador.
+    """CLI for interacting with InstructLab.
 
     If this is your first time running lab, it's best to start with `lab init` to create the environment
     """
@@ -100,7 +100,7 @@ def cli(ctx, config):
     "using the same taxonomy repository. ",
 )
 def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
-    """Initializes environment for labrador"""
+    """Initializes environment for InstructLab"""
     if exists(config.DEFAULT_CONFIG):
         overwrite = click.confirm(
             f"Found {config.DEFAULT_CONFIG} in the current directory, do you still want to continue?"
@@ -110,7 +110,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
 
     if interactive:
         click.echo(
-            "Welcome to labrador CLI. This guide will help you to setup your environment."
+            "Welcome to InstructLab CLI. This guide will help you to setup your environment."
         )
         click.echo("Please provide the following values to initiate the environment:")
 
@@ -180,7 +180,7 @@ def list(ctx, taxonomy_path):
 @cli.command()
 @click.pass_context
 def submit(ctx):
-    """Initializes environment for labrador"""
+    """Initializes environment for InstructLab"""
     click.echo("please use git commands and GitHub to submit a PR to the taxonomy repo")
 
 

@@ -19,7 +19,7 @@ def download_model(
 
     Parameters:
     - gh_repo (str): The URL of the GitHub repository containing the model.
-        Default: Open Labrador CLI repository.
+        Default: InstructLab CLI repository.
     - gh_release (str): The GitHub release version of the model to download.
         Default is 'latest'.
     - model_dir(str): The local directory to download the model files into
@@ -108,7 +108,7 @@ def clone_taxonomy(
 
     Parameters:
     - repository (str): URL of the taxonomy git repository.
-        Default is the Open Labrador taxonomy repository.
+        Default is the Intruct Lab taxonomy repository.
     - gh_branch (str): The GitHub branch of the taxonomy repository. Default is main
     - directory (str): Target directory where to clone the repository. Default is taxonomy.
     - min_taxonomy(bool): Shallow clone the taxonomy repository with minimum size.
