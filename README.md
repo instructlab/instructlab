@@ -1,6 +1,6 @@
-# Labrador (`lab`)
+# InstructLab 🐶 (`lab`)
 
-## 🐶 What is `lab`
+## ❓ What is `lab`
 
 `lab` is a Command-Line Interface (CLI) tool that allows you to:
 
@@ -93,13 +93,13 @@ You can override this behavior for any `lab` command with the `--config` paramet
 
 ## 📥 Download the model
 
-Users should make sure they are logged in to their github accounts via the `gh` CLI and following the promths/instructions:
+Users should make sure they are logged in to their github accounts via the `gh` CLI and following the prompts/instructions:
 
 ```
 gh auth login
 ```
 
-Please review [lab-troubleshoot.md](./lab-troubleshoot.md) for troubleshooting tips related to `gh`.
+**⁉️  Something not working?**: Please review [lab-troubleshoot.md](./lab-troubleshoot.md) for troubleshooting tips related to `gh`.
 
 ```
 lab download
@@ -156,13 +156,13 @@ Before you start adding new skills and knowledge to your knowledge, you can chec
 >>>                                                                                                                                                                                                                               [S][default]
 ```
 
-## 📘 Contribute knowledge or compositional skills
+## 🎁 Contribute knowledge or compositional skills
 
 Locally contribute new knowledge or compositional skills to your local [taxonomy](https://github.com/open-labrador/taxonomy.git) repository.
 
 Detailed contribution instructions can be found on the [taxonomy github](https://github.com/open-labrador/taxonomy/blob/main/README.md).
 
-## 📰 List your new knowledge
+## 📜 List your new knowledge
 
 ```
 lab list
@@ -202,7 +202,7 @@ The synthetic data set will be three files in the `taxonomy` repository that are
 
 ⏳ This can take over **1 hour+** to complete depending on your computing resources.
 
-## 🚄 Train the model
+## 👩‍🏫 Train the model
 
 Train the model on your synthetic data-enhanced dataset by following the instructions in [Training](./notebooks/README.md)
 

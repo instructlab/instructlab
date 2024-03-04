@@ -1,8 +1,8 @@
-# Lab Trouble Shooting
+# Lab Troubleshooting
 
 This document is for commonly found problems and their solutions when using `lab`.
 
-## `gh` Trouble Shooting
+## `gh` Troubleshooting
 
 This page has some troubleshooting techniques if you hit a github cli `gh` error described below.
 
@@ -64,7 +64,7 @@ gh auth login --with-token < mytoken.txt
 $ gh auth logout
 ```
 
-Raw steps:
+Always refer to (README.md)[README.md] for most/latest commands used during Installing lab:
 
 ```
 gh auth login --with-token < ~/Documents/mytoken.txt
