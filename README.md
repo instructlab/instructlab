@@ -16,7 +16,7 @@ After that is done you can:
 
 ## 📋 Requirements
 
-- **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora). We anticipate future support for other operating systems in the future.
+- **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora). We anticipate support for more operating systems in the future.
 - 🐍 Python 3.9 or later
 - `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github
 
