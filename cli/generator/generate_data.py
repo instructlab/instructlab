@@ -176,6 +176,7 @@ def generate_data(
     request_batch_size=5,
     temperature=1.0,
     top_p=1.0,
+    rouge_ths=0.7,
 ):
     seed_instruction_data = []
     generate_start = time.time()
@@ -393,8 +394,7 @@ def generate_data(
             # most_similar_instructions = {
             #    all_instructions[i]: rouge_scores[i] for i in np.argsort(rouge_scores)[-10:][::-1]
             # }
-            KEEP_ROUGE_SCORES_LT = 0.7  # TODO: PARAM
-            if max(rouge_scores) > KEEP_ROUGE_SCORES_LT:
+            if max(rouge_scores) > rouge_ths:
                 continue
             keep += 1
             # Comment out extra info not currently being used:
