@@ -204,6 +204,12 @@ The synthetic data set will be three files in the `taxonomy` repository that are
 
 ## 👩‍🏫 Train the model
 
+### Traing the model locally on an M-series Mac
+
+Instructions on how to train your instruct-lab model locally on an M-series Mac are in [mlx-training.md](./cli/train/mlx-training.md)
+
+### Traing the model in Co Lab
+
 Train the model on your synthetic data-enhanced dataset by following the instructions in [Training](./notebooks/README.md)
 
 ⏳ This takes about **0.5-2.5 hours** to complete in the free tier of Google Colab.
