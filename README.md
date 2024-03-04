@@ -24,6 +24,9 @@ After that is done you can:
 
 To start we'll create a new directory called `instruct-lab` to store the files that this CLI needs when it runs.
 
+Note 
+While running on Fedora , please make sure ` Development Tools ` and ` cmake`  is present on the machine and also ensure ` gcc-c++ ` is present with the path set .
+
 ```
 mkdir instruct-lab
 cd instruct-lab
