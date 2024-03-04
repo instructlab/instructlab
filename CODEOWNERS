@@ -1,0 +1,11 @@
+#####################################################
+#
+# List of approvers for instruct-lab/cli repository
+#
+#####################################################
+#
+# Learn about CODEOWNERS file format:
+#  https://help.github.com/en/articles/about-code-owners
+#
+
+* @soltysh @xukai92 @markstur @hickeyma
