@@ -3,6 +3,7 @@
 # 3rd party
 import pydantic
 import pydantic_yaml  # YAML parsing utility
+from click.testing import CliRunner
 
 # First Party
 from tests.schema import Config
@@ -17,14 +18,16 @@ def test_config_pydantic():
     """
 
     # check if config.yaml is here
-
-    try:
-        parsed = pydantic_yaml.parse_yaml_file_as(model_type=Config, file="config.yaml")
-        # If config.yaml parses to Config pydantic model, success.
-        assert True
-    except TypeError as e:
-        print(e)
-        assert False
-    except pydantic.ValidationError as e:
-        print(e)
-        assert False
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = CliRunner().invoke(lab.init, ["--interactive", "--model-path", "models", "--taxonomy-path", "taxonomy"])
+        try:
+            parsed = pydantic_yaml.parse_yaml_file_as(model_type=Config, file="config.yaml")
+            # If config.yaml parses to Config pydantic model, success.
+            assert True
+        except TypeError as e:
+            print(e)
+            assert False
+        except pydantic.ValidationError as e:
+            print(e)
+            assert False
