@@ -6,8 +6,8 @@ def test_init():
     runner = CliRunner()
     lab_test = lab
     with runner.isolated_filesystem():
-        result = CliRunner().invoke(lab_test.init, ["--interactive", "--model-path", "models", "--taxonomy-path", "taxonomy"])
+        result = runner.invoke(lab_test.init, ["--interactive", "--model-path", "models", "--taxonomy-path", "taxonomy"])
         assert result.exit_code == 0   
 
-    result = CliRunner().invoke(lab.init)
+    result = runner.invoke(lab.init)
     assert result.exit_code == 0 

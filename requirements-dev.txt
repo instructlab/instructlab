@@ -6,3 +6,4 @@ pylint>=2.16.2,<4.0
 tox>=4.4.2,<5
 pydantic_yaml
 pydantic
+pytest
