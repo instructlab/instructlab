@@ -1,6 +1,6 @@
 # Labrador (`lab`)
 
-## What is `lab`
+## 🐶 What is `lab`
 
 `lab` is a Command-Line Interface (CLI) tool that allows you to:
 
@@ -14,13 +14,13 @@ After that is done you can:
 2. Re-train the LLM that you initially downloaded with this new training data.
 3. Chat with the re-trained LLM to see the results.
 
-## Requirements
+## 📋 Requirements
 
-- Apple M1/M2/M3 Mac or Linux system (tested on Fedora). We anticipate future support for other operating systems in the future.
-- Python 3.9 or later
+- **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora). We anticipate future support for other operating systems in the future.
+- 🐍 Python 3.9 or later
 - `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github
 
-## Installing `lab`
+## 🧰 Installing `lab`
 
 To start we'll create a new directory called `labrador` to store the files that this CLI needs when it runs.
 
@@ -31,7 +31,7 @@ python3 -m venv venv
 source venv/bin/activate
 pip install git+ssh://git@github.com/open-labrador/cli.git@stable
 ```
-`pip install` may take some time, depending on your internet connection.
+⏳ `pip install` may take some time, depending on your internet connection.
 
 If `lab` is installed correctly, you should be able to test the lab command:
 
@@ -61,13 +61,13 @@ Commands:
   train     Trains labrador model
 ```
 
-Every lab command needs to be run from within your Python virtual environment:
+**Every** `lab` command needs to be run from within your Python virtual environment:
 
 ```
 source venv/bin/activate
 ```
 
-## Initialize `lab`
+## 🏗️ Initialize `lab`
 
 ```
 lab init
@@ -91,7 +91,7 @@ Initialization completed successfully, you're ready to start using `lab`. Enjoy!
 `lab` will use the default configuration file unless otherwise specified.
 You can override this behavior for any `lab` command with the `--config` parameter.
 
-## Download the model
+## 📥 Download the model
 
 Users should make sure they are logged in to their github accounts via the `gh` CLI and following the promths/instructions:
 
@@ -115,9 +115,9 @@ Downloading models from https://github.com/open-labrador/cli.git@v0.2.0 to model
 ggml-malachite-7b-0226-Q4_K_M.gguf
 ```
 
-This command can take 5+ minutes depending on your internet connection.
+⏳ This command can take 5+ minutes depending on your internet connection.
 
-## Serving the model
+## 🍴 Serving the model
 
 ```
 lab serve
@@ -133,7 +133,7 @@ After application startup complete see http://127.0.0.1:8000/docs for API.
 Press CTRL+C to shutdown server.
 ```
 
-## Chat with the model (optional)
+## 📣 Chat with the model (optional)
 
 Because you're serving the model in one terminal window, you'll likely have to create a new window and re-activate your Python virtual environment to run `lab chat`:
 ```
@@ -156,13 +156,13 @@ Before you start adding new skills and knowledge to your knowledge, you can chec
 >>>                                                                                                                                                                                                                               [S][default]
 ```
 
-## Contribute knowledge or compositional skills
+## 📘 Contribute knowledge or compositional skills
 
 Locally contribute new knowledge or compositional skills to your local [taxonomy](https://github.com/open-labrador/taxonomy.git) repository.
 
 Detailed contribution instructions can be found on the [taxonomy github](https://github.com/open-labrador/taxonomy/blob/main/README.md).
 
-## List your new knowledge
+## 📰 List your new knowledge
 
 ```
 lab list
@@ -176,7 +176,7 @@ Here is the expected result after adding the new compositional skill foo-lang:
 compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
 ```
 
-## Generate a synthetic dataset
+## 🚀 Generate a synthetic dataset
 
 ```
 lab generate
@@ -193,7 +193,6 @@ taxonomy: '/home/username/labrador/taxonomy' and seed 'seed_tasks.json'
 98%|##########| 98/100 INFO 2024-02-29 20:49:27,582 generate_data.py:428 Generation took 5978.78s
 ```
 
-
 The synthetic data set will be three files in the `taxonomy` repository that are named like: `generated*.json`, `test*.jsonl`, and `train*.jsonl`:
 ```
 (venv) $ ls taxonomy/
@@ -201,17 +200,17 @@ The synthetic data set will be three files in the `taxonomy` repository that are
  compositional_skills   docs              MAINTAINERS.md                                                     'test_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
 ```
 
-This can take over **1 hour+** to complete depending on your computing resources.
+⏳ This can take over **1 hour+** to complete depending on your computing resources.
 
-## Train the model
+## 🚄 Train the model
 
 Train the model on your synthetic data-enhanced dataset by following the instructions in [Training](./notebooks/README.md)
 
-This takes about **0.5-2.5 hours** to complete in the free tier of Google Colab.
+⏳ This takes about **0.5-2.5 hours** to complete in the free tier of Google Colab.
 
 After that's done, download the newly trained model from Google Colab and put it in the `models` directory created by the `lab download` command.
 
-## Serve the newly trained model
+## 🍴 Serve the newly trained model
 
 Stop the server you have running via `ctrl+c` in the terminal it is running in.
 Serve the newly trained model locally via `lab serve` with the `--model` argument to specify your new model:
@@ -220,14 +219,14 @@ Serve the newly trained model locally via `lab serve` with the `--model` argumen
 lab serve --model <New model name>
 ```
 
-## Chat with the new model (not optional this time)
+## 📣 Chat with the new model (not optional this time)
 
 Try the fine-tuned model out live using the chat interface, and see if the results are better than the untrained version of the model with chat.
 
 ```
 lab chat
 ```
-## Submit your new knowledge
+## 🎁 Submit your new knowledge
 
 Of course the final step is - if you've improved the model - to open up a a pull-request in the [taxonomy respository](https://github.com/open-labrador/taxonomy).
 
