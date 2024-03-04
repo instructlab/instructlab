@@ -189,13 +189,6 @@ def list(ctx, taxonomy_path):
 
 
 @cli.command()
-@click.pass_context
-def submit(ctx):
-    """Initializes environment for InstructLab"""
-    click.echo("please use git commands and GitHub to submit a PR to the taxonomy repo")
-
-
-@cli.command()
 @click.option(
     "--model-path",
     type=click.Path(),
