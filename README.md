@@ -20,6 +20,16 @@ After that is done you can:
 - 🐍 Python 3.9 or later
 - `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github
 
+## 🔐 Authenticate to github
+
+Users should make sure they are logged in to their github accounts via the `gh` CLI and following the prompts/instructions:
+
+```
+gh auth login
+```
+
+**⁉️  Something not working?**: Please review [lab-troubleshoot.md](./lab-troubleshoot.md) for troubleshooting tips related to `gh`.
+
 ## 🧰 Installing `lab`
 
 To start we'll create a new directory called `instruct-lab` to store the files that this CLI needs when it runs.
@@ -90,14 +100,6 @@ Initialization completed successfully, you're ready to start using `lab`. Enjoy!
 You can override this behavior for any `lab` command with the `--config` parameter.
 
 ## 📥 Download the model
-
-Users should make sure they are logged in to their github accounts via the `gh` CLI and following the prompts/instructions:
-
-```
-gh auth login
-```
-
-**⁉️  Something not working?**: Please review [lab-troubleshoot.md](./lab-troubleshoot.md) for troubleshooting tips related to `gh`.
 
 ```
 lab download
