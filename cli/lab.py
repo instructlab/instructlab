@@ -4,6 +4,7 @@ from os import listdir
 from os.path import basename, dirname, exists, splitext
 import logging
 import sys
+import platform
 import subprocess
 import json
 import shutil
@@ -388,6 +389,23 @@ def download(ctx, repository, release, model_dir, pattern):
             fg="red",
         )
 
+def is_macos_with_m_chip():
+    # Check if the OS is macOS
+    if platform.system() != 'Darwin':
+        return False
+    
+    # Check for Apple Silicon (M1, M2, etc.)
+    try:
+        # Running 'sysctl -a' and searching for a specific line that indicates ARM architecture
+        result = subprocess.check_output(['sysctl', '-a'], text=True)
+        if 'machdep.cpu.brand_string: Apple' in result:
+            return True
+        else:
+            return False
+    except Exception as e:
+        print(f"Error checking architecture: {e}")
+        return False
+
 @cli.command()
 @click.option(
     "--data-dir", help="Base directory where data is stored.", default=None
@@ -424,6 +442,13 @@ def train(data_dir, taxonomy_path, skip_preprocessing, model_dir, iters, local, 
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
+    if not is_macos_with_m_chip():
+        click.secho(
+            f"`lab train` is only implemented for macOS with M-series chips",
+            fg="red",
+        )
+        return
+    
     cli_dir = os.path.dirname(os.path.abspath(__file__))
 
     if data_dir is None:
@@ -456,43 +481,36 @@ def train(data_dir, taxonomy_path, skip_preprocessing, model_dir, iters, local, 
         cmd = f"{script} --data-dir {data_dir}"
         os.system('python {}'.format(cmd))
 
-    is_macos = True # TODO detect OS
-    if is_macos:
-        # NOTE we can skip this if we have a way ship MLX
-        # PyTorch safetensors to MLX safetensors
-        model_dir_local = model_dir.replace("/", "-")
-        model_dir_mlx = f"{model_dir_local}-mlx"
-        model_dir_mlx_quantized = f"{model_dir_local}-mlx-q"
+    # NOTE we can skip this if we have a way ship MLX
+    # PyTorch safetensors to MLX safetensors
+    model_dir_local = model_dir.replace("/", "-")
+    model_dir_mlx = f"{model_dir_local}-mlx"
+    model_dir_mlx_quantized = f"{model_dir_local}-mlx-q"
 
-        dest_model_dir = ""
-        quantize_arg = ""
-        
-        if not skip_quantize:
-            dest_model_dir = model_dir_mlx_quantized
-            quantize_arg =  "-q"
-        else:
-            dest_model_dir = model_dir_mlx
-
-        local_arg = "--local" if local else "" 
-
-        script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
-        cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
-        os.system('python {}'.format(cmd))
-
-
-        adapter_file_path = f"{dest_model_dir}/adapters.npz"
-        script = os.path.join(cli_dir, "train/lora-mlx/lora.py")
-        # train the model with LoRA
-        cmd = f"{script} --model {dest_model_dir} --train --data {data_dir} --adapter-file {adapter_file_path} --iters {iters} --save-every 10 --steps-per-eval 10"
-        os.system('python {}'.format(cmd))
-
-        # TODO copy some downloaded files from the PyTorch model folder
-        # Seems to be not a problem if working with a remote download with convert.py
+    dest_model_dir = ""
+    quantize_arg = ""
+    
+    if not skip_quantize:
+        dest_model_dir = model_dir_mlx_quantized
+        quantize_arg =  "-q"
     else:
-        click.secho(
-            f"`lab train` is only implemented for macOS with M-series chips",
-            fg="red",
-        )
+        dest_model_dir = model_dir_mlx
+
+    local_arg = "--local" if local else "" 
+
+    script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
+    cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
+    os.system('python {}'.format(cmd))
+
+
+    adapter_file_path = f"{dest_model_dir}/adapters.npz"
+    script = os.path.join(cli_dir, "train/lora-mlx/lora.py")
+    # train the model with LoRA
+    cmd = f"{script} --model {dest_model_dir} --train --data {data_dir} --adapter-file {adapter_file_path} --iters {iters} --save-every 10 --steps-per-eval 10"
+    os.system('python {}'.format(cmd))
+
+    # TODO copy some downloaded files from the PyTorch model folder
+    # Seems to be not a problem if working with a remote download with convert.py
 
 @cli.command()
 @click.option(
@@ -508,6 +526,13 @@ def test(data_dir, model_dir, adapter_file):
     """
     TODO
     """
+    if not is_macos_with_m_chip():
+        click.secho(
+            f"`lab train` is only implemented for macOS with M-series chips",
+            fg="red",
+        )
+        return
+    
     if adapter_file is None:
         adapter_file = os.path.join(model_dir, "adapters.npz")
     cli_dir = os.path.dirname(os.path.abspath(__file__))
