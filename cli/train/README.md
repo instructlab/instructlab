@@ -5,7 +5,7 @@ mkdir workspace-mlx
 cd workspace-mlx
 python3 -m venv venv
 source venv/bin/activate
-pip install "git+ssh://git@github.com/open-labrador/cli.git@mlx"
+pip install "git+ssh://git@github.com/instruct-lab/cli.git@mlx"
 lab init
 
 # downloads initial model 
