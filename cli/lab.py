@@ -412,13 +412,21 @@ def chat(ctx, question, model, context, session, quick_question):
     show_default=True,
     help="The local directory to download the model files into.",
 )
+@click.option(
+    "--hf-endpoint",
+    default=None,
+)
 @click.pass_context
-def download(ctx, repository, release, filename, model_dir):
+def download(ctx, repository, release, filename, model_dir, hf_endpoint):
     """Download the model(s) to train"""
     click.echo(f"Downloading model from {repository}@{release} to {model_dir}...")
     try:
         hf_hub_download(
-            repo_id=repository, revision=release, filename=filename, local_dir=model_dir
+            repo_id=repository,
+            revision=release,
+            filename=filename,
+            local_dir=model_dir,
+            endpoint=hf_endpoint,
         )
     except HfHubHTTPError as exc:
         click.secho(
