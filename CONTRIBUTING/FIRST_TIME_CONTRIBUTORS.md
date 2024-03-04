@@ -2,14 +2,14 @@
 
 This guide should teach you how to set up your development environment to start contributing to the `lab` CLI tool.
 
-**tl;dr** We're going to install `lab` in a Python virtual environment like we did in the README.md. Instead of installing from GitHub, however, we'll clone the [`open-labrador/cli`](https://github.com/open-labrador/cli) repository from GitHub and install `lab` from the cloned Python source code.
+**tl;dr** We're going to install `lab` in a Python virtual environment like we did in the README.md. Instead of installing from GitHub, however, we'll clone the [`instruct-lab/cli`](https://github.com/instruct-lab/cli) repository from GitHub and install `lab` from the cloned Python source code.
 
 # Installing `lab` from source
 
 Here we install from the upstream repo, but you may want to fork the repo and replace the git clone URL below with the URL for your fork:
 
 ```ShellSession
-git clone https://github.com/open-labrador/cli.git
+git clone https://github.com/instruct-lab/cli.git
 cd cli
 python3 -m venv venv
 source venv/bin/activate
@@ -18,7 +18,7 @@ pip3 install .
 
 These are the steps that we're executing above, in plain language:
 
-1. Clone the `open-labrador/cli` repository from GitHub into the `cli` directory.
+1. Clone the `instruct-lab/cli` repository from GitHub into the `cli` directory.
 2. `cd` into that directory.
 3. In the `cli` directory, create a new Python virtual environment.
 4. Turn the virtual environment on.
