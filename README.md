@@ -78,7 +78,7 @@ Initializing `lab` will:
 
 ```
 (venv) $ lab init
-Welcome to labrador CLI. This guide will help you to setup your environment.
+Welcome to Instruct Lab CLI. This guide will help you to setup your environment.
 Please provide the following values to initiate the environment:
 Path to taxonomy repo [taxonomy]: <ENTER>
 `taxonomy` seems to not exists or is empty. Should I clone git@github.com:instruct-lab/taxonomy.git for you? [y/N]: y
@@ -232,4 +232,4 @@ Of course the final step is - if you've improved the model - to open up a a pull
 
 ## Contributing
 
-Check out our [contributing](CONTRIBUTING/CONTRIBUTING.md) guide to learn how to contribute to the Labrador CLI.
+Check out our [contributing](CONTRIBUTING/CONTRIBUTING.md) guide to learn how to contribute to the Instruct Lab CLI.
