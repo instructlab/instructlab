@@ -203,7 +203,7 @@ The synthetic data set will be three files in the `taxonomy` repository that are
 
 ## 👩‍🏫 Train the model
 
-Train the model on your synthetic data-enhanced dataset by following the instructions in [Training](./notebooks/README.md)
+Train the model on your synthetic data-enhanced dataset by following the instructions in [Training](./notebooks/README.md).
 
 ⏳ This takes about **0.5-2.5 hours** to complete in the free tier of Google Colab.
 
