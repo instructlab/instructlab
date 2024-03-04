@@ -5,11 +5,11 @@ from dataclasses import asdict, dataclass
 import yaml
 
 DEFAULT_CONFIG = "config.yaml"
-DEFAULT_MODEL_PATH = "models/ggml-malachite-7b-0226-Q4_K_M.gguf"
+DEFAULT_MODEL_PATH = "models/ggml-merlinite-7b-0302-Q4_K_M.gguf"
 DEFAULT_API_BASE = "http://localhost:8000/v1"
 DEFAULT_API_KEY = "no_api_key"
-DEFAULT_MODEL = "ggml-malachite-7b-0226-Q4_K_M"
-DEFAULT_DOWNLOAD_TAG = "v0.2.0"
+DEFAULT_MODEL = "ggml-merlinite-7b-0302-Q4_K_M"
+DEFAULT_DOWNLOAD_TAG = "v0.4.0"
 DEFAULT_VI_MODE = False
 DEFAULT_VISIBLE_OVERFLOW = True
 DEFAULT_TAXONOMY_REPO = "git@github.com:instruct-lab/taxonomy.git"
