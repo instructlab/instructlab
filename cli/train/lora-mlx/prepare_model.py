@@ -1,10 +1,16 @@
+# Standard
 import os
+
+# Third Party
 from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
 import fire
+import torch
+
 
 def convert_bin_to_safetensors(input_dir, output_dir):
-    input_dir, output_dir = os.path.expanduser(input_dir), os.path.expanduser(output_dir)
+    input_dir, output_dir = os.path.expanduser(input_dir), os.path.expanduser(
+        output_dir
+    )
 
     model_path = os.path.expanduser(input_dir)
 
@@ -19,5 +25,6 @@ def convert_bin_to_safetensors(input_dir, output_dir):
     # torch.save(save_dict, os.path.join(output_dir, "pytorch_model.bin"))
     # model.config.to_json_file(os.path.join(output_dir, "config.json"))
 
-if __name__ == '__main__':
-  fire.Fire(convert_bin_to_safetensors)
+
+if __name__ == "__main__":
+    fire.Fire(convert_bin_to_safetensors)

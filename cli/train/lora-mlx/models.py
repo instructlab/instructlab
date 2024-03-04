@@ -1,18 +1,20 @@
 # Copyright © 2023 Apple Inc.
 
+# Standard
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, List, Optional, Tuple, Union
 import glob
 import inspect
 import json
 import math
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 
+# Third Party
+from huggingface_hub import snapshot_download
+from transformers import AutoTokenizer
 import mlx.core as mx
 import mlx.nn as nn
 import numpy as np
-from huggingface_hub import snapshot_download
-from transformers import AutoTokenizer
 
 
 @dataclass

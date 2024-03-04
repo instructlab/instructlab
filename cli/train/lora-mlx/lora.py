@@ -1,18 +1,20 @@
 # Copyright © 2023 Apple Inc.
 
+# Standard
+from pathlib import Path
 import argparse
 import json
 import math
 import time
-from pathlib import Path
 
+# Third Party
+from mlx.utils import tree_flatten, tree_unflatten
+from models.lora import LoRALinear
 import mlx.core as mx
 import mlx.nn as nn
 import mlx.optimizers as optim
 import numpy as np
 import utils as lora_utils
-from mlx.utils import tree_flatten, tree_unflatten
-from models.lora import LoRALinear
 
 
 def build_parser():
@@ -296,9 +298,7 @@ def train(model, train_set, val_set, optimizer, loss, tokenizer, args):
             )
             a, b = args.adapter_file.split(".")
             fn = f"{a}-{it+1:03d}.{b}"
-            mx.savez(
-                fn, **dict(tree_flatten(model.trainable_parameters()))
-            )
+            mx.savez(fn, **dict(tree_flatten(model.trainable_parameters())))
             print(f"Iter {it + 1}: Saved adapter weights to {fn}.")
 
 
@@ -350,7 +350,9 @@ if __name__ == "__main__":
             l.self_attn.q_proj = LoRALinear.from_linear(l.self_attn.q_proj)
             l.self_attn.v_proj = LoRALinear.from_linear(l.self_attn.v_proj)
             if hasattr(l, "block_sparse_moe"):
-                l.block_sparse_moe.gate = LoRALinear.from_linear(l.block_sparse_moe.gate)
+                l.block_sparse_moe.gate = LoRALinear.from_linear(
+                    l.block_sparse_moe.gate
+                )
     else:
         print("LoRA init skipped")
 

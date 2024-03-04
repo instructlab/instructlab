@@ -1,13 +1,15 @@
 # Copyright © 2023 Apple Inc.
 
-import argparse
+# Standard
 from pathlib import Path
+import argparse
 
+# Third Party
+from mlx.utils import tree_flatten, tree_unflatten
+from models.lora import LoRALinear
 import mlx.core as mx
 import mlx.nn as nn
 import utils
-from mlx.utils import tree_flatten, tree_unflatten
-from models.lora import LoRALinear
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="LoRA or QLoRA finetuning.")

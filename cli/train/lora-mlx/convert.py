@@ -1,14 +1,16 @@
 # Copyright © 2023 Apple Inc.
 
+# Standard
 import argparse
 import copy
 
+# Third Party
+from mlx.utils import tree_flatten
 import mlx.core as mx
 import mlx.nn as nn
-import utils
 import numpy as np
 import torch
-from mlx.utils import tree_flatten
+import utils
 
 
 def quantize(weights, config, args):
@@ -103,8 +105,10 @@ if __name__ == "__main__":
     if args.to_pt:
         dtype = np.float16 if args.quantize else getattr(np, args.dtype)
         print(f"{dtype=}")
-        weights = {k: torch.from_numpy(np.array(v, copy=False, dtype=dtype)) 
-                   for k, v in weights.items()}
+        weights = {
+            k: torch.from_numpy(np.array(v, copy=False, dtype=dtype))
+            for k, v in weights.items()
+        }
     else:
         dtype = mx.float16 if args.quantize else getattr(mx, args.dtype)
         print(f"{dtype=}")

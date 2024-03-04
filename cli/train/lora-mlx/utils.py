@@ -1,12 +1,15 @@
 # Copyright © 2023 Apple Inc.
 
-import os
+# Standard
+from pathlib import Path
+from typing import Generator
 import glob
 import json
 import logging
-from pathlib import Path
-from typing import Generator
+import os
 
+# Third Party
+from huggingface_hub import snapshot_download
 from safetensors.torch import save_file
 import mlx.core as mx
 import mlx.nn as nn
@@ -14,7 +17,6 @@ import models.llama as llama
 import models.mixtral as mixtral
 import models.phi2 as phi2
 import transformers
-from huggingface_hub import snapshot_download
 
 # Constants
 MODEL_MAPPING = {
@@ -51,10 +53,12 @@ def fetch_from_hub(hf_path: str, local: bool):
     else:
         model_path = snapshot_download(
             repo_id=hf_path,
-            local_dir=hf_path.replace("/", "-"), # "ibm/merlinite-7b" to "ibm-merlinite-7b"
+            local_dir=hf_path.replace(
+                "/", "-"
+            ),  # "ibm/merlinite-7b" to "ibm-merlinite-7b"
             allow_patterns=["*.json", "*.safetensors", "tokenizer.model"],
         )
-        
+
     weight_files = glob.glob(f"{model_path}/*.safetensors")
     if len(weight_files) == 0:
         raise FileNotFoundError("No safetensors found in {}".format(model_path))
@@ -72,8 +76,10 @@ def fetch_from_hub(hf_path: str, local: bool):
 
 
 def upload_to_hub(path: str, name: str, hf_path: str):
+    # Standard
     import os
 
+    # Third Party
     from huggingface_hub import HfApi, ModelCard, logging
 
     repo_id = f"mlx-community/{name}"
@@ -138,7 +144,9 @@ def save_model(save_dir: str, weights, tokenizer, config):
             mx.save_safetensors(str(save_dir / shard_name), shard)
     else:
         save_file(
-            weights, os.path.join(save_dir, "model.safetensors"), metadata={'format': 'pt'}
+            weights,
+            os.path.join(save_dir, "model.safetensors"),
+            metadata={"format": "pt"},
         )
 
     tokenizer.save_pretrained(save_dir)

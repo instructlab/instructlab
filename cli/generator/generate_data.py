@@ -149,6 +149,7 @@ def post_process_gpt3_response(num_prompt_instructions, response):
 def find_word_in_string(w, s):
     return re.compile(r"\b({0})\b".format(w), flags=re.IGNORECASE).search(s)
 
+
 def get_seed_examples(contents):
     if "seed_examples" in contents:
         return contents["seed_examples"]

@@ -1,5 +1,6 @@
-import inspect
+# Standard
 from dataclasses import dataclass
+import inspect
 
 
 @dataclass
