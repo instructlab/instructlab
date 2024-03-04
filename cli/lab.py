@@ -388,9 +388,6 @@ def download(ctx, repository, release, model_dir, pattern):
             fg="red",
         )
 
-# TODO merge requirements.txt
-# copy-files target-dir:
-#     cp ~/artifacts/merlinite-7b/added_tokens.json {{target-dir}}
 @cli.command()
 @click.option(
     "--data-dir", help="Base directory where data is stored.", default=None
@@ -462,7 +459,6 @@ def train(data_dir, taxonomy_path, skip_preprocessing, model_dir, iters, local, 
     is_macos = True # TODO detect OS
     if is_macos:
         # NOTE we can skip this if we have a way ship MLX
-        # TODO convert the model from PyTorch to MLX
         # PyTorch safetensors to MLX safetensors
         model_dir_local = model_dir.replace("/", "-")
         model_dir_mlx = f"{model_dir_local}-mlx"
@@ -481,7 +477,6 @@ def train(data_dir, taxonomy_path, skip_preprocessing, model_dir, iters, local, 
 
         script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
         cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
-         # python convert.py --hf-path ibm-merlinite-7b --mlx-path ibm-merlinite-7b-mlx
         os.system('python {}'.format(cmd))
 
 
@@ -493,16 +488,11 @@ def train(data_dir, taxonomy_path, skip_preprocessing, model_dir, iters, local, 
 
         # TODO copy some downloaded files from the PyTorch model folder
         # Seems to be not a problem if working with a remote download with convert.py
-        # just copy-files ibm-merlinite-7b-mlx
-
     else:
         click.secho(
             f"`lab train` is only implemented for macOS with M-series chips",
             fg="red",
         )
-
-    #   Can this target a directory or does it overwrite the model on the --model directory?
-    pass
 
 @cli.command()
 @click.option(
@@ -522,11 +512,6 @@ def test(data_dir, model_dir, adapter_file):
         adapter_file = os.path.join(model_dir, "adapters.npz")
     cli_dir = os.path.dirname(os.path.abspath(__file__))
     script = os.path.join(cli_dir, "train/lora-mlx/lora.py")
-    # _generate-no-lora model prompt:
-    #     python lora.py --model {{model}} --no-adapter --max-tokens 100 --prompt "<|system|>\nYou are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior.\n<|user|>\n{{prompt}}\n<|assistant|>\n"
-    # _generate model adapter prompt:
-    #     python lora.py --model {{model}} --adapter-file {{model}}/{{adapter}} --max-tokens 100 --prompt "<|system|>\nYou are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior.\n<|user|>\n{{prompt}}\n<|assistant|>\n"
-
 
     # Load the JSON Lines file
     test_data_dir = f"{data_dir}/test.jsonl"
@@ -538,14 +523,12 @@ def test(data_dir, model_dir, adapter_file):
     for (idx, example) in enumerate(test_data):
         system = example["system"]
         user = example["user"]
-        print("[{}] user prompt: {}".format(idx + 1, user))
+        print("[{}]\n user prompt: {}".format(idx + 1, user))
         print("expected output:", example["assistant"])
         print("\n-----model output BEFORE training----:\n")
-         # just _generate ibm-merlinite-7b-mlx {{user}}
         cmd = f"{script} --model {model_dir} --no-adapter --max-tokens 100 --prompt \"<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>\n\""
         os.system('python {}'.format(cmd))
         print("\n-----model output AFTER training----:\n")
-        # just _generate ibm-merlinite-7b-mlx adapters-100.npz {{user}}
         cmd = f"{script} --model {model_dir} --adapter-file {adapter_file} --max-tokens 100 --prompt \"<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>\n\""
         os.system('python {}'.format(cmd))
 
@@ -584,11 +567,8 @@ def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
     model_dir_fused= f"{source_model_dir}-fused"
     
     script = os.path.join(cli_dir, "train/lora-mlx/fuse.py")
-    # cmd = cwd + " --model " + source_model_dir + " --save-path " + model_dir_fused + " --adapter-file " + adapter_file_path + dequantize_arg
     cmd = f"{script} --model {source_model_dir} --save-path {model_dir_fused} --adapter-file {adapter_file} {dequantize_arg}"
     # this combines adapter with the original model to produce the updated model
-    # python fuse.py --model {{model}} --save-path {{model}}-fused --adapter-file {{model}}/adapters-100.npz
-    # just copy-files {{model}}-fused
     os.system('python {}'.format(cmd))
 
     model_dir_fused_pt= f"{model_dir_fused}-pt"
@@ -596,21 +576,15 @@ def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
     script = os.path.join(cli_dir, "train/lora-mlx/convert.py ")
     cmd = f"{script} --hf-path { model_dir_fused} --mlx-path {model_dir_fused_pt} --local --to-pt"
     # this converts MLX to PyTorch
-    # python convert.py --hf-path {{model}} --local --mlx-path {{model}}-pt --to-pt
-    # just copy-files {{model}}-pt
     os.system('{} {}'.format('python', cmd))
 
 
     script = os.path.join(cli_dir, "llamacpp/llamacpp_convert_to_gguf.py")
     cmd = f"{script} { model_dir_fused_pt} --pad-vocab"
     # use llama.cpp to convert back to GGUF
-    # python $HOME/src/open-labrador/llama.cpp/convert.py {{model_dir}} --pad-vocab
-    # TO DO: fix this to execute function instead
     os.system('{} {}'.format('python', cmd))
 
     # quantize 4-bi GGUF (optional)
-    # $HOME/src/open-labrador/llama.cpp/quantize {{model_dir}}/ggml-model-f16.gguf {{model_dir}}/ggml-model-Q4_K_M.gguf Q4_K_M
-    # TO DO: fix this to execute function instead
     if not skip_quantize:
         gguf_model_dir = f"{model_dir_fused_pt}/ggml-model-f16.gguf" 
         gguf_model_q_dir = f"{model_dir_fused_pt}/ggml-model-Q4_K_M.gguf"
