@@ -1,4 +1,4 @@
-happy path
+happy path for M chips
 ```ShellSession
 # session 1
 mkdir workspace-mlx
