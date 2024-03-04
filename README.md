@@ -55,7 +55,6 @@ Commands:
   init      Initializes environment for InstructLab
   list      Lists taxonomy files that have changed (modified or untracked).
   serve     Start a local server
-  submit    Initializes environment for InstructLab
   test      Perform rudimentary tests of the model
   train     Trains model
 ```
