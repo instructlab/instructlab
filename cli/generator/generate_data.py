@@ -156,6 +156,7 @@ def get_seed_examples(contents):
     else:
         return contents
 
+
 def get_seed_examples(contents):
     if "seed_examples" in contents:
         return contents["seed_examples"]
