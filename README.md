@@ -22,11 +22,11 @@ After that is done you can:
 
 ## 🧰 Installing `lab`
 
-To start we'll create a new directory called `labrador` to store the files that this CLI needs when it runs.
+To start we'll create a new directory called `instruct-lab` to store the files that this CLI needs when it runs.
 
 ```
-mkdir labrador
-cd labrador
+mkdir instruct-lab
+cd instruct-lab
 python3 -m venv venv
 source venv/bin/activate
 pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
@@ -57,7 +57,7 @@ Commands:
   serve     Start a local server
   submit    Initializes environment for InstructLab
   test      Perform rudimentary tests of the model
-  train     Trains labrador model
+  train     Trains model
 ```
 
 **Every** `lab` command needs to be run from within your Python virtual environment:
@@ -186,7 +186,7 @@ The next step is to generate a synthetic dataset based on your newly added knowl
 ```
 (venv) $ lab generate
 INFO 2024-02-29 19:09:48,804 lab.py:250 Generating model 'ggml-merlinite-7b-0302-Q4_K_M' using 10 cpus,
-taxonomy: '/home/username/labrador/taxonomy' and seed 'seed_tasks.json'
+taxonomy: '/home/username/instruct-lab/taxonomy' and seed 'seed_tasks.json'
 
 0%|##########| 0/100 Cannot find prompt.txt. Using default prompt.
 98%|##########| 98/100 INFO 2024-02-29 20:49:27,582 generate_data.py:428 Generation took 5978.78s

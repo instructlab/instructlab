@@ -40,7 +40,7 @@ Press Meta+Enter or Esc Enter to end multiline input.
 """
 
 CONTEXTS = {
-    "default": "You are Labrador, an AI language model developed by IBM DMF (Data Model Factory) Alignment Team. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior.",
+    "default": "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior.",
     "cli_helper": "You are an expert for command line interface and know all common commands. Answer the command to execute as it without any explanation.",
 }
 

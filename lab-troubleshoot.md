@@ -70,8 +70,8 @@ Always refer to [README.md](README.md) for most/latest commands used during Inst
 gh auth login --with-token < ~/Documents/mytoken.txt
 git clone https://github.com/instruct-lab/cli.git
 cd cli
-mkdir labrador
-cd labrador
+mkdir instruct-lab
+cd instruct-lab
 python3 -m venv venv
 source venv/bin/activate
 pip install git+ssh://git@github.com/instruct-lab/cli.git
@@ -80,7 +80,7 @@ pip install --upgrade pip
 
 ```
 $ lab init
-Welcome to labrador CLI. This guide will help you to setup your environment.
+Welcome to InstructLab CLI. This guide will help you to setup your environment.
 Please provide the following values to initiate the environment:
 Path to taxonomy repo [taxonomy]: <ENTER>
 `taxonomy` seems to not exists or is empty. Should I clone git@github.com:instruct-lab/taxonomy.git for you? [y/N]: y

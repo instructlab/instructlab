@@ -2,7 +2,7 @@
 
 👍🎉 First off, thank you for taking the time to contribute! 🎉👍
 
-The following is a set of guidelines for contributing. These are just guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request. Please read the [community contribution guide](https://github.com/instruct-lab/community/blob/main/CONTRIBUTING.md) first for general practices for the Labrador community.
+The following is a set of guidelines for contributing. These are just guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request. Please read the [community contribution guide](https://github.com/instruct-lab/community/blob/main/CONTRIBUTING.md) first for general practices for the InstructLab 🥼 community.
 
 ## What Should I Know Before I Get Started?
 
