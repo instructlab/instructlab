@@ -14,9 +14,9 @@ If you see this `error invoking gh command` there is a `quick fix` and `longer f
 ```
 (venv) $ lab download
 Make sure the local environment has the `gh` cli: https://cli.github.com
-Downloading models from https://github.com/open-labrador/cli.git@v0.2.0 to models...
+Downloading models from https://github.com/instruct-lab/cli.git@v0.2.0 to models...
 Downloading models failed with the following error: error invoking `gh` command: Command '['gh', 'release', 'download', 'v0.2.0',
- '--repo', 'https://github.com/open-labrador/cli.git', '--dir', 'models', '--pattern', 'ggml-malachite-7b-0226-Q4_K_M.*']' returned non-zero exit status 4.
+ '--repo', 'https://github.com/instruct-lab/cli.git', '--dir', 'models', '--pattern', 'ggml-malachite-7b-0226-Q4_K_M.*']' returned non-zero exit status 4.
 it is time to look at your gh settings - and make sure you can run 'gh auth login'
 ```
 
@@ -68,13 +68,13 @@ Always refer to (README.md)[README.md] for most/latest commands used during Inst
 
 ```
 gh auth login --with-token < ~/Documents/mytoken.txt
-git clone https://github.com/open-labrador/cli.git
+git clone https://github.com/instruct-lab/cli.git
 cd cli
 mkdir labrador
 cd labrador
 python3 -m venv venv
 source venv/bin/activate
-pip install git+ssh://git@github.com/open-labrador/cli.git
+pip install git+ssh://git@github.com/instruct-lab/cli.git
 pip install --upgrade pip
 ```
 
@@ -83,8 +83,8 @@ $ lab init
 Welcome to labrador CLI. This guide will help you to setup your environment.
 Please provide the following values to initiate the environment:
 Path to taxonomy repo [taxonomy]: <ENTER>
-`taxonomy` seems to not exists or is empty. Should I clone git@github.com:open-labrador/taxonomy.git for you? [y/N]: y
-Cloning git@github.com:open-labrador/taxonomy.git...
+`taxonomy` seems to not exists or is empty. Should I clone git@github.com:instruct-lab/taxonomy.git for you? [y/N]: y
+Cloning git@github.com:instruct-lab/taxonomy.git...
 Path to your model [models/ggml-malachite-7b-0226-Q4_K_M.gguf]: <ENTER>
 Generating `config.yaml` in the current directory...
 Initialization completed successfully, you're ready to start using `lab`. Enjoy!
@@ -93,7 +93,7 @@ Initialization completed successfully, you're ready to start using `lab`. Enjoy!
 ```
 $ lab download
 Make sure the local environment has the `gh` cli: https://cli.github.com
-Downloading models from https://github.com/open-labrador/cli.git@v0.2.0 to models...
+Downloading models from https://github.com/instruct-lab/cli.git@v0.2.0 to models...
 ```
 
 Ensure a model is downloaded.

@@ -18,8 +18,8 @@ classifiers = [
 dynamic = ["dependencies"]
 
 [project.urls]
-Homepage = "https://github.com/open-labrador/cli"
-Issues = "https://github.com/open-labrador/cli/issues"
+Homepage = "https://github.com/instruct-lab/cli"
+Issues = "https://github.com/instruct-lab/cli/issues"
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}

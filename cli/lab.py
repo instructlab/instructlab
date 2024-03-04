@@ -343,7 +343,7 @@ def chat(ctx, question, model, context, session, quick_question):
 @cli.command()
 @click.option(
     "--repository",
-    default="https://github.com/open-labrador/cli.git",
+    default="https://github.com/instruct-lab/cli.git",
     show_default=True,
     help="GitHub repository of the hosted models.",
 )

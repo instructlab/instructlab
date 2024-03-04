@@ -9,7 +9,7 @@ class DownloadException(Exception):
 
 
 def download_model(
-    gh_repo="https://github.com/open-labrador/cli.git",
+    gh_repo="https://github.com/instruct-lab/cli.git",
     gh_release="latest",
     model_dir=".",
     pattern="",
@@ -98,7 +98,7 @@ def download_model(
 
 
 def clone_taxonomy(
-    gh_repo="https://github.com/open-labrador/taxonomy.git",
+    gh_repo="https://github.com/instruct-lab/taxonomy.git",
     gh_branch="main",
     directory="taxonomy",
     min_taxonomy=False,
