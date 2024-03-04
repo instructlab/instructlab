@@ -37,9 +37,9 @@ If `lab` is installed correctly, you should be able to test the lab command:
 
 ```
 (venv) $ lab
-Usage: lab [OPTIONS] COMMAND [ARGS]...
+lab [OPTIONS] COMMAND [ARGS]...
 
-  CLI for interacting with labrador.
+  CLI for interacting with InstructLab.
 
   If this is your first time running lab, it's best to start with `lab init`
   to create the environment
@@ -52,11 +52,10 @@ Commands:
   chat      Run a chat using the modified model
   download  Download the model(s) to train
   generate  Generates synthetic data to enhance your example data
-  init      Initializes environment for labrador
+  init      Initializes environment for InstructLab
   list      Lists taxonomy files that have changed (modified or untracked).
   serve     Start a local server
-  submit    Initializes environment for labrador
-
+  submit    Initializes environment for InstructLab
   test      Perform rudimentary tests of the model
   train     Trains labrador model
 ```
@@ -78,7 +77,7 @@ Initializing `lab` will:
 
 ```
 (venv) $ lab init
-Welcome to Labrador CLI. This guide will help you to setup your environment.
+Welcome to InstructLab CLI. This guide will help you to setup your environment.
 Please provide the following values to initiate the environment:
 Path to taxonomy repo [taxonomy]: <ENTER>
 `taxonomy` seems to not exists or is empty. Should I clone git@github.com:instruct-lab/taxonomy.git for you? [y/N]: y
