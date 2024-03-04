@@ -33,7 +33,7 @@
 +---+--------+                          |
 |lab generate|--------------------------+ -=-synthesize data;
 +---+-------++other hardware            |      iterate by modifying examples
-    |M chip |  +-------+--------+       |      if samples do not look good
+    |M chips|  +-------+--------+       |      if samples do not look good
     v       +->+colab train cYEL|       | 
 +---+-----+    +-------+--------+       |
 |lab train|-=-w/ MLX   |                |
