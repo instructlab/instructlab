@@ -228,7 +228,7 @@ lab chat
 ```
 ## 🎁 Submit your new knowledge
 
-Of course the final step is - if you've improved the model - to open up a a pull-request in the [taxonomy respository](https://github.com/open-labrador/taxonomy).
+Of course the final step is - if you've improved the model - to open a pull-request in the [taxonomy respository](https://github.com/open-labrador/taxonomy).
 
 ## Contributing
 
