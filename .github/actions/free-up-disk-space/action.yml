@@ -1,0 +1,35 @@
+name: "Free up disk space"
+description: "Removes non-essential tools, libraries and cached files from GitHub action runner node"
+
+runs:
+  using: "composite"
+  steps:
+    - name: "Remove non-essential tools and libraries"
+      shell: bash
+      run: |
+        # https://github.com/actions/runner-images/issues/2840#issuecomment-790492173
+        echo "Disk usage before cleanup:"
+        df -h
+        
+        echo "Removing non-essential tools and libraries ..."
+        sudo rm -rf /opt/ghc
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /usr/local/share/boost
+        
+        echo "Deleting libraries for Android (12G), CodeQL (5.3G), PowerShell (1.3G), Swift (1.7G) ..."
+        sudo rm -rf /usr/local/lib/android
+        sudo rm -rf "${AGENT_TOOLSDIRECTORY}/CodeQL"
+        sudo rm -rf /usr/local/share/powershell
+        sudo rm -rf /usr/share/swift
+        
+        echo "Disk usage after cleanup:"
+        df -h
+
+    - name: "Prune docker images"
+      shell: bash
+      run: |
+        echo "Pruning docker images ..."
+        docker image prune -a -f
+        docker system df
+        echo "Disk usage after pruning docker images:"
+        df -h
