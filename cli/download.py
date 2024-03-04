@@ -19,7 +19,7 @@ def download_model(
 
     Parameters:
     - gh_repo (str): The URL of the GitHub repository containing the model.
-        Default: Instruct Lab CLI repository.
+        Default: InstructLab CLI repository.
     - gh_release (str): The GitHub release version of the model to download.
         Default is 'latest'.
     - model_dir(str): The local directory to download the model files into
