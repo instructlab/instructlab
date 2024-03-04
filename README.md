@@ -24,6 +24,8 @@ After that is done you can:
 
 To start we'll create a new directory called `instruct-lab` to store the files that this CLI needs when it runs.
 
+Please note, you will need to ensure your ssh public key is synced and stored on github. Later on you will need your
+github token for the gh authentication.
 ```
 mkdir instruct-lab
 cd instruct-lab
