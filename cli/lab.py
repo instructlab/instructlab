@@ -1,7 +1,13 @@
 # Standard
+from glob import glob
 from os import listdir
 from os.path import basename, dirname, exists, splitext
+import json
 import logging
+import os
+import platform
+import shutil
+import subprocess
 import sys
 
 # Third Party
@@ -282,13 +288,6 @@ def generate(ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file):
 
 @cli.command()
 @click.pass_context
-def train(ctx):
-    """Trains labrador model"""
-    click.echo("# train TBD")
-
-
-@cli.command()
-@click.pass_context
 def test(ctx):
     """Perform rudimentary tests of the model"""
     click.echo("# test TBD")
@@ -382,3 +381,242 @@ def download(ctx, repository, release, model_dir, pattern):
             f"Downloading models failed with the following error: {exc}",
             fg="red",
         )
+
+
+def is_macos_with_m_chip():
+    # Check if the OS is macOS
+    if platform.system() != "Darwin":
+        return False
+
+    # Check for Apple Silicon (M1, M2, etc.)
+    try:
+        # Running 'sysctl -a' and searching for a specific line that indicates ARM architecture
+        result = subprocess.check_output(["sysctl", "-a"], text=True)
+        if "machdep.cpu.brand_string: Apple" in result:
+            return True
+        else:
+            return False
+    except Exception as e:
+        print(f"Error checking architecture: {e}")
+        return False
+
+
+@cli.command()
+@click.option("--data-dir", help="Base directory where data is stored.", default=None)
+@click.option(
+    "--taxonomy-path",
+    type=click.Path(),
+    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
+    default="./taxonomy",
+)
+@click.option(
+    "--skip-preprocessing",
+    is_flag=True,
+)
+@click.option(
+    "--model-dir",
+    help="Base directory where model is stored.",
+    default="ibm/merlinite-7b",
+)
+@click.option("--iters", help="Number of iterations to train LoRA", default=100)
+@click.option(
+    "--local",
+    is_flag=True,
+    help="Whether or not `model_dir` is remote from HuggingFace.",
+)
+@click.option(
+    "-sq",
+    "--skip-quantize",
+    is_flag=True,
+    help="Whether to skip quantization while converting to MLX.",
+)
+def train(
+    data_dir, taxonomy_path, skip_preprocessing, model_dir, iters, local, skip_quantize
+):
+    """
+    Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
+    On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
+    """
+    if not is_macos_with_m_chip():
+        click.secho(
+            f"`lab train` is only implemented for macOS with M-series chips",
+            fg="red",
+        )
+        sys.exit()
+
+    cli_dir = os.path.dirname(os.path.abspath(__file__))
+
+    if data_dir is None:
+        data_dir = "./taxonomy_data"
+        try:
+            os.listdir(taxonomy_path)
+            if not os.path.isdir(data_dir):
+                os.mkdir(data_dir)
+            train_files = glob(taxonomy_path + "/train_*")
+            test_files = glob(taxonomy_path + "/test_*")
+            if len(train_files) > 1 or len(test_files) > 1:
+                click.secho(
+                    f"Found multiple files from `lab generate`. Using the first one.",
+                    fg="yellow",
+                )
+            shutil.copy(train_files[0], data_dir + "/train_gen.jsonl")
+            shutil.copy(test_files[0], data_dir + "/test_gen.jsonl")
+        except FileNotFoundError as exc:
+            click.secho(
+                f"Could not read taxonomy directory: {exc}",
+                fg="red",
+            )
+            sys.exit()
+        except OSError as exc:
+            click.secho(
+                f"Could not create data dir: {exc}",
+                fg="red",
+            )
+            sys.exit()
+        except IndexError as exc:
+            click.secho(
+                f"Could not copy into data directory: {exc}",
+                fg="red",
+            )
+            sys.exit()
+
+    if not skip_preprocessing:
+        script = os.path.join(cli_dir, "train/lora-mlx/make_data.py")
+        cmd = f"{script} --data-dir {data_dir}"
+        os.system("python {}".format(cmd))
+
+    # NOTE we can skip this if we have a way ship MLX
+    # PyTorch safetensors to MLX safetensors
+    model_dir_local = model_dir.replace("/", "-")
+    model_dir_mlx = f"{model_dir_local}-mlx"
+    model_dir_mlx_quantized = f"{model_dir_local}-mlx-q"
+
+    dest_model_dir = ""
+    quantize_arg = ""
+
+    if not skip_quantize:
+        dest_model_dir = model_dir_mlx_quantized
+        quantize_arg = "-q"
+    else:
+        dest_model_dir = model_dir_mlx
+
+    local_arg = "--local" if local else ""
+
+    script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
+    cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
+    os.system("python {}".format(cmd))
+
+    adapter_file_path = f"{dest_model_dir}/adapters.npz"
+    script = os.path.join(cli_dir, "train/lora-mlx/lora.py")
+    # train the model with LoRA
+    cmd = f"{script} --model {dest_model_dir} --train --data {data_dir} --adapter-file {adapter_file_path} --iters {iters} --save-every 10 --steps-per-eval 10"
+    os.system("python {}".format(cmd))
+
+    # TODO copy some downloaded files from the PyTorch model folder
+    # Seems to be not a problem if working with a remote download with convert.py
+
+
+@cli.command()
+@click.option(
+    "--data-dir", help="Base directory where data is stored.", default="./taxonomy_data"
+)
+@click.option(
+    "--model-dir",
+    help="Base directory where model is stored.",
+    default="ibm-merlinite-7b-mlx-q",
+)
+@click.option("--adapter-file", help="LoRA adapter to use for test.", default=None)
+def test(data_dir, model_dir, adapter_file):
+    """
+    TODO
+    """
+    if not is_macos_with_m_chip():
+        click.secho(
+            f"`lab train` is only implemented for macOS with M-series chips",
+            fg="red",
+        )
+        sys.exit()
+
+    if adapter_file is None:
+        adapter_file = os.path.join(model_dir, "adapters.npz")
+    cli_dir = os.path.dirname(os.path.abspath(__file__))
+    script = os.path.join(cli_dir, "train/lora-mlx/lora.py")
+
+    # Load the JSON Lines file
+    test_data_dir = f"{data_dir}/test.jsonl"
+    with open(test_data_dir, "r") as f:
+        test_data = [json.loads(line) for line in f]
+
+    SYS_PROMPT = "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
+    print("system prompt:", SYS_PROMPT)
+    for (idx, example) in enumerate(test_data):
+        system = example["system"]
+        user = example["user"]
+        print("[{}]\n user prompt: {}".format(idx + 1, user))
+        print("expected output:", example["assistant"])
+        print("\n-----model output BEFORE training----:\n")
+        cmd = f'{script} --model {model_dir} --no-adapter --max-tokens 100 --prompt "<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>\n"'
+        os.system("python {}".format(cmd))
+        print("\n-----model output AFTER training----:\n")
+        cmd = f'{script} --model {model_dir} --adapter-file {adapter_file} --max-tokens 100 --prompt "<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>\n"'
+        os.system("python {}".format(cmd))
+
+
+@cli.command()
+@click.option(
+    "--model-dir",
+    help="Base directory where model is stored.",
+    default="ibm-merlinite-7b-mlx-q",
+)
+@click.option("--adapter-file", help="LoRA adapter to fuse.", default=None)
+@click.option(
+    "-sd",
+    "--skip-de-quantize",
+    help="Skip de-quantization.",
+    is_flag=True,
+)
+@click.option(
+    "-sq",
+    "--skip-quantize",
+    is_flag=True,
+    help="Whether to skip quantization while converting to GGUF.",
+)
+def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
+    """
+    TODO
+    """
+    if adapter_file is None:
+        adapter_file = os.path.join(model_dir, "adapters.npz")
+    cli_dir = os.path.dirname(os.path.abspath(__file__))
+
+    dequantize_arg = ""
+    source_model_dir = model_dir
+    if not skip_de_quantize:
+        dequantize_arg = " -d "
+
+    model_dir_fused = f"{source_model_dir}-fused"
+
+    script = os.path.join(cli_dir, "train/lora-mlx/fuse.py")
+    cmd = f"{script} --model {source_model_dir} --save-path {model_dir_fused} --adapter-file {adapter_file} {dequantize_arg}"
+    # this combines adapter with the original model to produce the updated model
+    os.system("python {}".format(cmd))
+
+    model_dir_fused_pt = f"{model_dir_fused}-pt"
+
+    script = os.path.join(cli_dir, "train/lora-mlx/convert.py ")
+    cmd = f"{script} --hf-path { model_dir_fused} --mlx-path {model_dir_fused_pt} --local --to-pt"
+    # this converts MLX to PyTorch
+    os.system("{} {}".format("python", cmd))
+
+    script = os.path.join(cli_dir, "llamacpp/llamacpp_convert_to_gguf.py")
+    cmd = f"{script} { model_dir_fused_pt} --pad-vocab"
+    # use llama.cpp to convert back to GGUF
+    os.system("{} {}".format("python", cmd))
+
+    # quantize 4-bi GGUF (optional)
+    if not skip_quantize:
+        gguf_model_dir = f"{model_dir_fused_pt}/ggml-model-f16.gguf"
+        gguf_model_q_dir = f"{model_dir_fused_pt}/ggml-model-Q4_K_M.gguf"
+        script = os.path.join(cli_dir, "llamacpp/quantize")
+        cmd = f"{script} {gguf_model_dir} {gguf_model_q_dir} Q4_K_M"
+        os.system("{}".format(cmd))

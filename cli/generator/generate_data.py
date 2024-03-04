@@ -153,6 +153,13 @@ def find_word_in_string(w, s):
 def get_seed_examples(contents):
     if "seed_examples" in contents:
         return contents["seed_examples"]
+    else:
+        return contents
+
+
+def get_seed_examples(contents):
+    if "seed_examples" in contents:
+        return contents["seed_examples"]
     return contents
 
 

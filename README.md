@@ -203,6 +203,17 @@ The synthetic data set will be three files in the `taxonomy` repository that are
 
 ## 👩‍🏫 Train the model
 
+### Traing the model locally on an M-series Mac
+
+```
+lab train
+lab convert
+```
+
+**Every** `lab` command needs to be run from within your Python virtual environment:
+
+### Traing the model in Co Lab
+
 Train the model on your synthetic data-enhanced dataset by following the instructions in [Training](./notebooks/README.md)
 
 ⏳ This takes about **0.5-2.5 hours** to complete in the free tier of Google Colab.
@@ -215,7 +226,7 @@ Stop the server you have running via `ctrl+c` in the terminal it is running in.
 Serve the newly trained model locally via `lab serve` with the `--model` argument to specify your new model:
 
 ```
-lab serve --model <New model name>
+lab serve --model-path <New model name>
 ```
 
 ## 📣 Chat with the new model (not optional this time)
