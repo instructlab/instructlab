@@ -16,6 +16,7 @@ from llama_cpp.server.app import create_app
 from llama_cpp.server.settings import Settings
 import click
 import llama_cpp.server.app as llama_app
+import openai
 import uvicorn
 
 # Local
@@ -292,6 +293,11 @@ def generate(
     except GenerateException as exc:
         click.secho(
             f"Generating dataset failed with the following error: {exc}",
+            fg="red",
+        )
+    except openai.APIConnectionError as exc:
+        click.secho(
+            f"Error connecting to the server: {exc.__cause__}",
             fg="red",
         )
 
