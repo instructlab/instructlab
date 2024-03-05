@@ -124,7 +124,6 @@ def get_default_config():
         taxonomy_path=DEFAULT_TAXONOMY_PATH,
         prompt_file=DEFAULT_PROMPT_FILE,
         seed_file=DEFAULT_SEED_FILE,
-        rouge_threshold=0.9,
     )
     # pylint: disable=redefined-builtin
     list = _list(taxonomy_path=DEFAULT_TAXONOMY_PATH)

@@ -264,6 +264,7 @@ def serve(ctx, model_path, gpu_layers):
 @click.option(
     "--rouge-threshold",
     type=click.FLOAT,
+    default=0.9,
     help="Threshold of (max) Rouge score to keep samples; 1.0 means accept all samples.",
 )
 @click.pass_context
