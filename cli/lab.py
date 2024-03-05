@@ -19,7 +19,7 @@ import llama_cpp.server.app as llama_app
 import uvicorn
 
 # Local
-from . import config
+from . import config, utils
 from .chat.chat import ChatException, chat_cli
 from .download import DownloadException, clone_taxonomy, download_model
 from .generator.generate_data import GenerateException, generate_data, get_taxonomy_diff
@@ -119,7 +119,9 @@ def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
         )
         click.echo("Please provide the following values to initiate the environment:")
 
-        taxonomy_path = click.prompt("Path to taxonomy repo", default=taxonomy_path)
+        taxonomy_path = utils.expand_path(
+            click.prompt("Path to taxonomy repo", default=taxonomy_path)
+        )
         try:
             taxonomy_contents = os.listdir(taxonomy_path)
         except FileNotFoundError:
@@ -146,7 +148,9 @@ def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
         # check if models dir exists, and if so ask for which model to use
         models_dir = dirname(model_path)
         if exists(models_dir):
-            model_path = click.prompt("Path to your model", default=model_path)
+            model_path = utils.expand_path(
+                click.prompt("Path to your model", default=model_path)
+            )
 
     # non-interactive part of the generation
     click.echo(f"Generating `{config.DEFAULT_CONFIG}` in the current directory...")
