@@ -53,6 +53,7 @@ class _generate:
     prompt_file: str
     seed_file: str
 
+
 @dataclass
 class _list:
     taxonomy_path: str
