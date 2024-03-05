@@ -261,8 +261,16 @@ def serve(ctx, model_path, gpu_layers):
     type=click.Path(),
     help="Path to a seed file.",
 )
+@click.option(
+    "--rouge-threshold",
+    type=click.FLOAT,
+    default=0.9,
+    help="Threshold of (max) Rouge score to keep samples; 1.0 means accept all samples.",
+)
 @click.pass_context
-def generate(ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file):
+def generate(
+    ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file, rouge_threshold
+):
     """Generates synthetic data to enhance your example data"""
     ctx.obj.logger.info(
         f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}'"
@@ -276,6 +284,7 @@ def generate(ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file):
             taxonomy=taxonomy_path,
             prompt_file_path=ctx.obj.config.generate.prompt_file,
             seed_tasks_path=seed_file,
+            rouge_threshold=rouge_threshold,
         )
     except GenerateException as exc:
         click.secho(
@@ -286,6 +295,7 @@ def generate(ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file):
 
 @cli.command()
 @click.pass_context
+# pylint: disable=function-redefined
 def test(ctx):
     """Perform rudimentary tests of the model"""
     click.echo("# test TBD")
@@ -390,10 +400,9 @@ def is_macos_with_m_chip():
     try:
         # Running 'sysctl -a' and searching for a specific line that indicates ARM architecture
         result = subprocess.check_output(["sysctl", "-a"], text=True)
-        if "machdep.cpu.brand_string: Apple" in result:
-            return True
-        else:
-            return False
+        is_m_chip = "machdep.cpu.brand_string: Apple" in result
+        return is_m_chip
+    # pylint: disable=broad-exception-caught
     except Exception as e:
         print(f"Error checking architecture: {e}")
         return False
@@ -437,7 +446,7 @@ def train(
     """
     if not is_macos_with_m_chip():
         click.secho(
-            f"`lab train` is only implemented for macOS with M-series chips",
+            "`lab train` is only implemented for macOS with M-series chips",
             fg="red",
         )
         sys.exit()
@@ -453,6 +462,7 @@ def train(
             train_files = glob(taxonomy_path + "/train_*")
             test_files = glob(taxonomy_path + "/test_*")
             if len(train_files) > 1 or len(test_files) > 1:
+                # pylint: disable=f-string-without-interpolation
                 click.secho(
                     f"Found multiple files from `lab generate`. Using the first one.",
                     fg="yellow",
@@ -524,13 +534,14 @@ def train(
     default="ibm-merlinite-7b-mlx-q",
 )
 @click.option("--adapter-file", help="LoRA adapter to use for test.", default=None)
+# pylint: disable=function-redefined
 def test(data_dir, model_dir, adapter_file):
     """
     TODO
     """
     if not is_macos_with_m_chip():
         click.secho(
-            f"`lab train` is only implemented for macOS with M-series chips",
+            "`lab train` is only implemented for macOS with M-series chips",
             fg="red",
         )
         sys.exit()
@@ -542,7 +553,7 @@ def test(data_dir, model_dir, adapter_file):
 
     # Load the JSON Lines file
     test_data_dir = f"{data_dir}/test.jsonl"
-    with open(test_data_dir, "r") as f:
+    with open(test_data_dir, "r", encoding="utf-8") as f:
         test_data = [json.loads(line) for line in f]
 
     SYS_PROMPT = "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
