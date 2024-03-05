@@ -29,7 +29,7 @@ mkdir instruct-lab
 cd instruct-lab
 python3 -m venv venv
 source venv/bin/activate
-pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
+pip install git+ssh://git@github.com/instruct-lab/cli.git@main
 ```
 ⏳ `pip install` may take some time, depending on your internet connection.
 
