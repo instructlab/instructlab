@@ -262,12 +262,12 @@ def serve(ctx, model_path, gpu_layers):
     help="Path to a seed file.",
 )
 @click.option(
-    "--rouge-ths",
+    "--rouge-threshold",
     type=click.FLOAT,
     help="Threshold of (max) Rouge score to keep samples; 1.0 means accept all samples.",
 )
 @click.pass_context
-def generate(ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file, rouge_ths):
+def generate(ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file, rouge_threshold):
     """Generates synthetic data to enhance your example data"""
     ctx.obj.logger.info(
         f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}'"
@@ -281,7 +281,7 @@ def generate(ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file, r
             taxonomy=taxonomy_path,
             prompt_file_path=ctx.obj.config.generate.prompt_file,
             seed_tasks_path=seed_file,
-            rouge_ths=rouge_ths,
+            rouge_threshold=rouge_threshold,
         )
     except GenerateException as exc:
         click.secho(
