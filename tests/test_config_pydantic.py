@@ -13,7 +13,7 @@ import cli.lab as lab
 def test_config_pydantic():
     runner = CliRunner()
     with runner.isolated_filesystem():
-        result = CliRunner().invoke(lab.init, ["--interactive", "--taxonomy-path", "taxonomy"])
+        CliRunner().invoke(lab.init, ["--interactive"])
         try:
             pydantic_yaml.parse_yaml_file_as(model_type=Config, file="config.yaml")
             # If config.yaml parses to Config pydantic model, success.

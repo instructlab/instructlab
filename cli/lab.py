@@ -18,7 +18,7 @@ from . import config
 from .chat.chat import ChatException, chat_cli
 from .download import DownloadException, clone_taxonomy, download_model
 from .generator.generate_data import GenerateException, generate_data, get_taxonomy_diff
-
+from huggingface_hub import hf_hub_download
 
 # pylint: disable=unused-argument
 class Lab:
@@ -343,42 +343,36 @@ def chat(ctx, question, model, context, session, quick_question):
 @cli.command()
 @click.option(
     "--repository",
-    default="https://github.com/instruct-lab/cli.git",
+    default=config.DEFAULT_MODEL_REPO,
     show_default=True,
-    help="GitHub repository of the hosted models.",
+    help="Hugging Face repository of the model to download.",
+)
+@click.option(
+    "--filename",
+    default=config.DEFAULT_MODEL_FILE,
+    show_default=True,
+    help="Name of the model file to download from the Hugging Face repository.",
 )
 @click.option(
     "--release",
-    default=config.DEFAULT_DOWNLOAD_TAG,
+    default=config.DEFAULT_MODEL_REVISION,
     show_default=True,
-    help="GitHub release version of the hosted models.",
+    help="The git revision of the model to download - e.g. a branch, tag, or commit hash.",
 )
 @click.option(
     "--model-dir", help="The local directory to download the model files into."
 )
 @click.option(
-    "--pattern",
-    help="Download only assets that match a glob pattern.",
+    "--hf-endpoint", default=None
 )
-@click.option("--pattern", help="Download only assets that match a glob pattern.")
 @click.pass_context
-def download(ctx, repository, release, model_dir, pattern):
+def download(ctx, repository, filename, release, model_dir, hf_endpoint):
     """Download the model(s) to train"""
-    # Use the serve model path to get the right models in the right place, if needed
-    serve_model_path = ctx.obj.config.serve.model_path
-    if serve_model_path:  # if set in config
-        if not model_dir:  # --model_dir takes precedence
-            model_dir = dirname(serve_model_path)
-        if not pattern:  # --pattern takes precedence
-            pattern = basename(serve_model_path).replace(".gguf", ".*")
-    click.echo(
-        "Make sure the local environment has the `gh` cli: https://cli.github.com"
-    )
-    click.echo(f"Downloading models from {repository}@{release} to {model_dir}...")
+    click.echo(f"Downloading model from {repository}@{release} to {model_dir}...")
     try:
-        download_model(repository, release, model_dir, pattern)
-    except DownloadException as exc:
+        hf_hub_download(repo_id=repository, filename=filename, revision=release, local_dir=model_dir, endpoint=hf_endpoint)
+    except Exception as exc:
         click.secho(
-            f"Downloading models failed with the following error: {exc}",
+            f"Downloading model failed with the following error: {exc}",
             fg="red",
         )
