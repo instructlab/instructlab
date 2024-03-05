@@ -17,11 +17,12 @@ name: Lint and Format
 on:
   push:
     branches: 
-    - "main"
-    - "pip_cache"  # TODO: remove this before creating PR to `main`
+      - "main"
+      - "pip_cache"  # TODO: remove this before creating PR to `main`
   pull_request:
     branches: 
       - "main"
+      - "pip_cache"  # TODO: remove this before creating PR to `main`
 
 jobs:
   lint:
