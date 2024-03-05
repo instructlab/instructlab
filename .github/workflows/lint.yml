@@ -16,10 +16,10 @@ name: Lint and Format
 
 on:
   push:
-    branches: 
+    branches:
       - "main"
   pull_request:
-    branches: 
+    branches:
       - "main"
 
 jobs:

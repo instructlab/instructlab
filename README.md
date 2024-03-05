@@ -31,6 +31,7 @@ python3 -m venv venv
 source venv/bin/activate
 pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
 ```
+
 ⏳ `pip install` may take some time, depending on your internet connection.
 
 If `lab` is installed correctly, you should be able to test the lab command:
@@ -70,8 +71,10 @@ source venv/bin/activate
 ```
 lab init
 ```
+
 Initializing `lab` will:
-1. Add a new, default `config.yaml` file. 
+
+1. Add a new, default `config.yaml` file.
 2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory.
 
 ```
@@ -97,7 +100,7 @@ Users should make sure they are logged in to their github accounts via the `gh` 
 gh auth login
 ```
 
-**⁉️  Something not working?**: Please review [lab-troubleshoot.md](./lab-troubleshoot.md) for troubleshooting tips related to `gh`.
+**⁉️ Something not working?**: Please review [lab-troubleshoot.md](./lab-troubleshoot.md) for troubleshooting tips related to `gh`.
 
 ```
 lab download
@@ -134,6 +137,7 @@ Press CTRL+C to shutdown server.
 ## 📣 Chat with the model (optional)
 
 Because you're serving the model in one terminal window, you'll likely have to create a new window and re-activate your Python virtual environment to run `lab chat`:
+
 ```
 source venv/bin/activate
 lab chat
@@ -169,6 +173,7 @@ lab list
 To ensure `lab` is registering your new knowledge you can run `lab list`.
 
 Here is the expected result after adding the new compositional skill foo-lang:
+
 ```
 (venv) $ lab list
 compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
@@ -192,6 +197,7 @@ taxonomy: '/home/username/instruct-lab/taxonomy' and seed 'seed_tasks.json'
 ```
 
 The synthetic data set will be three files in the `taxonomy` repository that are named like: `generated*.json`, `test*.jsonl`, and `train*.jsonl`:
+
 ```
 (venv) $ ls taxonomy/
  CODE_OF_CONDUCT.md     CONTRIBUTING.md  'generated_ggml-merlinite-7b-0302-Q4_K_M_2024-02-29T19 09 48.json'   README.md                                                      'train_ggml-merlinite-7b-0302-Q4_K_M_2024-02-29T19 09 48.jsonl'
@@ -235,6 +241,7 @@ Try the fine-tuned model out live using the chat interface, and see if the resul
 ```
 lab chat
 ```
+
 ## 🎁 Submit your new knowledge
 
 Of course the final step is - if you've improved the model - to open up a a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy).

@@ -11,19 +11,18 @@ be general should you wish to use a custom dataset.
 
 ## Contents
 
-* [Setup](#Setup)
-  * [Convert](#convert)
-* [Run](#Run)
-  * [Fine-tune](#Fine-tune)
-  * [Evaluate](#Evaluate)
-  * [Generate](#Generate)
-* [Results](#Results)
-* [Fuse and Upload](#Fuse-and-Upload)
-* [Custom Data](#Custom-Data)
-* [Memory Issues](#Memory-Issues)
+- [Setup](#Setup)
+  - [Convert](#convert)
+- [Run](#Run)
+  - [Fine-tune](#Fine-tune)
+  - [Evaluate](#Evaluate)
+  - [Generate](#Generate)
+- [Results](#Results)
+- [Fuse and Upload](#Fuse-and-Upload)
+- [Custom Data](#Custom-Data)
+- [Memory Issues](#Memory-Issues)
 
-
-## Setup 
+## Setup
 
 Install the dependencies:
 
@@ -72,7 +71,7 @@ python lora.py --help
 ```
 
 Note, in the following the `--model` argument can be any compatible Hugging
-Face repo or a local path to a converted mdoel. 
+Face repo or a local path to a converted mdoel.
 
 ### Fine-tune
 
@@ -91,7 +90,7 @@ By default, the adapter weights are saved in `adapters.npz`. You can specify
 the output location with `--adapter-file`.
 
 You can resume fine-tuning with an existing adapter with `--resume-adapter-file
-<path_to_adapters.npz>`. 
+<path_to_adapters.npz>`.
 
 ### Evaluate
 
@@ -125,12 +124,12 @@ training and validation loss at a few points over the course of training.
 
 | Iteration | Train Loss | Validation Loss |
 | --------- | ---------- | --------------- |
-| 1         |    N/A     |      2.659      |
-| 200       |    1.264   |      1.405      |
-| 400       |    1.201   |      1.303      |
-| 600       |    1.123   |      1.274      |
-| 800       |    1.017   |      1.255      |
-| 1000      |    1.070   |      1.230      |
+| 1         | N/A        | 2.659           |
+| 200       | 1.264      | 1.405           |
+| 400       | 1.201      | 1.303           |
+| 600       | 1.123      | 1.274           |
+| 800       | 1.017      | 1.255           |
+| 1000      | 1.070      | 1.230           |
 
 The model trains at around 475 tokens per second on an M2 Ultra.
 
@@ -148,7 +147,7 @@ python fuse.py
 ```
 
 This will by default load the base model from `mlx_model/`, the adapters from
-`adapters.npz`,  and save the fused model in the path `lora_fused_model/`. All
+`adapters.npz`, and save the fused model in the path `lora_fused_model/`. All
 of these are configurable. You can see the list of options with:
 
 ```
@@ -159,7 +158,7 @@ To upload a fused model, supply the `--upload-name` and `--hf-path` arguments
 to `fuse.py`. The latter is the repo name of the original model, which is
 useful for the sake of attribution and model versioning.
 
-For example, to fuse and upload a model derived from Mistral-7B-v0.1, run: 
+For example, to fuse and upload a model derived from Mistral-7B-v0.1, run:
 
 ```
 python fuse.py --upload-name My-4-bit-model --hf-repo mistralai/Mistral-7B-v0.1
@@ -189,7 +188,7 @@ of memory. Here are some tips to reduce memory use should you need to do so:
 
 1. Try quantization (QLoRA). You can use QLoRA by generating a quantized model
    with `convert.py` and the `-q` flag. See the [Setup](#setup) section for
-   more details. 
+   more details.
 
 2. Try using a smaller batch size with `--batch-size`. The default is `4` so
    setting this to `2` or `1` will reduce memory consumption. This may slow
@@ -216,14 +215,14 @@ python lora.py \
 
 The above command on an M1 Max with 32 GB runs at about 250 tokens-per-second.
 
-
 [^lora]: Refer to the [arXiv paper](https://arxiv.org/abs/2106.09685) for more details on LoRA.
 [^qlora]: Refer to the paper [QLoRA: Efficient Finetuning of Quantized LLMs](https://arxiv.org/abs/2305.14314)
 [^wikisql]: Refer to the [GitHub repo](https://github.com/salesforce/WikiSQL/tree/master) for more information about WikiSQL.
 
-
 # Notice
+
 The code in this folder is modified from https://github.com/ml-explore/mlx-examples/tree/main/lora with the following license.
+
 ```
 MIT License
 

@@ -1,16 +1,16 @@
 @startditaa
-+--------+                                    
-|lab init|-=-taxonomy repo cloned         legend       
-+---+----+                                  +-------+    
-    |                                       |lab CLI|    
-    v                                       +-------+    
++--------+
+|lab init|-=-taxonomy repo cloned         legend
++---+----+                                  +-------+
+    |                                       |lab CLI|
+    v                                       +-------+
 +---+--------+                              +-----------+
 |lab download|-=-model weights downloaded   |manual cPNK|
 +---+--------+                              +-----------+
     |                                       +----------+
-    v optional                              |colab cYEL| 
-+---+-----+                                 +----------+ 
-|lab serve|-=-start model server 
+    v optional                              |colab cYEL|
++---+-----+                                 +----------+
+|lab serve|-=-start model server
 +---+-----+
     |
     v
@@ -34,7 +34,7 @@
 |lab generate|--------------------------+ -=-synthesize data;
 +---+-------++other hardware            |      iterate by modifying examples
     |M chips|  +-------+--------+       |      if samples do not look good
-    v       +->+colab train cYEL|       | 
+    v       +->+colab train cYEL|       |
 +---+-----+    +-------+--------+       |
 |lab train|-=-w/ MLX   |                |
 +---+-----+            v                |

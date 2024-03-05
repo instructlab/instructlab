@@ -7,6 +7,7 @@ This document is for commonly found problems and their solutions when using `lab
 This page has some troubleshooting techniques if you hit a github cli `gh` error described below.
 
 ### gh error during `lab download`
+
 Some people are hitting a `gh` error while running the `lab download` step.
 
 If you see this `error invoking gh command` there is a `quick fix` and `longer fix`
@@ -21,6 +22,7 @@ it is time to look at your gh settings - and make sure you can run 'gh auth logi
 ```
 
 #### Quick fix
+
 Run `gh auth login`
 
 ```
@@ -28,29 +30,35 @@ gh auth login
 ```
 
 **Note:** On macOS, users can add their SSH keys to their apple-keychain by running:
+
 ```
 ssh-add --apple-use-keychain ~/.ssh/[your-private-key]
 ```
 
 #### Longer fix
+
 If after `gh auth login` you are still hitting issue(s) try the following:
 
 Up front
+
 - git uses your SSH public key to allow https git clone (see below)
 - gh uses a token
 
 If you need to check/create a new `gh` token
+
 - log in to your `https://github.com/` account
 - find `developer settings` bottom of left hand column (sometimes tough to find)
 - Go to settings -> Developer Settings -> new personal access (classic) token
 
 Create new token checking off:
+
 - [x] repo
 - admin:org [x] read:org
 
 Copy your new token to `mytoken.txt` which gets used below.
 
 More info on `gh_auth_login` is at [gh_auth_login](https://cli.github.com/manual/gh_auth_login)
+
 ```
 Authenticate against github.com by reading the token from a file
 gh auth login --with-token < mytoken.txt

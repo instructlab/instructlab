@@ -8,20 +8,20 @@ By default, `lab` will attempt to use your GPU for inference and synthesis. This
 
 Unfortunately, at the time of writing, `torch` does not have GPU-specific support for the latest Python (3.12), so if you're on Linux, it's recommended to set up a Python 3.11-specific `venv` and install `lab` to that to minimize issues. (MacOS ships Python 3.9, so this step shouldn't be necessary.) Here's how to do that on Fedora with `dnf`:
 
-  ```ShellSession
-  # Install python3.11
-  sudo dnf install python3.11
+```ShellSession
+# Install python3.11
+sudo dnf install python3.11
 
-  # Remove old venv (if it exists)
-  rm -r venv
+# Remove old venv (if it exists)
+rm -r venv
 
-  # Create and activate new Python 3.11 venv
-  python3.11 -m venv venv
-  source venv/bin/activate
+# Create and activate new Python 3.11 venv
+python3.11 -m venv venv
+source venv/bin/activate
 
-  # Install lab (assumes a locally-cloned repo)
-  pip3 install .
-  ```
+# Install lab (assumes a locally-cloned repo)
+pip3 install .
+```
 
 With Python 3.11 installed, it's time to replace some packages!
 
@@ -67,7 +67,7 @@ Once that package is installed, recompile `lab` with `pip3 install .` and skip t
 
 ### Metal/Apple Silicon
 
-The `lab` default installation should have Metal support by default. If that isn't the case, these steps might help to enable it. 
+The `lab` default installation should have Metal support by default. If that isn't the case, these steps might help to enable it.
 
 `torch` should already ship with Metal support, so you only have to replace `llama-cpp-python`. Go to the project's Github to see the [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends). Find the `Metal` backend. You'll see a `pip3 install` command. You'll want to add a few options to ensure it gets installed over the existing package: `--force-reinstall` and `--no-cache-dir`. Your final command should look like so:
 

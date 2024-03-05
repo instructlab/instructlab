@@ -6,11 +6,11 @@ Inference an AI model on a Mac laptop using the [llama.cpp](https://github.com/g
 
 Tested with:
 
- * Python 3.11.6, 3.11.7
-   * CLang distribution of Python: 15.0.0 (xcode)
-* MacOS
-  * 14.2.1, 14.3.1
-  * M1 (Metal/GPU and CPU)
+- Python 3.11.6, 3.11.7
+  - CLang distribution of Python: 15.0.0 (xcode)
+- MacOS
+  - 14.2.1, 14.3.1
+  - M1 (Metal/GPU and CPU)
 
 **Note:** The steps shown use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. If you have used [pyenv](https://github.com/pyenv/pyenv), [Conda Miniforge](https://github.com/conda-forge/miniforge) or another tool for Python version management on your laptop, then use the virtual environment with that tool instead. Otherwise, you may have issues with packages installed but modules from that package not found as they are linked to you Python version management tool and not `venv`..
 
@@ -44,7 +44,7 @@ In `convert-hf-to-gguf.py`, add the following lines (with `+`):
 def write_tensors(self):
 [...]
     self.gguf_writer.add_tensor(new_name, data)
- 
+
 +   if new_name == "token_embd.weight":
 +       self.gguf_writer.add_tensor("output.weight", data)
 +
@@ -78,7 +78,6 @@ make
 
 #### Run quantize command
 
-
 ```shell
 ./quantize {model_directory}/{f16_gguf_model} <type>
 ```
@@ -97,7 +96,7 @@ Use the [llama.cpp](https://github.com/ggerganov/llama.cpp) framework to load an
 
 We are using [llama-cpp-python](https://github.com/abetlen/llama-cpp-python/) to provide python bindings to the [llama.cpp](https://github.com/ggerganov/llama.cpp) framework which is C/C++.
 
-> *Note:* From here down, use a new project dir (not the above). There is a [requirements.txt](./requirements.txt) file which will install the Python package dependencies for all the examples that follow in this section. You can use this or the individual requirements file [here](./requirements/). If you would prefer to just install the packages required per example, then follow the manual instructions in the example instead.
+> _Note:_ From here down, use a new project dir (not the above). There is a [requirements.txt](./requirements.txt) file which will install the Python package dependencies for all the examples that follow in this section. You can use this or the individual requirements file [here](./requirements/). If you would prefer to just install the packages required per example, then follow the manual instructions in the example instead.
 
 ### Load and run model using python
 
@@ -127,15 +126,15 @@ MODEL_FILE=os.getenv("MODEL_FILE")
 model = Llama(model_path=MODEL_FILE, n_gpu_layers=-1)
 
 # Prompt template
-sys_prompt = """You are Granite Chat, an AI language model developed by the IBM DMF Alignment Team. 
-You are a cautious assistant that carefully follows instructions. You are helpful and harmless and you 
-follow ethical guidelines and promote positive behavior. You respond in a comprehensive manner unless 
-instructed otherwise, providing explanations when needed while maintaining a neutral tone. You are 
-capable of coding, writing, and roleplaying. You are cautious and refrain from generating real-time 
-information, highly subjective or opinion-based topics. You are harmless and refrain from generating 
-content involving any form of bias, violence, discrimination or inappropriate content. You always 
-respond to greetings (for example, hi, hello, g'day, morning, afternoon, evening, night, what's up, 
-nice to meet you, sup, etc) with "Hello! I am Granite Chat, created by the IBM DMF Alignment Team. 
+sys_prompt = """You are Granite Chat, an AI language model developed by the IBM DMF Alignment Team.
+You are a cautious assistant that carefully follows instructions. You are helpful and harmless and you
+follow ethical guidelines and promote positive behavior. You respond in a comprehensive manner unless
+instructed otherwise, providing explanations when needed while maintaining a neutral tone. You are
+capable of coding, writing, and roleplaying. You are cautious and refrain from generating real-time
+information, highly subjective or opinion-based topics. You are harmless and refrain from generating
+content involving any form of bias, violence, discrimination or inappropriate content. You always
+respond to greetings (for example, hi, hello, g'day, morning, afternoon, evening, night, what's up,
+nice to meet you, sup, etc) with "Hello! I am Granite Chat, created by the IBM DMF Alignment Team.
 How can I help you today?". Please do not say anything else and do not start a conversation."""
 usr_prompt = "what is ibm?"
 prompt = "<|system|>\n" + sys_prompt + "\n<|user|>\n" + usr_prompt + "\n<|assistant|>\n"
@@ -143,10 +142,10 @@ prompt = "<|system|>\n" + sys_prompt + "\n<|user|>\n" + usr_prompt + "\n<|assist
 # Inference the model
 result = model(prompt, max_tokens=200, echo=True, stop="<|endoftext|>")
 
-print("\nJSON Output") 
-print(result) 
-print("\n\n\nText Output") 
-final_result = result["choices"][0]["text"].strip() 
+print("\nJSON Output")
+print(result)
+print("\n\n\nText Output")
+final_result = result["choices"][0]["text"].strip()
 print(final_result)
 print("\n")
 ```
@@ -206,15 +205,15 @@ MODEL_FILE_NAME=os.getenv("MODEL_FILE_NAME")
 
 stream_enabled = True
 
-sys_prompt = """You are Granite Chat, an AI language model developed by the IBM DMF Alignment Team. 
-You are a cautious assistant that carefully follows instructions. You are helpful and harmless and you 
-follow ethical guidelines and promote positive behavior. You respond in a comprehensive manner unless 
-instructed otherwise, providing explanations when needed while maintaining a neutral tone. You are 
-capable of coding, writing, and roleplaying. You are cautious and refrain from generating real-time 
-information, highly subjective or opinion-based topics. You are harmless and refrain from generating 
-content involving any form of bias, violence, discrimination or inappropriate content. You always 
-respond to greetings (for example, hi, hello, g'day, morning, afternoon, evening, night, what's up, 
-nice to meet you, sup, etc) with "Hello! I am Granite Chat, created by the IBM DMF Alignment Team. 
+sys_prompt = """You are Granite Chat, an AI language model developed by the IBM DMF Alignment Team.
+You are a cautious assistant that carefully follows instructions. You are helpful and harmless and you
+follow ethical guidelines and promote positive behavior. You respond in a comprehensive manner unless
+instructed otherwise, providing explanations when needed while maintaining a neutral tone. You are
+capable of coding, writing, and roleplaying. You are cautious and refrain from generating real-time
+information, highly subjective or opinion-based topics. You are harmless and refrain from generating
+content involving any form of bias, violence, discrimination or inappropriate content. You always
+respond to greetings (for example, hi, hello, g'day, morning, afternoon, evening, night, what's up,
+nice to meet you, sup, etc) with "Hello! I am Granite Chat, created by the IBM DMF Alignment Team.
 How can I help you today?". Please do not say anything else and do not start a conversation."""
 usr_prompt = "what is ibm?"
 messages=[
@@ -239,9 +238,9 @@ if not stream_enabled:
   print(response.choices[0].message.content)
 else:
   for chunk in response:
-    if chunk.choices[0].delta.role is not None: 
+    if chunk.choices[0].delta.role is not None:
       print(f"<|{chunk.choices[0].delta.role}|>")
-    if chunk.choices[0].delta.content is not None: 
+    if chunk.choices[0].delta.content is not None:
       print(chunk.choices[0].delta.content, end="", flush=True)
 print("\n")
 ```
@@ -260,14 +259,14 @@ The easiest way to use [vscode](https://code.visualstudio.com) is to start it wi
 
 As you are running it from the project directory, it will pickup the relevant pacakges installed in the python virtual environment. You can then [run and debug it like any python scripts](https://code.visualstudio.com/docs/python/debugging).
 
-**Note:** You need vscode and Python installed first. Check out [Getting started with Visual Studio Code](https://code.visualstudio.com/docs/introvideos/basics) for more details. 
+**Note:** You need vscode and Python installed first. Check out [Getting started with Visual Studio Code](https://code.visualstudio.com/docs/introvideos/basics) for more details.
 
 ## Useful Links
 
-* llama.cpp: https://github.com/ggerganov/llama.cpp
-* llama-cpp-python: https://github.com/abetlen/llama-cpp-python/
-* https://github.com/abetlen/llama-cpp-python/blob/main/docs/install/macos.md
-* llama-cpp-python OpenAI Compatible Server: https://llama-cpp-python.readthedocs.io/en/latest/server/
-* https://www.datacamp.com/tutorial/llama-cpp-tutorial
-* https://www.substratus.ai/blog/converting-hf-model-gguf-model/
-* Quantize options: https://github.com/ggerganov/llama.cpp/discussions/2094#discussioncomment-6351796
+- llama.cpp: https://github.com/ggerganov/llama.cpp
+- llama-cpp-python: https://github.com/abetlen/llama-cpp-python/
+- https://github.com/abetlen/llama-cpp-python/blob/main/docs/install/macos.md
+- llama-cpp-python OpenAI Compatible Server: https://llama-cpp-python.readthedocs.io/en/latest/server/
+- https://www.datacamp.com/tutorial/llama-cpp-tutorial
+- https://www.substratus.ai/blog/converting-hf-model-gguf-model/
+- Quantize options: https://github.com/ggerganov/llama.cpp/discussions/2094#discussioncomment-6351796
