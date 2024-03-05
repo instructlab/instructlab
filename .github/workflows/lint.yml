@@ -54,9 +54,7 @@ jobs:
           python -m pip install -r requirements-dev.txt
 
       - name: Run formatting
-        continue-on-error: true
         run: tox -e fmt
 
       - name: Run linting
-        continue-on-error: true
         run: tox -e lint
