@@ -37,12 +37,22 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.9'
-          cache: 'pip'
-          check-latest: false
-          cache-dependency-path: 'requirements-dev.txt'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys:
+            ${{ env.pythonLocation }}-
 
       - name: Install dependencies
-        run: pip install -r requirements-dev.txt
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+          python -m pip install -r requirements-dev.txt
       
       - name: Run formatting
         run: echo tox -e fmt
