@@ -2,6 +2,7 @@
 import os
 import re
 import subprocess
+from huggingface_hub import snapshot_download
 
 
 class DownloadException(Exception):
@@ -13,6 +14,9 @@ def download_model(
     gh_release="latest",
     model_dir=".",
     pattern="",
+    hf=False,
+    repo_id="ibm/merlinite-7b-GGUF",
+    revision="main",
 ):
     """
     Download and combine the model file from a GitHub repository source.
@@ -28,6 +32,14 @@ def download_model(
     Returns:
     - a list of downloaded models
     """
+    if hf:
+        model_path = snapshot_download(
+            repo_id=repo_id,
+            revision=revision,
+            local_dir=model_dir,
+            allow_patterns=["merlinite-7b-Q4_K_M.gguf"],
+        )
+        return
 
     model_file_split_keyword = ".split."
 

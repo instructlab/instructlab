@@ -367,8 +367,9 @@ def chat(ctx, question, model, context, session, quick_question):
     help="Download only assets that match a glob pattern.",
 )
 @click.option("--pattern", help="Download only assets that match a glob pattern.")
+@click.option("--hf", is_flag=True, help="Download the model from HuggingFace.")
 @click.pass_context
-def download(ctx, repository, release, model_dir, pattern):
+def download(ctx, repository, release, model_dir, pattern, hf):
     """Download the model(s) to train"""
     # Use the serve model path to get the right models in the right place, if needed
     serve_model_path = ctx.obj.config.serve.model_path
@@ -382,7 +383,7 @@ def download(ctx, repository, release, model_dir, pattern):
     )
     click.echo(f"Downloading models from {repository}@{release} to {model_dir}...")
     try:
-        download_model(repository, release, model_dir, pattern)
+        download_model(repository, release, model_dir, pattern, hf=hf)
     except DownloadException as exc:
         click.secho(
             f"Downloading models failed with the following error: {exc}",
