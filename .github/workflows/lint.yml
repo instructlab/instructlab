@@ -36,14 +36,13 @@ jobs:
       - name: Set up Python 3.9
         uses: actions/setup-python@v5
         with:
-          python-version: 3.9
-          cache: pip
+          python-version: '3.9'
+          cache: 'pip'
           check-latest: false
-      
+          cache-dependency-path: './requirements-dev.txt'
+
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install -r requirements-dev.txt
+        run: pip install -r requirements-dev.txt
       
       - name: Run formatting
         run: tox -e fmt
