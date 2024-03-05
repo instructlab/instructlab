@@ -221,14 +221,39 @@ The synthetic data set will be three files in the newly created `generated` dire
 
 There are currently two options to train the model on your synthetic data-enhanced dataset.
 
-#### Training the model locally on an M-series Mac:
+#### Train the model locally on Linux
+
+```
+lab train
+```
+
+`lab train` on Linux should not be run on a machine unless it has at least 64 GB of memory.
+
+Currently the default number of epochs of training is 1. This is very low value.
+To change this run:
+```
+lab train --num-epochs 10
+```
+
+Increasing the number of epochs increases the training time.
+
+`lab train` outputs a brand new gguf file that can be served in the `models` directory called `ggml-model-f16.gguf`
+
+```
+(venv) $ ls models
+ggml-merlinite-7b-0302-Q4_K_M.gguf  ggml-model-f16.gguf
+```
+
+**Every** `lab` command needs to be run from within your Python virtual environment:
+
+#### Train the model locally on an M-series Mac:
 
 ```
 lab train
 lab convert
 ```
 
-#### Training the model in Colab:
+#### Train the model in Colab:
 
 Follow the instructions in [Training](./notebooks/README.md).
 
