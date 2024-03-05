@@ -17,10 +17,11 @@ name: Lint and Format
 on:
   push:
     branches: 
-    - "main"
-  pull_request:
-    branches: 
-      - "main"
+    # - "main"
+    - "pip_cache"
+  # pull_request:
+  #   branches: 
+  #     - "main"
 
 jobs:
   lint:
