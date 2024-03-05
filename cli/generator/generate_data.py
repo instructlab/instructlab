@@ -176,7 +176,7 @@ def generate_data(
     request_batch_size=5,
     temperature=1.0,
     top_p=1.0,
-    rouge_threshold=0.7,
+    rouge_threshold: Optional[float] = None,
 ):
     seed_instruction_data = []
     generate_start = time.time()

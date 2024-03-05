@@ -17,7 +17,6 @@ DEFAULT_TAXONOMY_PATH = "taxonomy"
 DEFAULT_TAXONOMY_BRANCH = "main"
 DEFAULT_PROMPT_FILE = "prompt.txt"
 DEFAULT_SEED_FILE = "seed_tasks.json"
-DEFAULT_ROUGE_THRESHOLD = 0.9
 
 
 class ConfigException(Exception):
@@ -53,7 +52,6 @@ class _generate:
     taxonomy_path: str
     prompt_file: str
     seed_file: str
-    rouge_ths: float
 
 @dataclass
 class _list:
@@ -126,7 +124,7 @@ def get_default_config():
         taxonomy_path=DEFAULT_TAXONOMY_PATH,
         prompt_file=DEFAULT_PROMPT_FILE,
         seed_file=DEFAULT_SEED_FILE,
-        rouge_threshold=DEFAULT_ROUGE_THRESHOLD,
+        rouge_threshold=0.9,
     )
     # pylint: disable=redefined-builtin
     list = _list(taxonomy_path=DEFAULT_TAXONOMY_PATH)
