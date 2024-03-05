@@ -254,13 +254,15 @@ lab train
 ⏳ This process will take a little while to complete (time can vary based on hardware
 and output of `lab generate` but on the order of 30 minutes to two hours)
 
-#### Train the model in Colab:
+#### Training the model in the cloud
 
 Follow the instructions in [Training](./notebooks/README.md).
 
-> **NOTE:** ⏳ This takes about **0.5-2.5 hours** to complete in the free tier of Google Colab.
+⏳ Approximate amount of time taken on each platform:
+- *Google Colab*: **0.5-2.5 hours** with a T4 GPU
+- *Kaggle*: **~8 hours** with a P100 GPU.
 
-After that's done, you can play with your model directly in the Colab notebook.
+After that's done, you can play with your model directly in the Google Colab or Kaggle notebook.
 The model itself is for testing your taxonomy and is not a required artifact for
 a PR or any further task.
 
