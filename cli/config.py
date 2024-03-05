@@ -17,7 +17,7 @@ DEFAULT_TAXONOMY_PATH = "taxonomy"
 DEFAULT_TAXONOMY_BRANCH = "main"
 DEFAULT_PROMPT_FILE = "prompt.txt"
 DEFAULT_SEED_FILE = "seed_tasks.json"
-DEFAULT_ROUGE_THRESHOLD = 0.7
+DEFAULT_ROUGE_THRESHOLD = 0.9
 
 
 class ConfigException(Exception):
