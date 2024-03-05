@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 # Future
-# pylint: disable=too-many-lines
-# Future
 from __future__ import annotations
 
 # Standard
@@ -30,12 +28,12 @@ import zipfile
 
 # Third Party
 from sentencepiece import SentencePieceProcessor
-from transformers import AutoTokenizer
-import gguf
 import numpy as np
 
 if "NO_LOCAL_GGUF" not in os.environ:
     sys.path.insert(1, str(Path(__file__).parent / "gguf-py"))
+# Third Party
+import gguf
 
 if TYPE_CHECKING:
     # Standard
@@ -155,12 +153,12 @@ class GGMLFileType(enum.IntEnum):
     MostlyF16 = 1  # except 1d tensors
     MostlyQ8_0 = 7  # except 1d tensors
 
-    def type_for_tensor(self, tensor: LazyTensor) -> DataType:
-        dt_val = GGML_FILE_TYPE_TO_DATA_TYPE.get(self)
-        if dt_val is None:
+    def type_for_tensor(self, name: str, tensor: LazyTensor) -> DataType:
+        dt = GGML_FILE_TYPE_TO_DATA_TYPE.get(self)
+        if dt is None:
             raise ValueError(self)
         # 1D tensors are always F32.
-        return dt_val if len(tensor.shape) > 1 else DT_F32
+        return dt if len(tensor.shape) > 1 else DT_F32
 
 
 GGML_FILE_TYPE_TO_DATA_TYPE: dict[GGMLFileType, DataType] = {
@@ -175,7 +173,6 @@ GGML_FILE_TYPE_TO_DATA_TYPE: dict[GGMLFileType, DataType] = {
 
 
 @dataclass
-# pylint: disable=too-many-instance-attributes
 class Params:
     n_vocab: int
     n_embd: int
@@ -231,7 +228,6 @@ class Params:
             )
 
         if n_layer < 1:
-            # pylint: disable=broad-exception-raised
             raise Exception(
                 "failed to guess 'n_layer'. This model is unknown or unsupported.\n"
                 "Suggestion: provide 'config.json' of the model in the same directory containing model files."
@@ -256,9 +252,8 @@ class Params:
         )
 
     @staticmethod
-    def loadHFTransformerJson(config_path: Path) -> Params:
-        with open(config_path, encoding="utf-8") as f:
-            config = json.load(f)
+    def loadHFTransformerJson(model: LazyModel, config_path: Path) -> Params:
+        config = json.load(open(config_path))
 
         rope_scaling_type = f_rope_scale = n_orig_ctx = rope_finetuned = None
         rope_scaling = config.get("rope_scaling")
@@ -280,7 +275,7 @@ class Params:
         elif "max_position_embeddings" in config:
             n_ctx = config["max_position_embeddings"]
         else:
-            raise Exception(  # pylint: disable=broad-exception-raised
+            raise Exception(
                 "failed to guess 'n_ctx'. This model is unknown or unsupported.\n"
                 "Suggestion: provide 'config.json' of the model in the same directory containing model files."
             )
@@ -314,8 +309,7 @@ class Params:
     # {"dim": 8192, "multiple_of": 4096, "ffn_dim_multiplier": 1.3, "n_heads": 64, "n_kv_heads": 8, "n_layers": 80, "norm_eps": 1e-05, "vocab_size": -1}
     @staticmethod
     def loadOriginalParamsJson(model: LazyModel, config_path: Path) -> Params:
-        with open(config_path, encoding="utf-8") as f:
-            config = json.load(f)
+        config = json.load(open(config_path))
 
         n_experts = None
         n_experts_used = None
@@ -364,10 +358,10 @@ class Params:
         orig_config_path = model_plus.paths[0].parent / "params.json"
 
         if hf_config_path.exists():
-            params = Params.loadHFTransformerJson(hf_config_path)
+            params = Params.loadHFTransformerJson(model_plus.model, hf_config_path)
         elif orig_config_path.exists():
             params = Params.loadOriginalParamsJson(model_plus.model, orig_config_path)
-        elif model_plus.format_type != "none":
+        elif model_plus.format != "none":
             params = Params.guessed(model_plus.model)
         else:
             raise ValueError("Cannot guess params when model format is none")
@@ -384,8 +378,9 @@ class Params:
 
 class BpeVocab:
     def __init__(self, fname_tokenizer: Path, fname_added_tokens: Path | None) -> None:
-        with open(str(fname_tokenizer), encoding="utf-8") as f:
-            self.bpe_tokenizer = json.loads(f)
+        self.bpe_tokenizer = json.loads(
+            open(str(fname_tokenizer), encoding="utf-8").read()
+        )
         if isinstance(self.bpe_tokenizer.get("model"), dict):
             self.vocab = self.bpe_tokenizer["model"]["vocab"]
         else:
@@ -393,16 +388,14 @@ class BpeVocab:
         added_tokens: dict[str, int]
         if fname_added_tokens is not None:
             # FIXME: Verify that added tokens here _cannot_ overlap with the main vocab.
-            with open(fname_added_tokens, encoding="utf-8") as f:
-                added_tokens = json.load(f)
+            added_tokens = json.load(open(fname_added_tokens, encoding="utf-8"))
         else:
             # Fall back to trying to find the added tokens in tokenizer.json
             tokenizer_json_file = fname_tokenizer.parent / "tokenizer.json"
             if not tokenizer_json_file.is_file():
                 added_tokens = {}
             else:
-                with open(tokenizer_json_file, encoding="utf-8") as f:
-                    tokenizer_json = json.load(f)
+                tokenizer_json = json.load(open(tokenizer_json_file, encoding="utf-8"))
                 added_tokens = dict(
                     (item["content"], item["id"])
                     for item in tokenizer_json.get("added_tokens", [])
@@ -415,7 +408,6 @@ class BpeVocab:
         actual_ids = sorted(added_tokens.values())
         if expected_ids != actual_ids:
             expected_end_id = vocab_size + len(actual_ids) - 1
-            # pylint: disable=broad-exception-raised
             raise Exception(
                 f"Expected the {len(actual_ids)} added token ID(s) to be sequential in the range {vocab_size} - {expected_end_id}; got {actual_ids}"
             )
@@ -449,11 +441,10 @@ class BpeVocab:
 
 class SentencePieceVocab:
     def __init__(self, fname_tokenizer: Path, fname_added_tokens: Path | None) -> None:
-        self.sentencepiece_tokenizer = SentencePieceProcessor()
+        self.sentencepiece_tokenizer = SentencePieceProcessor(str(fname_tokenizer))
         added_tokens: dict[str, int]
         if fname_added_tokens is not None:
-            with open(fname_added_tokens, encoding="utf-8") as f:
-                added_tokens = json.load(f)
+            added_tokens = json.load(open(fname_added_tokens, encoding="utf-8"))
         else:
             added_tokens = {}
 
@@ -519,6 +510,15 @@ class HfVocab:
     def __init__(
         self, fname_tokenizer: Path, fname_added_tokens: Path | None = None
     ) -> None:
+        try:
+            # Third Party
+            from transformers import AutoTokenizer
+        except ImportError as e:
+            raise ImportError(
+                "To use HfVocab, please install the `transformers` package. "
+                "You can install it with `pip install transformers`."
+            ) from e
+
         print("fname_tokenizer:", fname_tokenizer)
         # Allow the tokenizer to default to slow or fast versions.
         # Explicitly set tokenizer to use local paths.
@@ -530,7 +530,7 @@ class HfVocab:
 
         # Initialize lists and dictionaries for added tokens
         self.added_tokens_list = []
-        self.added_tokens_dict = {}
+        self.added_tokens_dict = dict()
         self.added_tokens_ids = set()
 
         # Process added tokens
@@ -571,7 +571,7 @@ class HfVocab:
             token_text = reverse_vocab[token_id].encode("utf-8")
 
             # Yield token text, score, and type
-            yield token_text, self.get_token_score(), self.get_token_type(
+            yield token_text, self.get_token_score(token_id), self.get_token_type(
                 token_id,
                 token_text,
                 self.special_ids,  # Reuse already stored special IDs
@@ -589,7 +589,7 @@ class HfVocab:
             gguf.TokenType.CONTROL if token_id in special_ids else gguf.TokenType.NORMAL
         )
 
-    def get_token_score(self) -> float:
+    def get_token_score(self, token_id: int) -> float:
         # Placeholder for actual logic to determine the token's score
         # This needs to be implemented based on specific requirements
         return -1000.0  # Default score
@@ -600,7 +600,7 @@ class HfVocab:
                 toktype = self.get_token_type(
                     self.specials[text], b"", self.special_ids
                 )
-                score = self.get_token_score()
+                score = self.get_token_score(self.specials[text])
             else:
                 toktype = gguf.TokenType.USER_DEFINED
                 score = -1000.0
@@ -682,7 +682,6 @@ class UnquantizedTensor(Tensor):
         dtype = data_type.dtype
         if self.data_type == DT_BF16:
             self.ndarray = bf16_to_fp32(self.ndarray)
-        # pylint: disable=no-value-for-parameter
         return UnquantizedTensor(self.ndarray.astype(dtype))
 
     def to_ggml(self) -> UnquantizedTensor:
@@ -715,7 +714,6 @@ def load_unquantized(
     assert actual_shape == lazy_tensor.shape, (actual_shape, lazy_tensor.shape)
     if expected_dtype is not None and expected_dtype != tensor.ndarray.dtype:
         if convert:
-            # pylint: disable=no-value-for-parameter
             tensor.ndarray = tensor.ndarray.astype(expected_dtype)
         else:
             raise ValueError(
@@ -770,7 +768,7 @@ LazyModel: TypeAlias = "dict[str, LazyTensor]"
 class ModelPlus:
     model: LazyModel
     paths: list[Path]  # Where this was read from.
-    format_type: Literal["ggml", "torch", "safetensors", "none"]
+    format: Literal["ggml", "torch", "safetensors", "none"]
     vocab: Vocab | None  # For GGML models (which have vocab built in), the vocab.
 
 
@@ -819,9 +817,9 @@ def merge_sharded(models: list[LazyModel]) -> LazyModel:
 
 
 def merge_multifile_models(models_plus: list[ModelPlus]) -> ModelPlus:
-    formats = set(mp.format_type for mp in models_plus)
+    formats = set(mp.format for mp in models_plus)
     assert len(formats) == 1, "different formats?"
-    format_type = formats.pop()
+    format = formats.pop()
     paths = [path for mp in models_plus for path in mp.paths]
     # Use the first non-None vocab, if any.
     try:
@@ -838,9 +836,7 @@ def merge_multifile_models(models_plus: list[ModelPlus]) -> ModelPlus:
     else:
         model = merge_sharded([mp.model for mp in models_plus])
 
-    return ModelPlus(
-        model, paths, format_type, vocab
-    )  # pytype: disable=wrong-arg-types
+    return ModelPlus(model, paths, format, vocab)  # pytype: disable=wrong-arg-types
 
 
 def permute_lazy(lazy_tensor: LazyTensor, n_head: int, n_head_kv: int) -> LazyTensor:
@@ -932,6 +928,9 @@ class LazyUnpickler(pickle.Unpickler):
         storage_offset: Any,
         size: Any,
         stride: Any,
+        requires_grad: Any,
+        backward_hooks: Any,
+        metadata: Any = None,
     ) -> LazyTensor:
         assert isinstance(storage, LazyStorage)
 
@@ -947,7 +946,7 @@ class LazyUnpickler(pickle.Unpickler):
         return LazyTensor(load, list(size), storage.kind.data_type, description)
 
     @staticmethod
-    def rebuild_from_type_v2(func, args):
+    def rebuild_from_type_v2(func, new_type, args, state):
         return func(*args)
 
     CLASSES: dict[tuple[str, str], Any] = {
@@ -973,18 +972,18 @@ class LazyUnpickler(pickle.Unpickler):
 
 
 def lazy_load_torch_file(outer_fp: IO[bytes], path: Path) -> ModelPlus:
-    with zipfile.ZipFile(outer_fp) as zf:
-        pickle_paths = [name for name in zf.namelist() if name.endswith(".pkl")]
-        assert len(pickle_paths) == 1, pickle_paths
-        with zf.open(pickle_paths[0], "r") as pickle_fp:
-            unpickler = LazyUnpickler(
-                pickle_fp, data_base_path=pickle_paths[0][:-4], zip_file=zf
-            )
-            model = unpickler.load()
-            if "model" in model:
-                model = model["model"]
-            as_dict = dict(model.items())
-    return ModelPlus(model=as_dict, paths=[path], format_type="torch", vocab=None)
+    zf = zipfile.ZipFile(outer_fp)
+    pickle_paths = [name for name in zf.namelist() if name.endswith(".pkl")]
+    assert len(pickle_paths) == 1, pickle_paths
+    pickle_fp = zf.open(pickle_paths[0], "r")
+    unpickler = LazyUnpickler(
+        pickle_fp, data_base_path=pickle_paths[0][:-4], zip_file=zf
+    )
+    model = unpickler.load()
+    if "model" in model:
+        model = model["model"]
+    as_dict = dict(model.items())
+    return ModelPlus(model=as_dict, paths=[path], format="torch", vocab=None)
 
 
 def lazy_load_safetensors_file(fp: IO[bytes], path: Path) -> ModelPlus:
@@ -1016,30 +1015,29 @@ def lazy_load_safetensors_file(fp: IO[bytes], path: Path) -> ModelPlus:
     model = {
         name: convert(info) for (name, info) in header.items() if name != "__metadata__"
     }
-    return ModelPlus(model=model, paths=[path], format_type="safetensors", vocab=None)
+    return ModelPlus(model=model, paths=[path], format="safetensors", vocab=None)
 
 
 def must_read(fp: IO[bytes], length: int) -> bytes:
     ret = fp.read(length)
     if len(ret) < length:
-        # pylint: disable=broad-exception-raised
         raise Exception("unexpectedly reached end of file")
     return ret
 
 
 @functools.lru_cache(maxsize=None)
 def lazy_load_file(path: Path) -> ModelPlus:
-    with open(path, "rb", encoding="utf-8") as fp:
-        first8 = fp.read(8)
-        fp.seek(0)
+    fp = open(path, "rb")
+    first8 = fp.read(8)
+    fp.seek(0)
     if first8[:2] == b"PK":
         # A zip file, i.e. PyTorch format
         return lazy_load_torch_file(fp, path)
-    if struct.unpack("<Q", first8)[0] < 16 * 1024 * 1024:
+    elif struct.unpack("<Q", first8)[0] < 16 * 1024 * 1024:
         # Probably safetensors
         return lazy_load_safetensors_file(fp, path)
-
-    raise ValueError(f"unknown format: {path}")
+    else:
+        raise ValueError(f"unknown format: {path}")
 
 
 In = TypeVar("In")
@@ -1116,7 +1114,6 @@ def check_vocab_size(params: Params, vocab: Vocab, pad_vocab: bool = False) -> N
     if vocab.vocab_size < params.n_vocab:
         msg += " Add the --pad-vocab option and try again."
 
-    # pylint: disable=broad-exception-raised
     raise Exception(msg)
 
 
@@ -1135,7 +1132,7 @@ class OutputFile:
         if params.n_ctx == 4096:
             name = "LLaMA v2"
         elif params.path_model is not None:
-            name = str(params.path_model.parent).split("/", maxsplit=1)[-1]
+            name = str(params.path_model.parent).split("/")[-1]
 
         self.gguf.add_name(name)
         self.gguf.add_context_length(params.n_ctx)
@@ -1268,16 +1265,16 @@ class OutputFile:
 
     @staticmethod
     def do_item(item: tuple[str, LazyTensor]) -> tuple[DataType, NDArray]:
-        lazy_tensor = item
+        name, lazy_tensor = item
         tensor = lazy_tensor.load().to_ggml()
         return (lazy_tensor.data_type, tensor.ndarray)
 
     @staticmethod
     def maybe_do_quantize(item: tuple[DataType, NDArray]) -> NDArray:
-        quant_dt, arr = item
-        if not isinstance(quant_dt, QuantizedDataType):
+        dt, arr = item
+        if not isinstance(dt, QuantizedDataType):
             return arr
-        return quant_dt.quantize(arr)
+        return dt.quantize(arr)
 
     @staticmethod
     def write_all(
@@ -1355,13 +1352,12 @@ def pick_output_type(model: LazyModel, output_type_str: str | None) -> GGMLFileT
         name: lazy_tensor.data_type for (name, lazy_tensor) in model.items()
     }
 
-    # pylint: disable=broad-exception-raised
     raise Exception(f"Unexpected combination of types: {name_to_type}")
 
 
 def convert_to_output_type(model: LazyModel, output_type: GGMLFileType) -> LazyModel:
     return {
-        name: tensor.astype(output_type.type_for_tensor(tensor))
+        name: tensor.astype(output_type.type_for_tensor(name, tensor))
         for (name, tensor) in model.items()
     }
 
@@ -1419,11 +1415,10 @@ def convert_model_names(
             if skip_unknown:
                 print(f"Unexpected tensor name: {name} - skipping")
                 continue
-
-            # pylint: disable=broad-exception-raised
-            raise Exception(
-                f"Unexpected tensor name: {name}. Use --skip-unknown to ignore it (e.g. LLaVA)"
-            )
+            else:
+                raise Exception(
+                    f"Unexpected tensor name: {name}. Use --skip-unknown to ignore it (e.g. LLaVA)"
+                )
 
         if tensor_type in should_skip:
             print(f"skipping tensor {name_new}")
@@ -1493,19 +1488,18 @@ def load_some_model(path: Path) -> ModelPlus:
             ]
             files = [file for glob in globs for file in path.glob(glob)]
         if not files:
-            # pylint: disable=broad-exception-raised
             raise Exception(f"Can't find model in directory {path}")
         if len(files) > 1:
-            raise Exception(  # pylint: disable=broad-exception-raised
+            raise Exception(
                 f"Found multiple models in {path}, not sure which to pick: {files}"
             )
         path = files[0]
 
     paths = find_multifile_paths(path)
     models_plus: list[ModelPlus] = []
-    for model_path in paths:
-        print(f"Loading model file {model_path}")
-        models_plus.append(lazy_load_file(model_path))
+    for path in paths:
+        print(f"Loading model file {path}")
+        models_plus.append(lazy_load_file(path))
 
     model_plus = merge_multifile_models(models_plus)
     return model_plus
@@ -1602,7 +1596,7 @@ def default_outfile(model_paths: list[Path], file_type: GGMLFileType) -> Path:
 
 def do_dump_model(model_plus: ModelPlus) -> None:
     print(f"model_plus.paths = {model_plus.paths!r}")
-    print(f"model_plus.format_type = {model_plus.format_type!r}")
+    print(f"model_plus.format = {model_plus.format!r}")
     print(f"model_plus.vocab = {model_plus.vocab!r}")
     for name, lazy_tensor in model_plus.model.items():
         print(
@@ -1612,8 +1606,7 @@ def do_dump_model(model_plus: ModelPlus) -> None:
 
 def main(args_in: list[str] | None = None) -> None:
     output_choices = ["f32", "f16"]
-    np_dt = np.dtype(np.uint32(1))
-    if np_dt == np_dt.newbyteorder("<"):
+    if np.uint32(1) == np.uint32(1).newbyteorder("<"):
         # We currently only support Q8_0 output on little endian systems.
         output_choices.append("q8_0")
     parser = argparse.ArgumentParser(
@@ -1687,8 +1680,6 @@ def main(args_in: list[str] | None = None) -> None:
     if args.awq_path:
         sys.path.insert(1, str(Path(__file__).parent / "awq-py"))
         # Third Party
-        # pylint: disable=import-error
-        # pylint: disable=import-outside-toplevel
         from awq.apply_awq import add_scale_weights  # type: ignore[import-not-found]
 
         tmp_model_path = args.model / "weighted_model"
@@ -1710,7 +1701,7 @@ def main(args_in: list[str] | None = None) -> None:
         model_plus = load_some_model(args.model)
     else:
         model_plus = ModelPlus(
-            model={}, paths=[args.model / "dummy"], format_type="none", vocab=None
+            model={}, paths=[args.model / "dummy"], format="none", vocab=None
         )
 
     if args.dump:
@@ -1723,7 +1714,7 @@ def main(args_in: list[str] | None = None) -> None:
     params = Params.load(model_plus)
     if params.n_ctx == -1:
         if args.ctx is None:
-            raise Exception(  # pylint: disable=broad-exception-raised
+            raise Exception(
                 "The model doesn't have a context size, and you didn't specify one with --ctx\n"
                 "Please specify one with --ctx:\n"
                 " - LLaMA v1: --ctx 2048\n"
