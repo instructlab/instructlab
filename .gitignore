@@ -146,3 +146,6 @@ dmypy.json
 
 # config
 config.yaml
+
+# micromamba
+.mamba
