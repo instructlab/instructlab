@@ -24,13 +24,28 @@ After that is done you can:
 
 To start we'll create a new directory called `instruct-lab` to store the files that this CLI needs when it runs.
 
+First you need to set up your virtual environment:
+
 ```
 mkdir instruct-lab
 cd instruct-lab
 python3 -m venv venv
 source venv/bin/activate
+```
+
+Note: The project is changing at a fast pace, in order to train locally on your machine, you will want the latest version (instead of the stable branch which changes less frequently).  Most will want the latest, which is here:
+
+```
+pip install git+ssh://git@github.com/instruct-lab/cli.git
+```
+
+To instead install the stable branch, use these instructions:
+
+```
 pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
 ```
+
+
 ⏳ `pip install` may take some time, depending on your internet connection.
 
 If `lab` is installed correctly, you should be able to test the lab command:
@@ -202,7 +217,7 @@ The synthetic data set will be three files in the `taxonomy` repository that are
 
 ## 👩‍🏫 Train the model
 
-### Traing the model locally on an M-series Mac
+### Training the model locally on an M-series Mac
 
 ```
 lab train
