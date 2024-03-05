@@ -28,7 +28,7 @@ import yaml
 from . import utils
 
 DEFAULT_PROMPT_TEMPLATE = """\
-You are asked to come up with a set of 20 diverse task instructions. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
+You are asked to come up with a set of 20 diverse task instructions under {taxonomy}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
 
 Here are the requirements:
 1. Try not to repeat the verb for each instruction to maximize diversity.
@@ -64,11 +64,13 @@ def check_prompt_file(prompt_file_path):
 def encode_prompt(prompt_instructions, prompt):
     """Encode multiple prompt instructions into a single string."""
     idx = 0
+    prompt = prompt.format(taxonomy=prompt_instructions[0]['taxonomy_path'])
     for idx, task_dict in enumerate(prompt_instructions):
-        (instruction, prompt_input, prompt_output) = (
+        (instruction, prompt_input, prompt_output, taxonomy_path) = (
             task_dict["instruction"],
             task_dict["input"],
             task_dict["output"],
+            task_dict['taxonomy_path']
         )
         instruction = re.sub(r"\s+", " ", instruction).strip().rstrip(":")
         prompt_input = "<noinput>" if prompt_input.lower() == "" else prompt_input
@@ -242,8 +244,9 @@ def generate_data(
                                 )
                                 warnings += 1
                                 continue
+                            tax_path = '->'.join(file_path.split(os.sep)[1:-1])
                             seed_instruction_data.append(
-                                {"instruction": q, "input": "", "output": a}
+                                {"instruction": q, "input": "", "output": a, 'taxonomy_path': tax_path}
                             )
                 except Exception as e:
                     errors += 1
