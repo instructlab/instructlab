@@ -31,8 +31,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # - name: Free up disk space
-      #   uses: ./.github/actions/free-up-disk-space
+      - name: Free up disk space
+        uses: ./.github/actions/free-up-disk-space
       
       - name: Set up Python 3.9
         uses: actions/setup-python@v5
@@ -56,7 +56,9 @@ jobs:
           python -m pip install -r requirements-dev.txt
       
       - name: Run formatting
-        run: echo tox -e fmt
+        continue-on-error: true
+        run: tox -e fmt
 
       - name: Run linting
-        run: echo tox -e lint
+        continue-on-error: true
+        run: tox -e lint
