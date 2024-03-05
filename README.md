@@ -16,7 +16,7 @@ After that is done you can:
 
 ## 📋 Requirements
 
-- **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora). We anticipate future support for other operating systems in the future.
+- **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora). We anticipate support for more operating systems in the future.
 - 🐍 Python 3.9 or later
 - `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github
 
@@ -55,7 +55,6 @@ Commands:
   init      Initializes environment for InstructLab
   list      Lists taxonomy files that have changed (modified or untracked).
   serve     Start a local server
-  submit    Initializes environment for InstructLab
   test      Perform rudimentary tests of the model
   train     Trains model
 ```
@@ -203,6 +202,17 @@ The synthetic data set will be three files in the `taxonomy` repository that are
 
 ## 👩‍🏫 Train the model
 
+### Traing the model locally on an M-series Mac
+
+```
+lab train
+lab convert
+```
+
+**Every** `lab` command needs to be run from within your Python virtual environment:
+
+### Traing the model in Co Lab
+
 Train the model on your synthetic data-enhanced dataset by following the instructions in [Training](./notebooks/README.md)
 
 ⏳ This takes about **0.5-2.5 hours** to complete in the free tier of Google Colab.
@@ -215,7 +225,7 @@ Stop the server you have running via `ctrl+c` in the terminal it is running in.
 Serve the newly trained model locally via `lab serve` with the `--model` argument to specify your new model:
 
 ```
-lab serve --model <New model name>
+lab serve --model-path <New model name>
 ```
 
 ## 📣 Chat with the new model (not optional this time)
@@ -227,7 +237,7 @@ lab chat
 ```
 ## 🎁 Submit your new knowledge
 
-Of course the final step is - if you've improved the model - to open up a a pull-request in the [taxonomy respository](https://github.com/instruct-lab/taxonomy).
+Of course the final step is - if you've improved the model - to open up a a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy).
 
 ## Contributing
 

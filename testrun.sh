@@ -45,6 +45,5 @@ echo "V   ... and then exits!"
 # lab download  # Download the model(s) to train
 # lab serve     # Start a local server
 # lab chat      # Run a chat using the modified model
-# lab submit    # Initializes environment for labrador
 # lab test      # Perform rudimentary tests of the model
 # lab train     # Trains labrador model
