@@ -1,6 +1,5 @@
 # Standard
 from glob import glob
-from os import listdir
 from os.path import basename, dirname, exists, splitext
 import json
 import logging
@@ -122,7 +121,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
 
         taxonomy_path = click.prompt("Path to taxonomy repo", default=taxonomy_path)
         try:
-            taxonomy_contents = listdir(taxonomy_path)
+            taxonomy_contents = os.listdir(taxonomy_path)
         except FileNotFoundError:
             taxonomy_contents = []
         if len(taxonomy_contents) == 0:
