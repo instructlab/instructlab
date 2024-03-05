@@ -7,7 +7,7 @@ import yaml
 DEFAULT_CONFIG = "config.yaml"
 DEFAULT_MODEL = "merlinite-7b-Q4_K_M"
 DEFAULT_MODEL_PATH = f"models/{DEFAULT_MODEL}.gguf"
-DEFAULT_API_BASE = "http://localhost:8000/v1"
+DEFAULT_API_HOST_PORT = "localhost:8000"
 DEFAULT_API_KEY = "no_api_key"
 DEFAULT_VI_MODE = False
 DEFAULT_VISIBLE_OVERFLOW = True
@@ -34,7 +34,7 @@ class _general:
 
 @dataclass
 class _chat:
-    api_base: str
+    api_host_port: str
     api_key: str
     model: str
     vi_mode: bool
@@ -102,7 +102,7 @@ def get_default_config():
     """Generates default configuration for CLI"""
     general = _general(log_level="INFO")
     chat = _chat(
-        api_base=DEFAULT_API_BASE,
+        api_host_port=DEFAULT_API_HOST_PORT,
         api_key=DEFAULT_API_KEY,
         model=DEFAULT_MODEL,
         vi_mode=DEFAULT_VI_MODE,
