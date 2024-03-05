@@ -17,13 +17,14 @@ After that is done you can:
 ## 📋 Requirements
 
 - **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora). We anticipate support for more operating systems in the future.
+- The GNU C++ compiler
 - 🐍 Python 3.9 or later, including the development headers.
 - `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github
 
 On Fedora Linux this means installing:
 ```
 $ sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
-$ sudo yum install gh python3 python3-devel
+$ sudo yum install g++ gh python3 python3-devel
 ```
 
 ## 🧰 Installing `lab`
