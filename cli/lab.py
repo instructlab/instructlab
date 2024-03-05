@@ -445,9 +445,8 @@ def train(
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
     if not is_macos_with_m_chip():
-        # pylint: disable=f-string-without-interpolation
         click.secho(
-            f"`lab train` is only implemented for macOS with M-series chips",
+            "`lab train` is only implemented for macOS with M-series chips",
             fg="red",
         )
         sys.exit()
@@ -541,9 +540,8 @@ def test(data_dir, model_dir, adapter_file):
     TODO
     """
     if not is_macos_with_m_chip():
-        # pylint: disable=f-string-without-interpolation
         click.secho(
-            f"`lab train` is only implemented for macOS with M-series chips",
+            "`lab train` is only implemented for macOS with M-series chips",
             fg="red",
         )
         sys.exit()
