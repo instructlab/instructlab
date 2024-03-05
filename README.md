@@ -55,7 +55,6 @@ Commands:
   init      Initializes environment for InstructLab
   list      Lists taxonomy files that have changed (modified or untracked).
   serve     Start a local server
-  submit    Initializes environment for InstructLab
   test      Perform rudimentary tests of the model
   train     Trains model
 ```
@@ -238,7 +237,7 @@ lab chat
 ```
 ## 🎁 Submit your new knowledge
 
-Of course the final step is - if you've improved the model - to open up a a pull-request in the [taxonomy respository](https://github.com/instruct-lab/taxonomy).
+Of course the final step is - if you've improved the model - to open up a a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy).
 
 ## Contributing
 

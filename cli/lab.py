@@ -189,13 +189,6 @@ def list(ctx, taxonomy_path):
 
 
 @cli.command()
-@click.pass_context
-def submit(ctx):
-    """Initializes environment for InstructLab"""
-    click.echo("please use git commands and GitHub to submit a PR to the taxonomy repo")
-
-
-@cli.command()
 @click.option(
     "--model-path",
     type=click.Path(),
@@ -268,8 +261,16 @@ def serve(ctx, model_path, gpu_layers):
     type=click.Path(),
     help="Path to a seed file.",
 )
+@click.option(
+    "--rouge-threshold",
+    type=click.FLOAT,
+    default=0.9,
+    help="Threshold of (max) Rouge score to keep samples; 1.0 means accept all samples.",
+)
 @click.pass_context
-def generate(ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file):
+def generate(
+    ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file, rouge_threshold
+):
     """Generates synthetic data to enhance your example data"""
     ctx.obj.logger.info(
         f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}'"
@@ -283,6 +284,7 @@ def generate(ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file):
             taxonomy=taxonomy_path,
             prompt_file_path=ctx.obj.config.generate.prompt_file,
             seed_tasks_path=seed_file,
+            rouge_threshold=rouge_threshold,
         )
     except GenerateException as exc:
         click.secho(
