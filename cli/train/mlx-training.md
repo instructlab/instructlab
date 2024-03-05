@@ -1,4 +1,5 @@
 happy path for M chips
+
 ```ShellSession
 # session 1
 mkdir workspace-mlx
@@ -8,7 +9,7 @@ source venv/bin/activate
 pip install "git+ssh://git@github.com/instruct-lab/cli.git@mlx"
 lab init
 
-# downloads initial model 
+# downloads initial model
 lab download
 
 lab serve
@@ -16,7 +17,7 @@ lab serve
 # session 2 (also in workspace-mlx)
 cp -r taxonomy/compositional_skills/writing/freeform/jokes/puns taxonomy/compositional_skills/writing/freeform/jokes/puns-copy
 
-# generates synthetic data based on provided skill examples 
+# generates synthetic data based on provided skill examples
 lab generate --num-instructions 10
 
 # converts the model to MLX format and trains it on generated, synthetic data
@@ -26,7 +27,7 @@ lab train --iters 10
 lab test
 
 # converts the trained MLX model back to GGUF format and quantizes it to be served
-lab convert  
+lab convert
 
 # session 1
 # CTRL-C to kill the previous lab serve

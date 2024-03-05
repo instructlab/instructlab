@@ -1,5 +1,4 @@
-Moving the stable tag
-=====================
+# Moving the stable tag
 
 Because we do not have a PyPI package where folks can just install latest, our README.md instructions describe installing from the GitHub using a "stable" tag.
 
@@ -25,7 +24,7 @@ $ git show v0.x.y
 ```
 
 1. Verify that this is the tag/commit you want for stable.
-2. Double check with the short SHAHs on tags at https://github.com/instruct-lab/cli/tags 
+2. Double check with the short SHAHs on tags at https://github.com/instruct-lab/cli/tags
 3. Copy the SHAH
 
 I usually test first w/o --force and expect an error if I have everything right.
@@ -42,6 +41,7 @@ $ git tag -f stable v0.x.y
 ```
 
 Verify the tag SHAHs look correct:
+
 ```ShellSession
 $ git show-ref --tags
 ```
@@ -49,6 +49,7 @@ $ git show-ref --tags
 Push the new tag to remote (origin) with `-f` (force) flag.
 
 I usually test first w/o --force and expect an error if I have everything right.
+
 ```ShellSession
 $ git push origin stable
 ! [rejected]        stable -> stable (already exists)
@@ -58,9 +59,9 @@ hint: Updates were rejected because the tag already exists in the remote.
 ```
 
 If you are sure. Push with force.
+
 ```ShellSession
 git push -f origin stable
 ```
 
 Check the Tags on GitHub web.
-

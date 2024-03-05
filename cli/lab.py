@@ -434,7 +434,7 @@ def train(
             if len(train_files) > 1 or len(test_files) > 1:
                 # pylint: disable=f-string-without-interpolation
                 click.secho(
-                    f"Found multiple files from `lab generate`. Using the first one.",
+                    "Found multiple files from `lab generate`. Using the first one.",
                     fg="yellow",
                 )
             shutil.copy(train_files[0], data_dir + "/train_gen.jsonl")
@@ -520,7 +520,7 @@ def test(data_dir, model_dir, adapter_file):
 
     SYS_PROMPT = "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
     print("system prompt:", SYS_PROMPT)
-    for (idx, example) in enumerate(test_data):
+    for idx, example in enumerate(test_data):
         system = example["system"]
         user = example["user"]
         print("[{}]\n user prompt: {}".format(idx + 1, user))
@@ -574,12 +574,12 @@ def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
     model_dir_fused_pt = f"{model_dir_fused}-pt"
 
     script = os.path.join(cli_dir, "train/lora-mlx/convert.py ")
-    cmd = f"{script} --hf-path { model_dir_fused} --mlx-path {model_dir_fused_pt} --local --to-pt"
+    cmd = f"{script} --hf-path {model_dir_fused} --mlx-path {model_dir_fused_pt} --local --to-pt"
     # this converts MLX to PyTorch
     os.system("{} {}".format("python", cmd))
 
     script = os.path.join(cli_dir, "llamacpp/llamacpp_convert_to_gguf.py")
-    cmd = f"{script} { model_dir_fused_pt} --pad-vocab"
+    cmd = f"{script} {model_dir_fused_pt} --pad-vocab"
     # use llama.cpp to convert back to GGUF
     os.system("{} {}".format("python", cmd))
 

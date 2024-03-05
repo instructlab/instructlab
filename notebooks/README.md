@@ -10,16 +10,14 @@ We've laid out the steps to get started with either platform below.
 
 ### Kaggle
 
-Using a [Kaggle Notebook](./Training_a_LoRA_With_Labrador.ipynb) and the NVIDIA P100 provided in the free tier, we will fine tune a LoRA. 
+Using a [Kaggle Notebook](./Training_a_LoRA_With_Labrador.ipynb) and the NVIDIA P100 provided in the free tier, we will fine tune a LoRA.
 
 #### Pre-requisites
 
 1. You'll need a Kaggle account, which you can create by visiting [Kaggle's Signup Page](https://www.kaggle.com/account/login?phase=startRegisterTab&returnUrl=%2F).
 1. To use Kaggle's accelerators, you'll have to verify your account with a phone number. Visit the [account settings page](https://www.kaggle.com/settings) and select "Phone Verification".
 
-
 **NOTE: At present, you'll need to download the notebook and upload it to Kaggle. The following steps will walk you through uploading the notebook. Once this repository is open sourced, we will make an 'Open in Colab' button**
-
 
 #### Uploading the notebook
 
@@ -29,11 +27,9 @@ Once you have Kaggle properly configured, you can then run this notebook by foll
 
 ![create-notebook](images/kaggle/create.png)
 
-
 2. Then, select "Notebook" from the Dropdown menu.
 
 ![create-new-notebook](images/kaggle/create-new-nb.png)
-
 
 3. This will create a new notebook with some example data inside of it already. From here, select "File" at the top left corner.
 
@@ -43,7 +39,6 @@ Once you have Kaggle properly configured, you can then run this notebook by foll
 
 ![import-new-notebook](images/kaggle/import-nb.png)
 
-
 5. With the notebook uploaded, we'll then need to click the three vertical dots on the top right to open the accelerator options.
 
 ![select-an-accelerator](images/kaggle/select-accelerator.png)
@@ -52,24 +47,23 @@ Once you have Kaggle properly configured, you can then run this notebook by foll
 
 ![selecting-the-p100-gpu](images/kaggle/select-accelerator-p100.png)
 
-
-7. Finally, make sure to click "Restart & Clear Cell Outputs" before you run. ***KAGGLE WILL NOT LET YOU RUN NOTEBOOKS OVER 1 MEGABYTE IN SIZE***
+7. Finally, make sure to click "Restart & Clear Cell Outputs" before you run. **_KAGGLE WILL NOT LET YOU RUN NOTEBOOKS OVER 1 MEGABYTE IN SIZE_**
 
 ![restart-and-clear-cell-outputs](images/kaggle/clear-outputs.png)
 
 ### Google Collab
 
-Pre-requisites: 
-* [Google Colab](https://research.google.com/colaboratory/faq.html)
-* A Gmail account that you're logged into, this will allow you to use Google Colab, which in the free tier will give you access to an NVidia T4 x 15GB GPU
+Pre-requisites:
+
+- [Google Colab](https://research.google.com/colaboratory/faq.html)
+- A Gmail account that you're logged into, this will allow you to use Google Colab, which in the free tier will give you access to an NVidia T4 x 15GB GPU
 
 **NOTE: At present, you'll need to download the notebook and upload it to Google Colab. To upload a notebook go to {Google Colab](https://colab.research.google.com) and you will be prompted to upload a notebook. Once this repository is open sourced, we will make an 'Open in Colab' button**
 
-
 ## Running the notebook
 
-
 [The notebook](./Training_a_LoRA_With_Labrador.ipynb) in this folder will walk you through:
+
 1. Uploading the output of `lab generate` (a synthetic dataset created based on your hand written prompts/responses).
 2. Checking the base model before training
 3. Setting up and training a Low Rank Adapter (LoRA). LoRA is a parameter efficient fine tuning method (PEFT) that allows you to fine tune a model on a small subset of the overall parameters, which allows you to conduct a finetuning in a fraction of the time, on a fraction of the hardware required. The resultant model should be updated and better handle your queries than the base model.
