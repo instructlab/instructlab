@@ -407,17 +407,17 @@ def generate_data(
 def get_taxonomy_diff(repo="taxonomy"):
     repo = git.Repo(repo)
     untracked_files = [
-        u for u in repo.untracked_files if splitext(u)[1].lower() in [".yaml", ".yml"]
+        u for u in repo.untracked_files if splitext(u)[1].lower() == ".yaml"
     ]
     modified_files = [
         d.a_path
         for d in repo.index.diff(None)
-        if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]
+        if splitext(d.a_path)[1].lower() == ".yaml"
     ]
     staged_files = [
         d.a_path
         for d in repo.index.diff(repo.head.commit)
-        if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]
+        if splitext(d.a_path)[1].lower() == ".yaml"
     ]
     updated_taxonomy_files = list(set(untracked_files + modified_files + staged_files))
 
