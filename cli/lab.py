@@ -175,7 +175,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
 # pylint: disable=redefined-builtin
 def list(ctx, taxonomy_path):
     """
-    Lists taxonomy files that have changed (modified or untracked).
+    Lists taxonomy files that have changed since last commit.
     Similar to 'git diff'
     """
     updated_taxonomy_files = get_taxonomy_diff(taxonomy_path)
