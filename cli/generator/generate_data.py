@@ -186,29 +186,15 @@ def generate_data(
         if is_file:
             # Default output_dir to taxonomy file's dir
             output_dir = output_dir or os.path.dirname(os.path.abspath(taxonomy))
-            if splitext(taxonomy)[1] != ".yaml":  # File name standard
-                raise SystemExit(
-                    f"Error: taxonomy ({taxonomy}) "
-                    "is not a directory or file with '.yaml' extension."
+            seed_instruction_data, warnings, errors = read_taxonomy_file(
+                logger, taxonomy
+            )
+            if warnings:
+                logger.warn(
+                    f"{warnings} warnings (see above) due to taxonomy file not (fully) usable."
                 )
-            try:
-                with open(taxonomy, "r", encoding="utf-8") as file:
-                    contents = yaml.safe_load(file)
-                    for t in get_seed_examples(contents):
-                        seed_instruction_data.append(
-                            {
-                                "instruction": t["question"],
-                                "input": "",
-                                "output": t["answer"],
-                            }
-                        )
-            except Exception as e:
-                print(e.__repr__, " in ", file)
-                print(e)
-                raise SystemExit(
-                    yaml.YAMLError("taxonomy file () has YAML errors!  Exiting.")
-                )
-
+            if errors:
+                raise SystemExit(yaml.YAMLError("Taxonomy file with errors! Exiting."))
         else:  # taxonomy is_dir
             # Default output_dir to taxonomy dir, using the dir not the parent
             output_dir = output_dir or os.path.abspath(taxonomy)
@@ -217,50 +203,25 @@ def generate_data(
                 updated_taxonomy_files = get_taxonomy_diff(taxonomy)
             except NameError as exc:
                 raise GenerateException("`git` binary not found") from exc
-            errors = 0
-            warnings = 0
+            total_errors = 0
+            total_warnings = 0
             for f in updated_taxonomy_files:
-                if splitext(f)[1] != ".yaml":
-                    logger.warn(
-                        f"WARNING: Skipping {f}! Use lowercase '.yaml' extension instead."
-                    )
-                    continue
                 file_path = os.path.join(taxonomy, f)
-                try:
-                    with open(file_path, "r", encoding="utf-8") as file:
-                        contents = yaml.safe_load(file)
-                        for t in get_seed_examples(contents):
-                            q = t["question"]
-                            a = t["answer"]
-                            if not q or not a:
-                                logger.warn(
-                                    f"Skipping {file_path} "
-                                    + "because question and/or answer is empty!"
-                                )
-                                warnings += 1
-                                continue
-                            tax_path = "->".join(file_path.split(os.sep)[1:-1])
-                            seed_instruction_data.append(
-                                {
-                                    "instruction": q,
-                                    "input": "",
-                                    "output": a,
-                                    "taxonomy_path": tax_path,
-                                }
-                            )
-                except Exception as e:
-                    errors += 1
-                    print(e.__repr__, " in ", file_path)
-                    logger.error(e)
-            if warnings:
+                data, warnings, errors = read_taxonomy_file(logger, file_path)
+                total_warnings += warnings
+                total_errors += errors
+                if data:
+                    seed_instruction_data.extend(data)
+            if total_warnings:
                 logger.warn(
-                    f"{warnings} warnings (see above) due to taxonomy files that were not usable."
+                    f"{total_warnings} warnings (see above) due to taxonomy files that were not (fully) usable."
                 )
-            if errors:
+            if total_errors:
                 raise SystemExit(
-                    yaml.YAMLError(f"{errors} taxonomy files with errors! Exiting.")
+                    yaml.YAMLError(
+                        f"{total_errors} taxonomy files with errors! Exiting."
+                    )
                 )
-
     elif seed_tasks_path and os.path.exists(seed_tasks_path):
         output_dir = output_dir or os.path.dirname(os.path.abspath(seed_tasks_path))
         with open(seed_tasks_path, "r", encoding="utf-8") as seed_tasks_file:
@@ -461,3 +422,55 @@ def get_taxonomy_diff(repo="taxonomy"):
     updated_taxonomy_files = list(set(untracked_files + modified_files + staged_files))
 
     return updated_taxonomy_files
+
+
+def read_taxonomy_file(logger, file_path):
+    seed_instruction_data = []
+    warnings = 0
+    errors = 0
+    if splitext(file_path)[1] != ".yaml":
+        logger.warn(
+            f"Skipping {file_path}! Use lowercase '.yaml' extension instead."
+        )
+        warnings += 1
+        return None, warnings, errors
+    try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            contents = yaml.safe_load(file)
+            if not contents:
+                logger.warn(f"Skipping {file_path} because it is empty!")
+                warnings += 1
+                return None, warnings, errors
+            tax_path = "->".join(file_path.split(os.sep)[1:-1])
+            for t in get_seed_examples(contents):
+                q = t["question"]
+                a = t["answer"]
+                if not q:
+                    logger.warn(
+                        f"Skipping entry in {file_path} "
+                        + "because question is empty!"
+                    )
+                    warnings += 1
+                if not a:
+                    logger.warn(
+                        f"Skipping entry in {file_path} "
+                        + "because answer is empty!"
+                    )
+                    warnings += 1
+                if not q or not a:
+                    continue
+                tax_path = "->".join(file_path.split(os.sep)[1:-1])
+                seed_instruction_data.append(
+                    {
+                        "instruction": q,
+                        "input": "",
+                        "output": a,
+                        "taxonomy_path": tax_path,
+                    }
+                )
+    except Exception as e:
+        errors += 1
+        print(e.__repr__, " in ", file_path)
+        logger.error(e)
+
+    return seed_instruction_data, warnings, errors
