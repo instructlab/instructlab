@@ -1,0 +1,33 @@
+FROM registry.fedoraproject.org/fedora-toolbox:40 AS build-base
+RUN dnf install -y llvm clang-tools-extra lld rocblas-devel hip-devel python3-pip git make gcc hipblas-devel
+
+FROM build-base AS pytorch
+RUN pip3 install torch --force-reinstall --no-cache-dir --index-url https://download.pytorch.org/whl/rocm5.7
+
+FROM build-base AS llama-cpp-python
+ARG AMDGPU_TARGETS
+RUN CMAKE_ARGS="-DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DCMAKE_PREFIX_PATH=/opt/rocm -DAMDGPU_TARGETS=$AMDGPU_TARGETS" FORCE_CMAKE=1 pip install llama-cpp-python --force-reinstall --no-cache-dir -v
+
+FROM llama-cpp-python AS instructlab-install
+COPY . /instructlab
+RUN pip3 install git+file:///instructlab@stable
+
+# Cleans up __pycache__ directories and removes unneeded dependencies.
+FROM instructlab-install AS cleanup
+RUN pip3 freeze | grep "^nvidia" | sed 's/==.*$//g' | xargs pip3 uninstall -y && \
+    find /usr -type d -name "__pycache__" | xargs rm -rf -v
+
+FROM registry.fedoraproject.org/fedora-toolbox:40 AS final
+RUN dnf install -y gh nvtop lld rocm-runtime hipblas && \
+    dnf clean all && \
+    rm -rf /var/cache/yum
+COPY --from=cleanup /usr/lib/python3.12/site-packages /usr/lib/python3.12/site-packages
+COPY --from=cleanup /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=cleanup /usr/local/lib64/python3.12/site-packages /usr/local/lib64/python3.12/site-packages
+COPY --from=cleanup /usr/local/bin/lab /usr/local/bin/lab
+
+ENV HSA_OVERRIDE_GFX_VERSION=10.3.0
+LABEL com.github.containers.toolbox="true" \
+      name="instructlab-rocm" \
+      usage="This image is meant to be used with the toolbox(1) command" \
+      summary="Image for creating Fedora Toolbx containers"
