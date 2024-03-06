@@ -424,6 +424,7 @@ def get_taxonomy_diff(repo="taxonomy"):
     return updated_taxonomy_files
 
 
+# pylint: disable=broad-exception-caught
 def read_taxonomy_file(logger, file_path):
     seed_instruction_data = []
     warnings = 0
