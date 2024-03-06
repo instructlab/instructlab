@@ -64,13 +64,14 @@ def check_prompt_file(prompt_file_path):
 def encode_prompt(prompt_instructions, prompt):
     """Encode multiple prompt instructions into a single string."""
     idx = 0
-    prompt = prompt.format(taxonomy=prompt_instructions[0]['taxonomy_path'])
+    prompt = prompt.format(taxonomy=prompt_instructions[0]["taxonomy_path"])
+    # pylint: disable=unused-variable
     for idx, task_dict in enumerate(prompt_instructions):
-        (instruction, prompt_input, prompt_output, taxonomy_path) = (
+        (instruction, prompt_input, prompt_output, taxonomy_path,) = (
             task_dict["instruction"],
             task_dict["input"],
             task_dict["output"],
-            task_dict['taxonomy_path']
+            task_dict["taxonomy_path"],
         )
         instruction = re.sub(r"\s+", " ", instruction).strip().rstrip(":")
         prompt_input = "<noinput>" if prompt_input.lower() == "" else prompt_input
@@ -150,13 +151,6 @@ def post_process_gpt3_response(num_prompt_instructions, response):
 
 def find_word_in_string(w, s):
     return re.compile(r"\b({0})\b".format(w), flags=re.IGNORECASE).search(s)
-
-
-def get_seed_examples(contents):
-    if "seed_examples" in contents:
-        return contents["seed_examples"]
-    else:
-        return contents
 
 
 def get_seed_examples(contents):
@@ -245,9 +239,14 @@ def generate_data(
                                 )
                                 warnings += 1
                                 continue
-                            tax_path = '->'.join(file_path.split(os.sep)[1:-1])
+                            tax_path = "->".join(file_path.split(os.sep)[1:-1])
                             seed_instruction_data.append(
-                                {"instruction": q, "input": "", "output": a, 'taxonomy_path': tax_path}
+                                {
+                                    "instruction": q,
+                                    "input": "",
+                                    "output": a,
+                                    "taxonomy_path": tax_path,
+                                }
                             )
                 except Exception as e:
                     errors += 1
