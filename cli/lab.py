@@ -23,7 +23,12 @@ import uvicorn
 from . import config, utils
 from .chat.chat import ChatException, chat_cli
 from .download import DownloadException, clone_taxonomy
-from .generator.generate_data import GenerateException, generate_data, get_taxonomy_diff
+from .generator.generate_data import (
+    GenerateException,
+    generate_data,
+    get_taxonomy_diff,
+    read_taxonomy,
+)
 
 
 # pylint: disable=unused-argument
@@ -191,6 +196,21 @@ def list(ctx, taxonomy_path):
             )
             continue
         click.echo(f)
+
+
+@cli.command()
+@click.option(
+    "--taxonomy-path",
+    type=click.Path(),
+    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
+)
+@click.pass_context
+def check(ctx, taxonomy_path):
+    """Check that taxonomy is valid"""
+    if not taxonomy_path:
+        taxonomy_path = ctx.obj.config.generate.taxonomy_path
+    ctx.obj.logger.debug(f"Checking taxonomy: '{taxonomy_path}'")
+    read_taxonomy(ctx.obj.logger, taxonomy_path)
 
 
 @cli.command()
