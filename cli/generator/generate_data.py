@@ -28,7 +28,7 @@ import yaml
 from . import utils
 
 DEFAULT_PROMPT_TEMPLATE = """\
-You are asked to come up with a set of 20 diverse task instructions under {taxonomy}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
+You are asked to come up with a set of 20 diverse task instructions under {taxonomy}{task_description_str}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
 
 Here are the requirements:
 1. Try not to repeat the verb for each instruction to maximize diversity.
@@ -44,6 +44,25 @@ Here are the requirements:
 List of 20 tasks:
 """
 
+DEFAULT_PROMPT_TEMPLATE_CONTEXT = """\
+You are asked to come up with a set of 20 diverse task instructions under {taxonomy}{task_description_str}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
+
+Here are the requirements:
+1. Try not to repeat the verb for each instruction to maximize diversity.
+2. The language used for the instruction also should be diverse. For example, you should combine questions with imperative instrucitons.
+3. The type of instructions should be similar to provided examples. The generated instruction and the output should be grounded in the provided document.
+4. A GPT language model should be able to complete the instruction. For example, do not ask the assistant to create any visual or audio output. For another example, do not ask the assistant to wake you up at 5pm or set a reminder because it cannot perform any action.
+5. The instructions should be in English.
+6. The instructions should be 1 to 2 sentences long. Either an imperative sentence or a question is permitted.
+7. The output should be an appropriate response to the input and the instruction. Long outputs are preferrable. 
+
+Based on below document provide a list of 20 tasks:
+
+Document:
+{document}
+
+Here are some examples to help you understand the type of question that asked for this document:
+"""
 
 class GenerateException(Exception):
     """An exception raised during generate step."""
@@ -64,7 +83,24 @@ def check_prompt_file(prompt_file_path):
 def encode_prompt(prompt_instructions, prompt):
     """Encode multiple prompt instructions into a single string."""
     idx = 0
-    prompt = prompt.format(taxonomy=prompt_instructions[0]["taxonomy_path"])
+    task_description = prompt_instructions[0]["task_description"]
+    task_description_str = "" if task_description == "" else f' for the task "{task_description}"'
+    if "document" in prompt_instructions[0]:
+        document = prompt_instructions[0]["document"]
+    else:
+        document = ""
+    if document == "":
+        prompt = prompt.format(
+            taxonomy=prompt_instructions[0]["taxonomy_path"], 
+            task_description_str=task_description_str,
+        )
+    else:
+        prompt = prompt.format(
+            taxonomy=prompt_instructions[0]["taxonomy_path"], 
+            task_description_str=task_description_str,
+            document=document,
+        )
+
     # pylint: disable=unused-variable
     for idx, task_dict in enumerate(prompt_instructions):
         (instruction, prompt_input, prompt_output, taxonomy_path,) = (
@@ -412,6 +448,11 @@ def read_taxonomy_file(logger, file_path):
                 warnings += 1
                 return None, warnings, errors
             tax_path = "->".join(file_path.split(os.sep)[1:-1])
+            task_description = contents["task_description"]
+            if "document" in contents:
+                document = contents["document"]
+            else:
+                document = None
             for t in get_seed_examples(contents):
                 q = t["question"]
                 a = t["answer"]
@@ -433,7 +474,8 @@ def read_taxonomy_file(logger, file_path):
                         "input": "",
                         "output": a,
                         "taxonomy_path": tax_path,
-                    }
+                        "task_description": task_description,
+                    } | ({} if document is None else {"document": document})
                 )
     except Exception as e:
         errors += 1
