@@ -4,9 +4,7 @@ from os.path import basename, dirname, exists, splitext
 import json
 import logging
 import os
-import platform
 import shutil
-import subprocess
 import sys
 
 # Third Party
@@ -297,14 +295,6 @@ def generate(
 
 
 @cli.command()
-@click.pass_context
-# pylint: disable=function-redefined
-def test(ctx):
-    """Perform rudimentary tests of the model"""
-    click.echo("# test TBD")
-
-
-@cli.command()
 @click.argument(
     "question",
     nargs=-1,
@@ -394,23 +384,6 @@ def download(ctx, repository, release, model_dir, pattern):
         )
 
 
-def is_macos_with_m_chip():
-    # Check if the OS is macOS
-    if platform.system() != "Darwin":
-        return False
-
-    # Check for Apple Silicon (M1, M2, etc.)
-    try:
-        # Running 'sysctl -a' and searching for a specific line that indicates ARM architecture
-        result = subprocess.check_output(["sysctl", "-a"], text=True)
-        is_m_chip = "machdep.cpu.brand_string: Apple" in result
-        return is_m_chip
-    # pylint: disable=broad-exception-caught
-    except Exception as e:
-        print(f"Error checking architecture: {e}")
-        return False
-
-
 @cli.command()
 @click.option("--data-dir", help="Base directory where data is stored.", default=None)
 @click.option(
@@ -440,6 +413,7 @@ def is_macos_with_m_chip():
     is_flag=True,
     help="Whether to skip quantization while converting to MLX.",
 )
+@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 def train(
     data_dir, taxonomy_path, skip_preprocessing, model_dir, iters, local, skip_quantize
 ):
@@ -447,13 +421,6 @@ def train(
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
-    if not is_macos_with_m_chip():
-        click.secho(
-            "`lab train` is only implemented for macOS with M-series chips",
-            fg="red",
-        )
-        sys.exit()
-
     cli_dir = os.path.dirname(os.path.abspath(__file__))
 
     if data_dir is None:
@@ -537,18 +504,10 @@ def train(
     default="ibm-merlinite-7b-mlx-q",
 )
 @click.option("--adapter-file", help="LoRA adapter to use for test.", default=None)
+@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 # pylint: disable=function-redefined
 def test(data_dir, model_dir, adapter_file):
-    """
-    TODO
-    """
-    if not is_macos_with_m_chip():
-        click.secho(
-            "`lab train` is only implemented for macOS with M-series chips",
-            fg="red",
-        )
-        sys.exit()
-
+    """Runs basic test to ensure model correctness"""
     if adapter_file is None:
         adapter_file = os.path.join(model_dir, "adapters.npz")
     cli_dir = os.path.dirname(os.path.abspath(__file__))
@@ -593,10 +552,9 @@ def test(data_dir, model_dir, adapter_file):
     is_flag=True,
     help="Whether to skip quantization while converting to GGUF.",
 )
+@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
-    """
-    TODO
-    """
+    """Converts model to GGUF"""
     if adapter_file is None:
         adapter_file = os.path.join(model_dir, "adapters.npz")
     cli_dir = os.path.dirname(os.path.abspath(__file__))
