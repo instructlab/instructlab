@@ -8,6 +8,8 @@
 #  https://help.github.com/en/articles/about-code-owners
 #
 
-* @soltysh @xukai92 @markstur @hickeyma
+* @soltysh @xukai92 @markstur @hickeyma @afrittoli @spzala @Tomcli
 
 /notebooks/ @rawkintrevo
+README.md @mairin
+/docs/ @mairin

@@ -53,7 +53,7 @@ Commands:
   download  Download the model(s) to train
   generate  Generates synthetic data to enhance your example data
   init      Initializes environment for InstructLab
-  list      Lists taxonomy files that have changed (modified or untracked).
+  list      Lists taxonomy files that have changed since last commit
   serve     Start a local server
   test      Perform rudimentary tests of the model
   train     Trains model
