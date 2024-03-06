@@ -88,7 +88,6 @@ Please provide the following values to initiate the environment:
 Path to taxonomy repo [taxonomy]: <ENTER>
 `taxonomy` seems to not exists or is empty. Should I clone git@github.com:instruct-lab/taxonomy.git for you? [y/N]: y
 Cloning git@github.com:instruct-lab/taxonomy.git...
-Path to your model [models/ggml-merlinite-7b-0302-Q4_K_M.gguf]: <ENTER>
 Generating `config.yaml` in the current directory...
 Initialization completed successfully, you're ready to start using `lab`. Enjoy!
 ```
