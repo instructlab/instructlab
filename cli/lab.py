@@ -449,19 +449,19 @@ def train(
                 f"Could not read taxonomy directory: {exc}",
                 fg="red",
             )
-            sys.exit()
+            sys.exit(1)
         except OSError as exc:
             click.secho(
                 f"Could not create data dir: {exc}",
                 fg="red",
             )
-            sys.exit()
+            sys.exit(1)
         except IndexError as exc:
             click.secho(
                 f"Could not copy into data directory: {exc}",
                 fg="red",
             )
-            sys.exit()
+            sys.exit(1)
 
     if not skip_preprocessing:
         script = os.path.join(cli_dir, "train/lora-mlx/make_data.py")
