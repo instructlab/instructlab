@@ -18,9 +18,13 @@ on:
   push:
     branches: 
       - "main"
+    paths:
+      - '**.py'
   pull_request:
     branches: 
       - "main"
+    paths:
+      - '**.py'
 
 env:
   PYTHON_VERSION: 3.9
