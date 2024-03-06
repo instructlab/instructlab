@@ -161,7 +161,6 @@ def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
     cfg.generate.model = model
     cfg.serve.model_path = model_path
     cfg.generate.taxonomy_path = taxonomy_path
-    cfg.list.taxonomy_path = taxonomy_path
     config.write_config(cfg)
 
     click.echo(
@@ -182,6 +181,8 @@ def list(ctx, taxonomy_path):
     Lists taxonomy files that have changed since last commit.
     Similar to 'git diff'
     """
+    if not taxonomy_path:
+        taxonomy_path = ctx.obj.config.generate.taxonomy_path
     updated_taxonomy_files = get_taxonomy_diff(taxonomy_path)
     for f in updated_taxonomy_files:
         if splitext(f)[1] != ".yaml":
