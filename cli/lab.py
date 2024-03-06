@@ -395,7 +395,6 @@ def download(ctx, repository, release, filename, model_dir):
     "--taxonomy-path",
     type=click.Path(),
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
-    default="./taxonomy",
 )
 @click.option(
     "--skip-preprocessing",
@@ -418,15 +417,25 @@ def download(ctx, repository, release, filename, model_dir):
     is_flag=True,
     help="Whether to skip quantization while converting to MLX.",
 )
+@click.pass_context
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 def train(
-    data_dir, taxonomy_path, skip_preprocessing, model_dir, iters, local, skip_quantize
+    ctx,
+    data_dir,
+    taxonomy_path,
+    skip_preprocessing,
+    model_dir,
+    iters,
+    local,
+    skip_quantize,
 ):
     """
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
     cli_dir = os.path.dirname(os.path.abspath(__file__))
+    if not taxonomy_path:
+        taxonomy_path = ctx.obj.config.generate.taxonomy_path
 
     if data_dir is None:
         data_dir = "./taxonomy_data"
