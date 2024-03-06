@@ -424,14 +424,13 @@ def get_taxonomy_diff(repo="taxonomy"):
     return updated_taxonomy_files
 
 
+# pylint: disable=broad-exception-caught
 def read_taxonomy_file(logger, file_path):
     seed_instruction_data = []
     warnings = 0
     errors = 0
     if splitext(file_path)[1] != ".yaml":
-        logger.warn(
-            f"Skipping {file_path}! Use lowercase '.yaml' extension instead."
-        )
+        logger.warn(f"Skipping {file_path}! Use lowercase '.yaml' extension instead.")
         warnings += 1
         return None, warnings, errors
     try:
@@ -447,19 +446,16 @@ def read_taxonomy_file(logger, file_path):
                 a = t["answer"]
                 if not q:
                     logger.warn(
-                        f"Skipping entry in {file_path} "
-                        + "because question is empty!"
+                        f"Skipping entry in {file_path} " + "because question is empty!"
                     )
                     warnings += 1
                 if not a:
                     logger.warn(
-                        f"Skipping entry in {file_path} "
-                        + "because answer is empty!"
+                        f"Skipping entry in {file_path} " + "because answer is empty!"
                     )
                     warnings += 1
                 if not q or not a:
                     continue
-                tax_path = "->".join(file_path.split(os.sep)[1:-1])
                 seed_instruction_data.append(
                     {
                         "instruction": q,
