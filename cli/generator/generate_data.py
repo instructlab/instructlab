@@ -429,9 +429,7 @@ def read_taxonomy_file(logger, file_path):
     warnings = 0
     errors = 0
     if splitext(file_path)[1] != ".yaml":
-        logger.warn(
-            f"Skipping {file_path}! Use lowercase '.yaml' extension instead."
-        )
+        logger.warn(f"Skipping {file_path}! Use lowercase '.yaml' extension instead.")
         warnings += 1
         return None, warnings, errors
     try:
@@ -447,14 +445,12 @@ def read_taxonomy_file(logger, file_path):
                 a = t["answer"]
                 if not q:
                     logger.warn(
-                        f"Skipping entry in {file_path} "
-                        + "because question is empty!"
+                        f"Skipping entry in {file_path} " + "because question is empty!"
                     )
                     warnings += 1
                 if not a:
                     logger.warn(
-                        f"Skipping entry in {file_path} "
-                        + "because answer is empty!"
+                        f"Skipping entry in {file_path} " + "because answer is empty!"
                     )
                     warnings += 1
                 if not q or not a:
