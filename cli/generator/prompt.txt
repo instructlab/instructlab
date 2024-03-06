@@ -1,4 +1,4 @@
-You are asked to come up with a set of 20 diverse task instructions. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
+You are asked to come up with a set of 20 diverse task instructions under {taxonomy}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
 
 Here are the requirements:
 1. Try not to repeat the verb for each instruction to maximize diversity.
