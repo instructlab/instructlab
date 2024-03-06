@@ -17,6 +17,7 @@ try:
     import git
 except ImportError:
     pass
+
 # Third Party
 from rouge_score import rouge_scorer
 
@@ -217,6 +218,7 @@ def generate_data(
     api_base,
     output_dir: Optional[str] = None,
     taxonomy: Optional[str] = None,
+    taxonomy_base: Optional[str] = None,
     seed_tasks_path: Optional[str] = None,
     prompt_file_path: Optional[str] = None,
     model_name: Optional[str] = None,
@@ -241,7 +243,7 @@ def generate_data(
     # throw an error if both not found
     # pylint: disable=broad-exception-caught,raise-missing-from
     if taxonomy and os.path.exists(taxonomy):
-        seed_instruction_data = read_taxonomy(logger, taxonomy)
+        seed_instruction_data = read_taxonomy(logger, taxonomy, taxonomy_base)
     elif seed_tasks_path and os.path.exists(seed_tasks_path):
         with open(seed_tasks_path, "r", encoding="utf-8") as seed_tasks_file:
             seed_tasks = [json.loads(l) for l in seed_tasks_file]
@@ -443,23 +445,44 @@ def generate_data(
     logger.info(f"Generation took {generate_duration:.2f}s")
 
 
-def get_taxonomy_diff(repo="taxonomy"):
+def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     repo = git.Repo(repo)
     untracked_files = [
         u for u in repo.untracked_files if splitext(u)[1].lower() == ".yaml"
     ]
+
+    head_commit = None
+    if base == "HEAD":
+        head_commit = repo.commit("HEAD")
+    elif "/" in base:
+        re_git_branch = re.compile(f"remotes/{base}$", re.MULTILINE)
+    else:
+        re_git_branch = re.compile(f"{base}$", re.MULTILINE)
+
+    # Move backwards from HEAD until we find the first commit that is part of base
+    # then we can take our diff from there
+    current_commit = repo.commit("HEAD")
+    while not head_commit:
+        branches = repo.git.branch("-a", "--contains", current_commit.hexsha)
+        if re_git_branch.findall(branches):
+            head_commit = current_commit
+            break
+        try:
+            current_commit = current_commit.parents[0]
+        except IndexError as exc:
+            raise SystemExit(
+                yaml.YAMLError(
+                    f'Couldn\'t find the taxonomy base branch "{base}" from the current HEAD'
+                )
+            ) from exc
+
     modified_files = [
         d.a_path
-        for d in repo.index.diff(None)
+        for d in head_commit.diff(None)
         if splitext(d.a_path)[1].lower() == ".yaml"
     ]
-    staged_files = [
-        d.a_path
-        for d in repo.index.diff(repo.head.commit)
-        if splitext(d.a_path)[1].lower() == ".yaml"
-    ]
-    updated_taxonomy_files = list(set(untracked_files + modified_files + staged_files))
 
+    updated_taxonomy_files = list(set(untracked_files + modified_files))
     return updated_taxonomy_files
 
 
@@ -526,7 +549,7 @@ def read_taxonomy_file(logger, file_path):
     return seed_instruction_data, warnings, errors
 
 
-def read_taxonomy(logger, taxonomy):
+def read_taxonomy(logger, taxonomy, taxonomy_base):
     seed_instruction_data = []
     is_file = os.path.isfile(taxonomy)
     if is_file:
@@ -540,7 +563,7 @@ def read_taxonomy(logger, taxonomy):
     else:  # taxonomy is_dir
         # Gather the new or changed YAMLs using git diff
         try:
-            updated_taxonomy_files = get_taxonomy_diff(taxonomy)
+            updated_taxonomy_files = get_taxonomy_diff(taxonomy, taxonomy_base)
         except NameError as exc:
             raise utils.GenerateException("`git` binary not found") from exc
         total_errors = 0

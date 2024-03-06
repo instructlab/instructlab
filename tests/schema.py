@@ -32,6 +32,7 @@ class Generate(BaseModel):
     prompt_file: str
     seed_file: str
     taxonomy_path: str
+    taxonomy_base: str
 
 
 class Serve(BaseModel):
