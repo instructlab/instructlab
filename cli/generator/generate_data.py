@@ -455,7 +455,6 @@ def read_taxonomy_file(logger, file_path):
                     warnings += 1
                 if not q or not a:
                     continue
-                tax_path = "->".join(file_path.split(os.sep)[1:-1])
                 seed_instruction_data.append(
                     {
                         "instruction": q,
