@@ -68,7 +68,7 @@ Pre-requisites:
 
 ## Running the notebook
 
-[The notebook](./Training_a_LoRA_With_Labrador.ipynb) in this folder will walk you through:
+[The notebook](./Training_a_LoRA_With_Instruct_Lab.ipynb) in this folder will walk you through:
 1. Uploading the output of `lab generate` (a synthetic dataset created based on your hand written prompts/responses).
 2. Checking the base model before training
 3. Setting up and training a LoRA. A LoRA uses Parameter Efficient Fine-tuning (PEFT) methods to fine-tune a model on a small subset of the overall parameters, allowing you to conduct fine-tuning in a fraction of the time, on a fraction of the hardware required. The resultant model should be updated and better handle your queries than the base model.

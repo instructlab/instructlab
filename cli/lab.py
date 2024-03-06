@@ -4,24 +4,25 @@ from os.path import basename, dirname, exists, splitext
 import json
 import logging
 import os
-import platform
 import shutil
-import subprocess
 import sys
 
 # Third Party
 from click_didyoumean import DYMGroup
+from huggingface_hub import hf_hub_download
+from huggingface_hub.utils import HfHubHTTPError
 from llama_cpp import llama_chat_format
 from llama_cpp.server.app import create_app
 from llama_cpp.server.settings import Settings
 import click
 import llama_cpp.server.app as llama_app
+import openai
 import uvicorn
 
 # Local
 from . import config, utils
 from .chat.chat import ChatException, chat_cli
-from .download import DownloadException, clone_taxonomy, download_model
+from .download import DownloadException, clone_taxonomy
 from .generator.generate_data import GenerateException, generate_data, get_taxonomy_diff
 
 
@@ -160,7 +161,6 @@ def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
     cfg.generate.model = model
     cfg.serve.model_path = model_path
     cfg.generate.taxonomy_path = taxonomy_path
-    cfg.list.taxonomy_path = taxonomy_path
     config.write_config(cfg)
 
     click.echo(
@@ -181,6 +181,8 @@ def list(ctx, taxonomy_path):
     Lists taxonomy files that have changed since last commit.
     Similar to 'git diff'
     """
+    if not taxonomy_path:
+        taxonomy_path = ctx.obj.config.generate.taxonomy_path
     updated_taxonomy_files = get_taxonomy_diff(taxonomy_path)
     for f in updated_taxonomy_files:
         if splitext(f)[1] != ".yaml":
@@ -294,14 +296,11 @@ def generate(
             f"Generating dataset failed with the following error: {exc}",
             fg="red",
         )
-
-
-@cli.command()
-@click.pass_context
-# pylint: disable=function-redefined
-def test(ctx):
-    """Perform rudimentary tests of the model"""
-    click.echo("# test TBD")
+    except openai.APIConnectionError as exc:
+        click.secho(
+            f"Error connecting to the server: {exc.__cause__}",
+            fg="red",
+        )
 
 
 @cli.command()
@@ -353,62 +352,41 @@ def chat(ctx, question, model, context, session, quick_question):
 @cli.command()
 @click.option(
     "--repository",
-    default="https://github.com/instruct-lab/cli.git",
+    default="ibm/merlinite-7b-GGUF",
     show_default=True,
-    help="GitHub repository of the hosted models.",
+    help="Hugging Face repository of the model to download.",
 )
 @click.option(
     "--release",
-    default=config.DEFAULT_DOWNLOAD_TAG,
+    default="main",
     show_default=True,
-    help="GitHub release version of the hosted models.",
+    help="The git revision of the model to download - e.g. a branch, tag, or commit hash.",
 )
 @click.option(
-    "--model-dir", help="The local directory to download the model files into."
+    "--filename",
+    default=basename(config.DEFAULT_MODEL_PATH),
+    show_default=True,
+    help="Name of the model file to download from the Hugging Face repository.",
 )
 @click.option(
-    "--pattern",
-    help="Download only assets that match a glob pattern.",
+    "--model-dir",
+    default=dirname(config.DEFAULT_MODEL_PATH),
+    show_default=True,
+    help="The local directory to download the model files into.",
 )
-@click.option("--pattern", help="Download only assets that match a glob pattern.")
 @click.pass_context
-def download(ctx, repository, release, model_dir, pattern):
+def download(ctx, repository, release, filename, model_dir):
     """Download the model(s) to train"""
-    # Use the serve model path to get the right models in the right place, if needed
-    serve_model_path = ctx.obj.config.serve.model_path
-    if serve_model_path:  # if set in config
-        if not model_dir:  # --model_dir takes precedence
-            model_dir = dirname(serve_model_path)
-        if not pattern:  # --pattern takes precedence
-            pattern = basename(serve_model_path).replace(".gguf", ".*")
-    click.echo(
-        "Make sure the local environment has the `gh` cli: https://cli.github.com"
-    )
-    click.echo(f"Downloading models from {repository}@{release} to {model_dir}...")
+    click.echo(f"Downloading model from {repository}@{release} to {model_dir}...")
     try:
-        download_model(repository, release, model_dir, pattern)
-    except DownloadException as exc:
+        hf_hub_download(
+            repo_id=repository, revision=release, filename=filename, local_dir=model_dir
+        )
+    except HfHubHTTPError as exc:
         click.secho(
-            f"Downloading models failed with the following error: {exc}",
+            f"Downloading model failed with the following Hugging Face Hub error: {exc}",
             fg="red",
         )
-
-
-def is_macos_with_m_chip():
-    # Check if the OS is macOS
-    if platform.system() != "Darwin":
-        return False
-
-    # Check for Apple Silicon (M1, M2, etc.)
-    try:
-        # Running 'sysctl -a' and searching for a specific line that indicates ARM architecture
-        result = subprocess.check_output(["sysctl", "-a"], text=True)
-        is_m_chip = "machdep.cpu.brand_string: Apple" in result
-        return is_m_chip
-    # pylint: disable=broad-exception-caught
-    except Exception as e:
-        print(f"Error checking architecture: {e}")
-        return False
 
 
 @cli.command()
@@ -440,6 +418,7 @@ def is_macos_with_m_chip():
     is_flag=True,
     help="Whether to skip quantization while converting to MLX.",
 )
+@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 def train(
     data_dir, taxonomy_path, skip_preprocessing, model_dir, iters, local, skip_quantize
 ):
@@ -447,13 +426,6 @@ def train(
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
-    if not is_macos_with_m_chip():
-        click.secho(
-            "`lab train` is only implemented for macOS with M-series chips",
-            fg="red",
-        )
-        sys.exit()
-
     cli_dir = os.path.dirname(os.path.abspath(__file__))
 
     if data_dir is None:
@@ -537,18 +509,10 @@ def train(
     default="ibm-merlinite-7b-mlx-q",
 )
 @click.option("--adapter-file", help="LoRA adapter to use for test.", default=None)
+@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 # pylint: disable=function-redefined
 def test(data_dir, model_dir, adapter_file):
-    """
-    TODO
-    """
-    if not is_macos_with_m_chip():
-        click.secho(
-            "`lab train` is only implemented for macOS with M-series chips",
-            fg="red",
-        )
-        sys.exit()
-
+    """Runs basic test to ensure model correctness"""
     if adapter_file is None:
         adapter_file = os.path.join(model_dir, "adapters.npz")
     cli_dir = os.path.dirname(os.path.abspath(__file__))
@@ -593,10 +557,9 @@ def test(data_dir, model_dir, adapter_file):
     is_flag=True,
     help="Whether to skip quantization while converting to GGUF.",
 )
+@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
-    """
-    TODO
-    """
+    """Converts model to GGUF"""
     if adapter_file is None:
         adapter_file = os.path.join(model_dir, "adapters.npz")
     cli_dir = os.path.dirname(os.path.abspath(__file__))
