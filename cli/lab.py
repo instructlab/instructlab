@@ -145,6 +145,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
                         f"Cloning {repository} failed with the following error: {exc}",
                         fg="red",
                     )
+                    sys.exit(1)
 
         # check if models dir exists, and if so ask for which model to use
         models_dir = dirname(model_path)
@@ -221,6 +222,7 @@ def serve(ctx, model_path, gpu_layers):
             f"Creating App using model failed with following value error: {err}",
             fg="red",
         )
+        sys.exit(1)
     try:
         llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
             template="{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}",
@@ -233,6 +235,7 @@ def serve(ctx, model_path, gpu_layers):
             f"Error creating chat handler: {e}",
             fg="red",
         )
+        sys.exit(1)
     click.echo("Starting server process")
     click.echo(
         "After application startup complete see http://127.0.0.1:8000/docs for API."
@@ -301,6 +304,7 @@ def generate(
             f"Error connecting to the server: {exc.__cause__}",
             fg="red",
         )
+        sys.exit(1)
 
 
 @cli.command()
@@ -347,6 +351,7 @@ def chat(ctx, question, model, context, session, quick_question):
         )
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
+        sys.exit(1)
 
 
 @cli.command()
@@ -387,6 +392,7 @@ def download(ctx, repository, release, filename, model_dir):
             f"Downloading model failed with the following Hugging Face Hub error: {exc}",
             fg="red",
         )
+        sys.exit(1)
 
 
 @cli.command()
