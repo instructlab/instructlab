@@ -5,11 +5,10 @@ from dataclasses import asdict, dataclass
 import yaml
 
 DEFAULT_CONFIG = "config.yaml"
-DEFAULT_MODEL_PATH = "models/ggml-merlinite-7b-0302-Q4_K_M.gguf"
+DEFAULT_MODEL = "merlinite-7b-Q4_K_M"
+DEFAULT_MODEL_PATH = f"models/{DEFAULT_MODEL}.gguf"
 DEFAULT_API_BASE = "http://localhost:8000/v1"
 DEFAULT_API_KEY = "no_api_key"
-DEFAULT_MODEL = "ggml-merlinite-7b-0302-Q4_K_M"
-DEFAULT_DOWNLOAD_TAG = "v0.4.0"
 DEFAULT_VI_MODE = False
 DEFAULT_VISIBLE_OVERFLOW = True
 DEFAULT_TAXONOMY_REPO = "git@github.com:instruct-lab/taxonomy.git"
@@ -55,11 +54,6 @@ class _generate:
 
 
 @dataclass
-class _list:
-    taxonomy_path: str
-
-
-@dataclass
 class _serve:
     model_path: str
     gpu_layers: int
@@ -70,7 +64,6 @@ class Config:
     general: _general
     chat: _chat
     generate: _generate
-    list: _list
     serve: _serve
 
     def __post_init__(self):
@@ -81,7 +74,6 @@ class Config:
         self.general = _general(**self.general)
         self.chat = _chat(**self.chat)
         self.generate = _generate(**self.generate)
-        self.list = _list(**self.list)
         self.serve = _serve(**self.serve)
 
 
@@ -127,6 +119,5 @@ def get_default_config():
         seed_file=DEFAULT_SEED_FILE,
     )
     # pylint: disable=redefined-builtin
-    list = _list(taxonomy_path=DEFAULT_TAXONOMY_PATH)
     serve = _serve(model_path=DEFAULT_MODEL_PATH, gpu_layers=-1)
-    return Config(general=general, chat=chat, generate=generate, list=list, serve=serve)
+    return Config(general=general, chat=chat, generate=generate, serve=serve)
