@@ -23,7 +23,12 @@ import uvicorn
 from . import config, utils
 from .chat.chat import ChatException, chat_cli
 from .download import DownloadException, clone_taxonomy
-from .generator.generate_data import GenerateException, generate_data, get_taxonomy_diff
+from .generator.generate_data import (
+    GenerateException,
+    generate_data,
+    get_taxonomy_diff,
+    read_taxonomy,
+)
 
 
 # pylint: disable=unused-argument
@@ -195,6 +200,21 @@ def list(ctx, taxonomy_path):
 
 @cli.command()
 @click.option(
+    "--taxonomy-path",
+    type=click.Path(),
+    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
+)
+@click.pass_context
+def check(ctx, taxonomy_path):
+    """Check that taxonomy is valid"""
+    if not taxonomy_path:
+        taxonomy_path = ctx.obj.config.generate.taxonomy_path
+    ctx.obj.logger.debug(f"Checking taxonomy: '{taxonomy_path}'")
+    read_taxonomy(ctx.obj.logger, taxonomy_path)
+
+
+@cli.command()
+@click.option(
     "--model-path",
     type=click.Path(),
     help="Path to the model used during generation.",
@@ -272,9 +292,21 @@ def serve(ctx, model_path, gpu_layers):
     default=0.9,
     help="Threshold of (max) Rouge score to keep samples; 1.0 means accept all samples.",
 )
+@click.option(
+    "--quiet",
+    is_flag=True,
+    help="Suppress output of synthesized instructions",
+)
 @click.pass_context
 def generate(
-    ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file, rouge_threshold
+    ctx,
+    model,
+    num_cpus,
+    num_instructions,
+    taxonomy_path,
+    seed_file,
+    rouge_threshold,
+    quiet,
 ):
     """Generates synthetic data to enhance your example data"""
     ctx.obj.logger.info(
@@ -290,6 +322,7 @@ def generate(
             prompt_file_path=ctx.obj.config.generate.prompt_file,
             seed_tasks_path=seed_file,
             rouge_threshold=rouge_threshold,
+            console_output=not quiet,
         )
     except GenerateException as exc:
         click.secho(
