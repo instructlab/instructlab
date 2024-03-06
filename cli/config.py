@@ -54,11 +54,6 @@ class _generate:
 
 
 @dataclass
-class _list:
-    taxonomy_path: str
-
-
-@dataclass
 class _serve:
     model_path: str
     gpu_layers: int
@@ -69,7 +64,6 @@ class Config:
     general: _general
     chat: _chat
     generate: _generate
-    list: _list
     serve: _serve
 
     def __post_init__(self):
@@ -80,7 +74,6 @@ class Config:
         self.general = _general(**self.general)
         self.chat = _chat(**self.chat)
         self.generate = _generate(**self.generate)
-        self.list = _list(**self.list)
         self.serve = _serve(**self.serve)
 
 
@@ -126,6 +119,5 @@ def get_default_config():
         seed_file=DEFAULT_SEED_FILE,
     )
     # pylint: disable=redefined-builtin
-    list = _list(taxonomy_path=DEFAULT_TAXONOMY_PATH)
     serve = _serve(model_path=DEFAULT_MODEL_PATH, gpu_layers=-1)
-    return Config(general=general, chat=chat, generate=generate, list=list, serve=serve)
+    return Config(general=general, chat=chat, generate=generate, serve=serve)
