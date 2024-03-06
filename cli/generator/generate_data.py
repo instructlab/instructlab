@@ -65,8 +65,9 @@ def encode_prompt(prompt_instructions, prompt):
     """Encode multiple prompt instructions into a single string."""
     idx = 0
     prompt = prompt.format(taxonomy=prompt_instructions[0]["taxonomy_path"])
+    # pylint: disable=unused-variable
     for idx, task_dict in enumerate(prompt_instructions):
-        (instruction, prompt_input, prompt_output, taxonomy_path) = (
+        (instruction, prompt_input, prompt_output, taxonomy_path,) = (
             task_dict["instruction"],
             task_dict["input"],
             task_dict["output"],
@@ -150,13 +151,6 @@ def post_process_gpt3_response(num_prompt_instructions, response):
 
 def find_word_in_string(w, s):
     return re.compile(r"\b({0})\b".format(w), flags=re.IGNORECASE).search(s)
-
-
-def get_seed_examples(contents):
-    if "seed_examples" in contents:
-        return contents["seed_examples"]
-    else:
-        return contents
 
 
 def get_seed_examples(contents):
@@ -460,6 +454,7 @@ def read_taxonomy_file(logger, file_path):
                     warnings += 1
                 if not q or not a:
                     continue
+                tax_path = "->".join(file_path.split(os.sep)[1:-1])
                 seed_instruction_data.append(
                     {
                         "instruction": q,
