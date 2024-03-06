@@ -55,7 +55,9 @@ def download_model(
     except FileNotFoundError as exc:
         raise DownloadException("`gh` binary not found") from exc
     except subprocess.CalledProcessError as exc:
-        raise DownloadException(f"error invoking `gh` command: {exc}") from exc
+        raise DownloadException(
+            f"error invoking `gh` command: {exc}:\n  {exc.stderr}"
+        ) from exc
 
     # Get the list of local files
     ls_commands = ["ls", model_dir]
