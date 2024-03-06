@@ -129,3 +129,18 @@ Unsure where to begin contributing? You can start by looking through these issue
 
 - Issues with the [`good first issue` label](https://github.com/instruct-lab/cli/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22) - these should only require a few lines of code and are good targets if you're just starting contributing.
 - Issues with the [`help wanted` label](https://github.com/instruct-lab/cli/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) - these range from simple to more complex, but are generally things we want but can't get to in a short time frame.
+
+## Label Issues and Pull Requests
+After creating an issue or pull request, you can comment with the following commands to label your issue/PR:
+
+Label Commands | Policy | Description
+--- | --- | ---
+`/area [label1 label2 ...]` | anyone | adds an area/<> label(s) defined in the [`.github/labels.yaml` file](/.github/labels.yml)
+`/kind [label1 label2 ...]` | anyone | adds a kind/<> label(s) defined in the [`.github/labels.yaml` file](/.github/labels.yml)
+`/priority [label1 label2 ...]` | anyone | adds a priority/<> label(s) defined in the [`.github/labels.yaml` file](/.github/labels.yml)
+`/assign` | anyone | assigns yourself to the issue or pull request
+`/unassign` | anyone | Unassigns yourself from the issue or pull request
+`/hold` | anyone | adds the `hold` label to indicate the pull request is not ready to merge
+`/hold cancel` | anyone | removes the `hold` label
+
+For example, you can comment `/kind question` to label an issue about a question.

@@ -1,13 +1,29 @@
 # labels to be used with /area command
 area:
-  - 'bug'
-  - 'important'
+  - 'ci'
+  - 'cli'
+  - 'config'
+  - 'init'
+  - 'download'
+  - 'generate'
+  - 'serve'
+  - 'chat'
+  - 'train'
+  - 'convert'
 
+# labels to be used with /kind command
 kind:
   - 'feature'
   - 'enhancement'
+  - 'documentation'
+  - 'bug'
+  - 'tests'
+  - 'chore'
+  - 'question'
 
+# labels to be used with /priority command
 priority:
   - 'low'
   - 'mid'
   - 'high'
+  - 'critical'
