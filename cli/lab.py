@@ -287,7 +287,7 @@ def serve(ctx, model_path, gpu_layers):
 @click.option(
     "--output-dir",
     type=click.Path(),
-    help=f"Path to output generated files",
+    help="Path to output generated files",
 )
 @click.option(
     "--seed-file",
