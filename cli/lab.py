@@ -325,6 +325,7 @@ def generate(
     try:
         generate_data(
             logger=ctx.obj.logger,
+            api_host_port=ctx.obj.config.chat.api_host_port,
             model_name=model,
             num_cpus=num_cpus,
             num_instructions_to_generate=num_instructions,

@@ -31,6 +31,7 @@ class OpenAIDecodingArguments:
 
 
 def openai_completion(
+    api_host_port,
     prompts: Union[str, Sequence[str], Sequence[dict[str, str]], dict[str, str]],
     decoding_args: OpenAIDecodingArguments,
     model_name="ggml-merlinite-7b-0302-Q4_K_M",
@@ -95,7 +96,8 @@ def openai_completion(
             **decoding_kwargs,
         }
 
-        client = OpenAI(base_url="http://localhost:8000/v1", api_key="foo")
+        api_base = f"http://{api_host_port}/v1"
+        client = OpenAI(base_url=api_base, api_key="foo")
 
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
