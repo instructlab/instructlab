@@ -17,9 +17,16 @@ After that is done you can:
 ## 📋 Requirements
 
 - **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora). We anticipate support for more operating systems in the future.
-- 🐍 Python 3.9 or later
+- The GNU C++ compiler
+- 🐍 Python 3.9 or later, including the development headers.
 - `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github
 - Approximately 10GB of free disk space to get through the `lab generate` step.  Approximately 60GB of free disk space to fully run the entire process locally on Apple hardware.
+
+On Fedora Linux this means installing:
+```
+$ sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
+$ sudo yum install g++ gh python3 python3-devel
+```
 
 ## 🧰 Installing `lab`
 
