@@ -143,7 +143,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
                         f"Cloning {repository} failed with the following error: {exc}",
                         fg="red",
                     )
-                    sys.exit(1)
+                    raise click.exceptions.Exit(1)
 
         # check if models dir exists, and if so ask for which model to use
         models_dir = dirname(model_path)
@@ -226,6 +226,7 @@ def serve(ctx, model_path, gpu_layers):
         server(ctx.obj.logger, model_path, gpu_layers)
     except ServerException as exc:
         click.secho(f"Error creating server: {exc}", fg="red")
+        raise click.exceptions.Exit(1)
 
 
 @cli.command()
@@ -398,7 +399,7 @@ def download(ctx, repository, release, filename, model_dir):
             f"Downloading model failed with the following Hugging Face Hub error: {exc}",
             fg="red",
         )
-        sys.exit(1)
+        raise click.exceptions.Exit(1)
 
 
 @cli.command()
@@ -470,19 +471,19 @@ def train(
                 f"Could not read taxonomy directory: {exc}",
                 fg="red",
             )
-            sys.exit(1)
+            raise click.exceptions.Exit(1)
         except OSError as exc:
             click.secho(
                 f"Could not create data dir: {exc}",
                 fg="red",
             )
-            sys.exit(1)
+            raise click.exceptions.Exit(1)
         except IndexError as exc:
             click.secho(
                 f"Could not copy into data directory: {exc}",
                 fg="red",
             )
-            sys.exit(1)
+            raise click.exceptions.Exit(1)
 
     if not skip_preprocessing:
         script = os.path.join(cli_dir, "train/lora-mlx/make_data.py")
