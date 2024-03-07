@@ -242,14 +242,17 @@ def check(ctx, taxonomy_path, taxonomy_base):
     type=click.INT,
     help="The number of layers to put on the GPU. The rest will be on the CPU. Defaults to -1 to move all to GPU.",
 )
+@click.option("--num-threads", type=click.INT, help="The number of CPU threads to use")
 @click.pass_context
-def serve(ctx, model_path, gpu_layers):
+def serve(ctx, model_path, gpu_layers, num_threads):
     """Start a local server"""
     ctx.obj.logger.info(f"Using model '{model_path}' with {gpu_layers} gpu-layers")
+
     try:
         host = ctx.obj.config.serve.host_port.split(":")[0]
         port = int(ctx.obj.config.serve.host_port.split(":")[1])
-        server(ctx.obj.logger, model_path, gpu_layers, host, port)
+        server(ctx.obj.logger, model_path, gpu_layers, num_threads, host, port)
+
     except ServerException as exc:
         click.secho(f"Error creating server: {exc}", fg="red")
         raise click.exceptions.Exit(1)
