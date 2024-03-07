@@ -16,6 +16,7 @@ DEFAULT_TAXONOMY_PATH = "taxonomy"
 DEFAULT_TAXONOMY_BRANCH = "main"
 DEFAULT_PROMPT_FILE = "prompt.txt"
 DEFAULT_SEED_FILE = "seed_tasks.json"
+DEFAULT_GENERATED_FILES_OUTPUT_DIR = "generated"
 
 
 class ConfigException(Exception):
@@ -49,6 +50,7 @@ class _generate:
     num_cpus: int
     num_instructions: int
     taxonomy_path: str
+    output_dir: str
     prompt_file: str
     seed_file: str
 
@@ -115,6 +117,7 @@ def get_default_config():
         num_cpus=10,
         num_instructions=100,
         taxonomy_path=DEFAULT_TAXONOMY_PATH,
+        output_dir=DEFAULT_GENERATED_FILES_OUTPUT_DIR,
         prompt_file=DEFAULT_PROMPT_FILE,
         seed_file=DEFAULT_SEED_FILE,
     )
