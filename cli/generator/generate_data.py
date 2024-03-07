@@ -414,24 +414,30 @@ def read_taxonomy_file(logger, file_path):
             tax_path = "->".join(file_path.split(os.sep)[1:-1])
             for t in get_seed_examples(contents):
                 q = t["question"]
-                a = t["answer"]
+                r = t.get("response")
+                if not r:
+                    logger.warn(
+                        'Response is using the legacy yaml key ("answer"), use "response" instead'
+                    )
+                    r = t.get("answer")
+
                 if not q:
                     logger.warn(
                         f"Skipping entry in {file_path} " + "because question is empty!"
                     )
                     warnings += 1
-                if not a:
+                if not r:
                     logger.warn(
-                        f"Skipping entry in {file_path} " + "because answer is empty!"
+                        f"Skipping entry in {file_path} " + "because response is empty!"
                     )
                     warnings += 1
-                if not q or not a:
+                if not q or not r:
                     continue
                 seed_instruction_data.append(
                     {
                         "instruction": q,
                         "input": "",
-                        "output": a,
+                        "output": r,
                         "taxonomy_path": tax_path,
                     }
                 )
