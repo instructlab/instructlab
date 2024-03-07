@@ -406,7 +406,7 @@ def read_taxonomy_file(logger, file_path):
             for t in get_seed_examples(contents):
                 q = t["question"]
                 a = t["answer"]
-                c = t["context"]
+                c = t.get("context")
                 if not q:
                     logger.warn(
                         f"Skipping entry in {file_path} " + "because question is empty!"
