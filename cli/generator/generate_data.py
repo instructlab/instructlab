@@ -18,6 +18,7 @@ try:
 except ImportError:
     pass
 # Third Party
+from httpcore import ConnectError
 from rouge_score import rouge_scorer
 
 # import numpy as np
@@ -280,6 +281,10 @@ def generate_data(
                 raise GenerateException(
                     f"There was a problem with the new data, please make sure the yaml is formatted correctly, and there is enough new data({num_prompt_instructions}+ Q&A) or decrease `num_prompt_instructions`, (currently {num_prompt_instructions})"
                 ) from exc
+            except ConnectError:
+                raise GenerateException(
+                    "There was connection error upon completion, please ensure you have 'lab serve' running before initiating generate."
+                )
             prompt = encode_prompt(prompt_instructions, prompt_template)
             batch_inputs.append(prompt)
         decoding_args = utils.OpenAIDecodingArguments(
