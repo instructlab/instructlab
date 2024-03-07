@@ -14,8 +14,6 @@ class LogLevel(str, enum.Enum):
 
 
 class Chat(BaseModel):
-    api_base: str
-    api_key: str
     context: str
     session: None
     model: str
