@@ -19,13 +19,11 @@ After that is done you can:
 - **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora). We anticipate support for more operating systems in the future.
 - The GNU C++ compiler
 - 🐍 Python 3.9 or later, including the development headers.
-- `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github
 - Approximately 10GB of free disk space to get through the `lab generate` step.  Approximately 60GB of free disk space to fully run the entire process locally on Apple hardware.
 
 On Fedora Linux this means installing:
 ```
-$ sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
-$ sudo yum install g++ gh python3 python3-devel
+$ sudo yum install g++ python3 python3-devel
 ```
 
 ## 🧰 Installing `lab`
@@ -98,29 +96,20 @@ You can override this behavior for any `lab` command with the `--config` paramet
 
 ## 📥 Download the model
 
-Users should make sure they are logged in to their github accounts via the `gh` CLI and following the prompts/instructions:
-
-```
-gh auth login
-```
-
-**⁉️  Something not working?**: Please review [lab-troubleshoot.md](./lab-troubleshoot.md) for troubleshooting tips related to `gh`.
-
 ```
 lab download
 ```
 
-`lab download` will download a pre-trained model from GitHub and store it in a `models` directory:
+`lab download` will download a pre-trained model from HuggingFace and store it in a `models` directory:
 
 ```
 (venv) $ lab download
-Make sure the local environment has the `gh` cli: https://cli.github.com
-Downloading models from https://github.com/instruct-lab/cli.git@v0.2.0 to models...
+Downloading model from ibm/merlinite-7b-GGUF@main to models...
 (venv) $ ls models
-ggml-merlinite-7b-0302-Q4_K_M.gguf
+merlinite-7b-Q4_K_M.gguf
 ```
 
-⏳ This command can take 5+ minutes depending on your internet connection.
+⏳ This command can take few minutes or immediately depending on your internet connection or model is cached.
 
 ## 🍴 Serving the model
 
