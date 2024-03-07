@@ -155,7 +155,7 @@ source venv/bin/activate
 lab chat
 ```
 
-Before you start adding new skills and knowledge to your knowledge, you can check out its baseline performance:
+Before you start adding new skills and knowledge to your model, you can check out its baseline performance:
 
 ```
 (venv) $ lab chat
