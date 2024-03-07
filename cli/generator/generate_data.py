@@ -161,6 +161,7 @@ def get_seed_examples(contents):
 
 def generate_data(
     logger,
+    api_host_port,
     output_dir: Optional[str] = None,
     taxonomy: Optional[str] = None,
     seed_tasks_path: Optional[str] = None,
@@ -292,6 +293,7 @@ def generate_data(
         )
         request_start = time.time()
         results = utils.openai_completion(
+            api_host_port=api_host_port,
             prompts=batch_inputs,
             model_name=model_name,
             batch_size=request_batch_size,
