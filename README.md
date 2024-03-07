@@ -208,11 +208,11 @@ taxonomy: '/home/username/instruct-lab/taxonomy' and seed 'seed_tasks.json'
 98%|##########| 98/100 INFO 2024-02-29 20:49:27,582 generate_data.py:428 Generation took 5978.78s
 ```
 
-The synthetic data set will be three files in the newly created `generated` directory that are named like: `generated*.json`, `test*.jsonl`, and `train*.jsonl`:
+The synthetic data set will be three files in the existing `taxonomy` directory that are named like: `generated*.json`, `test*.jsonl`, and `train*.jsonl`:
 ```
-(venv) $ ls generated/
- 'generated_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.json'   'train_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
- 'test_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
+(venv) $ ls taxonomy/*.json*
+taxonomy/generated_merlinite-7b-Q4_K_M_2024-03-07T12:26:10.json  taxonomy/train_merlinite-7b-Q4_K_M_2024-03-07T12:26:10.jsonl
+taxonomy/test_merlinite-7b-Q4_K_M_2024-03-07T12:26:10.jsonl
 ```
 
 > **NOTE:** ⏳ This can take over **1 hour+** to complete depending on your computing resources.
