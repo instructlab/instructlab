@@ -23,7 +23,12 @@ import uvicorn
 from . import config, utils
 from .chat.chat import ChatException, chat_cli
 from .download import DownloadException, clone_taxonomy
-from .generator.generate_data import GenerateException, generate_data, get_taxonomy_diff
+from .generator.generate_data import (
+    GenerateException,
+    generate_data,
+    get_taxonomy_diff,
+    read_taxonomy,
+)
 
 
 # pylint: disable=unused-argument
@@ -145,6 +150,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
                         f"Cloning {repository} failed with the following error: {exc}",
                         fg="red",
                     )
+                    sys.exit(1)
 
         # check if models dir exists, and if so ask for which model to use
         models_dir = dirname(model_path)
@@ -195,6 +201,21 @@ def list(ctx, taxonomy_path):
 
 @cli.command()
 @click.option(
+    "--taxonomy-path",
+    type=click.Path(),
+    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
+)
+@click.pass_context
+def check(ctx, taxonomy_path):
+    """Check that taxonomy is valid"""
+    if not taxonomy_path:
+        taxonomy_path = ctx.obj.config.generate.taxonomy_path
+    ctx.obj.logger.debug(f"Checking taxonomy: '{taxonomy_path}'")
+    read_taxonomy(ctx.obj.logger, taxonomy_path)
+
+
+@cli.command()
+@click.option(
     "--model-path",
     type=click.Path(),
     help="Path to the model used during generation.",
@@ -221,6 +242,7 @@ def serve(ctx, model_path, gpu_layers):
             f"Creating App using model failed with following value error: {err}",
             fg="red",
         )
+        sys.exit(1)
     try:
         llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
             template="{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}",
@@ -233,6 +255,7 @@ def serve(ctx, model_path, gpu_layers):
             f"Error creating chat handler: {e}",
             fg="red",
         )
+        sys.exit(1)
     click.echo("Starting server process")
     click.echo(
         "After application startup complete see http://127.0.0.1:8000/docs for API."
@@ -272,9 +295,21 @@ def serve(ctx, model_path, gpu_layers):
     default=0.9,
     help="Threshold of (max) Rouge score to keep samples; 1.0 means accept all samples.",
 )
+@click.option(
+    "--quiet",
+    is_flag=True,
+    help="Suppress output of synthesized instructions",
+)
 @click.pass_context
 def generate(
-    ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file, rouge_threshold
+    ctx,
+    model,
+    num_cpus,
+    num_instructions,
+    taxonomy_path,
+    seed_file,
+    rouge_threshold,
+    quiet,
 ):
     """Generates synthetic data to enhance your example data"""
     ctx.obj.logger.info(
@@ -290,6 +325,7 @@ def generate(
             prompt_file_path=ctx.obj.config.generate.prompt_file,
             seed_tasks_path=seed_file,
             rouge_threshold=rouge_threshold,
+            console_output=not quiet,
         )
     except GenerateException as exc:
         click.secho(
@@ -301,6 +337,7 @@ def generate(
             f"Error connecting to the server: {exc.__cause__}",
             fg="red",
         )
+        sys.exit(1)
 
 
 @cli.command()
@@ -347,6 +384,7 @@ def chat(ctx, question, model, context, session, quick_question):
         )
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
+        sys.exit(1)
 
 
 @cli.command()
@@ -387,6 +425,7 @@ def download(ctx, repository, release, filename, model_dir):
             f"Downloading model failed with the following Hugging Face Hub error: {exc}",
             fg="red",
         )
+        sys.exit(1)
 
 
 @cli.command()
@@ -395,7 +434,6 @@ def download(ctx, repository, release, filename, model_dir):
     "--taxonomy-path",
     type=click.Path(),
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
-    default="./taxonomy",
 )
 @click.option(
     "--skip-preprocessing",
@@ -418,15 +456,25 @@ def download(ctx, repository, release, filename, model_dir):
     is_flag=True,
     help="Whether to skip quantization while converting to MLX.",
 )
+@click.pass_context
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 def train(
-    data_dir, taxonomy_path, skip_preprocessing, model_dir, iters, local, skip_quantize
+    ctx,
+    data_dir,
+    taxonomy_path,
+    skip_preprocessing,
+    model_dir,
+    iters,
+    local,
+    skip_quantize,
 ):
     """
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
     cli_dir = os.path.dirname(os.path.abspath(__file__))
+    if not taxonomy_path:
+        taxonomy_path = ctx.obj.config.generate.taxonomy_path
 
     if data_dir is None:
         data_dir = "./taxonomy_data"
@@ -449,19 +497,19 @@ def train(
                 f"Could not read taxonomy directory: {exc}",
                 fg="red",
             )
-            sys.exit()
+            sys.exit(1)
         except OSError as exc:
             click.secho(
                 f"Could not create data dir: {exc}",
                 fg="red",
             )
-            sys.exit()
+            sys.exit(1)
         except IndexError as exc:
             click.secho(
                 f"Could not copy into data directory: {exc}",
                 fg="red",
             )
-            sys.exit()
+            sys.exit(1)
 
     if not skip_preprocessing:
         script = os.path.join(cli_dir, "train/lora-mlx/make_data.py")
