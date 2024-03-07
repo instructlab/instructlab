@@ -1,11 +1,14 @@
 # Standard
+
 from dataclasses import asdict, dataclass
+
+
 
 # Third Party
 import yaml
 
 DEFAULT_CONFIG = "config.yaml"
-DEFAULT_MODEL = "merlinite-7b-Q4_K_M"
+DEFAULT_MODEL = f"merlinite-7b-Q4_K_M"
 DEFAULT_MODEL_PATH = f"models/{DEFAULT_MODEL}.gguf"
 DEFAULT_API_BASE = "http://localhost:8000/v1"
 DEFAULT_API_KEY = "no_api_key"
@@ -18,12 +21,14 @@ DEFAULT_PROMPT_FILE = "prompt.txt"
 DEFAULT_SEED_FILE = "seed_tasks.json"
 
 
+  
+
 class ConfigException(Exception):
-    """An exception that a configuration file doesn't exists or it doesn't contain valid YAML."""
+    """An exception that a configuration file doesn't exists or it doesn't contain valid YAML."""  
 
     def __init__(self, filename):
         super().__init__(
-            f"Configuration file {filename} does not exist or contains invalid YAML."
+            f"Configuration file {filename} does not exist or contains invalid YAML." 
         )
 
 
@@ -35,7 +40,7 @@ class _general:
 @dataclass
 class _chat:
     api_base: str
-    api_key: str
+    api_key: str  
     model: str
     vi_mode: bool
     visible_overflow: bool
@@ -105,6 +110,7 @@ def get_default_config():
         api_base=DEFAULT_API_BASE,
         api_key=DEFAULT_API_KEY,
         model=DEFAULT_MODEL,
+        output=None,
         vi_mode=DEFAULT_VI_MODE,
         visible_overflow=DEFAULT_VISIBLE_OVERFLOW,
         context="default",
