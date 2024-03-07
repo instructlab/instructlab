@@ -314,6 +314,8 @@ class ConsoleChatBot:
             self.console.print("Connection error, try again...", style="red bold")
             self.info["messages"].pop()
             raise KeyboardInterrupt
+        except KeyboardInterrupt as e:
+            raise e
         except:
             self.console.print("Unknown error", style="bold red")
             raise ChatException(f"Unknown error: {sys.exc_info()[0]}")
