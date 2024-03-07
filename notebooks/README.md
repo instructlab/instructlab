@@ -10,7 +10,7 @@ We've laid out the steps to get started with either platform below.
 
 ### Kaggle
 
-Using a [Kaggle Notebook]([./Training_a_LoRA_With_Instruct_Lab.ipynb](https://github.com/instruct-lab/cli/blob/main/notebooks/Training_a_LoRA_With_Instruct_Lab.ipynb)) and the NVIDIA P100 provided in the free tier, we will fine tune a LoRA. 
+Using a [Kaggle Notebook](https://github.com/instruct-lab/cli/blob/main/notebooks/Training_a_LoRA_With_Instruct_Lab.ipynb) and the NVIDIA P100 provided in the free tier, we will fine tune a LoRA. 
 
 #### Pre-requisites
 
