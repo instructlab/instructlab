@@ -20,6 +20,7 @@ After that is done you can:
 - The GNU C++ compiler
 - 🐍 Python 3.9 or later, including the development headers.
 - `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github
+- Approximately 10GB of free disk space to get through the `lab generate` step.  Approximately 60GB of free disk space to fully run the entire process locally on Apple hardware.
 
 On Fedora Linux this means installing:
 ```
