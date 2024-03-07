@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass
 import yaml
 
 DEFAULT_CONFIG = "config.yaml"
+DEFAULT_CHAT_LOGS = "data/chatlogs"
 DEFAULT_MODEL = "merlinite-7b-Q4_K_M"
 DEFAULT_MODEL_PATH = f"models/{DEFAULT_MODEL}.gguf"
 DEFAULT_API_HOST_PORT = "localhost:8000"
@@ -33,6 +34,7 @@ class _general:
     log_level: str
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class _chat:
     api_host_port: str
@@ -42,6 +44,7 @@ class _chat:
     visible_overflow: bool
     context: str
     session: str
+    logs_dir: str
 
 
 @dataclass
@@ -111,6 +114,7 @@ def get_default_config():
         visible_overflow=DEFAULT_VISIBLE_OVERFLOW,
         context="default",
         session=None,
+        logs_dir=DEFAULT_CHAT_LOGS,
     )
     generate = _generate(
         model=DEFAULT_MODEL,
