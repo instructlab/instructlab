@@ -45,10 +45,6 @@ List of 20 tasks:
 """
 
 
-class GenerateException(Exception):
-    """An exception raised during generate step."""
-
-
 def check_prompt_file(prompt_file_path):
     """Check for prompt file."""
     try:
@@ -161,7 +157,7 @@ def get_seed_examples(contents):
 
 def generate_data(
     logger,
-    api_host_port,
+    api_base,
     output_dir: Optional[str] = None,
     taxonomy: Optional[str] = None,
     seed_tasks_path: Optional[str] = None,
@@ -278,7 +274,7 @@ def generate_data(
                     seed_instruction_data, num_prompt_instructions
                 )
             except ValueError as exc:
-                raise GenerateException(
+                raise utils.GenerateException(
                     f"There was a problem with the new data, please make sure the yaml is formatted correctly, and there is enough new data({num_prompt_instructions}+ Q&A) or decrease `num_prompt_instructions`, (currently {num_prompt_instructions})"
                 ) from exc
             prompt = encode_prompt(prompt_instructions, prompt_template)
@@ -293,7 +289,7 @@ def generate_data(
         )
         request_start = time.time()
         results = utils.openai_completion(
-            api_host_port=api_host_port,
+            api_base=api_base,
             prompts=batch_inputs,
             model_name=model_name,
             batch_size=request_batch_size,
@@ -459,7 +455,7 @@ def read_taxonomy(logger, taxonomy):
         try:
             updated_taxonomy_files = get_taxonomy_diff(taxonomy)
         except NameError as exc:
-            raise GenerateException("`git` binary not found") from exc
+            raise utils.GenerateException("`git` binary not found") from exc
         total_errors = 0
         total_warnings = 0
         for f in updated_taxonomy_files:

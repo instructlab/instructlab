@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 # Standard
 import json
 import os
@@ -353,21 +351,9 @@ class ConsoleChatBot:
         self._update_conversation(response_content.plain, "assistant")
 
 
-def chat_cli(config, logger, question, model, context, session, qq) -> None:
-    assert (context is None) or (
-        session is None
-    ), "Cannot load context and session in the same time"
-
-    if not config.api_key:
-        raise ChatException("Invalid API Key. Please set it in your config file.")
-
-    # proxy = config.get("proxy")
-    # if proxy is not None:
-    # TODO: The 'openai.proxy' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(proxy={"http": proxy, "https": proxy})'
-    # openai.proxy = {"http": proxy, "https": proxy}
-
-    api_base = f"http://{config.api_host_port}/v1"
-    client = OpenAI(base_url=api_base, api_key=config.api_key)
+def chat_cli(logger, api_base, config, question, model, context, session, qq):
+    """Starts a CLI-based chat with the server"""
+    client = OpenAI(base_url=api_base, api_key="no_api_key")
 
     # Load context/session
     loaded = {}

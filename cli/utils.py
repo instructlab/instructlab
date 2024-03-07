@@ -20,7 +20,7 @@ def macos_requirement(echo_func, exit_exception):
                     message=f"`lab {func.__name__}` is only implemented for macOS with M-series chips for now",
                     fg="red",
                 )
-                raise exit_exception(-1)
+                raise exit_exception(1)
             return func(*args, **kwargs)
 
         return wrapper
