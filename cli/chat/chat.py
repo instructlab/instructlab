@@ -170,11 +170,11 @@ class ConsoleChatBot:
             raise KeyboardInterrupt
         context = cs[1]
         if context not in CONTEXTS:
-            available_contexts = ', '.join(CONTEXTS.keys())
+            available_contexts = ", ".join(CONTEXTS.keys())
             self._sys_print(
                 Markdown(
                     f"**WARNING**: Context `{context}` not found. "
-                    f"Avaliable contexts: `{available_contexts}`"
+                    f"Available contexts: `{available_contexts}`"
                 )
             )
             raise KeyboardInterrupt
