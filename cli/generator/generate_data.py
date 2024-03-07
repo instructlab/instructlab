@@ -12,6 +12,9 @@ import re
 import string
 import time
 
+# Local
+from .storage import json_to_parquet
+
 try:
     # Third Party
     import git
@@ -175,6 +178,7 @@ def generate_data(
     top_p=1.0,
     rouge_threshold: Optional[float] = None,
     console_output=True,
+    parquet=False,
 ):
     seed_instruction_data = []
     generate_start = time.time()
@@ -370,6 +374,20 @@ def generate_data(
             for entry in test_data:
                 json.dump(entry, outfile)
                 outfile.write("\n")
+        # If parquet flag is enabled, also output all the JSON content in parquet format
+        if parquet:
+            json_to_parquet(
+                machine_instruction_data,
+                os.path.join(output_dir, os.path.splitext(output_file)[0]),
+            )
+            json_to_parquet(
+                train_data,
+                os.path.join(output_dir, os.path.splitext(output_file_train)[0]),
+            )
+            json_to_parquet(
+                test_data,
+                os.path.join(output_dir, os.path.splitext(output_file_test)[0]),
+            )
 
     generate_duration = time.time() - generate_start
     logger.info(f"Generation took {generate_duration:.2f}s")
