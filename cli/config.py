@@ -28,6 +28,15 @@ class ConfigException(Exception):
         )
 
 
+class ConfigOutdated(Exception):
+    """Config parsing failed due to use of an outdated format."""
+
+    def __init__(self, filename):
+        super().__init__(
+            f"Configuration file {filename} is using an outdated format. Run `lab init` again."
+        )
+
+
 @dataclass
 class _general:
     log_level: str
@@ -84,8 +93,12 @@ def read_config(config_file=DEFAULT_CONFIG):
     try:
         with open(config_file, "r", encoding="utf-8") as yamlfile:
             cfg = yaml.safe_load(yamlfile)
+            if "list" in cfg and "taxonomy_path" in cfg["list"]:
+                raise ConfigOutdated(config_file)
             return Config(**cfg)
     except Exception as exc:
+        if isinstance(exc, ConfigOutdated):
+            raise
         raise ConfigException(config_file) from exc
 
 

@@ -54,7 +54,11 @@ def configure(ctx, param, filename):
             f"`{filename}` does not exists, please run `lab init` or point to a valid configuration file using `--config=<path>`."
         )
 
-    ctx.obj = Lab(filename)
+    try:
+        ctx.obj = Lab(filename)
+    except config.ConfigOutdated as exc:
+        raise click.ClickException(str(exc))
+
     # default_map holds a dictionary with default values for each command parameters
     ctx.default_map = config.get_dict(ctx.obj.config)
 
