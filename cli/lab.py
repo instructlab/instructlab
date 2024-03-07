@@ -4,25 +4,31 @@ from os.path import basename, dirname, exists, splitext
 import json
 import logging
 import os
-import platform
 import shutil
-import subprocess
 import sys
 
 # Third Party
 from click_didyoumean import DYMGroup
+from huggingface_hub import hf_hub_download
+from huggingface_hub.utils import HfHubHTTPError
 from llama_cpp import llama_chat_format
 from llama_cpp.server.app import create_app
 from llama_cpp.server.settings import Settings
 import click
 import llama_cpp.server.app as llama_app
+import openai
 import uvicorn
 
 # Local
 from . import config, utils
 from .chat.chat import ChatException, chat_cli
-from .download import DownloadException, clone_taxonomy, download_model
-from .generator.generate_data import GenerateException, generate_data, get_taxonomy_diff
+from .download import DownloadException, clone_taxonomy
+from .generator.generate_data import (
+    GenerateException,
+    generate_data,
+    get_taxonomy_diff,
+    read_taxonomy,
+)
 
 
 # pylint: disable=unused-argument
@@ -144,6 +150,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
                         f"Cloning {repository} failed with the following error: {exc}",
                         fg="red",
                     )
+                    sys.exit(1)
 
         # check if models dir exists, and if so ask for which model to use
         models_dir = dirname(model_path)
@@ -160,7 +167,6 @@ def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
     cfg.generate.model = model
     cfg.serve.model_path = model_path
     cfg.generate.taxonomy_path = taxonomy_path
-    cfg.list.taxonomy_path = taxonomy_path
     config.write_config(cfg)
 
     click.echo(
@@ -181,6 +187,8 @@ def list(ctx, taxonomy_path):
     Lists taxonomy files that have changed since last commit.
     Similar to 'git diff'
     """
+    if not taxonomy_path:
+        taxonomy_path = ctx.obj.config.generate.taxonomy_path
     updated_taxonomy_files = get_taxonomy_diff(taxonomy_path)
     for f in updated_taxonomy_files:
         if splitext(f)[1] != ".yaml":
@@ -189,6 +197,21 @@ def list(ctx, taxonomy_path):
             )
             continue
         click.echo(f)
+
+
+@cli.command()
+@click.option(
+    "--taxonomy-path",
+    type=click.Path(),
+    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
+)
+@click.pass_context
+def check(ctx, taxonomy_path):
+    """Check that taxonomy is valid"""
+    if not taxonomy_path:
+        taxonomy_path = ctx.obj.config.generate.taxonomy_path
+    ctx.obj.logger.debug(f"Checking taxonomy: '{taxonomy_path}'")
+    read_taxonomy(ctx.obj.logger, taxonomy_path)
 
 
 @cli.command()
@@ -219,6 +242,7 @@ def serve(ctx, model_path, gpu_layers):
             f"Creating App using model failed with following value error: {err}",
             fg="red",
         )
+        sys.exit(1)
     try:
         llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
             template="{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}",
@@ -231,6 +255,7 @@ def serve(ctx, model_path, gpu_layers):
             f"Error creating chat handler: {e}",
             fg="red",
         )
+        sys.exit(1)
     click.echo("Starting server process")
     click.echo(
         "After application startup complete see http://127.0.0.1:8000/docs for API."
@@ -270,9 +295,21 @@ def serve(ctx, model_path, gpu_layers):
     default=0.9,
     help="Threshold of (max) Rouge score to keep samples; 1.0 means accept all samples.",
 )
+@click.option(
+    "--quiet",
+    is_flag=True,
+    help="Suppress output of synthesized instructions",
+)
 @click.pass_context
 def generate(
-    ctx, model, num_cpus, num_instructions, taxonomy_path, seed_file, rouge_threshold
+    ctx,
+    model,
+    num_cpus,
+    num_instructions,
+    taxonomy_path,
+    seed_file,
+    rouge_threshold,
+    quiet,
 ):
     """Generates synthetic data to enhance your example data"""
     ctx.obj.logger.info(
@@ -288,20 +325,19 @@ def generate(
             prompt_file_path=ctx.obj.config.generate.prompt_file,
             seed_tasks_path=seed_file,
             rouge_threshold=rouge_threshold,
+            console_output=not quiet,
         )
     except GenerateException as exc:
         click.secho(
             f"Generating dataset failed with the following error: {exc}",
             fg="red",
         )
-
-
-@cli.command()
-@click.pass_context
-# pylint: disable=function-redefined
-def test(ctx):
-    """Perform rudimentary tests of the model"""
-    click.echo("# test TBD")
+    except openai.APIConnectionError as exc:
+        click.secho(
+            f"Error connecting to the server: {exc.__cause__}",
+            fg="red",
+        )
+        sys.exit(1)
 
 
 @cli.command()
@@ -348,67 +384,48 @@ def chat(ctx, question, model, context, session, quick_question):
         )
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
+        sys.exit(1)
 
 
 @cli.command()
 @click.option(
     "--repository",
-    default="https://github.com/instruct-lab/cli.git",
+    default="ibm/merlinite-7b-GGUF",
     show_default=True,
-    help="GitHub repository of the hosted models.",
+    help="Hugging Face repository of the model to download.",
 )
 @click.option(
     "--release",
-    default=config.DEFAULT_DOWNLOAD_TAG,
+    default="main",
     show_default=True,
-    help="GitHub release version of the hosted models.",
+    help="The git revision of the model to download - e.g. a branch, tag, or commit hash.",
 )
 @click.option(
-    "--model-dir", help="The local directory to download the model files into."
+    "--filename",
+    default=basename(config.DEFAULT_MODEL_PATH),
+    show_default=True,
+    help="Name of the model file to download from the Hugging Face repository.",
 )
 @click.option(
-    "--pattern",
-    help="Download only assets that match a glob pattern.",
+    "--model-dir",
+    default=dirname(config.DEFAULT_MODEL_PATH),
+    show_default=True,
+    help="The local directory to download the model files into.",
 )
-@click.option("--pattern", help="Download only assets that match a glob pattern.")
 @click.pass_context
-def download(ctx, repository, release, model_dir, pattern):
+def download(ctx, repository, release, filename, model_dir):
     """Download the model(s) to train"""
-    # Use the serve model path to get the right models in the right place, if needed
-    serve_model_path = ctx.obj.config.serve.model_path
-    if serve_model_path:  # if set in config
-        if not model_dir:  # --model_dir takes precedence
-            model_dir = dirname(serve_model_path)
-        if not pattern:  # --pattern takes precedence
-            pattern = basename(serve_model_path).replace(".gguf", ".*")
-    click.echo(
-        "Make sure the local environment has the `gh` cli: https://cli.github.com"
-    )
-    click.echo(f"Downloading models from {repository}@{release} to {model_dir}...")
+    click.echo(f"Downloading model from {repository}@{release} to {model_dir}...")
     try:
-        download_model(repository, release, model_dir, pattern)
-    except DownloadException as exc:
+        hf_hub_download(
+            repo_id=repository, revision=release, filename=filename, local_dir=model_dir
+        )
+    except HfHubHTTPError as exc:
         click.secho(
-            f"Downloading models failed with the following error: {exc}",
+            f"Downloading model failed with the following Hugging Face Hub error: {exc}",
             fg="red",
         )
-
-
-def is_macos_with_m_chip():
-    # Check if the OS is macOS
-    if platform.system() != "Darwin":
-        return False
-
-    # Check for Apple Silicon (M1, M2, etc.)
-    try:
-        # Running 'sysctl -a' and searching for a specific line that indicates ARM architecture
-        result = subprocess.check_output(["sysctl", "-a"], text=True)
-        is_m_chip = "machdep.cpu.brand_string: Apple" in result
-        return is_m_chip
-    # pylint: disable=broad-exception-caught
-    except Exception as e:
-        print(f"Error checking architecture: {e}")
-        return False
+        sys.exit(1)
 
 
 @cli.command()
@@ -417,7 +434,6 @@ def is_macos_with_m_chip():
     "--taxonomy-path",
     type=click.Path(),
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
-    default="./taxonomy",
 )
 @click.option(
     "--skip-preprocessing",
@@ -440,21 +456,25 @@ def is_macos_with_m_chip():
     is_flag=True,
     help="Whether to skip quantization while converting to MLX.",
 )
+@click.pass_context
+@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 def train(
-    data_dir, taxonomy_path, skip_preprocessing, model_dir, iters, local, skip_quantize
+    ctx,
+    data_dir,
+    taxonomy_path,
+    skip_preprocessing,
+    model_dir,
+    iters,
+    local,
+    skip_quantize,
 ):
     """
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
-    if not is_macos_with_m_chip():
-        click.secho(
-            "`lab train` is only implemented for macOS with M-series chips",
-            fg="red",
-        )
-        sys.exit()
-
     cli_dir = os.path.dirname(os.path.abspath(__file__))
+    if not taxonomy_path:
+        taxonomy_path = ctx.obj.config.generate.taxonomy_path
 
     if data_dir is None:
         data_dir = "./taxonomy_data"
@@ -477,19 +497,19 @@ def train(
                 f"Could not read taxonomy directory: {exc}",
                 fg="red",
             )
-            sys.exit()
+            sys.exit(1)
         except OSError as exc:
             click.secho(
                 f"Could not create data dir: {exc}",
                 fg="red",
             )
-            sys.exit()
+            sys.exit(1)
         except IndexError as exc:
             click.secho(
                 f"Could not copy into data directory: {exc}",
                 fg="red",
             )
-            sys.exit()
+            sys.exit(1)
 
     if not skip_preprocessing:
         script = os.path.join(cli_dir, "train/lora-mlx/make_data.py")
@@ -537,18 +557,10 @@ def train(
     default="ibm-merlinite-7b-mlx-q",
 )
 @click.option("--adapter-file", help="LoRA adapter to use for test.", default=None)
+@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 # pylint: disable=function-redefined
 def test(data_dir, model_dir, adapter_file):
-    """
-    TODO
-    """
-    if not is_macos_with_m_chip():
-        click.secho(
-            "`lab train` is only implemented for macOS with M-series chips",
-            fg="red",
-        )
-        sys.exit()
-
+    """Runs basic test to ensure model correctness"""
     if adapter_file is None:
         adapter_file = os.path.join(model_dir, "adapters.npz")
     cli_dir = os.path.dirname(os.path.abspath(__file__))
@@ -593,10 +605,9 @@ def test(data_dir, model_dir, adapter_file):
     is_flag=True,
     help="Whether to skip quantization while converting to GGUF.",
 )
+@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
-    """
-    TODO
-    """
+    """Converts model to GGUF"""
     if adapter_file is None:
         adapter_file = os.path.join(model_dir, "adapters.npz")
     cli_dir = os.path.dirname(os.path.abspath(__file__))
