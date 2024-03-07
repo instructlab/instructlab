@@ -20,6 +20,7 @@ After that is done you can:
 - The GNU C++ compiler
 - 🐍 Python 3.9 or later, including the development headers.
 - `gh` cli: Install [Github command cli](https://cli.github.com/) for downloading models from Github
+- Approximately 10GB of free disk space to get through the `lab generate` step.  Approximately 60GB of free disk space to fully run the entire process locally on Apple hardware.
 
 On Fedora Linux this means installing:
 ```
@@ -208,18 +209,17 @@ The synthetic data set will be three files in the `taxonomy` repository that are
 
 ## 👩‍🏫 Train the model
 
-### Traing the model locally on an M-series Mac
+There are currently two options to train the model on your synthetic data-enhanced dataset.
+
+### Train the model locally on an M-series Mac
 
 ```
 lab train
 lab convert
 ```
 
-**Every** `lab` command needs to be run from within your Python virtual environment:
-
-### Traing the model in Co Lab
-
-Train the model on your synthetic data-enhanced dataset by following the instructions in [Training](./notebooks/README.md)
+### Train the model in Colab
+Follow the instructions in [Training](./notebooks/README.md).
 
 ⏳ This takes about **0.5-2.5 hours** to complete in the free tier of Google Colab.
 
