@@ -59,7 +59,7 @@ class ChatException(Exception):
 
 
 # TODO Autosave chat history
-class ConsoleChatBot:
+class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
         model,
@@ -69,6 +69,7 @@ class ConsoleChatBot:
         vertical_overflow="ellipsis",
         loaded={},
         log_file=None,
+        greedy_mode=False,
     ):
         self.client = client
         self.model = model
@@ -76,6 +77,8 @@ class ConsoleChatBot:
         self.vertical_overflow = vertical_overflow
         self.loaded = loaded
         self.log_file = log_file
+        self.greedy_mode = greedy_mode
+
         self.console = Console()
         self.input = (
             PromptSession(history=FileHistory(PROMPT_HISTORY_FILEPATH))
@@ -306,10 +309,19 @@ class ConsoleChatBot:
             self.multiline_mode = 0
             self.multiline = not self.multiline
 
+        # Optional parameters
+        create_params = {}
+        if self.greedy_mode:
+            # https://platform.openai.com/docs/api-reference/chat/create#chat-create-temperature
+            create_params["temperature"] = 0
+
         # Get and parse response
         try:
             response = self.client.chat.completions.create(
-                model=self.model, messages=self.info["messages"], stream=True
+                model=self.model,
+                messages=self.info["messages"],
+                stream=True,
+                **create_params,
             )
             assert (
                 next(response).choices[0].delta.role == "assistant"
@@ -402,6 +414,7 @@ def chat_cli(logger, api_base, config, question, model, context, session, qq):
         prompt=not qq,
         vertical_overflow=("visible" if config.visible_overflow else "ellipsis"),
         loaded=loaded,
+        greedy_mode=config.greedy_mode,
     )
 
     if not qq:
