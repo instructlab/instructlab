@@ -393,6 +393,14 @@ def get_taxonomy_diff(repo="taxonomy"):
     updated_taxonomy_files = list(
         set(chain(untracked_files, modified_files, staged_files))
     )
+    if not updated_taxonomy_files:
+        # If diff empty, try diffing against origin/main.
+        # This can be useful when on a branch for a PR.
+        updated_taxonomy_files = [
+            d.a_path
+            for d in repo.index.diff(repo.refs["origin/main"].commit)
+            if splitext(d.a_path)[1].lower() in extensions
+        ]
     return updated_taxonomy_files
 
 
