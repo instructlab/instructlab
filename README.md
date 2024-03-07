@@ -104,7 +104,7 @@ Users should make sure they are logged in to their github accounts via the `gh` 
 gh auth login
 ```
 
-**⁉️  Something not working?**: Please review [lab-troubleshoot.md](./lab-troubleshoot.md) for troubleshooting tips related to `gh`.
+**⁉️  Something not working?**: Please review [TROUBLESHOOTING.md](./TROUBLESHOOTING.md#lab-troubleshooting) for troubleshooting tips related to `gh`.
 
 ```
 lab download
@@ -241,6 +241,9 @@ Try the fine-tuned model out live using the chat interface, and see if the resul
 ```
 lab chat -m <New model name>
 ```
+
+If you are interested in taking steps to optiimze the quality of the model's responses, please see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md#model-fine-tuning-and-response-optimization)
+
 ## 🎁 Submit your new knowledge
 
 Of course the final step is - if you've improved the model - to open up a a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy).
