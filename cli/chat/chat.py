@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 # Standard
-import atexit
 import json
 import os
 import sys
@@ -319,7 +318,7 @@ class ConsoleChatBot:
             )
             self.info["messages"].pop()
             raise ChatException("Rate limit exceeded") from e
-        except openai.APIConnectionError as e:
+        except openai.APIConnectionError:
             self.console.print("Connection error, try again...", style="red bold")
             self.info["messages"].pop()
             raise KeyboardInterrupt
@@ -367,7 +366,8 @@ def chat_cli(config, logger, question, model, context, session, qq) -> None:
     # TODO: The 'openai.proxy' option isn't read in the client API. You will need to pass it when you instantiate the client, e.g. 'OpenAI(proxy={"http": proxy, "https": proxy})'
     # openai.proxy = {"http": proxy, "https": proxy}
 
-    client = OpenAI(base_url=config.api_base, api_key=config.api_key)
+    api_base = f"http://{config.api_host_port}/v1"
+    client = OpenAI(base_url=api_base, api_key=config.api_key)
 
     # Load context/session
     loaded = {}

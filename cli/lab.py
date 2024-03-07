@@ -258,10 +258,11 @@ def serve(ctx, model_path, gpu_layers):
         sys.exit(1)
     click.echo("Starting server process")
     click.echo(
-        "After application startup complete see http://127.0.0.1:8000/docs for API."
+        f"After application startup complete see http://{ctx.obj.config.chat.api_host_port}/docs for API."
     )
     click.echo("Press CTRL+C to shutdown server.")
-    uvicorn.run(app, port=8000, log_level=logging.ERROR)  # TODO: host params, etc...
+    port = int(ctx.obj.config.chat.api_host_port.split(":")[-1])
+    uvicorn.run(app, port=port, log_level=logging.ERROR)  # TODO: host params, etc...
 
 
 @cli.command()
