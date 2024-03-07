@@ -221,15 +221,10 @@ def generate_data(
         )
 
     name = Path(model_name).stem  # Just in case it is a file path
-    output_file = (
-        f"generated_{name}_{datetime.now().replace(microsecond=0).isoformat()}.json"
-    )
-    output_file_train = (
-        f"train_{name}_{datetime.now().replace(microsecond=0).isoformat()}.jsonl"
-    )
-    output_file_test = (
-        f"test_{name}_{datetime.now().replace(microsecond=0).isoformat()}.jsonl"
-    )
+    date_suffix = datetime.now().replace(microsecond=0).isoformat().replace(":", "_")
+    output_file = f"generated_{name}_{date_suffix}.json"
+    output_file_train = f"train_{name}_{date_suffix}.jsonl"
+    output_file_test = f"test_{name}_{date_suffix}.jsonl"
     logger.debug(f"Generating to: {os.path.join(output_dir, output_file)}")
 
     request_idx = 0
