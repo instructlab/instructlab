@@ -425,7 +425,10 @@ def download(ctx, repository, release, filename, model_dir):
     click.echo(f"Downloading model from {repository}@{release} to {model_dir}...")
     try:
         hf_hub_download(
-            repo_id=repository, revision=release, filename=filename, local_dir=model_dir
+            repo_id=repository,
+            revision=release,
+            filename=filename,
+            local_dir=model_dir,
         )
     except HfHubHTTPError as exc:
         click.secho(
