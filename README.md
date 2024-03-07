@@ -239,7 +239,7 @@ lab serve --model-path <New model name>
 Try the fine-tuned model out live using the chat interface, and see if the results are better than the untrained version of the model with chat.
 
 ```
-lab chat
+lab chat -m <New model name>
 ```
 ## 🎁 Submit your new knowledge
 
