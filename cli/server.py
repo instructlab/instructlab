@@ -28,7 +28,7 @@ def ensure_server(logger, serve_config):
         return (None, None)
     except ClientException:
         port = random.randint(1024, 65535)
-        host_port = f"locahost:{port}"
+        host_port = f"localhost:{port}"
         temp_api_base = get_api_base(host_port)
         logger.debug(
             f"Connection to {api_base} failed. Starting a temporary server at {temp_api_base}..."
