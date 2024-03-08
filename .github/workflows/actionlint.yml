@@ -26,3 +26,6 @@ jobs:
         run: bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash)
       - name: Check workflow files
         run: PATH=".:$PATH" actionlint -color
+      - name: Check for trailing newline characters
+        id: newline-check
+        run: git ls-files -z | while IFS= read -rd '' f; do if file --mime-encoding "$f" | grep -qv binary; then tail -c1 < "$f" | read -r _ || (echo "$f is missing a trailing newline." && touch .newlines-missing) ; fi; done; [ ! -f .newlines-missing ] || exit 1
