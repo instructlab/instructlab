@@ -1,4 +1,5 @@
 # Standard
+import datetime
 import json
 import os
 import sys
@@ -67,13 +68,14 @@ class ConsoleChatBot:
         prompt=True,
         vertical_overflow="ellipsis",
         loaded={},
+        log_file=None,
     ):
         self.client = client
         self.model = model
         self.vi_mode = vi_mode
         self.vertical_overflow = vertical_overflow
         self.loaded = loaded
-
+        self.log_file = log_file
         self.console = Console()
         self.input = (
             PromptSession(history=FileHistory(PROMPT_HISTORY_FILEPATH))
@@ -97,6 +99,11 @@ class ConsoleChatBot:
 
     def _sys_print(self, *args, **kwargs):
         self.console.print(Panel(*args, title="system", **kwargs))
+
+    def log_message(self, msg):
+        if self.log_file:
+            with open(self.log_file, "a") as fp:
+                fp.write(msg)
 
     def greet(self, help=False, new=False, session_name="new session"):
         side_info_str = (" (type `/h` for help)" if help else "") + (
@@ -289,6 +296,8 @@ class ConsoleChatBot:
         if handler is not None:
             handler(content)
 
+        self.log_message(PROMPT_PREFIX + content + "\n\n")
+
         # Update message history and token counters
         self._update_conversation(content, "user")
 
@@ -347,6 +356,9 @@ class ConsoleChatBot:
                 if box:
                     panel.subtitle = f"elapsed {time.time() - start_time:.3f} seconds"
 
+        # Update chat logs
+        self.log_message("- " + panel.subtitle + " -\n")
+        self.log_message(response_content.plain + "\n\n")
         # Update message history and token counters
         self._update_conversation(response_content.plain, "assistant")
 
@@ -373,11 +385,20 @@ def chat_cli(logger, api_base, config, question, model, context, session, qq):
         loaded["name"] = os.path.basename(session.name).strip(".json")
         loaded["messages"] = json.loads(session.read())
 
+    log_file = None
+    if config.logs_dir:
+        date_suffix = (
+            datetime.datetime.now().replace(microsecond=0).isoformat().replace(":", "_")
+        )
+        os.makedirs(config.logs_dir, exist_ok=True)
+        log_file = f"{config.logs_dir}/chat_{date_suffix}.log"
+
     # Initialize chat bot
     ccb = ConsoleChatBot(
         config.model if model is None else model,
         client=client,
         vi_mode=config.vi_mode,
+        log_file=log_file,
         prompt=not qq,
         vertical_overflow=("visible" if config.visible_overflow else "ellipsis"),
         loaded=loaded,
