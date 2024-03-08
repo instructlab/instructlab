@@ -80,11 +80,11 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self.greedy_mode = greedy_mode
 
         self.console = Console()
-        self.input = (
-            PromptSession(history=FileHistory(PROMPT_HISTORY_FILEPATH))
-            if prompt
-            else None
-        )
+
+        self.input = None
+        if prompt:
+            os.makedirs(PROMPT_HISTORY_FILEPATH, exist_ok=True)
+            self.input = PromptSession(history=FileHistory(PROMPT_HISTORY_FILEPATH))
         self.multiline = False
         self.multiline_mode = 0
 
