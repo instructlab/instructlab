@@ -74,3 +74,14 @@ jobs:
             -x testenv:unit.system_site_packages=True \
             -x testenv:unit.skip_install=True \
             -e unit
+
+      - name: Install the expect package
+        run: |
+          sudo apt-get install -y expect
+
+      - name: Run functional tests
+        run: |
+          tox \
+            -x testenv:functional.system_site_packages=True \
+            -x testenv:functional.skip_install=True \
+            -e functional
