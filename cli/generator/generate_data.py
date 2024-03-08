@@ -44,7 +44,7 @@ Here are the requirements:
 List of 5 tasks:
 """
 
-DEFAULT_PROMPT_TEMPLATE_CONTEXT = """\
+DEFAULT_PROMPT_TEMPLATE_DOCUMENT = """\
 You are asked to come up with a set of 20 diverse task instructions under {taxonomy}{task_description_str}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
 
 Here are the requirements:
@@ -76,7 +76,7 @@ def check_prompt_file(prompt_file_path, has_document):
     except FileNotFoundError:
         print(f"Cannot find {prompt_file_path}. Using default prompt.")
         if has_document:
-            prompt_template = DEFAULT_PROMPT_TEMPLATE_CONTEXT
+            prompt_template = DEFAULT_PROMPT_TEMPLATE_DOCUMENT
         else:
             prompt_template = DEFAULT_PROMPT_TEMPLATE
     prompt_template = prompt_template + "\n"
