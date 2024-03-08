@@ -64,6 +64,7 @@ Document:
 Here are some examples to help you understand the type of question that asked for this document:
 """
 
+
 class GenerateException(Exception):
     """An exception raised during generate step."""
 
@@ -87,19 +88,21 @@ def encode_prompt(prompt_instructions, prompt):
     """Encode multiple prompt instructions into a single string."""
     idx = 0
     task_description = prompt_instructions[0]["task_description"]
-    task_description_str = "" if task_description == "" else f' for the task "{task_description}"'
+    task_description_str = (
+        "" if task_description == "" else f' for the task "{task_description}"'
+    )
     if "document" in prompt_instructions[0]:
         document = prompt_instructions[0]["document"]
     else:
         document = ""
     if document == "":
         prompt = prompt.format(
-            taxonomy=prompt_instructions[0]["taxonomy_path"], 
+            taxonomy=prompt_instructions[0]["taxonomy_path"],
             task_description_str=task_description_str,
         )
     else:
         prompt = prompt.format(
-            taxonomy=prompt_instructions[0]["taxonomy_path"], 
+            taxonomy=prompt_instructions[0]["taxonomy_path"],
             task_description_str=task_description_str,
             document=document,
         )
@@ -479,7 +482,8 @@ def read_taxonomy_file(logger, file_path):
                         "output": a,
                         "taxonomy_path": tax_path,
                         "task_description": task_description,
-                    } | ({} if document is None else {"document": document})
+                    }
+                    | ({} if document is None else {"document": document})
                 )
     except Exception as e:
         errors += 1
