@@ -45,10 +45,6 @@ List of 20 tasks:
 """
 
 
-class GenerateException(Exception):
-    """An exception raised during generate step."""
-
-
 def check_prompt_file(prompt_file_path):
     """Check for prompt file."""
     try:
@@ -161,6 +157,7 @@ def get_seed_examples(contents):
 
 def generate_data(
     logger,
+    api_base,
     output_dir: Optional[str] = None,
     taxonomy: Optional[str] = None,
     seed_tasks_path: Optional[str] = None,
@@ -173,57 +170,20 @@ def generate_data(
     temperature=1.0,
     top_p=1.0,
     rouge_threshold: Optional[float] = None,
+    console_output=True,
 ):
     seed_instruction_data = []
     generate_start = time.time()
+
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
 
     # check taxonomy first then seed_tasks_path
     # throw an error if both not found
     # pylint: disable=broad-exception-caught,raise-missing-from
     if taxonomy and os.path.exists(taxonomy):
-
-        is_file = os.path.isfile(taxonomy)
-        if is_file:
-            # Default output_dir to taxonomy file's dir
-            output_dir = output_dir or os.path.dirname(os.path.abspath(taxonomy))
-            seed_instruction_data, warnings, errors = read_taxonomy_file(
-                logger, taxonomy
-            )
-            if warnings:
-                logger.warn(
-                    f"{warnings} warnings (see above) due to taxonomy file not (fully) usable."
-                )
-            if errors:
-                raise SystemExit(yaml.YAMLError("Taxonomy file with errors! Exiting."))
-        else:  # taxonomy is_dir
-            # Default output_dir to taxonomy dir, using the dir not the parent
-            output_dir = output_dir or os.path.abspath(taxonomy)
-            # Gather the new or changed YAMLs using git diff
-            try:
-                updated_taxonomy_files = get_taxonomy_diff(taxonomy)
-            except NameError as exc:
-                raise GenerateException("`git` binary not found") from exc
-            total_errors = 0
-            total_warnings = 0
-            for f in updated_taxonomy_files:
-                file_path = os.path.join(taxonomy, f)
-                data, warnings, errors = read_taxonomy_file(logger, file_path)
-                total_warnings += warnings
-                total_errors += errors
-                if data:
-                    seed_instruction_data.extend(data)
-            if total_warnings:
-                logger.warn(
-                    f"{total_warnings} warnings (see above) due to taxonomy files that were not (fully) usable."
-                )
-            if total_errors:
-                raise SystemExit(
-                    yaml.YAMLError(
-                        f"{total_errors} taxonomy files with errors! Exiting."
-                    )
-                )
+        seed_instruction_data = read_taxonomy(logger, taxonomy)
     elif seed_tasks_path and os.path.exists(seed_tasks_path):
-        output_dir = output_dir or os.path.dirname(os.path.abspath(seed_tasks_path))
         with open(seed_tasks_path, "r", encoding="utf-8") as seed_tasks_file:
             seed_tasks = [json.loads(l) for l in seed_tasks_file]
         seed_instruction_data = [
@@ -261,15 +221,10 @@ def generate_data(
         )
 
     name = Path(model_name).stem  # Just in case it is a file path
-    output_file = (
-        f"generated_{name}_{datetime.now().replace(microsecond=0).isoformat()}.json"
-    )
-    output_file_train = (
-        f"train_{name}_{datetime.now().replace(microsecond=0).isoformat()}.jsonl"
-    )
-    output_file_test = (
-        f"test_{name}_{datetime.now().replace(microsecond=0).isoformat()}.jsonl"
-    )
+    date_suffix = datetime.now().replace(microsecond=0).isoformat().replace(":", "_")
+    output_file = f"generated_{name}_{date_suffix}.json"
+    output_file_train = f"train_{name}_{date_suffix}.jsonl"
+    output_file_test = f"test_{name}_{date_suffix}.jsonl"
     logger.debug(f"Generating to: {os.path.join(output_dir, output_file)}")
 
     request_idx = 0
@@ -299,6 +254,10 @@ def generate_data(
     ]
 
     prompt_template = check_prompt_file(prompt_file_path)
+    if console_output:
+        print(
+            "Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help."
+        )
     while len(machine_instruction_data) < num_instructions_to_generate:
         request_idx += 1
 
@@ -310,7 +269,7 @@ def generate_data(
                     seed_instruction_data, num_prompt_instructions
                 )
             except ValueError as exc:
-                raise GenerateException(
+                raise utils.GenerateException(
                     f"There was a problem with the new data, please make sure the yaml is formatted correctly, and there is enough new data({num_prompt_instructions}+ Q&A) or decrease `num_prompt_instructions`, (currently {num_prompt_instructions})"
                 ) from exc
             prompt = encode_prompt(prompt_instructions, prompt_template)
@@ -325,6 +284,7 @@ def generate_data(
         )
         request_start = time.time()
         results = utils.openai_completion(
+            api_base=api_base,
             prompts=batch_inputs,
             model_name=model_name,
             batch_size=request_batch_size,
@@ -385,6 +345,8 @@ def generate_data(
                     "assistant": synth_example["output"],
                 }
             )
+            if console_output:
+                print(f"{user}\n{synth_example['output']}\n")
         # utils.jdump(train_data, os.path.join(output_dir, output_file_train))
         with open(
             os.path.join(output_dir, output_file_train), "w", encoding="utf-8"
@@ -407,17 +369,17 @@ def generate_data(
 def get_taxonomy_diff(repo="taxonomy"):
     repo = git.Repo(repo)
     untracked_files = [
-        u for u in repo.untracked_files if splitext(u)[1].lower() in [".yaml", ".yml"]
+        u for u in repo.untracked_files if splitext(u)[1].lower() == ".yaml"
     ]
     modified_files = [
         d.a_path
         for d in repo.index.diff(None)
-        if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]
+        if splitext(d.a_path)[1].lower() == ".yaml"
     ]
     staged_files = [
         d.a_path
         for d in repo.index.diff(repo.head.commit)
-        if splitext(d.a_path)[1].lower() in [".yaml", ".yml"]
+        if splitext(d.a_path)[1].lower() == ".yaml"
     ]
     updated_taxonomy_files = list(set(untracked_files + modified_files + staged_files))
 
@@ -444,6 +406,7 @@ def read_taxonomy_file(logger, file_path):
             for t in get_seed_examples(contents):
                 q = t["question"]
                 a = t["answer"]
+                c = t.get("context")
                 if not q:
                     logger.warn(
                         f"Skipping entry in {file_path} " + "because question is empty!"
@@ -459,7 +422,7 @@ def read_taxonomy_file(logger, file_path):
                 seed_instruction_data.append(
                     {
                         "instruction": q,
-                        "input": "",
+                        "input": "" if not c else c,
                         "output": a,
                         "taxonomy_path": tax_path,
                     }
@@ -470,3 +433,40 @@ def read_taxonomy_file(logger, file_path):
         logger.error(e)
 
     return seed_instruction_data, warnings, errors
+
+
+def read_taxonomy(logger, taxonomy):
+    seed_instruction_data = []
+    is_file = os.path.isfile(taxonomy)
+    if is_file:
+        seed_instruction_data, warnings, errors = read_taxonomy_file(logger, taxonomy)
+        if warnings:
+            logger.warn(
+                f"{warnings} warnings (see above) due to taxonomy file not (fully) usable."
+            )
+        if errors:
+            raise SystemExit(yaml.YAMLError("Taxonomy file with errors! Exiting."))
+    else:  # taxonomy is_dir
+        # Gather the new or changed YAMLs using git diff
+        try:
+            updated_taxonomy_files = get_taxonomy_diff(taxonomy)
+        except NameError as exc:
+            raise utils.GenerateException("`git` binary not found") from exc
+        total_errors = 0
+        total_warnings = 0
+        for f in updated_taxonomy_files:
+            file_path = os.path.join(taxonomy, f)
+            data, warnings, errors = read_taxonomy_file(logger, file_path)
+            total_warnings += warnings
+            total_errors += errors
+            if data:
+                seed_instruction_data.extend(data)
+        if total_warnings:
+            logger.warn(
+                f"{total_warnings} warnings (see above) due to taxonomy files that were not (fully) usable."
+            )
+        if total_errors:
+            raise SystemExit(
+                yaml.YAMLError(f"{total_errors} taxonomy files with errors! Exiting.")
+            )
+    return seed_instruction_data
