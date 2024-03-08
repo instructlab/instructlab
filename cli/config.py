@@ -1,5 +1,6 @@
 # Standard
-from dataclasses import asdict, dataclass
+from dataclasses import Field, asdict, dataclass
+import sys
 
 # Third Party
 import yaml
@@ -87,9 +88,41 @@ class Config:
 
 def read_config(config_file=DEFAULT_CONFIG):
     """Reads configuration from disk"""
+
+    def validateConfig(cl, d):
+        fields = None
+        warnings = []
+        if cl is Config:
+            fields = cl.__dataclass_fields__
+            name = "at the global level"
+        elif isinstance(cl, Field) and isinstance(d, dict):
+            fields = cl.type.__dataclass_fields__
+            name = f"in section '{cl.name}'"
+        if fields:
+            c = {}
+            for (k, v) in fields.items():
+                if k in d:
+                    c[k], warning = validateConfig(v, d[k])
+                    if warning:
+                        warnings.extend(warning)
+                else:
+                    warnings.append(f">> '{k}', {v.type} is missing {name}")
+        else:
+            c = d
+        return c, warnings
+
     try:
         with open(config_file, "r", encoding="utf-8") as yamlfile:
-            cfg = yaml.safe_load(yamlfile)
+            content = yaml.safe_load(yamlfile)
+            cfg, warnings = validateConfig(Config, content)
+            if warnings:
+                print(f"ERROR: Following issues were detected in {config_file}:")
+                for w in warnings:
+                    print(w)
+                print(
+                    f"Please update your {config_file} and re-run the tool. You can move {config_file} aside and generate a new one with 'lab init'"
+                )
+                sys.exit(1)
             return Config(**cfg)
     except Exception as exc:
         raise ConfigException(config_file) from exc
