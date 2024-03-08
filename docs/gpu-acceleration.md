@@ -55,7 +55,7 @@ pip3 install torch --force-reinstall --no-cache-dir --index-url https://download
 
 With that done, it's time to move on to `llama-cpp-python`.
 
-Go to the project's Github to see the [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends). There are several possible backends that may work on AMD; `CLBlast (OpenCL)` and `hipBLAS (ROCm)` have been tested to work. It may be worth installing others to see if they work for you, but your mileage may vary. We'll include instructions for the tested backends below!
+Go to the project's Github to see the [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends). There are several possible backends that may work on AMD; `CLBlast (OpenCL)` and `hipBLAS (ROCm)` have been tested to work. It may be worth installing others to see if they work for you, but your mileage may vary. Instructions for the tested backends are included below!
 
 Whichever backend you choose, you'll see a `pip3 install` command. You'll want to add a few options to ensure it gets installed over the existing package: `--force-reinstall` and `--no-cache-dir`. 
 
@@ -68,12 +68,12 @@ If using hipBLAS you may need to install additional ROCm and hipBLAS Dependencie
 sudo dnf install rocm-dev rocm-utils rocm-llvm rocminfo
 
 # hipBLAS dependencies
-sudo dnf install hipblas-devel hipblas
+sudo dnf install hipblas-devel hipblas rocblas-devel
 ```
 
 With those dependencies installed, you should be able to install (and build) `llama-cpp-python`!
 
-We'll use `rocminfo | grep gfx` to find our GPU model to include in the build command - this may not be necessary in Fedora 40+ or ROCm 6.0+.  You should see something like the following if you have an AMD Integrated and Dedicated GPU:
+You can use `rocminfo | grep gfx` to find our GPU model to include in the build command - this may not be necessary in Fedora 40+ or ROCm 6.0+.  You should see something like the following if you have an AMD Integrated and Dedicated GPU:
 ```
 $ rocminfo | grep gfx
   Name:                    gfx1100                            
@@ -87,7 +87,7 @@ In this case, `gfx1100` is the model we're looking for (our dedicated GPU) so we
 CMAKE_ARGS="-DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ -DCMAKE_PREFIX_PATH=/opt/rocm -DAMDGPU_TARGETS=gfx1100" FORCE_CMAKE=1 pip install llama-cpp-python --force-reinstall --no-cache-dir
 ```
 
-**Note:** We are explicitly forcing the build to use the ROCm compilers and prefix path for dependency resolution in the CMake build.  This works around an issue in the CMake and ROCm version in Fedora 39 and below and may be fixed in F40.  
+**Note:** This is explicitly forcing the build to use the ROCm compilers and prefix path for dependency resolution in the CMake build.  This works around an issue in the CMake and ROCm version in Fedora 39 and below and may be fixed in F40.  
 
 Once that package is installed, recompile `lab` with `pip3 install .`.  You also need to tell `HIP` which GPU to use - you can find this out via `rocminfo` although it is typically GPU 0.  To set which device is visible to HIP, we'll set `export HIP_VISIBLE_DEVICES=0` for GPU 0. Now you can skip to the `Testing` section.
 
