@@ -78,3 +78,10 @@ jobs:
             -x testenv:lint.system_site_packages=True \
             -x testenv:lint.skip_install=True \
             -e lint
+
+      - name: Run flake8
+        run: |
+          tox \
+            -x testenv:flake8.system_site_packages=True \
+            -x testenv:flake8.skip_install=True \
+            -e flake8
