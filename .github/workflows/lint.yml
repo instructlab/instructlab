@@ -1,4 +1,4 @@
-# Copyright The Authors
+# Copyright The InstructLab Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ on:
       - '**.py'
 
 env:
-  PYTHON_VERSION: 3.9
+  PYTHON_VERSION: 3.11
 
 jobs:
   lint:
@@ -73,7 +73,9 @@ jobs:
             -e fmt
 
       - name: Run linting
+        if: success() || failure()
         run: |
+          echo "::add-matcher::.github/workflows/matchers/pylint.json"
           tox \
             -x testenv:lint.system_site_packages=True \
             -x testenv:lint.skip_install=True \

@@ -12,18 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Build and Test
+name: Test
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "main"
+    paths:
+      - '**.py'
   pull_request:
     branches:
       - "main"
+    paths:
+      - '**.py'
 
 jobs:
-  build:
+  test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -39,7 +44,25 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
 
+      # tox creates (and reuses) a separate Python (virtual) environment for each context (fmt, lint, unit)
+      # tox requires (and will install, if not exists) all the packages listed in requirements.txt
+      # so we want to cache the entire Python environment, not just the pip cache as tox will not reuse that
+      # but caching tox environments is fickle and can cause weird errors
+      # tox does provide a legacy option to reuse the Python system wide site packages
+      # since GH action runners are one-and-done we can install all requirements into the system packages
+      # and cache and reuse all of the installed Python system packages
+      # tox can then reuse the system site packages with setting `-x testenv:unit.system_site_packages=True`
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        id: cache
+        with:
+          path: ${{ env.pythonLocation }}
+          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-${{ hashFiles('requirements-dev.txt') }}
+          restore-keys:
+            ${{ env.pythonLocation }}-
+
       - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
@@ -47,4 +70,7 @@ jobs:
 
       - name: Run unit tests
         run: |
-          tox -e unit
+          tox \
+            -x testenv:unit.system_site_packages=True \
+            -x testenv:unit.skip_install=True \
+            -e unit

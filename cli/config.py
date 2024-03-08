@@ -5,9 +5,10 @@ from dataclasses import asdict, dataclass
 import yaml
 
 DEFAULT_CONFIG = "config.yaml"
+DEFAULT_CHAT_LOGS = "data/chatlogs"
 DEFAULT_MODEL = "merlinite-7b-Q4_K_M"
 DEFAULT_MODEL_PATH = f"models/{DEFAULT_MODEL}.gguf"
-DEFAULT_API_HOST_PORT = "localhost:8000"
+DEFAULT_HOST_PORT = "localhost:8000"
 DEFAULT_API_KEY = "no_api_key"
 DEFAULT_VI_MODE = False
 DEFAULT_VISIBLE_OVERFLOW = True
@@ -33,15 +34,15 @@ class _general:
     log_level: str
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class _chat:
-    api_host_port: str
-    api_key: str
     model: str
     vi_mode: bool
     visible_overflow: bool
     context: str
     session: str
+    logs_dir: str
 
 
 @dataclass
@@ -57,8 +58,13 @@ class _generate:
 
 @dataclass
 class _serve:
+    host_port: str
     model_path: str
     gpu_layers: int
+
+    def api_base(self):
+        """Returns server API URL, based on the configured host and port"""
+        return get_api_base(self.host_port)
 
 
 @dataclass
@@ -104,13 +110,12 @@ def get_default_config():
     """Generates default configuration for CLI"""
     general = _general(log_level="INFO")
     chat = _chat(
-        api_host_port=DEFAULT_API_HOST_PORT,
-        api_key=DEFAULT_API_KEY,
         model=DEFAULT_MODEL,
         vi_mode=DEFAULT_VI_MODE,
         visible_overflow=DEFAULT_VISIBLE_OVERFLOW,
         context="default",
         session=None,
+        logs_dir=DEFAULT_CHAT_LOGS,
     )
     generate = _generate(
         model=DEFAULT_MODEL,
@@ -122,5 +127,14 @@ def get_default_config():
         seed_file=DEFAULT_SEED_FILE,
     )
     # pylint: disable=redefined-builtin
-    serve = _serve(model_path=DEFAULT_MODEL_PATH, gpu_layers=-1)
+    serve = _serve(
+        host_port=DEFAULT_HOST_PORT,
+        model_path=DEFAULT_MODEL_PATH,
+        gpu_layers=-1,
+    )
     return Config(general=general, chat=chat, generate=generate, serve=serve)
+
+
+def get_api_base(host_port):
+    """Returns server API URL, based on the provided host_port"""
+    return f"http://{host_port}/v1"

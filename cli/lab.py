@@ -11,27 +11,17 @@ import sys
 from click_didyoumean import DYMGroup
 from huggingface_hub import hf_hub_download
 from huggingface_hub.utils import HfHubHTTPError
-from llama_cpp import llama_chat_format
-from llama_cpp.server.app import create_app
-from llama_cpp.server.settings import Settings
 import click
-import llama_cpp.server.app as llama_app
-import openai
-import uvicorn
 
 # Local
 from . import config, utils
 from .chat.chat import ChatException, chat_cli
 from .download import DownloadException, clone_taxonomy
-from .generator.generate_data import (
-    GenerateException,
-    generate_data,
-    get_taxonomy_diff,
-    read_taxonomy,
-)
+from .generator.generate_data import generate_data, get_taxonomy_diff, read_taxonomy
+from .generator.utils import GenerateException
+from .server import ServerException, server
 
 
-# pylint: disable=unused-argument
 class Lab:
     """Lab object holds high-level information about lab CLI"""
 
@@ -44,7 +34,9 @@ class Lab:
         self.logger.setLevel(self.config.general.log_level.upper())
 
 
+# pylint: disable=unused-argument
 def configure(ctx, param, filename):
+    """Configure is responsible for reading the config file, initiating Lab object and CLI context."""
     # skip configuration reading when invoked command is `init`
     if len(sys.argv) > 0 and sys.argv[1] == "init":
         return
@@ -110,6 +102,7 @@ def cli(ctx, config):
     "Please do not use this option if you are planning to contribute back "
     "using the same taxonomy repository. ",
 )
+# pylint: disable=unused-argument
 def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
     """Initializes environment for InstructLab"""
     if exists(config.DEFAULT_CONFIG):
@@ -150,7 +143,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
                         f"Cloning {repository} failed with the following error: {exc}",
                         fg="red",
                     )
-                    sys.exit(1)
+                    raise click.exceptions.Exit(1)
 
         # check if models dir exists, and if so ask for which model to use
         models_dir = dirname(model_path)
@@ -181,7 +174,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
 )
 @click.pass_context
-# pylint: disable=redefined-builtin
+# pylint: disable=redefined-builtin,unused-argument
 def list(ctx, taxonomy_path):
     """
     Lists taxonomy files that have changed since last commit.
@@ -229,40 +222,11 @@ def check(ctx, taxonomy_path):
 def serve(ctx, model_path, gpu_layers):
     """Start a local server"""
     ctx.obj.logger.info(f"Using model '{model_path}' with {gpu_layers} gpu-layers")
-    settings = Settings(
-        model=model_path,
-        n_ctx=4096,
-        n_gpu_layers=gpu_layers,
-        verbose=ctx.obj.logger.level == logging.DEBUG,
-    )
     try:
-        app = create_app(settings=settings)
-    except ValueError as err:
-        click.secho(
-            f"Creating App using model failed with following value error: {err}",
-            fg="red",
-        )
-        sys.exit(1)
-    try:
-        llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
-            template="{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}",
-            eos_token="<|endoftext|>",
-            bos_token="",
-        ).to_chat_handler()
-    # pylint: disable=broad-exception-caught
-    except Exception as e:
-        click.secho(
-            f"Error creating chat handler: {e}",
-            fg="red",
-        )
-        sys.exit(1)
-    click.echo("Starting server process")
-    click.echo(
-        f"After application startup complete see http://{ctx.obj.config.chat.api_host_port}/docs for API."
-    )
-    click.echo("Press CTRL+C to shutdown server.")
-    port = int(ctx.obj.config.chat.api_host_port.split(":")[-1])
-    uvicorn.run(app, port=port, log_level=logging.ERROR)  # TODO: host params, etc...
+        server(ctx.obj.logger, model_path, gpu_layers)
+    except ServerException as exc:
+        click.secho(f"Error creating server: {exc}", fg="red")
+        raise click.exceptions.Exit(1)
 
 
 @cli.command()
@@ -325,13 +289,14 @@ def generate(
     has_document,
 ):
     """Generates synthetic data to enhance your example data"""
-    ctx.obj.logger.info(
-        f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}'"
-    )
+    api_base = ctx.obj.config.serve.api_base()
     try:
+        ctx.obj.logger.info(
+            f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}' against {api_base} server"
+        )
         generate_data(
             logger=ctx.obj.logger,
-            api_host_port=ctx.obj.config.chat.api_host_port,
+            api_base=api_base,
             model_name=model,
             num_cpus=num_cpus,
             num_instructions_to_generate=num_instructions,
@@ -348,12 +313,7 @@ def generate(
             f"Generating dataset failed with the following error: {exc}",
             fg="red",
         )
-    except openai.APIConnectionError as exc:
-        click.secho(
-            f"Error connecting to the server: {exc.__cause__}",
-            fg="red",
-        )
-        sys.exit(1)
+        raise click.exceptions.Exit(1)
 
 
 @cli.command()
@@ -388,19 +348,21 @@ def generate(
 @click.pass_context
 def chat(ctx, question, model, context, session, quick_question):
     """Run a chat using the modified model"""
+    api_base = ctx.obj.config.serve.api_base()
     try:
         chat_cli(
-            ctx.obj.config.chat,
-            ctx.obj.logger,
-            question,
-            model,
-            context,
-            session,
-            quick_question,
+            logger=ctx.obj.logger,
+            api_base=api_base,
+            config=ctx.obj.config.chat,
+            question=question,
+            model=model,
+            context=context,
+            session=session,
+            qq=quick_question,
         )
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
-        sys.exit(1)
+        raise click.exceptions.Exit(1)
 
 
 @cli.command()
@@ -444,7 +406,7 @@ def download(ctx, repository, release, filename, model_dir):
             f"Downloading model failed with the following Hugging Face Hub error: {exc}",
             fg="red",
         )
-        sys.exit(1)
+        raise click.exceptions.Exit(1)
 
 
 @cli.command()
@@ -516,19 +478,19 @@ def train(
                 f"Could not read taxonomy directory: {exc}",
                 fg="red",
             )
-            sys.exit(1)
+            raise click.exceptions.Exit(1)
         except OSError as exc:
             click.secho(
                 f"Could not create data dir: {exc}",
                 fg="red",
             )
-            sys.exit(1)
+            raise click.exceptions.Exit(1)
         except IndexError as exc:
             click.secho(
                 f"Could not copy into data directory: {exc}",
                 fg="red",
             )
-            sys.exit(1)
+            raise click.exceptions.Exit(1)
 
     if not skip_preprocessing:
         script = os.path.join(cli_dir, "train/lora-mlx/make_data.py")

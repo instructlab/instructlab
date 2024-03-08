@@ -1,23 +1,23 @@
 # InstructLab 🥼 (`lab`)
 
 ## 📖 Contents
-- [❓ What is `lab`](#❓-what-is-lab)
-- [📋 Requirements](#📋-requirements)
-- [✅ Getting started](#✅-getting-started)
-  - [🧰 Installing`lab`](#🧰-installing-lab)
-  - [🏗️ Initialize `lab`](#🏗️-initialize-lab)
-  - [📥 Download the model](#📥-download-the-model)
-  - [🍴 Serving the model](#🍴-serving-the-model)
-  - [📣 Chat with the model (Optional)](#📣-chat-with-the-model-optional)
-- [💻 Creating new knowledge and training the model](#💻-creating-new-knowledge-and-training-the-model)
-  - [🎁 Contribute knowledge or compositional skills](#🎁-contribute-knowledge-or-compositional-skills)
-  - [📜 List your new knowledge](#📜-list-your-new-knowledge)
-  - [🚀 Generate a synthetic dataset](#🚀-generate-a-synthetic-dataset)
-  - [👩‍🏫 Train the model](#👩‍🏫-train-the-model) 
-  - [🍴 Serve the newly trained model](#🍴-serve-the-newly-trained-model)
-  - [📣 Chat with the new model (not optional this time)](#📣-chat-with-the-new-model-not-optional-this-time)
-- [🎁 Submit your new knowledge](#🎁-submit-your-new-knowledge)
-- [📬 Contributing to Instruct-Lab CLI](#contributing)
+- [❓What is `lab`](#-what-is-lab)
+- [📋 Requirements](#-requirements)
+- [✅ Getting started](#-getting-started)
+  - [🧰 Installing`lab`](#-installing-lab)
+  - [🏗️ Initialize `lab`](#%EF%B8%8F-initialize-lab)
+  - [📥 Download the model](#-download-the-model)
+  - [🍴 Serving the model](#-serving-the-model)
+  - [📣 Chat with the model (Optional)](#-chat-with-the-model-optional)
+- [💻 Creating new knowledge and training the model](#-creating-new-knowledge-and-training-the-model)
+  - [🎁 Contribute knowledge or compositional skills](#-contribute-knowledge-or-compositional-skills)
+  - [📜 List your new knowledge](#-list-your-new-knowledge)
+  - [🚀 Generate a synthetic dataset](#-generate-a-synthetic-dataset)
+  - [👩‍🏫 Train the model](#-train-the-model) 
+  - [🍴 Serve the newly trained model](#-serve-the-newly-trained-model)
+  - [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
+- [🎁 Submit your new knowledge](#-submit-your-new-knowledge)
+- [📬 Contributing to Instruct-Lab CLI](#-contributing)
 
 ## ❓ What is `lab`
 
@@ -155,7 +155,7 @@ source venv/bin/activate
 lab chat
 ```
 
-Before you start adding new skills and knowledge to your knowledge, you can check out its baseline performance:
+Before you start adding new skills and knowledge to your model, you can check out its baseline performance:
 
 ```
 (venv) $ lab chat
@@ -257,6 +257,6 @@ lab chat -m <New model name>
 
 Of course the final step is, if you've improved the model, to open up a a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy).
 
-## Contributing
+## 📬 Contributing
 
 Check out our [contributing](CONTRIBUTING/CONTRIBUTING.md) guide to learn how to contribute to the InstructLab CLI.
