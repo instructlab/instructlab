@@ -338,8 +338,14 @@ def generate(
     is_flag=True,
     help="Exit after answering question",
 )
+@click.option(
+    "-gm",
+    "--greedy-mode",
+    is_flag=True,
+    help="Use model greedy decoding. Useful for debugging and reproducing errors.",
+)
 @click.pass_context
-def chat(ctx, question, model, context, session, quick_question):
+def chat(ctx, question, model, context, session, quick_question, greedy_mode):
     """Run a chat using the modified model"""
     api_base = ctx.obj.config.serve.api_base()
     try:
@@ -352,6 +358,7 @@ def chat(ctx, question, model, context, session, quick_question):
             context=context,
             session=session,
             qq=quick_question,
+            greedy_mode=greedy_mode,
         )
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
