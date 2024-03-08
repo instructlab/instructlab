@@ -64,6 +64,12 @@ def formatting_prompts_func(example):
 def main(args_in: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Lab Train for Linux!")
     parser.add_argument(
+        "--base-model",
+        type=str,
+        help="absolute path to the base pytorch tensors model",
+        default=None,
+    )
+    parser.add_argument(
         "--train-file",
         type=str,
         help="absolute path to the training file",
@@ -82,7 +88,8 @@ def main(args_in: list[str] | None = None) -> None:
 
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", args.num_epochs)
     print("LINUX_TRAIN.PY: TRAIN FILE IS: ", args.train_file)
-    print("LINUX_TRAIN.PY: TEST FILE IS: ", args.test_file)
+    print("LINUX_TRAIN.PY: TEST FILE IS:  ", args.test_file)
+    print("LINUX_TRAIN.PY: BASE MODEL IS: ", args.base_model)
 
     print("LINUX_TRAIN.PY: LOADING DATASETS")
     # Get the file name
@@ -118,13 +125,15 @@ def main(args_in: list[str] | None = None) -> None:
         model_name, torchscript=True, trust_remote_code=True
     )
 
+
     model = AutoModelForCausalLM.from_pretrained(
-        model_name,
+        pretrained_model_name_or_path=args.base_model,
         torch_dtype="auto",
         # quantization_config=bnb_config,
         config=config,
-        trust_remote_code=True,
+        #trust_remote_code=True,
         low_cpu_mem_usage=True,
+        use_safetensors=True,
     )
 
     print("LINUX_TRAIN.PY: SANITY CHECKING THE BASE MODEL")

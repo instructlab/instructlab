@@ -11,7 +11,7 @@ import sys
 # Third Party
 from click_didyoumean import DYMGroup
 from git import GitError, Repo
-from huggingface_hub import hf_hub_download
+from huggingface_hub import hf_hub_download, snapshot_download
 import click
 
 # Local
@@ -625,8 +625,30 @@ def train(
             raise click.exceptions.Exit(1)
 
     if not utils.is_macos_with_m_chip():
+        training_results_dir = "./training_results"
+        if local:
+            pt_tensors_dir = training_results_dir + "/pt_tensors_base_model"
+            os.makedirs(pt_tensors_dir, exist_ok=True)
+
+            # fetch tokenizer from hugging face
+            hf_model_name = "ibm/merlinite-7b"
+            snapshot_download(repo_id=hf_model_name, allow_patterns=["*.model", "*.json"], ignore_patterns=["model.safetensors.index.json"], local_dir=pt_tensors_dir)
+
+            # convert base gguf model to pytorch safe tensors
+            gguf_path = "models/ggml-merlinite-7b-0302-Q4_K_M.gguf"
+            script = os.path.join(cli_dir, "mlx_explore/convert_gguf_to_safe_tensors.py")
+            cmd = f"{script} --gguf {gguf_path} --dest-path {pt_tensors_dir}"
+            click.secho(
+                f"python {cmd}",
+            )
+            os.system("python {}".format(cmd))
+
+            base_model = pt_tensors_dir
+        else:
+            base_model = "ibm/merlinite-7b"
+
         script = os.path.join(cli_dir, "train/linux_train.py")
-        cmd = f"{script} --train-file {train_files[0]} --test-file {test_files[0]} --num-epochs {num_epochs}"
+        cmd = f"{script} --base-model {base_model} --train-file {train_files[0]} --test-file {test_files[0]} --num-epochs {num_epochs}"
         click.secho(
             f"python {cmd}",
         )
