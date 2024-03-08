@@ -9,6 +9,9 @@
   - [📥 Download the model](#-download-the-model)
   - [🍴 Serving the model](#-serving-the-model)
   - [📣 Chat with the model (Optional)](#-chat-with-the-model-optional)
+- [🔎 Getting information about existing skills](#🔎-getting-information-about-existing-skills)
+  - [📜 Listing Skills](#listing-skills)
+  - [Getting information about a specific skill](#getting-information-about-a-specific-skill)
 - [💻 Creating new knowledge or skills and training the model](#-creating-new-knowledge-or-skills-and-training-the-model)
   - [🎁 Contribute knowledge or compositional skills](#-contribute-knowledge-or-compositional-skills)
   - [📜 List your new data](#-list-your-new-data)
@@ -90,6 +93,7 @@ Commands:
   init      Initializes environment for InstructLab
   list      Lists taxonomy files that have changed since a reference commit (default origin/main)
   serve     Start a local server
+  skills    Get information about the skills in the taxonomy.
   test      Runs basic test to ensure model correctness
   train     Takes synthetic data generated locally with `lab generate`...
 ```
@@ -180,6 +184,32 @@ Before you start adding new skills and knowledge to your model, you can check ou
 ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── elapsed 12.008 seconds ─╯
 >>>                                                                                                                                                                                                                               [S][default]
 ```
+
+## 🔎 Getting information about existing skills
+
+### Listing skills
+
+The lab cli allows you to see all of the skills that are curently in your taxonomy repo.
+Simply run:
+```
+lab skills list
+```
+And you will be presented with a table showing each skill along with a list of their tags.
+
+If you have changed a skill, or added a new one, those will annotated.
+
+You can then filter skills by `--tag, -t` or `--changed`.
+```
+lab skills list --tag freeform -t technical --changed
+```
+
+### Getting information about a specific skill
+
+If you want to know more about a specific skill, use this subcommand:
+```
+lab skills info <skill_name>
+```
+This will return some metadata found in the skill's definition.
 
 ## 💻 Creating new knowledge or skills and training the model
 

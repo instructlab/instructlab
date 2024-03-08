@@ -1,4 +1,5 @@
 # Standard
+from pathlib import Path
 import copy
 import functools
 import os
@@ -150,3 +151,38 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
 
     updated_taxonomy_files = list(set(untracked_files + modified_files))
     return updated_taxonomy_files
+
+
+def skill_path_to_tags(skill_path, taxonomy_path):
+    """Converts a skill path to a tuple of tags"""
+    tags = skill_path.parent.parent.relative_to(taxonomy_path).as_posix().split("/")
+    return tuple(tags)
+
+
+def get_skills_dict(parent_dir, skills_dict=None, taxonomy_path=None):
+    """Recursively read the taxonomy directory.
+
+    returns a dictionary with the following structure:
+    {
+        "skill_name": {
+            "path": Path to the skill directory,
+            "tags": Tuple of tags
+        }
+    }
+    """
+    parent_dir = Path(parent_dir)
+    if skills_dict is None:
+        skills_dict = {}
+    if taxonomy_path is None:
+        taxonomy_path = parent_dir
+    for child in parent_dir.iterdir():
+        if child.is_dir():
+            get_skills_dict(child, skills_dict, taxonomy_path)
+        elif child.stem == "qna":
+            skills_dict[child.parent.name] = {
+                "path": child,
+                "tags": skill_path_to_tags(child, taxonomy_path),
+            }
+    # sort the dictionary by key
+    skills_dict = dict(sorted(skills_dict.items()))
+    return skills_dict

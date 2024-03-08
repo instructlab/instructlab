@@ -1,6 +1,7 @@
 # Standard
 from glob import glob
 from os.path import basename, dirname, exists, splitext
+from pathlib import Path
 import json
 import logging
 import os
@@ -13,7 +14,10 @@ from click_didyoumean import DYMGroup
 from git import GitError, Repo
 from huggingface_hub import hf_hub_download
 from huggingface_hub import logging as hf_logging
+from rich.console import Console
+from rich.table import Table
 import click
+import yaml
 
 # Local
 # NOTE: Subcommands are using local imports to speed up startup time.
@@ -727,7 +731,7 @@ def train(
             if len(train_files) > 1 or len(test_files) > 1:
                 # pylint: disable=f-string-without-interpolation
                 click.secho(
-                    f"Found multiple files from `lab generate`. Using the most recent generation.",
+                    "Found multiple files from `lab generate`. Using the most recent generation.",
                     fg="yellow",
                 )
             # First file is latest (by above reverse sort and timestamped names)
@@ -1005,3 +1009,81 @@ def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
         script = os.path.join(cli_dir, "llamacpp/quantize")
         cmd = f"{script} {gguf_model_dir} {gguf_model_q_dir} Q4_K_M"
         os.system("{}".format(cmd))
+
+
+@cli.group()
+def skills():
+    """Get information about the skills in the taxonomy."""
+
+
+@skills.command(name="list")
+@click.option(
+    "--taxonomy-path",
+    type=click.Path(),
+    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
+)
+@click.option(
+    "-t",
+    "--tags",
+    type=str,
+    multiple=True,
+    help="Filter skills by one or more tags.",
+)
+@click.option(
+    "--changed",
+    is_flag=True,
+    help="Show only skills that have changed since last commit.",
+)
+@click.pass_context
+def _list(ctx, taxonomy_path, tags, changed):
+    """List all skills available in taxonomy."""
+    # pylint: disable=C0415
+    # Local
+    from .generator.generate_data import get_taxonomy_diff
+
+    if not taxonomy_path:
+        taxonomy_path = ctx.obj.config.generate.taxonomy_path
+    # get information about or skills
+    skills_dict = utils.get_skills_dict(taxonomy_path)
+    changed_skills = get_taxonomy_diff(taxonomy_path)
+    changed_skills = [Path(taxonomy_path) / skill for skill in changed_skills]
+    skills_table = Table(title="Skills", show_header=True, header_style="bold")
+    skills_table.add_column("Skill")
+    skills_table.add_column("Tags")
+    for skill, _info in skills_dict.items():
+        # if tags are provided, filter by them
+        if not tags or all(tag in _info["tags"] for tag in tags):
+            if _info["path"] in changed_skills:
+                if changed:  # show only changed skills
+                    skills_table.add_row(skill, ", ".join(_info["tags"]))
+                else:  # highlight changed skills if not filtered
+                    skill = f"[bold red]*{skill}[/bold red]"
+            if not changed:  # show all skills
+                skills_table.add_row(skill, ", ".join(_info["tags"]))
+    console = Console()
+    console.print(skills_table)
+
+
+@skills.command()
+@click.argument("skill", nargs=1, required=True)
+@click.option(
+    "--taxonomy-path",
+    type=click.Path(),
+    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
+)
+@click.pass_context
+def info(ctx, skill, taxonomy_path):
+    """Get information about a specific skill."""
+    if not taxonomy_path:
+        taxonomy_path = ctx.obj.config.generate.taxonomy_path
+    skills_dict = utils.get_skills_dict(taxonomy_path)
+    if skill not in skills_dict:
+        click.echo("Skill not found in taxonomy.")
+        return
+    click.echo(f"Skill: {skill}")
+    skill_data = yaml.load(
+        skills_dict[skill]["path"].read_text(), Loader=yaml.FullLoader
+    )
+    click.echo(f"Contributor: {skill_data.get('created_by')}")
+    click.echo(f"Description: {skill_data.get('task_description')}")
+    click.echo(f"Path: {skills_dict[skill]['path']}")
