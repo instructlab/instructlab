@@ -629,8 +629,8 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
             task_description = contents.get("task_description")
             document = contents.get("document")
             for t in get_seed_examples(contents):
-                q = t["question"]
-                a = t["answer"]
+                q = t.get("question")
+                a = t.get("answer")
                 c = t.get("context")
                 if not q:
                     logger.warn(
