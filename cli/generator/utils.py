@@ -44,6 +44,7 @@ def openai_completion(
     max_instances=sys.maxsize,
     max_batches=sys.maxsize,
     return_text=False,
+    api_key="no_api_key",
     **decoding_kwargs,
 ) -> Union[
     Union[StrOrOpenAIObject],
@@ -101,7 +102,7 @@ def openai_completion(
             **decoding_kwargs,
         }
 
-        client = OpenAI(base_url=api_base, api_key="no_api_key")
+        client = OpenAI(base_url=api_base, api_key=api_key)
 
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},

@@ -217,6 +217,13 @@ The synthetic data set will be three files in the newly created `generated` dire
 
 > **NOTE:** ⏳ This can take over **1 hour+** to complete depending on your computing resources.
 
+It is also possible to run the generate step against a different model via an
+OpenAI compatible API. For example, the one spawned by `lab serve` or any remote or locally hosted LLM (e.g. via [ollama](ollama.ai/), [LM Studio](https://lmstudio.ai), etc.)
+
+```
+lab generate --endpoint-url http://localhost:8000/v1
+```
+
 ### 👩‍🏫 Train the model
 
 There are currently two options to train the model on your synthetic data-enhanced dataset.
