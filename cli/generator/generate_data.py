@@ -41,7 +41,7 @@ Here are the requirements:
 8. Not all instructions require input. For example, when a instruction asks about some general information, "what is the highest peak in the world", it is not necessary to provide a specific context. In this case, we simply put "<noinput>" in the input field.
 9. The output should be an appropriate response to the instruction and the input. Make sure the output is less than 100 words.
 
-List of 20 tasks:
+List of 5 tasks:
 """
 
 DEFAULT_PROMPT_TEMPLATE_CONTEXT = """\
@@ -56,7 +56,7 @@ Here are the requirements:
 6. The instructions should be 1 to 2 sentences long. Either an imperative sentence or a question is permitted.
 7. The output should be an appropriate response to the input and the instruction. Long outputs are preferrable. 
 
-Based on below document provide a list of 20 tasks:
+Based on below document provide a list of 5 tasks:
 
 Document:
 {document}
@@ -68,14 +68,17 @@ class GenerateException(Exception):
     """An exception raised during generate step."""
 
 
-def check_prompt_file(prompt_file_path):
+def check_prompt_file(prompt_file_path, has_document):
     """Check for prompt file."""
     try:
         with open(prompt_file_path, encoding="utf=8") as file:
             prompt_template = file.read()
     except FileNotFoundError:
         print(f"Cannot find {prompt_file_path}. Using default prompt.")
-        prompt_template = DEFAULT_PROMPT_TEMPLATE
+        if has_document:
+            prompt_template = DEFAULT_PROMPT_TEMPLATE_CONTEXT
+        else:
+            prompt_template = DEFAULT_PROMPT_TEMPLATE
     prompt_template = prompt_template + "\n"
     return prompt_template
 
@@ -211,6 +214,7 @@ def generate_data(
     top_p=1.0,
     rouge_threshold: Optional[float] = None,
     console_output=True,
+    has_document=True,
 ):
     seed_instruction_data = []
     generate_start = time.time()
@@ -298,7 +302,7 @@ def generate_data(
         scorer._tokenizer.tokenize(inst) for inst in all_instructions
     ]
 
-    prompt_template = check_prompt_file(prompt_file_path)
+    prompt_template = check_prompt_file(prompt_file_path, has_document)
     if console_output:
         print(
             "Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help."

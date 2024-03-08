@@ -306,6 +306,11 @@ def serve(ctx, model_path, gpu_layers):
     is_flag=True,
     help="Suppress output of synthesized instructions",
 )
+@click.option(
+    "--has-document",
+    is_flag=True,
+    help="Whether or not the examples contain the document field",
+)
 @click.pass_context
 def generate(
     ctx,
@@ -317,6 +322,7 @@ def generate(
     seed_file,
     rouge_threshold,
     quiet,
+    has_document,
 ):
     """Generates synthetic data to enhance your example data"""
     ctx.obj.logger.info(
@@ -335,6 +341,7 @@ def generate(
             seed_tasks_path=seed_file,
             rouge_threshold=rouge_threshold,
             console_output=not quiet,
+            has_document=has_document,
         )
     except GenerateException as exc:
         click.secho(
