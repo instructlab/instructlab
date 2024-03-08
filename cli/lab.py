@@ -405,9 +405,9 @@ def download(ctx, repository, release, filename, model_dir):
 @cli.command()
 @click.option("--data-dir", help="Base directory where data is stored.", default=None)
 @click.option(
-    "--taxonomy-path",
+    "--generated-output-dir",
     type=click.Path(),
-    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
+    help="Path to generated output dir",
 )
 @click.option(
     "--skip-preprocessing",
@@ -435,7 +435,7 @@ def download(ctx, repository, release, filename, model_dir):
 def train(
     ctx,
     data_dir,
-    taxonomy_path,
+    generated_output_dir,
     skip_preprocessing,
     model_dir,
     iters,
@@ -447,17 +447,17 @@ def train(
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
     cli_dir = os.path.dirname(os.path.abspath(__file__))
-    if not taxonomy_path:
-        taxonomy_path = ctx.obj.config.generate.taxonomy_path
+    if not generated_output_dir:
+        generated_output_dir = ctx.obj.config.generate.output_dir
 
     if data_dir is None:
         data_dir = "./taxonomy_data"
         try:
-            os.listdir(taxonomy_path)
+            os.listdir(generated_output_dir)
             if not os.path.isdir(data_dir):
                 os.mkdir(data_dir)
-            train_files = glob(taxonomy_path + "/train_*")
-            test_files = glob(taxonomy_path + "/test_*")
+            train_files = glob(generated_output_dir + "/train_*")
+            test_files = glob(generated_output_dir + "/test_*")
             if len(train_files) > 1 or len(test_files) > 1:
                 # pylint: disable=f-string-without-interpolation
                 click.secho(
@@ -468,7 +468,7 @@ def train(
             shutil.copy(test_files[0], data_dir + "/test_gen.jsonl")
         except FileNotFoundError as exc:
             click.secho(
-                f"Could not read taxonomy directory: {exc}",
+                f"Could not read generated output dir: {exc}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
