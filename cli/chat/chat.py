@@ -46,8 +46,10 @@ PROMPT_HISTORY_FILEPATH = os.path.expanduser("~/.local/chat-cli.history")
 
 PROMPT_PREFIX = ">>> "
 
+
 class ChatException(Exception):
     """An exception raised during chat step."""
+
 
 # TODO Autosave chat history
 class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
