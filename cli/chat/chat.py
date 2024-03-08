@@ -375,7 +375,9 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self._update_conversation(response_content.plain, "assistant")
 
 
-def chat_cli(logger, api_base, config, question, model, context, session, qq):
+def chat_cli(
+    logger, api_base, config, question, model, context, session, qq, greedy_mode
+):
     """Starts a CLI-based chat with the server"""
     client = OpenAI(base_url=api_base, api_key="no_api_key")
 
@@ -414,7 +416,9 @@ def chat_cli(logger, api_base, config, question, model, context, session, qq):
         prompt=not qq,
         vertical_overflow=("visible" if config.visible_overflow else "ellipsis"),
         loaded=loaded,
-        greedy_mode=config.greedy_mode,
+        greedy_mode=greedy_mode
+        if greedy_mode
+        else config.greedy_mode,  # The CLI flag can only be used to enable
     )
 
     if not qq:
