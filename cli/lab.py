@@ -405,9 +405,9 @@ def download(ctx, repository, release, filename, model_dir):
 @cli.command()
 @click.option("--data-dir", help="Base directory where data is stored.", default=None)
 @click.option(
-    "--taxonomy-path",
+    "--input-dir",
     type=click.Path(),
-    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
+    help="Path to generated files to use as input",
 )
 @click.option(
     "--skip-preprocessing",
@@ -435,7 +435,7 @@ def download(ctx, repository, release, filename, model_dir):
 def train(
     ctx,
     data_dir,
-    taxonomy_path,
+    input_dir,
     skip_preprocessing,
     model_dir,
     iters,
@@ -447,28 +447,33 @@ def train(
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
     cli_dir = os.path.dirname(os.path.abspath(__file__))
-    if not taxonomy_path:
-        taxonomy_path = ctx.obj.config.generate.taxonomy_path
 
+    if not input_dir:
+        # By default, generate output-dir is used as train input-dir
+        input_dir = ctx.obj.config.generate.output_dir
+
+    # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
     if data_dir is None:
         data_dir = "./taxonomy_data"
         try:
-            os.listdir(taxonomy_path)
+            os.listdir(input_dir)  # Test to throw FileNotFound exception
             if not os.path.isdir(data_dir):
                 os.mkdir(data_dir)
-            train_files = glob(taxonomy_path + "/train_*")
-            test_files = glob(taxonomy_path + "/test_*")
+            # generated input files reverse sorted by name (contains timestamp)
+            train_files = sorted(glob(input_dir + "/train_*"), reverse=True)
+            test_files = sorted(glob(input_dir + "/test_*"), reverse=True)
             if len(train_files) > 1 or len(test_files) > 1:
                 # pylint: disable=f-string-without-interpolation
                 click.secho(
-                    f"Found multiple files from `lab generate`. Using the first one.",
+                    f"Found multiple files from `lab generate`. Using the most recent generation.",
                     fg="yellow",
                 )
+            # First file is latest (by above reverse sort and timestamped names)
             shutil.copy(train_files[0], data_dir + "/train_gen.jsonl")
             shutil.copy(test_files[0], data_dir + "/test_gen.jsonl")
         except FileNotFoundError as exc:
             click.secho(
-                f"Could not read taxonomy directory: {exc}",
+                f"Could not read directory: {exc}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
