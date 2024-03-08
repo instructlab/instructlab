@@ -81,7 +81,7 @@ CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip3 install --force-reinstall --no-cache-dir lla
 pip3 install cli/.
 ```
 
-Proceed to the `Testing` section and use the `nvtop` utility to validate GPU utilization when interacting with `lab chat` or `lab generate`
+Proceed to the `Initialize` section of the [CLI Readme](https://github.com/instruct-lab/cli?tab=readme-ov-file#%EF%B8%8F-initialize-lab), and use the `nvtop` utility to validate GPU utilization when interacting with `lab chat` or `lab generate`
 
 ### AMD/ROCm
 
