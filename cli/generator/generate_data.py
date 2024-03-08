@@ -151,6 +151,15 @@ def post_process_gpt3_response(num_prompt_instructions, response, discarded_file
         f"{num_prompt_instructions + 1}. Instruction:" + response.message.content
     )
     raw_instructions = re.split("###", raw_instructions)
+
+    with open("prompts.txt", "a", encoding="utf-8") as fp:
+        fp.write(
+            datetime.now().replace(microsecond=0).isoformat()
+            + " - Instructions returned == == == ==\n"
+            + response.message.content
+            + "\n"
+        )
+
     instructions = []
     discarded = 0
     for idx, inst in enumerate(raw_instructions):

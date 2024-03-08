@@ -1,4 +1,5 @@
 # Standard
+from datetime import datetime
 from typing import Optional, Sequence, Union
 import copy
 import dataclasses
@@ -112,6 +113,15 @@ def openai_completion(
 
         # do not pass a lower timeout to this client since generating a dataset takes some time
         client = OpenAI(base_url=api_base, api_key=api_key)
+
+        with open("prompts.txt", "a", encoding="utf-8") as fp:
+            fp.write(
+                "== == == ==\n"
+                + datetime.now().replace(microsecond=0).isoformat()
+                + " - Prompt sent == == == ==\n"
+                + prompt_batch[batch_id]
+                + "\n"
+            )
 
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
