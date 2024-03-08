@@ -18,6 +18,7 @@ DEFAULT_TAXONOMY_BRANCH = "main"
 DEFAULT_PROMPT_FILE = "prompt.txt"
 DEFAULT_SEED_FILE = "seed_tasks.json"
 DEFAULT_GENERATED_FILES_OUTPUT_DIR = "generated"
+DEFAULT_GREEDY_MODE = False
 
 
 class ConfigException(Exception):
@@ -43,6 +44,7 @@ class _chat:
     context: str
     session: str
     logs_dir: str
+    greedy_mode: bool
 
 
 @dataclass
@@ -116,6 +118,7 @@ def get_default_config():
         context="default",
         session=None,
         logs_dir=DEFAULT_CHAT_LOGS,
+        greedy_mode=DEFAULT_GREEDY_MODE,
     )
     generate = _generate(
         model=DEFAULT_MODEL,
