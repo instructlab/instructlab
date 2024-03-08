@@ -9,6 +9,7 @@ import sys
 
 # Third Party
 from click_didyoumean import DYMGroup
+from git import GitError, Repo
 from huggingface_hub import hf_hub_download
 from huggingface_hub.utils import HfHubHTTPError
 import click
@@ -16,7 +17,6 @@ import click
 # Local
 from . import config, utils
 from .chat.chat import ChatException, chat_cli
-from .download import DownloadException, clone_taxonomy
 from .generator.generate_data import generate_data, get_taxonomy_diff, read_taxonomy
 from .generator.utils import GenerateException
 from .server import ServerException, server
@@ -73,9 +73,8 @@ def cli(ctx, config):
 @cli.command()
 @click.pass_context
 @click.option(
-    "--interactive",
+    "--non-interactive",
     is_flag=True,
-    default=True,
     help="Initialize the environment assuming defaults.",
 )
 @click.option(
@@ -103,7 +102,8 @@ def cli(ctx, config):
     "using the same taxonomy repository. ",
 )
 # pylint: disable=unused-argument
-def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
+def init(ctx, non_interactive, model_path, taxonomy_path, repository, min_taxonomy):
+
     """Initializes environment for InstructLab"""
     if exists(config.DEFAULT_CONFIG):
         overwrite = click.confirm(
@@ -112,7 +112,8 @@ def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
         if not overwrite:
             return
 
-    if interactive:
+    clone_taxonomy_repo = True
+    if not non_interactive:
         click.echo(
             "Welcome to InstructLab CLI. This guide will help you to setup your environment."
         )
@@ -126,33 +127,28 @@ def init(ctx, interactive, model_path, taxonomy_path, repository, min_taxonomy):
         except FileNotFoundError:
             taxonomy_contents = []
         if len(taxonomy_contents) == 0:
-            do_clone = click.confirm(
+            clone_taxonomy_repo = click.confirm(
                 f"`{taxonomy_path}` seems to not exists or is empty. Should I clone {repository} for you?"
             )
-            if do_clone:
-                click.echo(f"Cloning {repository}...")
-                try:
-                    clone_taxonomy(
-                        repository,
-                        config.DEFAULT_TAXONOMY_BRANCH,
-                        taxonomy_path,
-                        min_taxonomy,
-                    )
-                except DownloadException as exc:
-                    click.secho(
-                        f"Cloning {repository} failed with the following error: {exc}",
-                        fg="red",
-                    )
-                    raise click.exceptions.Exit(1)
 
-        # check if models dir exists, and if so ask for which model to use
-        models_dir = dirname(model_path)
-        if exists(models_dir):
-            model_path = utils.expand_path(
-                click.prompt("Path to your model", default=model_path)
-            )
+    # clone taxonomy repo if it needs to be cloned
+    if clone_taxonomy_repo:
+        click.echo(f"Cloning {repository}...")
+        try:
+            if not min_taxonomy:
+                Repo.clone_from(repository, taxonomy_path, branch="main")
+            else:
+                Repo.clone_from(repository, taxonomy_path, branch="main", depth=1)
+        except GitError as exc:
+            click.secho(f"Failed to clone taxonomy repo:{exc}", fg="red")
+            raise click.exceptions.Exit(1)
 
-    # non-interactive part of the generation
+    # check if models dir exists, and if so ask for which model to use
+    models_dir = dirname(model_path)
+    if exists(models_dir):
+        model_path = utils.expand_path(
+            click.prompt("Path to your model", default=model_path)
+        )
     click.echo(f"Generating `{config.DEFAULT_CONFIG}` in the current directory...")
     cfg = config.get_default_config()
     model = splitext(basename(model_path))[0]
