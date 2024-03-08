@@ -15,6 +15,7 @@
 name: Build and Test
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - "main"
@@ -59,6 +60,7 @@ jobs:
           key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-${{ hashFiles('requirements-dev.txt') }}
           restore-keys:
             ${{ env.pythonLocation }}-
+
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
         run: |
