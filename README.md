@@ -42,7 +42,7 @@ After that is done, you can:
 
 On Fedora Linux this means installing:
 ```
-$ sudo yum install g++ python3 python3-devel
+$ sudo dnf install g++ python3 python3-devel
 ```
 
 ## ✅ Getting started 
