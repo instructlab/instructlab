@@ -83,7 +83,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
         self.input = None
         if prompt:
-            os.makedirs(PROMPT_HISTORY_FILEPATH, exist_ok=True)
+            os.makedirs(os.path.dirname(PROMPT_HISTORY_FILEPATH), exist_ok=True)
             self.input = PromptSession(history=FileHistory(PROMPT_HISTORY_FILEPATH))
         self.multiline = False
         self.multiline_mode = 0
