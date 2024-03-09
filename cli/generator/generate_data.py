@@ -450,7 +450,7 @@ def read_taxonomy_file(logger, file_path):
                 warnings += 1
                 return None, warnings, errors
             tax_path = "->".join(file_path.split(os.sep)[1:-1])
-            task_description = contents["task_description"]
+            task_description = contents.get("task_description")
             if "document" in contents:
                 document = contents["document"]
             else:
