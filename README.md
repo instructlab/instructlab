@@ -255,7 +255,7 @@ lab chat -m <New model name>
 ```
 ## 🎁 Submit your new knowledge
 
-Of course the final step is, if you've improved the model, to open up a a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy).
+Of course the final step is, if you've improved the model, to open up a a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy) that includes the `qna.yaml` files with your improved data. 
 
 ## 📬 Contributing
 
