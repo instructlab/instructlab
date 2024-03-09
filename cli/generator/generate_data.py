@@ -345,6 +345,13 @@ def generate_data(
             new_instructions = post_process_gpt3_response(
                 num_prompt_instructions, result
             )
+            # make sure the generated instruction carried over extra fields
+            prompt_ins_0 = prompt_instructions[0]
+            for new_ins in new_instructions:
+                new_ins["taxonomy_path"] = prompt_ins_0["taxonomy_path"]
+                new_ins["task_description"] = prompt_ins_0["task_description"]
+                if "document" in prompt_ins_0:
+                    new_ins["document"] = prompt_ins_0["document"]
             instruction_data += new_instructions
 
         total = len(instruction_data)
@@ -380,6 +387,14 @@ def generate_data(
             f"processing took {process_duration:.2f}s"
         )
         logger.debug(f"Generated {total} instructions, kept {keep} instructions")
+        machine_instruction_data = [
+            {
+                "instruction": ins["instruction"],
+                "input": ins["input"],
+                "output": ins["output"],
+            }
+            for ins in machine_instruction_data
+        ]
         utils.jdump(machine_instruction_data, os.path.join(output_dir, output_file))
         for synth_example in machine_instruction_data:
             user = synth_example["instruction"]
