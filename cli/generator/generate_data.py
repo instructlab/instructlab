@@ -217,7 +217,7 @@ def generate_data(
     top_p=1.0,
     rouge_threshold: Optional[float] = None,
     console_output=True,
-    has_document=True,
+    has_document=False,
 ):
     seed_instruction_data = []
     generate_start = time.time()
