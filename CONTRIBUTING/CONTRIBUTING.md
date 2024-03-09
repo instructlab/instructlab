@@ -10,7 +10,7 @@ The following is a set of guidelines for contributing. These are just guidelines
 
 This project adheres to the [Contributor Covenant](./CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
-Please report unacceptable behavior to one of the [Code Owners](./OWNERS).
+Please report unacceptable behavior to one of the [Code Owners](../CODEOWNERS).
 
 ### How Do I Start Contributing?
 
