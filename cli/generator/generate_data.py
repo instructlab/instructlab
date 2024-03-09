@@ -28,7 +28,7 @@ import yaml
 from . import utils
 
 DEFAULT_PROMPT_TEMPLATE = """\
-You are asked to come up with a set of 20 diverse task instructions under {taxonomy}{task_description_str}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
+You are asked to come up with a set of 5 diverse task instructions under {taxonomy}{task_description_str}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
 
 Here are the requirements:
 1. Try not to repeat the verb for each instruction to maximize diversity.
@@ -45,7 +45,7 @@ List of 5 tasks:
 """
 
 DEFAULT_PROMPT_TEMPLATE_DOCUMENT = """\
-You are asked to come up with a set of 20 diverse task instructions under {taxonomy}{task_description_str}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
+You are asked to come up with a set of 5 diverse task instructions under {taxonomy}{task_description_str}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
 
 Here are the requirements:
 1. Try not to repeat the verb for each instruction to maximize diversity.
@@ -327,7 +327,7 @@ def generate_data(
             # Hard-coded to maximize length. Requests will be automatically adjusted.
             max_tokens=3072,
             top_p=top_p,
-            stop=["\n20", "20.", "20."],
+            stop=["\n5", "5.", "5."],
         )
         request_start = time.time()
         results = utils.openai_completion(
