@@ -239,10 +239,13 @@ ggml-merlinite-7b-0302-Q4_K_M.gguf  ggml-model-f16.gguf
 
 #### Train the model locally on an M-series Mac:
 
+To train the model locally on your M-Series Mac is as easy as running:
 ```
 lab train
-lab convert
 ```
+
+⏳ This process will take a little while to complete (time can vary based on hardware
+and output of `lab generate` but on the order of 30 minutes to two hours)
 
 #### Train the model in Colab:
 
@@ -250,19 +253,34 @@ Follow the instructions in [Training](./notebooks/README.md).
 
 > **NOTE:** ⏳ This takes about **0.5-2.5 hours** to complete in the free tier of Google Colab.
 
-After that's done, download the newly trained model from Google Colab and put it in the `models` directory created by the `lab download` command.
+After that's done, you can play with your model directly in the Colab notebook.
+The model itself is for testing your taxonomy and is not a required artifact for
+a PR or any further task.
 
 ### 🍴 Serve the newly trained model
 
-Stop the server you have running via `Ctrl+C` in the terminal it is running in.
+Stop the server you have running via `ctrl+c` in the terminal it is running in.
 
-Serve the newly trained model locally using `lab serve` with the `--model` argument to specify your new model:
+Before serving the newly trained model you will need to convert it to work with 
+the `lab` cli. 
+
+```
+lab convert
+```
+
+Serve the newly trained model locally via `lab serve` with the `--model` 
+argument to specify your new model:
 
 ```
 lab serve --model-path <New model name>
 ```
 
-### 📣 Chat with the new model (not optional this time)
+But which model to serve? After running the `lab convert` command, a few files
+and directories are generated. The one you will want to serve will end in `.gguf`
+and will exist in a directory with the suffix `fused-pt`. For example:
+`ibm-merlinite-7b-mlx-q-fused-pt/ggml-model-Q4_K_M.gguf`
+
+## 📣 Chat with the new model (not optional this time)
 
 Try the fine-tuned model out live using the chat interface, and see if the results are better than the untrained version of the model with chat.
 
