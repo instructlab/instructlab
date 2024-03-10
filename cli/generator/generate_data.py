@@ -213,6 +213,76 @@ def get_version(contents):
     return 1
 
 
+def get_instructions_from_model(
+    logger,
+    request_idx,
+    instruction_data_pool,
+    prompt_template,
+    api_base,
+    api_key,
+    model_name,
+    num_prompt_instructions,
+    request_batch_size,
+    temperature,
+    top_p,
+):
+    batch_inputs = []
+    for _ in range(request_batch_size):
+        # only sampling from the seed tasks
+        try:
+            prompt_instructions = random.sample(
+                instruction_data_pool, num_prompt_instructions
+            )
+        except ValueError as exc:
+            raise GenerateException(
+                f"There was a problem with the new data, please make sure the "
+                f"yaml is formatted correctly, and there is enough "
+                f"new data({num_prompt_instructions}+ Q&A))"
+            ) from exc
+        prompt = encode_prompt(prompt_instructions, prompt_template)
+        batch_inputs.append(prompt)
+    decoding_args = utils.OpenAIDecodingArguments(
+        temperature=temperature,
+        n=1,
+        # Hard-coded to maximize length.
+        # Requests will be automatically adjusted.
+        max_tokens=3072,
+        top_p=top_p,
+        stop=["\n5", "5.", "5."],
+    )
+    request_start = time.time()
+    results = utils.openai_completion(
+        api_base=api_base,
+        api_key=api_key,
+        prompts=batch_inputs,
+        model_name=model_name,
+        batch_size=request_batch_size,
+        decoding_args=decoding_args,
+    )
+    request_duration = time.time() - request_start
+
+    post_process_start = time.time()
+    instruction_data = []
+    for result in results:
+        new_instructions = post_process_gpt3_response(num_prompt_instructions, result)
+        # make sure the generated instruction carried over extra fields
+        prompt_ins_0 = prompt_instructions[0]
+        for new_ins in new_instructions:
+            new_ins["taxonomy_path"] = prompt_ins_0["taxonomy_path"]
+            new_ins["task_description"] = prompt_ins_0["task_description"]
+            if "document" in prompt_ins_0:
+                new_ins["document"] = prompt_ins_0["document"]
+        instruction_data += new_instructions
+
+    post_process_duration = time.time() - post_process_start
+    logger.debug(
+        f"Request {request_idx} took {request_duration:.2f}s, "
+        f"post-processing took {post_process_duration:.2f}s"
+    )
+
+    return instruction_data
+
+
 def generate_data(
     logger,
     api_base,
@@ -313,7 +383,6 @@ def generate_data(
     while len(machine_instruction_data) < num_instructions_to_generate:
         request_idx += 1
 
-        batch_inputs = []
         # Pick taxonomy path
         selected_taxonomy = all_taxonomy_paths[request_idx % len(all_taxonomy_paths)]
         logger.info(f"Selected taxonomy path {selected_taxonomy}")
@@ -323,55 +392,23 @@ def generate_data(
             for e in seed_instruction_data + machine_instruction_data
             if e["taxonomy_path"] == selected_taxonomy
         ]
-        for _ in range(request_batch_size):
-
-            # only sampling from the seed tasks
-            try:
-                prompt_instructions = random.sample(
-                    instruction_data_pool, num_prompt_instructions
-                )
-            except ValueError as exc:
-                raise utils.GenerateException(
-                    f"There was a problem with the new data, please make sure the yaml is formatted correctly, and there is enough new data({num_prompt_instructions}+ Q&A)"
-                ) from exc
-            prompt = encode_prompt(prompt_instructions, prompt_template)
-            batch_inputs.append(prompt)
-        decoding_args = utils.OpenAIDecodingArguments(
-            temperature=temperature,
-            n=1,
-            # Hard-coded to maximize length. Requests will be automatically adjusted.
-            max_tokens=3072,
-            top_p=top_p,
-            stop=["\n5", "5.", "5."],
+        instruction_data = get_instructions_from_model(
+            logger,
+            request_idx,
+            instruction_data_pool,
+            prompt_template,
+            api_base,
+            api_key,
+            model_name,
+            num_prompt_instructions,
+            request_batch_size,
+            temperature,
+            top_p,
         )
-        request_start = time.time()
-        results = utils.openai_completion(
-            api_base=api_base,
-            api_key=api_key,
-            prompts=batch_inputs,
-            model_name=model_name,
-            batch_size=request_batch_size,
-            decoding_args=decoding_args,
-        )
-        request_duration = time.time() - request_start
-
-        process_start = time.time()
-        instruction_data = []
-        for result in results:
-            new_instructions = post_process_gpt3_response(
-                num_prompt_instructions, result
-            )
-            # make sure the generated instruction carried over extra fields
-            prompt_ins_0 = prompt_instructions[0]
-            for new_ins in new_instructions:
-                new_ins["taxonomy_path"] = prompt_ins_0["taxonomy_path"]
-                new_ins["task_description"] = prompt_ins_0["task_description"]
-                if "document" in prompt_ins_0:
-                    new_ins["document"] = prompt_ins_0["document"]
-            instruction_data += new_instructions
 
         total = len(instruction_data)
         keep = 0
+        assess_start = time.time()
         for instruction_data_entry in instruction_data:
             # computing similarity with the pre-tokenzied instructions
             new_instruction_tokens = scorer._tokenizer.tokenize(
@@ -402,11 +439,8 @@ def generate_data(
                     f"Q> {instruction_data_entry['instruction']}\nI>{instruction_data_entry['input']}\nA>{instruction_data_entry['output']}\n"
                 )
         progress_bar.update(keep)
-        process_duration = time.time() - process_start
-        logger.debug(
-            f"Request {request_idx} took {request_duration:.2f}s, "
-            f"processing took {process_duration:.2f}s"
-        )
+        assess_duration = time.time() - assess_start
+        logger.debug(f"Assessing generated samples took {assess_duration:.2f}s")
         logger.debug(f"Generated {total} instructions, kept {keep} instructions")
         utils.jdump(machine_instruction_data, os.path.join(output_dir, output_file))
         for synth_example in machine_instruction_data:
