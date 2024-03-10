@@ -2,6 +2,7 @@
 
 # Standard
 from functools import cache, wraps
+from itertools import chain
 from logging import Logger
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Union
@@ -18,6 +19,7 @@ import tempfile
 # Third Party
 from git import Repo, exc
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from podman import PodmanClient
 import click
 import git
 import gitdb
@@ -132,16 +134,30 @@ TAXONOMY_FOLDERS: List[str] = ["compositional_skills", "knowledge"]
 """Taxonomy folders which are also the schema names"""
 
 
-def istaxonomyfile(fn):
+def is_static_taxonomy_file(fn):
     path = Path(fn)
     if path.suffix == ".yaml" and path.parts[0] in TAXONOMY_FOLDERS:
         return True
     return False
 
 
+def is_dynamic_taxonomy_file(name):
+    return os.path.basename(name) in ("Dockerfile", "Containerfile")
+
+
+def is_taxonomy_file(name):
+    return is_dynamic_taxonomy_file(name) or is_static_taxonomy_file(name)
+
+
+def is_incompatible_list_of_taxonomies(files):
+    return any(is_dynamic_taxonomy_file(f) for f in files) and any(
+        is_static_taxonomy_file(f) for f in files
+    )
+
+
 def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     repo = git.Repo(repo)
-    untracked_files = [u for u in repo.untracked_files if istaxonomyfile(u)]
+    untracked_files = [u for u in repo.untracked_files if is_taxonomy_file(u)]
 
     branches = [b.name for b in repo.branches]
 
@@ -180,7 +196,7 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     modified_files = [
         d.b_path
         for d in head_commit.diff(None)
-        if not d.deleted_file and istaxonomyfile(d.b_path)
+        if not d.deleted_file and is_taxonomy_file(d.b_path)
     ]
 
     updated_taxonomy_files = list(set(untracked_files + modified_files))
@@ -394,18 +410,16 @@ def get_version(contents: Mapping) -> int:
 
 
 # pylint: disable=broad-exception-caught
-def read_taxonomy_file(
-    logger: Logger, file_path: str, yaml_rules: Optional[str] = None
+def _read_taxonomy_file(
+    # todo: change type of file_path to Path
+    logger: Logger,
+    file_path: str,
+    yaml_rules: Optional[str] = None,
 ):
     seed_instruction_data = []
     warnings = 0
     errors = 0
     file_path = Path(file_path).resolve()
-    # file should end with ".yaml" explicitly
-    if file_path.suffix != ".yaml":
-        logger.warn(f"Skipping {file_path}! Use lowercase '.yaml' extension instead.")
-        warnings += 1
-        return None, warnings, errors
     for i in range(len(file_path.parts) - 1, -1, -1):
         if file_path.parts[i] in TAXONOMY_FOLDERS:
             taxonomy_path = Path(*file_path.parts[i:])
@@ -414,7 +428,9 @@ def read_taxonomy_file(
         taxonomy_path = file_path
     # read file if extension is correct
     try:
+        # todo: deal with linter for dynamic qnas, e.g. normalizing the yaml before linting it
         # do general YAML linting if specified
+        # todo: move rule enforcement into a separate function
         if yaml_rules is not None:
             is_file = os.path.isfile(yaml_rules)
             if is_file:
@@ -474,6 +490,7 @@ def read_taxonomy_file(
                 return None, warnings, errors
 
             # get seed instruction data
+            # todo: deal with dynamic taxonomy paths (currently they point to ->tmp)
             tax_path = "->".join(taxonomy_path.parent.parts)
             task_description = contents.get("task_description")
             documents = contents.get("document")
@@ -500,6 +517,55 @@ def read_taxonomy_file(
         raise TaxonomyReadingException(f"Exception {e} raised in {file_path}") from e
 
     return seed_instruction_data, warnings, errors
+
+
+def get_dynamic_seed(logger, file_path):
+    with PodmanClient() as client:
+        # build container
+        path = os.path.dirname(file_path)
+        cfname = os.path.basename(file_path)
+        # todo: don't build the image on every iteration
+        img, _ = client.images.build(path=path, dockerfile=cfname)
+
+        # create temporary directory for qna generation
+        with tempfile.TemporaryDirectory() as d:
+            # run container with the directory
+            client.containers.run(
+                img,
+                mounts=[
+                    {
+                        # mounted tmpdir into container
+                        "type": "bind",
+                        "source": d,
+                        "target": "/out",
+                        "read_only": False,
+                        "relabel": "Z",
+                    }
+                ],
+            )
+
+            # read generated qna file
+            return _read_taxonomy_file(logger, os.path.join(d, "qna.yaml"))
+
+
+# pylint: disable=broad-exception-caught
+def read_taxonomy_file(
+    logger: Logger, file_path: str, yaml_rules: Optional[str] = None
+):
+    if is_dynamic_taxonomy_file(file_path):
+        try:
+            return get_dynamic_seed(logger, file_path)
+        except Exception as e:
+            print(str(e), " in ", file_path)
+            logger.error(f"Failed to generate qna file: {e}")
+            return None, 0, 1
+
+    file_path = Path(file_path).resolve()
+    if file_path.suffix != ".yaml":
+        logger.warn(f"Skipping {file_path}! Use lowercase '.yaml' extension instead.")
+        return None, 1, 0
+
+    return _read_taxonomy_file(logger, file_path, yaml_rules)
 
 
 def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
