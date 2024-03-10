@@ -274,12 +274,13 @@ def serve(ctx, model_path, gpu_layers):
 @click.option(
     "--endpoint-url",
     type=click.STRING,
+    default="",
     help="Custom URL endpoint for OpenAI-compatible API. Defaults to the `lab serve` endpoint.",
 )
 @click.option(
     "--api-key",
     type=click.STRING,
-    default="",
+    default="no_api_key",
     help="API key for API endpoint.",
 )
 @click.pass_context
