@@ -218,6 +218,7 @@ def generate_data(
     rouge_threshold: Optional[float] = None,
     console_output=True,
     has_document=False,
+    api_key: Optional[str] = None,
 ):
     seed_instruction_data = []
     generate_start = time.time()
@@ -332,6 +333,7 @@ def generate_data(
         request_start = time.time()
         results = utils.openai_completion(
             api_base=api_base,
+            api_key=api_key,
             prompts=batch_inputs,
             model_name=model_name,
             batch_size=request_batch_size,

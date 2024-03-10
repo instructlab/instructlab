@@ -271,6 +271,17 @@ def serve(ctx, model_path, gpu_layers):
     is_flag=True,
     help="Whether or not the examples contain the document field",
 )
+@click.option(
+    "--endpoint-url",
+    type=click.STRING,
+    help="Custom URL endpoint for OpenAI-compatible API. Defaults to the `lab serve` endpoint.",
+)
+@click.option(
+    "--api-key",
+    type=click.STRING,
+    default="",
+    help="API key for API endpoint.",
+)
 @click.pass_context
 def generate(
     ctx,
@@ -283,9 +294,11 @@ def generate(
     rouge_threshold,
     quiet,
     has_document,
+    endpoint_url,
+    api_key,
 ):
     """Generates synthetic data to enhance your example data"""
-    api_base = ctx.obj.config.serve.api_base()
+    api_base = endpoint_url if endpoint_url != "" else ctx.obj.config.serve.api_base()
     try:
         ctx.obj.logger.info(
             f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}' against {api_base} server"
@@ -293,6 +306,7 @@ def generate(
         generate_data(
             logger=ctx.obj.logger,
             api_base=api_base,
+            api_key=api_key,
             model_name=model,
             num_cpus=num_cpus,
             num_instructions_to_generate=num_instructions,
