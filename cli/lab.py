@@ -440,8 +440,13 @@ def download(ctx, repository, release, filename, model_dir):
     is_flag=True,
     help="Whether to skip quantization while converting to MLX.",
 )
+@click.option(
+    "--num-epochs",
+    type=click.INT,
+    default=1,  # TODO: change this to a more reasonable default
+    help="Whether to skip quantization while converting to MLX.",
+)
 @click.pass_context
-@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 def train(
     ctx,
     data_dir,
@@ -451,6 +456,7 @@ def train(
     iters,
     local,
     skip_quantize,
+    num_epochs,
 ):
     """
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
@@ -500,40 +506,106 @@ def train(
             )
             raise click.exceptions.Exit(1)
 
-    if not skip_preprocessing:
-        script = os.path.join(cli_dir, "train/lora-mlx/make_data.py")
-        cmd = f"{script} --data-dir {data_dir}"
+    if not utils.is_macos_with_m_chip():
+        script = os.path.join(cli_dir, "train/linux_train.py")
+        cmd = f"{script} --train-file {train_files[0]} --test-file {test_files[0]} --num-epochs {num_epochs}"
+        click.secho(
+            f"python {cmd}",
+        )
         os.system("python {}".format(cmd))
 
-    # NOTE we can skip this if we have a way ship MLX
-    # PyTorch safetensors to MLX safetensors
-    model_dir_local = model_dir.replace("/", "-")
-    model_dir_mlx = f"{model_dir_local}-mlx"
-    model_dir_mlx_quantized = f"{model_dir_local}-mlx-q"
+        training_results_dir = "./training_results"
+        os.makedirs(training_results_dir, exist_ok=True)
 
-    dest_model_dir = ""
-    quantize_arg = ""
+        final_results_dir = training_results_dir + "/final"
+        os.makedirs(final_results_dir, exist_ok=True)
 
-    if not skip_quantize:
-        dest_model_dir = model_dir_mlx_quantized
-        quantize_arg = "-q"
+        # TODO: Figure out what to do when there are multiple checkpoint dirs.
+        # Right now it's just copying files from the first one numerically not necessarily the best one
+        added_tokens_file = glob(
+            training_results_dir + "/checkpoint-*/added_tokens.json"
+        )
+        special_tokens_map = glob(
+            training_results_dir + "/checkpoint-*/special_tokens_map.json"
+        )
+        tokenizer_json = glob(training_results_dir + "/checkpoint-*/tokenizer.json")
+        tokenizer_model = glob(training_results_dir + "/checkpoint-*/tokenizer.model")
+        tokenizer_config_json = glob(
+            training_results_dir + "/checkpoint-*/tokenizer_config.json"
+        )
+        config_json = glob(training_results_dir + "/merged_model/config.json")
+        generation_config_json = glob(
+            training_results_dir + "/merged_model/generation_config.json"
+        )
+        safe_tensors = glob(training_results_dir + "/merged_model/*.safetensors")
+
+        shutil.copy(added_tokens_file[0], final_results_dir)
+        print("Copied ", added_tokens_file[0], "to ", final_results_dir)
+        shutil.copy(special_tokens_map[0], final_results_dir)
+        print("Copied ", special_tokens_map[0], "to ", final_results_dir)
+        shutil.copy(tokenizer_json[0], final_results_dir)
+        print("Copied ", tokenizer_json[0], "to ", final_results_dir)
+        shutil.copy(tokenizer_model[0], final_results_dir)
+        print("Copied ", tokenizer_model[0], "to ", final_results_dir)
+        shutil.copy(tokenizer_config_json[0], final_results_dir)
+        print("Copied ", tokenizer_config_json[0], "to ", final_results_dir)
+        shutil.copy(config_json[0], final_results_dir)
+        print("Copied ", config_json[0], "to ", final_results_dir)
+        shutil.copy(generation_config_json[0], final_results_dir)
+        print("Copied ", generation_config_json[0], "to ", final_results_dir)
+        for file in safe_tensors:
+            shutil.copy(file, final_results_dir)
+            print("Copied ", file, "to ", final_results_dir)
+
+        script = os.path.join(cli_dir, "llamacpp/llamacpp_convert_to_gguf.py")
+        cmd = f"{script} {final_results_dir} --pad-vocab"
+        os.system("python {}".format(cmd))
+
+        gguf_models_dir = "./models"
+        if not os.path.isdir(gguf_models_dir):
+            os.mkdir(gguf_models_dir)
+        shutil.copy(final_results_dir + "/ggml-model-f16.gguf", gguf_models_dir)
+        # cleanup original copy of model
+        os.remove(final_results_dir + "/ggml-model-f16.gguf")
+        # cleanup checkpoint dir since it's name is unpredictable
+        # TODO: figure out how checkpoint dirs should be cleaned up
+        # checkpoint_dirs = glob(training_results_dir + "/checkpoint*")
+        # shutil.rmtree(checkpoint_dirs[0])
     else:
-        dest_model_dir = model_dir_mlx
+        if not skip_preprocessing:
+            script = os.path.join(cli_dir, "train/lora-mlx/make_data.py")
+            cmd = f"{script} --data-dir {data_dir}"
+            os.system("python {}".format(cmd))
 
-    local_arg = "--local" if local else ""
+        # NOTE we can skip this if we have a way ship MLX
+        # PyTorch safetensors to MLX safetensors
+        model_dir_local = model_dir.replace("/", "-")
+        model_dir_mlx = f"{model_dir_local}-mlx"
+        model_dir_mlx_quantized = f"{model_dir_local}-mlx-q"
 
-    script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
-    cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
-    os.system("python {}".format(cmd))
+        dest_model_dir = ""
+        quantize_arg = ""
 
-    adapter_file_path = f"{dest_model_dir}/adapters.npz"
-    script = os.path.join(cli_dir, "train/lora-mlx/lora.py")
-    # train the model with LoRA
-    cmd = f"{script} --model {dest_model_dir} --train --data {data_dir} --adapter-file {adapter_file_path} --iters {iters} --save-every 10 --steps-per-eval 10"
-    os.system("python {}".format(cmd))
+        if not skip_quantize:
+            dest_model_dir = model_dir_mlx_quantized
+            quantize_arg = "-q"
+        else:
+            dest_model_dir = model_dir_mlx
 
-    # TODO copy some downloaded files from the PyTorch model folder
-    # Seems to be not a problem if working with a remote download with convert.py
+        local_arg = "--local" if local else ""
+
+        script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
+        cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
+        os.system("python {}".format(cmd))
+
+        adapter_file_path = f"{dest_model_dir}/adapters.npz"
+        script = os.path.join(cli_dir, "train/lora-mlx/lora.py")
+        # train the model with LoRA
+        cmd = f"{script} --model {dest_model_dir} --train --data {data_dir} --adapter-file {adapter_file_path} --iters {iters} --save-every 10 --steps-per-eval 10"
+        os.system("python {}".format(cmd))
+
+        # TODO copy some downloaded files from the PyTorch model folder
+        # Seems to be not a problem if working with a remote download with convert.py
 
 
 @cli.command()
