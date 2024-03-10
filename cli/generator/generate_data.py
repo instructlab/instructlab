@@ -382,7 +382,11 @@ def generate_data(
             machine_instruction_data.append(instruction_data_entry)
             all_instructions.append(instruction_data_entry["instruction"])
             all_instruction_tokens.append(new_instruction_tokens)
-            progress_bar.update(1)
+            if console_output:
+                print(
+                    f"Q> {instruction_data_entry['instruction']}\nI>{instruction_data_entry['input']}\nA>{instruction_data_entry['output']}\n"
+                )
+        progress_bar.update(keep)
         process_duration = time.time() - process_start
         logger.debug(
             f"Request {request_idx} took {request_duration:.2f}s, "
@@ -409,8 +413,6 @@ def generate_data(
                     "assistant": synth_example["output"],
                 }
             )
-            if console_output:
-                print(f"{user}\n{synth_example['output']}\n")
         # utils.jdump(train_data, os.path.join(output_dir, output_file_train))
         with open(
             os.path.join(output_dir, output_file_train), "w", encoding="utf-8"
