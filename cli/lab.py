@@ -126,7 +126,9 @@ def init(ctx, non_interactive, model_path, taxonomy_path, repository, min_taxono
             taxonomy_contents = os.listdir(taxonomy_path)
         except FileNotFoundError:
             taxonomy_contents = []
-        if len(taxonomy_contents) == 0:
+        if taxonomy_contents:
+            clone_taxonomy_repo = False
+        else:
             clone_taxonomy_repo = click.confirm(
                 f"`{taxonomy_path}` seems to not exists or is empty. Should I clone {repository} for you?"
             )
