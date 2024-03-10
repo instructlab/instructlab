@@ -1,6 +1,8 @@
-_DEFAULT_PROMPT_TEMPLATE = """\
+_COMMON_PREAMBULE = """\
 You are asked to come up with a set of 5 diverse task instructions under {taxonomy}{task_description_str}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
+"""
 
+_DEFAULT_PROMPT_TEMPLATE = """\
 Here are the requirements:
 1. Try not to repeat the verb for each instruction to maximize diversity.
 2. The language used for the instruction also should be diverse. For example, you should combine questions with imperative instructions.
@@ -16,8 +18,6 @@ List of 5 tasks:
 """
 
 _DEFAULT_PROMPT_TEMPLATE_DOCUMENT = """\
-You are asked to come up with a set of 5 diverse task instructions under {taxonomy}{task_description_str}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
-
 Here are the requirements:
 1. Try not to repeat the verb for each instruction to maximize diversity.
 2. The language used for the instruction also should be diverse. For example, you should combine questions with imperative instructions.
@@ -36,9 +36,19 @@ Here are some examples to help you understand the type of questions that are ask
 """
 
 
+def join_sections(*sections):
+    return "\n\n".join(sections)
+
+
 def get_default_template():
-    return _DEFAULT_PROMPT_TEMPLATE
+    return join_sections(
+        _COMMON_PREAMBULE,
+        _DEFAULT_PROMPT_TEMPLATE
+    )
 
 
 def get_document_template():
-    return _DEFAULT_PROMPT_TEMPLATE_DOCUMENT
+    return join_sections(
+        _COMMON_PREAMBULE,
+        _DEFAULT_PROMPT_TEMPLATE_DOCUMENT
+    )
