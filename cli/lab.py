@@ -298,7 +298,7 @@ def generate(
     api_key,
 ):
     """Generates synthetic data to enhance your example data"""
-    api_base = endpoint_url if endpoint_url != "" else ctx.obj.config.serve.api_base()
+    api_base = endpoint_url if endpoint_url else ctx.obj.config.serve.api_base()
     try:
         ctx.obj.logger.info(
             f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}' against {api_base} server"
