@@ -28,7 +28,7 @@ import yaml
 from . import utils
 
 DEFAULT_PROMPT_TEMPLATE = """\
-You are asked to come up with a set of 20 diverse task instructions under {taxonomy}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
+You are asked to come up with a set of 5 diverse task instructions under {taxonomy}{task_description_str}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
 
 Here are the requirements:
 1. Try not to repeat the verb for each instruction to maximize diversity.
@@ -41,7 +41,27 @@ Here are the requirements:
 8. Not all instructions require input. For example, when a instruction asks about some general information, "what is the highest peak in the world", it is not necessary to provide a specific context. In this case, we simply put "<noinput>" in the input field.
 9. The output should be an appropriate response to the instruction and the input. Make sure the output is less than 100 words.
 
-List of 20 tasks:
+List of 5 tasks:
+"""
+
+DEFAULT_PROMPT_TEMPLATE_DOCUMENT = """\
+You are asked to come up with a set of 5 diverse task instructions under {taxonomy}{task_description_str}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
+
+Here are the requirements:
+1. Try not to repeat the verb for each instruction to maximize diversity.
+2. The language used for the instruction also should be diverse. For example, you should combine questions with imperative instrucitons.
+3. The type of instructions should be similar to provided examples. The generated instruction and the output should be grounded in the provided document.
+4. A GPT language model should be able to complete the instruction. For example, do not ask the assistant to create any visual or audio output. For another example, do not ask the assistant to wake you up at 5pm or set a reminder because it cannot perform any action.
+5. The instructions should be in English.
+6. The instructions should be 1 to 2 sentences long. Either an imperative sentence or a question is permitted.
+7. The output should be an appropriate response to the input and the instruction. Long outputs are preferrable. 
+
+Based on below document provide a list of 5 tasks:
+
+Document:
+{document}
+
+Here are some examples to help you understand the type of question that asked for this document:
 """
 
 
@@ -49,14 +69,17 @@ class GenerateException(Exception):
     """An exception raised during generate step."""
 
 
-def check_prompt_file(prompt_file_path):
+def check_prompt_file(prompt_file_path, has_document):
     """Check for prompt file."""
     try:
         with open(prompt_file_path, encoding="utf=8") as file:
             prompt_template = file.read()
     except FileNotFoundError:
         print(f"Cannot find {prompt_file_path}. Using default prompt.")
-        prompt_template = DEFAULT_PROMPT_TEMPLATE
+        if has_document:
+            prompt_template = DEFAULT_PROMPT_TEMPLATE_DOCUMENT
+        else:
+            prompt_template = DEFAULT_PROMPT_TEMPLATE
     prompt_template = prompt_template + "\n"
     return prompt_template
 
@@ -64,7 +87,26 @@ def check_prompt_file(prompt_file_path):
 def encode_prompt(prompt_instructions, prompt):
     """Encode multiple prompt instructions into a single string."""
     idx = 0
-    prompt = prompt.format(taxonomy=prompt_instructions[0]["taxonomy_path"])
+    task_description = prompt_instructions[0]["task_description"]
+    task_description_str = (
+        "" if task_description == "" else f' for the task "{task_description}"'
+    )
+    if "document" in prompt_instructions[0]:
+        document = prompt_instructions[0]["document"]
+    else:
+        document = ""
+    if document == "":
+        prompt = prompt.format(
+            taxonomy=prompt_instructions[0]["taxonomy_path"],
+            task_description_str=task_description_str,
+        )
+    else:
+        prompt = prompt.format(
+            taxonomy=prompt_instructions[0]["taxonomy_path"],
+            task_description_str=task_description_str,
+            document=document,
+        )
+
     # pylint: disable=unused-variable
     for idx, task_dict in enumerate(prompt_instructions):
         (instruction, prompt_input, prompt_output, taxonomy_path,) = (
@@ -161,7 +203,7 @@ def get_seed_examples(contents):
 
 def generate_data(
     logger,
-    api_host_port,
+    api_base,
     output_dir: Optional[str] = None,
     taxonomy: Optional[str] = None,
     seed_tasks_path: Optional[str] = None,
@@ -175,6 +217,7 @@ def generate_data(
     top_p=1.0,
     rouge_threshold: Optional[float] = None,
     console_output=True,
+    has_document=False,
 ):
     seed_instruction_data = []
     generate_start = time.time()
@@ -225,15 +268,10 @@ def generate_data(
         )
 
     name = Path(model_name).stem  # Just in case it is a file path
-    output_file = (
-        f"generated_{name}_{datetime.now().replace(microsecond=0).isoformat()}.json"
-    )
-    output_file_train = (
-        f"train_{name}_{datetime.now().replace(microsecond=0).isoformat()}.jsonl"
-    )
-    output_file_test = (
-        f"test_{name}_{datetime.now().replace(microsecond=0).isoformat()}.jsonl"
-    )
+    date_suffix = datetime.now().replace(microsecond=0).isoformat().replace(":", "_")
+    output_file = f"generated_{name}_{date_suffix}.json"
+    output_file_train = f"train_{name}_{date_suffix}.jsonl"
+    output_file_test = f"test_{name}_{date_suffix}.jsonl"
     logger.debug(f"Generating to: {os.path.join(output_dir, output_file)}")
 
     request_idx = 0
@@ -262,7 +300,7 @@ def generate_data(
         scorer._tokenizer.tokenize(inst) for inst in all_instructions
     ]
 
-    prompt_template = check_prompt_file(prompt_file_path)
+    prompt_template = check_prompt_file(prompt_file_path, has_document)
     if console_output:
         print(
             "Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help."
@@ -278,7 +316,7 @@ def generate_data(
                     seed_instruction_data, num_prompt_instructions
                 )
             except ValueError as exc:
-                raise GenerateException(
+                raise utils.GenerateException(
                     f"There was a problem with the new data, please make sure the yaml is formatted correctly, and there is enough new data({num_prompt_instructions}+ Q&A) or decrease `num_prompt_instructions`, (currently {num_prompt_instructions})"
                 ) from exc
             prompt = encode_prompt(prompt_instructions, prompt_template)
@@ -289,11 +327,11 @@ def generate_data(
             # Hard-coded to maximize length. Requests will be automatically adjusted.
             max_tokens=3072,
             top_p=top_p,
-            stop=["\n20", "20.", "20."],
+            stop=["\n5", "5.", "5."],
         )
         request_start = time.time()
         results = utils.openai_completion(
-            api_host_port=api_host_port,
+            api_base=api_base,
             prompts=batch_inputs,
             model_name=model_name,
             batch_size=request_batch_size,
@@ -307,6 +345,13 @@ def generate_data(
             new_instructions = post_process_gpt3_response(
                 num_prompt_instructions, result
             )
+            # make sure the generated instruction carried over extra fields
+            prompt_ins_0 = prompt_instructions[0]
+            for new_ins in new_instructions:
+                new_ins["taxonomy_path"] = prompt_ins_0["taxonomy_path"]
+                new_ins["task_description"] = prompt_ins_0["task_description"]
+                if "document" in prompt_ins_0:
+                    new_ins["document"] = prompt_ins_0["document"]
             instruction_data += new_instructions
 
         total = len(instruction_data)
@@ -342,6 +387,14 @@ def generate_data(
             f"processing took {process_duration:.2f}s"
         )
         logger.debug(f"Generated {total} instructions, kept {keep} instructions")
+        machine_instruction_data = [
+            {
+                "instruction": ins["instruction"],
+                "input": ins["input"],
+                "output": ins["output"],
+            }
+            for ins in machine_instruction_data
+        ]
         utils.jdump(machine_instruction_data, os.path.join(output_dir, output_file))
         for synth_example in machine_instruction_data:
             user = synth_example["instruction"]
@@ -412,9 +465,15 @@ def read_taxonomy_file(logger, file_path):
                 warnings += 1
                 return None, warnings, errors
             tax_path = "->".join(file_path.split(os.sep)[1:-1])
+            task_description = contents.get("task_description")
+            if "document" in contents:
+                document = contents["document"]
+            else:
+                document = None
             for t in get_seed_examples(contents):
                 q = t["question"]
                 a = t["answer"]
+                c = t.get("context")
                 if not q:
                     logger.warn(
                         f"Skipping entry in {file_path} " + "because question is empty!"
@@ -430,10 +489,12 @@ def read_taxonomy_file(logger, file_path):
                 seed_instruction_data.append(
                     {
                         "instruction": q,
-                        "input": "",
+                        "input": "" if not c else c,
                         "output": a,
                         "taxonomy_path": tax_path,
+                        "task_description": task_description,
                     }
+                    | ({} if document is None else {"document": document})
                 )
     except Exception as e:
         errors += 1
@@ -459,7 +520,7 @@ def read_taxonomy(logger, taxonomy):
         try:
             updated_taxonomy_files = get_taxonomy_diff(taxonomy)
         except NameError as exc:
-            raise GenerateException("`git` binary not found") from exc
+            raise utils.GenerateException("`git` binary not found") from exc
         total_errors = 0
         total_warnings = 0
         for f in updated_taxonomy_files:

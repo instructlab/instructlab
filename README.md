@@ -1,17 +1,36 @@
 # InstructLab 🥼 (`lab`)
 
+## 📖 Contents
+- [❓What is `lab`](#-what-is-lab)
+- [📋 Requirements](#-requirements)
+- [✅ Getting started](#-getting-started)
+  - [🧰 Installing`lab`](#-installing-lab)
+  - [🏗️ Initialize `lab`](#%EF%B8%8F-initialize-lab)
+  - [📥 Download the model](#-download-the-model)
+  - [🍴 Serving the model](#-serving-the-model)
+  - [📣 Chat with the model (Optional)](#-chat-with-the-model-optional)
+- [💻 Creating new knowledge and training the model](#-creating-new-knowledge-and-training-the-model)
+  - [🎁 Contribute knowledge or compositional skills](#-contribute-knowledge-or-compositional-skills)
+  - [📜 List your new knowledge](#-list-your-new-knowledge)
+  - [🚀 Generate a synthetic dataset](#-generate-a-synthetic-dataset)
+  - [👩‍🏫 Train the model](#-train-the-model) 
+  - [🍴 Serve the newly trained model](#-serve-the-newly-trained-model)
+  - [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
+- [🎁 Submit your new knowledge](#-submit-your-new-knowledge)
+- [📬 Contributing to Instruct-Lab CLI](#-contributing)
+
 ## ❓ What is `lab`
 
 `lab` is a Command-Line Interface (CLI) tool that allows you to:
 
-1. Download a pre-trained LLM.
+1. Download a pre-trained LLM (Large Laungage Model).
 2. Chat with the LLM.
 
 To add new knowledge and skills to the pre-trained LLM you have to add new information to the companion [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository.
-After that is done you can:
+After that is done, you can:
 
-1. Use `lab` to generate new synthetic training data based on the changes to your local `taxonomy` repository.
-2. Re-train the LLM that you initially downloaded with this new training data.
+1. Use `lab` to generate new synthetic training data based on the changes in your local `taxonomy` repository.
+2. Re-train the LLM with the new training data.
 3. Chat with the re-trained LLM to see the results.
 
 ## 📋 Requirements
@@ -26,9 +45,10 @@ On Fedora Linux this means installing:
 $ sudo yum install g++ python3 python3-devel
 ```
 
-## 🧰 Installing `lab`
+## ✅ Getting started 
+### 🧰 Installing `lab`
 
-To start we'll create a new directory called `instruct-lab` to store the files that this CLI needs when it runs.
+To start, create a new directory called `instruct-lab` to store the files that the `lab` CLI needs when it runs.
 
 ```
 mkdir instruct-lab
@@ -37,9 +57,9 @@ python3 -m venv venv
 source venv/bin/activate
 pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
 ```
-⏳ `pip install` may take some time, depending on your internet connection.
+> **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection.
 
-If `lab` is installed correctly, you should be able to test the lab command:
+If `lab` is installed correctly, you can test the lab command:
 
 ```
 (venv) $ lab
@@ -47,7 +67,7 @@ lab [OPTIONS] COMMAND [ARGS]...
 
   CLI for interacting with InstructLab.
 
-  If this is your first time running lab, it's best to start with `lab init`
+  If this is your first time running `lab`, it's best to start with `lab init`
   to create the environment
 
 Options:
@@ -65,18 +85,18 @@ Commands:
   train     Trains model
 ```
 
-**Every** `lab` command needs to be run from within your Python virtual environment:
+**Every** `lab` command needs to be run from within your Python virtual environment. To enter the Python environment, run the following command: 
 
 ```
 source venv/bin/activate
 ```
 
-## 🏗️ Initialize `lab`
+### 🏗️ Initialize `lab`
 
 ```
 lab init
 ```
-Initializing `lab` will:
+Initializing `lab` will: 
 1. Add a new, default `config.yaml` file. 
 2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory.
 
@@ -94,7 +114,7 @@ Initialization completed successfully, you're ready to start using `lab`. Enjoy!
 `lab` will use the default configuration file unless otherwise specified.
 You can override this behavior for any `lab` command with the `--config` parameter.
 
-## 📥 Download the model
+### 📥 Download the model
 
 ```
 lab download
@@ -109,15 +129,15 @@ Downloading model from ibm/merlinite-7b-GGUF@main to models...
 merlinite-7b-Q4_K_M.gguf
 ```
 
-⏳ This command can take few minutes or immediately depending on your internet connection or model is cached.
+> **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached.
 
-## 🍴 Serving the model
+### 🍴 Serving the model
 
 ```
 lab serve
 ```
 
-Once the model is being served and ready, you'll see the following output:
+Once the model is served and ready, you'll see the following output:
 
 ```
 (venv) $ lab serve
@@ -127,15 +147,15 @@ After application startup complete see http://127.0.0.1:8000/docs for API.
 Press CTRL+C to shutdown server.
 ```
 
-## 📣 Chat with the model (optional)
+### 📣 Chat with the model (Optional)
 
-Because you're serving the model in one terminal window, you'll likely have to create a new window and re-activate your Python virtual environment to run `lab chat`:
+Because you're serving the model in one terminal window, you likely have to create a new window and re-activate your Python virtual environment to run `lab chat`:
 ```
 source venv/bin/activate
 lab chat
 ```
 
-Before you start adding new skills and knowledge to your knowledge, you can check out its baseline performance:
+Before you start adding new skills and knowledge to your model, you can check out its baseline performance:
 
 ```
 (venv) $ lab chat
@@ -150,27 +170,28 @@ Before you start adding new skills and knowledge to your knowledge, you can chec
 >>>                                                                                                                                                                                                                               [S][default]
 ```
 
-## 🎁 Contribute knowledge or compositional skills
+## 💻 Creating new knowledge and training the model
+### 🎁 Contribute knowledge or compositional skills
 
 Locally contribute new knowledge or compositional skills to your local [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository.
 
 Detailed contribution instructions can be found on the [taxonomy github](https://github.com/instruct-lab/taxonomy/blob/main/README.md).
 
-## 📜 List your new knowledge
+### 📜 List your new knowledge
 
 ```
 lab list
 ```
 
-To ensure `lab` is registering your new knowledge you can run `lab list`.
+To ensure `lab` is registering your new knowledge, you can run `lab list`.
 
-Here is the expected result after adding the new compositional skill foo-lang:
+The following is the expected result after adding the new compositional skill foo-lang:
 ```
 (venv) $ lab list
 compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
 ```
 
-## 🚀 Generate a synthetic dataset
+### 🚀 Generate a synthetic dataset
 
 ```
 lab generate
@@ -194,13 +215,29 @@ The synthetic data set will be three files in the newly created `generated` dire
  'test_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
 ```
 
-⏳ This can take over **1 hour+** to complete depending on your computing resources.
+> **NOTE:** ⏳ This can take over **1 hour+** to complete depending on your computing resources.
 
-## 👩‍🏫 Train the model
+### 👩‍🏫 Train the model
 
-There are currently two options to train the model on your synthetic data-enhanced dataset.
+There are currently three options to train the model on your synthetic data-enhanced dataset.
 
-### Train the model locally on an M-series Mac
+**Every** `lab` command needs to be run from within your Python virtual environment
+
+#### Train the model locally on Linux
+
+```
+lab train
+```
+
+> **NOTE:** ⏳ This step can take **several hours** to complete depending on your computing resources.
+
+`lab train` outputs a brand new model that can be served in the `models` directory called `ggml-model-f16.gguf`
+```
+(venv) $ ls models
+ggml-merlinite-7b-0302-Q4_K_M.gguf  ggml-model-f16.gguf
+```
+
+#### Train the model locally on an M-series Mac:
 
 To train the model locally on your M-Series Mac is as easy as running:
 ```
@@ -210,16 +247,17 @@ lab train
 ⏳ This process will take a little while to complete (time can vary based on hardware
 and output of `lab generate` but on the order of 30 minutes to two hours)
 
-### Train the model in Colab
+#### Train the model in Colab:
+
 Follow the instructions in [Training](./notebooks/README.md).
 
-⏳ This takes about **0.5-2.5 hours** to complete in the free tier of Google Colab.
+> **NOTE:** ⏳ This takes about **0.5-2.5 hours** to complete in the free tier of Google Colab.
 
 After that's done, you can play with your model directly in the Colab notebook.
 The model itself is for testing your taxonomy and is not a required artifact for
 a PR or any further task.
 
-## 🍴 Serve the newly trained model
+### 🍴 Serve the newly trained model
 
 Stop the server you have running via `ctrl+c` in the terminal it is running in.
 
@@ -251,8 +289,8 @@ lab chat -m <New model name>
 ```
 ## 🎁 Submit your new knowledge
 
-Of course the final step is - if you've improved the model - to open up a a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy).
+Of course the final step is, if you've improved the model, to open up a a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy) that includes the `qna.yaml` files with your improved data. 
 
-## Contributing
+## 📬 Contributing
 
 Check out our [contributing](CONTRIBUTING/CONTRIBUTING.md) guide to learn how to contribute to the InstructLab CLI.

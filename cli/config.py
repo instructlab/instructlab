@@ -1,13 +1,15 @@
 # Standard
-from dataclasses import asdict, dataclass
+from dataclasses import Field, asdict, dataclass
+import sys
 
 # Third Party
 import yaml
 
 DEFAULT_CONFIG = "config.yaml"
+DEFAULT_CHAT_LOGS = "data/chatlogs"
 DEFAULT_MODEL = "merlinite-7b-Q4_K_M"
 DEFAULT_MODEL_PATH = f"models/{DEFAULT_MODEL}.gguf"
-DEFAULT_API_HOST_PORT = "localhost:8000"
+DEFAULT_HOST_PORT = "localhost:8000"
 DEFAULT_API_KEY = "no_api_key"
 DEFAULT_VI_MODE = False
 DEFAULT_VISIBLE_OVERFLOW = True
@@ -17,6 +19,7 @@ DEFAULT_TAXONOMY_BRANCH = "main"
 DEFAULT_PROMPT_FILE = "prompt.txt"
 DEFAULT_SEED_FILE = "seed_tasks.json"
 DEFAULT_GENERATED_FILES_OUTPUT_DIR = "generated"
+DEFAULT_GREEDY_MODE = False
 
 
 class ConfigException(Exception):
@@ -33,15 +36,16 @@ class _general:
     log_level: str
 
 
+# pylint: disable=too-many-instance-attributes
 @dataclass
 class _chat:
-    api_host_port: str
-    api_key: str
     model: str
     vi_mode: bool
     visible_overflow: bool
     context: str
     session: str
+    logs_dir: str
+    greedy_mode: bool
 
 
 @dataclass
@@ -57,8 +61,13 @@ class _generate:
 
 @dataclass
 class _serve:
+    host_port: str
     model_path: str
     gpu_layers: int
+
+    def api_base(self):
+        """Returns server API URL, based on the configured host and port"""
+        return get_api_base(self.host_port)
 
 
 @dataclass
@@ -81,9 +90,41 @@ class Config:
 
 def read_config(config_file=DEFAULT_CONFIG):
     """Reads configuration from disk"""
+
+    def validateConfig(cl, d):
+        fields = None
+        warnings = []
+        if cl is Config:
+            fields = cl.__dataclass_fields__
+            name = "at the global level"
+        elif isinstance(cl, Field) and isinstance(d, dict):
+            fields = cl.type.__dataclass_fields__
+            name = f"in section '{cl.name}'"
+        if fields:
+            c = {}
+            for (k, v) in fields.items():
+                if k in d:
+                    c[k], warning = validateConfig(v, d[k])
+                    if warning:
+                        warnings.extend(warning)
+                else:
+                    warnings.append(f">> '{k}', {v.type} is missing {name}")
+        else:
+            c = d
+        return c, warnings
+
     try:
         with open(config_file, "r", encoding="utf-8") as yamlfile:
-            cfg = yaml.safe_load(yamlfile)
+            content = yaml.safe_load(yamlfile)
+            cfg, warnings = validateConfig(Config, content)
+            if warnings:
+                print(f"ERROR: Following issues were detected in {config_file}:")
+                for w in warnings:
+                    print(w)
+                print(
+                    f"Please update your {config_file} and re-run the tool. You can move {config_file} aside and generate a new one with 'lab init'"
+                )
+                sys.exit(1)
             return Config(**cfg)
     except Exception as exc:
         raise ConfigException(config_file) from exc
@@ -104,13 +145,13 @@ def get_default_config():
     """Generates default configuration for CLI"""
     general = _general(log_level="INFO")
     chat = _chat(
-        api_host_port=DEFAULT_API_HOST_PORT,
-        api_key=DEFAULT_API_KEY,
         model=DEFAULT_MODEL,
         vi_mode=DEFAULT_VI_MODE,
         visible_overflow=DEFAULT_VISIBLE_OVERFLOW,
         context="default",
         session=None,
+        logs_dir=DEFAULT_CHAT_LOGS,
+        greedy_mode=DEFAULT_GREEDY_MODE,
     )
     generate = _generate(
         model=DEFAULT_MODEL,
@@ -122,5 +163,14 @@ def get_default_config():
         seed_file=DEFAULT_SEED_FILE,
     )
     # pylint: disable=redefined-builtin
-    serve = _serve(model_path=DEFAULT_MODEL_PATH, gpu_layers=-1)
+    serve = _serve(
+        host_port=DEFAULT_HOST_PORT,
+        model_path=DEFAULT_MODEL_PATH,
+        gpu_layers=-1,
+    )
     return Config(general=general, chat=chat, generate=generate, serve=serve)
+
+
+def get_api_base(host_port):
+    """Returns server API URL, based on the provided host_port"""
+    return f"http://{host_port}/v1"

@@ -10,11 +10,16 @@ import os
 import sys
 
 # Third Party
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
 
 StrOrOpenAIObject = Union[str, object]
 
 SYSTEM_PROMPT = "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
+
+
+class GenerateException(Exception):
+    """An exception raised during generate step."""
+
 
 # pylint: disable=too-many-instance-attributes
 @dataclasses.dataclass
@@ -31,7 +36,7 @@ class OpenAIDecodingArguments:
 
 
 def openai_completion(
-    api_host_port,
+    api_base,
     prompts: Union[str, Sequence[str], Sequence[dict[str, str]], dict[str, str]],
     decoding_args: OpenAIDecodingArguments,
     model_name="ggml-merlinite-7b-0302-Q4_K_M",
@@ -96,8 +101,7 @@ def openai_completion(
             **decoding_kwargs,
         }
 
-        api_base = f"http://{api_host_port}/v1"
-        client = OpenAI(base_url=api_base, api_key="foo")
+        client = OpenAI(base_url=api_base, api_key="no_api_key")
 
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
@@ -105,10 +109,15 @@ def openai_completion(
         ]
 
         # Inference the model
-        response = client.chat.completions.create(
-            messages=messages,
-            **shared_kwargs,
-        )
+        try:
+            response = client.chat.completions.create(
+                messages=messages,
+                **shared_kwargs,
+            )
+        except OpenAIError as exc:
+            raise GenerateException(
+                f"There was a problem connecting to the server {exc}"
+            ) from exc
 
         completions.extend(response.choices)
 

@@ -65,7 +65,7 @@ def fetch_from_hub(hf_path: str, local: bool):
 
     weights = {}
     for wf in weight_files:
-        w, m = mx.load(wf, return_metadata=True)
+        w = mx.load(wf, return_metadata=False)
         weights.update(w.items())
 
     config = transformers.AutoConfig.from_pretrained(hf_path)
@@ -178,7 +178,7 @@ def load(path_or_hf_repo: str):
 
     weights = {}
     for wf in weight_files:
-        w, m = mx.load(wf, return_metadata=True)
+        w = mx.load(wf, return_metadata=False)
         weights.update(w.items())
 
     model_class, model_args_class = _get_classes(config=config)
