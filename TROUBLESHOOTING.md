@@ -1,6 +1,6 @@
 # Troubleshooting
 
-This document is for commonly found problems and their solutions when using `lab`. There is also a section that talks about troubleshooting/fine-tuning your model to optimize the quality of its responses. 
+This document is for commonly found problems and their solutions when using `lab`. There is also a section that includes information on fine-tuning and troubleshooting your model to optimize the quality of its responses. 
 
 ## `lab` troubleshooting
 
