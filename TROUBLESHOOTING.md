@@ -168,7 +168,7 @@ The data generation step is executed via `lab generate`, and is responsible for 
 
 ### Training 
 
-The training step can be invokeed via `lab train`. This step trains the model on the synthetic data that was generated. The output of this step is a set of adapter files with the general format `adapters-xxx.npz`, where `xxx` is a number. These adapter files represent a snapshot of the model's trained state and are periodically written to disk. 
+The training step is run with `lab train`. This step trains the model on the synthetic data that was generated. The output of this step is a set of adapter files with the general format `adapters-xxx.npz`, where `xxx` is a number. These adapter files represent a snapshot of the model's trained state and are periodically written to disk. 
 
 #### Steps that can be taken in order to train the model better:
 - Increase the number of training iterations via `--iters`. A larger number of iterations usually means a better trained model (diminishing returns might kick in around 300 or so iterations). Increasing the number of iterations comes at the cost of having to wait longer for the training to complete. 
