@@ -86,7 +86,7 @@ gh auth login --with-token < mytoken.txt
 $ gh auth logout
 ```
 
-Always refer to [README.md](README.md) for most/latest commands used during Installing lab:
+Always refer to [README.md](README.md) for most/latest commands used during Installing `lab`:
 
 ```
 gh auth login --with-token < ~/Documents/mytoken.txt
