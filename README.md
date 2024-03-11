@@ -192,6 +192,7 @@ compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
 ```
 
 ### 🚀 Generate a synthetic dataset
+You need to have running `lab serve` in order to make the following command work.
 
 ```
 lab generate
