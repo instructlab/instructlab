@@ -295,7 +295,7 @@ Try the fine-tuned model out live using the chat interface, and see if the resul
 lab chat -m <New model name>
 ```
 
-If you are interested in taking steps to optiimze the quality of the model's responses, please see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md#model-fine-tuning-and-response-optimization)
+If you are interested in optimizing the quality of the model's responses, please see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md#model-fine-tuning-and-response-optimization)
 
 ## 🎁 Submit your new knowledge
 
