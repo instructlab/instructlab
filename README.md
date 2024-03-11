@@ -183,7 +183,7 @@ Detailed contribution instructions can be found on the [taxonomy github](https:/
 lab list
 ```
 
-To ensure `lab` is registering your new knowledge, you can run `lab list`.
+To ensure `lab` is registering your new uncommitted knowledge, you can run `lab list`.
 
 The following is the expected result after adding the new compositional skill foo-lang:
 ```
