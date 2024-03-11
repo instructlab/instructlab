@@ -12,17 +12,10 @@ import sys
 # Third Party
 from huggingface_hub import snapshot_download
 from mlx.utils import tree_flatten, tree_unflatten
+from utils import save_model
 import mlx.core as mx
 import mlx.nn as nn
 import numpy as np
-import utils
-
-# # Get the current script's directory
-# current_dir = os.path.dirname(os.path.abspath(__file__))
-# # Get the parent directory by going one level up
-# parent_dir = os.path.dirname(current_dir)
-# # Add the parent directory to sys.path
-# sys.path.append(parent_dir)
 
 
 @dataclass
@@ -50,16 +43,6 @@ class ModelArgs:
 
             if self.rope_scaling["type"] != "linear":
                 raise ValueError("rope_scaling 'type' currently only supports 'linear'")
-
-    @classmethod
-    def from_dict(cls, params):
-        return cls(
-            **{
-                k: v
-                for k, v in params.items()
-                if k in inspect.signature(cls).parameters
-            }
-        )
 
 
 class RMSNorm(nn.Module):
@@ -242,21 +225,6 @@ def get_config(metadata: dict):
     return output
 
 
-class GGUFTokenizer:
-    def __init__(self, metadata):
-        self._tokenizer = utils.spm_tokenizer(metadata)
-
-    def encode(self, s: str) -> mx.array:
-        return mx.array([self._tokenizer.bos_id()] + self._tokenizer.encode(s))
-
-    @property
-    def eos_token_id(self):
-        return self._tokenizer.eos_id()
-
-    def decode(self, toks: List[int]) -> str:
-        return self._tokenizer.decode(toks)
-
-
 def translate_weight_names(name):
     name = name.replace("blk.", "model.layers.")
     name = name.replace("ffn_gate", "mlp.gate_proj")
@@ -319,19 +287,8 @@ def load(gguf_file: str, repo: str = None, mlx_path: str = None):
             **quantization,
         )
 
-    def dequantize(k):
-        weight = weights.pop(f"{k}.weight")
-        scales = weights.pop(f"{k}.scales")
-        biases = weights.pop(f"{k}.biases")
-        weights[f"{k}.weight"] = mx.dequantize(
-            weight, scales=scales, biases=biases, **quantization
-        )
-
-    # Dequantize embeddings
-    dequantize("model.embed_tokens")
-
     model.load_weights(list(weights.items()))
-    utils.save_model(mlx_path, weights)
+    save_model(mlx_path, weights)
 
 
 def generate(prompt: mx.array, model: Model, temp: float = 0.0):
@@ -348,35 +305,6 @@ def generate(prompt: mx.array, model: Model, temp: float = 0.0):
         logits = logits[:, -1, :]
         y = sample(logits)
         yield y
-
-
-def quantize(weights, config, args):
-    quantized_config = copy.deepcopy(config)
-
-    # Get model classes
-    model_class, model_args_class = utils._get_classes(config=config)
-
-    # Load the model:
-    model = model_class(model_args_class.from_dict(config))
-    model.load_weights(list(weights.items()))
-
-    # Quantize the model:
-    nn.QuantizedLinear.quantize_module(
-        model,
-        args.q_group_size,
-        args.q_bits,
-        linear_class_predicate=lambda m: isinstance(m, nn.Linear)
-        and m.weight.shape[0] != 8,
-    )
-
-    # Update the config:
-    quantized_config["quantization"] = {
-        "group_size": args.q_group_size,
-        "bits": args.q_bits,
-    }
-    quantized_weights = dict(tree_flatten(model.parameters()))
-
-    return quantized_weights, quantized_config
 
 
 if __name__ == "__main__":

@@ -477,7 +477,7 @@ def download(ctx, repository, release, filename, model_dir):
     "-sq",
     "--skip-quantize",
     is_flag=True,
-    help="Whether to skip quantization while converting to MLX.",
+    help="Whether to skip quantization while converting to MLX. This parameter will be ignored if --gguf-model-path and --tokenizer-dir are specified",
 )
 @click.option(
     "--num-epochs",
