@@ -22,7 +22,7 @@ sudo sysctl iogpu.wired_limit_mb=12288
 ```
 Once done, make sure to reset the limit back to 0, which resets it to default.
 
-**Note:** This value will reset to defaults after machine reboot.
+> **Note:** This value will reset to defaults after machine reboot.
 
 
 ## Model fine tuning and response optimization 
