@@ -68,6 +68,7 @@ The following tools are required:
 - [git](https://git-scm.com)
 - [python](https://www.python.org) (v3.9+)
 - [pip](https://pypi.org/project/pip/) (v23.0+)
+- [expect](https://core.tcl-lang.org/expect/index) (for functional tests)
 
 You can setup your dev environment using [tox](https://tox.wiki/en/latest/), an environment orchestrator which allows for setting up environments for and invoking builds, unit tests, formatting, linting, etc. Install tox with:
 
@@ -81,29 +82,42 @@ Install project requirements with:
 pip install -r requirements.txt
 ```
 
-If you want to manage your own virtual environment instead of using `tox`, you can install `cli` and all dependencies with:
+If you want to test the `cli` binary, you can install `cli` and all dependencies with:
 
 ```shell
 pip install .
 ```
 
-<!--### Unit tests
+### Testing
 
-Unit tests are enforced by the CI system. When making changes, run the tests before pushing the changes to avoid CI issues.
-
-Running unit tests against all supported Python versions is as simple as:
+Before pushing changes to GitHub, you need to run the tests as shown below. They can be run individually as shown in each sub-section
+or can be run with the one command:
 
 ```shell
 tox
 ```
 
-Running tests against a single Python version can be done with:
+#### Unit tests
+
+Unit tests are enforced by the CI system. When making changes, run the tests before pushing the changes to avoid CI issues.
+
+Running unit tests can be done with:
 
 ```shell
-tox -e py
-```-->
+tox -e unit
+```
 
-### Coding style
+#### Functional tests
+
+Functional tests are enforced by the CI system. When making changes, run the tests before pushing the changes to avoid CI issues.
+
+Running functional tests can be done with:
+
+```shell
+tox -e functional
+```
+
+#### Coding style
 
 Cli follows the python [pep8](https://peps.python.org/pep-0008/) coding style. The coding style is enforced by the CI system, and your PR will fail until the style has been applied correctly.
 
