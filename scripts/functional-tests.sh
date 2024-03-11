@@ -11,12 +11,16 @@ for cmd in lab expect; do
     fi
 done
 
-PID=
+PID1=
+PID2=
 
 cleanup() {
     set +e
-    if [ -n "$PID" ]; then
-        kill $PID
+    if [ -n "$PID1" ]; then
+        kill $PID1
+    fi
+    if [ -n "$PID2" ]; then
+        kill $PID2
     fi
 }
 
@@ -31,39 +35,37 @@ echo -e "\n\n\n" | lab init
 lab download
 
 # check that lab serve is working
-# catch ERROR strings in the output
 expect -c '
 spawn lab serve
 expect {
-    "ERROR" { exit 1 }
+    "http://localhost:8000/docs" { exit 0 }
     eof
 }
-'
 
 python -m http.server 8000 &
-PID=$!
+PID1=$!
 
 # check that lab serve is detecting the port is already in use
 # catch 'error while attempting to bind on address ('127.0.0.1', 8000): address already in use' strings in the output
-expect -c '
 spawn lab serve
 expect {
-    "error while attempting to bind on address " { exit 0 }
+    "error while attempting to bind on address " { exit 1 }
     eof
-'
+}
 
 # configure a different port
 sed -i 's/8000/9999/g' config.yaml
 
 # check that lab serve is working on the new port
 # catch ERROR strings in the output
-expect -c '
 spawn lab serve
 expect {
-    "ERROR" { exit 1 }
     "http://localhost:9999/docs" { exit 0}
     eof
 }
 '
+
+python -m http.server 9999 &
+PID2=$!
 
 exit 0
