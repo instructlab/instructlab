@@ -196,8 +196,11 @@ compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
 ```
 lab generate
 ```
+The next step is to generate a synthetic dataset based on your newly added knowledge set in the [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository.
 
-The next step is to generate a synthetic dataset based on your newly added knowledge set in the [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository:
+> **NOTE:** ⏳ This can take over **1 hour+** to complete depending on your computing resources.
+
+> **NOTE:** Do not use `lab generate` and `lab chat` in parallel, that could crash the model ([#346](https://github.com/instruct-lab/cli/issues/346).
 
 ```
 (venv) $ lab generate
@@ -214,8 +217,6 @@ The synthetic data set will be three files in the newly created `generated` dire
  'generated_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.json'   'train_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
  'test_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
 ```
-
-> **NOTE:** ⏳ This can take over **1 hour+** to complete depending on your computing resources.
 
 It is also possible to run the generate step against a different model via an
 OpenAI compatible API. For example, the one spawned by `lab serve` or any remote or locally hosted LLM (e.g. via [ollama](ollama.ai/), [LM Studio](https://lmstudio.ai), etc.)
