@@ -19,6 +19,7 @@ from . import config, utils
 from .chat.chat import ChatException, chat_cli
 from .generator.generate_data import generate_data, get_taxonomy_diff, read_taxonomy
 from .generator.utils import GenerateException
+from .mlx_explore import utils as mlx_utils
 from .server import ServerException, ensure_server, server
 
 
@@ -449,6 +450,16 @@ def download(ctx, repository, release, filename, model_dir):
     is_flag=True,
 )
 @click.option(
+    "--tokenizer-dir",
+    help="Base directory where tokenizer is stored.",
+    default=None,
+)
+@click.option(
+    "--gguf-model-path",
+    help="Local directory where gguf model is stored",
+    default=None,
+)
+@click.option(
     "--model-dir",
     help="Base directory where model is stored.",
     default="ibm/merlinite-7b",
@@ -463,7 +474,7 @@ def download(ctx, repository, release, filename, model_dir):
     "-sq",
     "--skip-quantize",
     is_flag=True,
-    help="Whether to skip quantization while converting to MLX.",
+    help="Whether to skip quantization while converting to MLX. This parameter will be ignored if --gguf-model-path and --tokenizer-dir are specified",
 )
 @click.option(
     "--num-epochs",
@@ -477,6 +488,8 @@ def train(
     data_dir,
     input_dir,
     skip_preprocessing,
+    tokenizer_dir,
+    gguf_model_path,
     model_dir,
     iters,
     local,
@@ -619,9 +632,27 @@ def train(
 
         local_arg = "--local" if local else ""
 
-        script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
-        cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
-        os.system("python {}".format(cmd))
+        if tokenizer_dir is not None and gguf_model_path is not None:
+            if not local:
+                tokenizer_dir_local = tokenizer_dir.replace("/", "-")
+                mlx_utils.fetch_tokenizer_from_hub(tokenizer_dir, tokenizer_dir_local)
+
+            script = os.path.join(cli_dir, "mlx_explore/gguf_convert_to_mlx.py")
+            # no need to pass quantize_arg for now, script automatically detects if quantization is necessary based on whether gguf model is quantized or not
+            cmd = f"{script} --gguf {gguf_model_path} --repo {tokenizer_dir} --mlx-path {dest_model_dir}"
+            os.system("python {}".format(cmd))
+
+            for filename in os.listdir(model_dir_local):
+                shutil.copy(
+                    os.path.join(model_dir_local, filename),
+                    os.path.join(dest_model_dir, filename),
+                )
+            shutil.rmtree(model_dir_local, ignore_errors=True)
+
+        else:
+            script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
+            cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
+            os.system("python {}".format(cmd))
 
         adapter_file_path = f"{dest_model_dir}/adapters.npz"
         script = os.path.join(cli_dir, "train/lora-mlx/lora.py")
