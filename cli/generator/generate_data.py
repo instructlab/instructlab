@@ -345,6 +345,17 @@ def generate_data(
     def unescape(s):
         return bytes(s, "utf-8").decode("utf-8")
 
+    name = Path(model_name).stem  # Just in case it is a file path
+    date_suffix = datetime.now().replace(microsecond=0).isoformat().replace(":", "_")
+    output_file = f"generated_{name}_{date_suffix}.json"
+    output_file_train = f"train_{name}_{date_suffix}.jsonl"
+    output_file_test = f"test_{name}_{date_suffix}.jsonl"
+    output_file_discarded = os.path.join(
+        output_dir, f"discarded_{name}_{date_suffix}.log"
+    )
+    logger.debug(f"Generating to: {os.path.join(output_dir, output_file)}")
+
+    # Dump test data
     test_data = []
     for seed_example in seed_instruction_data:
         user = seed_example["instruction"]
@@ -373,16 +384,7 @@ def generate_data(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
-
-    name = Path(model_name).stem  # Just in case it is a file path
-    date_suffix = datetime.now().replace(microsecond=0).isoformat().replace(":", "_")
-    output_file = f"generated_{name}_{date_suffix}.json"
-    output_file_train = f"train_{name}_{date_suffix}.jsonl"
-    output_file_test = f"test_{name}_{date_suffix}.jsonl"
-    output_file_discarded = os.path.join(
-        output_dir, f"discarded_{name}_{date_suffix}.log"
-    )
-    logger.debug(f"Generating to: {os.path.join(output_dir, output_file)}")
+    utils.dump_jsonl(os.path.join(output_dir, output_file_test), test_data)
 
     request_idx = 0
     # load the LM-generated instructions
@@ -502,7 +504,6 @@ def generate_data(
                 }
             )
         utils.dump_jsonl(os.path.join(output_dir, output_file_train), train_data)
-        utils.dump_jsonl(os.path.join(output_dir, output_file_test), test_data)
 
     if total_discarded or total_rouged:
         logger.info(
