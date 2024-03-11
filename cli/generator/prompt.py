@@ -1,9 +1,12 @@
 import itertools
 
 
-_COMMON_PREAMBULE = """\
-You are asked to come up with a set of 5 diverse task instructions under {taxonomy}{task_description_str}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
-"""
+_COMMON_PREAMBULE = (
+    "You are asked to come up with a set of 5 diverse task instructions "
+    "under {taxonomy}{task_description_str}. These task instructions will "
+    "be given to a GPT model and we will evaluate the GPT model for "
+    "completing the instructions."
+)
 
 _COMMON_RULES = (
     "Try not to repeat the verb for each instruction to maximize diversity.",
@@ -53,12 +56,14 @@ _DEFAULT_PROMPT_DOCUMENT_RULES = (
 _DEFAULT_PROMPT_POSTAMBULE = """List of 5 tasks:
 """
 
-_DEFAULT_PROMPT_DOCUMENT_POSTAMBULE = """Based on below document provide a list of 5 tasks:
+_DEFAULT_PROMPT_DOCUMENT_POSTAMBULE = """\
+Based on below document provide a list of 5 tasks:
 
 Document:
 {document}
 
-Here are some examples to help you understand the type of questions that are asked for this document:
+Here are some examples to help you understand the type of questions that are \
+asked for this document:
 """
 
 
