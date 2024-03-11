@@ -5,9 +5,9 @@ This document is for commonly found problems and their solutions when using `lab
 ## `lab` troubleshooting
 
 ### Long `lab generate` on MacOS issue
-If you notice `lab generate` being very slow for you, several hours or more.
-Check [this discussion](https://github.com/ggerganov/llama.cpp/discussions/2182#discussioncomment-7698315)
-which is suggesting to tweak the GPU limit, which MacOS assigns. By default it's
+If you notice `lab generate` being very slow for you, running for several hours or more,
+check out [this discussion](https://github.com/ggerganov/llama.cpp/discussions/2182#discussioncomment-7698315).
+This is suggesting to tweak the GPU limit, which MacOS automatically assigns. By default it's
 around 60%-70% of your total RAM available, which is expressed as 0:
 ```
 $ sudo sysctl iogpu.wired_limit_mb
