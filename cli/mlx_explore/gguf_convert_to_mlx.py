@@ -16,7 +16,6 @@ import mlx.core as mx
 import mlx.nn as nn
 import numpy as np
 
-sys.path.insert(0, './modules')
 # Local
 from utils import save_model
 
