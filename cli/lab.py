@@ -302,7 +302,12 @@ def generate(
     api_key,
 ):
     """Generates synthetic data to enhance your example data"""
-    api_base = endpoint_url if endpoint_url != "" else ctx.obj.config.serve.api_base()
+    server_process, api_base = ensure_server(
+        ctx.obj.logger,
+        ctx.obj.config.serve,
+    )
+    if not api_base:
+        api_base = ctx.obj.config.serve.api_base()
     try:
         ctx.obj.logger.info(
             f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}' against {api_base} server"
@@ -328,6 +333,9 @@ def generate(
             fg="red",
         )
         raise click.exceptions.Exit(1)
+    finally:
+        if server_process:
+            server_process.terminate()
 
 
 @cli.command()
