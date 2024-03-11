@@ -23,7 +23,7 @@
 
 `lab` is a Command-Line Interface (CLI) tool that allows you to:
 
-1. Download a pre-trained LLM (Large Laungage Model).
+1. Download a pre-trained LLM (Large Language Model).
 2. Chat with the LLM.
 
 To add new knowledge and skills to the pre-trained LLM you have to add new information to the companion [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository.
