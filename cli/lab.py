@@ -471,6 +471,13 @@ def download(ctx, repository, release, filename, model_dir):
     default=1,  # TODO: change this to a more reasonable default
     help="Whether to skip quantization while converting to MLX.",
 )
+@click.option(
+    "--linux-gpu",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Whether to use GPU for training on Linux",
+)
 @click.pass_context
 def train(
     ctx,
@@ -482,6 +489,7 @@ def train(
     local,
     skip_quantize,
     num_epochs,
+    linux_gpu,
 ):
     """
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
@@ -534,6 +542,8 @@ def train(
     if not utils.is_macos_with_m_chip():
         script = os.path.join(cli_dir, "train/linux_train.py")
         cmd = f"{script} --train-file {train_files[0]} --test-file {test_files[0]} --num-epochs {num_epochs}"
+        if linux_gpu:
+            cmd = cmd + " --gpu"
         click.secho(
             f"python {cmd}",
         )

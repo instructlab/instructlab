@@ -1,5 +1,4 @@
 # Standard
-from pathlib import Path
 import argparse
 
 # Third Party
@@ -9,6 +8,7 @@ from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
     AutoTokenizer,
+    BitsAndBytesConfig,
     StoppingCriteria,
     StoppingCriteriaList,
     TrainingArguments,
@@ -24,11 +24,13 @@ from cli.chat.chat import CONTEXTS
 
 
 class StoppingCriteriaSub(StoppingCriteria):
-    def __init__(self, stops=[], encounters=1):
+    def __init__(self, gpu=False, stops=[], encounters=1):
         super().__init__()
-        # TODO GPU: the commented out version might be needed to work on Nvidia GPUs
-        # self.stops = [stop.to("cuda") for stop in stops]
-        self.stops = [stop for stop in stops]
+        # GPU: needed to work on Nvidia GPUs
+        if gpu:
+            self.stops = [stop.to("cuda") for stop in stops]
+        else:
+            self.stops = [stop for stop in stops]
 
     def __call__(
         self, input_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs
@@ -78,11 +80,17 @@ def main(args_in: list[str] | None = None) -> None:
         help="number of epochs to run during training",
         default=None,
     )
+    parser.add_argument(
+        "--gpu",
+        action="store_true",
+        default=False,
+    )
     args = parser.parse_args(args_in)
 
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", args.num_epochs)
     print("LINUX_TRAIN.PY: TRAIN FILE IS: ", args.train_file)
     print("LINUX_TRAIN.PY: TEST FILE IS: ", args.test_file)
+    print("LINUX_TRAIN.PY: GPU: ", args.gpu)
 
     print("LINUX_TRAIN.PY: LOADING DATASETS")
     # Get the file name
@@ -104,13 +112,14 @@ def main(args_in: list[str] | None = None) -> None:
         response_template_ids, tokenizer=tokenizer
     )
 
-    # TODO GPU: bnb_config is needed quantize on Nvidia GPUs
-    # bnb_config = BitsAndBytesConfig(
-    #    load_in_4bit=True,
-    #    bnb_4bit_quant_type="nf4",
-    #    bnb_4bit_use_double_quant=True,
-    #    bnb_4bit_compute_dtype=torch.float16 # if not set will throw a warning about slow speeds when training
-    # )
+    # GPU: bnb_config is needed quantize on Nvidia GPUs
+    if args.gpu:
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_compute_dtype=torch.float16 # if not set will throw a warning about slow speeds when training
+        )
 
     # Loading the model
     print("LINUX_TRAIN.PY: LOADING THE BASE MODEL")
@@ -121,7 +130,7 @@ def main(args_in: list[str] | None = None) -> None:
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype="auto",
-        # quantization_config=bnb_config,
+        quantization_config=bnb_config if args.gpu else None,
         config=config,
         trust_remote_code=True,
         low_cpu_mem_usage=True,
@@ -136,15 +145,17 @@ def main(args_in: list[str] | None = None) -> None:
         for stop_word in stop_words
     ]
     stopping_criteria = StoppingCriteriaList(
-        [StoppingCriteriaSub(stops=stop_words_ids)]
+        [StoppingCriteriaSub(gpu=args.gpu, stops=stop_words_ids)]
     )
 
     def model_generate(user):
         text = create_prompt(user=user)
 
-        # TODO GPU: the commented out line might be needed to work on Nvidia GPUs
-        # input_ids = tokenizer(text, return_tensors="pt").input_ids.to("cuda")
         input_ids = tokenizer(text, return_tensors="pt").input_ids
+        # GPU: needed to work on Nvidia GPUs
+        if args.gpu:
+            input_ids = input_ids.to("cuda")
+            
         outputs = model.generate(
             input_ids=input_ids,
             max_new_tokens=256,
@@ -196,16 +207,26 @@ def main(args_in: list[str] | None = None) -> None:
     output_dir = "./training_results"
     per_device_train_batch_size = 1
 
-    training_arguments = TrainingArguments(
-        output_dir=output_dir,
-        num_train_epochs=args.num_epochs,
-        per_device_train_batch_size=per_device_train_batch_size,
-        bf16=True,
-        # use_ipex=True, # TODO CPU test this possible optimization
-        use_cpu=True,
-        save_strategy="epoch",
-        report_to="none",
-    )
+    if args.gpu:
+        training_arguments = TrainingArguments(
+            output_dir=output_dir,
+            num_train_epochs=10,
+            per_device_train_batch_size=per_device_train_batch_size,
+            fp16=True,
+            report_to="none"
+        )
+    else:
+        # CPU Training args
+        training_arguments = TrainingArguments(
+            output_dir=output_dir,
+            num_train_epochs=args.num_epochs,
+            per_device_train_batch_size=per_device_train_batch_size,
+            bf16=True,
+            # use_ipex=True, # TODO CPU test this possible optimization
+            use_cpu=True,
+            save_strategy="epoch",
+            report_to="none",
+        )
 
     max_seq_length = 300
     tokenizer.padding_side = "right"
