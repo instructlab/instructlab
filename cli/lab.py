@@ -19,7 +19,7 @@ from . import config, utils
 from .chat.chat import ChatException, chat_cli
 from .generator.generate_data import generate_data, get_taxonomy_diff, read_taxonomy
 from .generator.utils import GenerateException
-from .server import ServerException, server
+from .server import ServerException, ensure_server, server
 
 
 class Lab:
@@ -364,7 +364,12 @@ def generate(
 @click.pass_context
 def chat(ctx, question, model, context, session, quick_question, greedy_mode):
     """Run a chat using the modified model"""
-    api_base = ctx.obj.config.serve.api_base()
+    server_process, api_base = ensure_server(
+        ctx.obj.logger,
+        ctx.obj.config.serve,
+    )
+    if not api_base:
+        api_base = ctx.obj.config.serve.api_base()
     try:
         chat_cli(
             logger=ctx.obj.logger,
@@ -380,6 +385,9 @@ def chat(ctx, question, model, context, session, quick_question, greedy_mode):
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
         raise click.exceptions.Exit(1)
+    finally:
+        if server_process:
+            server_process.terminate()
 
 
 @cli.command()
