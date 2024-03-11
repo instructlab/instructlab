@@ -64,3 +64,4 @@ git push -f origin stable
 
 Check the Tags on GitHub web.
 
+> PLEASE!  Whenever you move the `stable` tag, give `@Josh Boyer` a heads-up so that Red Hat is using the new tag.
