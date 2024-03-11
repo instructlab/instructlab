@@ -469,7 +469,8 @@ def download(ctx, repository, release, filename, model_dir):
     "--num-epochs",
     type=click.INT,
     default=1,  # TODO: change this to a more reasonable default
-    help="Whether to skip quantization while converting to MLX.",
+    help="How many epochs to train for.",
+    show_default=True,
 )
 @click.pass_context
 def train(
