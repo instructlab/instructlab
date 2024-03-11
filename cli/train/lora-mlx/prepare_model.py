@@ -1,15 +1,15 @@
 # Standard
 import os
 
+import fire
+
 # Third Party
 from transformers import AutoModelForCausalLM, AutoTokenizer
-import fire
-import torch
 
 
 def convert_bin_to_safetensors(input_dir, output_dir):
     input_dir, output_dir = os.path.expanduser(input_dir), os.path.expanduser(
-        output_dir
+        output_dir,
     )
 
     model_path = os.path.expanduser(input_dir)

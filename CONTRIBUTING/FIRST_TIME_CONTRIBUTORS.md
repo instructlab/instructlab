@@ -24,7 +24,7 @@ These are the steps that we're executing above, in plain language:
 4. Turn the virtual environment on.
 5. Install `lab`, from the `cli/cli/` directory, into your newly created Python virtual environment.
 
-Success! 🌟 Now, when you run `lab` commands, it's using the source code on your computer. 
+Success! 🌟 Now, when you run `lab` commands, it's using the source code on your computer.
 
 ⚠️  **If `lab` stops working:** Make sure to run `source venv/bin/activate` and are inside the venv (your terminal prompt should be prefixed with a `(venv)` to indicate this.
 

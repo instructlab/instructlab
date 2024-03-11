@@ -3,12 +3,13 @@ import logging
 import multiprocessing
 import random
 
+import llama_cpp.server.app as llama_app
+import uvicorn
+
 # Third Party
 from llama_cpp import llama_chat_format
 from llama_cpp.server.app import create_app
 from llama_cpp.server.settings import Settings
-import llama_cpp.server.app as llama_app
-import uvicorn
 
 # Local
 from .client import ClientException, list_models
@@ -31,7 +32,7 @@ def ensure_server(logger, serve_config):
         host_port = f"localhost:{port}"
         temp_api_base = get_api_base(host_port)
         logger.debug(
-            f"Connection to {api_base} failed. Starting a temporary server at {temp_api_base}..."
+            f"Connection to {api_base} failed. Starting a temporary server at {temp_api_base}...",
         )
         # create a temporary, throw-away logger
         logger = logging.getLogger(host_port)
@@ -77,6 +78,6 @@ def server(logger, model_path, gpu_layers, host="localhost", port=8000):
 
     logger.info("Starting server process, press CTRL+C to shutdown server...")
     logger.info(
-        f"After application startup complete see http://{host}:{port}/docs for API."
+        f"After application startup complete see http://{host}:{port}/docs for API.",
     )
     uvicorn.run(app, host=host, port=port, log_level=logging.ERROR)

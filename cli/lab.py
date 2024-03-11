@@ -1,18 +1,19 @@
 # Standard
-from glob import glob
-from os.path import basename, dirname, exists, splitext
 import json
 import logging
 import os
 import shutil
 import sys
+from glob import glob
+from os.path import basename, dirname, exists, splitext
+
+import click
 
 # Third Party
 from click_didyoumean import DYMGroup
 from git import GitError, Repo
 from huggingface_hub import hf_hub_download
 from huggingface_hub.utils import HfHubHTTPError
-import click
 
 # Local
 from . import config, utils
@@ -43,7 +44,7 @@ def configure(ctx, param, filename):
 
     if not exists(filename):
         raise click.ClickException(
-            f"`{filename}` does not exists, please run `lab init` or point to a valid configuration file using `--config=<path>`."
+            f"`{filename}` does not exists, please run `lab init` or point to a valid configuration file using `--config=<path>`.",
         )
 
     try:
@@ -103,7 +104,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
     """Initializes environment for InstructLab"""
     if exists(config.DEFAULT_CONFIG):
         overwrite = click.confirm(
-            f"Found {config.DEFAULT_CONFIG} in the current directory, do you still want to continue?"
+            f"Found {config.DEFAULT_CONFIG} in the current directory, do you still want to continue?",
         )
         if not overwrite:
             return
@@ -111,12 +112,12 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
     clone_taxonomy_repo = True
     if interactive:
         click.echo(
-            "Welcome to InstructLab CLI. This guide will help you to setup your environment."
+            "Welcome to InstructLab CLI. This guide will help you to setup your environment.",
         )
         click.echo("Please provide the following values to initiate the environment:")
 
         taxonomy_path = utils.expand_path(
-            click.prompt("Path to taxonomy repo", default=taxonomy_path)
+            click.prompt("Path to taxonomy repo", default=taxonomy_path),
         )
         try:
             taxonomy_contents = os.listdir(taxonomy_path)
@@ -126,7 +127,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
             clone_taxonomy_repo = False
         else:
             clone_taxonomy_repo = click.confirm(
-                f"`{taxonomy_path}` seems to not exists or is empty. Should I clone {repository} for you?"
+                f"`{taxonomy_path}` seems to not exists or is empty. Should I clone {repository} for you?",
             )
 
     # clone taxonomy repo if it needs to be cloned
@@ -142,7 +143,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
     models_dir = dirname(model_path)
     if exists(models_dir):
         model_path = utils.expand_path(
-            click.prompt("Path to your model", default=model_path)
+            click.prompt("Path to your model", default=model_path),
         )
     click.echo(f"Generating `{config.DEFAULT_CONFIG}` in the current directory...")
     cfg = config.get_default_config()
@@ -154,7 +155,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
     config.write_config(cfg)
 
     click.echo(
-        "Initialization completed successfully, you're ready to start using `lab`. Enjoy!"
+        "Initialization completed successfully, you're ready to start using `lab`. Enjoy!",
     )
 
 
@@ -177,7 +178,7 @@ def list(ctx, taxonomy_path):
     for f in updated_taxonomy_files:
         if splitext(f)[1] != ".yaml":
             click.secho(
-                f"WARNING: Found {f}! Use lowercase '.yaml' instead.", fg="yellow"
+                f"WARNING: Found {f}! Use lowercase '.yaml' instead.", fg="yellow",
             )
             continue
         click.echo(f)
@@ -296,7 +297,7 @@ def generate(
     api_base = endpoint_url if endpoint_url != "" else ctx.obj.config.serve.api_base()
     try:
         ctx.obj.logger.info(
-            f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}' against {api_base} server"
+            f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}' against {api_base} server",
         )
         generate_data(
             logger=ctx.obj.logger,
@@ -498,7 +499,7 @@ def train(
             if len(train_files) > 1 or len(test_files) > 1:
                 # pylint: disable=f-string-without-interpolation
                 click.secho(
-                    f"Found multiple files from `lab generate`. Using the most recent generation.",
+                    "Found multiple files from `lab generate`. Using the most recent generation.",
                     fg="yellow",
                 )
             # First file is latest (by above reverse sort and timestamped names)
@@ -529,7 +530,7 @@ def train(
         click.secho(
             f"python {cmd}",
         )
-        os.system("python {}".format(cmd))
+        os.system(f"python {cmd}")
 
         training_results_dir = "./training_results"
         os.makedirs(training_results_dir, exist_ok=True)
@@ -540,19 +541,19 @@ def train(
         # TODO: Figure out what to do when there are multiple checkpoint dirs.
         # Right now it's just copying files from the first one numerically not necessarily the best one
         added_tokens_file = glob(
-            training_results_dir + "/checkpoint-*/added_tokens.json"
+            training_results_dir + "/checkpoint-*/added_tokens.json",
         )
         special_tokens_map = glob(
-            training_results_dir + "/checkpoint-*/special_tokens_map.json"
+            training_results_dir + "/checkpoint-*/special_tokens_map.json",
         )
         tokenizer_json = glob(training_results_dir + "/checkpoint-*/tokenizer.json")
         tokenizer_model = glob(training_results_dir + "/checkpoint-*/tokenizer.model")
         tokenizer_config_json = glob(
-            training_results_dir + "/checkpoint-*/tokenizer_config.json"
+            training_results_dir + "/checkpoint-*/tokenizer_config.json",
         )
         config_json = glob(training_results_dir + "/merged_model/config.json")
         generation_config_json = glob(
-            training_results_dir + "/merged_model/generation_config.json"
+            training_results_dir + "/merged_model/generation_config.json",
         )
         safe_tensors = glob(training_results_dir + "/merged_model/*.safetensors")
 
@@ -576,7 +577,7 @@ def train(
 
         script = os.path.join(cli_dir, "llamacpp/llamacpp_convert_to_gguf.py")
         cmd = f"{script} {final_results_dir} --pad-vocab"
-        os.system("python {}".format(cmd))
+        os.system(f"python {cmd}")
 
         gguf_models_dir = "./models"
         if not os.path.isdir(gguf_models_dir):
@@ -592,7 +593,7 @@ def train(
         if not skip_preprocessing:
             script = os.path.join(cli_dir, "train/lora-mlx/make_data.py")
             cmd = f"{script} --data-dir {data_dir}"
-            os.system("python {}".format(cmd))
+            os.system(f"python {cmd}")
 
         # NOTE we can skip this if we have a way ship MLX
         # PyTorch safetensors to MLX safetensors
@@ -613,13 +614,13 @@ def train(
 
         script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
         cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
-        os.system("python {}".format(cmd))
+        os.system(f"python {cmd}")
 
         adapter_file_path = f"{dest_model_dir}/adapters.npz"
         script = os.path.join(cli_dir, "train/lora-mlx/lora.py")
         # train the model with LoRA
         cmd = f"{script} --model {dest_model_dir} --train --data {data_dir} --adapter-file {adapter_file_path} --iters {iters} --save-every 10 --steps-per-eval 10"
-        os.system("python {}".format(cmd))
+        os.system(f"python {cmd}")
 
         # TODO copy some downloaded files from the PyTorch model folder
         # Seems to be not a problem if working with a remote download with convert.py
@@ -627,7 +628,7 @@ def train(
 
 @cli.command()
 @click.option(
-    "--data-dir", help="Base directory where data is stored.", default="./taxonomy_data"
+    "--data-dir", help="Base directory where data is stored.", default="./taxonomy_data",
 )
 @click.option(
     "--model-dir",
@@ -646,22 +647,22 @@ def test(data_dir, model_dir, adapter_file):
 
     # Load the JSON Lines file
     test_data_dir = f"{data_dir}/test.jsonl"
-    with open(test_data_dir, "r", encoding="utf-8") as f:
+    with open(test_data_dir, encoding="utf-8") as f:
         test_data = [json.loads(line) for line in f]
 
     SYS_PROMPT = "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
     print("system prompt:", SYS_PROMPT)
-    for (idx, example) in enumerate(test_data):
+    for idx, example in enumerate(test_data):
         system = example["system"]
         user = example["user"]
-        print("[{}]\n user prompt: {}".format(idx + 1, user))
+        print(f"[{idx + 1}]\n user prompt: {user}")
         print("expected output:", example["assistant"])
         print("\n-----model output BEFORE training----:\n")
         cmd = f'{script} --model {model_dir} --no-adapter --max-tokens 100 --prompt "<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>\n"'
-        os.system("python {}".format(cmd))
+        os.system(f"python {cmd}")
         print("\n-----model output AFTER training----:\n")
         cmd = f'{script} --model {model_dir} --adapter-file {adapter_file} --max-tokens 100 --prompt "<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>\n"'
-        os.system("python {}".format(cmd))
+        os.system(f"python {cmd}")
 
 
 @cli.command()
@@ -700,7 +701,7 @@ def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
     script = os.path.join(cli_dir, "train/lora-mlx/fuse.py")
     cmd = f"{script} --model {source_model_dir} --save-path {model_dir_fused} --adapter-file {adapter_file} {dequantize_arg}"
     # this combines adapter with the original model to produce the updated model
-    os.system("python {}".format(cmd))
+    os.system(f"python {cmd}")
 
     model_dir_fused_pt = f"{model_dir_fused}-pt"
 
@@ -720,4 +721,4 @@ def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
         gguf_model_q_dir = f"{model_dir_fused_pt}/ggml-model-Q4_K_M.gguf"
         script = os.path.join(cli_dir, "llamacpp/quantize")
         cmd = f"{script} {gguf_model_dir} {gguf_model_q_dir} Q4_K_M"
-        os.system("{}".format(cmd))
+        os.system(f"{cmd}")

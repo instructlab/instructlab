@@ -25,7 +25,7 @@ $ git show v0.x.y
 ```
 
 1. Verify that this is the tag/commit you want for stable.
-2. Double check with the short SHAHs on tags at https://github.com/instruct-lab/cli/tags 
+2. Double check with the short SHAHs on tags at https://github.com/instruct-lab/cli/tags
 3. Copy the SHAH
 
 I usually test first w/o --force and expect an error if I have everything right.

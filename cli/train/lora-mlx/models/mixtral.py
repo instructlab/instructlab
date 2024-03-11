@@ -4,8 +4,8 @@ from typing import Dict, Optional, Tuple, Union
 
 # Third Party
 import mlx.core as mx
-import mlx.nn as nn
 import numpy as np
+from mlx import nn
 
 # Local
 from .base import BaseModelArgs
@@ -63,16 +63,16 @@ class MixtralAttention(nn.Module):
         self.scale = self.head_dim**-0.5
 
         self.q_proj = nn.Linear(
-            self.hidden_size, self.num_heads * self.head_dim, bias=False
+            self.hidden_size, self.num_heads * self.head_dim, bias=False,
         )
         self.k_proj = nn.Linear(
-            self.hidden_size, self.num_key_value_heads * self.head_dim, bias=False
+            self.hidden_size, self.num_key_value_heads * self.head_dim, bias=False,
         )
         self.v_proj = nn.Linear(
-            self.hidden_size, self.num_key_value_heads * self.head_dim, bias=False
+            self.hidden_size, self.num_key_value_heads * self.head_dim, bias=False,
         )
         self.o_proj = nn.Linear(
-            self.num_heads * self.head_dim, self.hidden_size, bias=False
+            self.num_heads * self.head_dim, self.hidden_size, bias=False,
         )
 
         self.rope = nn.RoPE(
@@ -95,7 +95,7 @@ class MixtralAttention(nn.Module):
         queries = queries.reshape(B, L, self.num_heads, -1).transpose(0, 2, 1, 3)
         keys = keys.reshape(B, L, self.num_key_value_heads, -1).transpose(0, 2, 1, 3)
         values = values.reshape(B, L, self.num_key_value_heads, -1).transpose(
-            0, 2, 1, 3
+            0, 2, 1, 3,
         )
 
         def repeat(a):

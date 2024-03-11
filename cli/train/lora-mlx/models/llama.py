@@ -4,7 +4,7 @@ from typing import Dict, Optional, Tuple, Union
 
 # Third Party
 import mlx.core as mx
-import mlx.nn as nn
+from mlx import nn
 
 # Local
 from .base import BaseModelArgs

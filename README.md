@@ -13,7 +13,7 @@
   - [🎁 Contribute knowledge or compositional skills](#-contribute-knowledge-or-compositional-skills)
   - [📜 List your new knowledge](#-list-your-new-knowledge)
   - [🚀 Generate a synthetic dataset](#-generate-a-synthetic-dataset)
-  - [👩‍🏫 Train the model](#-train-the-model) 
+  - [👩‍🏫 Train the model](#-train-the-model)
   - [🍴 Serve the newly trained model](#-serve-the-newly-trained-model)
   - [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
 - [🎁 Submit your new knowledge](#-submit-your-new-knowledge)
@@ -45,7 +45,7 @@ On Fedora Linux this means installing:
 $ sudo yum install g++ python3 python3-devel
 ```
 
-## ✅ Getting started 
+## ✅ Getting started
 ### 🧰 Installing `lab`
 
 To start, create a new directory called `instruct-lab` to store the files that the `lab` CLI needs when it runs.
@@ -85,7 +85,7 @@ Commands:
   train     Trains model
 ```
 
-**Every** `lab` command needs to be run from within your Python virtual environment. To enter the Python environment, run the following command: 
+**Every** `lab` command needs to be run from within your Python virtual environment. To enter the Python environment, run the following command:
 
 ```
 source venv/bin/activate
@@ -96,8 +96,8 @@ source venv/bin/activate
 ```
 lab init
 ```
-Initializing `lab` will: 
-1. Add a new, default `config.yaml` file. 
+Initializing `lab` will:
+1. Add a new, default `config.yaml` file.
 2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory.
 
 ```
@@ -268,14 +268,14 @@ a PR or any further task.
 
 Stop the server you have running via `ctrl+c` in the terminal it is running in.
 
-Before serving the newly trained model you will need to convert it to work with 
-the `lab` cli. 
+Before serving the newly trained model you will need to convert it to work with
+the `lab` cli.
 
 ```
 lab convert
 ```
 
-Serve the newly trained model locally via `lab serve` with the `--model` 
+Serve the newly trained model locally via `lab serve` with the `--model`
 argument to specify your new model:
 
 ```
@@ -296,7 +296,7 @@ lab chat -m <New model name>
 ```
 ## 🎁 Submit your new knowledge
 
-Of course the final step is, if you've improved the model, to open up a a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy) that includes the `qna.yaml` files with your improved data. 
+Of course the final step is, if you've improved the model, to open up a a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy) that includes the `qna.yaml` files with your improved data.
 
 ## 📬 Contributing
 

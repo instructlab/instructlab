@@ -1,5 +1,4 @@
 # Standard
-from typing import Optional, Sequence, Union
 import copy
 import dataclasses
 import io
@@ -8,6 +7,8 @@ import logging
 import math
 import os
 import sys
+from collections.abc import Sequence
+from typing import Optional, Union
 
 # Third Party
 from openai import OpenAI, OpenAIError
@@ -81,7 +82,7 @@ def openai_completion(
     if max_batches < sys.maxsize:
         logging.warning(
             "`max_batches` will be deprecated in the future, please use `max_instances` instead."
-            "Setting `max_instances` to `max_batches * batch_size` for now."
+            "Setting `max_instances` to `max_batches * batch_size` for now.",
         )
         max_instances = max_batches * batch_size
 
@@ -117,7 +118,7 @@ def openai_completion(
             )
         except OpenAIError as exc:
             raise GenerateException(
-                f"There was a problem connecting to the server {exc}"
+                f"There was a problem connecting to the server {exc}",
             ) from exc
 
         completions.extend(response.choices)

@@ -1,6 +1,7 @@
 # Standard
-from pathlib import Path
 import argparse
+
+import torch
 
 # Third Party
 from datasets import load_dataset
@@ -14,7 +15,6 @@ from transformers import (
     TrainingArguments,
 )
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
-import torch
 
 # First Party
 from cli.chat.chat import CONTEXTS
@@ -31,7 +31,7 @@ class StoppingCriteriaSub(StoppingCriteria):
         self.stops = [stop for stop in stops]
 
     def __call__(
-        self, input_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs
+        self, input_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs,
     ) -> bool:
         for seq in input_ids:
             for stop in self.stops:
@@ -70,7 +70,7 @@ def main(args_in: list[str] | None = None) -> None:
         default=None,
     )
     parser.add_argument(
-        "--test-file", type=str, help="absolute path to the testing file", default=None
+        "--test-file", type=str, help="absolute path to the testing file", default=None,
     )
     parser.add_argument(
         "--num-epochs",
@@ -98,10 +98,10 @@ def main(args_in: list[str] | None = None) -> None:
     response_template = "\n<|assistant|>\n"
 
     response_template_ids = tokenizer.encode(
-        response_template, add_special_tokens=False
+        response_template, add_special_tokens=False,
     )[2:]
     collator = DataCollatorForCompletionOnlyLM(
-        response_template_ids, tokenizer=tokenizer
+        response_template_ids, tokenizer=tokenizer,
     )
 
     # TODO GPU: bnb_config is needed quantize on Nvidia GPUs
@@ -115,7 +115,7 @@ def main(args_in: list[str] | None = None) -> None:
     # Loading the model
     print("LINUX_TRAIN.PY: LOADING THE BASE MODEL")
     config = AutoConfig.from_pretrained(
-        model_name, torchscript=True, trust_remote_code=True
+        model_name, torchscript=True, trust_remote_code=True,
     )
 
     model = AutoModelForCausalLM.from_pretrained(
@@ -136,7 +136,7 @@ def main(args_in: list[str] | None = None) -> None:
         for stop_word in stop_words
     ]
     stopping_criteria = StoppingCriteriaList(
-        [StoppingCriteriaSub(stops=stop_words_ids)]
+        [StoppingCriteriaSub(stops=stop_words_ids)],
     )
 
     def model_generate(user):
@@ -157,7 +157,7 @@ def main(args_in: list[str] | None = None) -> None:
         return tokenizer.batch_decode([o[:-1] for o in outputs])[0]
 
     model_generate(
-        "In excruciating detail, explain to me the nuances of who runs Barter Town."
+        "In excruciating detail, explain to me the nuances of who runs Barter Town.",
     )
     assistant_old_lst = [
         model_generate(d["user"]).split(response_template.strip())[-1].strip()
@@ -228,7 +228,7 @@ def main(args_in: list[str] | None = None) -> None:
 
     print("LINUX_TRAIN.PY: RUNNING INFERENCE ON THE OUTPUT MODEL")
 
-    for (i, (d, assistant_old)) in enumerate(zip(test_dataset, assistant_old_lst)):
+    for i, (d, assistant_old) in enumerate(zip(test_dataset, assistant_old_lst)):
         assistant_new = (
             model_generate(d["user"]).split(response_template.strip())[-1].strip()
         )

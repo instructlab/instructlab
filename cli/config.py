@@ -101,7 +101,7 @@ def read_config(config_file=DEFAULT_CONFIG):
             name = f"in section '{cl.name}'"
         if fields:
             c = {}
-            for (k, v) in fields.items():
+            for k, v in fields.items():
                 if k in d:
                     c[k], warning = validateConfig(v, d[k])
                     if warning:
@@ -113,7 +113,7 @@ def read_config(config_file=DEFAULT_CONFIG):
         return c, warnings
 
     try:
-        with open(config_file, "r", encoding="utf-8") as yamlfile:
+        with open(config_file, encoding="utf-8") as yamlfile:
             content = yaml.safe_load(yamlfile)
     except Exception as exc:
         raise ConfigException(config_file) from exc
@@ -121,7 +121,7 @@ def read_config(config_file=DEFAULT_CONFIG):
     if warnings:
         warnings.insert(0, "The following issues were detected in the config")
         warnings.append(
-            f"Please update {config_file}, or move it aside and generate a new one with 'lab init'"
+            f"Please update {config_file}, or move it aside and generate a new one with 'lab init'",
         )
         raise ConfigException(config_file, "\n".join(warnings))
     return Config(**cfg)

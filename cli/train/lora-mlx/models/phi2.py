@@ -1,10 +1,10 @@
 # Standard
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 
 # Third Party
 import mlx.core as mx
-import mlx.nn as nn
+from mlx import nn
 
 # Local
 from .base import BaseModelArgs

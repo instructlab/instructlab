@@ -13,7 +13,7 @@ Unless specified, the statistics from this document are based on the following c
    * `14.0`
    * `M1` (Metal/GPU and CPU)
  * `llama.cpp` version based on short commit hash `4ed8e4f`
- * Sample script provided [here](../model_run_from_server.py) (based on commit hash `dd70e9b`) usually run 3 times 
+ * Sample script provided [here](../model_run_from_server.py) (based on commit hash `dd70e9b`) usually run 3 times
  * Inference Model - `Q4_K_M` quantized `v3` of `Labrador.13b`
 
 ## Statistics from Sample Runs
@@ -38,5 +38,3 @@ Unless specified, the statistics from this document are based on the following c
 |                  | 3     | 7302.31        |               |
 
 **Note:** `--n_gpu_layers -1` flag was set and confirmed `offloaded 41/41 layers to GPU` in the server startup logs
-
-

@@ -4,13 +4,14 @@
 import argparse
 import copy
 
-# Third Party
-from mlx.utils import tree_flatten
 import mlx.core as mx
-import mlx.nn as nn
 import numpy as np
 import torch
 import utils
+from mlx import nn
+
+# Third Party
+from mlx.utils import tree_flatten
 
 
 def quantize(weights, config, args):
@@ -44,7 +45,7 @@ def quantize(weights, config, args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Convert Hugging Face model to MLX format"
+        description="Convert Hugging Face model to MLX format",
     )
     parser.add_argument(
         "--hf-path",

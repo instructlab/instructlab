@@ -1,11 +1,23 @@
+---
 repos:
-    - repo: https://github.com/psf/black
-      rev: 22.3.0
+    - repo: https://github.com/pre-commit/pre-commit-hooks
+      rev: "v4.5.0"
       hooks:
-          - id: black
-            exclude: imports
-    - repo: https://github.com/PyCQA/isort
-      rev: 5.11.5
+          - id: end-of-file-fixer
+          - id: mixed-line-ending
+          - id: trailing-whitespace
+          - id: check-toml
+
+    - repo: https://github.com/adrienverge/yamllint
+      rev: v1.35.1
       hooks:
-          - id: isort
-            exclude: imports
+          - id: yamllint
+            files: ^tmt/schemas/.*\.yaml
+
+    - repo: https://github.com/charliermarsh/ruff-pre-commit
+      rev: v0.3.2
+      hooks:
+          - id: ruff
+            args:
+                - '--fix'
+                - '--show-fixes'

@@ -1,22 +1,21 @@
 # Copyright © 2023 Apple Inc.
 
 # Standard
-from pathlib import Path
-from typing import Generator
 import glob
 import json
 import logging
 import os
+from collections.abc import Generator
+from pathlib import Path
+
+import mlx.core as mx
+import transformers
 
 # Third Party
 from huggingface_hub import snapshot_download
+from mlx import nn
+from models import llama, mixtral, phi2
 from safetensors.torch import save_file
-import mlx.core as mx
-import mlx.nn as nn
-import models.llama as llama
-import models.mixtral as mixtral
-import models.phi2 as phi2
-import transformers
 
 # Constants
 MODEL_MAPPING = {
@@ -54,14 +53,14 @@ def fetch_from_hub(hf_path: str, local: bool):
         model_path = snapshot_download(
             repo_id=hf_path,
             local_dir=hf_path.replace(
-                "/", "-"
+                "/", "-",
             ),  # "ibm/merlinite-7b" to "ibm-merlinite-7b"
             allow_patterns=["*.json", "*.safetensors", "tokenizer.model"],
         )
 
     weight_files = glob.glob(f"{model_path}/*.safetensors")
     if len(weight_files) == 0:
-        raise FileNotFoundError("No safetensors found in {}".format(model_path))
+        raise FileNotFoundError(f"No safetensors found in {model_path}")
 
     weights = {}
     for wf in weight_files:
@@ -165,16 +164,16 @@ def load(path_or_hf_repo: str):
             snapshot_download(
                 repo_id=path_or_hf_repo,
                 allow_patterns=["*.json", "*.safetensors", "tokenizer.model"],
-            )
+            ),
         )
 
-    with open(model_path / "config.json", "r") as f:
+    with open(model_path / "config.json") as f:
         config = json.loads(f.read())
         quantization = config.get("quantization", None)
 
     weight_files = glob.glob(str(model_path / "*.safetensors"))
     if len(weight_files) == 0:
-        raise FileNotFoundError("No safetensors found in {}".format(model_path))
+        raise FileNotFoundError(f"No safetensors found in {model_path}")
 
     weights = {}
     for wf in weight_files:
@@ -200,7 +199,7 @@ def load(path_or_hf_repo: str):
 
 
 def generate(
-    prompt: mx.array, model: nn.Module, temp: float = 0.0
+    prompt: mx.array, model: nn.Module, temp: float = 0.0,
 ) -> Generator[mx.array, None, None]:
     """
     Generate text based on the given prompt and model.

@@ -3,7 +3,7 @@ import math
 
 # Third Party
 import mlx.core as mx
-import mlx.nn as nn
+from mlx import nn
 
 
 class LoRALinear(nn.Module):

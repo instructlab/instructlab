@@ -1,15 +1,16 @@
 # Copyright © 2023 Apple Inc.
 
 # Standard
-from pathlib import Path
 import argparse
+from pathlib import Path
+
+import mlx.core as mx
+import utils
+from mlx import nn
 
 # Third Party
 from mlx.utils import tree_flatten, tree_unflatten
 from models.lora import LoRALinear
-import mlx.core as mx
-import mlx.nn as nn
-import utils
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="LoRA or QLoRA finetuning.")
@@ -62,11 +63,13 @@ if __name__ == "__main__":
 
     # Freeze all layers other than LORA linears
     model.freeze()
-    for l in model.model.layers[len(model.model.layers) - lora_layers :]:
-        l.self_attn.q_proj = LoRALinear.from_linear(l.self_attn.q_proj)
-        l.self_attn.v_proj = LoRALinear.from_linear(l.self_attn.v_proj)
-        if hasattr(l, "block_sparse_moe"):
-            l.block_sparse_moe.gate = LoRALinear.from_linear(l.block_sparse_moe.gate)
+    for layer in model.model.layers[len(model.model.layers) - lora_layers :]:
+        layer.self_attn.q_proj = LoRALinear.from_linear(layer.self_attn.q_proj)
+        layer.self_attn.v_proj = LoRALinear.from_linear(layer.self_attn.v_proj)
+        if hasattr(layer, "block_sparse_moe"):
+            layer.block_sparse_moe.gate = LoRALinear.from_linear(
+                layer.block_sparse_moe.gate,
+            )
 
     model.update(tree_unflatten(adapters))
     fused_linears = [
@@ -111,6 +114,6 @@ if __name__ == "__main__":
             hf_path = args.model
         elif hf_path is None:
             raise ValueError(
-                "Must provide original Hugging Face repo to upload local model."
+                "Must provide original Hugging Face repo to upload local model.",
             )
         utils.upload_to_hub(args.save_path, args.upload_name, hf_path)

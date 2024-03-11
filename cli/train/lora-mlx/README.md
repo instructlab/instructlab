@@ -23,7 +23,7 @@ be general should you wish to use a custom dataset.
 * [Memory Issues](#Memory-Issues)
 
 
-## Setup 
+## Setup
 
 Install the dependencies:
 
@@ -72,7 +72,7 @@ python lora.py --help
 ```
 
 Note, in the following the `--model` argument can be any compatible Hugging
-Face repo or a local path to a converted mdoel. 
+Face repo or a local path to a converted mdoel.
 
 ### Fine-tune
 
@@ -91,7 +91,7 @@ By default, the adapter weights are saved in `adapters.npz`. You can specify
 the output location with `--adapter-file`.
 
 You can resume fine-tuning with an existing adapter with `--resume-adapter-file
-<path_to_adapters.npz>`. 
+<path_to_adapters.npz>`.
 
 ### Evaluate
 
@@ -159,7 +159,7 @@ To upload a fused model, supply the `--upload-name` and `--hf-path` arguments
 to `fuse.py`. The latter is the repo name of the original model, which is
 useful for the sake of attribution and model versioning.
 
-For example, to fuse and upload a model derived from Mistral-7B-v0.1, run: 
+For example, to fuse and upload a model derived from Mistral-7B-v0.1, run:
 
 ```
 python fuse.py --upload-name My-4-bit-model --hf-repo mistralai/Mistral-7B-v0.1
@@ -189,7 +189,7 @@ of memory. Here are some tips to reduce memory use should you need to do so:
 
 1. Try quantization (QLoRA). You can use QLoRA by generating a quantized model
    with `convert.py` and the `-q` flag. See the [Setup](#setup) section for
-   more details. 
+   more details.
 
 2. Try using a smaller batch size with `--batch-size`. The default is `4` so
    setting this to `2` or `1` will reduce memory consumption. This may slow

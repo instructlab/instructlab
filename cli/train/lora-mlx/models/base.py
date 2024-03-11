@@ -1,6 +1,6 @@
 # Standard
-from dataclasses import dataclass
 import inspect
+from dataclasses import dataclass
 
 
 @dataclass
@@ -12,5 +12,5 @@ class BaseModelArgs:
                 k: v
                 for k, v in params.items()
                 if k in inspect.signature(cls).parameters
-            }
+            },
         )

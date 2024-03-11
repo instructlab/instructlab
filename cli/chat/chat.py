@@ -5,6 +5,8 @@ import os
 import sys
 import time
 
+import openai
+
 # Third Party
 from openai import OpenAI
 from prompt_toolkit import PromptSession
@@ -15,7 +17,6 @@ from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.text import Text
-import openai
 
 HELP_MD = """
 Help / TL;DR
@@ -113,7 +114,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             f" ({session_name})" if new else ""
         )
         self._sys_print(
-            Markdown(f"Welcome to Chat CLI w/ **{self.model.upper()}**" + side_info_str)
+            Markdown(f"Welcome to Chat CLI w/ **{self.model.upper()}**" + side_info_str),
         )
 
     @property
@@ -131,7 +132,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                 ),  # loaded context/session file
                 # TODO: Fix openai package to fix the openai error.
                 # *([] if openai.proxy is None else [('#d08770 bold', "[proxied]")]), # indicate prox
-            ]
+            ],
         )
 
     def _handle_quit(self, content):
@@ -152,8 +153,8 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         if len(cs) < 2:
             self._sys_print(
                 Markdown(
-                    "**WARNING**: The second argument `assistant` is missing in the `/a assistant` command."
-                )
+                    "**WARNING**: The second argument `assistant` is missing in the `/a assistant` command.",
+                ),
             )
             raise KeyboardInterrupt
         self.model = cs[1]
@@ -164,15 +165,15 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
     def _handle_context(self, content):
         if CONTEXTS is None:
             self._sys_print(
-                Markdown("**WARNING**: No contexts loaded from the config file.")
+                Markdown("**WARNING**: No contexts loaded from the config file."),
             )
             raise KeyboardInterrupt
         cs = content.split()
         if len(cs) < 2:
             self._sys_print(
                 Markdown(
-                    "**WARNING**: The second argument `context` is missing in the `/c context` command."
-                )
+                    "**WARNING**: The second argument `context` is missing in the `/c context` command.",
+                ),
             )
             raise KeyboardInterrupt
         context = cs[1]
@@ -181,8 +182,8 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             self._sys_print(
                 Markdown(
                     f"**WARNING**: Context `{context}` not found. "
-                    f"Available contexts: `{available_contexts}`"
-                )
+                    f"Available contexts: `{available_contexts}`",
+                ),
             )
             raise KeyboardInterrupt
         self.loaded["name"] = context
@@ -215,7 +216,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             content,
             display_wrapper=(
                 lambda x: Panel(
-                    Markdown(x), subtitle_align="right", subtitle="rendered as Markdown"
+                    Markdown(x), subtitle_align="right", subtitle="rendered as Markdown",
                 )
             ),
         )
@@ -225,8 +226,8 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         if len(cs) < 2:
             self._sys_print(
                 Markdown(
-                    "**WARNING**: The second argument `filepath` is missing in the `/s filepath` command."
-                )
+                    "**WARNING**: The second argument `filepath` is missing in the `/s filepath` command.",
+                ),
             )
             raise KeyboardInterrupt
         filepath = cs[1]
@@ -239,12 +240,12 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         if len(cs) < 2:
             self._sys_print(
                 Markdown(
-                    "**WARNING**: The second argument `filepath` is missing in the `/l filepath` or `/L filepath` command."
-                )
+                    "**WARNING**: The second argument `filepath` is missing in the `/l filepath` or `/L filepath` command.",
+                ),
             )
             raise KeyboardInterrupt
         filepath = cs[1]
-        with open(filepath, "r") as session:
+        with open(filepath) as session:
             messages = json.loads(session.read())
         if content[:2] == "/L":
             self.loaded["name"] = filepath
@@ -328,12 +329,12 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             ), 'first response should be {"role": "assistant"}'
         except openai.AuthenticationError as e:
             self.console.print(
-                "Invalid API Key. Please set it in your config file.", style="bold red"
+                "Invalid API Key. Please set it in your config file.", style="bold red",
             )
             raise ChatException("API Key Error") from e
         except openai.RateLimitError as e:
             self.console.print(
-                "Rate limit or maximum monthly limit exceeded", style="bold red"
+                "Rate limit or maximum monthly limit exceeded", style="bold red",
             )
             self.info["messages"].pop()
             raise ChatException("Rate limit exceeded") from e
@@ -343,7 +344,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             raise KeyboardInterrupt
         except KeyboardInterrupt as e:
             raise e
-        except:
+        except Exception:
             self.console.print("Unknown error", style="bold red")
             raise ChatException(f"Unknown error: {sys.exc_info()[0]}")
 
@@ -358,7 +359,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             console=self.console,
             refresh_per_second=5,
             vertical_overflow=self.vertical_overflow,
-        ) as live:
+        ) as _:
             start_time = time.time()
             for chunk in response:
                 chunk_message = chunk.choices[0].delta
@@ -376,7 +377,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
 
 def chat_cli(
-    logger, api_base, config, question, model, context, session, qq, greedy_mode
+    logger, api_base, config, question, model, context, session, qq, greedy_mode,
 ):
     """Starts a CLI-based chat with the server"""
     client = OpenAI(base_url=api_base, api_key="no_api_key")
@@ -416,9 +417,9 @@ def chat_cli(
         prompt=not qq,
         vertical_overflow=("visible" if config.visible_overflow else "ellipsis"),
         loaded=loaded,
-        greedy_mode=greedy_mode
-        if greedy_mode
-        else config.greedy_mode,  # The CLI flag can only be used to enable
+        greedy_mode=(
+            greedy_mode if greedy_mode else config.greedy_mode
+        ),  # The CLI flag can only be used to enable
     )
 
     if not qq:

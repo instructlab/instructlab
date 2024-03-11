@@ -1,16 +1,16 @@
 # Standard
-from datetime import datetime
-from functools import partial
-from multiprocessing import Pool
-from os.path import splitext
-from pathlib import Path
-from typing import Optional
 import json
 import os
 import random
 import re
 import string
 import time
+from datetime import datetime
+from functools import partial
+from multiprocessing import Pool
+from os.path import splitext
+from pathlib import Path
+from typing import Optional
 
 try:
     # Third Party
@@ -18,11 +18,10 @@ try:
 except ImportError:
     pass
 # Third Party
-from rouge_score import rouge_scorer
-
 # import numpy as np
 import tqdm
 import yaml
+from rouge_score import rouge_scorer
 
 # Local
 from . import utils
@@ -54,7 +53,7 @@ Here are the requirements:
 4. A GPT language model should be able to complete the instruction. For example, do not ask the assistant to create any visual or audio output. For another example, do not ask the assistant to wake you up at 5pm or set a reminder because it cannot perform any action.
 5. The instructions should be in English.
 6. The instructions should be 1 to 2 sentences long. Either an imperative sentence or a question is permitted.
-7. The output should be an appropriate response to the input and the instruction. Long outputs are preferrable. 
+7. The output should be an appropriate response to the input and the instruction. Long outputs are preferrable.
 
 Based on below document provide a list of 5 tasks:
 
@@ -109,7 +108,12 @@ def encode_prompt(prompt_instructions, prompt):
 
     # pylint: disable=unused-variable
     for idx, task_dict in enumerate(prompt_instructions):
-        (instruction, prompt_input, prompt_output, taxonomy_path,) = (
+        (
+            instruction,
+            prompt_input,
+            prompt_output,
+            _,
+        ) = (
             task_dict["instruction"],
             task_dict["input"],
             task_dict["output"],
@@ -186,13 +190,13 @@ def post_process_gpt3_response(num_prompt_instructions, response):
         if not inst[0].isascii():
             continue
         instructions.append(
-            {"instruction": inst, "input": prompt_input, "output": prompt_output}
+            {"instruction": inst, "input": prompt_input, "output": prompt_output},
         )
     return instructions
 
 
 def find_word_in_string(w, s):
-    return re.compile(r"\b({0})\b".format(w), flags=re.IGNORECASE).search(s)
+    return re.compile(rf"\b({w})\b", flags=re.IGNORECASE).search(s)
 
 
 def get_seed_examples(contents):
@@ -232,8 +236,8 @@ def generate_data(
     if taxonomy and os.path.exists(taxonomy):
         seed_instruction_data = read_taxonomy(logger, taxonomy)
     elif seed_tasks_path and os.path.exists(seed_tasks_path):
-        with open(seed_tasks_path, "r", encoding="utf-8") as seed_tasks_file:
-            seed_tasks = [json.loads(l) for l in seed_tasks_file]
+        with open(seed_tasks_path, encoding="utf-8") as seed_tasks_file:
+            seed_tasks = [json.loads(task) for task in seed_tasks_file]
         seed_instruction_data = [
             {
                 "instruction": t["instruction"],
@@ -244,13 +248,13 @@ def generate_data(
         ]
     else:
         raise SystemExit(
-            f"Error: both taxonomy ({taxonomy}) and ({seed_tasks_path}) do not exist."
+            f"Error: both taxonomy ({taxonomy}) and ({seed_tasks_path}) do not exist.",
         )
 
     seeds = len(seed_instruction_data)
     logger.debug(
         f"Loaded {seeds} human-written seed instructions from "
-        f"{taxonomy or seed_tasks_path}"
+        f"{taxonomy or seed_tasks_path}",
     )
     if not seeds:
         raise SystemExit("Nothing to generate. Exiting.")
@@ -265,7 +269,7 @@ def generate_data(
                 "system": utils.SYSTEM_PROMPT,
                 "user": user,
                 "assistant": seed_example["output"],
-            }
+            },
         )
 
     name = Path(model_name).stem  # Just in case it is a file path
@@ -282,7 +286,7 @@ def generate_data(
     if os.path.exists(os.path.join(output_dir, "regen.json")):
         machine_instruction_data = utils.jload(os.path.join(output_dir, "regen.json"))
         logger.debug(
-            f"Loaded {len(machine_instruction_data)} machine-generated instructions"
+            f"Loaded {len(machine_instruction_data)} machine-generated instructions",
         )
 
     # similarities = {}
@@ -304,7 +308,7 @@ def generate_data(
     prompt_template = check_prompt_file(prompt_file_path, has_document)
     if console_output:
         print(
-            "Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help."
+            "Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help.",
         )
     while len(machine_instruction_data) < num_instructions_to_generate:
         request_idx += 1
@@ -314,11 +318,11 @@ def generate_data(
             # only sampling from the seed tasks
             try:
                 prompt_instructions = random.sample(
-                    seed_instruction_data, num_prompt_instructions
+                    seed_instruction_data, num_prompt_instructions,
                 )
             except ValueError as exc:
                 raise utils.GenerateException(
-                    f"There was a problem with the new data, please make sure the yaml is formatted correctly, and there is enough new data({num_prompt_instructions}+ Q&A)"
+                    f"There was a problem with the new data, please make sure the yaml is formatted correctly, and there is enough new data({num_prompt_instructions}+ Q&A)",
                 ) from exc
             prompt = encode_prompt(prompt_instructions, prompt_template)
             batch_inputs.append(prompt)
@@ -345,7 +349,7 @@ def generate_data(
         instruction_data = []
         for result in results:
             new_instructions = post_process_gpt3_response(
-                num_prompt_instructions, result
+                num_prompt_instructions, result,
             )
             # make sure the generated instruction carried over extra fields
             prompt_ins_0 = prompt_instructions[0]
@@ -361,7 +365,7 @@ def generate_data(
         for instruction_data_entry in instruction_data:
             # computing similarity with the pre-tokenzied instructions
             new_instruction_tokens = scorer._tokenizer.tokenize(
-                instruction_data_entry["instruction"]
+                instruction_data_entry["instruction"],
             )
             with Pool(num_cpus) as p:
                 rouge_scores = p.map(
@@ -384,13 +388,13 @@ def generate_data(
             all_instruction_tokens.append(new_instruction_tokens)
             if console_output:
                 print(
-                    f"Q> {instruction_data_entry['instruction']}\nI>{instruction_data_entry['input']}\nA>{instruction_data_entry['output']}\n"
+                    f"Q> {instruction_data_entry['instruction']}\nI>{instruction_data_entry['input']}\nA>{instruction_data_entry['output']}\n",
                 )
         progress_bar.update(keep)
         process_duration = time.time() - process_start
         logger.debug(
             f"Request {request_idx} took {request_duration:.2f}s, "
-            f"processing took {process_duration:.2f}s"
+            f"processing took {process_duration:.2f}s",
         )
         logger.debug(f"Generated {total} instructions, kept {keep} instructions")
         machine_instruction_data = [
@@ -411,18 +415,18 @@ def generate_data(
                     "system": utils.SYSTEM_PROMPT,
                     "user": user,
                     "assistant": synth_example["output"],
-                }
+                },
             )
         # utils.jdump(train_data, os.path.join(output_dir, output_file_train))
         with open(
-            os.path.join(output_dir, output_file_train), "w", encoding="utf-8"
+            os.path.join(output_dir, output_file_train), "w", encoding="utf-8",
         ) as outfile:
             for entry in train_data:
                 json.dump(entry, outfile)
                 outfile.write("\n")
         # utils.jdump(test_data, os.path.join(output_dir, output_file_test))
         with open(
-            os.path.join(output_dir, output_file_test), "w", encoding="utf-8"
+            os.path.join(output_dir, output_file_test), "w", encoding="utf-8",
         ) as outfile:
             for entry in test_data:
                 json.dump(entry, outfile)
@@ -462,7 +466,7 @@ def read_taxonomy_file(logger, file_path):
         warnings += 1
         return None, warnings, errors
     try:
-        with open(file_path, "r", encoding="utf-8") as file:
+        with open(file_path, encoding="utf-8") as file:
             contents = yaml.safe_load(file)
             if not contents:
                 logger.warn(f"Skipping {file_path} because it is empty!")
@@ -480,12 +484,12 @@ def read_taxonomy_file(logger, file_path):
                 c = t.get("context")
                 if not q:
                     logger.warn(
-                        f"Skipping entry in {file_path} " + "because question is empty!"
+                        f"Skipping entry in {file_path} " + "because question is empty!",
                     )
                     warnings += 1
                 if not a:
                     logger.warn(
-                        f"Skipping entry in {file_path} " + "because answer is empty!"
+                        f"Skipping entry in {file_path} " + "because answer is empty!",
                     )
                     warnings += 1
                 if not q or not a:
@@ -498,7 +502,7 @@ def read_taxonomy_file(logger, file_path):
                         "taxonomy_path": tax_path,
                         "task_description": task_description,
                     }
-                    | ({} if document is None else {"document": document})
+                    | ({} if document is None else {"document": document}),
                 )
     except Exception as e:
         errors += 1
@@ -515,7 +519,7 @@ def read_taxonomy(logger, taxonomy):
         seed_instruction_data, warnings, errors = read_taxonomy_file(logger, taxonomy)
         if warnings:
             logger.warn(
-                f"{warnings} warnings (see above) due to taxonomy file not (fully) usable."
+                f"{warnings} warnings (see above) due to taxonomy file not (fully) usable.",
             )
         if errors:
             raise SystemExit(yaml.YAMLError("Taxonomy file with errors! Exiting."))
@@ -536,10 +540,10 @@ def read_taxonomy(logger, taxonomy):
                 seed_instruction_data.extend(data)
         if total_warnings:
             logger.warn(
-                f"{total_warnings} warnings (see above) due to taxonomy files that were not (fully) usable."
+                f"{total_warnings} warnings (see above) due to taxonomy files that were not (fully) usable.",
             )
         if total_errors:
             raise SystemExit(
-                yaml.YAMLError(f"{total_errors} taxonomy files with errors! Exiting.")
+                yaml.YAMLError(f"{total_errors} taxonomy files with errors! Exiting."),
             )
     return seed_instruction_data

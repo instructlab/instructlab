@@ -21,6 +21,39 @@ dynamic = ["dependencies"]
 Homepage = "https://github.com/instruct-lab/cli"
 Issues = "https://github.com/instruct-lab/cli/issues"
 
+[tool.ruff]
+select = [
+    "F",  # pyflakes
+    "E",  # pycodestyle
+    "W",  # pycodestyle
+    "I",  # isort
+    "N",  # pep8-naming
+    "UP",  # pyupgrade
+    "B",  # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "YTT",  # flake8-2020
+    "PT",  # flake8-pytest-style
+    "RET",  # flake8-return
+    "SIM",  # flake8-simplify
+    "COM",  # flake8-commas
+    "DTZ",  # flake8-datetimez
+    "T10",  # flake8-debugger
+    "EXE",  # flake8-executable
+    "PIE",  # flake8-pie
+    "RSE",  # flake8-raise
+    "PGH",  # pygrep-hooks
+    "PLC",  # pylint-convention
+    "PLE",  # pylint-error
+    "PLR01",  # pylint-refactor
+    "PLR02",
+    "PLR04",
+    "PLR1",
+    "RUF",  # ruff
+]
+
+[tool.ruff.format]
+indent-style = "space"
+
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
 

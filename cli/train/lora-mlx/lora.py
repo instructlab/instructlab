@@ -1,20 +1,21 @@
 # Copyright © 2023 Apple Inc.
 
 # Standard
-from pathlib import Path
 import argparse
 import json
 import math
 import time
+from pathlib import Path
 
-# Third Party
-from mlx.utils import tree_flatten, tree_unflatten
-from models.lora import LoRALinear
 import mlx.core as mx
-import mlx.nn as nn
 import mlx.optimizers as optim
 import numpy as np
 import utils as lora_utils
+from mlx import nn
+
+# Third Party
+from mlx.utils import tree_flatten
+from models.lora import LoRALinear
 
 
 def build_parser():
@@ -33,7 +34,7 @@ def build_parser():
         help="The maximum number of tokens to generate",
     )
     parser.add_argument(
-        "--temp", type=float, default=0.8, help="The sampling temperature"
+        "--temp", type=float, default=0.8, help="The sampling temperature",
     )
     parser.add_argument(
         "--prompt",
@@ -63,7 +64,7 @@ def build_parser():
     )
     parser.add_argument("--batch-size", type=int, default=4, help="Minibatch size.")
     parser.add_argument(
-        "--iters", type=int, default=1000, help="Iterations to train for."
+        "--iters", type=int, default=1000, help="Iterations to train for.",
     )
     parser.add_argument(
         "--val-batches",
@@ -72,7 +73,7 @@ def build_parser():
         help="Number of validation batches, -1 uses the entire validation set.",
     )
     parser.add_argument(
-        "--learning-rate", type=float, default=1e-5, help="Adam learning rate."
+        "--learning-rate", type=float, default=1e-5, help="Adam learning rate.",
     )
     parser.add_argument(
         "--steps-per-report",
@@ -138,8 +139,8 @@ class Dataset:
         if not path.exists():
             self._data = None
         else:
-            with open(path, "r") as fid:
-                self._data = [json.loads(l) for l in fid]
+            with open(path) as fid:
+                self._data = [json.loads(line) for line in fid]
         self._key = key
 
     def __getitem__(self, idx: int):
@@ -163,15 +164,15 @@ def load(args):
 
     if args.train and len(train) == 0:
         raise ValueError(
-            "Training set not found or empty. Must provide training set for fine-tuning."
+            "Training set not found or empty. Must provide training set for fine-tuning.",
         )
     if args.train and len(valid) == 0:
         raise ValueError(
-            "Validation set not found or empty. Must provide validation set for fine-tuning."
+            "Validation set not found or empty. Must provide validation set for fine-tuning.",
         )
     if args.test and len(test) == 0:
         raise ValueError(
-            "Test set not found or empty. Must provide test set for evaluation."
+            "Test set not found or empty. Must provide test set for evaluation.",
         )
     return train, valid, test
 
@@ -208,7 +209,7 @@ def iterate_batches(dset, tokenizer, batch_size, train=False):
             if max(lengths) > 2048:
                 print(
                     "[WARNING] Some sequences are longer than 2048 tokens. "
-                    "Consider pre-splitting your data to save memory."
+                    "Consider pre-splitting your data to save memory.",
                 )
 
             # Pad to the max length
@@ -269,7 +270,7 @@ def train(model, train_set, val_set, optimizer, loss, tokenizer, args):
             print(
                 f"Iter {it+1:03d}: Train loss {train_loss:.3f}, "
                 f"It/sec {args.steps_per_report / (stop - start):.3f}, "
-                f"Tokens/sec {float(n_tokens) / (stop - start):.3f}"
+                f"Tokens/sec {float(n_tokens) / (stop - start):.3f}",
             )
             losses = []
             n_tokens = 0
@@ -279,14 +280,14 @@ def train(model, train_set, val_set, optimizer, loss, tokenizer, args):
         if it == 0 or (it + 1) % args.steps_per_eval == 0:
             stop = time.perf_counter()
             val_loss = evaluate(
-                model, val_set, loss, tokenizer, args.batch_size, args.val_batches
+                model, val_set, loss, tokenizer, args.batch_size, args.val_batches,
             )
             epoch = (it * args.batch_size) // len(train_set)
             print(
                 f"Epoch {epoch + 1}: "
                 f"Iter {it + 1}: "
                 f"Val loss {val_loss:.3f}, "
-                f"Val took {(time.perf_counter() - stop):.3f}s"
+                f"Val took {(time.perf_counter() - stop):.3f}s",
             )
 
             start = time.perf_counter()
@@ -294,7 +295,7 @@ def train(model, train_set, val_set, optimizer, loss, tokenizer, args):
         # Save adapter weights if needed
         if (it + 1) % args.save_every == 0:
             mx.savez(
-                args.adapter_file, **dict(tree_flatten(model.trainable_parameters()))
+                args.adapter_file, **dict(tree_flatten(model.trainable_parameters())),
             )
             a, b = args.adapter_file.split(".")
             fn = f"{a}-{it+1:03d}.{b}"
@@ -346,12 +347,12 @@ if __name__ == "__main__":
     # Freeze all layers other than LORA linears
     model.freeze()
     if not args.no_adapter:
-        for l in model.model.layers[len(model.model.layers) - args.lora_layers :]:
-            l.self_attn.q_proj = LoRALinear.from_linear(l.self_attn.q_proj)
-            l.self_attn.v_proj = LoRALinear.from_linear(l.self_attn.v_proj)
-            if hasattr(l, "block_sparse_moe"):
-                l.block_sparse_moe.gate = LoRALinear.from_linear(
-                    l.block_sparse_moe.gate
+        for layer in model.model.layers[len(model.model.layers) - args.lora_layers :]:
+            layer.self_attn.q_proj = LoRALinear.from_linear(layer.self_attn.q_proj)
+            layer.self_attn.v_proj = LoRALinear.from_linear(layer.self_attn.v_proj)
+            if hasattr(layer, "block_sparse_moe"):
+                layer.block_sparse_moe.gate = LoRALinear.from_linear(
+                    layer.block_sparse_moe.gate,
                 )
     else:
         print("LoRA init skipped")
@@ -384,7 +385,7 @@ if __name__ == "__main__":
         if not Path(args.adapter_file).is_file():
             raise ValueError(
                 f"Adapter file {args.adapter_file} missing. "
-                "Use --train to learn and save the adapters.npz."
+                "Use --train to learn and save the adapters.npz.",
             )
         model.load_weights(args.adapter_file, strict=False)
     else:

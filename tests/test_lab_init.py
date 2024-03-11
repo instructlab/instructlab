@@ -1,15 +1,17 @@
 # Standard
-from unittest.mock import MagicMock, patch
 import unittest
+from unittest.mock import MagicMock, patch
 
-# Third Party
-from click.testing import CliRunner
-from git import GitError
 import pydantic
 import pydantic_yaml
 
 # First Party
 from cli import lab
+
+# Third Party
+from click.testing import CliRunner
+from git import GitError
+
 from tests.schema import Config
 
 
@@ -40,7 +42,7 @@ class TestLabInit(unittest.TestCase):
                 assert self.assertFalse
 
     @patch(
-        "git.Repo.clone_from", MagicMock(side_effect=GitError("Authentication failed"))
+        "git.Repo.clone_from", MagicMock(side_effect=GitError("Authentication failed")),
     )
     def test_init_git_error(self):
         runner = CliRunner()

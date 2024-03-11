@@ -60,7 +60,7 @@ class TestConfig(unittest.TestCase):
     def setUp(self):
         # pylint: disable=consider-using-with
         self.temp = tempfile.NamedTemporaryFile(
-            prefix="config", suffix=".yaml", delete=False
+            prefix="config", suffix=".yaml", delete=False,
         )
 
     # Tests basic config parsing

@@ -1,17 +1,17 @@
 # Training
 
 You're now at the training phase. So far, you have handcrafted some prompts and
-responses, and used `lab generate` to synthesize those prompt/response pairs 
+responses, and used `lab generate` to synthesize those prompt/response pairs
 into a new data set.
 
-If you have a Mac Silicon (M1 or newer), we _strongly_ recommend using `lab 
-train` locally, and only proceed here if you hit issues. 
+If you have a Mac Silicon (M1 or newer), we _strongly_ recommend using `lab
+train` locally, and only proceed here if you hit issues.
 
-Also, there is active work being done to support Linux, so if you have 
-access to a Linux machine with GPUs, that might also be a better option. 
+Also, there is active work being done to support Linux, so if you have
+access to a Linux machine with GPUs, that might also be a better option.
 
-Next, you'll get to fine-tune a LoRA (Low-Rank Adaptation of Large Language 
-Models) using a Jupyter notebook and (preferably) Google Collab platform or if 
+Next, you'll get to fine-tune a LoRA (Low-Rank Adaptation of Large Language
+Models) using a Jupyter notebook and (preferably) Google Collab platform or if
 unable to use Colab, unmaintained instructions for
 [Kaggle](https://www.kaggle.com).
 
@@ -21,7 +21,7 @@ We've laid out the steps to get started with either platform below.
 
 ### Google Collab
 
-Pre-requisites: 
+Pre-requisites:
 * [Google Colab](https://research.google.com/colaboratory/faq.html)
 * A Gmail account that you're logged into. This will allow you to use Google Colab, which in the free tier will give you access to an NVidia T4 x 15GB GPU.
 

@@ -28,7 +28,7 @@ def make_data(data_dir, is_shiv):
         for fn in [f"{data_dir}/train_gen.jsonl", f"{data_dir}/test_gen.jsonl"]:
 
             # Load the JSON Lines file
-            with open(fn, "r") as f:
+            with open(fn) as f:
                 data = [json.loads(line) for line in f]
 
             # Add the "text" field with value "x" to each object
@@ -59,7 +59,7 @@ def make_data(data_dir, is_shiv):
         fn = f"{data_dir}/raw.jsonl"
 
         # Load the JSON Lines file
-        with open(fn, "r") as f:
+        with open(fn) as f:
             data = [json.loads(line) for line in f]
 
         # Add the "text" field with value "x" to each object

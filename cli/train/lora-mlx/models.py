@@ -1,20 +1,20 @@
 # Copyright © 2023 Apple Inc.
 
 # Standard
-from dataclasses import dataclass
-from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
 import glob
 import inspect
 import json
 import math
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Dict, Optional, Tuple, Union
+
+import mlx.core as mx
 
 # Third Party
 from huggingface_hub import snapshot_download
+from mlx import nn
 from transformers import AutoTokenizer
-import mlx.core as mx
-import mlx.nn as nn
-import numpy as np
 
 
 @dataclass
@@ -50,7 +50,7 @@ class ModelArgs:
                 k: v
                 for k, v in params.items()
                 if k in inspect.signature(cls).parameters
-            }
+            },
         )
 
 
@@ -312,17 +312,17 @@ def load(path_or_hf_repo: str):
             snapshot_download(
                 repo_id=path_or_hf_repo,
                 allow_patterns=["*.json", "*.safetensors", "tokenizer.model"],
-            )
+            ),
         )
 
-    with open(model_path / "config.json", "r") as f:
+    with open(model_path / "config.json") as f:
         config = json.loads(f.read())
         quantization = config.get("quantization", None)
         model_args = ModelArgs.from_dict(config)
 
     weight_files = glob.glob(str(model_path / "*.safetensors"))
     if len(weight_files) == 0:
-        raise FileNotFoundError("No safetensors found in {}".format(model_path))
+        raise FileNotFoundError(f"No safetensors found in {model_path}")
 
     weights = {}
     for wf in weight_files:
