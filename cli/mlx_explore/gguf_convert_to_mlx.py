@@ -25,8 +25,6 @@ import utils
 # sys.path.append(parent_dir)
 
 
-
-
 @dataclass
 class ModelArgs:
     hidden_size: int

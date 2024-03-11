@@ -19,8 +19,8 @@ from . import config, utils
 from .chat.chat import ChatException, chat_cli
 from .generator.generate_data import generate_data, get_taxonomy_diff, read_taxonomy
 from .generator.utils import GenerateException
-from .server import ServerException, ensure_server, server
 from .mlx_explore import utils as mlx_utils
+from .server import ServerException, ensure_server, server
 
 
 class Lab:
@@ -647,8 +647,8 @@ def train(
 
             for filename in os.listdir(model_dir_local):
                 shutil.copy(
-                os.path.join(model_dir_local, filename),
-                os.path.join(dest_model_dir, filename),
+                    os.path.join(model_dir_local, filename),
+                    os.path.join(dest_model_dir, filename),
                 )
             shutil.rmtree(model_dir_local, ignore_errors=True)
 
