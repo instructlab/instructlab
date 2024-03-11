@@ -1,5 +1,5 @@
+# Standard
 import itertools
-
 
 _COMMON_PREAMBULE = (
     "You are asked to come up with a set of 5 diverse task instructions "
@@ -26,31 +26,31 @@ _COMMON_RULES = (
 )
 
 _DEFAULT_PROMPT_RULES = (
-    'The type of instructions should not have topic diversity. The list '
-    'should follow the same topic and category.',
+    "The type of instructions should not have topic diversity. The list "
+    "should follow the same topic and category.",
     ###
-    'You should generate an appropriate input to the instruction. The input '
-    'field should contain a specific example provided for the instruction. It '
-    'should involve realistic data and should not contain simple '
-    'placeholders. The input should provide substantial content to make the '
-    'instruction challenging but should ideally not exceed 100 words.',
+    "You should generate an appropriate input to the instruction. The input "
+    "field should contain a specific example provided for the instruction. It "
+    "should involve realistic data and should not contain simple "
+    "placeholders. The input should provide substantial content to make the "
+    "instruction challenging but should ideally not exceed 100 words.",
     ###
-    'Not all instructions require input. For example, when a instruction '
+    "Not all instructions require input. For example, when a instruction "
     'asks about some general information, "what is the highest peak in the '
     'world", it is not necessary to provide a specific context. In this case, '
     'we simply put "<noinput>" in the input field.',
     ###
-    'The output should be an appropriate response to the instruction and the '
-    'input. Make sure the output is less than 100 words.',
+    "The output should be an appropriate response to the instruction and the "
+    "input. Make sure the output is less than 100 words.",
 )
 
 _DEFAULT_PROMPT_DOCUMENT_RULES = (
-    'The type of instructions should be similar to provided examples. The '
-    'generated instruction and the output should be grounded in the provided '
-    'document.',
+    "The type of instructions should be similar to provided examples. The "
+    "generated instruction and the output should be grounded in the provided "
+    "document.",
     ###
-    'The output should be an appropriate response to the input and the '
-    'instruction. Long outputs are preferable.',
+    "The output should be an appropriate response to the input and the "
+    "instruction. Long outputs are preferable.",
 )
 
 _DEFAULT_PROMPT_POSTAMBULE = """List of 5 tasks:
@@ -68,13 +68,12 @@ asked for this document:
 
 
 def get_requirements_section(rules):
-    return "\n".join(itertools.chain(
-        ("Here are the requirements:",),
-        (
-            f"{i}. {rule}"
-            for i, rule in enumerate(rules, start=1)
-        ),
-    ))
+    return "\n".join(
+        itertools.chain(
+            ("Here are the requirements:",),
+            (f"{i}. {rule}" for i, rule in enumerate(rules, start=1)),
+        )
+    )
 
 
 def join_sections(*sections):
@@ -84,18 +83,14 @@ def join_sections(*sections):
 def get_default_template():
     return join_sections(
         _COMMON_PREAMBULE,
-        get_requirements_section(
-            _COMMON_RULES + _DEFAULT_PROMPT_RULES
-        ),
-        _DEFAULT_PROMPT_POSTAMBULE
+        get_requirements_section(_COMMON_RULES + _DEFAULT_PROMPT_RULES),
+        _DEFAULT_PROMPT_POSTAMBULE,
     )
 
 
 def get_document_template():
     return join_sections(
         _COMMON_PREAMBULE,
-        get_requirements_section(
-            _COMMON_RULES + _DEFAULT_PROMPT_DOCUMENT_RULES
-        ),
-        _DEFAULT_PROMPT_DOCUMENT_POSTAMBULE
+        get_requirements_section(_COMMON_RULES + _DEFAULT_PROMPT_DOCUMENT_RULES),
+        _DEFAULT_PROMPT_DOCUMENT_POSTAMBULE,
     )
