@@ -46,7 +46,7 @@ python -m http.server 8000 &
 PID1=$!
 
 # check that lab serve is detecting the port is already in use
-# catch 'error while attempting to bind on address ('127.0.0.1', 8000): address already in use' strings in the output
+# catch "error while attempting to bind on address ...."
 spawn lab serve
 expect {
     "error while attempting to bind on address " { exit 1 }
