@@ -1,4 +1,4 @@
-# Copyright The InstructLab Authors
+# Copyright The Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,43 +12,46 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-name: Lint and Format
+name: Test
 
 on:
+  workflow_dispatch:
   push:
-    branches: 
+    branches:
       - "main"
     paths:
       - '**.py'
   pull_request:
-    branches: 
+    branches:
       - "main"
     paths:
       - '**.py'
 
-env:
-  PYTHON_VERSION: 3.11
-
 jobs:
-  lint:
+  test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python:
+          - "3.11"
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Python
+      - name: Setup Python ${{ matrix.python }}
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: ${{ matrix.python }}
 
-      # tox creates (and reuses) a separate Python (virtual) environment for each context (fmt, lint)
+      # tox creates (and reuses) a separate Python (virtual) environment for each context (fmt, lint, unit)
       # tox requires (and will install, if not exists) all the packages listed in requirements.txt
       # so we want to cache the entire Python environment, not just the pip cache as tox will not reuse that
       # but caching tox environments is fickle and can cause weird errors
       # tox does provide a legacy option to reuse the Python system wide site packages
       # since GH action runners are one-and-done we can install all requirements into the system packages
       # and cache and reuse all of the installed Python system packages
-      # tox can then reuse the system site packages with setting `-x testenv:lint.system_site_packages=True`
+      # tox can then reuse the system site packages with setting `-x testenv:unit.system_site_packages=True`
       - name: Cache dependencies
         uses: actions/cache@v4
         id: cache
@@ -65,18 +68,9 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install -r requirements-dev.txt
 
-      - name: Run formatting
+      - name: Run unit tests
         run: |
           tox \
-            -x testenv:fmt.system_site_packages=True \
-            -x testenv:fmt.skip_install=True \
-            -e fmt
-
-      - name: Run linting
-        if: success() || failure()
-        run: |
-          echo "::add-matcher::.github/workflows/matchers/pylint.json"
-          tox \
-            -x testenv:lint.system_site_packages=True \
-            -x testenv:lint.skip_install=True \
-            -e lint
+            -x testenv:unit.system_site_packages=True \
+            -x testenv:unit.skip_install=True \
+            -e unit

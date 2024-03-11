@@ -5,6 +5,8 @@ models/
 taxonomy/
 # We recommend putting generated files here, but PLEASE don't commit them.
 generated/
+# We recommend outputting training results on Linux here, but PLEASE don't commit them.
+training_results/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
