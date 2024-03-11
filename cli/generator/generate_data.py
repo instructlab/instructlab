@@ -296,6 +296,34 @@ def get_instructions_from_model(
     return instruction_data, discarded
 
 
+def unescape(s):
+    return bytes(s, "utf-8").decode("utf-8")
+
+
+def dump_test_data(fname, data):
+    test_data = []
+    for seed_example in data:
+        user = seed_example["instruction"]
+
+        if len(seed_example["input"]) > 0:
+            user += "\n" + seed_example["input"]
+        try:
+            test_data.append(
+                {
+                    "system": utils.get_sysprompt(),
+                    "user": unescape(user),
+                    "assistant": unescape(seed_example["output"]),
+                }
+            )
+        except TypeError as exc:
+            click.secho(
+                f"Error reading seed examples: {exc}. Please make sure your answers are verbose enough.",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
+    utils.dump_jsonl(fname, test_data)
+
+
 def generate_data(
     logger,
     api_base,
@@ -342,9 +370,6 @@ def generate_data(
     if not seeds:
         raise SystemExit("Nothing to generate. Exiting.")
 
-    def unescape(s):
-        return bytes(s, "utf-8").decode("utf-8")
-
     name = Path(model_name).stem  # Just in case it is a file path
     date_suffix = datetime.now().replace(microsecond=0).isoformat().replace(":", "_")
     output_file = f"generated_{name}_{date_suffix}.json"
@@ -355,11 +380,7 @@ def generate_data(
     )
     logger.debug(f"Generating to: {os.path.join(output_dir, output_file)}")
 
-    # Dump test data
-    test_data = []
     for seed_example in seed_instruction_data:
-        user = seed_example["instruction"]
-
         documents = seed_example["document"]
         if documents:
             seed_example["document"] = chunk_document(
@@ -368,23 +389,7 @@ def generate_data(
                 chunk_word_count=chunk_word_count,
             )
 
-        if len(seed_example["input"]) > 0:
-            user += "\n" + seed_example["input"]
-        try:
-            test_data.append(
-                {
-                    "system": utils.get_sysprompt(),
-                    "user": unescape(user),
-                    "assistant": unescape(seed_example["output"]),
-                }
-            )
-        except TypeError as exc:
-            click.secho(
-                f"Error reading seed examples: {exc}. Please make sure your answers are verbose enough.",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
-    utils.dump_jsonl(os.path.join(output_dir, output_file_test), test_data)
+    dump_test_data(os.path.join(output_dir, output_file_test), seed_instruction_data)
 
     request_idx = 0
     # load the LM-generated instructions
