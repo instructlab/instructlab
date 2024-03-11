@@ -12,11 +12,13 @@ import sys
 # Third Party
 from huggingface_hub import snapshot_download
 from mlx.utils import tree_flatten, tree_unflatten
-from utils import save_model
 import mlx.core as mx
 import mlx.nn as nn
 import numpy as np
 
+sys.path.insert(0, './modules')
+# Local
+from utils import save_model
 
 @dataclass
 class ModelArgs:
