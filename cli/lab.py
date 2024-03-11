@@ -277,7 +277,7 @@ def serve(ctx, model_path, gpu_layers):
 @click.option(
     "--api-key",
     type=click.STRING,
-    default="",
+    default=config.DEFAULT_API_KEY,
     help="API key for API endpoint.",
 )
 @click.pass_context
@@ -296,12 +296,15 @@ def generate(
     api_key,
 ):
     """Generates synthetic data to enhance your example data"""
-    server_process, api_base = ensure_server(
-        ctx.obj.logger,
-        ctx.obj.config.serve,
-    )
-    if not api_base:
-        api_base = ctx.obj.config.serve.api_base()
+    if endpoint_url is None:
+        server_process, api_base = ensure_server(
+            ctx.obj.logger,
+            ctx.obj.config.serve,
+        )
+        if not api_base:
+            api_base = ctx.obj.config.serve.api_base()
+    else:
+        server_process, api_base = (None, endpoint_url)
     try:
         ctx.obj.logger.info(
             f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}' against {api_base} server"
