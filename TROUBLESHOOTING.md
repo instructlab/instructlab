@@ -20,7 +20,7 @@ On a M1 with 16GB, it was tested that `lab generate` with that limit bumped to
 ```
 sudo sysctl iogpu.wired_limit_mb=12288
 ```
-Once done, make sure to reset the limit back to 0, which resets it to default.
+Once done, make sure to reset the limit back to 0, which is the default.
 
 > **Note:** This value will reset to defaults after machine reboot.
 
