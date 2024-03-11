@@ -294,6 +294,9 @@ Try the fine-tuned model out live using the chat interface, and see if the resul
 ```
 lab chat -m <New model name>
 ```
+
+If you are interested in optimizing the quality of the model's responses, please see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md#model-fine-tuning-and-response-optimization)
+
 ## 🎁 Submit your new knowledge
 
 Of course the final step is, if you've improved the model, to open up a a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy) that includes the `qna.yaml` files with your improved data. 
