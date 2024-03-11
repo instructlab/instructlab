@@ -164,3 +164,29 @@ Once that package is installed, recompile `lab` with `pip3 install .` and skip t
 ### Testing
 
 Test your changes by chatting to the LLM. Run `lab serve` and `lab chat` and chat to the LLM. If you notice significantly faster inference, congratulations! You've enabled GPU acceleration. You should also notice that the `lab generate` step will take significantly less time.
+
+
+## Training
+
+`lab train` has experimental support for GPU acceleration on Linux. It requires a PyTorch build for your GPU. Follow the previous instruction how to install and configure PyTorch for your GPU. You also need a recent GPU with sufficient memory. Training requires about 17 GiB of video RAM. It has been successfully tested on
+
+- NVidia GeForce RTX 3090 (24 GiB), Fedora 39, PyTorch 2.2.1 CUDA 12.1
+- Radeon RX 7900 XT (20 GiB), Fedora 39, PyTorch 2.2.1+rocm5.7
+- Radeon RX 7900 XTX (24 GiB), Fedora 39, PyTorch 2.2.1+rocm5.7
+
+**Note:** PyTorch implements AMD ROCm support on top of its `torch.cuda` API and treats AMD GPUs as CUDA devices. In a ROCm build of PyTorch, `cuda:0` is actually the first ROCm device.
+
+```shell
+lab train --device cuda
+```
+
+```
+python3 .../cli/train/linux_train.py --train-file generated/train_merlinite-7b-Q4_K_M_2024-03-11T16_40_55.jsonl --test-file generated/test_merlinite-7b-Q4_K_M_2024-03-11T16_40_55.jsonl --num-epochs 1 --device cuda
+LINUX_TRAIN.PY: PyTorch device is 'cuda:0'
+  NVidia CUDA version: n/a
+  AMD ROCm HIP version: 5.7.31921-d1770ee1b
+  Device 'cuda:0' is 'AMD Radeon RX 7900 XT'
+  Free GPU memory: 19.9 GiB of 20.0 GiB
+LINUX_TRAIN.PY: NUM EPOCHS IS:  1
+...
+```

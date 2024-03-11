@@ -272,7 +272,16 @@ lab train
  ggml-merlinite-7b-0302-Q4_K_M.gguf  ggml-model-f16.gguf
 ```
 
-#### Train the model locally on an M-series Mac
+`lab train` has experimental support for GPU acceleration with NVidia CUDA
+or AMD ROCm. See [GPU acceleration doc](./docs/gpu-acceleration.md) for more
+details. tl;dr you need
+
+- a PyTorch build for CUDA or ROCm
+- an AMD or NVidia GPU with at least 17 GiB of free memory
+- permission to access GPU device (`sudo usermod -a -G render,video $LOGNAME`, log out)
+- `lab train --device cuda`
+
+#### Train the model locally on an M-series Mac:
 
 To train the model locally on your M-Series Mac is as easy as running:
 ```

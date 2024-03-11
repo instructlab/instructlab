@@ -61,6 +61,35 @@ def formatting_prompts_func(example):
     return output_texts
 
 
+def arg_device(value):
+    """Parse and convert string to torch.device()"""
+    # turn unqualified 'cuda' into specific 'cuda:0'
+    if value == "cuda" and torch.cuda.is_available():
+        return torch.device("cuda", torch.cuda.current_device())
+    try:
+        return torch.device(value)
+    except RuntimeError as e:
+        raise ValueError(str(e)) from None
+
+
+def report_cuda_device(device, threshold_gib=17):
+    """Report CUDA/ROCm device properties"""
+    print(f"  NVidia CUDA version: {torch.version.cuda or 'n/a'}")
+    print(f"  AMD ROCm HIP version: {torch.version.hip or 'n/a'}")
+    name = torch.cuda.get_device_name(device)
+    free, total = torch.cuda.mem_get_info(device)
+    gib = 1024**3
+    free /= gib
+    total /= gib
+    print(f"  Device '{device}' is '{name}'")
+    print(f"  Free GPU memory: {free:.1f} GiB of {total:.1f} GiB")
+    if free < threshold_gib:
+        print(
+            f"  WARNING: You have less than {threshold_gib} GiB of free "
+            "GPU memory. Training may fail."
+        )
+
+
 def main(args_in: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description="Lab Train for Linux!")
     parser.add_argument(
@@ -78,7 +107,17 @@ def main(args_in: list[str] | None = None) -> None:
         help="number of epochs to run during training",
         default=None,
     )
+    parser.add_argument(
+        "--device",
+        type=arg_device,
+        help="Enable GPU offloading to device ('cpu', 'cuda', 'cuda:0')",
+        default="cpu",
+    )
     args = parser.parse_args(args_in)
+
+    print(f"LINUX_TRAIN.PY: PyTorch device is '{args.device}'")
+    if args.device.type == "cuda":
+        report_cuda_device(args.device)
 
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", args.num_epochs)
     print("LINUX_TRAIN.PY: TRAIN FILE IS: ", args.train_file)
@@ -125,7 +164,7 @@ def main(args_in: list[str] | None = None) -> None:
         config=config,
         trust_remote_code=True,
         low_cpu_mem_usage=True,
-    )
+    ).to(args.device)
 
     print("LINUX_TRAIN.PY: SANITY CHECKING THE BASE MODEL")
     stop_words = ["<|endoftext|>", "<|assistant|>"]
@@ -142,9 +181,7 @@ def main(args_in: list[str] | None = None) -> None:
     def model_generate(user):
         text = create_prompt(user=user)
 
-        # TODO GPU: the commented out line might be needed to work on Nvidia GPUs
-        # input_ids = tokenizer(text, return_tensors="pt").input_ids.to("cuda")
-        input_ids = tokenizer(text, return_tensors="pt").input_ids
+        input_ids = tokenizer(text, return_tensors="pt").input_ids.to(args.device)
         outputs = model.generate(
             input_ids=input_ids,
             max_new_tokens=256,
@@ -202,7 +239,7 @@ def main(args_in: list[str] | None = None) -> None:
         per_device_train_batch_size=per_device_train_batch_size,
         bf16=True,
         # use_ipex=True, # TODO CPU test this possible optimization
-        use_cpu=True,
+        use_cpu=args.device.type == "cpu",
         save_strategy="epoch",
         report_to="none",
     )
@@ -228,7 +265,7 @@ def main(args_in: list[str] | None = None) -> None:
 
     print("LINUX_TRAIN.PY: RUNNING INFERENCE ON THE OUTPUT MODEL")
 
-    for (i, (d, assistant_old)) in enumerate(zip(test_dataset, assistant_old_lst)):
+    for i, (d, assistant_old) in enumerate(zip(test_dataset, assistant_old_lst)):
         assistant_new = (
             model_generate(d["user"]).split(response_template.strip())[-1].strip()
         )

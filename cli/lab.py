@@ -5,7 +5,9 @@ import json
 import logging
 import os
 import platform
+import shlex
 import shutil
+import subprocess
 import sys
 
 # Third Party
@@ -570,6 +572,15 @@ def download(ctx, repository, release, filename, model_dir):
     show_default=True,
     help="Whether to skip quantization while converting to MLX.",
 )
+@click.option(
+    "--device",
+    type=click.STRING,
+    default="cpu",
+    help=(
+        "PyTorch device for Linux training (default: 'cpu'). Use 'cuda' "
+        "for NVidia CUDA or AMD ROCm GPU."
+    ),
+)
 @click.pass_context
 def train(
     ctx,
@@ -583,6 +594,7 @@ def train(
     local,
     skip_quantize,
     num_epochs,
+    device,
 ):
     """
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
@@ -634,11 +646,20 @@ def train(
 
     if not utils.is_macos_with_m_chip():
         script = os.path.join(cli_dir, "train/linux_train.py")
-        cmd = f"{script} --train-file {train_files[0]} --test-file {test_files[0]} --num-epochs {num_epochs}"
-        click.secho(
-            f"python {cmd}",
-        )
-        os.system("python {}".format(cmd))
+        cmd = [
+            sys.executable,
+            script,
+            "--train-file",
+            train_files[0],
+            "--test-file",
+            test_files[0],
+            "--num-epochs",
+            str(num_epochs),
+            "--device",
+            device,
+        ]
+        click.secho(shlex.join(cmd))
+        subprocess.check_call(cmd)
 
         training_results_dir = "./training_results"
         os.makedirs(training_results_dir, exist_ok=True)
@@ -684,8 +705,9 @@ def train(
             print("Copied ", file, "to ", final_results_dir)
 
         script = os.path.join(cli_dir, "llamacpp/llamacpp_convert_to_gguf.py")
-        cmd = f"{script} {final_results_dir} --pad-vocab"
-        os.system("python {}".format(cmd))
+        cmd = [sys.executable, script, final_results_dir, "--pad-vocab"]
+        click.secho(shlex.join(cmd))
+        subprocess.check_call(cmd)
 
         gguf_models_dir = "./models"
         if not os.path.isdir(gguf_models_dir):
