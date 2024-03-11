@@ -102,6 +102,11 @@ def openai_completion(
             **decoding_kwargs,
         }
 
+        if not api_key:
+            # we need to explicitly set non-empty api-key, to ensure generate
+            # connects to our local server
+            api_key = "no_api_key"
+
         client = OpenAI(base_url=api_base, api_key=api_key)
 
         messages = [
