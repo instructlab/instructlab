@@ -105,7 +105,7 @@ Initializing `lab` will:
 ```shell
 (venv) $ lab init
 Welcome to InstructLab CLI. This guide will help you set up your environment.
-Please provide the following values to initiate the environment:
+Please provide the following values to initiate the environment [press Enter for defaults]:
 Path to taxonomy repo [taxonomy]: <ENTER>
 `taxonomy` seems to not exists or is empty. Should I clone git@github.com:instruct-lab/taxonomy.git for you? [y/N]: y
 Cloning git@github.com:instruct-lab/taxonomy.git...
