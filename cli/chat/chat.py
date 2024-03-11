@@ -353,6 +353,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             if box
             else response_content
         )
+        subtitle = None
         with Live(
             panel,
             console=self.console,
@@ -367,9 +368,11 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
                 if box:
                     panel.subtitle = f"elapsed {time.time() - start_time:.3f} seconds"
+            subtitle = f"elapsed {time.time() - start_time:.3f} seconds"
 
         # Update chat logs
-        self.log_message("- " + panel.subtitle + " -\n")
+        if subtitle is not None:
+            self.log_message("- " + subtitle + " -\n")
         self.log_message(response_content.plain + "\n\n")
         # Update message history and token counters
         self._update_conversation(response_content.plain, "assistant")
