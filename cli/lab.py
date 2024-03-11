@@ -215,7 +215,9 @@ def serve(ctx, model_path, gpu_layers):
     """Start a local server"""
     ctx.obj.logger.info(f"Using model '{model_path}' with {gpu_layers} gpu-layers")
     try:
-        server(ctx.obj.logger, model_path, gpu_layers)
+        host = ctx.obj.config.serve.host_port.split(":")[0]
+        port = int(ctx.obj.config.serve.host_port.split(":")[1])
+        server(ctx.obj.logger, model_path, gpu_layers, host, port)
     except ServerException as exc:
         click.secho(f"Error creating server: {exc}", fg="red")
         raise click.exceptions.Exit(1)
