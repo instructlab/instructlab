@@ -77,8 +77,8 @@ def cli(ctx, config):
 @cli.command()
 @click.pass_context
 @click.option(
-    "--non-interactive",
-    is_flag=True,
+    "--interactive/--non-interactive",
+    default=True,
     help="Initialize the environment assuming defaults.",
 )
 @click.option(
@@ -98,16 +98,8 @@ def cli(ctx, config):
     default=config.DEFAULT_TAXONOMY_REPO,
     help="Taxonomy repository location.",
 )
-@click.option(
-    "--min_taxonomy",
-    is_flag=True,
-    help="Shallow clone the taxonomy repository with minimum size. "
-    "Please do not use this option if you are planning to contribute back "
-    "using the same taxonomy repository. ",
-)
 # pylint: disable=unused-argument
-def init(ctx, non_interactive, model_path, taxonomy_path, repository, min_taxonomy):
-
+def init(ctx, interactive, model_path, taxonomy_path, repository):
     """Initializes environment for InstructLab"""
     if exists(config.DEFAULT_CONFIG):
         overwrite = click.confirm(
@@ -117,7 +109,7 @@ def init(ctx, non_interactive, model_path, taxonomy_path, repository, min_taxono
             return
 
     clone_taxonomy_repo = True
-    if not non_interactive:
+    if interactive:
         click.echo(
             "Welcome to InstructLab CLI. This guide will help you to setup your environment."
         )
@@ -141,10 +133,7 @@ def init(ctx, non_interactive, model_path, taxonomy_path, repository, min_taxono
     if clone_taxonomy_repo:
         click.echo(f"Cloning {repository}...")
         try:
-            if not min_taxonomy:
-                Repo.clone_from(repository, taxonomy_path, branch="main")
-            else:
-                Repo.clone_from(repository, taxonomy_path, branch="main", depth=1)
+            Repo.clone_from(repository, taxonomy_path, branch="main", depth=1)
         except GitError as exc:
             click.secho(f"Failed to clone taxonomy repo:{exc}", fg="red")
             raise click.exceptions.Exit(1)
