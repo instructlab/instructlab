@@ -153,3 +153,5 @@ config.yaml
 
 # Spelling
 dictionary.dic
+
+**/prompt.txt
