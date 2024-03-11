@@ -1,6 +1,5 @@
 # Standard
 from dataclasses import Field, asdict, dataclass
-import sys
 
 # Third Party
 import yaml
@@ -23,12 +22,12 @@ DEFAULT_GREEDY_MODE = False
 
 
 class ConfigException(Exception):
-    """An exception that a configuration file doesn't exists or it doesn't contain valid YAML."""
+    """An exception that a configuration file has an error."""
 
-    def __init__(self, filename):
-        super().__init__(
-            f"Configuration file {filename} does not exist or contains invalid YAML."
-        )
+    def __init__(self, filename, msg=None):
+        if not msg:
+            msg = "Configuration file does not exist or contains invalid YAML."
+        super().__init__(f"{filename}: {msg}")
 
 
 @dataclass
@@ -116,18 +115,16 @@ def read_config(config_file=DEFAULT_CONFIG):
     try:
         with open(config_file, "r", encoding="utf-8") as yamlfile:
             content = yaml.safe_load(yamlfile)
-            cfg, warnings = validateConfig(Config, content)
-            if warnings:
-                print(f"ERROR: Following issues were detected in {config_file}:")
-                for w in warnings:
-                    print(w)
-                print(
-                    f"Please update your {config_file} and re-run the tool. You can move {config_file} aside and generate a new one with 'lab init'"
-                )
-                sys.exit(1)
-            return Config(**cfg)
     except Exception as exc:
         raise ConfigException(config_file) from exc
+    cfg, warnings = validateConfig(Config, content)
+    if warnings:
+        warnings.insert(0, "The following issues were detected in the config")
+        warnings.append(
+            f"Please update {config_file}, or move it aside and generate a new one with 'lab init'"
+        )
+        raise ConfigException(config_file, "\n".join(warnings))
+    return Config(**cfg)
 
 
 def get_dict(cfg):
