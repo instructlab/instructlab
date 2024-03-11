@@ -4,7 +4,6 @@ from functools import partial
 from multiprocessing import Pool
 from pathlib import Path
 from typing import Optional
-import json
 import os
 import random
 import re
@@ -502,20 +501,8 @@ def generate_data(
                     "assistant": unescape(synth_example["output"]),
                 }
             )
-        # utils.jdump(train_data, os.path.join(output_dir, output_file_train))
-        with open(
-            os.path.join(output_dir, output_file_train), "w", encoding="utf-8"
-        ) as outfile:
-            for entry in train_data:
-                json.dump(entry, outfile, ensure_ascii=False)
-                outfile.write("\n")
-        # utils.jdump(test_data, os.path.join(output_dir, output_file_test))
-        with open(
-            os.path.join(output_dir, output_file_test), "w", encoding="utf-8"
-        ) as outfile:
-            for entry in test_data:
-                json.dump(entry, outfile, ensure_ascii=False)
-                outfile.write("\n")
+        utils.dump_jsonl(os.path.join(output_dir, output_file_train), train_data)
+        utils.dump_jsonl(os.path.join(output_dir, output_file_test), test_data)
 
     if total_discarded or total_rouged:
         logger.info(
