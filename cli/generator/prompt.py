@@ -1,7 +1,7 @@
 # Standard
 import itertools
 
-_COMMON_PREAMBULE = (
+_COMMON_PREAMBLE = (
     "You are asked to come up with a set of 5 diverse task instructions "
     "under {taxonomy}{task_description_str}. These task instructions will "
     "be given to a GPT model and we will evaluate the GPT model for "
@@ -53,10 +53,10 @@ _DEFAULT_PROMPT_DOCUMENT_RULES = (
     "instruction. Long outputs are preferable.",
 )
 
-_DEFAULT_PROMPT_POSTAMBULE = """List of 5 tasks:
+_DEFAULT_PROMPT_POSTAMBLE = """List of 5 tasks:
 """
 
-_DEFAULT_PROMPT_DOCUMENT_POSTAMBULE = """\
+_DEFAULT_PROMPT_DOCUMENT_POSTAMBLE = """\
 Based on below document provide a list of 5 tasks:
 
 Document:
@@ -82,15 +82,15 @@ def join_sections(*sections):
 
 def get_default_template():
     return join_sections(
-        _COMMON_PREAMBULE,
+        _COMMON_PREAMBLE,
         get_requirements_section(_COMMON_RULES + _DEFAULT_PROMPT_RULES),
-        _DEFAULT_PROMPT_POSTAMBULE,
+        _DEFAULT_PROMPT_POSTAMBLE,
     )
 
 
 def get_document_template():
     return join_sections(
-        _COMMON_PREAMBULE,
+        _COMMON_PREAMBLE,
         get_requirements_section(_COMMON_RULES + _DEFAULT_PROMPT_DOCUMENT_RULES),
-        _DEFAULT_PROMPT_DOCUMENT_POSTAMBULE,
+        _DEFAULT_PROMPT_DOCUMENT_POSTAMBLE,
     )
