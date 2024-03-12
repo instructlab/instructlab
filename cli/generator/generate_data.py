@@ -202,6 +202,17 @@ def get_seed_examples(contents):
     return contents
 
 
+def get_version(contents):
+    if "version" in contents:
+        version = contents["version"]
+        try:
+            version = int(version)
+        except ValueError:
+            pass
+        return version
+    return 1
+
+
 def generate_data(
     logger,
     api_base,
@@ -480,6 +491,13 @@ def read_taxonomy_file(logger, file_path):
             contents = yaml.safe_load(file)
             if not contents:
                 logger.warn(f"Skipping {file_path} because it is empty!")
+                warnings += 1
+                return None, warnings, errors
+            version = get_version(contents)
+            if version != 1:
+                logger.warn(
+                    f"Skipping {file_path} because its version, {version}, is not understood. You may need a newer version of this command."
+                )
                 warnings += 1
                 return None, warnings, errors
             tax_path = "->".join(file_path.split(os.sep)[1:-1])
