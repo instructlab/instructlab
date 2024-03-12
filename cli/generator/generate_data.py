@@ -17,6 +17,7 @@ try:
     import git
 except ImportError:
     pass
+
 # Third Party
 from rouge_score import rouge_scorer
 
@@ -201,11 +202,23 @@ def get_seed_examples(contents):
     return contents
 
 
+def get_version(contents):
+    if "version" in contents:
+        version = contents["version"]
+        try:
+            version = int(version)
+        except ValueError:
+            pass
+        return version
+    return 1
+
+
 def generate_data(
     logger,
     api_base,
     output_dir: Optional[str] = None,
     taxonomy: Optional[str] = None,
+    taxonomy_base: Optional[str] = None,
     seed_tasks_path: Optional[str] = None,
     prompt_file_path: Optional[str] = None,
     model_name: Optional[str] = None,
@@ -230,22 +243,9 @@ def generate_data(
     # throw an error if both not found
     # pylint: disable=broad-exception-caught,raise-missing-from
     if taxonomy and os.path.exists(taxonomy):
-        seed_instruction_data = read_taxonomy(logger, taxonomy)
-    elif seed_tasks_path and os.path.exists(seed_tasks_path):
-        with open(seed_tasks_path, "r", encoding="utf-8") as seed_tasks_file:
-            seed_tasks = [json.loads(l) for l in seed_tasks_file]
-        seed_instruction_data = [
-            {
-                "instruction": t["instruction"],
-                "input": t["instances"][0]["input"],
-                "output": t["instances"][0]["output"],
-            }
-            for t in seed_tasks
-        ]
+        seed_instruction_data = read_taxonomy(logger, taxonomy, taxonomy_base)
     else:
-        raise SystemExit(
-            f"Error: both taxonomy ({taxonomy}) and ({seed_tasks_path}) do not exist."
-        )
+        raise SystemExit(f"Error: taxonomy ({taxonomy}) does not exist.")
 
     seeds = len(seed_instruction_data)
     logger.debug(
@@ -306,15 +306,26 @@ def generate_data(
         print(
             "Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help."
         )
+    all_taxonomy_paths = list(set(e["taxonomy_path"] for e in seed_instruction_data))
     while len(machine_instruction_data) < num_instructions_to_generate:
         request_idx += 1
 
         batch_inputs = []
+        # Pick taxonomy path
+        selected_taxonomy = all_taxonomy_paths[request_idx % len(all_taxonomy_paths)]
+        logger.info(f"Selected taxonomy path {selected_taxonomy}")
+        # Filter the pool
+        instruction_data_pool = [
+            e
+            for e in seed_instruction_data + machine_instruction_data
+            if e["taxonomy_path"] == selected_taxonomy
+        ]
         for _ in range(request_batch_size):
+
             # only sampling from the seed tasks
             try:
                 prompt_instructions = random.sample(
-                    seed_instruction_data, num_prompt_instructions
+                    instruction_data_pool, num_prompt_instructions
                 )
             except ValueError as exc:
                 raise utils.GenerateException(
@@ -368,6 +379,7 @@ def generate_data(
                     partial(rouge_scorer._score_lcs, new_instruction_tokens),
                     all_instruction_tokens,
                 )
+            instruction_data_entry["taxonomy_path"] = selected_taxonomy
             rouge_scores = [score.fmeasure for score in rouge_scores]
             # Comment out extra info not currently being used:
             # most_similar_instructions = {
@@ -393,14 +405,6 @@ def generate_data(
             f"processing took {process_duration:.2f}s"
         )
         logger.debug(f"Generated {total} instructions, kept {keep} instructions")
-        machine_instruction_data = [
-            {
-                "instruction": ins["instruction"],
-                "input": ins["input"],
-                "output": ins["output"],
-            }
-            for ins in machine_instruction_data
-        ]
         utils.jdump(machine_instruction_data, os.path.join(output_dir, output_file))
         for synth_example in machine_instruction_data:
             user = synth_example["instruction"]
@@ -432,23 +436,44 @@ def generate_data(
     logger.info(f"Generation took {generate_duration:.2f}s")
 
 
-def get_taxonomy_diff(repo="taxonomy"):
+def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     repo = git.Repo(repo)
     untracked_files = [
         u for u in repo.untracked_files if splitext(u)[1].lower() == ".yaml"
     ]
+
+    head_commit = None
+    if base == "HEAD":
+        head_commit = repo.commit("HEAD")
+    elif "/" in base:
+        re_git_branch = re.compile(f"remotes/{base}$", re.MULTILINE)
+    else:
+        re_git_branch = re.compile(f"{base}$", re.MULTILINE)
+
+    # Move backwards from HEAD until we find the first commit that is part of base
+    # then we can take our diff from there
+    current_commit = repo.commit("HEAD")
+    while not head_commit:
+        branches = repo.git.branch("-a", "--contains", current_commit.hexsha)
+        if re_git_branch.findall(branches):
+            head_commit = current_commit
+            break
+        try:
+            current_commit = current_commit.parents[0]
+        except IndexError as exc:
+            raise SystemExit(
+                yaml.YAMLError(
+                    f'Couldn\'t find the taxonomy base branch "{base}" from the current HEAD'
+                )
+            ) from exc
+
     modified_files = [
         d.a_path
-        for d in repo.index.diff(None)
+        for d in head_commit.diff(None)
         if splitext(d.a_path)[1].lower() == ".yaml"
     ]
-    staged_files = [
-        d.a_path
-        for d in repo.index.diff(repo.head.commit)
-        if splitext(d.a_path)[1].lower() == ".yaml"
-    ]
-    updated_taxonomy_files = list(set(untracked_files + modified_files + staged_files))
 
+    updated_taxonomy_files = list(set(untracked_files + modified_files))
     return updated_taxonomy_files
 
 
@@ -466,6 +491,13 @@ def read_taxonomy_file(logger, file_path):
             contents = yaml.safe_load(file)
             if not contents:
                 logger.warn(f"Skipping {file_path} because it is empty!")
+                warnings += 1
+                return None, warnings, errors
+            version = get_version(contents)
+            if version != 1:
+                logger.warn(
+                    f"Skipping {file_path} because its version, {version}, is not understood. You may need a newer version of this command."
+                )
                 warnings += 1
                 return None, warnings, errors
             tax_path = "->".join(file_path.split(os.sep)[1:-1])
@@ -508,7 +540,7 @@ def read_taxonomy_file(logger, file_path):
     return seed_instruction_data, warnings, errors
 
 
-def read_taxonomy(logger, taxonomy):
+def read_taxonomy(logger, taxonomy, taxonomy_base):
     seed_instruction_data = []
     is_file = os.path.isfile(taxonomy)
     if is_file:
@@ -522,11 +554,15 @@ def read_taxonomy(logger, taxonomy):
     else:  # taxonomy is_dir
         # Gather the new or changed YAMLs using git diff
         try:
-            updated_taxonomy_files = get_taxonomy_diff(taxonomy)
+            updated_taxonomy_files = get_taxonomy_diff(taxonomy, taxonomy_base)
         except NameError as exc:
             raise utils.GenerateException("`git` binary not found") from exc
         total_errors = 0
         total_warnings = 0
+        if updated_taxonomy_files:
+            logger.info("Found new taxonomy files :")
+            for e in updated_taxonomy_files:
+                logger.info(f"* {e}")
         for f in updated_taxonomy_files:
             file_path = os.path.join(taxonomy, f)
             data, warnings, errors = read_taxonomy_file(logger, file_path)

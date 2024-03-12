@@ -19,6 +19,7 @@ from . import config, utils
 from .chat.chat import ChatException, chat_cli
 from .generator.generate_data import generate_data, get_taxonomy_diff, read_taxonomy
 from .generator.utils import GenerateException
+from .mlx_explore import utils as mlx_utils
 from .server import ServerException, ensure_server, server
 
 
@@ -88,6 +89,11 @@ def cli(ctx, config):
     help="Path to the model used during generation.",
 )
 @click.option(
+    "--taxonomy-base",
+    default=config.DEFAULT_TAXONOMY_BASE,
+    help="Base git-ref to use when listing/generating new taxonomy.",
+)
+@click.option(
     "--taxonomy-path",
     type=click.Path(),
     default=config.DEFAULT_TAXONOMY_PATH,
@@ -99,7 +105,14 @@ def cli(ctx, config):
     help="Taxonomy repository location.",
 )
 # pylint: disable=unused-argument
-def init(ctx, interactive, model_path, taxonomy_path, repository):
+def init(
+    ctx,
+    interactive,
+    model_path,
+    taxonomy_path,
+    taxonomy_base,
+    repository,
+):
     """Initializes environment for InstructLab"""
     if exists(config.DEFAULT_CONFIG):
         overwrite = click.confirm(
@@ -151,6 +164,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
     cfg.generate.model = model
     cfg.serve.model_path = model_path
     cfg.generate.taxonomy_path = taxonomy_path
+    cfg.generate.taxonomy_base = taxonomy_base
     config.write_config(cfg)
 
     click.echo(
@@ -164,16 +178,29 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
     type=click.Path(),
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
 )
+@click.option(
+    "--taxonomy-base",
+    help="Base git-ref to use when listing new taxonomy.",
+)
 @click.pass_context
 # pylint: disable=redefined-builtin,unused-argument
-def list(ctx, taxonomy_path):
+def list(ctx, taxonomy_path, taxonomy_base):
     """
-    Lists taxonomy files that have changed since last commit.
-    Similar to 'git diff'
+    Lists taxonomy files that have changed since <taxonomy-base>.
+    Similar to 'git diff <ref>'
     """
+    if not taxonomy_base:
+        taxonomy_base = ctx.obj.config.generate.taxonomy_base
     if not taxonomy_path:
         taxonomy_path = ctx.obj.config.generate.taxonomy_path
-    updated_taxonomy_files = get_taxonomy_diff(taxonomy_path)
+    try:
+        updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
+    except GenerateException as exc:
+        click.secho(
+            f"Generating dataset failed with the following error: {exc}",
+            fg="red",
+        )
+        return
     for f in updated_taxonomy_files:
         if splitext(f)[1] != ".yaml":
             click.secho(
@@ -189,13 +216,19 @@ def list(ctx, taxonomy_path):
     type=click.Path(),
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
 )
+@click.option(
+    "--taxonomy-base",
+    help="Base git-ref to use when checking taxonomy.",
+)
 @click.pass_context
-def check(ctx, taxonomy_path):
+def check(ctx, taxonomy_path, taxonomy_base):
     """Check that taxonomy is valid"""
+    if not taxonomy_base:
+        taxonomy_base = ctx.obj.config.generate.taxonomy_base
     if not taxonomy_path:
         taxonomy_path = ctx.obj.config.generate.taxonomy_path
-    ctx.obj.logger.debug(f"Checking taxonomy: '{taxonomy_path}'")
-    read_taxonomy(ctx.obj.logger, taxonomy_path)
+    ctx.obj.logger.debug(f"Checking taxonomy: '{taxonomy_path}:{taxonomy_base}'")
+    read_taxonomy(ctx.obj.logger, taxonomy_path, taxonomy_base)
 
 
 @cli.command()
@@ -214,7 +247,9 @@ def serve(ctx, model_path, gpu_layers):
     """Start a local server"""
     ctx.obj.logger.info(f"Using model '{model_path}' with {gpu_layers} gpu-layers")
     try:
-        server(ctx.obj.logger, model_path, gpu_layers)
+        host = ctx.obj.config.serve.host_port.split(":")[0]
+        port = int(ctx.obj.config.serve.host_port.split(":")[1])
+        server(ctx.obj.logger, model_path, gpu_layers, host, port)
     except ServerException as exc:
         click.secho(f"Error creating server: {exc}", fg="red")
         raise click.exceptions.Exit(1)
@@ -239,6 +274,11 @@ def serve(ctx, model_path, gpu_layers):
     "--taxonomy-path",
     type=click.Path(),
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
+)
+@click.option(
+    "--taxonomy-base",
+    default=config.DEFAULT_TAXONOMY_BASE,
+    help="Base git-ref to use when generating new taxonomy.",
 )
 @click.option(
     "--output-dir",
@@ -284,6 +324,7 @@ def generate(
     num_cpus,
     num_instructions,
     taxonomy_path,
+    taxonomy_base,
     output_dir,
     seed_file,
     rouge_threshold,
@@ -311,6 +352,7 @@ def generate(
             num_cpus=num_cpus,
             num_instructions_to_generate=num_instructions,
             taxonomy=taxonomy_path,
+            taxonomy_base=taxonomy_base,
             output_dir=output_dir,
             prompt_file_path=ctx.obj.config.generate.prompt_file,
             seed_tasks_path=seed_file,
@@ -449,6 +491,16 @@ def download(ctx, repository, release, filename, model_dir):
     is_flag=True,
 )
 @click.option(
+    "--tokenizer-dir",
+    help="Base directory where tokenizer is stored.",
+    default=None,
+)
+@click.option(
+    "--gguf-model-path",
+    help="Local directory where gguf model is stored",
+    default=None,
+)
+@click.option(
     "--model-dir",
     help="Base directory where model is stored.",
     default="ibm/merlinite-7b",
@@ -463,7 +515,7 @@ def download(ctx, repository, release, filename, model_dir):
     "-sq",
     "--skip-quantize",
     is_flag=True,
-    help="Whether to skip quantization while converting to MLX.",
+    help="Whether to skip quantization while converting to MLX. This parameter will be ignored if --gguf-model-path and --tokenizer-dir are specified",
 )
 @click.option(
     "--num-epochs",
@@ -477,6 +529,8 @@ def train(
     data_dir,
     input_dir,
     skip_preprocessing,
+    tokenizer_dir,
+    gguf_model_path,
     model_dir,
     iters,
     local,
@@ -619,9 +673,27 @@ def train(
 
         local_arg = "--local" if local else ""
 
-        script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
-        cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
-        os.system("python {}".format(cmd))
+        if tokenizer_dir is not None and gguf_model_path is not None:
+            if not local:
+                tokenizer_dir_local = tokenizer_dir.replace("/", "-")
+                mlx_utils.fetch_tokenizer_from_hub(tokenizer_dir, tokenizer_dir_local)
+
+            script = os.path.join(cli_dir, "mlx_explore/gguf_convert_to_mlx.py")
+            # no need to pass quantize_arg for now, script automatically detects if quantization is necessary based on whether gguf model is quantized or not
+            cmd = f"{script} --gguf {gguf_model_path} --repo {tokenizer_dir} --mlx-path {dest_model_dir}"
+            os.system("python {}".format(cmd))
+
+            for filename in os.listdir(model_dir_local):
+                shutil.copy(
+                    os.path.join(model_dir_local, filename),
+                    os.path.join(dest_model_dir, filename),
+                )
+            shutil.rmtree(model_dir_local, ignore_errors=True)
+
+        else:
+            script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
+            cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
+            os.system("python {}".format(cmd))
 
         adapter_file_path = f"{dest_model_dir}/adapters.npz"
         script = os.path.join(cli_dir, "train/lora-mlx/lora.py")

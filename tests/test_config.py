@@ -22,6 +22,7 @@ generate:
   prompt_file: prompt.txt
   seed_file: seed_tasks.json
   taxonomy_path: /tmp/instruct-lab-taxonomy
+  taxonomy_base: origin/main
   output_dir: /tmp
 serve:
   gpu_layers: -1
@@ -49,6 +50,7 @@ generate:
   prompt_file: prompt.txt
   seed_file: seed_tasks.json
   taxonomy_path: /tmp/instruct-lab-taxonomy
+  taxonomy_base: origin/main
   output_dir: /tmp
 serve:
   gpu_layers: -1
@@ -85,6 +87,7 @@ class TestConfig(unittest.TestCase):
         assert cfg.generate.prompt_file == "prompt.txt"
         assert cfg.generate.seed_file == "seed_tasks.json"
         assert cfg.generate.taxonomy_path == "/tmp/instruct-lab-taxonomy"
+        assert cfg.generate.taxonomy_base == "origin/main"
 
     # Tests that additional lines in the config do not cause errors
     def test_config_unexpected_arguments(self):
