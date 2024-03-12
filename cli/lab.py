@@ -89,6 +89,11 @@ def cli(ctx, config):
     help="Path to the model used during generation.",
 )
 @click.option(
+    "--taxonomy-base",
+    default=config.DEFAULT_TAXONOMY_BASE,
+    help="Base git-ref to use when listing/generating new taxonomy.",
+)
+@click.option(
     "--taxonomy-path",
     type=click.Path(),
     default=config.DEFAULT_TAXONOMY_PATH,
@@ -100,7 +105,14 @@ def cli(ctx, config):
     help="Taxonomy repository location.",
 )
 # pylint: disable=unused-argument
-def init(ctx, interactive, model_path, taxonomy_path, repository):
+def init(
+    ctx,
+    interactive,
+    model_path,
+    taxonomy_path,
+    taxonomy_base,
+    repository,
+):
     """Initializes environment for InstructLab"""
     if exists(config.DEFAULT_CONFIG):
         overwrite = click.confirm(
@@ -152,6 +164,7 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
     cfg.generate.model = model
     cfg.serve.model_path = model_path
     cfg.generate.taxonomy_path = taxonomy_path
+    cfg.generate.taxonomy_base = taxonomy_base
     config.write_config(cfg)
 
     click.echo(
@@ -165,16 +178,29 @@ def init(ctx, interactive, model_path, taxonomy_path, repository):
     type=click.Path(),
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
 )
+@click.option(
+    "--taxonomy-base",
+    help="Base git-ref to use when listing new taxonomy.",
+)
 @click.pass_context
 # pylint: disable=redefined-builtin,unused-argument
-def list(ctx, taxonomy_path):
+def list(ctx, taxonomy_path, taxonomy_base):
     """
-    Lists taxonomy files that have changed since last commit.
-    Similar to 'git diff'
+    Lists taxonomy files that have changed since <taxonomy-base>.
+    Similar to 'git diff <ref>'
     """
+    if not taxonomy_base:
+        taxonomy_base = ctx.obj.config.generate.taxonomy_base
     if not taxonomy_path:
         taxonomy_path = ctx.obj.config.generate.taxonomy_path
-    updated_taxonomy_files = get_taxonomy_diff(taxonomy_path)
+    try:
+        updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
+    except GenerateException as exc:
+        click.secho(
+            f"Generating dataset failed with the following error: {exc}",
+            fg="red",
+        )
+        return
     for f in updated_taxonomy_files:
         if splitext(f)[1] != ".yaml":
             click.secho(
@@ -190,13 +216,19 @@ def list(ctx, taxonomy_path):
     type=click.Path(),
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
 )
+@click.option(
+    "--taxonomy-base",
+    help="Base git-ref to use when checking taxonomy.",
+)
 @click.pass_context
-def check(ctx, taxonomy_path):
+def check(ctx, taxonomy_path, taxonomy_base):
     """Check that taxonomy is valid"""
+    if not taxonomy_base:
+        taxonomy_base = ctx.obj.config.generate.taxonomy_base
     if not taxonomy_path:
         taxonomy_path = ctx.obj.config.generate.taxonomy_path
-    ctx.obj.logger.debug(f"Checking taxonomy: '{taxonomy_path}'")
-    read_taxonomy(ctx.obj.logger, taxonomy_path)
+    ctx.obj.logger.debug(f"Checking taxonomy: '{taxonomy_path}:{taxonomy_base}'")
+    read_taxonomy(ctx.obj.logger, taxonomy_path, taxonomy_base)
 
 
 @cli.command()
@@ -244,6 +276,11 @@ def serve(ctx, model_path, gpu_layers):
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
 )
 @click.option(
+    "--taxonomy-base",
+    default=config.DEFAULT_TAXONOMY_BASE,
+    help="Base git-ref to use when generating new taxonomy.",
+)
+@click.option(
     "--output-dir",
     type=click.Path(),
     help="Path to output generated files",
@@ -287,6 +324,7 @@ def generate(
     num_cpus,
     num_instructions,
     taxonomy_path,
+    taxonomy_base,
     output_dir,
     seed_file,
     rouge_threshold,
@@ -314,6 +352,7 @@ def generate(
             num_cpus=num_cpus,
             num_instructions_to_generate=num_instructions,
             taxonomy=taxonomy_path,
+            taxonomy_base=taxonomy_base,
             output_dir=output_dir,
             prompt_file_path=ctx.obj.config.generate.prompt_file,
             seed_tasks_path=seed_file,
