@@ -192,8 +192,16 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
     def __handle_replay(self, content, display_wrapper=(lambda x: x)):
         cs = content.split()
-        i = 1 if len(cs) == 1 else int(cs[1]) * 2 - 1
-        if len(self.info["messages"]) > i:
+        try:
+            i = 1 if len(cs) == 1 else int(cs[1]) * 2 - 1
+            if abs(i) >= len(self.info["messages"]):
+                raise IndexError
+        except (IndexError, ValueError):
+            self.console.print(
+                display_wrapper("Invalid index: " + content), style="bold red"
+            )
+            raise KeyboardInterrupt
+        if len(self.info["messages"]) > abs(i):
             self.console.print(display_wrapper(self.info["messages"][-i]["content"]))
         raise KeyboardInterrupt
 
