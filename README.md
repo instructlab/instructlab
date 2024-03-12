@@ -141,7 +141,7 @@ Once the model is served and ready, you'll see the following output:
 
 ```
 (venv) $ lab serve
-INFO 2024-03-02 02:21:11,352 lab.py:201 Using model 'models/ggml-merlinite-7b-0302-Q4_K_M.gguf' with -1 gpu-layers
+INFO 2024-03-02 02:21:11,352 lab.py:201 Using model 'models/ggml-merlinite-7b-0302-Q4_K_M.gguf' with -1 gpu-layers and 4096 max context size.
 Starting server process
 After application startup complete see http://127.0.0.1:8000/docs for API.
 Press CTRL+C to shutdown server.

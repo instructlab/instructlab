@@ -26,6 +26,7 @@ generate:
   output_dir: /tmp
 serve:
   gpu_layers: -1
+  max_ctx_size: 4096
   model_path: models/ggml-merlinite-7b-0302-Q4_K_M.gguf
   host_port: localhost:8000
 """
@@ -54,6 +55,7 @@ generate:
   output_dir: /tmp
 serve:
   gpu_layers: -1
+  max_ctx_size: 4096
   model_path: models/ggml-merlinite-7b-0302-Q4_K_M.gguf
 """
 
@@ -74,6 +76,7 @@ class TestConfig(unittest.TestCase):
         assert cfg is not None
         assert cfg.serve is not None
         assert cfg.serve.gpu_layers == -1
+        assert cfg.serve.max_ctx_size == 4096
         assert cfg.serve.model_path == "models/ggml-merlinite-7b-0302-Q4_K_M.gguf"
         assert cfg.chat.context == "default"
         assert cfg.chat.model == "ggml-merlinite-7b-0302-Q4_K_M"
