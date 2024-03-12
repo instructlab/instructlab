@@ -261,7 +261,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         message = {"role": role, "content": content}
         self.info["messages"].append(message)
 
-    def start_prompt(self, content=None, box=True):
+    def start_prompt(self, content=None, box=True, logger=None):
         handlers = {
             "/q": self._handle_quit,
             "quit": self._handle_quit,
@@ -313,15 +313,35 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
         # Get and parse response
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=self.info["messages"],
-                stream=True,
-                **create_params,
-            )
-            assert (
-                next(response).choices[0].delta.role == "assistant"
-            ), 'first response should be {"role": "assistant"}'
+            while True:
+                # Loop to catch situations where we need to retry, such as context length exceeded
+                try:
+                    response = self.client.chat.completions.create(
+                        model=self.model,
+                        messages=self.info["messages"],
+                        stream=True,
+                        **create_params,
+                    )
+                except openai.BadRequestError as e:
+                    if e.code == "context_length_exceeded":
+                        if len(self.info["messages"]) > 1:
+                            # Trim the oldest entry in our message history
+                            logger.debug(
+                                "Trimming message history to attempt to fit context length"
+                            )
+                            self.info["messages"] = self.info["messages"][1:]
+                            continue
+                        else:
+                            # We only have a single message and it's still to big.
+                            self.console.print(
+                                "Message too large for context size.", style="bold red"
+                            )
+                            self.info["messages"].pop()
+                            raise KeyboardInterrupt
+                assert (
+                    next(response).choices[0].delta.role == "assistant"
+                ), 'first response should be {"role": "assistant"}'
+                break
         except openai.AuthenticationError as e:
             self.console.print(
                 "Invalid API Key. Please set it in your config file.", style="bold red"
@@ -442,7 +462,7 @@ def chat_cli(
     # Start chatting
     while True:
         try:
-            ccb.start_prompt()
+            ccb.start_prompt(logger=logger)
         except KeyboardInterrupt:
             continue
         except ChatException as exc:
