@@ -19,7 +19,13 @@ from . import config, utils
 from .chat.chat import ChatException, chat_cli
 from .generator.generate_data import generate_data, get_taxonomy_diff, read_taxonomy
 from .generator.utils import GenerateException
-from .server import ServerException, server
+from .server import ServerException, ensure_server, server
+
+if sys.platform == "darwin":  # mlx requires macOS
+    # Local
+    from .mlx_explore import utils as mlx_utils
+else:
+    mlx_utils = None
 
 
 class Lab:
@@ -46,7 +52,11 @@ def configure(ctx, param, filename):
             f"`{filename}` does not exists, please run `lab init` or point to a valid configuration file using `--config=<path>`."
         )
 
-    ctx.obj = Lab(filename)
+    try:
+        ctx.obj = Lab(filename)
+    except config.ConfigException as ex:
+        raise click.ClickException(str(ex))
+
     # default_map holds a dictionary with default values for each command parameters
     ctx.default_map = config.get_dict(ctx.obj.config)
 
@@ -73,8 +83,8 @@ def cli(ctx, config):
 @cli.command()
 @click.pass_context
 @click.option(
-    "--non-interactive",
-    is_flag=True,
+    "--interactive/--non-interactive",
+    default=True,
     help="Initialize the environment assuming defaults.",
 )
 @click.option(
@@ -82,6 +92,11 @@ def cli(ctx, config):
     type=click.Path(),
     default=config.DEFAULT_MODEL_PATH,
     help="Path to the model used during generation.",
+)
+@click.option(
+    "--taxonomy-base",
+    default=config.DEFAULT_TAXONOMY_BASE,
+    help="Base git-ref to use when listing/generating new taxonomy.",
 )
 @click.option(
     "--taxonomy-path",
@@ -94,16 +109,15 @@ def cli(ctx, config):
     default=config.DEFAULT_TAXONOMY_REPO,
     help="Taxonomy repository location.",
 )
-@click.option(
-    "--min_taxonomy",
-    is_flag=True,
-    help="Shallow clone the taxonomy repository with minimum size. "
-    "Please do not use this option if you are planning to contribute back "
-    "using the same taxonomy repository. ",
-)
 # pylint: disable=unused-argument
-def init(ctx, non_interactive, model_path, taxonomy_path, repository, min_taxonomy):
-
+def init(
+    ctx,
+    interactive,
+    model_path,
+    taxonomy_path,
+    taxonomy_base,
+    repository,
+):
     """Initializes environment for InstructLab"""
     if exists(config.DEFAULT_CONFIG):
         overwrite = click.confirm(
@@ -113,7 +127,7 @@ def init(ctx, non_interactive, model_path, taxonomy_path, repository, min_taxono
             return
 
     clone_taxonomy_repo = True
-    if not non_interactive:
+    if interactive:
         click.echo(
             "Welcome to InstructLab CLI. This guide will help you to setup your environment."
         )
@@ -126,7 +140,9 @@ def init(ctx, non_interactive, model_path, taxonomy_path, repository, min_taxono
             taxonomy_contents = os.listdir(taxonomy_path)
         except FileNotFoundError:
             taxonomy_contents = []
-        if len(taxonomy_contents) == 0:
+        if taxonomy_contents:
+            clone_taxonomy_repo = False
+        else:
             clone_taxonomy_repo = click.confirm(
                 f"`{taxonomy_path}` seems to not exists or is empty. Should I clone {repository} for you?"
             )
@@ -135,10 +151,7 @@ def init(ctx, non_interactive, model_path, taxonomy_path, repository, min_taxono
     if clone_taxonomy_repo:
         click.echo(f"Cloning {repository}...")
         try:
-            if not min_taxonomy:
-                Repo.clone_from(repository, taxonomy_path, branch="main")
-            else:
-                Repo.clone_from(repository, taxonomy_path, branch="main", depth=1)
+            Repo.clone_from(repository, taxonomy_path, branch="main", depth=1)
         except GitError as exc:
             click.secho(f"Failed to clone taxonomy repo:{exc}", fg="red")
             raise click.exceptions.Exit(1)
@@ -156,6 +169,7 @@ def init(ctx, non_interactive, model_path, taxonomy_path, repository, min_taxono
     cfg.generate.model = model
     cfg.serve.model_path = model_path
     cfg.generate.taxonomy_path = taxonomy_path
+    cfg.generate.taxonomy_base = taxonomy_base
     config.write_config(cfg)
 
     click.echo(
@@ -169,16 +183,29 @@ def init(ctx, non_interactive, model_path, taxonomy_path, repository, min_taxono
     type=click.Path(),
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
 )
+@click.option(
+    "--taxonomy-base",
+    help="Base git-ref to use when listing new taxonomy.",
+)
 @click.pass_context
 # pylint: disable=redefined-builtin,unused-argument
-def list(ctx, taxonomy_path):
+def list(ctx, taxonomy_path, taxonomy_base):
     """
-    Lists taxonomy files that have changed since last commit.
-    Similar to 'git diff'
+    Lists taxonomy files that have changed since <taxonomy-base>.
+    Similar to 'git diff <ref>'
     """
+    if not taxonomy_base:
+        taxonomy_base = ctx.obj.config.generate.taxonomy_base
     if not taxonomy_path:
         taxonomy_path = ctx.obj.config.generate.taxonomy_path
-    updated_taxonomy_files = get_taxonomy_diff(taxonomy_path)
+    try:
+        updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
+    except GenerateException as exc:
+        click.secho(
+            f"Generating dataset failed with the following error: {exc}",
+            fg="red",
+        )
+        return
     for f in updated_taxonomy_files:
         if splitext(f)[1] != ".yaml":
             click.secho(
@@ -194,13 +221,19 @@ def list(ctx, taxonomy_path):
     type=click.Path(),
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
 )
+@click.option(
+    "--taxonomy-base",
+    help="Base git-ref to use when checking taxonomy.",
+)
 @click.pass_context
-def check(ctx, taxonomy_path):
+def check(ctx, taxonomy_path, taxonomy_base):
     """Check that taxonomy is valid"""
+    if not taxonomy_base:
+        taxonomy_base = ctx.obj.config.generate.taxonomy_base
     if not taxonomy_path:
         taxonomy_path = ctx.obj.config.generate.taxonomy_path
-    ctx.obj.logger.debug(f"Checking taxonomy: '{taxonomy_path}'")
-    read_taxonomy(ctx.obj.logger, taxonomy_path)
+    ctx.obj.logger.debug(f"Checking taxonomy: '{taxonomy_path}:{taxonomy_base}'")
+    read_taxonomy(ctx.obj.logger, taxonomy_path, taxonomy_base)
 
 
 @cli.command()
@@ -219,7 +252,9 @@ def serve(ctx, model_path, gpu_layers):
     """Start a local server"""
     ctx.obj.logger.info(f"Using model '{model_path}' with {gpu_layers} gpu-layers")
     try:
-        server(ctx.obj.logger, model_path, gpu_layers)
+        host = ctx.obj.config.serve.host_port.split(":")[0]
+        port = int(ctx.obj.config.serve.host_port.split(":")[1])
+        server(ctx.obj.logger, model_path, gpu_layers, host, port)
     except ServerException as exc:
         click.secho(f"Error creating server: {exc}", fg="red")
         raise click.exceptions.Exit(1)
@@ -244,6 +279,11 @@ def serve(ctx, model_path, gpu_layers):
     "--taxonomy-path",
     type=click.Path(),
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
+)
+@click.option(
+    "--taxonomy-base",
+    default=config.DEFAULT_TAXONOMY_BASE,
+    help="Base git-ref to use when generating new taxonomy.",
 )
 @click.option(
     "--output-dir",
@@ -271,6 +311,17 @@ def serve(ctx, model_path, gpu_layers):
     is_flag=True,
     help="Whether or not the examples contain the document field",
 )
+@click.option(
+    "--endpoint-url",
+    type=click.STRING,
+    help="Custom URL endpoint for OpenAI-compatible API. Defaults to the `lab serve` endpoint.",
+)
+@click.option(
+    "--api-key",
+    type=click.STRING,
+    default="",
+    help="API key for API endpoint.",
+)
 @click.pass_context
 def generate(
     ctx,
@@ -278,14 +329,22 @@ def generate(
     num_cpus,
     num_instructions,
     taxonomy_path,
+    taxonomy_base,
     output_dir,
     seed_file,
     rouge_threshold,
     quiet,
     has_document,
+    endpoint_url,
+    api_key,
 ):
     """Generates synthetic data to enhance your example data"""
-    api_base = ctx.obj.config.serve.api_base()
+    server_process, api_base = ensure_server(
+        ctx.obj.logger,
+        ctx.obj.config.serve,
+    )
+    if not api_base:
+        api_base = ctx.obj.config.serve.api_base()
     try:
         ctx.obj.logger.info(
             f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}' against {api_base} server"
@@ -293,10 +352,12 @@ def generate(
         generate_data(
             logger=ctx.obj.logger,
             api_base=api_base,
+            api_key=api_key,
             model_name=model,
             num_cpus=num_cpus,
             num_instructions_to_generate=num_instructions,
             taxonomy=taxonomy_path,
+            taxonomy_base=taxonomy_base,
             output_dir=output_dir,
             prompt_file_path=ctx.obj.config.generate.prompt_file,
             seed_tasks_path=seed_file,
@@ -310,6 +371,9 @@ def generate(
             fg="red",
         )
         raise click.exceptions.Exit(1)
+    finally:
+        if server_process:
+            server_process.terminate()
 
 
 @cli.command()
@@ -350,7 +414,12 @@ def generate(
 @click.pass_context
 def chat(ctx, question, model, context, session, quick_question, greedy_mode):
     """Run a chat using the modified model"""
-    api_base = ctx.obj.config.serve.api_base()
+    server_process, api_base = ensure_server(
+        ctx.obj.logger,
+        ctx.obj.config.serve,
+    )
+    if not api_base:
+        api_base = ctx.obj.config.serve.api_base()
     try:
         chat_cli(
             logger=ctx.obj.logger,
@@ -366,6 +435,9 @@ def chat(ctx, question, model, context, session, quick_question, greedy_mode):
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
         raise click.exceptions.Exit(1)
+    finally:
+        if server_process:
+            server_process.terminate()
 
 
 @cli.command()
@@ -424,6 +496,16 @@ def download(ctx, repository, release, filename, model_dir):
     is_flag=True,
 )
 @click.option(
+    "--tokenizer-dir",
+    help="Base directory where tokenizer is stored.",
+    default=None,
+)
+@click.option(
+    "--gguf-model-path",
+    help="Local directory where gguf model is stored",
+    default=None,
+)
+@click.option(
     "--model-dir",
     help="Base directory where model is stored.",
     default="ibm/merlinite-7b",
@@ -438,7 +520,7 @@ def download(ctx, repository, release, filename, model_dir):
     "-sq",
     "--skip-quantize",
     is_flag=True,
-    help="Whether to skip quantization while converting to MLX.",
+    help="Whether to skip quantization while converting to MLX. This parameter will be ignored if --gguf-model-path and --tokenizer-dir are specified",
 )
 @click.option(
     "--num-epochs",
@@ -452,6 +534,8 @@ def train(
     data_dir,
     input_dir,
     skip_preprocessing,
+    tokenizer_dir,
+    gguf_model_path,
     model_dir,
     iters,
     local,
@@ -594,9 +678,28 @@ def train(
 
         local_arg = "--local" if local else ""
 
-        script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
-        cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
-        os.system("python {}".format(cmd))
+        if tokenizer_dir is not None and gguf_model_path is not None:
+            if not local:
+                assert mlx_utils is not None
+                tokenizer_dir_local = tokenizer_dir.replace("/", "-")
+                mlx_utils.fetch_tokenizer_from_hub(tokenizer_dir, tokenizer_dir_local)
+
+            script = os.path.join(cli_dir, "mlx_explore/gguf_convert_to_mlx.py")
+            # no need to pass quantize_arg for now, script automatically detects if quantization is necessary based on whether gguf model is quantized or not
+            cmd = f"{script} --gguf {gguf_model_path} --repo {tokenizer_dir} --mlx-path {dest_model_dir}"
+            os.system("python {}".format(cmd))
+
+            for filename in os.listdir(model_dir_local):
+                shutil.copy(
+                    os.path.join(model_dir_local, filename),
+                    os.path.join(dest_model_dir, filename),
+                )
+            shutil.rmtree(model_dir_local, ignore_errors=True)
+
+        else:
+            script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
+            cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
+            os.system("python {}".format(cmd))
 
         adapter_file_path = f"{dest_model_dir}/adapters.npz"
         script = os.path.join(cli_dir, "train/lora-mlx/lora.py")
@@ -634,7 +737,7 @@ def test(data_dir, model_dir, adapter_file):
 
     SYS_PROMPT = "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
     print("system prompt:", SYS_PROMPT)
-    for (idx, example) in enumerate(test_data):
+    for idx, example in enumerate(test_data):
         system = example["system"]
         user = example["user"]
         print("[{}]\n user prompt: {}".format(idx + 1, user))

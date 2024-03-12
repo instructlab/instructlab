@@ -40,11 +40,11 @@ After that is done, you can:
 - 🐍 Python 3.9 or later, including the development headers.
 - Approximately 10GB of free disk space to get through the `lab generate` step.  Approximately 60GB of free disk space to fully run the entire process locally on Apple hardware.
 
-On Fedora Linux this means installing:
-```
-$ sudo yum install g++ python3 python3-devel
-```
+On Fedora Linux, install the necessary packages by running:
 
+```shell
+sudo yum install g++ python3 python3-devel
+```
 ## ✅ Getting started
 ### 🧰 Installing `lab`
 
@@ -57,7 +57,7 @@ python3 -m venv venv
 source venv/bin/activate
 pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
 ```
-> **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection.
+> **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection, if g++ is not found try 'gcc-c++'
 
 If `lab` is installed correctly, you can test the lab command:
 
@@ -79,7 +79,7 @@ Commands:
   download  Download the model(s) to train
   generate  Generates synthetic data to enhance your example data
   init      Initializes environment for InstructLab
-  list      Lists taxonomy files that have changed since last commit
+  list      Lists taxonomy files that have changed since a reference commit (default origin/main)
   serve     Start a local server
   test      Perform rudimentary tests of the model
   train     Trains model
@@ -217,6 +217,13 @@ The synthetic data set will be three files in the newly created `generated` dire
 
 > **NOTE:** ⏳ This can take over **1 hour+** to complete depending on your computing resources.
 
+It is also possible to run the generate step against a different model via an
+OpenAI compatible API. For example, the one spawned by `lab serve` or any remote or locally hosted LLM (e.g. via [ollama](ollama.ai/), [LM Studio](https://lmstudio.ai), etc.)
+
+```
+lab generate --endpoint-url http://localhost:8000/v1
+```
+
 ### 👩‍🏫 Train the model
 
 There are currently three options to train the model on your synthetic data-enhanced dataset.
@@ -247,13 +254,15 @@ lab train
 ⏳ This process will take a little while to complete (time can vary based on hardware
 and output of `lab generate` but on the order of 30 minutes to two hours)
 
-#### Train the model in Colab:
+#### Training the model in the cloud
 
 Follow the instructions in [Training](./notebooks/README.md).
 
-> **NOTE:** ⏳ This takes about **0.5-2.5 hours** to complete in the free tier of Google Colab.
+⏳ Approximate amount of time taken on each platform:
+- *Google Colab*: **0.5-2.5 hours** with a T4 GPU
+- *Kaggle*: **~8 hours** with a P100 GPU.
 
-After that's done, you can play with your model directly in the Colab notebook.
+After that's done, you can play with your model directly in the Google Colab or Kaggle notebook.
 The model itself is for testing your taxonomy and is not a required artifact for
 a PR or any further task.
 
@@ -287,6 +296,9 @@ Try the fine-tuned model out live using the chat interface, and see if the resul
 ```
 lab chat -m <New model name>
 ```
+
+If you are interested in optimizing the quality of the model's responses, please see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md#model-fine-tuning-and-response-optimization)
+
 ## 🎁 Submit your new knowledge
 
 Of course the final step is, if you've improved the model, to open up a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy) that includes the `qna.yaml` files with your improved data. 
