@@ -19,8 +19,13 @@ from . import config, utils
 from .chat.chat import ChatException, chat_cli
 from .generator.generate_data import generate_data, get_taxonomy_diff, read_taxonomy
 from .generator.utils import GenerateException
-from .mlx_explore import utils as mlx_utils
 from .server import ServerException, ensure_server, server
+
+if sys.platform == "darwin":  # mlx requires macOS
+    # Local
+    from .mlx_explore import utils as mlx_utils
+else:
+    mlx_utils = None
 
 
 class Lab:
@@ -675,6 +680,7 @@ def train(
 
         if tokenizer_dir is not None and gguf_model_path is not None:
             if not local:
+                assert mlx_utils is not None
                 tokenizer_dir_local = tokenizer_dir.replace("/", "-")
                 mlx_utils.fetch_tokenizer_from_hub(tokenizer_dir, tokenizer_dir_local)
 
@@ -731,7 +737,7 @@ def test(data_dir, model_dir, adapter_file):
 
     SYS_PROMPT = "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
     print("system prompt:", SYS_PROMPT)
-    for (idx, example) in enumerate(test_data):
+    for idx, example in enumerate(test_data):
         system = example["system"]
         user = example["user"]
         print("[{}]\n user prompt: {}".format(idx + 1, user))
