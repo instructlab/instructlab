@@ -40,11 +40,11 @@ After that is done, you can:
 - 🐍 Python 3.9 or later, including the development headers.
 - Approximately 10GB of free disk space to get through the `lab generate` step.  Approximately 60GB of free disk space to fully run the entire process locally on Apple hardware.
 
-On Fedora Linux this means installing:
-```
-$ sudo yum install g++ python3 python3-devel
-```
+On Fedora Linux, install the necessary packages by running:
 
+```shell
+sudo yum install g++ python3 python3-devel
+```
 ## ✅ Getting started 
 ### 🧰 Installing `lab`
 
@@ -57,7 +57,7 @@ python3 -m venv venv
 source venv/bin/activate
 pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
 ```
-> **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection.
+> **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection, if g++ is not found try 'gcc-c++'
 
 If `lab` is installed correctly, you can test the lab command:
 
