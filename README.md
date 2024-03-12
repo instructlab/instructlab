@@ -93,14 +93,14 @@ source venv/bin/activate
 
 ### 🏗️ Initialize `lab`
 
-```
+```shell
 lab init
 ```
 Initializing `lab` will: 
 1. Add a new, default `config.yaml` file. 
 2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory.
 
-```
+```shell
 (venv) $ lab init
 Welcome to InstructLab CLI. This guide will help you to setup your environment.
 Please provide the following values to initiate the environment:
