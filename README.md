@@ -23,7 +23,7 @@
 
 `lab` is a Command-Line Interface (CLI) tool that allows you to:
 
-1. Download a pre-trained LLM (Large Laungage Model).
+1. Download a pre-trained LLM (Large Language Model).
 2. Chat with the LLM.
 
 To add new knowledge and skills to the pre-trained LLM you have to add new information to the companion [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository.
@@ -45,7 +45,7 @@ On Fedora Linux, install the necessary packages by running:
 ```shell
 sudo yum install g++ python3 python3-devel
 ```
-## ✅ Getting started 
+## ✅ Getting started
 ### 🧰 Installing `lab`
 
 To start, create a new directory called `instruct-lab` to store the files that the `lab` CLI needs when it runs.
@@ -175,7 +175,7 @@ Before you start adding new skills and knowledge to your model, you can check ou
 
 Locally contribute new knowledge or compositional skills to your local [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository.
 
-Detailed contribution instructions can be found on the [taxonomy github](https://github.com/instruct-lab/taxonomy/blob/main/README.md).
+Detailed contribution instructions can be found on the [taxonomy GitHub](https://github.com/instruct-lab/taxonomy/blob/main/README.md).
 
 ### 📜 List your new knowledge
 
@@ -238,7 +238,7 @@ lab train
 
 > **NOTE:** ⏳ This step can take **several hours** to complete depending on your computing resources.
 
-`lab train` outputs a brand new model that can be served in the `models` directory called `ggml-model-f16.gguf`
+`lab train` outputs a brand-new model that can be served in the `models` directory called `ggml-model-f16.gguf`
 ```
 (venv) $ ls models
 ggml-merlinite-7b-0302-Q4_K_M.gguf  ggml-model-f16.gguf
@@ -301,7 +301,7 @@ If you are interested in optimizing the quality of the model's responses, please
 
 ## 🎁 Submit your new knowledge
 
-Of course the final step is, if you've improved the model, to open up a a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy) that includes the `qna.yaml` files with your improved data. 
+Of course the final step is, if you've improved the model, to open up a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy) that includes the `qna.yaml` files with your improved data. 
 
 ## 📬 Contributing
 
