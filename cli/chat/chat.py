@@ -38,8 +38,8 @@ Press Meta+Enter or Esc Enter to end multiline input.
 """
 
 CONTEXTS = {
-    "default": "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior.",
-    "cli_helper": "You are an expert for command line interface and know all common commands. Answer the command to execute as it without any explanation.",
+    "default": f"You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior.\nCurrent date is {datetime.datetime.now().astimezone()}",
+    "cli_helper": f"You are an expert for command line interface and know all common commands. Answer the command to execute as it without any explanation.\nCurrent date is {datetime.datetime.now().astimezone()}",
 }
 
 PROMPT_HISTORY_FILEPATH = os.path.expanduser("~/.local/chat-cli.history")
