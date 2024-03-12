@@ -6,6 +6,7 @@ from os.path import splitext
 from pathlib import Path
 from typing import Optional
 import json
+import logging
 import os
 import random
 import re
@@ -91,6 +92,57 @@ class GenerateException(Exception):
     """An exception raised during generate step."""
 
 
+class _WordPolicy:
+    def __init__(self, data, allow_name, deny_name):
+        self.allow = self.__orderedTuple(data.get(allow_name, ()))
+        self.deny = self.__orderedTuple(data.get(deny_name, ()))
+
+    def __orderedTuple(self, value):
+        if not isinstance(value, list):
+            return ()
+        return tuple(sorted(value))
+
+    def apply(self, data):
+        for word in self.allow:
+            data.discard(word)
+        for word in self.deny:
+            data.add(word)
+
+    def __repr__(self):
+        return "allow = " + repr(self.allow) + ", deny = " + repr(self.deny)
+
+
+class _SeedGroups:
+    def __init__(self, seed_instruction_data):
+        grouping = self.__grouping = {}
+        for inst in seed_instruction_data:
+            policy = inst["word_policy"]
+            entry_key = (policy.allow, policy.deny)
+            if entry_key not in grouping:
+                grouping[entry_key] = [inst]
+            else:
+                grouping[entry_key].append(inst)
+
+    def get_group(self, seed):
+        policy = seed["word_policy"]
+        entry_key = (policy.allow, policy.deny)
+        return self.__grouping[entry_key]
+
+    def debug_info(self, logger):
+        if not logger.isEnabledFor(logging.DEBUG):
+            return
+        groups = self.__grouping.items()
+        size = len(groups)
+        detail = []
+        for group in groups:
+            policy = group[0]
+            count = len(group[1])
+            if len(policy[0]) == 0 and len(policy[1]) == 0:
+                policy = "default"
+            detail.append(f"{policy}: {count} entries")
+        logger.debug(f"Defined {size} seed groups: {detail}")
+
+
 def check_prompt_file(prompt_file_path):
     """Check for prompt file."""
     try:
@@ -144,7 +196,9 @@ def writeline2file(logfile, line):
         fp.write(f"{t} - {line}\n")
 
 
-def post_process_gpt3_response(num_prompt_instructions, response, discarded_file):
+def post_process_gpt3_response(
+    num_prompt_instructions, response, discarded_file, policy: _WordPolicy
+):
     if response is None:
         return [], 0
     raw_instructions = (
@@ -184,7 +238,12 @@ def post_process_gpt3_response(num_prompt_instructions, response, discarded_file
             discarded += 1
             continue
         # filter based on keywords that are not suitable for language models.
-        if any(find_word_in_string(word, inst) for word in _WORD_DENYLIST):
+        exclude = set(_WORD_DENYLIST)
+
+        # Removes allowed words, and adds denied words
+        policy.apply(exclude)
+
+        if any(find_word_in_string(word, inst) for word in exclude):
             writeline2file(
                 discarded_file,
                 "Discarded instruction(contained a word from the denylist): "
@@ -262,12 +321,18 @@ def get_instructions_from_model(
     output_file_discarded,
 ):
     batch_inputs = []
+    seed_groups = _SeedGroups(instruction_data_pool)
+    seed_groups.debug_info(logger)
+    selected_data = instruction_data_pool
     for _ in range(request_batch_size):
         # only sampling from the seed tasks
         try:
-            prompt_instructions = random.sample(
-                instruction_data_pool, num_prompt_instructions
-            )
+            if selected_data is instruction_data_pool:
+                # pick from the whole set, at random to get the group, then pick again only within group
+                pick = random.choice(selected_data)
+                selected_data = seed_groups.get_group(pick)
+
+            prompt_instructions = random.sample(selected_data, num_prompt_instructions)
         except ValueError as exc:
             raise GenerateException(
                 f"There was a problem with the new data, please make sure the "
@@ -298,16 +363,21 @@ def get_instructions_from_model(
 
     post_process_start = time.time()
     instruction_data = []
+    total_discarded = 0
     for result in results:
-        new_instructions, discarded = post_process_gpt3_response(
-            num_prompt_instructions, result, output_file_discarded
-        )
         # make sure the generated instruction carried over extra fields
         prompt_ins_0 = prompt_instructions[0]
+        policy = prompt_ins_0["word_policy"]
+        new_instructions, discarded = post_process_gpt3_response(
+            num_prompt_instructions, result, output_file_discarded, policy
+        )
+        total_discarded += discarded
+        # make sure the generated instruction carried over extra fields
         for new_ins in new_instructions:
             new_ins["taxonomy_path"] = prompt_ins_0["taxonomy_path"]
             new_ins["task_description"] = prompt_ins_0["task_description"]
             new_ins["document"] = prompt_ins_0["document"]
+            new_ins["word_policy"] = policy
         instruction_data += new_instructions
 
     post_process_duration = time.time() - post_process_start
@@ -316,7 +386,7 @@ def get_instructions_from_model(
         f"post-processing took {post_process_duration:.2f}s"
     )
 
-    return instruction_data, discarded
+    return instruction_data, total_discarded
 
 
 def generate_data(
@@ -606,6 +676,7 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
                         "taxonomy_path": tax_path,
                         "task_description": task_description,
                         "document": documents,
+                        "word_policy": _WordPolicy(t, "allow_words", "deny_words"),
                     }
                 )
     except Exception as e:
