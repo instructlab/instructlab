@@ -27,9 +27,9 @@ Help / TL;DR
 - `/M`: toggle **m**ultiline
 - `/n`: **n**ew session
 - `/N`: **n**ew session (ignoring loaded)
-- `/d [1]`: **d**isplay previous response
-- `/p [1]`: previous response in **p**lain text
-- `/md [1]`: previous response in **M**ark**d**own
+- `/d <int>`: **d**isplay previous response based on input, if passed 1 then previous, if 2 then second last response and so on.
+- `/p <int>`: previous response in **p**lain text based on input, if passed 1 then previous, if 2 then second last response and so on.
+- `/md <int>`: previous response in **M**ark**d**own based on input, if passed 1 then previous, if 2 then second last response and so on.
 - `/s filepath`: **s**ave current session to `filepath`
 - `/l filepath`: **l**oad `filepath` and start a new session
 - `/L filepath`: **l**oad `filepath` (permanently) and start a new session
