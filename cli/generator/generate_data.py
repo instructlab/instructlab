@@ -542,7 +542,7 @@ def read_taxonomy(logger, taxonomy, taxonomy_base):
         total_errors = 0
         total_warnings = 0
         if updated_taxonomy_files:
-            logger.info(f"Found new taxonomy files :")
+            logger.info("Found new taxonomy files :")
             for e in updated_taxonomy_files:
                 logger.info(f"* {e}")
         for f in updated_taxonomy_files:
