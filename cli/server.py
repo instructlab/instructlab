@@ -50,7 +50,7 @@ def ensure_server(logger, serve_config):
         return (server_process, temp_api_base)
 
 
-def server(logger, model_path, gpu_layers, threads, host="localhost", port=8000):
+def server(logger, model_path, gpu_layers, threads=None, host="localhost", port=8000):
     """Start OpenAI-compatible server"""
     settings = Settings(
         host=host,
