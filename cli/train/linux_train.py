@@ -9,6 +9,7 @@ from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
     AutoTokenizer,
+    BitsAndBytesConfig,
     StoppingCriteria,
     StoppingCriteriaList,
     TrainingArguments,
@@ -113,6 +114,15 @@ def main(args_in: list[str] | None = None) -> None:
         help="Enable GPU offloading to device ('cpu', 'cuda', 'cuda:0')",
         default="cpu",
     )
+    parser.add_argument(
+        "--4bit-quant",
+        action="store_true",
+        dest="use_bitsandbytes",
+        help=(
+            "Use BitsAndBytes for 4-bit quantization "
+            "(reduces GPU VRAM usage and may slow down training)"
+        ),
+    )
     args = parser.parse_args(args_in)
 
     print(f"LINUX_TRAIN.PY: PyTorch device is '{args.device}'")
@@ -143,13 +153,17 @@ def main(args_in: list[str] | None = None) -> None:
         response_template_ids, tokenizer=tokenizer
     )
 
-    # TODO GPU: bnb_config is needed quantize on Nvidia GPUs
-    # bnb_config = BitsAndBytesConfig(
-    #    load_in_4bit=True,
-    #    bnb_4bit_quant_type="nf4",
-    #    bnb_4bit_use_double_quant=True,
-    #    bnb_4bit_compute_dtype=torch.float16 # if not set will throw a warning about slow speeds when training
-    # )
+    if args.device.type == "cuda" and args.use_bitsandbytes:
+        print("LINUX_TRAIN.PY: USING BitsAndBytes")
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_compute_dtype=torch.float16,  # if not set will throw a warning about slow speeds when training
+        )
+    else:
+        print("LINUX_TRAIN.PY: NOT USING BitsAndBytes")
+        bnb_config = None
 
     # Loading the model
     print("LINUX_TRAIN.PY: LOADING THE BASE MODEL")
@@ -160,11 +174,13 @@ def main(args_in: list[str] | None = None) -> None:
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype="auto",
-        # quantization_config=bnb_config,
+        quantization_config=bnb_config,
         config=config,
         trust_remote_code=True,
         low_cpu_mem_usage=True,
-    ).to(args.device)
+    )
+    if model.device != args.device:
+        model = model.to(args.device)
 
     print("LINUX_TRAIN.PY: SANITY CHECKING THE BASE MODEL")
     stop_words = ["<|endoftext|>", "<|assistant|>"]
