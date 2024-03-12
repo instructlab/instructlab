@@ -37,23 +37,24 @@ Here are the requirements:
 4. A GPT language model should be able to complete the instruction. For example, do not ask the assistant to create any visual or audio output. For another example, do not ask the assistant to wake you up at 5pm or set a reminder because it cannot perform any action.
 5. The instructions should be in English.
 6. The instructions should be 1 to 2 sentences long. Either an imperative sentence or a question is permitted.
+7. Each entry should be a single line of JSON that can be parsed by the python json module
 {% if not document -%}
-7. You should generate an appropriate input to the instruction. The input field should contain a specific example provided for the instruction. It should involve realistic data and should not contain simple placeholders. The input should provide substantial content to make the instruction challenging but should ideally not exceed 100 words.
-8. Not all instructions require input. For example, when an instruction asks about some general information, "what is the highest peak in the world", it is not necessary to provide a specific context. In this case, we simply put "<noinput>" in the input field.
-9. The output should be an appropriate response to the instruction and the input. Make sure the output is less than 100 words.
+8. You should generate an appropriate input to the instruction. The input field should contain a specific example provided for the instruction. It should involve realistic data and should not contain simple placeholders. The input should provide substantial content to make the instruction challenging but should ideally not exceed 100 words.
+9. Not all instructions require input. For example, when an instruction asks about some general information, "what is the highest peak in the world", it is not necessary to provide a specific context. In this case, we simply put "<noinput>" in the input field.
+10. The output should be an appropriate response to the instruction and the input. Make sure the output is less than 100 words.
 {% else -%}
-7. The output should be an appropriate response to the input and the instruction. Long outputs are preferable.
+8. The output should be an appropriate response to the input and the instruction. Long outputs are preferable.
 {% endif %}
 
 {% if not document -%}
-List of 5 tasks:
+List of 5 tasks, each entry is a single line of JSON:
 {% else -%}
 Based on below document provide a list of 5 tasks:
 
 Document:
 {{document}}
 
-Here are some examples to help you understand the type of questions that are asked for this document:
+Here are some examples to help you understand the type of questions that are asked for this document, each entry is a single line of JSON:
 {% endif -%}
 """
 
@@ -106,7 +107,6 @@ def check_prompt_file(prompt_file_path):
 def encode_prompt(prompt_instructions, prompt):
     """Encode multiple prompt instructions into a single string.
     If documents exist, randomly select one."""
-    idx = 0
     document = None
     document_list = prompt_instructions[0].get("document")
 
@@ -120,7 +120,7 @@ def encode_prompt(prompt_instructions, prompt):
     )
 
     # pylint: disable=unused-variable
-    for idx, task_dict in enumerate(prompt_instructions):
+    for task_dict in prompt_instructions:
         (instruction, prompt_input, prompt_output, taxonomy_path,) = (
             task_dict["instruction"],
             task_dict["input"],
@@ -128,13 +128,7 @@ def encode_prompt(prompt_instructions, prompt):
             task_dict["taxonomy_path"],
         )
         instruction = re.sub(r"\s+", " ", instruction).strip().rstrip(":")
-        prompt_input = "<noinput>" if prompt_input.lower() == "" else prompt_input
-        prompt += "###\n"
-        prompt += f"{idx + 1}. Instruction: {instruction}\n"
-        prompt += f"{idx + 1}. Input:\n{prompt_input}\n"
-        prompt += f"{idx + 1}. Output:\n{prompt_output}\n"
-    prompt += "###\n"
-    prompt += f"{idx + 2}. Instruction:"
+        prompt += f'{{ "Instruction": {json.dumps(instruction)}, "Input": {json.dumps(prompt_input)}, "Output": {json.dumps(prompt_output)} }},\n'
     return prompt
 
 
@@ -144,13 +138,9 @@ def writeline2file(logfile, line):
         fp.write(f"{t} - {line}\n")
 
 
-def post_process_gpt3_response(num_prompt_instructions, response, discarded_file):
+def post_process_gpt3_response(response, discarded_file):
     if response is None:
         return [], 0
-    raw_instructions = (
-        f"{num_prompt_instructions + 1}. Instruction:" + response.message.content
-    )
-    raw_instructions = re.split("###", raw_instructions)
 
     with open("prompts.txt", "a", encoding="utf-8") as fp:
         fp.write(
@@ -160,35 +150,43 @@ def post_process_gpt3_response(num_prompt_instructions, response, discarded_file
             + "\n"
         )
 
+    level = 0
+    instruction_strings = []
+    for index, c in enumerate(response.message.content):
+        if c == "{":
+            level += 1
+            sindex = index
+        elif c == "}":
+            level -= 1
+            eindex = index
+            if level == 0:
+                instruction_strings.append(
+                    response.message.content[sindex : eindex + 1]
+                )
+
     instructions = []
     discarded = 0
-    for idx, inst in enumerate(raw_instructions):
-        # if the decoding stops due to length, the last example is likely truncated so we discard it
-        # if idx == len(raw_instructions) - 1 and response["finish_reason"] == "length":
-        #     continue
-        idx += num_prompt_instructions + 1
-
-        if not inst.strip():
-            continue
-
-        splitted_data = re.split(rf"{idx}\.\s+(Instruction|Input|Output):", inst)
-        if len(splitted_data) != 7:
+    for inst in instruction_strings:
+        try:
+            inst_json = json.loads(inst)
+            inst_json = dict((k.lower(), v) for k, v in inst_json.items())
+        except json.decoder.JSONDecodeError:
             writeline2file(
                 discarded_file,
-                f"Discarded instruction(didn't match expected format, idx={idx}): "
-                + repr(inst),
+                "Discarded instruction(couldn't parse): " + repr(inst),
             )
             discarded += 1
             continue
-        inst = splitted_data[2].strip()
-        prompt_input = splitted_data[4].strip()
-        prompt_input = "" if prompt_input.lower() == "<noinput>" else prompt_input
-        prompt_output = splitted_data[6].strip()
+
+        prompt_inst = inst_json.get("instruction", "")
+        prompt_input = inst_json.get("input", "")
+        prompt_output = inst_json.get("output", "")
+
         # filter out too short or too long instructions
-        if len(inst.split()) <= 3 or len(inst.split()) > 150:
+        if len(prompt_inst.split()) <= 3 or len(prompt_inst.split()) > 150:
             writeline2file(
                 discarded_file,
-                "Discarded instruction(wrong number of words): " + repr(splitted_data),
+                "Discarded instruction(wrong number of words): " + repr(inst),
             )
             discarded += 1
             continue
@@ -197,7 +195,7 @@ def post_process_gpt3_response(num_prompt_instructions, response, discarded_file
             writeline2file(
                 discarded_file,
                 "Discarded instruction(contained a word from the denylist): "
-                + repr(splitted_data),
+                + repr(inst),
             )
             discarded += 1
             continue
@@ -205,32 +203,31 @@ def post_process_gpt3_response(num_prompt_instructions, response, discarded_file
         # which lead to a lot of such instructions and it's confusing whether the model needs
         # to write a program or directly output the result, so here we filter them out.
         # NOTE: this is not a comprehensive filtering for all programming instructions.
-        if inst.startswith("Write a program"):
+        if prompt_inst.startswith("Write a program"):
             writeline2file(
                 discarded_file,
-                "Discarded instruction(began with 'Write a program'): "
-                + repr(splitted_data),
+                "Discarded instruction(began with 'Write a program'): " + repr(inst),
             )
             discarded += 1
             continue
         # filter those starting with punctuation
-        if inst[0] in string.punctuation:
+        if prompt_inst[0] in string.punctuation:
             writeline2file(
                 discarded_file,
-                "Discarded instruction(began with punctuation): " + repr(splitted_data),
+                "Discarded instruction(began with punctuation): " + repr(inst),
             )
             discarded += 1
             continue
         # filter those starting with non-english character
-        if not inst[0].isascii():
+        if not prompt_inst[0].isascii():
             writeline2file(
                 discarded_file,
-                "Discarded instruction(began with non-ascii): " + repr(splitted_data),
+                "Discarded instruction(began with non-ascii): " + repr(inst),
             )
             discarded += 1
             continue
         instructions.append(
-            {"instruction": inst, "input": prompt_input, "output": prompt_output}
+            {"instruction": prompt_inst, "input": prompt_input, "output": prompt_output}
         )
     return instructions, discarded
 
@@ -309,7 +306,7 @@ def get_instructions_from_model(
     instruction_data = []
     for result in results:
         new_instructions, discarded = post_process_gpt3_response(
-            num_prompt_instructions, result, output_file_discarded
+            result, output_file_discarded
         )
         # make sure the generated instruction carried over extra fields
         prompt_ins_0 = prompt_instructions[0]
