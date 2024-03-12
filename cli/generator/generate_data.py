@@ -295,7 +295,7 @@ def generate_data(
         print(
             "Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help."
         )
-    all_taxonomy_paths = list(set([e["taxonomy_path"] for e in seed_instruction_data]))
+    all_taxonomy_paths = list(set(e["taxonomy_path"] for e in seed_instruction_data))
     while len(machine_instruction_data) < num_instructions_to_generate:
         request_idx += 1
 
