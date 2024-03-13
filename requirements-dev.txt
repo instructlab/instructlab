@@ -7,3 +7,4 @@ pydeps>=1.12.12,<2
 pylint>=2.16.2,<4.0
 pytest
 tox>=4.4.2,<5
+reuse
