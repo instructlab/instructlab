@@ -8,11 +8,11 @@ By default, `lab` will attempt to use your GPU for inference and synthesis. This
 
 Unfortunately, at the time of writing, `torch` does not have GPU-specific support for the latest Python (3.12), so if you're on Linux, it's recommended to set up a Python 3.11-specific `venv` and install `lab` to that to minimize issues. (MacOS ships Python 3.9, so this step shouldn't be necessary.) Here's how to do that on Fedora with `dnf`:
 
-  ```ShellSession
+  ```Shell
   # Install python3.11
   sudo dnf install python3.11
 
-  # Remove old venv (if it exists)
+  # Remove old venv from instruct-lab/ directory (if it exists) 
   rm -r venv
 
   # Create and activate new Python 3.11 venv
@@ -20,7 +20,10 @@ Unfortunately, at the time of writing, `torch` does not have GPU-specific suppor
   source venv/bin/activate
 
   # Install lab (assumes a locally-cloned repo)
-  pip3 install .
+  # You can clone the repo using gh cli if you haven't already done so
+  # gh auth login
+  # gh repo clone instruct-lab/cli
+  pip3 install cli/.
   ```
 
 With Python 3.11 installed, it's time to replace some packages!
@@ -29,13 +32,56 @@ With Python 3.11 installed, it's time to replace some packages!
 
 `torch` should already ship with CUDA support, so you only have to replace `llama-cpp-python`.
 
+Ensure you have the latest proprietary NVidia drivers installed.  You can easily validate whether you are using nouveau or nvidia kernel drivers with the following command.  If your output shows "Kernel driver in use: nouveau", you are not running with the proprietary NVidia drivers.
+
+```shell
+#Check video driver
+lspci -n -n -k | grep -A 2 -e VGA -e 3D
+```
+
+If needed, install the proprietary NVidia drivers 
+
+```shell
+# Enable RPM Fusion Repos
+sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
+
+# Install NVidia Drivers
+# There may be extra steps for enabling secure boot.  View the following blog for further details: https://blog.monosoul.dev/2022/05/17/automatically-sign-nvidia-kernel-module-in-fedora-36/ 
+
+sudo yum install akmod-nvidia xorg-x11-drv-nvidia-cuda
+
+# Reboot to load new kernel drivers
+reboot
+
+#Check video driver
+lspci -n -n -k | grep -A 2 -e VGA -e 3D
+```
+You should now see "Kernel driver in use: nvidia". The next step is to ensure CUDA 12.4 is installed.
+
+```shell
+# Install CUDA 12.4 and nvtop to monitor GPU usage
+sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/fedora39/x86_64/cuda-fedora39.repo
+
+sudo dnf clean all
+sudo dnf -y install cuda-toolkit-12-4 nvtop
+```
+
 Go to the project's Github to see the [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends). Find the `cuBLAS (CUDA)` backend. You'll see a `pip3 install` command. You'll want to add a few options to ensure it gets installed over the existing package: `--force-reinstall` and `--no-cache-dir`. Your final command should look like so:
 
 ```shell
+#Veryify CUDA can be found in your PATH variable
+export CUDA_HOME=/usr/local/cuda
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64
+export PATH=$PATH:$CUDA_HOME/bin
+
+# Recompile llama-cpp-python using CUDA
 CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip3 install --force-reinstall --no-cache-dir llama-cpp-python
+
+# Recompile lab 
+pip3 install cli/.
 ```
 
-Once that package is installed, recompile `lab` with `pip3 install .` and skip to the `Testing` section.
+Proceed to the `Initialize` section of the [CLI Readme](https://github.com/instruct-lab/cli?tab=readme-ov-file#%EF%B8%8F-initialize-lab), and use the `nvtop` utility to validate GPU utilization when interacting with `lab chat` or `lab generate`
 
 ### AMD/ROCm
 
@@ -64,6 +110,8 @@ Whichever backend you choose, you'll see a `pip3 install` command. You'll want t
 If using hipBLAS you may need to install additional ROCm and hipBLAS Dependencies:
 ```
 # Optionally enable repo.radeon.com repository, available through AMD documentation or Radeon Software for Linux for RHEL 9.3 at https://www.amd.com/en/support/linux-drivers
+# The above will get you the latest 6.x drivers, and will not work with rocm5.7 pytorch
+# to grab rocm 5.7 drivers: https://repo.radeon.com/amdgpu-install/23.30.3/rhel/9.2/
 # ROCm Dependencies
 sudo dnf install rocm-dev rocm-utils rocm-llvm rocminfo
 

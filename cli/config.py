@@ -65,6 +65,7 @@ class _serve:
     host_port: str
     model_path: str
     gpu_layers: int
+    max_ctx_size: int
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
@@ -167,6 +168,7 @@ def get_default_config():
         host_port=DEFAULT_HOST_PORT,
         model_path=DEFAULT_MODEL_PATH,
         gpu_layers=-1,
+        max_ctx_size=4096,
     )
     return Config(general=general, chat=chat, generate=generate, serve=serve)
 

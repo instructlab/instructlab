@@ -4,6 +4,7 @@ from os.path import basename, dirname, exists, splitext
 import json
 import logging
 import os
+import platform
 import shutil
 import sys
 
@@ -11,7 +12,6 @@ import sys
 from click_didyoumean import DYMGroup
 from git import GitError, Repo
 from huggingface_hub import hf_hub_download
-from huggingface_hub.utils import HfHubHTTPError
 import click
 
 # Local
@@ -21,7 +21,7 @@ from .generator.generate_data import generate_data, get_taxonomy_diff, read_taxo
 from .generator.utils import GenerateException
 from .server import ServerException, ensure_server, server
 
-if sys.platform == "darwin":  # mlx requires macOS
+if sys.platform == "darwin" and platform.machine() == "arm64":  # mlx requires macOS
     # Local
     from .mlx_explore import utils as mlx_utils
 else:
@@ -153,7 +153,7 @@ def init(
         try:
             Repo.clone_from(repository, taxonomy_path, branch="main", depth=1)
         except GitError as exc:
-            click.secho(f"Failed to clone taxonomy repo:{exc}", fg="red")
+            click.secho(f"Failed to clone taxonomy repo: {exc}", fg="red")
             raise click.exceptions.Exit(1)
 
     # check if models dir exists, and if so ask for which model to use
@@ -248,16 +248,30 @@ def check(ctx, taxonomy_path, taxonomy_base):
     help="The number of layers to put on the GPU. The rest will be on the CPU. Defaults to -1 to move all to GPU.",
 )
 @click.option("--num-threads", type=click.INT, help="The number of CPU threads to use")
+@click.option(
+    "--max-ctx-size",
+    type=click.INT,
+    help="The context size is the maximum number of tokens considered by the model, for both the prompt and response. Defaults to 4096.",
+)
 @click.pass_context
-def serve(ctx, model_path, gpu_layers, num_threads):
+def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
     """Start a local server"""
-    ctx.obj.logger.info(f"Using model '{model_path}' with {gpu_layers} gpu-layers")
+    ctx.obj.logger.info(
+        f"Using model '{model_path}' with {gpu_layers} gpu-layers and {max_ctx_size} max context size."
+    )
 
     try:
         host = ctx.obj.config.serve.host_port.split(":")[0]
         port = int(ctx.obj.config.serve.host_port.split(":")[1])
-        server(ctx.obj.logger, model_path, gpu_layers, num_threads, host, port)
-
+        server(
+            ctx.obj.logger,
+            model_path,
+            gpu_layers,
+            max_ctx_size,
+            num_threads,
+            host,
+            port,
+        )
     except ServerException as exc:
         click.secho(f"Error creating server: {exc}", fg="red")
         raise click.exceptions.Exit(1)
@@ -483,7 +497,7 @@ def download(ctx, repository, release, filename, model_dir):
             filename=filename,
             local_dir=model_dir,
         )
-    except HfHubHTTPError as exc:
+    except Exception as exc:
         click.secho(
             f"Downloading model failed with the following Hugging Face Hub error: {exc}",
             fg="red",

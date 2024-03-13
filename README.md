@@ -9,21 +9,21 @@
   - [📥 Download the model](#-download-the-model)
   - [🍴 Serving the model](#-serving-the-model)
   - [📣 Chat with the model (Optional)](#-chat-with-the-model-optional)
-- [💻 Creating new knowledge and training the model](#-creating-new-knowledge-and-training-the-model)
+- [💻 Creating new knowledge or skills and training the model](#-creating-new-knowledge-or-skills-and-training-the-model)
   - [🎁 Contribute knowledge or compositional skills](#-contribute-knowledge-or-compositional-skills)
-  - [📜 List your new knowledge](#-list-your-new-knowledge)
+  - [📜 List your new data](#-list-your-new-data)
   - [🚀 Generate a synthetic dataset](#-generate-a-synthetic-dataset)
   - [👩‍🏫 Train the model](#-train-the-model) 
   - [🍴 Serve the newly trained model](#-serve-the-newly-trained-model)
   - [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
-- [🎁 Submit your new knowledge](#-submit-your-new-knowledge)
+- [🎁 Submit your new knowledge or skills](#-submit-your-new-knowledge-or-skills)
 - [📬 Contributing to Instruct-Lab CLI](#-contributing)
 
 ## ❓ What is `lab`
 
 `lab` is a Command-Line Interface (CLI) tool that allows you to:
 
-1. Download a pre-trained LLM (Large Language Model).
+1. Download a pre-trained Large Language Model (LLM).
 2. Chat with the LLM.
 
 To add new knowledge and skills to the pre-trained LLM you have to add new information to the companion [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository.
@@ -129,7 +129,7 @@ Downloading model from ibm/merlinite-7b-GGUF@main to models...
 merlinite-7b-Q4_K_M.gguf
 ```
 
-> **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached.
+> **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
 
 ### 🍴 Serving the model
 
@@ -141,7 +141,7 @@ Once the model is served and ready, you'll see the following output:
 
 ```
 (venv) $ lab serve
-INFO 2024-03-02 02:21:11,352 lab.py:201 Using model 'models/ggml-merlinite-7b-0302-Q4_K_M.gguf' with -1 gpu-layers
+INFO 2024-03-02 02:21:11,352 lab.py:201 Using model 'models/ggml-merlinite-7b-0302-Q4_K_M.gguf' with -1 gpu-layers and 4096 max context size.
 Starting server process
 After application startup complete see http://127.0.0.1:8000/docs for API.
 Press CTRL+C to shutdown server.
@@ -170,20 +170,20 @@ Before you start adding new skills and knowledge to your model, you can check ou
 >>>                                                                                                                                                                                                                               [S][default]
 ```
 
-## 💻 Creating new knowledge and training the model
+## 💻 Creating new knowledge or skills and training the model
 ### 🎁 Contribute knowledge or compositional skills
 
 Locally contribute new knowledge or compositional skills to your local [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository.
 
 Detailed contribution instructions can be found on the [taxonomy GitHub](https://github.com/instruct-lab/taxonomy/blob/main/README.md).
 
-### 📜 List your new knowledge
+### 📜 List your new data
 
 ```
 lab list
 ```
 
-To ensure `lab` is registering your new knowledge, you can run `lab list`.
+To ensure `lab` is registering your new knowledge or skills, you can run `lab list`.
 
 The following is the expected result after adding the new compositional skill foo-lang:
 ```
@@ -197,7 +197,7 @@ compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
 lab generate
 ```
 
-The next step is to generate a synthetic dataset based on your newly added knowledge set in the [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository:
+The next step is to generate a synthetic dataset based on your newly added knowledge or skill set in the [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository:
 
 ```
 (venv) $ lab generate
@@ -299,7 +299,7 @@ lab chat -m <New model name>
 
 If you are interested in optimizing the quality of the model's responses, please see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md#model-fine-tuning-and-response-optimization)
 
-## 🎁 Submit your new knowledge
+## 🎁 Submit your new knowledge or skills
 
 Of course the final step is, if you've improved the model, to open up a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy) that includes the `qna.yaml` files with your improved data. 
 

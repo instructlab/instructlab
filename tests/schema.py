@@ -37,6 +37,7 @@ class Generate(BaseModel):
 
 class Serve(BaseModel):
     gpu_layers: int
+    max_ctx_size: int
     model_path: str
 
 
