@@ -59,6 +59,11 @@ pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
 ```
 > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection, if g++ is not found try 'gcc-c++'
 
+If `pip install` fails, and you suspect that the issue was already fixed but missing in `stable`, you can try:
+```
+pip install git+ssh://git@github.com/instruct-lab/cli.git@main
+```
+
 If `lab` is installed correctly, you can test the lab command:
 
 ```
