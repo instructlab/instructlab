@@ -110,6 +110,8 @@ Whichever backend you choose, you'll see a `pip3 install` command. You'll want t
 If using hipBLAS you may need to install additional ROCm and hipBLAS Dependencies:
 ```
 # Optionally enable repo.radeon.com repository, available through AMD documentation or Radeon Software for Linux for RHEL 9.3 at https://www.amd.com/en/support/linux-drivers
+# The above will get you the latest 6.x drivers, and will not work with rocm5.7 pytorch
+# to grab rocm 5.7 drivers: https://repo.radeon.com/amdgpu-install/23.30.3/rhel/9.2/
 # ROCm Dependencies
 sudo dnf install rocm-dev rocm-utils rocm-llvm rocminfo
 
