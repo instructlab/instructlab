@@ -168,13 +168,22 @@ Test your changes by chatting to the LLM. Run `lab serve` and `lab chat` and cha
 
 ## Training
 
-`lab train` has experimental support for GPU acceleration on Linux. It requires a PyTorch build for your GPU. Follow the previous instruction how to install and configure PyTorch for your GPU. You also need a recent GPU with sufficient memory. Training requires about 17 GiB of video RAM. It has been successfully tested on
+`lab train` has experimental support for GPU acceleration on Linux. It requires a PyTorch build for your GPU. Follow the previous instruction how to install and configure PyTorch for your GPU. You also need a recent GPU with sufficient memory. Training requires about 17 GiB of GPU memory. NVidia CUDA is able to use host memory if GPU memory is not sufficient, but that comes with a performance penantly. AMD ROCm requires all data in GPU memory.
+
+It has been successfully tested on:
 
 - NVidia GeForce RTX 3090 (24 GiB), Fedora 39, PyTorch 2.2.1 CUDA 12.1
 - Radeon RX 7900 XT (20 GiB), Fedora 39, PyTorch 2.2.1+rocm5.7
 - Radeon RX 7900 XTX (24 GiB), Fedora 39, PyTorch 2.2.1+rocm5.7
 
+Incompatible devices
+
+- NVidia cards with Turing architecture (GeForce RTX 20 series) or older. They
+  lack support for bfloat16 and fp16.
+
 **Note:** PyTorch implements AMD ROCm support on top of its `torch.cuda` API and treats AMD GPUs as CUDA devices. In a ROCm build of PyTorch, `cuda:0` is actually the first ROCm device.
+
+**Note:** Training does not use a local lab server. You can stop `lab serve` to free up GPU memory.
 
 ```shell
 lab train --device cuda

@@ -89,6 +89,10 @@ def report_cuda_device(device, min_vram=0):
             f"  WARNING: You have less than {min_vram} GiB of free "
             "GPU memory. Training may fail."
         )
+        print(
+            "  Training does not use the local lab serve. Consider "
+            "stopping the server to free up ~5 GiB of GPU memory."
+        )
 
 
 def main(args_in: list[str] | None = None) -> None:
