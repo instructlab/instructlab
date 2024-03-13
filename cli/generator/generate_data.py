@@ -19,8 +19,6 @@ except ImportError:
     pass
 
 # Third Party
-from rouge_score import rouge_scorer
-
 # import numpy as np
 import tqdm
 import yaml
@@ -233,6 +231,11 @@ def generate_data(
     has_document=False,
     api_key: Optional[str] = None,
 ):
+    # Third Party
+    # pylint: disable=import-outside-toplevel
+    # rouge_score is slow to import, so let's do it on demand
+    from rouge_score import rouge_scorer
+
     seed_instruction_data = []
     generate_start = time.time()
 
