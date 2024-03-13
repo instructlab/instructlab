@@ -12,7 +12,6 @@ import sys
 from click_didyoumean import DYMGroup
 from git import GitError, Repo
 from huggingface_hub import hf_hub_download
-from huggingface_hub.utils import HfHubHTTPError
 import click
 
 # Local
@@ -154,7 +153,7 @@ def init(
         try:
             Repo.clone_from(repository, taxonomy_path, branch="main", depth=1)
         except GitError as exc:
-            click.secho(f"Failed to clone taxonomy repo:{exc}", fg="red")
+            click.secho(f"Failed to clone taxonomy repo: {exc}", fg="red")
             raise click.exceptions.Exit(1)
 
     # check if models dir exists, and if so ask for which model to use
@@ -498,7 +497,7 @@ def download(ctx, repository, release, filename, model_dir):
             filename=filename,
             local_dir=model_dir,
         )
-    except HfHubHTTPError as exc:
+    except Exception as exc:
         click.secho(
             f"Downloading model failed with the following Hugging Face Hub error: {exc}",
             fg="red",
