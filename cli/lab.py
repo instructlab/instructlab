@@ -4,6 +4,7 @@ from os.path import basename, dirname, exists, splitext
 import json
 import logging
 import os
+import platform
 import shutil
 import sys
 
@@ -21,7 +22,7 @@ from .generator.generate_data import generate_data, get_taxonomy_diff, read_taxo
 from .generator.utils import GenerateException
 from .server import ServerException, ensure_server, server
 
-if sys.platform == "darwin":  # mlx requires macOS
+if sys.platform == "darwin" and platform.machine() == "arm64":  # mlx requires macOS
     # Local
     from .mlx_explore import utils as mlx_utils
 else:
