@@ -6,7 +6,7 @@ and your GPU into a container for an isolated and easily reproducible experience
 
 ## Steps to build an image then run a container:
 
-Containerfile: 
+**Containerfile:**
 
 ```dockerfile
 FROM nvcr.io/nvidia/cuda:12.3.2-devel-ubi9
@@ -30,7 +30,7 @@ CMD ["/bin/bash"]
 
 Or image: TBD (am I allowed to have a public image with references to lab in it?)
 
-This containerfile is based on Nvidia's CUDA image, which lucky for us plugs directly into Podman via their `nvidia-container-toolkit`! The base OS, ubuntu, does not have most packages installed. The bulk of the `containerfile` is spent configuring your system so `lab` can be installed and run properly. 
+This containerfile is based on Nvidia's CUDA image, which lucky for us plugs directly into Podman via their `nvidia-container-toolkit`! The ubi9 base image does not have most packages installed. The bulk of the `containerfile` is spent configuring your system so `lab` can be installed and run properly. ubi9 as compared to ubuntu cannot install the entire nvidia-12-4 toolkit. This did not impact performance during testing.
 
 1. Podman build –ssh=default -f <Containerfile_Path>
 2. curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo |   sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
