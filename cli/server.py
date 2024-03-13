@@ -4,10 +4,6 @@ import multiprocessing
 import random
 
 # Third Party
-from llama_cpp import llama_chat_format
-from llama_cpp.server.app import create_app
-from llama_cpp.server.settings import Settings
-import llama_cpp.server.app as llama_app
 import uvicorn
 
 # Local
@@ -52,6 +48,15 @@ def ensure_server(logger, serve_config):
 
 def server(logger, model_path, gpu_layers, threads=None, host="localhost", port=8000):
     """Start OpenAI-compatible server"""
+
+    # Third Party
+    # pylint: disable=import-outside-toplevel
+    # llama_cpp is very slow to import, so let's do it on demand
+    from llama_cpp import llama_chat_format
+    from llama_cpp.server.app import create_app
+    from llama_cpp.server.settings import Settings
+    import llama_cpp.server.app as llama_app
+
     settings = Settings(
         host=host,
         port=port,
