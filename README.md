@@ -129,7 +129,7 @@ Downloading model from ibm/merlinite-7b-GGUF@main to models...
 merlinite-7b-Q4_K_M.gguf
 ```
 
-> **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. Connect the HuggingFace may need a proxy in some states, please try the `export http_proxy=` and/or `export https_proxy=` with the correct proxy and port.
+> **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached.               Connect HuggingFace may need proxy in some states, please try `export http_proxy=` and/or `export https_proxy=` with the `server:port`.
 
 ### 🍴 Serving the model
 
