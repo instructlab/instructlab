@@ -258,7 +258,7 @@ python model_run_from_server.py
 
 The easiest way to use [vscode](https://code.visualstudio.com) is to start it within the directory of any of the projects you created above. From [Load and Run using Python](#load-and-run-model-using-python) or [Inference model hosted by the server](#inference-model-hosted-by-the-server), you can run the command `code .` and vscode will start for the project.
 
-As you are running it from the project directory, it will pickup the relevant pacakges installed in the python virtual environment. You can then [run and debug it like any python scripts](https://code.visualstudio.com/docs/python/debugging).
+As you are running it from the project directory, it will pickup the relevant packages installed in the python virtual environment. You can then [run and debug it like any python scripts](https://code.visualstudio.com/docs/python/debugging).
 
 **Note:** You need vscode and Python installed first. Check out [Getting started with Visual Studio Code](https://code.visualstudio.com/docs/introvideos/basics) for more details. 
 

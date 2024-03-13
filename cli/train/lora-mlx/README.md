@@ -72,7 +72,7 @@ python lora.py --help
 ```
 
 Note, in the following the `--model` argument can be any compatible Hugging
-Face repo or a local path to a converted mdoel. 
+Face repo or a local path to a converted model.
 
 ### Fine-tune
 
