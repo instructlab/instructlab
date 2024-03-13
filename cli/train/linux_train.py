@@ -73,7 +73,7 @@ def arg_device(value):
         raise ValueError(str(e)) from None
 
 
-def report_cuda_device(device, threshold_gib=17):
+def report_cuda_device(device, min_vram=0):
     """Report CUDA/ROCm device properties"""
     print(f"  NVidia CUDA version: {torch.version.cuda or 'n/a'}")
     print(f"  AMD ROCm HIP version: {torch.version.hip or 'n/a'}")
@@ -84,9 +84,9 @@ def report_cuda_device(device, threshold_gib=17):
     total /= gib
     print(f"  Device '{device}' is '{name}'")
     print(f"  Free GPU memory: {free:.1f} GiB of {total:.1f} GiB")
-    if free < threshold_gib:
+    if free < min_vram:
         print(
-            f"  WARNING: You have less than {threshold_gib} GiB of free "
+            f"  WARNING: You have less than {min_vram} GiB of free "
             "GPU memory. Training may fail."
         )
 
@@ -114,20 +114,27 @@ def main(args_in: list[str] | None = None) -> None:
         help="Enable GPU offloading to device ('cpu', 'cuda', 'cuda:0')",
         default="cpu",
     )
+    # TODO: llamacpp_convert_to_gguf.py does not support quantized models, yet.
+    # https://github.com/instruct-lab/cli/issues/579
     parser.add_argument(
-        "--4bit-quant",
+        "--4-bit-quant",
         action="store_true",
-        dest="use_bitsandbytes",
+        dest="four_bit_quant",
         help=(
-            "Use BitsAndBytes for 4-bit quantization "
-            "(reduces GPU VRAM usage and may slow down training)"
+            "Use BitsAndBytes for 4-bit quantization (requires CUDA "
+            "reduces GPU VRAM usage, and may slow down training)"
         ),
     )
     args = parser.parse_args(args_in)
 
+    if args.four_bit_quant and args.device.type != "cuda":
+        parser.error("4-bit quantization requires --device cuda\n")
+
     print(f"LINUX_TRAIN.PY: PyTorch device is '{args.device}'")
     if args.device.type == "cuda":
-        report_cuda_device(args.device)
+        # estimated by watching nvtop / radeontop during training
+        min_vram = 11 if args.four_bit_quant else 17
+        report_cuda_device(args.device, min_vram)
 
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", args.num_epochs)
     print("LINUX_TRAIN.PY: TRAIN FILE IS: ", args.train_file)
@@ -153,8 +160,9 @@ def main(args_in: list[str] | None = None) -> None:
         response_template_ids, tokenizer=tokenizer
     )
 
-    if args.device.type == "cuda" and args.use_bitsandbytes:
-        print("LINUX_TRAIN.PY: USING BitsAndBytes")
+    if args.four_bit_quant:
+        print("LINUX_TRAIN.PY: USING 4-bit quantization with BitsAndBytes")
+        use_fp16 = True
         bnb_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
@@ -162,7 +170,8 @@ def main(args_in: list[str] | None = None) -> None:
             bnb_4bit_compute_dtype=torch.float16,  # if not set will throw a warning about slow speeds when training
         )
     else:
-        print("LINUX_TRAIN.PY: NOT USING BitsAndBytes")
+        print("LINUX_TRAIN.PY: NOT USING 4-bit quantization")
+        use_fp16 = False
         bnb_config = None
 
     # Loading the model
@@ -253,7 +262,8 @@ def main(args_in: list[str] | None = None) -> None:
         output_dir=output_dir,
         num_train_epochs=args.num_epochs,
         per_device_train_batch_size=per_device_train_batch_size,
-        bf16=True,
+        fp16=use_fp16,
+        bf16=not use_fp16,
         # use_ipex=True, # TODO CPU test this possible optimization
         use_cpu=args.device.type == "cpu",
         save_strategy="epoch",

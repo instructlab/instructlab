@@ -583,11 +583,14 @@ def download(ctx, repository, release, filename, model_dir):
     ),
 )
 @click.option(
-    "--4bit-quant",
+    "--4-bit-quant",
     "use_bitsandbytes",
     is_flag=True,
     show_default=True,
     default=False,
+    # TODO: hidden option until llamacpp_convert_to_gguf.py supports
+    # quantized models, https://github.com/instruct-lab/cli/issues/579
+    hidden=True,
     help=(
         "Use BitsAndBytes for 4-bit quantization "
         "(reduces GPU VRAM usage and may slow down training)"
@@ -672,7 +675,7 @@ def train(
             device,
         ]
         if use_bitsandbytes:
-            cmd.append("--4bit-quant")
+            cmd.append("--4-bit-quant")
         click.secho(shlex.join(cmd))
         subprocess.check_call(cmd)
 
