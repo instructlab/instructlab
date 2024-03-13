@@ -168,11 +168,14 @@ def init(
             raise click.exceptions.Exit(1)
 
     # check if models dir exists, and if so ask for which model to use
-    models_dir = dirname(model_path)
-    if exists(models_dir):
-        model_path = utils.expand_path(
-            click.prompt("Path to your model", default=model_path)
-        )
+    if not interactive and model_path != config.DEFAULT_MODEL_PATH:
+        pass
+    else:
+        models_dir = dirname(model_path)
+        if exists(models_dir) and interactive:
+            model_path = utils.expand_path(
+                click.prompt("Path to your model", default=model_path)
+            )
     click.echo(f"Generating `{config.DEFAULT_CONFIG}` in the current directory...")
     cfg = config.get_default_config()
     model = splitext(basename(model_path))[0]
