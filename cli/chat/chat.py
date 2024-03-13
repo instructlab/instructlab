@@ -17,6 +17,9 @@ from rich.panel import Panel
 from rich.text import Text
 import openai
 
+# Local
+from ..config import DEFAULT_API_KEY
+
 HELP_MD = """
 Help / TL;DR
 - `/q`: **q**uit
@@ -346,6 +349,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             if box
             else response_content
         )
+        subtitle = None
         with Live(
             panel,
             console=self.console,
@@ -360,9 +364,11 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
                 if box:
                     panel.subtitle = f"elapsed {time.time() - start_time:.3f} seconds"
+            subtitle = f"elapsed {time.time() - start_time:.3f} seconds"
 
         # Update chat logs
-        self.log_message("- " + panel.subtitle + " -\n")
+        if subtitle is not None:
+            self.log_message("- " + subtitle + " -\n")
         self.log_message(response_content.plain + "\n\n")
         # Update message history and token counters
         self._update_conversation(response_content.plain, "assistant")
@@ -372,7 +378,7 @@ def chat_cli(
     logger, api_base, config, question, model, context, session, qq, greedy_mode
 ):
     """Starts a CLI-based chat with the server"""
-    client = OpenAI(base_url=api_base, api_key="no_api_key")
+    client = OpenAI(base_url=api_base, api_key=DEFAULT_API_KEY)
 
     # Load context/session
     loaded = {}
