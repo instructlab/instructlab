@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: The InstructLab Authors
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Performance Numbers
 
 Performance numbers on Mac laptop for a quantized inference model hosted by the [OpenAI server](https://llama-cpp-python.readthedocs.io/en/latest/server/).

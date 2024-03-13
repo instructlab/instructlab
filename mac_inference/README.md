@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: The InstructLab Authors
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Inferencing AI Models on a Mac Laptop
 
 Inference an AI model on a Mac laptop using the [llama.cpp](https://github.com/ggerganov/llama.cpp) framework and [llama-cpp-python](https://github.com/abetlen/llama-cpp-python/) which provides Python bindings for [llama.cpp](https://github.com/ggerganov/llama.cpp).

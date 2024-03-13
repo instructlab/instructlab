@@ -1,4 +1,6 @@
 # Copyright © 2023 Apple Inc.
+# SPDX-FileCopyrightText: The InstructLab Authors
+# SPDX-License-Identifier: Apache-2.0
 
 # Standard
 from dataclasses import dataclass

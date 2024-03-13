@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# SPDX-FileCopyrightText: The InstructLab Authors
+# SPDX-License-Identifier: Apache-2.0
+
 pre-commit run --all-files
 RETURN_CODE=$?
 

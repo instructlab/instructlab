@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: The InstructLab Authors
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Training
 
 You're now at the training phase. So far, you have handcrafted some prompts and

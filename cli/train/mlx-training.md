@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: The InstructLab Authors
+SPDX-License-Identifier: Apache-2.0
+-->
+
 happy path for M chips
 ```ShellSession
 # session 1

@@ -1,5 +1,8 @@
 #!/bin/bash -ex
 
+# SPDX-FileCopyrightText: The InstructLab Authors
+# SPDX-License-Identifier: Apache-2.0
+
 # If arg $1, use that branch from GitHub, else assume run in repo root.
 if [ -z "$1" ]
   then

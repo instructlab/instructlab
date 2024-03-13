@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+
+# SPDX-FileCopyrightText: The InstructLab Authors
+# SPDX-License-Identifier: Apache-2.0
+
 # Future
 from __future__ import annotations
 

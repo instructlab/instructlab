@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: The InstructLab Authors
+# SPDX-License-Identifier: Apache-2.0
+
 # We recommend using models here, but PLEASE don't commit them.
 models/
 !cli/train/lora-mlx/models

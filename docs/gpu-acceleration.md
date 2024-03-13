@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: The InstructLab Authors
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # 🏎️ Making `lab` go fast
 
 By default, `lab` will attempt to use your GPU for inference and synthesis. This works on a wide variety of common systems, but less-common configurations may require some additional tinkering to get it enabled. This document aims to describe how you can GPU-accelerate `lab` on a variety of different environments.

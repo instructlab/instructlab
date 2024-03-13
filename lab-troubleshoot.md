@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: The InstructLab Authors
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Lab Troubleshooting
 
 This document is for commonly found problems and their solutions when using `lab`.

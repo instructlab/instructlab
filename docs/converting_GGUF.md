@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: The InstructLab Authors
+SPDX-License-Identifier: Apache-2.0
+-->
+
 <a name="model-convert-quant"></a>
 
 # Optional: Converting a Model to GGUF and Quantizing 

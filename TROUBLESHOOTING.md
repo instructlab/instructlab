@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: The InstructLab Authors
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Troubleshooting
 
 This document is for commonly found problems and their solutions when using `lab`. There is also a section that includes information on fine-tuning and troubleshooting your model to optimize the quality of its responses. 

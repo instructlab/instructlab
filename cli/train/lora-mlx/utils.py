@@ -1,4 +1,5 @@
-# Copyright © 2023 Apple Inc.
+# SPDX-FileCopyrightText: Apple Inc.
+# SPDX-License-Identifier: Apache-2.0
 
 # Standard
 from pathlib import Path

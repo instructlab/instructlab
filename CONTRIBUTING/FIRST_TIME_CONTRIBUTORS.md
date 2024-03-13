@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: The InstructLab Authors
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Welcome to InstructLab 🥼!
 
 This guide should teach you how to set up your development environment to start contributing to the `lab` CLI tool.

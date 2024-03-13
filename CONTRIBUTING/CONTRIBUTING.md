@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: The InstructLab Authors
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Contributing
 
 👍🎉 First off, thank you for taking the time to contribute! 🎉👍

@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: The InstructLab Authors
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # List of reviewers, alphabetical
 
 * Aakanksha Duggal - aduggal@redhat.com

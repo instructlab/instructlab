@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: The InstructLab Authors
+SPDX-License-Identifier: Apache-2.0
+-->
+
 # Fine-Tuning with LoRA or QLoRA
 
 This is an example of using MLX to fine-tune an LLM with low rank adaptation

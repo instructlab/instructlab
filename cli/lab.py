@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: The InstructLab Authors
+# SPDX-License-Identifier: Apache-2.0
+
 # Standard
 from glob import glob
 from os.path import basename, dirname, exists, splitext
