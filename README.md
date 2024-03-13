@@ -193,6 +193,8 @@ compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
 
 ### 🚀 Generate a synthetic dataset
 
+> **NOTE**: 🍴 This step needs the model to be served and ready, so ensure `lab serve` is running before generating
+
 ```
 lab generate
 ```
