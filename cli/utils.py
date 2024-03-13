@@ -3,7 +3,7 @@ import copy
 import functools
 import os
 import platform
-import subprocess
+import sys
 
 # Third Party
 import click
@@ -33,18 +33,8 @@ def macos_requirement(echo_func, exit_exception):
 
 
 def is_macos_with_m_chip():
-    """Checks if the OS is MacOS"""
-    if platform.system() != "Darwin":
-        return False
-
-    # Check for Apple Silicon (M1, M2, etc.)
-    try:
-        # Running 'sysctl -a' and searching for a specific line that indicates ARM architecture
-        result = subprocess.check_output(["sysctl", "-a"], text=True)
-        is_m_chip = "machdep.cpu.brand_string: Apple" in result
-        return is_m_chip
-    except subprocess.SubprocessError:
-        return False
+    """Checks if the OS is MacOS with an ARM processor"""
+    return sys.platform == "darwin" and platform.machine() == "arm64"
 
 
 def expand_path(path):
