@@ -129,7 +129,7 @@ Downloading model from ibm/merlinite-7b-GGUF@main to models...
 merlinite-7b-Q4_K_M.gguf
 ```
 
-> **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached.
+> **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
 
 ### 🍴 Serving the model
 
