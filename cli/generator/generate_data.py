@@ -470,7 +470,7 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     modified_files = [
         d.a_path
         for d in head_commit.diff(None)
-        if splitext(d.a_path)[1].lower() == ".yaml" and d.change_type != "D"
+        if splitext(d.a_path)[1].lower() == ".yaml" and not d.deleted_file
     ]
 
     updated_taxonomy_files = list(set(untracked_files + modified_files))
