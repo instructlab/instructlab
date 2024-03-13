@@ -29,10 +29,18 @@ With Python 3.11 installed, it's time to replace some packages!
 
 `torch` should already ship with CUDA support, so you only have to replace `llama-cpp-python`.
 
+Make sure that you have a recent version of CUDA installed. Details on how to install this 
+on Fedora are available in [CUDA Toolkit 12.4 Downloads](https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&Distribution=Fedora&target_version=39&target_type=rpm_network).
+
 Go to the project's Github to see the [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends). Find the `cuBLAS (CUDA)` backend. You'll see a `pip3 install` command. You'll want to add a few options to ensure it gets installed over the existing package: `--force-reinstall` and `--no-cache-dir`. Your final command should look like so:
 
 ```shell
 CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip3 install --force-reinstall --no-cache-dir llama-cpp-python
+```
+
+Note: If you are using CUDA 12, you may need to use the following command instead to successfully build llama-cpp:
+```shell
+CUDACXX=/usr/local/cuda-12/bin/nvcc CMAKE_ARGS="-DLLAMA_CUBLAS=on -DCMAKE_CUDA_ARCHITECTURES=native" FORCE_CMAKE=1 pip3 install --force-reinstall --no-cache-dir --upgrade llama-cpp-python
 ```
 
 Once that package is installed, recompile `lab` with `pip3 install .` and skip to the `Testing` section.
