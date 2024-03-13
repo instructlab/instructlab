@@ -438,9 +438,7 @@ def generate_data(
 
 def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     repo = git.Repo(repo)
-    untracked_files = [
-        u for u in repo.untracked_files if splitext(u)[1].lower() == ".yaml"
-    ]
+    untracked_files = [u for u in repo.untracked_files if u.endswith(".yaml")]
 
     head_commit = None
     if base == "HEAD":
@@ -468,9 +466,9 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
             ) from exc
 
     modified_files = [
-        d.a_path
+        d.b_path
         for d in head_commit.diff(None)
-        if splitext(d.a_path)[1].lower() == ".yaml" and not d.deleted_file
+        if d.b_path.endswith(".yaml") and not d.deleted_file
     ]
 
     updated_taxonomy_files = list(set(untracked_files + modified_files))
