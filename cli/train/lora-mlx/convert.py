@@ -1,11 +1,11 @@
 # Copyright © 2023 Apple Inc.
 
 # Standard
-import argparse
 import copy
 
 # Third Party
 from mlx.utils import tree_flatten
+import click
 import mlx.core as mx
 import mlx.nn as nn
 import numpy as np
@@ -13,7 +13,7 @@ import torch
 import utils
 
 
-def quantize(weights, config, args):
+def quantize_model(weights, config, q_group_size, q_bits):
     quantized_config = copy.deepcopy(config)
 
     # Get model classes
@@ -26,97 +26,77 @@ def quantize(weights, config, args):
     # Quantize the model:
     nn.QuantizedLinear.quantize_module(
         model,
-        args.q_group_size,
-        args.q_bits,
+        q_group_size,
+        q_bits,
         linear_class_predicate=lambda m: isinstance(m, nn.Linear)
         and m.weight.shape[0] != 8,
     )
 
     # Update the config:
     quantized_config["quantization"] = {
-        "group_size": args.q_group_size,
-        "bits": args.q_bits,
+        "group_size": q_group_size,
+        "bits": q_bits,
     }
     quantized_weights = dict(tree_flatten(model.parameters()))
 
     return quantized_weights, quantized_config
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description="Convert Hugging Face model to MLX format"
-    )
-    parser.add_argument(
-        "--hf-path",
-        type=str,
-        help="Path to the Hugging Face model.",
-    )
-    parser.add_argument(
-        "--mlx-path",
-        type=str,
-        default="mlx_model",
-        help="Path to save the MLX model.",
-    )
-    parser.add_argument(
-        "-q",
-        "--quantize",
-        help="Generate a quantized model.",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--q-group-size",
-        help="Group size for quantization.",
-        type=int,
-        default=64,
-    )
-    parser.add_argument(
-        "--q-bits",
-        help="Bits per weight for quantization.",
-        type=int,
-        default=4,
-    )
-    parser.add_argument(
-        "--dtype",
-        help="Type to save the parameters, ignored if -q is given.",
-        type=str,
-        choices=["float16", "bfloat16", "float32"],
-        default="float16",
-    )
-    parser.add_argument(
-        "--upload-name",
-        help="The name of model to upload to Hugging Face MLX Community",
-        type=str,
-        default=None,
-    )
-    parser.add_argument(
-        "--to-pt",
-        action="store_true",
-    )
-    parser.add_argument(
-        "--local",
-        action="store_true",
-    )
-
-    args = parser.parse_args()
-
+@click.command()
+@click.option("--hf-path", type=click.STRING, help="Path to the Hugging Face model.")
+@click.option(
+    "--mlx-path",
+    type=click.STRING,
+    default="mlx_model",
+    help="Path to save the MLX model.",
+)
+@click.option("--quantize", "-q", help="Generate a quantized model.", is_flag=True)
+@click.option(
+    "--q-group-size", help="Group size for quantization.", type=click.INT, default=64
+)
+@click.option(
+    "--q-bits", help="Bits per weight for quantization.", type=click.INT, default=4
+)
+@click.option(
+    "--dtype",
+    help="Type to save the parameters, ignored if -q is given.",
+    type=click.Choice(["float16", "bfloat16", "float32"], case_sensitive=True),
+    default="float16",
+)
+@click.option(
+    "--upload-name",
+    help="The name of model to upload to Hugging Face MLX Community",
+    type=click.STRING,
+    default=None,
+)
+@click.option("--to-pt", is_flag=True)
+@click.option("--local", is_flag=True)
+def convert(
+    hf_path, mlx_path, quantize, q_group_size, q_bits, dtype, upload_name, to_pt, local
+):
+    """Convert Hugging Face model to MLX format"""
     print("[INFO] Loading")
-    weights, config, tokenizer = utils.fetch_from_hub(args.hf_path, args.local)
+    weights, config, tokenizer = utils.fetch_from_hub(hf_path, local)
 
-    if args.to_pt:
-        dtype = np.float16 if args.quantize else getattr(np, args.dtype)
+    if to_pt:
+        dtype = np.float16 if quantize else getattr(np, dtype)
         print(f"{dtype=}")
         weights = {
             k: torch.from_numpy(np.array(v, copy=False, dtype=dtype))
             for k, v in weights.items()
         }
     else:
-        dtype = mx.float16 if args.quantize else getattr(mx, args.dtype)
+        dtype = mx.float16 if quantize else getattr(mx, dtype)
         print(f"{dtype=}")
         weights = {k: v.astype(dtype) for k, v in weights.items()}
-    if args.quantize:
+    if quantize:
         print("[INFO] Quantizing")
-        weights, config = quantize(weights, config, args)
+        weights, config = quantize_model(weights, config, q_group_size, q_bits)
 
-    utils.save_model(args.mlx_path, weights, tokenizer, config)
-    if args.upload_name is not None:
-        utils.upload_to_hub(args.mlx_path, args.upload_name, args.hf_path)
+    utils.save_model(mlx_path, weights, tokenizer, config)
+    if upload_name is not None:
+        utils.upload_to_hub(mlx_path, upload_name, hf_path)
+
+
+if __name__ == "__main__":
+    convert()
