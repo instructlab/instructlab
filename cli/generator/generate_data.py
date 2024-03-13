@@ -255,6 +255,9 @@ def generate_data(
     if not seeds:
         raise SystemExit("Nothing to generate. Exiting.")
 
+    def unescape(s):
+        return bytes(s, "utf-8").decode("utf-8")
+
     test_data = []
     for seed_example in seed_instruction_data:
         user = seed_example["instruction"]
@@ -263,8 +266,8 @@ def generate_data(
         test_data.append(
             {
                 "system": utils.SYSTEM_PROMPT,
-                "user": user,
-                "assistant": seed_example["output"],
+                "user": unescape(user),
+                "assistant": unescape(seed_example["output"]),
             }
         )
 
@@ -413,8 +416,8 @@ def generate_data(
             train_data.append(
                 {
                     "system": utils.SYSTEM_PROMPT,
-                    "user": user,
-                    "assistant": synth_example["output"],
+                    "user": unescape(user),
+                    "assistant": unescape(synth_example["output"]),
                 }
             )
         # utils.jdump(train_data, os.path.join(output_dir, output_file_train))
@@ -422,14 +425,14 @@ def generate_data(
             os.path.join(output_dir, output_file_train), "w", encoding="utf-8"
         ) as outfile:
             for entry in train_data:
-                json.dump(entry, outfile)
+                json.dump(entry, outfile, ensure_ascii=False)
                 outfile.write("\n")
         # utils.jdump(test_data, os.path.join(output_dir, output_file_test))
         with open(
             os.path.join(output_dir, output_file_test), "w", encoding="utf-8"
         ) as outfile:
             for entry in test_data:
-                json.dump(entry, outfile)
+                json.dump(entry, outfile, ensure_ascii=False)
                 outfile.write("\n")
 
     generate_duration = time.time() - generate_start
