@@ -4,7 +4,7 @@ Containerization of `lab` allows for portability and ease of setup. With this, u
 and your GPU into a container for an isolated and easily reproducible experience.
 
 
-## Steps to build an image and run a container:
+## Steps to build an image then run a container:
 
 Containerfile: 
 
