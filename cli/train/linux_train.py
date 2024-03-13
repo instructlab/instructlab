@@ -87,7 +87,8 @@ def report_cuda_device(device, min_vram=0):
     if free < min_vram:
         print(
             f"  WARNING: You have less than {min_vram} GiB of free "
-            "GPU memory. Training may fail."
+            "GPU memory. Training may fail on AMD ROCm or use slow"
+            "shared host memory on NVidia CUDA."
         )
         print(
             "  Training does not use the local lab serve. Consider "
