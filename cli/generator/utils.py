@@ -12,6 +12,9 @@ import sys
 # Third Party
 from openai import OpenAI, OpenAIError
 
+# Local
+from ..config import DEFAULT_API_KEY
+
 StrOrOpenAIObject = Union[str, object]
 
 SYSTEM_PROMPT = "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
@@ -44,7 +47,7 @@ def openai_completion(
     max_instances=sys.maxsize,
     max_batches=sys.maxsize,
     return_text=False,
-    api_key="no_api_key",
+    api_key=DEFAULT_API_KEY,
     **decoding_kwargs,
 ) -> Union[
     Union[StrOrOpenAIObject],

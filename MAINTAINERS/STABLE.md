@@ -52,7 +52,7 @@ I usually test first w/o --force and expect an error if I have everything right.
 ```ShellSession
 $ git push origin stable
 ! [rejected]        stable -> stable (already exists)
-error: failed to push some refs to 'https://github.com/open-labrador/cli.git'
+error: failed to push some refs to 'https://github.com/instruct-lab/cli.git'
 hint: Updates were rejected because the tag already exists in the remote.
 
 ```

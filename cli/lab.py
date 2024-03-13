@@ -19,8 +19,13 @@ from . import config, utils
 from .chat.chat import ChatException, chat_cli
 from .generator.generate_data import generate_data, get_taxonomy_diff, read_taxonomy
 from .generator.utils import GenerateException
-from .mlx_explore import utils as mlx_utils
 from .server import ServerException, ensure_server, server
+
+if sys.platform == "darwin":  # mlx requires macOS
+    # Local
+    from .mlx_explore import utils as mlx_utils
+else:
+    mlx_utils = None
 
 
 class Lab:
@@ -242,14 +247,17 @@ def check(ctx, taxonomy_path, taxonomy_base):
     type=click.INT,
     help="The number of layers to put on the GPU. The rest will be on the CPU. Defaults to -1 to move all to GPU.",
 )
+@click.option("--num-threads", type=click.INT, help="The number of CPU threads to use")
 @click.pass_context
-def serve(ctx, model_path, gpu_layers):
+def serve(ctx, model_path, gpu_layers, num_threads):
     """Start a local server"""
     ctx.obj.logger.info(f"Using model '{model_path}' with {gpu_layers} gpu-layers")
+
     try:
         host = ctx.obj.config.serve.host_port.split(":")[0]
         port = int(ctx.obj.config.serve.host_port.split(":")[1])
-        server(ctx.obj.logger, model_path, gpu_layers, host, port)
+        server(ctx.obj.logger, model_path, gpu_layers, num_threads, host, port)
+
     except ServerException as exc:
         click.secho(f"Error creating server: {exc}", fg="red")
         raise click.exceptions.Exit(1)
@@ -314,7 +322,7 @@ def serve(ctx, model_path, gpu_layers):
 @click.option(
     "--api-key",
     type=click.STRING,
-    default="",
+    default=config.DEFAULT_API_KEY,
     help="API key for API endpoint.",
 )
 @click.pass_context
@@ -679,6 +687,7 @@ def train(
 
         if tokenizer_dir is not None and gguf_model_path is not None:
             if not local:
+                assert mlx_utils is not None
                 tokenizer_dir_local = tokenizer_dir.replace("/", "-")
                 mlx_utils.fetch_tokenizer_from_hub(tokenizer_dir, tokenizer_dir_local)
 
@@ -735,7 +744,7 @@ def test(data_dir, model_dir, adapter_file):
 
     SYS_PROMPT = "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
     print("system prompt:", SYS_PROMPT)
-    for (idx, example) in enumerate(test_data):
+    for idx, example in enumerate(test_data):
         system = example["system"]
         user = example["user"]
         print("[{}]\n user prompt: {}".format(idx + 1, user))
