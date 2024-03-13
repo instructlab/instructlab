@@ -30,7 +30,7 @@ CMD ["/bin/bash"]
 
 Or image: TBD (am I allowed to have a public image with references to lab in it?)
 
-This containerfile is based off of Nvidia's CUDA image, which lucky for us plugs directly into podman via their nvidia-container-toolkit! The base OS, which is ubuntu does not have most packages installed, the bulk of the containerfile is spent configuring your system so `lab` can be installed and run properly. 
+This containerfile is based on Nvidia's CUDA image, which lucky for us plugs directly into Podman via their `nvidia-container-toolkit`! The base OS, ubuntu, does not have most packages installed. The bulk of the `containerfile` is spent configuring your system so `lab` can be installed and run properly. 
 
 1. Podman build –ssh=default -f <Containerfile_Path>
 2. curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo |   sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
