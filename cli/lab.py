@@ -12,6 +12,7 @@ import sys
 from click_didyoumean import DYMGroup
 from git import GitError, Repo
 from huggingface_hub import hf_hub_download
+from huggingface_hub import logging as hf_logging
 import click
 
 # Local
@@ -507,6 +508,9 @@ def download(ctx, repository, release, filename, model_dir):
     """Download the model(s) to train"""
     click.echo(f"Downloading model from {repository}@{release} to {model_dir}...")
     try:
+        if ctx.obj is not None:
+            hf_logging.set_verbosity(ctx.obj.config.general.log_level.upper())
+
         hf_hub_download(
             repo_id=repository,
             revision=release,
