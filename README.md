@@ -43,7 +43,7 @@ After that is done, you can:
 On Fedora Linux, install the necessary packages by running:
 
 ```shell
-sudo yum install g++ python3 python3-devel
+sudo dnf install g++ python3 python3-devel pipx
 ```
 ## ✅ Getting started
 ### 🧰 Installing `lab`
@@ -53,16 +53,14 @@ To start, create a new directory called `instruct-lab` to store the files the `l
 ```
 mkdir instruct-lab
 cd instruct-lab
-python3 -m venv venv
-source venv/bin/activate
-pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
+pipx install git+ssh://git@github.com/instruct-lab/cli.git@stable
 ```
-> **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection, if g++ is not found try 'gcc-c++'
+> **NOTE**: ⏳ `pipx install` may take some time, depending on your internet connection, if g++ is not found try 'gcc-c++'
 
 If `lab` is installed correctly, you can test the lab command:
 
 ```
-(venv) $ lab
+$ lab
 lab [OPTIONS] COMMAND [ARGS]...
 
   CLI for interacting with InstructLab.
@@ -101,7 +99,7 @@ Initializing `lab` will:
 2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory.
 
 ```shell
-(venv) $ lab init
+$ lab init
 Welcome to InstructLab CLI. This guide will help you set up your environment.
 Please provide the following values to initiate the environment:
 Path to taxonomy repo [taxonomy]: <ENTER>
@@ -123,9 +121,9 @@ lab download
 `lab download` will download a pre-trained model from HuggingFace and store it in a `models` directory:
 
 ```
-(venv) $ lab download
+$ lab download
 Downloading model from ibm/merlinite-7b-GGUF@main to models...
-(venv) $ ls models
+$ ls models
 merlinite-7b-Q4_K_M.gguf
 ```
 
@@ -140,7 +138,7 @@ lab serve
 Once the model is served and ready, you'll see the following output:
 
 ```
-(venv) $ lab serve
+$ lab serve
 INFO 2024-03-02 02:21:11,352 lab.py:201 Using model 'models/ggml-merlinite-7b-0302-Q4_K_M.gguf' with -1 gpu-layers and 4096 max context size.
 Starting server process
 After application startup complete see http://127.0.0.1:8000/docs for API.
@@ -158,7 +156,7 @@ lab chat
 Before you start adding new skills and knowledge to your model, you can check out its baseline performance:
 
 ```
-(venv) $ lab chat
+$ lab chat
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────── system ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ Welcome to Chat CLI w/ GGML-MERLINITE-7B-0302-Q4_K_M (type /h for help)                                                                                                                                                                    │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -187,7 +185,7 @@ To ensure `lab` is registering your new knowledge or skills, you can run `lab li
 
 The following is the expected result after adding the new compositional skill foo-lang:
 ```
-(venv) $ lab list
+$ lab list
 compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
 ```
 
@@ -200,7 +198,7 @@ lab generate
 The next step is to generate a synthetic dataset based on your newly added knowledge or skill set in the [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository:
 
 ```
-(venv) $ lab generate
+$ lab generate
 INFO 2024-02-29 19:09:48,804 lab.py:250 Generating model 'ggml-merlinite-7b-0302-Q4_K_M' using 10 CPUs,
 taxonomy: '/home/username/instruct-lab/taxonomy' and seed 'seed_tasks.json'
 
@@ -210,7 +208,7 @@ taxonomy: '/home/username/instruct-lab/taxonomy' and seed 'seed_tasks.json'
 
 The synthetic data set will be three files in the newly created `generated` directory named `generated*.json`, `test*.jsonl`, and `train*.jsonl`:
 ```
-(venv) $ ls generated/
+$ ls generated/
  'generated_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.json'   'train_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
  'test_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
 ```
@@ -240,7 +238,7 @@ lab train
 
 `lab train` outputs a brand-new model that can be served in the `models` directory called `ggml-model-f16.gguf`
 ```
-(venv) $ ls models
+$ ls models
 ggml-merlinite-7b-0302-Q4_K_M.gguf  ggml-model-f16.gguf
 ```
 
