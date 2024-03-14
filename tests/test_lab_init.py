@@ -17,7 +17,7 @@ from tests.schema import Config
 
 class TestLabInit(unittest.TestCase):
     # When using `from X import Y` you need to understand that Y becomes part
-    # of your module, so you should use `my_modyle.Y`` to patch.
+    # of your module, so you should use `my_module.Y`` to patch.
     # When using `import X`, you should use `X.Y` to patch.
     # https://docs.python.org/3/library/unittest.mock.html#where-to-patch?
     @patch("cli.lab.Repo.clone_from")
