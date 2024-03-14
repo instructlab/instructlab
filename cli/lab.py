@@ -44,7 +44,7 @@ class Lab:
 def configure(ctx, param, filename):
     """Configure is responsible for reading the config file, initiating Lab object and CLI context."""
     # skip configuration reading when invoked command is `init`
-    if len(sys.argv) > 0 and sys.argv[1] == "init":
+    if len(sys.argv) > 0 and sys.argv[1] in ("init", "--help"):
         return
 
     if not exists(filename):
@@ -110,7 +110,7 @@ def cli(ctx, config):
     help="Taxonomy repository location.",
 )
 @click.option(
-    "--min_taxonomy",
+    "--min-taxonomy",
     is_flag=True,
     help="Shallow clone the taxonomy repository with minimum size. "
     "Please do not use this option if you are planning to contribute back "
