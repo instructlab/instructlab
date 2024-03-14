@@ -63,7 +63,7 @@ If `lab` is installed correctly, you can test the lab command:
 
 ```
 (venv) $ lab
-lab [OPTIONS] COMMAND [ARGS]...
+Usage: lab [OPTIONS] COMMAND [ARGS]...
 
   CLI for interacting with InstructLab.
 
@@ -76,13 +76,15 @@ Options:
 
 Commands:
   chat      Run a chat using the modified model
+  check     Check that taxonomy is valid
+  convert   Converts model to GGUF
   download  Download the model(s) to train
   generate  Generates synthetic data to enhance your example data
   init      Initializes environment for InstructLab
   list      Lists taxonomy files that have changed since a reference commit (default origin/main)
   serve     Start a local server
-  test      Perform rudimentary tests of the model
-  train     Trains model
+  test      Runs basic test to ensure model correctness
+  train     Takes synthetic data generated locally with `lab generate`...
 ```
 
 **Every** `lab` command needs to be run from within your Python virtual environment. To enter the Python environment, run the following command:
