@@ -17,9 +17,6 @@ def mock_download_raise_exception(repo_id, revision, filename, local_dir):
 
 
 class TestLabDownload(unittest.TestCase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     @patch("huggingface_hub.hf_hub_download")
     def test_download(self, _):
         runner = CliRunner()

@@ -15,9 +15,6 @@ from tests.schema import Config
 
 
 class TestLabInit(unittest.TestCase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     @patch("git.Repo.clone_from", MagicMock())
     def test_init(self):
         runner = CliRunner()
