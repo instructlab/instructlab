@@ -20,12 +20,14 @@ on:
       - "main"
     paths:
       - '**.py'
+      - 'scripts/*.sh'
       - 'tox.ini'
   pull_request:
     branches: 
       - "main"
     paths:
       - '**.py'
+      - 'scripts/*.sh'
       - 'tox.ini'
 
 env:

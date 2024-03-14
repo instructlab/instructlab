@@ -22,12 +22,14 @@ on:
     paths:
       - '**.py'
       - 'tox.ini'
+      - 'scripts/*.sh'
   pull_request:
     branches:
       - "main"
     paths:
       - '**.py'
       - 'tox.ini'
+      - 'scripts/*.sh'
 
 jobs:
   test:
