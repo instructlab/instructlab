@@ -168,7 +168,7 @@ Test your changes by chatting to the LLM. Run `lab serve` and `lab chat` and cha
 
 ## Training
 
-`lab train` has experimental support for GPU acceleration on Linux. It requires a PyTorch build for your GPU. Follow the previous instruction how to install and configure PyTorch for your GPU. You also need a recent GPU with sufficient memory. Training requires about 17 GiB of GPU memory. NVidia CUDA is able to use shared host memory if GPU memory is not sufficient, but that comes with a performance penantly. AMD ROCm requires all data in GPU memory.
+`lab train`  also experimentally supports GPU acceleration on Linux, assuming a working setup as detailed above. Training is memory-intensive and requires a modern GPU to work well; about 17 GiB of GPU memory or more is recommended. Nvidia CUDA is able to use shared host memory if GPU memory is not sufficient, but that comes with a performance penalty. AMD ROCm requires all data in GPU memory.
 
 It has been successfully tested on:
 
