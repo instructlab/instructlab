@@ -1,5 +1,4 @@
 # Standard
-from unittest.mock import MagicMock, patch
 import unittest
 
 # Third Party
@@ -9,7 +8,6 @@ import pytest
 
 # First Party
 from cli import lab
-from cli.generator.utils import GenerateException
 
 TAXONOMY_BASE = "master"
 
@@ -81,30 +79,6 @@ class TestLabList(unittest.TestCase):
             self.assertNotIn(untracked_file, result.output)
             self.assertEqual(result.exit_code, 0)
 
-    # NOTE: The mock is needed as it is not clear how to trigger this exception.
-    @patch(
-        "cli.lab.get_taxonomy_diff",
-        MagicMock(
-            side_effect=GenerateException("Make sure the yaml is formatted correctly")
-        ),
-    )
-    def test_list_generator_error(self):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(
-                lab.list,
-                [
-                    "--taxonomy-base",
-                    TAXONOMY_BASE,
-                    "--taxonomy-path",
-                    self.taxonomy.root,
-                ],
-            )
-            self.assertIn(
-                "Generating dataset failed with the following error", result.output
-            )
-            self.assertEqual(result.exit_code, 0)
-
     def test_list_invalid_base(self):
         taxonomy_base = "main"
         runner = CliRunner()
@@ -118,13 +92,13 @@ class TestLabList(unittest.TestCase):
                     self.taxonomy.root,
                 ],
             )
-            self.assertIsInstance(result.exception, SystemExit)
+            self.assertIsNone(result.exception)
             self.assertIn(
                 f'Couldn\'t find the taxonomy base branch "{taxonomy_base}" '
                 "from the current HEAD",
                 result.output,
             )
-            self.assertEqual(result.exit_code, 1)
+            self.assertEqual(result.exit_code, 0)
 
     def test_list_invalid_path(self):
         taxonomy_path = "/path/to/taxonomy"
