@@ -579,12 +579,13 @@ def download(ctx, repository, release, filename, model_dir):
     default="cpu",
     help=(
         "PyTorch device for Linux training (default: 'cpu'). Use 'cuda' "
-        "for NVidia CUDA or AMD ROCm GPU."
+        "for NVidia CUDA / AMD ROCm GPU. 'auto' for automatic mapping "
+        "(buggy, see issue #610)."
     ),
 )
 @click.option(
     "--4-bit-quant",
-    "use_bitsandbytes",
+    "four_bit_quant",
     is_flag=True,
     show_default=True,
     default=False,
@@ -610,7 +611,7 @@ def train(
     skip_quantize,
     num_epochs,
     device,
-    use_bitsandbytes,
+    four_bit_quant,
 ):
     """
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
@@ -674,7 +675,7 @@ def train(
             "--device",
             device,
         ]
-        if use_bitsandbytes:
+        if four_bit_quant:
             cmd.append("--4-bit-quant")
         click.secho(shlex.join(cmd))
         subprocess.check_call(cmd)

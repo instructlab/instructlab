@@ -1,6 +1,6 @@
 # Standard
-from pathlib import Path
 import argparse
+import collections
 
 # Third Party
 from datasets import load_dataset
@@ -62,37 +62,72 @@ def formatting_prompts_func(example):
     return output_texts
 
 
-def arg_device(value):
-    """Parse and convert string to torch.device()"""
-    # turn unqualified 'cuda' into specific 'cuda:0'
-    if value == "cuda" and torch.cuda.is_available():
-        return torch.device("cuda", torch.cuda.current_device())
+DeviceInfo = collections.namedtuple("DeviceInfo", "type index device_map")
+
+
+def arg_device(value) -> DeviceInfo:
+    """Parse and convert device string
+
+    Returns DeviceInfo object:
+    - type is one of 'cpu', 'cuda', 'auto' (for auto device map)
+    - index is None or CUDA/ROCm device index (0 for first GPU)
+    - device_map is a string or dict
+    """
+    if value == "cpu":
+        # all layers on CPU
+        return DeviceInfo("cpu", None, {"": "cpu"})
+    if value in {"auto", "balanced", "balanced_low_0", "sequential"}:
+        # auto infer device map for all available GPUs, takes free GPU memory
+        # into account. See #610 for issues
+        # https://huggingface.co/docs/accelerate/concept_guides/big_model_inference
+        return DeviceInfo("auto", None, value)
+
+    # CUDA/ROCm
+    if not torch.cuda.is_available():
+        raise ValueError(
+            f"{value}: Torch has no CUDA/ROCm support or could not detect "
+            "a compatible device."
+        )
     try:
-        return torch.device(value)
+        device = torch.device(value)
     except RuntimeError as e:
         raise ValueError(str(e)) from None
+    # map unqualified 'cuda' to current device
+    if device.index is None:
+        device = torch.device(device.type, torch.cuda.current_device())
+    # all layers on a single GPU
+    return DeviceInfo(device.type, device.index, {"": device.index})
 
 
-def report_cuda_device(device, min_vram=0):
+def report_cuda_device(args, min_vram=0):
     """Report CUDA/ROCm device properties"""
     print(f"  NVidia CUDA version: {torch.version.cuda or 'n/a'}")
     print(f"  AMD ROCm HIP version: {torch.version.hip or 'n/a'}")
-    name = torch.cuda.get_device_name(device)
-    free, total = torch.cuda.mem_get_info(device)
-    gib = 1024**3
-    free /= gib
-    total /= gib
-    print(f"  Device '{device}' is '{name}'")
-    print(f"  Free GPU memory: {free:.1f} GiB of {total:.1f} GiB")
+
+    def _gib(size: int) -> str:
+        return "{:.1f} GiB".format(size / 1024**3)
+
+    for idx in range(torch.cuda.device_count()):
+        device = torch.device("cuda", idx)
+        name = torch.cuda.get_device_name(device)
+        free, total = torch.cuda.mem_get_info(device)
+        print(f"  {device} is '{name}' ({_gib(free)} of {_gib(total)} free)")
+
+    if args.device.index is None:
+        index = torch.cuda.current_device()
+    else:
+        index = args.device.index
+
+    free = torch.cuda.mem_get_info(index)[0]
     if free < min_vram:
         print(
-            f"  WARNING: You have less than {min_vram} GiB of free "
-            "GPU memory. Training may fail on AMD ROCm or use slow"
-            "shared host memory on NVidia CUDA."
+            f"  WARNING: You have less than {min_vram} GiB of free GPU "
+            "memory on '{index}'. Training may fail, use slow shared "
+            "host memory, or move some layers to CPU."
         )
         print(
             "  Training does not use the local lab serve. Consider "
-            "stopping the server to free up ~5 GiB of GPU memory."
+            "stopping the server to free up about 5 GiB of GPU memory."
         )
 
 
@@ -113,10 +148,12 @@ def main(args_in: list[str] | None = None) -> None:
         help="number of epochs to run during training",
         default=None,
     )
+    # TODO: auto device mapping does not work for some people
+    # https://github.com/instruct-lab/cli/issues/610
     parser.add_argument(
         "--device",
         type=arg_device,
-        help="Enable GPU offloading to device ('cpu', 'cuda', 'cuda:0')",
+        help="Enable GPU offloading to device ('cpu', 'cuda', 'auto')",
         default="cpu",
     )
     # TODO: llamacpp_convert_to_gguf.py does not support quantized models, yet.
@@ -135,11 +172,16 @@ def main(args_in: list[str] | None = None) -> None:
     if args.four_bit_quant and args.device.type != "cuda":
         parser.error("4-bit quantization requires --device cuda\n")
 
-    print(f"LINUX_TRAIN.PY: PyTorch device is '{args.device}'")
-    if args.device.type == "cuda":
+    print(f"LINUX_TRAIN.PY: Using device'{args.device}'")
+    if args.device.type in {"auto", "cuda"}:
         # estimated by watching nvtop / radeontop during training
         min_vram = 11 if args.four_bit_quant else 17
-        report_cuda_device(args.device, min_vram)
+        report_cuda_device(args, min_vram)
+    if args.device.type == "auto":
+        print(
+            "LINUX_TRAIN.PY: WARNING: auto device map has issues, see "
+            "https://github.com/instruct-lab/cli/issues/610"
+        )
 
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", args.num_epochs)
     print("LINUX_TRAIN.PY: TRAIN FILE IS: ", args.train_file)
@@ -192,9 +234,11 @@ def main(args_in: list[str] | None = None) -> None:
         config=config,
         trust_remote_code=True,
         low_cpu_mem_usage=True,
+        # force less GPU memory for testing
+        max_memory={0: "8GiB", "cpu": "16GiB"},
+        device_map=args.device.device_map,
     )
-    if model.device != args.device:
-        model = model.to(args.device)
+    print(f"LINUX_TRAIN.PY: Model device {model.device}, map: {model.hf_device_map}")
 
     print("LINUX_TRAIN.PY: SANITY CHECKING THE BASE MODEL")
     stop_words = ["<|endoftext|>", "<|assistant|>"]
@@ -211,7 +255,7 @@ def main(args_in: list[str] | None = None) -> None:
     def model_generate(user):
         text = create_prompt(user=user)
 
-        input_ids = tokenizer(text, return_tensors="pt").input_ids.to(args.device)
+        input_ids = tokenizer(text, return_tensors="pt").input_ids.to(model.device)
         outputs = model.generate(
             input_ids=input_ids,
             max_new_tokens=256,
@@ -270,7 +314,7 @@ def main(args_in: list[str] | None = None) -> None:
         fp16=use_fp16,
         bf16=not use_fp16,
         # use_ipex=True, # TODO CPU test this possible optimization
-        use_cpu=args.device.type == "cpu",
+        use_cpu=model.device.type == "cpu",
         save_strategy="epoch",
         report_to="none",
     )
