@@ -76,7 +76,7 @@ def configure(ctx, param, filename):
 def cli(ctx, config):
     """CLI for interacting with InstructLab.
 
-    If this is your first time running lab, it's best to start with `lab init` to create the environment
+    If this is your first time running lab, it's best to start with `lab init` to create the environment.
     """
 
 
@@ -152,7 +152,7 @@ def init(
             clone_taxonomy_repo = False
         else:
             clone_taxonomy_repo = click.confirm(
-                f"`{taxonomy_path}` seems to not exists or is empty. Should I clone {repository} for you?"
+                f"`{taxonomy_path}` seems to not exist or is empty. Should I clone {repository} for you?"
             )
 
     # clone taxonomy repo if it needs to be cloned
