@@ -69,19 +69,13 @@ def arg_device(value) -> DeviceInfo:
     """Parse and convert device string
 
     Returns DeviceInfo object:
-    - type is one of 'cpu', 'cuda', 'auto' (for auto device map)
+    - type is one of 'cpu' or 'cuda')
     - index is None or CUDA/ROCm device index (0 for first GPU)
-    - device_map is a string or dict
+    - device_map is a dict
     """
     if value == "cpu":
         # all layers on CPU
         return DeviceInfo("cpu", None, {"": "cpu"})
-    if value in {"auto", "balanced", "balanced_low_0", "sequential"}:
-        # auto infer device map for all available GPUs, takes free GPU memory
-        # into account. See #610 for issues
-        # https://huggingface.co/docs/accelerate/concept_guides/big_model_inference
-        return DeviceInfo("auto", None, value)
-
     # CUDA/ROCm
     if not torch.cuda.is_available():
         raise ValueError(
@@ -153,7 +147,7 @@ def main(args_in: list[str] | None = None) -> None:
     parser.add_argument(
         "--device",
         type=arg_device,
-        help="Enable GPU offloading to device ('cpu', 'cuda', 'auto')",
+        help="Enable GPU offloading to device ('cpu', 'cuda', 'cuda:0')",
         default="cpu",
     )
     # TODO: llamacpp_convert_to_gguf.py does not support quantized models, yet.
@@ -172,16 +166,11 @@ def main(args_in: list[str] | None = None) -> None:
     if args.four_bit_quant and args.device.type != "cuda":
         parser.error("4-bit quantization requires --device cuda\n")
 
-    print(f"LINUX_TRAIN.PY: Using device'{args.device}'")
-    if args.device.type in {"auto", "cuda"}:
+    print(f"LINUX_TRAIN.PY: Using device '{args.device}'")
+    if args.device.type == "cuda":
         # estimated by watching nvtop / radeontop during training
         min_vram = 11 if args.four_bit_quant else 17
         report_cuda_device(args, min_vram)
-    if args.device.type == "auto":
-        print(
-            "LINUX_TRAIN.PY: WARNING: auto device map has issues, see "
-            "https://github.com/instruct-lab/cli/issues/610"
-        )
 
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", args.num_epochs)
     print("LINUX_TRAIN.PY: TRAIN FILE IS: ", args.train_file)
