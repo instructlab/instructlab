@@ -483,13 +483,13 @@ def chat(ctx, question, model, context, session, quick_question, greedy_mode):
 @cli.command()
 @click.option(
     "--repository",
-    default="ibm/merlinite-7b-GGUF", # TODO: add to config.yaml
+    default="ibm/merlinite-7b-GGUF",  # TODO: add to config.yaml
     show_default=True,
     help="Hugging Face repository of the model to download.",
 )
 @click.option(
     "--release",
-    default="main", # TODO: add to config.yaml
+    default="main",  # TODO: add to config.yaml
     show_default=True,
     help="The git revision of the model to download - e.g. a branch, tag, or commit hash.",
 )
@@ -529,7 +529,7 @@ def download(ctx, repository, release, filename, model_dir):
 @click.option(
     "--input-dir",
     type=click.Path(),
-    show_default=True, # TODO: set to None and change help message
+    show_default=True,  # TODO: set to None and change help message
     help="Path to generated files to use as input",
 )
 @click.option(
@@ -769,7 +769,8 @@ def train(
     default="ibm-merlinite-7b-mlx-q",
     show_default=True,
 )
-@click.option("--adapter-file",
+@click.option(
+    "--adapter-file",
     help="LoRA adapter to use for test.",
     default=None,
     show_default=True,
