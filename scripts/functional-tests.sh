@@ -110,6 +110,26 @@ EOF
 '
 }
 
+test_server_shutdown_while_chatting(){
+    # we don't want to fall into the trap function since the failure is expected
+    # so we force the command to return 0
+    timeout 10 lab serve || true &
+
+    # add the pid to the list of PID to kill in case something fails before the 5s timeout
+    PID_SERVE=$!
+
+    expect -c '
+        set timeout 30
+        spawn lab chat
+        expect ">>>"
+        send "hello!\r"
+        expect {
+            "Connection to the server was closed" { exit 0 }
+            timeout { exit 1 }
+        }
+    '
+}
+
 wait_for_pid_to_disappear(){
     for i in $(seq 1 20); do
         if ! test -d /proc/$1; then
@@ -194,5 +214,6 @@ cleanup
 test_loading_session_history
 cleanup
 test_generate
+test_server_shutdown_while_chatting
 
 exit 0
