@@ -144,16 +144,17 @@ def init(
         taxonomy_path = utils.expand_path(
             click.prompt("Path to taxonomy repo", default=taxonomy_path)
         )
-        try:
-            taxonomy_contents = os.listdir(taxonomy_path)
-        except FileNotFoundError:
-            taxonomy_contents = []
-        if taxonomy_contents:
-            clone_taxonomy_repo = False
-        else:
-            clone_taxonomy_repo = click.confirm(
-                f"`{taxonomy_path}` seems to not exists or is empty. Should I clone {repository} for you?"
-            )
+
+    try:
+        taxonomy_contents = os.listdir(taxonomy_path)
+    except FileNotFoundError:
+        taxonomy_contents = []
+    if taxonomy_contents:
+        clone_taxonomy_repo = False
+    elif interactive:
+        clone_taxonomy_repo = click.confirm(
+            f"`{taxonomy_path}` seems to not exists or is empty. Should I clone {repository} for you?"
+        )
 
     # clone taxonomy repo if it needs to be cloned
     if clone_taxonomy_repo:
@@ -165,11 +166,12 @@ def init(
                 Repo.clone_from(repository, taxonomy_path, branch="main", depth=1)
         except GitError as exc:
             click.secho(f"Failed to clone taxonomy repo: {exc}", fg="red")
+            click.secho(f"Please make sure to manually run `git clone {repository}`")
             raise click.exceptions.Exit(1)
 
     # check if models dir exists, and if so ask for which model to use
     models_dir = dirname(model_path)
-    if exists(models_dir):
+    if interactive and exists(models_dir):
         model_path = utils.expand_path(
             click.prompt("Path to your model", default=model_path)
         )
