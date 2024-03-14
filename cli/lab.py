@@ -27,7 +27,6 @@ if sys.platform == "darwin" and platform.machine() == "arm64":  # mlx requires m
 else:
     mlx_utils = None
 
-
 class Lab:
     """Lab object holds high-level information about lab CLI"""
 
@@ -85,28 +84,33 @@ def cli(ctx, config):
 @click.option(
     "--interactive/--non-interactive",
     default=True,
+    show_default=True,
     help="Initialize the environment assuming defaults.",
 )
 @click.option(
     "--model-path",
     type=click.Path(),
     default=config.DEFAULT_MODEL_PATH,
+    show_default=True,
     help="Path to the model used during generation.",
 )
 @click.option(
     "--taxonomy-base",
     default=config.DEFAULT_TAXONOMY_BASE,
+    show_default=True,
     help="Base git-ref to use when listing/generating new taxonomy.",
 )
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
     default=config.DEFAULT_TAXONOMY_PATH,
+    show_default=True,
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
 )
 @click.option(
     "--repository",
     default=config.DEFAULT_TAXONOMY_REPO,
+    show_default=True,
     help="Taxonomy repository location.",
 )
 @click.option(
@@ -311,6 +315,7 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
 @click.option(
     "--taxonomy-base",
     default=config.DEFAULT_TAXONOMY_BASE,
+    show_default=True,
     help="Base git-ref to use when generating new taxonomy.",
 )
 @click.option(
@@ -327,6 +332,7 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
     "--rouge-threshold",
     type=click.FLOAT,
     default=0.9,
+    show_default=True,
     help="Threshold of (max) Rouge score to keep samples; 1.0 means accept all samples.",
 )
 @click.option(
@@ -347,8 +353,8 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
 @click.option(
     "--api-key",
     type=click.STRING,
-    default=config.DEFAULT_API_KEY,
-    help="API key for API endpoint.",
+    default=config.DEFAULT_API_KEY,  # Note: do not expose default API key
+    help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
 )
 @click.pass_context
 def generate(
@@ -423,6 +429,7 @@ def generate(
     "-c",
     "--context",
     default="default",
+    show_default=True,
     help="Name of system context in config file",
 )
 @click.option(
@@ -475,13 +482,13 @@ def chat(ctx, question, model, context, session, quick_question, greedy_mode):
 @cli.command()
 @click.option(
     "--repository",
-    default="ibm/merlinite-7b-GGUF",
+    default="ibm/merlinite-7b-GGUF", # TODO: add to config.yaml
     show_default=True,
     help="Hugging Face repository of the model to download.",
 )
 @click.option(
     "--release",
-    default="main",
+    default="main", # TODO: add to config.yaml
     show_default=True,
     help="The git revision of the model to download - e.g. a branch, tag, or commit hash.",
 )
@@ -521,6 +528,7 @@ def download(ctx, repository, release, filename, model_dir):
 @click.option(
     "--input-dir",
     type=click.Path(),
+    show_default=True, # TODO: set to None and change help message
     help="Path to generated files to use as input",
 )
 @click.option(
@@ -531,16 +539,19 @@ def download(ctx, repository, release, filename, model_dir):
     "--tokenizer-dir",
     help="Base directory where tokenizer is stored.",
     default=None,
+    show_default=True,
 )
 @click.option(
     "--gguf-model-path",
     help="Local directory where gguf model is stored",
     default=None,
+    show_default=True,
 )
 @click.option(
     "--model-dir",
     help="Base directory where model is stored.",
     default="ibm/merlinite-7b",
+    show_default=True,
 )
 @click.option("--iters", help="Number of iterations to train LoRA", default=100)
 @click.option(
@@ -558,6 +569,7 @@ def download(ctx, repository, release, filename, model_dir):
     "--num-epochs",
     type=click.INT,
     default=1,  # TODO: change this to a more reasonable default
+    show_default=True,
     help="Whether to skip quantization while converting to MLX.",
 )
 @click.pass_context
@@ -745,14 +757,22 @@ def train(
 
 @cli.command()
 @click.option(
-    "--data-dir", help="Base directory where data is stored.", default="./taxonomy_data"
+    "--data-dir",
+    help="Base directory where data is stored.",
+    default="./taxonomy_data",
+    show_default=True,
 )
 @click.option(
     "--model-dir",
     help="Base directory where model is stored.",
     default="ibm-merlinite-7b-mlx-q",
+    show_default=True,
 )
-@click.option("--adapter-file", help="LoRA adapter to use for test.", default=None)
+@click.option("--adapter-file",
+    help="LoRA adapter to use for test.",
+    default=None,
+    show_default=True,
+)
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 # pylint: disable=function-redefined
 def test(data_dir, model_dir, adapter_file):
@@ -787,6 +807,7 @@ def test(data_dir, model_dir, adapter_file):
     "--model-dir",
     help="Base directory where model is stored.",
     default="ibm-merlinite-7b-mlx-q",
+    show_default=True,
 )
 @click.option("--adapter-file", help="LoRA adapter to fuse.", default=None)
 @click.option(
