@@ -12,13 +12,12 @@ for cmd in lab expect; do
 done
 
 PID1=
-PID2=
 PID_SERVE=
 PID_CHAT=
 
 cleanup() {
     set +e
-    for pid in $PID1 $PID2 $PID_SERVE $PID_CHAT; do
+    for pid in $PID1 $PID_SERVE $PID_CHAT; do
         if [ -n "$pid" ]; then
             kill $pid
         fi
@@ -67,8 +66,6 @@ test_bind_port(){
         eof
     }
 '
-    python -m http.server 9999 &
-    PID2=$!
 }
 
 test_ctx_size(){
