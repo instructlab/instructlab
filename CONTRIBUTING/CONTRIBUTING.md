@@ -8,9 +8,7 @@ The following is a set of guidelines for contributing. These are just guidelines
 
 ### Code of Conduct
 
-This project adheres to the [Contributor Covenant](./CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
-
-Please report unacceptable behavior to one of the [Code Owners](../CODEOWNERS).
+This project adheres to the [InstructLab/cli - Code of Conduct and Covenant](../CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
 ### How Do I Start Contributing?
 
