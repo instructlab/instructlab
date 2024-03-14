@@ -1,0 +1,21 @@
+---
+name: Spellcheck
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '**.md'
+
+permissions:
+  contents: read
+
+jobs:
+  spellcheck:
+    name: Spellcheck (en_US)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Spellcheck
+        uses: rojopolis/spellcheck-github-actions@0.35.0
