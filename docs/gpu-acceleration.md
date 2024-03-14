@@ -6,6 +6,8 @@ By default, `lab` will attempt to use your GPU for inference and synthesis. This
 
 ### Python 3.11 (Linux only)
 
+**NOTE:** This section may be outdated. At least AMD ROCm works fine with Python 3.12 and Torch 2.2.1+rocm5.7 binaries.
+
 Unfortunately, at the time of writing, `torch` does not have GPU-specific support for the latest Python (3.12), so if you're on Linux, it's recommended to set up a Python 3.11-specific `venv` and install `lab` to that to minimize issues. (MacOS ships Python 3.9, so this step shouldn't be necessary.) Here's how to do that on Fedora with `dnf`:
 
   ```Shell
@@ -85,6 +87,12 @@ Proceed to the `Initialize` section of the [CLI Readme](https://github.com/instr
 
 ### AMD/ROCm
 
+Your user account must be in the `video` and `render` group to have permission to access the GPU hardware. If the `id` command does not show both groups, then run the following command. You have to log out log and log in again to refresh your current user session.
+
+```shell
+sudo usermod -a -G render,video $LOGNAME
+```
+
 `torch` does not yet ship with AMD ROCm support, so you'll need to install a version compiled with support for it.
 
 Visit [Pytorch's "Get Started Locally" page](https://pytorch.org/get-started/locally/) and use the matrix installer tool to find the ROCm package. `Stable, Linux, Pip, Python, ROCm 5.7` in the matrix installer spits out the following command:
@@ -121,7 +129,7 @@ sudo dnf install hipblas-devel hipblas rocblas-devel
 
 With those dependencies installed, you should be able to install (and build) `llama-cpp-python`!
 
-You can use `rocminfo | grep gfx` to find our GPU model to include in the build command - this may not be necessary in Fedora 40+ or ROCm 6.0+.  You should see something like the following if you have an AMD Integrated and Dedicated GPU:
+You can use `rocminfo | grep gfx` from `rocminfo` package or `amdgpu-arch` from `clang-tools-extra` package to find our GPU model to include in the build command - this may not be necessary in Fedora 40+ or ROCm 6.0+.  You should see something like the following if you have an AMD Integrated and Dedicated GPU:
 ```
 $ rocminfo | grep gfx
   Name:                    gfx1100                            
@@ -131,13 +139,16 @@ $ rocminfo | grep gfx
 ```
 
 In this case, `gfx1100` is the model we're looking for (our dedicated GPU) so we'll include that in our build command as follows:
-```
+
+```shell
 CMAKE_ARGS="-DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ -DCMAKE_PREFIX_PATH=/opt/rocm -DAMDGPU_TARGETS=gfx1100" FORCE_CMAKE=1 pip install llama-cpp-python --force-reinstall --no-cache-dir
 ```
 
-**Note:** This is explicitly forcing the build to use the ROCm compilers and prefix path for dependency resolution in the CMake build.  This works around an issue in the CMake and ROCm version in Fedora 39 and below and may be fixed in F40.  
+**Note:** This is explicitly forcing the build to use the ROCm compilers and prefix path for dependency resolution in the CMake build.  This works around an issue in the CMake and ROCm version in Fedora 39 and below and is fixed in Fedora 40.  With Fedora 40's ROCm packages, use `CMAKE_ARGS="-DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DAMDGPU_TARGETS=gfx1100"` instead.
 
-Once that package is installed, recompile `lab` with `pip3 install .`.  You also need to tell `HIP` which GPU to use - you can find this out via `rocminfo` although it is typically GPU 0.  To set which device is visible to HIP, we'll set `export HIP_VISIBLE_DEVICES=0` for GPU 0. Now you can skip to the `Testing` section.
+Once that package is installed, recompile `lab` with `pip3 install .`.  You also need to tell `HIP` which GPU to use - you can find this out via `rocminfo` although it is typically GPU 0.  To set which device is visible to HIP, we'll set `export HIP_VISIBLE_DEVICES=0` for GPU 0.   You may also have to set `HSA_OVERRIDE_GFX_VERSION` to override ROCm's GFX version detection, for example `export HSA_OVERRIDE_GFX_VERSION=10.3.0` to force an unsupported `gfx1032` card to use use supported `gfx1030` version.  The environment variable `AMD_LOG_LEVEL` enables debug logging of ROCm libraries, for example `AMD_LOG_LEVEL=3` to print API calls to stderr.
+
+Now you can skip to the `Testing` section.
 
 #### CLBlast (OpenCL)
 
@@ -163,8 +174,38 @@ Once that package is installed, recompile `lab` with `pip3 install .` and skip t
 
 ### Testing
 
-Test your changes by chatting to the LLM. Run `lab serve` and `lab chat` and chat to the LLM. If you notice significantly faster inference, congratulations! You've enabled GPU acceleration. You should also notice that the `lab generate` step will take significantly less time.
+Test your changes by chatting to the LLM. Run `lab serve` and `lab chat` and chat to the LLM. If you notice significantly faster inference, congratulations! You've enabled GPU acceleration. You should also notice that the `lab generate` step will take significantly less time.  You can use tools like `nvtop` and `radeontop` to monitor GPU usage.
 
+The `torch` and `llama_cpp` packages provide functions to debug GPU support.  Here is an example from an AMD ROCm system with a single GPU, ROCm build of PyTorch and llama-cpp with HIPBLAS.  Don't be confused by the fact that PyTorch uses `torch.cuda` API for ROCm or llama-cpp reports HIPBLAS as CUBLAS.  The packages treat ROCm like a variant of CUDA.
+
+```python
+>>> import torch
+>>> torch.__version__
+'2.2.1+rocm5.7'
+>>> torch.version.cuda or 'n/a'
+'n/a'
+>>> torch.version.hip or 'n/a'
+'5.7.31921-d1770ee1b'
+>>> torch.cuda.is_available()
+True
+>>> torch.cuda.device_count()
+1
+>>> torch.cuda.get_device_name(torch.cuda.current_device())
+'AMD Radeon RX 7900 XT'
+```
+
+```python
+>>> import llama
+>>> llama_cpp.__version__
+'0.2.56'
+>>> llama_cpp.llama_supports_gpu_offload()
+True
+>>> llama_cpp.llama_backend_init()
+ggml_init_cublas: GGML_CUDA_FORCE_MMQ:   no
+ggml_init_cublas: CUDA_USE_TENSOR_CORES: yes
+ggml_init_cublas: found 1 ROCm devices:
+  Device 0: AMD Radeon RX 7900 XT, compute capability 11.0, VMM: no
+```
 
 ## Training
 
@@ -190,8 +231,8 @@ Incompatible devices
 lab train --device cuda
 ```
 
-```
-python3 .../cli/train/linux_train.py --train-file generated/train_merlinite-7b-Q4_K_M_2024-03-11T16_40_55.jsonl --test-file generated/test_merlinite-7b-Q4_K_M_2024-03-11T16_40_55.jsonl --num-epochs 1 --device cuda
+```shell
+python3 cli/train/linux_train.py --train-file generated/train_merlinite-7b-Q4_K_M_2024-03-11T16_40_55.jsonl --test-file generated/test_merlinite-7b-Q4_K_M_2024-03-11T16_40_55.jsonl --num-epochs 1 --device cuda
 LINUX_TRAIN.PY: PyTorch device is 'cuda:0'
   NVidia CUDA version: n/a
   AMD ROCm HIP version: 5.7.31921-d1770ee1b
