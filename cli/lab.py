@@ -230,7 +230,7 @@ def list(ctx, taxonomy_path, taxonomy_base):
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
-    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
+    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone or local file path.",
 )
 @click.option(
     "--taxonomy-base",
@@ -306,7 +306,7 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
-    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
+    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone or local file path.",
 )
 @click.option(
     "--taxonomy-base",
