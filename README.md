@@ -13,7 +13,7 @@
   - [🎁 Contribute knowledge or compositional skills](#-contribute-knowledge-or-compositional-skills)
   - [📜 List your new data](#-list-your-new-data)
   - [🚀 Generate a synthetic dataset](#-generate-a-synthetic-dataset)
-  - [👩‍🏫 Train the model](#-train-the-model) 
+  - [👩‍🏫 Train the model](#-train-the-model)
   - [🍴 Serve the newly trained model](#-serve-the-newly-trained-model)
   - [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
 - [🎁 Submit your new knowledge or skills](#-submit-your-new-knowledge-or-skills)
@@ -48,7 +48,7 @@ sudo yum install g++ python3 python3-devel
 ## ✅ Getting started
 ### 🧰 Installing `lab`
 
-To start, create a new directory called `instruct-lab` to store the files that the `lab` CLI needs when it runs.
+To start, create a new directory called `instruct-lab` to store the files the `lab` CLI needs when running.
 
 ```
 mkdir instruct-lab
@@ -85,7 +85,7 @@ Commands:
   train     Trains model
 ```
 
-**Every** `lab` command needs to be run from within your Python virtual environment. To enter the Python environment, run the following command: 
+**Every** `lab` command needs to be run from within your Python virtual environment. To enter the Python environment, run the following command:
 
 ```
 source venv/bin/activate
@@ -93,16 +93,16 @@ source venv/bin/activate
 
 ### 🏗️ Initialize `lab`
 
-```
+```shell
 lab init
 ```
-Initializing `lab` will: 
-1. Add a new, default `config.yaml` file. 
+Initializing `lab` will:
+1. Add a new, default `config.yaml` file.
 2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory.
 
-```
+```shell
 (venv) $ lab init
-Welcome to InstructLab CLI. This guide will help you to setup your environment.
+Welcome to InstructLab CLI. This guide will help you set up your environment.
 Please provide the following values to initiate the environment:
 Path to taxonomy repo [taxonomy]: <ENTER>
 `taxonomy` seems to not exists or is empty. Should I clone git@github.com:instruct-lab/taxonomy.git for you? [y/N]: y
@@ -111,8 +111,8 @@ Generating `config.yaml` in the current directory...
 Initialization completed successfully, you're ready to start using `lab`. Enjoy!
 ```
 
-`lab` will use the default configuration file unless otherwise specified.
-You can override this behavior for any `lab` command with the `--config` parameter.
+`lab` will use the default configuration file unless otherwise specified`.
+You can override this behavior with the `--config` parameter for any `lab` command.
 
 ### 📥 Download the model
 
@@ -144,7 +144,7 @@ Once the model is served and ready, you'll see the following output:
 INFO 2024-03-02 02:21:11,352 lab.py:201 Using model 'models/ggml-merlinite-7b-0302-Q4_K_M.gguf' with -1 gpu-layers and 4096 max context size.
 Starting server process
 After application startup complete see http://127.0.0.1:8000/docs for API.
-Press CTRL+C to shutdown server.
+Press CTRL+C to shut down the server.
 ```
 
 ### 📣 Chat with the model (Optional)
@@ -201,24 +201,24 @@ The next step is to generate a synthetic dataset based on your newly added knowl
 
 ```
 (venv) $ lab generate
-INFO 2024-02-29 19:09:48,804 lab.py:250 Generating model 'ggml-merlinite-7b-0302-Q4_K_M' using 10 cpus,
+INFO 2024-02-29 19:09:48,804 lab.py:250 Generating model 'ggml-merlinite-7b-0302-Q4_K_M' using 10 CPUs,
 taxonomy: '/home/username/instruct-lab/taxonomy' and seed 'seed_tasks.json'
 
 0%|##########| 0/100 Cannot find prompt.txt. Using default prompt.
 98%|##########| 98/100 INFO 2024-02-29 20:49:27,582 generate_data.py:428 Generation took 5978.78s
 ```
 
-The synthetic data set will be three files in the newly created `generated` directory that are named like: `generated*.json`, `test*.jsonl`, and `train*.jsonl`:
+The synthetic data set will be three files in the newly created `generated` directory named `generated*.json`, `test*.jsonl`, and `train*.jsonl`:
 ```
 (venv) $ ls generated/
  'generated_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.json'   'train_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
  'test_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
 ```
 
-> **NOTE:** ⏳ This can take over **1 hour+** to complete depending on your computing resources.
+> **NOTE:** ⏳ This can take over **1 hour** to complete, depending on your computing resources.
 
 It is also possible to run the generate step against a different model via an
-OpenAI compatible API. For example, the one spawned by `lab serve` or any remote or locally hosted LLM (e.g. via [ollama](ollama.ai/), [LM Studio](https://lmstudio.ai), etc.)
+OpenAI-compatible API. For example, the one spawned by `lab serve` or any remote or locally hosted LLM (e.g. via [ollama](ollama.ai/), [LM Studio](https://lmstudio.ai), etc.)
 
 ```
 lab generate --endpoint-url http://localhost:8000/v1
@@ -270,14 +270,14 @@ a PR or any further task.
 
 Stop the server you have running via `ctrl+c` in the terminal it is running in.
 
-Before serving the newly trained model you will need to convert it to work with 
-the `lab` cli. 
+Before serving the newly trained model you must convert it to work with
+the `lab` cli.
 
 ```
 lab convert
 ```
 
-Serve the newly trained model locally via `lab serve` with the `--model` 
+Serve the newly trained model locally via `lab serve` with the `--model`
 argument to specify your new model:
 
 ```
@@ -301,7 +301,7 @@ If you are interested in optimizing the quality of the model's responses, please
 
 ## 🎁 Submit your new knowledge or skills
 
-Of course the final step is, if you've improved the model, to open up a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy) that includes the `qna.yaml` files with your improved data. 
+Of course, the final step is, if you've improved the model, to open a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy) that includes the `qna.yaml` files with your improved data.
 
 ## 📬 Contributing
 

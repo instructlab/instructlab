@@ -16,9 +16,6 @@ from tests.schema import Config
 
 
 class TestLabInit(unittest.TestCase):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     # When using `from X import Y` you need to understand that Y becomes part
     # of your module, so you should use `my_modyle.Y`` to patch.
     # When using `import X`, you should use `X.Y` to patch.

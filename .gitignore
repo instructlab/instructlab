@@ -150,3 +150,6 @@ dmypy.json
 
 # config
 config.yaml
+
+# Spelling
+dictionary.dic

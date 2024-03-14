@@ -1,7 +1,7 @@
 Moving the stable tag
 =====================
 
-Because we do not have a PyPI package where folks can just install latest, our README.md instructions describe installing from the GitHub using a "stable" tag.
+Because we do not have a PyPI package where folks can just install latest, our `README.md` instructions describe installing from the GitHub using a "stable" tag.
 
 To support this, we move the stable tag to the latest release, as needed.
 
