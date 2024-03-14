@@ -27,6 +27,7 @@ if sys.platform == "darwin" and platform.machine() == "arm64":  # mlx requires m
 else:
     mlx_utils = None
 
+
 class Lab:
     """Lab object holds high-level information about lab CLI"""
 
