@@ -21,11 +21,13 @@ on:
       - "main"
     paths:
       - '**.py'
+      - 'tox.ini'
   pull_request:
     branches:
       - "main"
     paths:
       - '**.py'
+      - 'tox.ini'
 
 jobs:
   test:
