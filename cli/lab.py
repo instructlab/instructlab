@@ -218,11 +218,6 @@ def list(ctx, taxonomy_path, taxonomy_base):
         )
         return
     for f in updated_taxonomy_files:
-        if splitext(f)[1] != ".yaml":
-            click.secho(
-                f"WARNING: Found {f}! Use lowercase '.yaml' instead.", fg="yellow"
-            )
-            continue
         click.echo(f)
 
 

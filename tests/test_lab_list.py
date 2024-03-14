@@ -62,11 +62,6 @@ class TestLabList(unittest.TestCase):
             self.assertNotIn(tracked_file, result.output)
             self.assertEqual(result.exit_code, 0)
 
-    @pytest.mark.xfail(
-        reason="Invalid extensions are filtered within `get_taxonomy_diff()`, "
-        "before the check happens",
-        strict=True,
-    )
     def test_list_invalid_ext(self):
         untracked_file = "compositional_skills/writing/new/qna.YAML"
         self.taxonomy.create_untracked(untracked_file)
@@ -82,8 +77,8 @@ class TestLabList(unittest.TestCase):
                 ],
             )
             self.assertListEqual(self.taxonomy.untracked_files, [untracked_file])
-            self.assertIn("WARNING", result.output)
-            self.assertIn(untracked_file, result.output)
+            # Invalid extension is silently filtered out.
+            self.assertNotIn(untracked_file, result.output)
             self.assertEqual(result.exit_code, 0)
 
     # NOTE: The mock is needed as it is not clear how to trigger this exception.
