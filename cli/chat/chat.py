@@ -268,7 +268,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             self.greet(new=True, session_name=filepath)
         raise KeyboardInterrupt
 
-    def _handle_empty():
+    def _handle_empty(self):
         raise KeyboardInterrupt
 
     def _update_conversation(self, content, role):
