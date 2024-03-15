@@ -393,7 +393,7 @@ def generate_data(
         keep = 0
         assess_start = time.time()
         for instruction_data_entry in instruction_data:
-            # computing similarity with the pre-tokenzied instructions
+            # computing similarity with the pre-tokenized instructions
             new_instruction_tokens = scorer._tokenizer.tokenize(
                 instruction_data_entry["instruction"]
             )
