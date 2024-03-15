@@ -21,7 +21,8 @@ cleanup() {
             kill $pid
         fi
     done
-    rm -f test_ctx_size_lab_serve_output.txt
+    rm -f test_ctx_size_lab_serve_output.txt simple_math.yaml
+    set -e
 }
 
 trap cleanup EXIT QUIT INT TERM
@@ -104,12 +105,37 @@ EOF
     fi
 }
 
+test_generate(){
+    cat - <<EOF >  simple_math.yaml
+created_by: ci
+seed_examples:
+- question: what is 1+1
+  answer: it is 2
+- question: what is 1+3
+  answer: it is 4
+task_description: 'simple maths'
+EOF
 
+    sed -i -e 's/num_instructions:.*/num_instructions: 1/g' config.yaml
+
+    # This should be finished in a minut or so but time it out incase it goes wrong
+    timeout 5m lab generate --taxonomy-path simple_math.yaml
+
+    # Test if generated was created and contains files
+    ls -l generated/*
+    if [ $(cat $(ls -tr generated/generated_* | tail -n 1) | jq ". | length" ) -lt 1 ] ; then
+        echo "Not enough generated results"
+        exit 1
+    fi
+}
 
 ########
 # MAIN #
 ########
 test_bind_port
+cleanup
 test_ctx_size
+cleanup
+test_generate
 
 exit 0
