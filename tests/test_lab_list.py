@@ -93,7 +93,7 @@ class TestLabList(unittest.TestCase):
             )
             self.assertIsNone(result.exception)
             self.assertIn(
-                f'Couldn\'t find the taxonomy base branch "{taxonomy_base}" '
+                f'Couldn\'t find the taxonomy git ref "{taxonomy_base}" '
                 "from the current HEAD",
                 result.output,
             )
