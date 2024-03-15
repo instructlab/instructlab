@@ -83,18 +83,22 @@ test_bind_port(){
 }
 
 test_ctx_size(){
-    lab serve --max-ctx-size 1 &> "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" &
+    # A context size of 55 will allow a small message
+    lab serve --max-ctx-size 55 &> "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" &
     PID_SERVE=$!
 
     # Make sure the server has time to open the port
     # if "lab chat" tests it before its open then it will run its own server without --max-ctx-size 1
     sleep 5
 
+    # Should succeed
+    lab chat -qq "Hello"
+
     # the error is expected so let's ignore it to not fall into the trap
     set +e
-    # now chat with the server
+    # now chat with the server and exceed the context size
     lab chat &> "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" <<EOF &
-hello
+hello, I am a ci message that should not finish because I am too long for the context window, tell me about your day please, I love to hear all about it, tell me about the time you could only take 55 tokens
 EOF
     PID_CHAT=$!
     wait_for_pid_to_disappear $PID_CHAT
