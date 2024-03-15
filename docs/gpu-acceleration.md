@@ -38,7 +38,7 @@ Go to the project's Github to see the [supported backends](https://github.com/ab
 CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip3 install --force-reinstall --no-cache-dir llama-cpp-python
 ```
 
-Note: If you are using CUDA 12, you may need to use the following command instead to successfully build llama-cpp:
+> **NOTE:** If you are using CUDA 12, you may need to use the following command instead to successfully build llama-cpp:
 ```shell
 CUDACXX=/usr/local/cuda-12/bin/nvcc CMAKE_ARGS="-DLLAMA_CUBLAS=on -DCMAKE_CUDA_ARCHITECTURES=native" FORCE_CMAKE=1 pip3 install --force-reinstall --no-cache-dir --upgrade llama-cpp-python
 ```
