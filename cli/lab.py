@@ -578,7 +578,7 @@ def download(ctx, repository, release, filename, model_dir):
     type=click.INT,
     default=1,  # TODO: change this to a more reasonable default
     show_default=True,
-    help="The number of times the training data is passed through the training algorithm (Value is used on Linux platforms only).",
+    help="The number of times the training data is passed through the training algorithm. Please note that this value is used on Linux platforms only.",
 )
 @click.pass_context
 def train(
