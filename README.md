@@ -12,8 +12,10 @@
 - [💻 Creating new knowledge or skills and training the model](#-creating-new-knowledge-or-skills-and-training-the-model)
   - [🎁 Contribute knowledge or compositional skills](#-contribute-knowledge-or-compositional-skills)
   - [📜 List your new data](#-list-your-new-data)
+  - [📜 Check your new data](#-check-your-new-data)
   - [🚀 Generate a synthetic dataset](#-generate-a-synthetic-dataset)
   - [👩‍🏫 Train the model](#-train-the-model)
+  - [Test the newly trained model](#-test-the-newly-trained-model)
   - [🍴 Serve the newly trained model](#-serve-the-newly-trained-model)
   - [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
 - [🎁 Submit your new knowledge or skills](#-submit-your-new-knowledge-or-skills)
@@ -121,7 +123,7 @@ Generating `config.yaml` in the current directory...
 Initialization completed successfully, you're ready to start using `lab`. Enjoy!
 ```
 
-`lab` will use the default configuration file unless otherwise specified`.
+`lab` will use the default configuration file unless otherwise specified.
 You can override this behavior with the `--config` parameter for any `lab` command.
 
 ### 📥 Download the model
@@ -254,11 +256,7 @@ lab generate --endpoint-url http://localhost:8000/v1
 
 There are three options to train the model on your synthetic data-enhanced dataset.
 
-> **Note:** **Every** `lab` command needs to be run from within your Python virtual environment. `lab train` outputs a brand-new model that can be served in the `models` directory called `ggml-model-f16.gguf`. Model trained on the cloud will be saved on the cloud
-```
-(venv) $ ls models
-ggml-merlinite-7b-0302-Q4_K_M.gguf  ggml-model-f16.gguf
-```
+> **Note:** **Every** `lab` command needs to be run from within your Python virtual environment.
 
 #### Train the model locally on Linux
 
@@ -268,15 +266,30 @@ lab train
 
 > **NOTE:** ⏳ This step can take **several hours** to complete depending on your computing resources.
 
-#### Train the model locally on an M-series Mac:
+`lab train` outputs a brand-new model that can be served in the `models` directory called `ggml-model-f16.gguf`.
+```
+ (venv) $ ls models
+ ggml-merlinite-7b-0302-Q4_K_M.gguf  ggml-model-f16.gguf
+```
+
+#### Train the model locally on an M-series Mac
 
 To train the model locally on your M-Series Mac is as easy as running:
 ```
 lab train
 ```
 
-⏳ This process will take a little while to complete (time can vary based on hardware
+> **Note:** ⏳ This process will take a little while to complete (time can vary based on hardware
 and output of `lab generate` but on the order of 20 minutes to 1+ hours)
+
+`lab train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory called `adapters.npz` (in Numpy's compressed array format). For example:
+```
+(venv) $ ls ibm-merlinite-7b-mlx-q
+adapters-010.npz        adapters-050.npz        adapters-090.npz        config.json             tokenizer.model
+adapters-020.npz        adapters-060.npz        adapters-100.npz        model.safetensors       tokenizer_config.json
+adapters-030.npz        adapters-070.npz        adapters.npz            special_tokens_map.json
+adapters-040.npz        adapters-080.npz        added_tokens.json       tokenizer.jso
+```
 
 #### Training the model in the cloud
 
@@ -286,15 +299,25 @@ Follow the instructions in [Training](./notebooks/README.md).
 - *Google Colab*: **0.5-2.5 hours** with a T4 GPU
 - *Kaggle*: **~8 hours** with a P100 GPU.
 
-After that's done, you can play with your model directly in the Google Colab or Kaggle notebook.
+After that's done, you can play with your model directly in the Google Colab or Kaggle notebook. Model trained on the cloud will be saved on the cloud.
 The model can also be downloaded and served locally.
+
+### 📜 Test the newly trained model
+
+```
+lab test
+```
+
+To ensure the model correctness, you can run `lab test`.
+
+The output from the command will consist of a series of outputs from the model before and after training.
 
 ### 🍴 Serve the newly trained model
 
 Stop the server you have running via `ctrl+c` in the terminal it is running in.
 
 Before serving the newly trained model you must convert it to work with
-the `lab` cli. The `lab convert` command converts the new model into [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format which is required by the server to host the model in the `lab serve` command.
+the `lab` cli. The `lab convert` command converts the new model into quantized [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format which is required by the server to host the model in the `lab serve` command.
 
 ```
 lab convert
