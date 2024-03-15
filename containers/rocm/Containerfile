@@ -1,0 +1,98 @@
+# Christian Heimes <cheimes@redhat.com>
+# Based on Zack Zlotnik's container file
+
+# runtime container has libraries, CLI tools, and virtual env
+FROM registry.fedoraproject.org/fedora-toolbox:40 AS runtime
+# args and env (default to gfx1100, GFX level 11.0.0, first GPU only)
+ARG AMDGPU_ARCH=gfx1100
+ARG HSA_OVERRIDE_GFX_VERSION=11.0.0
+ARG HIP_VISIBLE_DEVICES=0
+ARG PYTORCH_ROCM_VERSION=5.7
+ENV AMDGPU_ARCH="${AMDGPU_ARCH}"
+ENV HIP_VISIBLE_DEVICES="${HIP_VISIBLE_DEVICES}"
+ENV HSA_OVERRIDE_GFX_VERSION="${HSA_OVERRIDE_GFX_VERSION}"
+ENV PYTORCH_ROCM_VERSION="${PYTORCH_ROCM_VERSION}"
+# runtime dependencies
+COPY containers/rocm/remove-gfx.sh /tmp/
+RUN --mount=type=cache,target=/var/cache/dnf,z \
+    dnf install -y --nodocs --setopt=install_weak_deps=False --setopt=keepcache=True \
+    rocm-runtime hipblas hiprand hipsparse lld-libs python3-pip nvtop radeontop make git gh && \
+    /tmp/remove-gfx.sh
+# virtual env, umask 0000 to allow end-user to write to venv later
+ENV VIRTUAL_ENV="/opt/rocm-venv"
+RUN umask 0000 && \
+    python3 -m venv ${VIRTUAL_ENV}
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
+ENV PS1="(rocm-venv) ${PS1}"
+# additional helpers to debug torch and llama
+COPY containers/bin/debug-* ${VIRTUAL_ENV}/bin
+
+
+# build env contains compilers and build dependencies
+FROM runtime AS buildenv
+RUN --mount=type=cache,target=/var/cache/dnf,z \
+    dnf install -y --nodocs --setopt=keepcache=True \
+    llvm compiler-rt clang-tools-extra lld python3-devel cmake ninja-build gcc \
+    rocblas-devel hip-devel hipblas-devel rocprim-devel rocthrust-devel hipsparse-devel hipcub-devel hiprand-devel
+
+
+FROM buildenv AS pytorch
+COPY requirements.txt ${VIRTUAL_ENV}/
+# pip constraint does not support optional dependencies.
+RUN sed 's/\[.*\]//' ${VIRTUAL_ENV}/requirements.txt > ${VIRTUAL_ENV}/constraints.txt
+# chcon to work around pip's SELinux context shenanigans
+RUN --mount=type=cache,target=/root/.cache/pip,z \
+    umask 0000 && \
+    ${VIRTUAL_ENV}/bin/pip install torch --index-url https://download.pytorch.org/whl/rocm${PYTORCH_ROCM_VERSION} && \
+    /tmp/remove-gfx.sh && \
+    $(chcon -R -l s0 /root/.cache/pip 2>/dev/null || true)
+
+FROM pytorch AS llama
+# remove cached wheel to force rebuild
+RUN --mount=type=cache,target=/root/.cache/pip,z \
+    pip cache remove llama_cpp_python && \
+    umask 0000 && \
+    CMAKE_ARGS="-DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DAMDGPU_TARGETS=${AMDGPU_ARCH}" \
+    FORCE_CMAKE=1 \
+    ${VIRTUAL_ENV}/bin/pip install -c ${VIRTUAL_ENV}/constraints.txt llama-cpp-python && \
+    $(chcon -R -l s0 /root/.cache/pip 2>/dev/null || true)
+
+
+FROM llama AS bitsandbytes
+RUN git clone --depth 1 -b rocm https://github.com/arlo-phoenix/bitsandbytes-rocm-5.6.git /tmp/bitsandbytes
+RUN git clone --depth 1 -b rocm-6.0.2 https://github.com/ROCm/hipBLASLt /tmp/hipblaslt
+RUN mkdir -p /tmp/bitsandbytes/include/hipblaslt && \
+    echo -e '#pragma once\n#ifndef HIPBLASLT_EXPORT\n#define HIPBLASLT_EXPORT\n#endif' > /tmp/bitsandbytes/include/hipblaslt/hipblaslt-export.h && \
+    touch /tmp/bitsandbytes/include/hipblaslt/hipblaslt-version.h && \
+    cp /tmp/hipblaslt/library/include/* /tmp/bitsandbytes/include/hipblaslt/
+RUN cd /tmp/bitsandbytes && \
+    make hip ROCM_TARGET="${AMDGPU_ARCH}" && \
+    umask 0000 && \
+    pip install -c ${VIRTUAL_ENV}/constraints.txt . && \
+    $(chcon -R -l s0 /root/.cache/pip 2>/dev/null || true)
+
+
+# install from requirements.txt last. pip does not override installed
+# packages unless there is a version conflict.
+FROM bitsandbytes AS pip-install
+RUN --mount=type=cache,target=/root/.cache/pip,z \
+    umask 0000 && \
+    ${VIRTUAL_ENV}/bin/pip install -r ${VIRTUAL_ENV}/requirements.txt && \
+    $(chcon -R -l s0 /root/.cache/pip 2>/dev/null || true)
+# debug and self-test
+RUN export
+RUN pip list
+# the attribute error from bitsandbytes is harmless
+RUN python3 -Wignore -c 'import llama_cpp, torch, bitsandbytes' 2>&1 | grep -v NoneType
+RUN find ${VIRTUAL_ENV} -name __pycache__ | xargs rm -rf
+
+
+# create final image from base runtime, copy virtual env into final stage
+FROM runtime as final
+COPY --from=pip-install /opt/rocm-venv/lib/python3.12/site-packages /opt/rocm-venv/lib/python3.12/site-packages
+COPY --from=pip-install /opt/rocm-venv/bin /opt/rocm-venv/bin
+LABEL com.github.containers.toolbox="true" \
+      name="instructlab-rocm-base-gfx${GFX_VERSION}" \
+      usage="This image is meant to be used with the toolbox(1) command" \
+      summary="PyTorch, llama.cpp, and instruct-lab dependencies for AMD ROCm GPU ${AMDGPU_ARCH}" \
+      maintainer="Christian Heimes <cheimes@redhat.com>"
