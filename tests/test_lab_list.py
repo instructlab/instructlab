@@ -3,7 +3,6 @@ import unittest
 
 # Third Party
 from click.testing import CliRunner
-from git import NoSuchPathError
 import pytest
 
 # First Party
@@ -113,5 +112,6 @@ class TestLabList(unittest.TestCase):
                     taxonomy_path,
                 ],
             )
-            self.assertIsInstance(result.exception, NoSuchPathError)
-            self.assertEqual(result.exit_code, 1)
+            self.assertIsNone(result.exception)
+            self.assertIn(f"{taxonomy_path}", result.output)
+            self.assertEqual(result.exit_code, 0)

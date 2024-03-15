@@ -211,7 +211,7 @@ def list(ctx, taxonomy_path, taxonomy_base):
         taxonomy_path = ctx.obj.config.generate.taxonomy_path
     try:
         updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
-    except SystemExit as exc:
+    except (SystemExit, GitError) as exc:
         click.secho(
             f"Generating dataset failed with the following error: {exc}",
             fg="red",
