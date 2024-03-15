@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # based on Steffen Röcker's gist
 # https://gist.github.com/sroecker/f52646023d45ab4e281ddee05d6ef2a5
+# Standard
 import os
 
+# Third Party
 import torch
 
 print(f"pytorch version: {torch.__version__}")

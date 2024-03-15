@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 
+# Standard
 import argparse
 import os
 import sys
 import time
 
+# Third Party
 import llama_cpp
 
 PROMPT = "Q: What is the answer to the ultimate question of life, the universe, and everything? A:"
@@ -27,6 +29,7 @@ def main(argv=None):
     print(f"n_gpu_layers: {n_gpu_layers} ({args.device})")
 
     if args.model is None:
+        # First Party
         from cli.config import read_config
 
         cfg = read_config()
