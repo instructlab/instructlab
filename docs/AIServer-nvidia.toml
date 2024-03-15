@@ -1,0 +1,321 @@
+name = "AIServer-nvidia"
+distro = "fedora-39"
+version = "0.0.5"
+
+packages = [
+    { name = "openssh-server" },
+    { name = "podman" },
+    { name = "podman-compose" },
+    { name = "container-selinux" },
+    { name = "slirp4netns" },
+    { name = "containernetworking-plugins" },
+    { name = "tmux" },
+    { name = "gdisk" },
+    { name = "rsync" },
+    { name = "xorg-x11-drv-nvidia-cuda" },
+    { name = "nvidia-container-toolkit" },
+    { name = "akmod-nvidia" },
+    { name = "kmod-nvidia" },
+    { name = "setools-console" },
+    { name = "git" },
+    { name = "policycoreutils-python-utils" },
+    { name = "python3-devel" },
+    { name = "python3-pip" },
+    { name = "python3.11" },
+    { name = "g++" },
+    { name = "cmake" }
+  ]
+
+[[customizations.filesystem]]
+mountpoint = "/"
+# 10GB
+minsize = 10737418240
+
+[[containers]]
+source = "docker.io/ollama/ollama:latest"
+[[containers]]
+source = "ghcr.io/ollama-webui/ollama-webui:main"
+
+[customizations.kernel]
+append = "nouveau.modeset=0"
+
+[customizations.locale]
+languages = ["en_US.UTF-8"]
+keyboard = "de"
+
+[customizations.timezone]
+timezone = "Europe/Vienna"
+
+[[customizations.sshkey]]
+user = "root"
+
+# CHANGE THIS KEY
+key = "ssh-rsa YOUR_KEY_HERE user@computer"
+
+[[customizations.user]]
+name = "ollama"
+description = "Administrator account and runner for the containers"
+
+# CHANGE THIS PASSWORD
+password = "$6$rC3RfYctazcOuwo/$bYvjKsS9.L.TAnYUhdlqaL81K1/CZnYNcp40ldv8niWVJ0hYtbNOAEC6lfQRdTeAbbleNC9weKhz6IEKDftqP."
+
+# CHANGE THIS KEY
+key = "ssh-rsa YOUR_KEY_HERE user@computer"
+home = "/home/ollama"
+shell = "/bin/bash"
+groups = [ "users", "wheel"]
+
+[customizations.services]
+enabled = ["ollama-webui", "firstboot-tasks"]
+disabled = [ "initial-setup" ]
+
+[[customizations.repositories]]
+id = "rpmfusion-nonfree-nvidia-driver"
+name="rpmfusion-nonfree-nvidia-driver"
+baseurls=[ "https://download1.rpmfusion.org/nonfree/fedora/nvidia-driver/39/x86_64" ]
+gpgcheck=true
+gpgkeys = [ "https://download1.rpmfusion.org/nonfree/fedora/RPM-GPG-KEY-rpmfusion-nonfree-fedora-2020" ]
+enabled=true
+
+[[customizations.repositories]]
+id = "nvidia-container-toolkit"
+name="nvidia-container-toolkit"
+baseurls=[ "https://nvidia.github.io/libnvidia-container/stable/rpm/x86_64" ]
+gpgcheck=true
+gpgkeys = [ "https://nvidia.github.io/libnvidia-container/gpgkey" ]
+enabled=true
+
+[[customizations.repositories]]
+id = "nvidia-container-toolkit-experimental"
+name="nvidia-container-toolkit-experimental"
+baseurls=[ "https://nvidia.github.io/libnvidia-container/experimental/rpm/x86_64" ]
+gpgcheck=true
+gpgkeys = [ "https://nvidia.github.io/libnvidia-container/gpgkey" ]
+enabled=true
+
+[[customizations.repositories]]
+id = "nvidia-cuda"
+name="nvidia-cuda"
+baseurls=[ "https://developer.download.nvidia.com/compute/cuda/repos/fedora39/x86_64" ]
+gpgcheck=true
+gpgkeys = [ "http://developer.download.nvidia.com/compute/cuda/repos/fedora39/x86_64/D42D0685.pub" ]
+enabled=false
+
+
+# place the compose file to be moved upon first boot
+[[customizations.files]]
+path = "/etc/ollama-compose.yaml"
+user = "ollama"
+group = "ollama"
+data = """
+version: '3.6'
+
+services:
+  ollama:
+    container_name: ollama
+    devices:
+      - nvidia.com/gpu=all
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    image: ollama/ollama:latest
+    volumes:
+      - /var/lib/ollama/ollama-data:/root/.ollama:z
+    ports:
+      - "11434:11434"
+    restart: unless-stopped
+  ollama-webui:
+    container_name: ollama-webui
+    image: ghcr.io/ollama-webui/ollama-webui:main
+    ports:
+        - "8080:8080"
+    extra_hosts:
+        - host.docker.internal:host-gateway
+    environment:
+        OLLAMA_API_BASE_URL: "http://ollama:11434/api"
+    volumes:
+        - /var/lib/ollama/ollama-webui:/app/backend/data:z
+    restart: unless-stopped
+"""
+
+[customizations.firewall]
+ports = ["8080:tcp"]
+
+[[customizations.files]]
+path = "/etc/selinux/targeted/contexts/files/file_contexts.local"
+data = """
+/var/lib/ollama(/.*)?    system_u:object_r:container_file_t:s0
+"""
+
+# start ollama containers as root for now due to
+# pre-filled container store, and networking
+[[customizations.files]]
+path = "/etc/systemd/system/ollama-webui.service"
+data = """
+[Unit]
+Description=Ollama WebUI with ollama AI Server
+ConditionPathExists=!/etc/firstboot-tasks.touch
+
+[Service]
+User=ollama
+WorkingDirectory=/var/lib/ollama
+ExecStart=/usr/bin/podman-compose up
+ExecStop=/usr/bin/podman-compose down
+
+[Install]
+WantedBy=multi-user.target
+"""
+
+[[customizations.files]]
+path = "/etc/systemd/system/colab-worker.service"
+data = """[Unit]
+Description=Colab Worker
+
+[Service]
+ExecStart=/usr/bin/podman run --security-opt label=disable --device=nvidia.com/gpu=all -p 127.0.0.1:9000:8080 us-docker.pkg.dev/colab-images/public/runtime
+
+[Install]
+WantedBy=multi-user.target
+"""
+
+[[customizations.directories]]
+path = "/etc/selinux/targeted/modules/active/modules/custom"
+ensure_parents = true
+
+[[customizations.files]]
+path = "/etc/selinux/targeted/modules/active/modules/custom/ollama_device.te"
+data = """module ollama_device 1.0;
+
+require {
+    type container_t;
+    type xserver_misc_device_t;
+    class chr_file { getattr read write open ioctl map };
+}
+
+# Allow container_t to getattr and read xserver_misc_device_t chr_file
+allow container_t xserver_misc_device_t:chr_file { getattr read write open ioctl map };
+"""
+
+
+[[customizations.files]]
+path = "/etc/systemd/system/firstboot-tasks.service"
+data = """[Unit]
+Description=Do all kinds of firstboot tasks
+ConditionPathExists=/etc/firstboot-tasks.touch
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/usr/bin/systemctl start systemd-growfs-root
+ExecStart=/usr/bin/mkdir -p /var/lib/ollama/ollama-data
+ExecStart=/usr/bin/mkdir -p /var/lib/ollama/ollama-webui
+ExecStart=/usr/bin/mv -Z /etc/ollama-compose.yaml /var/lib/ollama/compose.yaml
+ExecStart=/usr/bin/chown -R ollama: /var/lib/ollama
+ExecStart=/usr/sbin/restorecon -Rv /var/lib/ollama
+
+ExecStart=/usr/bin/checkmodule -M -m -o /etc/selinux/targeted/modules/active/modules/custom/ollama_device.mod /etc/selinux/targeted/modules/active/modules/custom/ollama_device.te
+ExecStart=/usr/bin/semodule_package -o /etc/selinux/targeted/modules/active/modules/custom/ollama_device.pp -m /etc/selinux/targeted/modules/active/modules/custom/ollama_device.mod
+ExecStart=/usr/sbin/semodule -i /etc/selinux/targeted/modules/active/modules/custom/ollama_device.pp
+
+ExecStart=systemctl restart systemd-sysctl.service
+
+ExecStart=/usr/bin/loginctl enable-linger ollama
+ExecStart=/usr/bin/mkdir -p /home/ollama/.local/share/containers
+ExecStart=/usr/bin/cp -rZ /var/lib/containers/storage /home/ollama/.local/share/containers
+ExecStart=/usr/bin/chown -R ollama: /home/ollama
+ExecStart=/usr/sbin/restorecon -Rv /home/ollama
+
+ExecStart=/usr/bin/dnf config-manager --enable nvidia-cuda
+ExecStart=/usr/bin/dnf install -y cuda-toolkit nvtop
+ExecStart=/usr/bin/rm /etc/firstboot-tasks.touch
+
+[Install]
+WantedBy=multi-user.target
+"""
+
+# Indicate that we never did firstboot tasks
+[[customizations.files]]
+path = "/etc/firstboot-tasks.touch"
+data = """ Trigger to firstboot tasks - file is removed after first run
+"""
+
+# Keep logs in RAM (less IO - no persistence needed
+[[customizations.files]]
+path = "/etc/systemd/journald.conf"
+data = """
+[Journal]
+Storage=volatile
+RuntimeMaxUse=500M
+"""
+
+# Do not conflict with BIOS-RTC settings of Windows
+[[customizations.files]]
+path = "/etc/adjtime"
+data = """
+0.0 0 0.0
+0
+LOCAL
+"""
+
+[[customizations.directories]]
+path = "/etc/systemd/system/user@1000.service.d"
+ensure_parents = true
+
+[[customizations.files]]
+path = "/etc/systemd/system/user@1000.service.d/home.conf"
+data = """[Unit]
+RequiresMountsFor=/home/ollama
+"""
+
+# Grow the root partition on boot
+[[customizations.directories]]
+path = "/etc/repart.d"
+
+[[customizations.files]]
+path = "/etc/repart.d/grow_root.conf"
+data = """[Partition]
+Type=linux-generic
+"""
+
+# TODO test if step 01 and 02 can be done with one reboot
+[[customizations.files]]
+path = "/root/01_sign_nvidia_and_reboot.sh"
+mode = "0755"
+data = """
+if [ -f /etc/firstboot-tasks.touch ] ; then
+  echo "You need to wait longer until all installation is done"
+  echo "Check the status by calling:"
+  echo "sudo systemctl status firstboot-tasks.service"
+  echo "or even look at the live output with:"
+  echo "journalctl -fu firstboot-tasks.service"
+  exit 1
+fi
+
+set -euxo pipefail
+
+echo "Recompiling kernel modules"
+sudo akmods --force
+sudo dracut --force
+
+echo "Just type any simple password and give it to 'Enroll MOK' in bios after automatic REBOOT"
+sudo mokutil --import /etc/pki/akmods/certs/public_key.der
+sudo reboot
+"""
+
+[[customizations.files]]
+path = "/root/02_register_gpu_with_podman.sh"
+mode = "0755"
+data = """
+nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+nvidia-ctk cdi list
+
+echo "you might need to restart the services now"
+echo "sudo systemctl restart ollama-webui"
+"""
+
