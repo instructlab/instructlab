@@ -1,5 +1,7 @@
 # InstructLab 🥼 (`lab`)
 
+just to test functional tests
+
 ## 📖 Contents
 - [❓What is `lab`](#-what-is-lab)
 - [📋 Requirements](#-requirements)

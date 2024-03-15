@@ -221,6 +221,7 @@ def list(ctx, taxonomy_path, taxonomy_base):
         return
     for f in updated_taxonomy_files:
         click.echo(f)
+        click.echo(f)
 
 
 @cli.command()
