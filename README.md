@@ -63,7 +63,7 @@ pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
 ```
 > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection, if g++ is not found try 'gcc-c++'
 
-> **Note:** The steps shown in this document use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. If you have used [pyenv](https://github.com/pyenv/pyenv), [Conda Miniforge](https://github.com/conda-forge/miniforge) or another tool for Python version management on your laptop, then use the virtual environment with that tool instead. Otherwise, you may have issues with packages installed but modules from that package not found as they are linked to you Python version management tool and not `venv`.
+> **Note:** The steps shown in this document use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. However, if for managing Python environments on your machine you use another tool such as [pyenv](https://github.com/pyenv/pyenv) or [Conda Miniforge](https://github.com/conda-forge/miniforge) continue to use that tool instead. Otherwise, you may have issues with packages that are installed but not found in `venv`.
 
 If `lab` is installed correctly, you can test the lab command:
 
@@ -108,7 +108,7 @@ lab init
 Initializing `lab` will:
 
 1. Add a new, default `config.yaml` file.
-2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory. If you want to point to an existing local clone of the `taxonomy` respoitory then pass the path interactively or alternatively with the `--taxonomy-path` flag.
+2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory. If you want to point to an existing local clone of the `taxonomy` respository then pass the path interactively or alternatively with the `--taxonomy-path` flag.
 
 ```shell
 (venv) $ lab init
@@ -165,7 +165,7 @@ source venv/bin/activate
 lab chat
 ```
 
-Before you start adding new skills and knowledge to your model, you can check out its baseline performance (model needs to be trained with the generated synthetic data to use new skills or knowledge):
+Before you start adding new skills and knowledge to your model, you can check out its baseline performance (the model needs to be trained with the generated synthetic data to use the new skills or knowledge):
 
 ```
 (venv) $ lab chat
@@ -186,7 +186,7 @@ Before you start adding new skills and knowledge to your model, you can check ou
 
 Contribute new knowledge or compositional skills to your local [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository.
 
-Detailed contribution instructions can be found on the [taxonomy GitHub](https://github.com/instruct-lab/taxonomy/blob/main/README.md).
+Detailed contribution instructions can be found in the [taxonomy respoitory](https://github.com/instruct-lab/taxonomy/blob/main/README.md).
 
 ### 📜 List your new data
 
@@ -294,7 +294,7 @@ The model can also be downloaded and served locally.
 Stop the server you have running via `ctrl+c` in the terminal it is running in.
 
 Before serving the newly trained model you must convert it to work with
-the `lab` cli. The convert command converts the new model into [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format which is required by the server to host the model in the `lab serve` command.
+the `lab` cli. The `lab convert` command converts the new model into [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format which is required by the server to host the model in the `lab serve` command.
 
 ```
 lab convert
