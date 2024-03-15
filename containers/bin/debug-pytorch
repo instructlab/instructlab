@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+# based on Steffen Röcker's gist
+# https://gist.github.com/sroecker/f52646023d45ab4e281ddee05d6ef2a5
+import os
+
+import torch
+
+print(f"pytorch version: {torch.__version__}")
+print(f"HSA_OVERRIDE_GFX_VERSION={os.environ.get('HSA_OVERRIDE_GFX_VERSION')}")
+print(f"HIP_VISIBLE_DEVICES={os.environ.get('HIP_VISIBLE_DEVICES')}")
+print(f"GPU available: {torch.cuda.is_available()}")
+print(f"NVidia CUDA version: {torch.version.cuda or 'n/a'}")
+print(f"AMD ROCm HIP version: {torch.version.hip or 'n/a'}")
+print()
+if torch.cuda.is_available():
+    print(f"device count: {torch.cuda.device_count()}")
+    print(f"current device: {torch.cuda.current_device()}")
+    for idx in range(torch.cuda.device_count()):
+        print(f"  device {idx}: {torch.cuda.get_device_name(idx)}")
+    device = torch.device("cuda", torch.cuda.current_device())
+else:
+    device = torch.device("cpu")
+
+print(f"Testing with {device}")
+print()
+print("small matmul")
+a = torch.rand(3, 3).to(device)
+b = torch.rand(3, 3).to(device)
+res = torch.matmul(a, b)
+print(res)
+print(res.size())
+
+print()
+print("larger matmul")
+a = torch.rand(1280, 1280).to(device)
+b = torch.rand(1280, 1280).to(device)
+res = torch.matmul(a, b)
+print(res)
+print(res.size())

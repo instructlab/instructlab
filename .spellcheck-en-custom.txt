@@ -19,6 +19,8 @@ PEFT
 PlantUML
 PyPI
 Quantizing
+RDNA
+ROCm
 cli
 compositional
 cpp
@@ -26,6 +28,7 @@ dataset
 dev
 ditaa
 dr
+env
 gpu
 lora
 orchestrator
