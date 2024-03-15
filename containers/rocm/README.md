@@ -11,9 +11,9 @@ The container has all Python dependencies installed in a virtual env. The virtua
 1. git clone the `cli` and `taxonomy` project into a common folder in your
    home directory (e.g. `~/path/to/instruct-lab`)
 2. add your account to `render` and `video` group: `sudo usermod -a -G render,video $LOGNAME`
-3. install build dependency for this container: `sudo dnf install toolbox podman make`
-4. build the container for RDNA3: `podman build -t localhost/instructlab:rocm-gf1100 -f container/rocm/Containerfile .`
-5. create a toolbox `toolbox create --image localhost/instructlab:rocm-gf1100 instructlab`
+3. install build dependency for this container: `sudo dnf install toolbox podman make rocminfo`
+4. build the container: `make rocm`
+5. create a toolbox `make rocm-toolbox`
 6. enter toolbox `toolbox enter instructlab`. The container has your
    home directory mounted.
 7. install lab cli with `pip install -e ~/path/to/instruct-lab/cli/`
@@ -66,15 +66,6 @@ Build the container with additional build arguments:
 podman build \
     --build-arg AMDGPU_ARCH="gfx1030" \
     --build-arg HSA_OVERRIDE_GFX_VERSION="10.3.0" \
-    -f container/rocm/Containerfile \
-    -t localhost/instructlab:rocm-gf1030
-```
-
-or use pre-defined build arguments from a config file:
-
-```shell
-podman build \
-    --build-args-file container/rocm/gfx1030.conf
     -f container/rocm/Containerfile \
     -t localhost/instructlab:rocm-gf1030
 ```
