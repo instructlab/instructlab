@@ -2,55 +2,26 @@
 
 # Standard
 from pathlib import Path
+from typing import Optional
 
 # Third Party
 from mlx.utils import tree_flatten, tree_unflatten
-from models.lora import LoRALinear
-import click
 import mlx.core as mx
 import mlx.nn as nn
-import utils
+
+# Local
+from . import utils
+from .models.lora import LoRALinear
 
 
-@click.command()
-@click.option(
-    "--model",
-    default="mlx_model",
-    help="The path to the local model directory or Hugging Face repo.",
-)
-@click.option(
-    "--save-path",
-    default="lora_fused_model",
-    help="The path to save the fused model.",
-)
-@click.option(
-    "--adapter-file",
-    type=click.STRING,
-    default="adapters.npz",
-    help="Path to the trained adapter weights (npz or safetensors).",
-)
-@click.option(
-    "--hf-path",
-    help=(
-        "Path to the original Hugging Face model. This is "
-        "required for upload if --model is a local directory."
-    ),
-    type=click.STRING,
-    default=None,
-)
-@click.option(
-    "--upload-name",
-    help="The name of model to upload to Hugging Face MLX Community",
-    type=click.STRING,
-    default=None,
-)
-@click.option(
-    "--de-quantize",
-    "-d",
-    help="Generate a de-quantized model.",
-    is_flag=True,
-)
-def fine_tune(model, save_path, adapter_file, hf_path, upload_name, de_quantize):
+def fine_tune(
+    model: str = "mlx_model",
+    save_path: str = "lora_fused_model",
+    adapter_file: str = "adapters.npz",
+    hf_path: Optional[str] = "None",
+    upload_name: Optional[str] = None,
+    de_quantize: bool = False,
+):
     """LoRA or QLoRA fine tuning."""
     print("Loading pretrained model")
 
@@ -113,7 +84,3 @@ def fine_tune(model, save_path, adapter_file, hf_path, upload_name, de_quantize)
                 "Must provide original Hugging Face repo to upload local model."
             )
         utils.upload_to_hub(save_path, upload_name, hf_path)
-
-
-if __name__ == "__main__":
-    fine_tune()

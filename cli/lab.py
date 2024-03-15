@@ -19,7 +19,14 @@ from . import config, utils
 from .chat.chat import ChatException, chat_cli
 from .generator.generate_data import generate_data, get_taxonomy_diff, read_taxonomy
 from .generator.utils import GenerateException
+from .llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
+from .mlx_explore.gguf_convert_to_mlx import load
 from .server import ServerException, ensure_server, server
+from .train.linux_train import linux_train
+from .train.lora_mlx.convert import convert_between_mlx_and_pytorch
+from .train.lora_mlx.fuse import fine_tune
+from .train.lora_mlx.lora import load_and_train
+from .train.lora_mlx.make_data import make_data
 
 if sys.platform == "darwin" and platform.machine() == "arm64":  # mlx requires macOS
     # Local
@@ -588,8 +595,6 @@ def train(
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
-    cli_dir = os.path.dirname(os.path.abspath(__file__))
-
     if not input_dir:
         # By default, generate output-dir is used as train input-dir
         input_dir = ctx.obj.config.generate.output_dir
@@ -633,12 +638,9 @@ def train(
             raise click.exceptions.Exit(1)
 
     if not utils.is_macos_with_m_chip():
-        script = os.path.join(cli_dir, "train/linux_train.py")
-        cmd = f"{script} --train-file {train_files[0]} --test-file {test_files[0]} --num-epochs {num_epochs}"
-        click.secho(
-            f"python {cmd}",
+        linux_train(
+            train_file=train_files[0], test_file=test_files[0], num_epochs=num_epochs
         )
-        os.system("python {}".format(cmd))
 
         training_results_dir = "./training_results"
         os.makedirs(training_results_dir, exist_ok=True)
@@ -683,9 +685,7 @@ def train(
             shutil.copy(file, final_results_dir)
             print("Copied ", file, "to ", final_results_dir)
 
-        script = os.path.join(cli_dir, "llamacpp/llamacpp_convert_to_gguf.py")
-        cmd = f"{script} {final_results_dir} --pad-vocab"
-        os.system("python {}".format(cmd))
+        convert_llama_to_gguf(model=final_results_dir, pad_vocab=True)
 
         gguf_models_dir = "./models"
         if not os.path.isdir(gguf_models_dir):
@@ -699,9 +699,7 @@ def train(
         # shutil.rmtree(checkpoint_dirs[0])
     else:
         if not skip_preprocessing:
-            script = os.path.join(cli_dir, "train/lora-mlx/make_data.py")
-            cmd = f"{script} --data-dir {data_dir}"
-            os.system("python {}".format(cmd))
+            make_data(data_dir=data_dir)
 
         # NOTE we can skip this if we have a way ship MLX
         # PyTorch safetensors to MLX safetensors
@@ -709,16 +707,12 @@ def train(
         model_dir_mlx = f"{model_dir_local}-mlx"
         model_dir_mlx_quantized = f"{model_dir_local}-mlx-q"
 
-        dest_model_dir = ""
-        quantize_arg = ""
-
-        if not skip_quantize:
-            dest_model_dir = model_dir_mlx_quantized
-            quantize_arg = "-q"
-        else:
+        if skip_quantize:
             dest_model_dir = model_dir_mlx
-
-        local_arg = "--local" if local else ""
+            quantize_arg = False
+        else:
+            dest_model_dir = model_dir_mlx_quantized
+            quantize_arg = True
 
         if tokenizer_dir is not None and gguf_model_path is not None:
             if not local:
@@ -726,10 +720,8 @@ def train(
                 tokenizer_dir_local = tokenizer_dir.replace("/", "-")
                 mlx_utils.fetch_tokenizer_from_hub(tokenizer_dir, tokenizer_dir_local)
 
-            script = os.path.join(cli_dir, "mlx_explore/gguf_convert_to_mlx.py")
             # no need to pass quantize_arg for now, script automatically detects if quantization is necessary based on whether gguf model is quantized or not
-            cmd = f"{script} --gguf {gguf_model_path} --repo {tokenizer_dir} --mlx-path {dest_model_dir}"
-            os.system("python {}".format(cmd))
+            load(gguf=gguf_model_path, repo=tokenizer_dir, mlx_path=dest_model_dir)
 
             for filename in os.listdir(model_dir_local):
                 shutil.copy(
@@ -739,15 +731,26 @@ def train(
             shutil.rmtree(model_dir_local, ignore_errors=True)
 
         else:
-            script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
-            cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
-            os.system("python {}".format(cmd))
+            # Downloading PyTorch SafeTensor and Converting to MLX SafeTensor
+            convert_between_mlx_and_pytorch(
+                hf_path=model_dir,
+                mlx_path=dest_model_dir,
+                quantize=quantize_arg,
+                local=local,
+            )
 
         adapter_file_path = f"{dest_model_dir}/adapters.npz"
-        script = os.path.join(cli_dir, "train/lora-mlx/lora.py")
         # train the model with LoRA
-        cmd = f"{script} --model {dest_model_dir} --train --data {data_dir} --adapter-file {adapter_file_path} --iters {iters} --save-every 10 --steps-per-eval 10"
-        os.system("python {}".format(cmd))
+
+        load_and_train(
+            model=dest_model_dir,
+            train=True,
+            data=data_dir,
+            adapter_file=adapter_file_path,
+            iters=iters,
+            save_every=10,
+            steps_per_eval=10,
+        )
 
         # TODO copy some downloaded files from the PyTorch model folder
         # Seems to be not a problem if working with a remote download with convert.py
@@ -778,8 +781,6 @@ def test(data_dir, model_dir, adapter_file):
     """Runs basic test to ensure model correctness"""
     if adapter_file is None:
         adapter_file = os.path.join(model_dir, "adapters.npz")
-    cli_dir = os.path.dirname(os.path.abspath(__file__))
-    script = os.path.join(cli_dir, "train/lora-mlx/lora.py")
 
     # Load the JSON Lines file
     test_data_dir = f"{data_dir}/test.jsonl"
@@ -792,13 +793,16 @@ def test(data_dir, model_dir, adapter_file):
         system = example["system"]
         user = example["user"]
         print("[{}]\n user prompt: {}".format(idx + 1, user))
+        prompt = f"<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>"
         print("expected output:", example["assistant"])
+
         print("\n-----model output BEFORE training----:\n")
-        cmd = f'{script} --model {model_dir} --no-adapter --max-tokens 100 --prompt "<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>\n"'
-        os.system("python {}".format(cmd))
+        load_and_train(model=model_dir, no_adapter=True, max_tokens=100, prompt=prompt)
+
         print("\n-----model output AFTER training----:\n")
-        cmd = f'{script} --model {model_dir} --adapter-file {adapter_file} --max-tokens 100 --prompt "<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>\n"'
-        os.system("python {}".format(cmd))
+        load_and_train(
+            model=model_dir, adapter_file=adapter_file, max_tokens=100, prompt=prompt
+        )
 
 
 @cli.command()
@@ -828,29 +832,25 @@ def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
         adapter_file = os.path.join(model_dir, "adapters.npz")
     cli_dir = os.path.dirname(os.path.abspath(__file__))
 
-    dequantize_arg = ""
     source_model_dir = model_dir
-    if not skip_de_quantize:
-        dequantize_arg = " -d "
-
     model_dir_fused = f"{source_model_dir}-fused"
 
-    script = os.path.join(cli_dir, "train/lora-mlx/fuse.py")
-    cmd = f"{script} --model {source_model_dir} --save-path {model_dir_fused} --adapter-file {adapter_file} {dequantize_arg}"
     # this combines adapter with the original model to produce the updated model
-    os.system("python {}".format(cmd))
+    fine_tune(
+        model=source_model_dir,
+        save_path=model_dir_fused,
+        adapter_file=adapter_file,
+        de_quantize=not skip_de_quantize,
+    )
 
     model_dir_fused_pt = f"{model_dir_fused}-pt"
 
-    script = os.path.join(cli_dir, "train/lora-mlx/convert.py ")
-    cmd = f"{script} --hf-path { model_dir_fused} --mlx-path {model_dir_fused_pt} --local --to-pt"
     # this converts MLX to PyTorch
-    os.system("{} {}".format("python", cmd))
+    convert_between_mlx_and_pytorch(
+        hf_path=model_dir_fused, mlx_path=model_dir_fused_pt, local=True, to_pt=True
+    )
 
-    script = os.path.join(cli_dir, "llamacpp/llamacpp_convert_to_gguf.py")
-    cmd = f"{script} { model_dir_fused_pt} --pad-vocab"
-    # use llama.cpp to convert back to GGUF
-    os.system("{} {}".format("python", cmd))
+    convert_llama_to_gguf(model=model_dir_fused_pt, pad_vocab=True)
 
     # quantize 4-bi GGUF (optional)
     if not skip_quantize:

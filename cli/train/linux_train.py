@@ -1,5 +1,5 @@
 # Standard
-from pathlib import Path
+from typing import Optional
 
 # Third Party
 from datasets import load_dataset
@@ -13,7 +13,6 @@ from transformers import (
     TrainingArguments,
 )
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
-import click
 import torch
 
 # First Party
@@ -61,26 +60,7 @@ def formatting_prompts_func(example):
     return output_texts
 
 
-@click.command()
-@click.option(
-    "--train-file",
-    help="Absolute path to the training file",
-    type=click.STRING,
-    default=None,
-)
-@click.option(
-    "--test-file",
-    type=click.STRING,
-    help="Absolute path to the testing file",
-    default=None,
-)
-@click.option(
-    "--num-epochs",
-    type=click.INT,
-    help="Number of epochs to run during training",
-    default=None,
-)
-def train(train_file, test_file, num_epochs):
+def linux_train(train_file: str, test_file: str, num_epochs: Optional[int] = None):
     """Lab Train for Linux!"""
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", num_epochs)
     print("LINUX_TRAIN.PY: TRAIN FILE IS: ", train_file)
@@ -230,7 +210,7 @@ def train(train_file, test_file, num_epochs):
 
     print("LINUX_TRAIN.PY: RUNNING INFERENCE ON THE OUTPUT MODEL")
 
-    for (i, (d, assistant_old)) in enumerate(zip(test_dataset, assistant_old_lst)):
+    for i, (d, assistant_old) in enumerate(zip(test_dataset, assistant_old_lst)):
         assistant_new = (
             model_generate(d["user"]).split(response_template.strip())[-1].strip()
         )
@@ -251,7 +231,3 @@ def train(train_file, test_file, num_epochs):
     model.save_pretrained("./training_results/merged_model")
 
     print("LINUX_TRAIN.PY: FINISHED")
-
-
-if __name__ == "__main__":
-    train()
