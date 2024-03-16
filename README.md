@@ -272,9 +272,7 @@ lab train
  ggml-merlinite-7b-0302-Q4_K_M.gguf  ggml-model-f16.gguf
 ```
 
-##### Using GPU acceleration
-
-`lab train` ships with experimental support for GPU acceleration with Nvidia CUDA
+> **NOTE:** `lab train` ships with experimental support for GPU acceleration with Nvidia CUDA
 or AMD ROCm. See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for more
 details.
 

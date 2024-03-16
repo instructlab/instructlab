@@ -209,23 +209,25 @@ ggml_init_cublas: found 1 ROCm devices:
 
 ## Training
 
-`lab train`  also experimentally supports GPU acceleration on Linux. Details of a working set up is included above. Training is memory-intensive and requires a modern GPU to work well; about 17 GiB of GPU memory or more is recommended. Nvidia CUDA is able to use shared host memory if GPU memory is not sufficient, but that comes with a performance penalty. AMD ROCm requires all data in GPU memory.
+`lab train`  also experimentally supports GPU acceleration on Linux. Details of a working set up is included above. Training is memory-intensive and requires a modern GPU to work. The GPU must support `bfloat16` or `fp16` and have at least 17 GiB of free GPU memory. Nvidia CUDA on WSL2 is able to use shared host memory (USM) if GPU memory is not sufficient, but that comes with a performance penalty. Training on Linux Kernel requires all data to fit in GPU memory. We are working on improvements like 4-bit quantization.
 
 It has been successfully tested on:
 
-- NVidia GeForce RTX 3090 (24 GiB), Fedora 39, PyTorch 2.2.1 CUDA 12.1
-- NVidia GeForce RTX 3060 Ti (8 GiB + 9 GiB shared), Fedora 39 on WSL2, CUDA 12.1
-- Radeon RX 7900 XT (20 GiB), Fedora 39, PyTorch 2.2.1+rocm5.7
-- Radeon RX 7900 XTX (24 GiB), Fedora 39, PyTorch 2.2.1+rocm5.7
+- Nvidia GeForce RTX 3090 (24 GiB), Fedora 39, PyTorch 2.2.1 CUDA 12.1
+- Nvidia GeForce RTX 3060 Ti (8 GiB + 9 GiB shared), Fedora 39 on WSL2, CUDA 12.1
+- Nvidia Tesla V100 (16 GB) on AWS `p3.2xlarge`, Fedora 39, PyTorch 2.2.1, 4-bit quantization
+- AMD Radeon RX 7900 XT (20 GiB), Fedora 39, PyTorch 2.2.1+rocm5.7
+- AMD Radeon RX 7900 XTX (24 GiB), Fedora 39, PyTorch 2.2.1+rocm5.7
+- AMD Radeon RX 6700 XT (12 GiB), Fedora 39, PyTorch 2.2.1+rocm5.7, 4-bit quantization
 
 Incompatible devices:
 
 - NVidia cards with Turing architecture (GeForce RTX 20 series) or older. They
-  lack support for bfloat16 and fp16.
+  lack support for `bfloat16` and `fp16`.
 
-**Note:** PyTorch implements AMD ROCm support on top of its `torch.cuda` API and treats AMD GPUs as CUDA devices. In a ROCm build of PyTorch, `cuda:0` is actually the first ROCm device.
+> **Note:** PyTorch implements AMD ROCm support on top of its `torch.cuda` API and treats AMD GPUs as CUDA devices. In a ROCm build of PyTorch, `cuda:0` is actually the first ROCm device.
 
-**Note:** Training does not use a local lab server. You can stop `lab serve` to free up GPU memory.
+> **Note:** Training does not use a local lab server. You can stop `lab serve` to free up GPU memory.
 
 ```shell
 lab train --device cuda
