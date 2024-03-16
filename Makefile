@@ -72,10 +72,10 @@ rocm:   ## Build container for AMD ROCm (auto-detect the ROCm GPU arch)
 	@arch=$(shell rocminfo | grep -o -m1 'gfx[1-9][0-9a-f]*'); \
 	    if test -z $$arch; then echo "Unable to detect AMD GPU arch"; exit 2; fi; \
 	    echo "Auto-detected GPU arch '$$arch'"; \
-	    $(MAKE) --silent rocm-$(AMDGPU_ARCH)
+	    $(MAKE) rocm-$${arch}
 
 # RDNA3 / Radeon RX 7000 series
-.PHONY: rocm-gf1100 rocm-rdna3 rocm-gfx1101 rocm-gfx1102
+.PHONY: rocm-gfx1100 rocm-rdna3 rocm-gfx1101 rocm-gfx1102
 rocm-rdna3 rocm-gfx1101 rocm-gfx1102: rocm-gfx1100
 
 rocm-gfx1100: $(ROCM_DEPS)  ## Build container for AMD ROCm RDNA3 (Radeon RX 7000 series)
@@ -89,6 +89,7 @@ rocm-gfx1030: $(ROCM_DEPS)  ## Build container for AMD ROCm RDNA2 (Radeon RX 600
 	$(call build-rocm,gfx1030,10.3.0)
 
 # untested older cards
+# Fedora
 .PHONY: rocm-gfx90a
 rocm-gfx90a: $(ROCM_DEPS)  ## Build container for AMD ROCm gfx90a (untested)
 	$(call build-rocm,gfx90a,9.0.10)

@@ -3,7 +3,7 @@
 set -e
 # Remove GPU support files that are not necessary for current GPU arch
 
-TORCH="/opt/rocm-venv/lib/python3.12/site-packages/torch"
+TORCH="${VIRTUAL_ENV:-/opt/rocm-venv}/lib/${PYTHON:-python3.1?}/site-packages/torch"
 
 case "$AMDGPU_ARCH" in
 	gfx9*)
