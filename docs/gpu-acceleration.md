@@ -6,7 +6,7 @@ By default, `lab` will attempt to use your GPU for inference and synthesis. This
 
 ### Python 3.11 (Linux only)
 
-**NOTE:** This section may be outdated. At least AMD ROCm works fine with Python 3.12 and Torch 2.2.1+rocm5.7 binaries.
+> **NOTE:** This section may be outdated. At least AMD ROCm works fine with Python 3.12 and Torch 2.2.1+rocm5.7 binaries.
 
 Unfortunately, at the time of writing, `torch` does not have GPU-specific support for the latest Python (3.12), so if you're on Linux, it's recommended to set up a Python 3.11-specific `venv` and install `lab` to that to minimize issues. (MacOS ships Python 3.9, so this step shouldn't be necessary.) Here's how to do that on Fedora with `dnf`:
 
@@ -144,7 +144,7 @@ In this case, `gfx1100` is the model we're looking for (our dedicated GPU) so we
 CMAKE_ARGS="-DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ -DCMAKE_PREFIX_PATH=/opt/rocm -DAMDGPU_TARGETS=gfx1100" FORCE_CMAKE=1 pip install llama-cpp-python --force-reinstall --no-cache-dir
 ```
 
-**Note:** This is explicitly forcing the build to use the ROCm compilers and prefix path for dependency resolution in the CMake build.  This works around an issue in the CMake and ROCm version in Fedora 39 and below and is fixed in Fedora 40.  With Fedora 40's ROCm packages, use `CMAKE_ARGS="-DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DAMDGPU_TARGETS=gfx1100"` instead.
+> **Note:** This is explicitly forcing the build to use the ROCm compilers and prefix path for dependency resolution in the CMake build.  This works around an issue in the CMake and ROCm version in Fedora 39 and below and is fixed in Fedora 40.  With Fedora 40's ROCm packages, use `CMAKE_ARGS="-DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DAMDGPU_TARGETS=gfx1100"` instead.
 
 Once that package is installed, recompile `lab` with `pip3 install .`.  You also need to tell `HIP` which GPU to use - you can find this out via `rocminfo` although it is typically GPU 0.  To set which device is visible to HIP, we'll set `export HIP_VISIBLE_DEVICES=0` for GPU 0.   You may also have to set `HSA_OVERRIDE_GFX_VERSION` to override ROCm's GFX version detection, for example `export HSA_OVERRIDE_GFX_VERSION=10.3.0` to force an unsupported `gfx1032` card to use use supported `gfx1030` version.  The environment variable `AMD_LOG_LEVEL` enables debug logging of ROCm libraries, for example `AMD_LOG_LEVEL=3` to print API calls to stderr.
 
@@ -209,7 +209,7 @@ ggml_init_cublas: found 1 ROCm devices:
 
 ## Training
 
-`lab train`  also experimentally supports GPU acceleration on Linux, assuming a working setup as detailed above. Training is memory-intensive and requires a modern GPU to work well; about 17 GiB of GPU memory or more is recommended. Nvidia CUDA is able to use shared host memory if GPU memory is not sufficient, but that comes with a performance penalty. AMD ROCm requires all data in GPU memory.
+`lab train`  also experimentally supports GPU acceleration on Linux. Details of a working set up is included above. Training is memory-intensive and requires a modern GPU to work well; about 17 GiB of GPU memory or more is recommended. Nvidia CUDA is able to use shared host memory if GPU memory is not sufficient, but that comes with a performance penalty. AMD ROCm requires all data in GPU memory.
 
 It has been successfully tested on:
 
@@ -218,7 +218,7 @@ It has been successfully tested on:
 - Radeon RX 7900 XT (20 GiB), Fedora 39, PyTorch 2.2.1+rocm5.7
 - Radeon RX 7900 XTX (24 GiB), Fedora 39, PyTorch 2.2.1+rocm5.7
 
-Incompatible devices
+Incompatible devices:
 
 - NVidia cards with Turing architecture (GeForce RTX 20 series) or older. They
   lack support for bfloat16 and fp16.
