@@ -223,11 +223,11 @@ def main(args_in: list[str] | None = None) -> None:
         config=config,
         trust_remote_code=True,
         low_cpu_mem_usage=True,
-        # force less GPU memory for testing
-        max_memory={0: "8GiB", "cpu": "16GiB"},
         device_map=args.device.device_map,
     )
     print(f"LINUX_TRAIN.PY: Model device {model.device}, map: {model.hf_device_map}")
+    if model.device.type == "cuda":
+        print(torch.cuda.memory_summary())
 
     print("LINUX_TRAIN.PY: SANITY CHECKING THE BASE MODEL")
     stop_words = ["<|endoftext|>", "<|assistant|>"]
@@ -306,6 +306,15 @@ def main(args_in: list[str] | None = None) -> None:
         use_cpu=model.device.type == "cpu",
         save_strategy="epoch",
         report_to="none",
+        # options to reduce GPU memory usage and improve performance
+        # https://huggingface.co/docs/transformers/perf_train_gpu_one
+        # https://stackoverflow.com/a/75793317
+        # torch_compile=True,
+        # fp16=False,  # fp16 increases memory consumption 1.5x
+        # gradient_accumulation_steps=8,
+        # gradient_checkpointing=True,
+        # eval_accumulation_steps=1,
+        # per_device_eval_batch_size=1,
     )
 
     max_seq_length = 300
