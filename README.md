@@ -44,10 +44,9 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 - Python 3.9+
 - Approximately 60GB disk space (entire process)
 
-On Fedora Linux, install the necessary packages by running:
-
+On Fedora Linux this means installing:
 ```shell
-sudo yum install g++ python3 python3-devel
+$ sudo dnf install g++ gcc make pip python3 python3-devel python3-GitPython
 ```
 
 ## ✅ Getting started
