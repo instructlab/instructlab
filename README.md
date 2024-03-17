@@ -220,6 +220,8 @@ INFO 2024-03-15 11:33:23,973 generate_data.py:566 * compositional_skills/writing
 
 ### 🚀 Generate a synthetic dataset
 
+> **NOTE**: 🍴 This step needs the model to be served and ready, so ensure `lab serve` is running before generating
+
 ```
 lab generate
 ```
