@@ -2,11 +2,11 @@
 
 This guide should teach you how to set up your development environment to start contributing to the `lab` CLI tool.
 
-**tl;dr** We're going to install `lab` in a Python virtual environment like we did in the README.md. Instead of installing from GitHub, however, we'll clone the [`instruct-lab/cli`](https://github.com/instruct-lab/cli) repository from GitHub and install `lab` from the cloned Python source code.
+**tl;dr** We're going to install `lab` in a Python virtual environment like we did in the `README.md`. Instead of installing from GitHub, however, we'll clone the [`instruct-lab/cli`](https://github.com/instruct-lab/cli) repository from GitHub and install `lab` from the cloned Python source code.
 
 # Installing `lab` from source
 
-Here we install from the upstream repo, but you may want to fork the repo and replace the git clone URL below with the URL for your fork:
+Here we install from the upstream repository, but you may want to fork the repository and replace the git clone URL below with the URL for your fork:
 
 ```ShellSession
 git clone https://github.com/instruct-lab/cli.git

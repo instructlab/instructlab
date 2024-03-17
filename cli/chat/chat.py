@@ -1,4 +1,5 @@
 # Standard
+import datetime
 import json
 import os
 import sys
@@ -15,6 +16,9 @@ from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.text import Text
 import openai
+
+# Local
+from ..config import DEFAULT_API_KEY
 
 HELP_MD = """
 Help / TL;DR
@@ -43,13 +47,6 @@ CONTEXTS = {
 
 PROMPT_HISTORY_FILEPATH = os.path.expanduser("~/.local/chat-cli.history")
 
-PRICING_RATE = {
-    "gpt-3.5-turbo": {"prompt": 0.0015, "completion": 0.002},
-    "gpt-3.5-turbo-16k": {"prompt": 0.003, "completion": 0.004},
-    "gpt-4": {"prompt": 0.03, "completion": 0.06},
-    "gpt-4-32k": {"prompt": 0.06, "completion": 0.12},
-}
-
 PROMPT_PREFIX = ">>> "
 
 
@@ -58,7 +55,7 @@ class ChatException(Exception):
 
 
 # TODO Autosave chat history
-class ConsoleChatBot:
+class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
         model,
@@ -67,19 +64,23 @@ class ConsoleChatBot:
         prompt=True,
         vertical_overflow="ellipsis",
         loaded={},
+        log_file=None,
+        greedy_mode=False,
     ):
         self.client = client
         self.model = model
         self.vi_mode = vi_mode
         self.vertical_overflow = vertical_overflow
         self.loaded = loaded
+        self.log_file = log_file
+        self.greedy_mode = greedy_mode
 
         self.console = Console()
-        self.input = (
-            PromptSession(history=FileHistory(PROMPT_HISTORY_FILEPATH))
-            if prompt
-            else None
-        )
+
+        self.input = None
+        if prompt:
+            os.makedirs(os.path.dirname(PROMPT_HISTORY_FILEPATH), exist_ok=True)
+            self.input = PromptSession(history=FileHistory(PROMPT_HISTORY_FILEPATH))
         self.multiline = False
         self.multiline_mode = 0
 
@@ -97,6 +98,11 @@ class ConsoleChatBot:
 
     def _sys_print(self, *args, **kwargs):
         self.console.print(Panel(*args, title="system", **kwargs))
+
+    def log_message(self, msg):
+        if self.log_file:
+            with open(self.log_file, "a") as fp:
+                fp.write(msg)
 
     def greet(self, help=False, new=False, session_name="new session"):
         side_info_str = (" (type `/h` for help)" if help else "") + (
@@ -255,7 +261,7 @@ class ConsoleChatBot:
         message = {"role": role, "content": content}
         self.info["messages"].append(message)
 
-    def start_prompt(self, content=None, box=True):
+    def start_prompt(self, content=None, box=True, logger=None):
         handlers = {
             "/q": self._handle_quit,
             "quit": self._handle_quit,
@@ -289,6 +295,8 @@ class ConsoleChatBot:
         if handler is not None:
             handler(content)
 
+        self.log_message(PROMPT_PREFIX + content + "\n\n")
+
         # Update message history and token counters
         self._update_conversation(content, "user")
 
@@ -297,14 +305,43 @@ class ConsoleChatBot:
             self.multiline_mode = 0
             self.multiline = not self.multiline
 
+        # Optional parameters
+        create_params = {}
+        if self.greedy_mode:
+            # https://platform.openai.com/docs/api-reference/chat/create#chat-create-temperature
+            create_params["temperature"] = 0
+
         # Get and parse response
         try:
-            response = self.client.chat.completions.create(
-                model=self.model, messages=self.info["messages"], stream=True
-            )
-            assert (
-                next(response).choices[0].delta.role == "assistant"
-            ), 'first response should be {"role": "assistant"}'
+            while True:
+                # Loop to catch situations where we need to retry, such as context length exceeded
+                try:
+                    response = self.client.chat.completions.create(
+                        model=self.model,
+                        messages=self.info["messages"],
+                        stream=True,
+                        **create_params,
+                    )
+                except openai.BadRequestError as e:
+                    if e.code == "context_length_exceeded":
+                        if len(self.info["messages"]) > 1:
+                            # Trim the oldest entry in our message history
+                            logger.debug(
+                                "Trimming message history to attempt to fit context length"
+                            )
+                            self.info["messages"] = self.info["messages"][1:]
+                            continue
+                        else:
+                            # We only have a single message and it's still to big.
+                            self.console.print(
+                                "Message too large for context size.", style="bold red"
+                            )
+                            self.info["messages"].pop()
+                            raise KeyboardInterrupt
+                assert (
+                    next(response).choices[0].delta.role == "assistant"
+                ), 'first response should be {"role": "assistant"}'
+                break
         except openai.AuthenticationError as e:
             self.console.print(
                 "Invalid API Key. Please set it in your config file.", style="bold red"
@@ -332,6 +369,7 @@ class ConsoleChatBot:
             if box
             else response_content
         )
+        subtitle = None
         with Live(
             panel,
             console=self.console,
@@ -346,14 +384,21 @@ class ConsoleChatBot:
 
                 if box:
                     panel.subtitle = f"elapsed {time.time() - start_time:.3f} seconds"
+            subtitle = f"elapsed {time.time() - start_time:.3f} seconds"
 
+        # Update chat logs
+        if subtitle is not None:
+            self.log_message("- " + subtitle + " -\n")
+        self.log_message(response_content.plain + "\n\n")
         # Update message history and token counters
         self._update_conversation(response_content.plain, "assistant")
 
 
-def chat_cli(logger, api_base, config, question, model, context, session, qq):
+def chat_cli(
+    logger, api_base, config, question, model, context, session, qq, greedy_mode
+):
     """Starts a CLI-based chat with the server"""
-    client = OpenAI(base_url=api_base, api_key="no_api_key")
+    client = OpenAI(base_url=api_base, api_key=DEFAULT_API_KEY)
 
     # Load context/session
     loaded = {}
@@ -373,14 +418,26 @@ def chat_cli(logger, api_base, config, question, model, context, session, qq):
         loaded["name"] = os.path.basename(session.name).strip(".json")
         loaded["messages"] = json.loads(session.read())
 
+    log_file = None
+    if config.logs_dir:
+        date_suffix = (
+            datetime.datetime.now().replace(microsecond=0).isoformat().replace(":", "_")
+        )
+        os.makedirs(config.logs_dir, exist_ok=True)
+        log_file = f"{config.logs_dir}/chat_{date_suffix}.log"
+
     # Initialize chat bot
     ccb = ConsoleChatBot(
         config.model if model is None else model,
         client=client,
         vi_mode=config.vi_mode,
+        log_file=log_file,
         prompt=not qq,
         vertical_overflow=("visible" if config.visible_overflow else "ellipsis"),
         loaded=loaded,
+        greedy_mode=greedy_mode
+        if greedy_mode
+        else config.greedy_mode,  # The CLI flag can only be used to enable
     )
 
     if not qq:
@@ -405,7 +462,7 @@ def chat_cli(logger, api_base, config, question, model, context, session, qq):
     # Start chatting
     while True:
         try:
-            ccb.start_prompt()
+            ccb.start_prompt(logger=logger)
         except KeyboardInterrupt:
             continue
         except ChatException as exc:

@@ -1,7 +1,7 @@
 Moving the stable tag
 =====================
 
-Because we do not have a PyPI package where folks can just install latest, our README.md instructions describe installing from the GitHub using a "stable" tag.
+Because we do not have a PyPI package where folks can just install latest, our `README.md` instructions describe installing from the GitHub using a "stable" tag.
 
 To support this, we move the stable tag to the latest release, as needed.
 
@@ -52,7 +52,7 @@ I usually test first w/o --force and expect an error if I have everything right.
 ```ShellSession
 $ git push origin stable
 ! [rejected]        stable -> stable (already exists)
-error: failed to push some refs to 'https://github.com/open-labrador/cli.git'
+error: failed to push some refs to 'https://github.com/instruct-lab/cli.git'
 hint: Updates were rejected because the tag already exists in the remote.
 
 ```
@@ -64,3 +64,4 @@ git push -f origin stable
 
 Check the Tags on GitHub web.
 
+> PLEASE!  Whenever you move the `stable` tag, give `@Josh Boyer` a heads-up so that Red Hat is using the new tag.

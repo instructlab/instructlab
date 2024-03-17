@@ -14,7 +14,7 @@ fi
 HERE="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 # Use mktemp for unique name, but we'll keep the dir
-TEMP_DIR=`mktemp -d -p "$HERE" -t test_run_` || exit 1
+TEMP_DIR=`mktemp -d -p "$HERE" -t test_run_XXXXXXXX` || exit 1
 echo "test run in: $TEMP_DIR"
 cd $TEMP_DIR
 

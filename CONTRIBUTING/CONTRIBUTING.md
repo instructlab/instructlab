@@ -8,9 +8,7 @@ The following is a set of guidelines for contributing. These are just guidelines
 
 ### Code of Conduct
 
-This project adheres to the [Contributor Covenant](./CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
-
-Please report unacceptable behavior to one of the [Code Owners](./OWNERS).
+This project adheres to the [InstructLab/cli - Code of Conduct and Covenant](../CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
 ### How Do I Start Contributing?
 
@@ -22,7 +20,7 @@ Help on open source projects is always welcome and there is always something tha
 
 When contributing, it's useful to start by looking at [issues](https://github.com/instruct-lab/cli/issues). After picking up an issue, writing code, or updating a document, make a pull request and your work will be reviewed and merged. If you're adding a new feature or find a bug, it's best to [write an issue](https://github.com/instruct-lab/cli/issues/new?assignees=&labels=&template=feature_request.md&title=) first to discuss it with maintainers.
 
-To contribute to this repo, you'll use the Fork and Pull model common in many open source repositories. For details on this process, check out [The GitHub Workflow
+To contribute to this repository, you'll use the Fork and Pull model common in many open source repositories. For details on this process, check out [The GitHub Workflow
 Guide](https://github.com/kubernetes/community/blob/master/contributors/guide/github-workflow.md)
 from Kubernetes.
 
@@ -68,6 +66,7 @@ The following tools are required:
 - [git](https://git-scm.com)
 - [python](https://www.python.org) (v3.9+)
 - [pip](https://pypi.org/project/pip/) (v23.0+)
+- [expect](https://core.tcl-lang.org/expect/index) (for functional tests)
 
 You can setup your dev environment using [tox](https://tox.wiki/en/latest/), an environment orchestrator which allows for setting up environments for and invoking builds, unit tests, formatting, linting, etc. Install tox with:
 
@@ -81,29 +80,42 @@ Install project requirements with:
 pip install -r requirements.txt
 ```
 
-If you want to manage your own virtual environment instead of using `tox`, you can install `cli` and all dependencies with:
+If you want to test the `cli` binary, you can install `cli` and all dependencies with:
 
 ```shell
 pip install .
 ```
 
-<!--### Unit tests
+### Testing
 
-Unit tests are enforced by the CI system. When making changes, run the tests before pushing the changes to avoid CI issues.
-
-Running unit tests against all supported Python versions is as simple as:
+Before pushing changes to GitHub, you need to run the tests as shown below. They can be run individually as shown in each sub-section
+or can be run with the one command:
 
 ```shell
 tox
 ```
 
-Running tests against a single Python version can be done with:
+#### Unit tests
+
+Unit tests are enforced by the CI system. When making changes, run the tests before pushing the changes to avoid CI issues.
+
+Running unit tests can be done with:
 
 ```shell
-tox -e py
-```-->
+tox -e unit
+```
 
-### Coding style
+#### Functional tests
+
+Functional tests are enforced by the CI system. When making changes, run the tests before pushing the changes to avoid CI issues.
+
+Running functional tests can be done with:
+
+```shell
+tox -e functional
+```
+
+#### Coding style
 
 Cli follows the python [pep8](https://peps.python.org/pep-0008/) coding style. The coding style is enforced by the CI system, and your PR will fail until the style has been applied correctly.
 
