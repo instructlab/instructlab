@@ -118,7 +118,11 @@ def report_cuda_device(args_device, min_vram=0):
         device = torch.device("cuda", idx)
         name = torch.cuda.get_device_name(device)
         free, total = torch.cuda.mem_get_info(device)
-        print(f"  {device} is '{name}' ({_gib(free)} of {_gib(total)} free)")
+        capmin, capmax = torch.cuda.get_device_capability(device)
+        print(
+            f"  {device} is '{name}' ({_gib(free)} of {_gib(total)} free, "
+            f"capability: {capmin}.{capmax})"
+        )
 
     if args_device.index is None:
         index = torch.cuda.current_device()
