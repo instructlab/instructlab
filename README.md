@@ -60,7 +60,7 @@ mkdir instruct-lab
 cd instruct-lab
 python3 -m venv venv
 source venv/bin/activate
-pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
+pip install git+https://github.com/instruct-lab/cli.git@stable
 ```
 > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection, if g++ is not found try 'gcc-c++'
 
@@ -109,15 +109,15 @@ lab init
 Initializing `lab` will:
 
 1. Add a new, default `config.yaml` file.
-2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory. If you want to point to an existing local clone of the `taxonomy` respository then pass the path interactively or alternatively with the `--taxonomy-path` flag.
+2. Clone the `https://github.com/instruct-lab/taxonomy.git` repository into the current directory. If you want to point to an existing local clone of the `taxonomy` respository then pass the path interactively or alternatively with the `--taxonomy-path` flag.
 
 ```shell
 (venv) $ lab init
 Welcome to InstructLab CLI. This guide will help you set up your environment.
 Please provide the following values to initiate the environment:
 Path to taxonomy repo [taxonomy]: <ENTER>
-`taxonomy` seems to not exists or is empty. Should I clone git@github.com:instruct-lab/taxonomy.git for you? [y/N]: y
-Cloning git@github.com:instruct-lab/taxonomy.git...
+`taxonomy` seems to not exists or is empty. Should I clone https://github.com/instruct-lab/taxonomy.git for you? [y/N]: y
+Cloning https://github.com/instruct-lab/taxonomy.git...
 Generating `config.yaml` in the current directory...
 Initialization completed successfully, you're ready to start using `lab`. Enjoy!
 ```
