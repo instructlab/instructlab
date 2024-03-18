@@ -4,7 +4,6 @@
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Union
-import argparse
 import copy
 import os
 import sys
@@ -13,6 +12,7 @@ import sys
 from huggingface_hub import snapshot_download
 from mlx.utils import tree_flatten, tree_unflatten
 from utils import save_model
+import click
 import mlx.core as mx
 import mlx.nn as nn
 import numpy as np
@@ -242,25 +242,46 @@ def translate_weight_names(name):
     return name
 
 
-def load(gguf_file: str, repo: str = None, mlx_path: str = None):
-    # If the gguf_file exists, try to load model from it.
+@click.command()
+@click.option(
+    "--gguf",
+    type=click.STRING,
+    help="The GGUF file to load (and optionally download).",
+)
+@click.option(
+    "--repo",
+    type=click.STRING,
+    default=None,
+    help="The Hugging Face repo if downloading from the Hub.",
+)
+@click.option(
+    "--mlx-path",
+    type=click.STRING,
+    default=None,
+    help="The destination where the converted mlx model should be stored.",
+)
+# Appears to be unused
+@click.option("--quantize", "-q", help="Generate a quantized model.", is_flag=True)
+def load(gguf: str, repo: str = None, mlx_path: str = None):
+    """Inference script"""
+    # If the gguf exists, try to load model from it.
     # Otherwise try to download and cache from the HF repo
-    if not Path(gguf_file).exists():
+    if not Path(gguf).exists():
         if repo is None:
             raise ValueError(
-                f"Could not find file {gguf_file}, and no Hugging Face"
+                f"Could not find file {gguf}, and no Hugging Face"
                 " repo provided for download."
             )
         model_path = snapshot_download(
             repo_id=repo,
-            allow_patterns=[gguf_file],
+            allow_patterns=[gguf],
         )
-        if not (Path(model_path) / gguf_file).exists():
-            raise ValueError(f"File {gguf_file} not in repo {repo}.")
-        gguf_file = str(Path(model_path) / gguf_file)
+        if not (Path(model_path) / gguf).exists():
+            raise ValueError(f"File {gguf} not in repo {repo}.")
+        gguf = str(Path(model_path) / gguf)
 
-    print(f"[INFO] Loading model from {gguf_file}")
-    weights, metadata = mx.load(gguf_file, return_metadata=True)
+    print(f"[INFO] Loading model from {gguf}")
+    weights, metadata = mx.load(gguf, return_metadata=True)
     gguf_ft = metadata["general.file_type"]
     if gguf_ft == 0 or gguf_ft == 1:
         # ALL_F32 or MOSTLY_F16
@@ -308,30 +329,4 @@ def generate(prompt: mx.array, model: Model, temp: float = 0.0):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Inference script")
-    parser.add_argument(
-        "--gguf",
-        type=str,
-        help="The GGUF file to load (and optionally download).",
-    )
-    parser.add_argument(
-        "--repo",
-        type=str,
-        default=None,
-        help="The Hugging Face repo if downloading from the Hub.",
-    )
-    parser.add_argument(
-        "--mlx-path",
-        type=str,
-        default=None,
-        help="The destination where the converted mlx model should be stored.",
-    )
-    parser.add_argument(
-        "-q",
-        "--quantize",
-        help="Generate a quantized model.",
-        action="store_true",
-    )
-
-    args = parser.parse_args()
-    load(args.gguf, args.repo, args.mlx_path)
+    load()

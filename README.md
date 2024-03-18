@@ -44,10 +44,9 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 - Python 3.9+
 - Approximately 60GB disk space (entire process)
 
-On Fedora Linux, install the necessary packages by running:
-
+On Fedora Linux this means installing:
 ```shell
-sudo yum install g++ python3 python3-devel
+$ sudo dnf install g++ gcc make pip python3 python3-devel python3-GitPython
 ```
 
 ## ✅ Getting started
@@ -220,6 +219,8 @@ INFO 2024-03-15 11:33:23,973 generate_data.py:566 * compositional_skills/writing
 ```
 
 ### 🚀 Generate a synthetic dataset
+
+> **NOTE**: 🍴 This step needs the model to be served and ready, so ensure `lab serve` is running before generating
 
 ```
 lab generate

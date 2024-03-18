@@ -579,8 +579,7 @@ def download(ctx, repository, release, filename, model_dir):
     default="cpu",
     help=(
         "PyTorch device for Linux training (default: 'cpu'). Use 'cuda' "
-        "for NVidia CUDA / AMD ROCm GPU. 'auto' for automatic mapping "
-        "(buggy, see issue #610)."
+        "for NVidia CUDA / AMD ROCm GPU."
     ),
 )
 @click.option(

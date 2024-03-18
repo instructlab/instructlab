@@ -8,7 +8,6 @@ from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import IO, TYPE_CHECKING, Any, Callable, Iterable, Literal, TypeVar
-import argparse
 import concurrent.futures
 import enum
 import faulthandler
@@ -28,6 +27,7 @@ import zipfile
 
 # Third Party
 from sentencepiece import SentencePieceProcessor
+import click
 import numpy as np
 
 if "NO_LOCAL_GGUF" not in os.environ:
@@ -1604,166 +1604,175 @@ def do_dump_model(model_plus: ModelPlus) -> None:
         )
 
 
-def main(args_in: list[str] | None = None) -> None:
-    output_choices = ["f32", "f16"]
-    if np.uint32(1) == np.uint32(1).newbyteorder("<"):
-        # We currently only support Q8_0 output on little endian systems.
-        output_choices.append("q8_0")
-    parser = argparse.ArgumentParser(
-        description="Convert a LLaMA model to a GGML compatible file"
-    )
-    parser.add_argument(
-        "--awq-path", type=Path, help="Path to scale awq cache file", default=None
-    )
-    parser.add_argument(
-        "--dump",
-        action="store_true",
-        help="don't convert, just show what's in the model",
-    )
-    parser.add_argument(
-        "--dump-single",
-        action="store_true",
-        help="don't convert, just show what's in a single model file",
-    )
-    parser.add_argument(
-        "--vocab-only", action="store_true", help="extract only the vocab"
-    )
-    parser.add_argument(
-        "--outtype",
-        choices=output_choices,
-        help="output format - note: q8_0 may be very slow (default: f16 or f32 based on input)",
-    )
-    parser.add_argument(
-        "--vocab-dir",
-        type=Path,
-        help="directory containing tokenizer.model, if separate from model file",
-    )
-    parser.add_argument(
-        "--vocab-type",
-        help="vocab types to try in order, choose from 'spm', 'bpe', 'hfft' (default: spm,hfft)",
-        default="spm,hfft",
-    )
-    parser.add_argument(
-        "--outfile", type=Path, help="path to write to; default: based on input"
-    )
-    parser.add_argument(
-        "model",
-        type=Path,
-        help="directory containing model file, or model file itself (*.pth, *.pt, *.bin)",
-    )
-    parser.add_argument(
-        "--ctx", type=int, help="model training context (default: based on input)"
-    )
-    parser.add_argument(
-        "--concurrency",
-        type=int,
-        help=f"concurrency used for conversion (default: {DEFAULT_CONCURRENCY})",
-        default=DEFAULT_CONCURRENCY,
-    )
-    parser.add_argument(
-        "--big-endian",
-        action="store_true",
-        help="model is executed on big endian machine",
-    )
-    parser.add_argument(
-        "--pad-vocab",
-        action="store_true",
-        help="add pad tokens when model vocab expects more than tokenizer metadata provides",
-    )
-    parser.add_argument(
-        "--skip-unknown",
-        action="store_true",
-        help="skip unknown tensor names instead of failing",
-    )
-
-    args = parser.parse_args(args_in)
-    if args.awq_path:
+@click.command()
+@click.argument(
+    "model",
+    nargs=1,
+    type=click.Path(),
+)
+@click.option(
+    "--awq-path", type=click.Path(), help="Path to scale awq cache file", default=None
+)
+@click.option(
+    "--dump", is_flag=True, help="Don't convert, just show what's in the model"
+)
+@click.option(
+    "--dump-single",
+    is_flag=True,
+    help="Don't convert, just show what's in a single model file",
+)
+@click.option("--vocab-only", is_flag=True, help="Extract only the vocab")
+# We currently only support Q8_0 output on little endian systems.
+@click.option(
+    "--outtype",
+    type=click.Choice(
+        ["f32", "f16", "q8_0"]
+        if np.uint32(1) == np.uint32(1).newbyteorder("<")
+        else ["f32", "f16"],
+        case_sensitive=True,
+    ),
+    help="Output format - note: q8_0 may be very slow (default: f16 or f32 based on input)",
+)
+@click.option(
+    "--vocab-dir",
+    type=click.Path(),
+    help="Directory containing tokenizer.model, if separate from model file",
+)
+@click.option(
+    "--vocab-type",
+    help="Vocab types to try in order, choose from 'spm', 'bpe', 'hfft' (default: spm,hfft)",
+    default="spm,hfft",
+)
+@click.option(
+    "--outfile", type=click.Path(), help="Path to write to; default: based on input"
+)
+@click.option(
+    "--ctx", type=click.INT, help="Model training context (default: based on input)"
+)
+@click.option(
+    "--concurrency",
+    type=click.INT,
+    help=f"Concurrency used for conversion (default: {DEFAULT_CONCURRENCY})",
+    default=DEFAULT_CONCURRENCY,
+)
+@click.option(
+    "--big-endian", is_flag=True, help="Model is executed on big endian machine"
+)
+@click.option(
+    "--pad-vocab",
+    is_flag=True,
+    help="add pad tokens when model vocab expects more than tokenizer metadata provides",
+)
+@click.option(
+    "--skip-unknown", is_flag=True, help="skip unknown tensor names instead of failing"
+)
+def convert_llama_to_gguf(
+    model,
+    awq_path,
+    dump,
+    dump_single,
+    vocab_only,
+    outtype,
+    vocab_dir,
+    vocab_type,
+    outfile,
+    ctx,
+    concurrency,
+    big_endian,
+    pad_vocab,
+    skip_unknown,
+):
+    """Convert a LLaMA model to a GGML compatible file"""
+    # click.argument doesn't seem to be returning a Path for model
+    if isinstance(model, str):
+        model = Path(model)
+    if awq_path:
         sys.path.insert(1, str(Path(__file__).parent / "awq-py"))
         # Third Party
         from awq.apply_awq import add_scale_weights  # type: ignore[import-not-found]
 
-        tmp_model_path = args.model / "weighted_model"
+        tmp_model_path = model / "weighted_model"
         if tmp_model_path.is_dir():
             print(f"{tmp_model_path} exists as a weighted model.")
         else:
             tmp_model_path.mkdir(parents=True, exist_ok=True)
             print("Saving new weighted model ...")
-            add_scale_weights(str(args.model), str(args.awq_path), str(tmp_model_path))
+            add_scale_weights(str(model), str(awq_path), str(tmp_model_path))
             print(f"Saved weighted model at {tmp_model_path}.")
-        args.model = tmp_model_path
+        model = tmp_model_path
 
-    if args.dump_single:
-        model_plus = lazy_load_file(args.model)
+    if dump_single:
+        model_plus = lazy_load_file(model)
         do_dump_model(model_plus)
         return
 
-    if not args.vocab_only:
-        model_plus = load_some_model(args.model)
+    if not vocab_only:
+        model_plus = load_some_model(model)
     else:
         model_plus = ModelPlus(
-            model={}, paths=[args.model / "dummy"], format="none", vocab=None
+            model={}, paths=[model / "dummy"], format="none", vocab=None
         )
 
-    if args.dump:
+    if dump:
         do_dump_model(model_plus)
         return
     endianess = gguf.GGUFEndian.LITTLE
-    if args.big_endian:
+    if big_endian:
         endianess = gguf.GGUFEndian.BIG
 
     params = Params.load(model_plus)
     if params.n_ctx == -1:
-        if args.ctx is None:
+        if ctx is None:
             raise Exception(
                 "The model doesn't have a context size, and you didn't specify one with --ctx\n"
                 "Please specify one with --ctx:\n"
                 " - LLaMA v1: --ctx 2048\n"
                 " - LLaMA v2: --ctx 4096\n"
             )
-        params.n_ctx = args.ctx
+        params.n_ctx = ctx
 
-    if args.outtype:
+    if outtype:
         params.ftype = {
             "f32": GGMLFileType.AllF32,
             "f16": GGMLFileType.MostlyF16,
             "q8_0": GGMLFileType.MostlyQ8_0,
-        }[args.outtype]
+        }[outtype]
 
     print(f"params = {params}")
 
     model_parent_path = model_plus.paths[0].parent
-    vocab_path = Path(args.vocab_dir or args.model or model_parent_path)
+    vocab_path = Path(vocab_dir or model or model_parent_path)
     vocab_factory = VocabFactory(vocab_path)
     vocab, special_vocab = vocab_factory.load_vocab(
-        args.vocab_type.split(","), model_parent_path
+        vocab_type.split(","), model_parent_path
     )
 
-    if args.vocab_only:
-        if not args.outfile:
+    if vocab_only:
+        if not outfile:
             raise ValueError("need --outfile if using --vocab-only")
-        outfile = args.outfile
+        outfile = outfile
         OutputFile.write_vocab_only(
             outfile,
             params,
             vocab,
             special_vocab,
             endianess=endianess,
-            pad_vocab=args.pad_vocab,
+            pad_vocab=pad_vocab,
         )
         print(f"Wrote {outfile}")
         return
 
-    if model_plus.vocab is not None and args.vocab_dir is None:
+    if model_plus.vocab is not None and vocab_dir is None:
         vocab = model_plus.vocab
 
     print(f"Vocab info: {vocab}")
     print(f"Special vocab info: {special_vocab}")
 
     model = model_plus.model
-    model = convert_model_names(model, params, args.skip_unknown)
-    ftype = pick_output_type(model, args.outtype)
+    model = convert_model_names(model, params, skip_unknown)
+    ftype = pick_output_type(model, outtype)
     model = convert_to_output_type(model, ftype)
-    outfile = args.outfile or default_outfile(model_plus.paths, ftype)
+    outfile = outfile or default_outfile(model_plus.paths, ftype)
 
     params.ftype = ftype
     print(f"Writing {outfile}, format {ftype}")
@@ -1775,12 +1784,12 @@ def main(args_in: list[str] | None = None) -> None:
         model,
         vocab,
         special_vocab,
-        concurrency=args.concurrency,
+        concurrency=concurrency,
         endianess=endianess,
-        pad_vocab=args.pad_vocab,
+        pad_vocab=pad_vocab,
     )
     print(f"Wrote {outfile}")
 
 
 if __name__ == "__main__":
-    main()
+    convert_llama_to_gguf()

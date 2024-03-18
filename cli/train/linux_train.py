@@ -15,6 +15,7 @@ from transformers import (
     TrainingArguments,
 )
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
+import click
 import torch
 
 # First Party
@@ -65,7 +66,7 @@ def formatting_prompts_func(example):
 DeviceInfo = collections.namedtuple("DeviceInfo", "type index device_map")
 
 
-def arg_device(value) -> DeviceInfo:
+class TorchDeviceInfo(click.ParamType):
     """Parse and convert device string
 
     Returns DeviceInfo object:
@@ -73,27 +74,39 @@ def arg_device(value) -> DeviceInfo:
     - index is None or CUDA/ROCm device index (0 for first GPU)
     - device_map is a dict
     """
-    if value == "cpu":
-        # all layers on CPU
-        return DeviceInfo("cpu", None, {"": "cpu"})
-    # CUDA/ROCm
-    if not torch.cuda.is_available():
-        raise ValueError(
-            f"{value}: Torch has no CUDA/ROCm support or could not detect "
-            "a compatible device."
-        )
-    try:
-        device = torch.device(value)
-    except RuntimeError as e:
-        raise ValueError(str(e)) from None
-    # map unqualified 'cuda' to current device
-    if device.index is None:
-        device = torch.device(device.type, torch.cuda.current_device())
-    # all layers on a single GPU
-    return DeviceInfo(device.type, device.index, {"": device.index})
+
+    name = "deviceinfo"
+
+    def convert(self, value, param, ctx):
+        if isinstance(value, DeviceInfo):
+            return value
+
+        if value == "cpu":
+            # all layers on CPU
+            return DeviceInfo("cpu", None, {"": "cpu"})
+        # CUDA/ROCm
+        if not torch.cuda.is_available():
+            self.fail(
+                f"{value}: Torch has no CUDA/ROCm support or could not detect "
+                "a compatible device.",
+                param,
+                ctx,
+            )
+        try:
+            device = torch.device(value)
+        except RuntimeError as e:
+            self.fail(str(e), param, ctx)
+        # map unqualified 'cuda' to current device
+        if device.index is None:
+            device = torch.device(device.type, torch.cuda.current_device())
+        # all layers on a single GPU
+        return DeviceInfo(device.type, device.index, {"": device.index})
 
 
-def report_cuda_device(args, min_vram=0):
+TORCH_DEVICE = TorchDeviceInfo()
+
+
+def report_cuda_device(args_device, min_vram=0):
     """Report CUDA/ROCm device properties"""
     print(f"  NVidia CUDA version: {torch.version.cuda or 'n/a'}")
     print(f"  AMD ROCm HIP version: {torch.version.hip or 'n/a'}")
@@ -107,10 +120,10 @@ def report_cuda_device(args, min_vram=0):
         free, total = torch.cuda.mem_get_info(device)
         print(f"  {device} is '{name}' ({_gib(free)} of {_gib(total)} free)")
 
-    if args.device.index is None:
+    if args_device.index is None:
         index = torch.cuda.current_device()
     else:
-        index = args.device.index
+        index = args_device.index
 
     free = torch.cuda.mem_get_info(index)[0]
     if free < min_vram:
@@ -125,62 +138,72 @@ def report_cuda_device(args, min_vram=0):
         )
 
 
-def main(args_in: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description="Lab Train for Linux!")
-    parser.add_argument(
-        "--train-file",
-        type=str,
-        help="absolute path to the training file",
-        default=None,
-    )
-    parser.add_argument(
-        "--test-file", type=str, help="absolute path to the testing file", default=None
-    )
-    parser.add_argument(
-        "--num-epochs",
-        type=int,
-        help="number of epochs to run during training",
-        default=None,
-    )
-    # TODO: auto device mapping does not work for some people
-    # https://github.com/instruct-lab/cli/issues/610
-    parser.add_argument(
-        "--device",
-        type=arg_device,
-        help="Enable GPU offloading to device ('cpu', 'cuda', 'cuda:0')",
-        default="cpu",
-    )
-    # TODO: llamacpp_convert_to_gguf.py does not support quantized models, yet.
-    # https://github.com/instruct-lab/cli/issues/579
-    parser.add_argument(
-        "--4-bit-quant",
-        action="store_true",
-        dest="four_bit_quant",
-        help=(
-            "Use BitsAndBytes for 4-bit quantization (requires CUDA "
-            "reduces GPU VRAM usage, and may slow down training)"
-        ),
-    )
-    args = parser.parse_args(args_in)
+@click.command()
+@click.option(
+    "--train-file",
+    help="Absolute path to the training file",
+    type=click.STRING,
+    default=None,
+)
+@click.option(
+    "--test-file",
+    type=click.STRING,
+    help="Absolute path to the testing file",
+    default=None,
+)
+@click.option(
+    "--num-epochs",
+    type=click.INT,
+    help="Number of epochs to run during training",
+    default=None,
+)
+@click.option(
+    "--device",
+    type=TORCH_DEVICE,
+    show_default=True,
+    default="cpu",
+    help=(
+        "PyTorch device for Linux training (default: 'cpu'). Use 'cuda' "
+        "for NVidia CUDA / AMD ROCm GPU."
+    ),
+)
+@click.option(
+    "--4-bit-quant",
+    "four_bit_quant",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    help=(
+        "Use BitsAndBytes for 4-bit quantization "
+        "(reduces GPU VRAM usage and may slow down training)"
+    ),
+)
+def train(
+    train_file: str,
+    test_file: str,
+    num_epochs: int,
+    device: TorchDeviceInfo,
+    four_bit_quant: bool,
+):
+    """Lab Train for Linux!"""
+    if four_bit_quant and device.type != "cuda":
+        raise click.ClickException("--4-bit-quant requires CUDA device")
 
-    if args.four_bit_quant and args.device.type != "cuda":
-        parser.error("4-bit quantization requires --device cuda\n")
+    print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", num_epochs)
+    print("LINUX_TRAIN.PY: TRAIN FILE IS: ", train_file)
+    print("LINUX_TRAIN.PY: TEST FILE IS: ", test_file)
 
-    print(f"LINUX_TRAIN.PY: Using device '{args.device}'")
-    if args.device.type == "cuda":
+    print(f"LINUX_TRAIN.PY: Using device '{device}'")
+    if device.type == "cuda":
         # estimated by watching nvtop / radeontop during training
-        min_vram = 11 if args.four_bit_quant else 17
-        report_cuda_device(args, min_vram)
-
-    print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", args.num_epochs)
-    print("LINUX_TRAIN.PY: TRAIN FILE IS: ", args.train_file)
-    print("LINUX_TRAIN.PY: TEST FILE IS: ", args.test_file)
+        min_vram = 11 if four_bit_quant else 17
+        report_cuda_device(device, min_vram)
 
     print("LINUX_TRAIN.PY: LOADING DATASETS")
     # Get the file name
-    train_dataset = load_dataset("json", data_files=args.train_file, split="train")
+    train_dataset = load_dataset("json", data_files=train_file, split="train")
 
-    test_dataset = load_dataset("json", data_files=args.test_file, split="train")
+    test_dataset = load_dataset("json", data_files=test_file, split="train")
     train_dataset.to_pandas().head()
 
     model_name = "ibm/merlinite-7b"
@@ -196,7 +219,7 @@ def main(args_in: list[str] | None = None) -> None:
         response_template_ids, tokenizer=tokenizer
     )
 
-    if args.four_bit_quant:
+    if four_bit_quant:
         print("LINUX_TRAIN.PY: USING 4-bit quantization with BitsAndBytes")
         use_fp16 = True
         bnb_config = BitsAndBytesConfig(
@@ -223,7 +246,7 @@ def main(args_in: list[str] | None = None) -> None:
         config=config,
         trust_remote_code=True,
         low_cpu_mem_usage=True,
-        device_map=args.device.device_map,
+        device_map=device.device_map,
     )
     print(f"LINUX_TRAIN.PY: Model device {model.device}, map: {model.hf_device_map}")
     if model.device.type == "cuda":
@@ -298,7 +321,7 @@ def main(args_in: list[str] | None = None) -> None:
 
     training_arguments = TrainingArguments(
         output_dir=output_dir,
-        num_train_epochs=args.num_epochs,
+        num_train_epochs=num_epochs,
         per_device_train_batch_size=per_device_train_batch_size,
         fp16=use_fp16,
         bf16=not use_fp16,
@@ -362,4 +385,4 @@ def main(args_in: list[str] | None = None) -> None:
 
 
 if __name__ == "__main__":
-    main()
+    train()
