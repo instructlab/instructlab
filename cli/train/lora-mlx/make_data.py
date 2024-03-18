@@ -42,7 +42,7 @@ def make_data(data_dir, is_shiv):
 
             # Save the modified objects back to the JSON Lines file
             if "train_gen" in fn:
-                n = len(data_new) // 10 * 8
+                n = len(data_new) * 8 // 10
                 with open(f"{data_dir}/train.jsonl", "w") as f:
                     for obj in data_new[:n]:
                         f.write(json.dumps(obj) + "\n")
