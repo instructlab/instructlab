@@ -399,7 +399,7 @@ def generate_data(
             all_instruction_tokens.append(new_instruction_tokens)
             if console_output:
                 print(
-                    f"Q> {instruction_data_entry['instruction']}\nI>{instruction_data_entry['input']}\nA>{instruction_data_entry['output']}\n"
+                    f"Q> {instruction_data_entry['instruction']}\nI> {instruction_data_entry['input']}\nA> {instruction_data_entry['output']}\n"
                 )
         progress_bar.update(keep)
         process_duration = time.time() - process_start
