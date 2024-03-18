@@ -1,19 +1,24 @@
 # Specialized Fedora for Nvidia PCs
 
-The use case here is, you have a **"gaming PC"** with an **Nvidia graphics card** available and don't want
+The use case here is, you have a **PC with an Nvidia graphics card** available and don't want
 to mess with your current installation (Windows?) just for AI testing and playing around with models.
 
-So you can install [osbuild](https://osbuild.org) on any Fedora or Red Hat Enterprise Linux
+**NOTE** that your graphics card has to have
+ * enough RAM to hold the AI model and has to
+ * support "CUDA"
 
+See https://developer.nvidia.com/cuda-gpus to check if your card is compatible
+
+Now you can install [osbuild](https://osbuild.org) on any Fedora or Red Hat Enterprise Linux
 ```
 dnf install osbuild
 ```
 
 and build your **own custom operating system** to be copied onto an external USB drive.
-This is will then be a **portable Fedora**, able to run AI workloads but not
+This is then will be a **portable Fedora**, able to run AI workloads but not
 touching your current installation.
 
-You can even disconnect your current harddrive before booting
+You can even disconnect your current hard drive before booting
 for some extra peace of mind ☺
 
 ## Adapt the image definition
@@ -68,7 +73,7 @@ or you can check the IDs with `composer-cli compose status`
 
 Check e.g. with `lsblk` where your USB drive is.
 Please be careful to take the correct device and repace `/dev/sd_SOMETHING` in the command below.
-WARNING! This will kill all data on the disk given!
+WARNING! This will erase all data on the disk given!
 
 ```
 export IMAGEID=YOUR_IMAGE_ID_HERE
@@ -79,7 +84,7 @@ xz -dc $IMAGEID-raw.img.xz |sudo dd of=$DISK bs=100M status=progress && echo "Wa
 
 ## Boot the image
 
-Now just connect the USB drive to your "gaming PC" and assure it starts from the USB drive.
+Now just connect the USB drive to your PC with the Nvidia card and assure it starts from the USB drive.
 
 You should be able to connect to the PC via SSH (the IP should be visible on the monitor)
 with your password or ssh key.

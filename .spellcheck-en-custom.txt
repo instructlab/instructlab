@@ -45,4 +45,5 @@ wikisql
 xcode
 Nvidia
 osbuild
+CUDA
 
