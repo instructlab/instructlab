@@ -43,3 +43,6 @@ tox
 venv
 wikisql
 xcode
+Nvidia
+osbuild
+
