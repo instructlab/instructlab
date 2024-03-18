@@ -40,9 +40,11 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 ## 📋 Requirements
 
 - **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora). We anticipate support for more operating systems in the future.
+  **NOTE:** This CLI tool can also be used on x86 (Intel/ AMD) based Macs for interacting with a pre-trained LLM. However, it would not be efficient to also train a model on these systems if they lack a GPU or equivalent AI acceleration hardware. 
 - C++ compiler
 - Python 3.9+
 - Approximately 60GB disk space (entire process)
+- Note: This cli tool can also be used on x86 (Intel/ AMD) based Macs for interacting (i.e. chatting)  with a pre-trained LLM. However it would not usually be efficient to also train a model on these systems if they lack a GPU or equivalent AI acceleration hardware. 
 
 On Fedora Linux this means installing:
 ```shell
