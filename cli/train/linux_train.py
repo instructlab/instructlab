@@ -1,6 +1,5 @@
 # Standard
 from pathlib import Path
-import argparse
 
 # Third Party
 from datasets import load_dataset
@@ -14,6 +13,7 @@ from transformers import (
     TrainingArguments,
 )
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
+import click
 import torch
 
 # First Party
@@ -61,34 +61,36 @@ def formatting_prompts_func(example):
     return output_texts
 
 
-def main(args_in: list[str] | None = None) -> None:
-    parser = argparse.ArgumentParser(description="Lab Train for Linux!")
-    parser.add_argument(
-        "--train-file",
-        type=str,
-        help="absolute path to the training file",
-        default=None,
-    )
-    parser.add_argument(
-        "--test-file", type=str, help="absolute path to the testing file", default=None
-    )
-    parser.add_argument(
-        "--num-epochs",
-        type=int,
-        help="number of epochs to run during training",
-        default=None,
-    )
-    args = parser.parse_args(args_in)
-
-    print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", args.num_epochs)
-    print("LINUX_TRAIN.PY: TRAIN FILE IS: ", args.train_file)
-    print("LINUX_TRAIN.PY: TEST FILE IS: ", args.test_file)
+@click.command()
+@click.option(
+    "--train-file",
+    help="Absolute path to the training file",
+    type=click.STRING,
+    default=None,
+)
+@click.option(
+    "--test-file",
+    type=click.STRING,
+    help="Absolute path to the testing file",
+    default=None,
+)
+@click.option(
+    "--num-epochs",
+    type=click.INT,
+    help="Number of epochs to run during training",
+    default=None,
+)
+def train(train_file, test_file, num_epochs):
+    """Lab Train for Linux!"""
+    print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", num_epochs)
+    print("LINUX_TRAIN.PY: TRAIN FILE IS: ", train_file)
+    print("LINUX_TRAIN.PY: TEST FILE IS: ", test_file)
 
     print("LINUX_TRAIN.PY: LOADING DATASETS")
     # Get the file name
-    train_dataset = load_dataset("json", data_files=args.train_file, split="train")
+    train_dataset = load_dataset("json", data_files=train_file, split="train")
 
-    test_dataset = load_dataset("json", data_files=args.test_file, split="train")
+    test_dataset = load_dataset("json", data_files=test_file, split="train")
     train_dataset.to_pandas().head()
 
     model_name = "ibm/merlinite-7b"
@@ -198,7 +200,7 @@ def main(args_in: list[str] | None = None) -> None:
 
     training_arguments = TrainingArguments(
         output_dir=output_dir,
-        num_train_epochs=args.num_epochs,
+        num_train_epochs=num_epochs,
         per_device_train_batch_size=per_device_train_batch_size,
         bf16=True,
         # use_ipex=True, # TODO CPU test this possible optimization
@@ -252,4 +254,4 @@ def main(args_in: list[str] | None = None) -> None:
 
 
 if __name__ == "__main__":
-    main()
+    train()
