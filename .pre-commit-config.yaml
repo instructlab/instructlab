@@ -9,3 +9,9 @@ repos:
       hooks:
           - id: isort
             exclude: imports
+    - repo: https://github.com/schuellerf/pre-commit-pyspelling
+      rev: 0.1.0
+      hooks:
+          - id: pyspelling
+            args: ["--config", ".spellcheck.yml"]
+
