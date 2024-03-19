@@ -30,9 +30,9 @@ Help / TL;DR
 - `/M`: toggle **m**ultiline
 - `/n`: **n**ew session
 - `/N`: **n**ew session (ignoring loaded)
-- `/d [1]`: **d**isplay previous response
-- `/p [1]`: previous response in **p**lain text
-- `/md [1]`: previous response in **M**ark**d**own
+- `/d <int>`: **d**isplay previous response based on input, if passed 1 then previous, if 2 then second last response and so on.
+- `/p <int>`: previous response in **p**lain text based on input, if passed 1 then previous, if 2 then second last response and so on.
+- `/md <int>`: previous response in **M**ark**d**own based on input, if passed 1 then previous, if 2 then second last response and so on.
 - `/s filepath`: **s**ave current session to `filepath`
 - `/l filepath`: **l**oad `filepath` and start a new session
 - `/L filepath`: **l**oad `filepath` (permanently) and start a new session
@@ -195,8 +195,16 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
     def __handle_replay(self, content, display_wrapper=(lambda x: x)):
         cs = content.split()
-        i = 1 if len(cs) == 1 else int(cs[1]) * 2 - 1
-        if len(self.info["messages"]) > i:
+        try:
+            i = 1 if len(cs) == 1 else int(cs[1]) * 2 - 1
+            if abs(i) >= len(self.info["messages"]):
+                raise IndexError
+        except (IndexError, ValueError):
+            self.console.print(
+                display_wrapper("Invalid index: " + content), style="bold red"
+            )
+            raise KeyboardInterrupt
+        if len(self.info["messages"]) > abs(i):
             self.console.print(display_wrapper(self.info["messages"][-i]["content"]))
         raise KeyboardInterrupt
 
@@ -240,6 +248,13 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             )
             raise KeyboardInterrupt
         filepath = cs[1]
+        if not os.path.exists(filepath):
+            self._sys_print(
+                Markdown(
+                    f"**WARNING**: File `{filepath}` specified in the `/l filepath` or `/L filepath` command does not exist."
+                )
+            )
+            raise KeyboardInterrupt
         with open(filepath, "r") as session:
             messages = json.loads(session.read())
         if content[:2] == "/L":

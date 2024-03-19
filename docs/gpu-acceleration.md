@@ -8,7 +8,7 @@ By default, `lab` will attempt to use your GPU for inference and synthesis. This
 
 Unfortunately, at the time of writing, `torch` does not have GPU-specific support for the latest Python (3.12), so if you're on Linux, it's recommended to set up a Python 3.11-specific `venv` and install `lab` to that to minimize issues. (MacOS ships Python 3.9, so this step shouldn't be necessary.) Here's how to do that on Fedora with `dnf`:
 
-  ```Shell
+  ```shell
   # Install python3.11
   sudo dnf install python3.11
 
@@ -20,9 +20,9 @@ Unfortunately, at the time of writing, `torch` does not have GPU-specific suppor
   source venv/bin/activate
 
   # Install lab (assumes a locally-cloned repo)
-  # You can clone the repo using gh cli if you haven't already done so
-  # gh auth login
+  # You can clone the repo if you haven't already done so (either one)
   # gh repo clone instruct-lab/cli
+  # git clone git@github.com:instruct-lab/cli.git
   pip3 install cli/.
   ```
 
@@ -32,10 +32,10 @@ With Python 3.11 installed, it's time to replace some packages!
 
 `torch` should already ship with CUDA support, so you only have to replace `llama-cpp-python`.
 
-Ensure you have the latest proprietary NVidia drivers installed.  You can easily validate whether you are using nouveau or nvidia kernel drivers with the following command.  If your output shows "Kernel driver in use: nouveau", you are not running with the proprietary NVidia drivers.
+Ensure you have the latest proprietary Nvidia drivers installed.  You can easily validate whether you are using `nouveau` or `nvidia` kernel drivers with the following command.  If your output shows "Kernel driver in use: nouveau", you are **not running** with the proprietary Nvidia drivers.
 
 ```shell
-#Check video driver
+# Check video driver
 lspci -n -n -k | grep -A 2 -e VGA -e 3D
 ```
 
@@ -45,17 +45,18 @@ If needed, install the proprietary NVidia drivers
 # Enable RPM Fusion Repos
 sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-$(rpm -E %fedora).noarch.rpm https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-$(rpm -E %fedora).noarch.rpm
 
-# Install NVidia Drivers
+# Install Nvidia Drivers
 # There may be extra steps for enabling secure boot.  View the following blog for further details: https://blog.monosoul.dev/2022/05/17/automatically-sign-nvidia-kernel-module-in-fedora-36/ 
 
-sudo yum install akmod-nvidia xorg-x11-drv-nvidia-cuda
+sudo dnf install akmod-nvidia xorg-x11-drv-nvidia-cuda
 
 # Reboot to load new kernel drivers
-reboot
+sudo reboot
 
-#Check video driver
+# Check video driver
 lspci -n -n -k | grep -A 2 -e VGA -e 3D
 ```
+
 You should now see "Kernel driver in use: nvidia". The next step is to ensure CUDA 12.4 is installed.
 
 ```shell
@@ -66,10 +67,10 @@ sudo dnf clean all
 sudo dnf -y install cuda-toolkit-12-4 nvtop
 ```
 
-Go to the project's Github to see the [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends). Find the `cuBLAS (CUDA)` backend. You'll see a `pip3 install` command. You'll want to add a few options to ensure it gets installed over the existing package: `--force-reinstall` and `--no-cache-dir`. Your final command should look like so:
+Go to the project's Github to see the [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends). Find the `cuBLAS (CUDA)` backend. You'll see a `pip3 install` command. You'll want to add a few options to ensure it gets installed over the existing package: `--force-reinstall` and `--no-cache-dir`. Your final command should look like this:
 
 ```shell
-#Veryify CUDA can be found in your PATH variable
+# Veryify CUDA can be found in your PATH variable
 export CUDA_HOME=/usr/local/cuda
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64
 export PATH=$PATH:$CUDA_HOME/bin
@@ -85,7 +86,7 @@ Proceed to the `Initialize` section of the [CLI Readme](https://github.com/instr
 
 ### AMD/ROCm
 
-`torch` does not yet ship with AMD ROCm support, so you'll need to install a version compiled with support for it.
+`torch` does not yet ship with AMD ROCm support, so you'll need to install a version compiled with support.
 
 Visit [Pytorch's "Get Started Locally" page](https://pytorch.org/get-started/locally/) and use the matrix installer tool to find the ROCm package. `Stable, Linux, Pip, Python, ROCm 5.7` in the matrix installer spits out the following command:
 

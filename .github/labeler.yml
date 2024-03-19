@@ -1,0 +1,10 @@
+documentation:
+- CODE_OF_CONDUCT.md
+- README.md
+- TROUBLESHOOTING.md
+- CONTRIBUTING/**/*
+- docs/**/*
+
+testing:
+- tests/**/*
+- scripts/functional-tests.sh

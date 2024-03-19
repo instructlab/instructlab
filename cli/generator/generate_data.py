@@ -39,7 +39,7 @@ Here are the requirements:
 5. The instructions should be in English.
 6. The instructions should be 1 to 2 sentences long. Either an imperative sentence or a question is permitted.
 7. You should generate an appropriate input to the instruction. The input field should contain a specific example provided for the instruction. It should involve realistic data and should not contain simple placeholders. The input should provide substantial content to make the instruction challenging but should ideally not exceed 100 words.
-8. Not all instructions require input. For example, when a instruction asks about some general information, "what is the highest peak in the world", it is not necessary to provide a specific context. In this case, we simply put "<noinput>" in the input field.
+8. Not all instructions require input. For example, when an instruction asks about some general information, "what is the highest peak in the world", it is not necessary to provide a specific context. In this case, we simply put "<noinput>" in the input field.
 9. The output should be an appropriate response to the instruction and the input. Make sure the output is less than 100 words.
 
 List of 5 tasks:
@@ -64,6 +64,28 @@ Document:
 
 Here are some examples to help you understand the type of question that asked for this document:
 """
+
+
+_WORD_DENYLIST = [
+    "image",
+    "images",
+    "graph",
+    "graphs",
+    "picture",
+    "pictures",
+    "file",
+    "files",
+    "map",
+    "maps",
+    "draw",
+    "plot",
+    "go to",
+    "video",
+    "audio",
+    "music",
+    "flowchart",
+    "diagram",
+]
 
 
 class GenerateException(Exception):
@@ -151,28 +173,7 @@ def post_process_gpt3_response(num_prompt_instructions, response):
         if len(inst.split()) <= 3 or len(inst.split()) > 150:
             continue
         # filter based on keywords that are not suitable for language models.
-        blacklist = [
-            "image",
-            "images",
-            "graph",
-            "graphs",
-            "picture",
-            "pictures",
-            "file",
-            "files",
-            "map",
-            "maps",
-            "draw",
-            "plot",
-            "go to",
-            "video",
-            "audio",
-            "music",
-            "flowchart",
-            "diagram",
-        ]
-        blacklist += []
-        if any(find_word_in_string(word, inst) for word in blacklist):
+        if any(find_word_in_string(word, inst) for word in _WORD_DENYLIST):
             continue
         # We found that the model tends to add "write a program" to some existing instructions
         # which lead to a lot of such instructions and it's confusing whether the model needs
@@ -399,7 +400,7 @@ def generate_data(
             all_instruction_tokens.append(new_instruction_tokens)
             if console_output:
                 print(
-                    f"Q> {instruction_data_entry['instruction']}\nI>{instruction_data_entry['input']}\nA>{instruction_data_entry['output']}\n"
+                    f"Q> {instruction_data_entry['instruction']}\nI> {instruction_data_entry['input']}\nA> {instruction_data_entry['output']}\n"
                 )
         progress_bar.update(keep)
         process_duration = time.time() - process_start
