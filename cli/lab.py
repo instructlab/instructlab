@@ -151,7 +151,10 @@ def init(
         click.echo(
             "Welcome to InstructLab CLI. This guide will help you to setup your environment."
         )
-        click.echo("Please provide the following values to initiate the environment:")
+        click.echo(
+            "Please provide the following values to initiate the "
+            "environment [press Enter for defaults]:"
+        )
 
         taxonomy_path = utils.expand_path(
             click.prompt("Path to taxonomy repo", default=taxonomy_path)
