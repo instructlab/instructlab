@@ -1,16 +1,18 @@
 # Copyright © 2023 Apple Inc.
 
 # Standard
+from typing import Optional
 import copy
 
 # Third Party
 from mlx.utils import tree_flatten
-import click
 import mlx.core as mx
 import mlx.nn as nn
 import numpy as np
 import torch
-import utils
+
+# Local
+from . import utils
 
 
 def quantize_model(weights, config, q_group_size, q_bits):
@@ -42,39 +44,21 @@ def quantize_model(weights, config, q_group_size, q_bits):
     return quantized_weights, quantized_config
 
 
-@click.command()
-@click.option("--hf-path", type=click.STRING, help="Path to the Hugging Face model.")
-@click.option(
-    "--mlx-path",
-    type=click.STRING,
-    default="mlx_model",
-    help="Path to save the MLX model.",
-)
-@click.option("--quantize", "-q", help="Generate a quantized model.", is_flag=True)
-@click.option(
-    "--q-group-size", help="Group size for quantization.", type=click.INT, default=64
-)
-@click.option(
-    "--q-bits", help="Bits per weight for quantization.", type=click.INT, default=4
-)
-@click.option(
-    "--dtype",
-    help="Type to save the parameters, ignored if -q is given.",
-    type=click.Choice(["float16", "bfloat16", "float32"], case_sensitive=True),
-    default="float16",
-)
-@click.option(
-    "--upload-name",
-    help="The name of model to upload to Hugging Face MLX Community",
-    type=click.STRING,
-    default=None,
-)
-@click.option("--to-pt", is_flag=True)
-@click.option("--local", is_flag=True)
-def convert(
-    hf_path, mlx_path, quantize, q_group_size, q_bits, dtype, upload_name, to_pt, local
+def convert_between_mlx_and_pytorch(
+    hf_path: str,
+    mlx_path: str = "mlx_model",
+    quantize: bool = False,
+    q_group_size: int = 64,
+    q_bits: int = 4,
+    dtype: str = "float16",
+    upload_name: Optional[str] = None,
+    to_pt: bool = False,
+    local: bool = False,
 ):
     """Convert Hugging Face model to MLX format"""
+    if dtype not in ("float16", "bfloat16", "float32"):
+        raise  # TODO something
+
     print("[INFO] Loading")
     weights, config, tokenizer = utils.fetch_from_hub(hf_path, local)
 
@@ -96,7 +80,3 @@ def convert(
     utils.save_model(mlx_path, weights, tokenizer, config)
     if upload_name is not None:
         utils.upload_to_hub(mlx_path, upload_name, hf_path)
-
-
-if __name__ == "__main__":
-    convert()

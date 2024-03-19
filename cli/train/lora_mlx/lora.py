@@ -2,19 +2,21 @@
 
 # Standard
 from pathlib import Path
+from typing import Optional
 import json
 import math
 import time
 
 # Third Party
 from mlx.utils import tree_flatten, tree_unflatten
-from models.lora import LoRALinear
-import click
 import mlx.core as mx
 import mlx.nn as nn
 import mlx.optimizers as optim
 import numpy as np
-import utils as lora_utils
+
+# Local
+from . import utils as lora_utils
+from .models.lora import LoRALinear
 
 
 class Dataset:
@@ -236,108 +238,28 @@ def generate(model, prompt, tokenizer, stream, temp, max_tokens):
         return
 
 
-@click.command()
-@click.option(
-    "--model",
-    default="mlx_model",
-    help="The path to the local model directory or Hugging Face repo.",
-)
-# Generation options
-@click.option(
-    "--max-tokens",
-    "-m",
-    type=click.INT,
-    default=100,
-    help="The maximum number of tokens to generate",
-)
-@click.option("--temp", type=click.FLOAT, default=0.8, help="The sampling temperature")
-@click.option(
-    "--prompt", "-p", type=click.STRING, help="The prompt for generation", default=None
-)
-# Training options
-@click.option("--train", is_flag=True, help="Do training")
-@click.option(
-    "--data",
-    type=click.STRING,
-    default="data/",
-    help="Directory with {train, valid, test}.jsonl files",
-)
-@click.option(
-    "--lora-layers", type=click.INT, default=16, help="Number of layers to fine-tune"
-)
-@click.option("--batch-size", type=click.INT, default=4, help="Minibatch size.")
-@click.option("--iters", type=click.INT, default=1000, help="Iterations to train for.")
-@click.option(
-    "--val-batches",
-    type=click.INT,
-    default=25,
-    help="Number of validation batches, -1 uses the entire validation set.",
-)
-@click.option(
-    "--learning-rate", type=click.FLOAT, default=1e-5, help="Adam learning rate."
-)
-@click.option(
-    "--steps-per-report",
-    type=click.INT,
-    default=10,
-    help="Number of training steps between loss reporting.",
-)
-@click.option(
-    "--steps-per-eval",
-    type=click.INT,
-    default=200,
-    help="Number of training steps between validations.",
-)
-@click.option(
-    "--resume-adapter-file",
-    type=click.STRING,
-    default=None,
-    help="Load path to resume training with the given adapter weights.",
-)
-@click.option(
-    "--adapter-file",
-    type=click.STRING,
-    default="adapters.npz",
-    help="Save/load path for the trained adapter weights.",
-)
-@click.option(
-    "--save-every",
-    type=click.INT,
-    default=100,
-    help="Save the model every N iterations.",
-)
-@click.option("--test", is_flag=True, help="Evaluate on the test set after training")
-@click.option("--stream", is_flag=True, help="Evaluate on the test set after training")
-@click.option("--no-adapter", is_flag=True, help="")
-@click.option(
-    "--test-batches",
-    type=click.INT,
-    default=500,
-    help="Number of test set batches, -1 uses the entire test set.",
-)
-@click.option("--seed", type=click.INT, default=0, help="The PRNG seed")
 def load_and_train(
-    model,
-    max_tokens,
-    temp,
-    prompt,
-    train,
-    data,
-    lora_layers,
-    batch_size,
-    iters,
-    val_batches,
-    learning_rate,
-    steps_per_report,
-    steps_per_eval,
-    resume_adapter_file,
-    adapter_file,
-    save_every,
-    test,
-    stream,
-    no_adapter,
-    test_batches,
-    seed,
+    model: str = "mlx_model",
+    max_tokens: int = 100,
+    temp: float = 0.8,
+    prompt: Optional[str] = None,
+    train: bool = False,
+    data: str = "data/",
+    lora_layers: int = 16,
+    batch_size: int = 4,
+    iters: int = 1000,
+    val_batches: int = 25,
+    learning_rate: float = 1e-5,
+    steps_per_report: int = 10,
+    steps_per_eval: int = 200,
+    resume_adapter_file: Optional[str] = None,
+    adapter_file: str = "adapters.npz",
+    save_every: int = 100,
+    test: bool = False,
+    stream: bool = False,
+    no_adapter: bool = False,
+    test_batches: int = 500,
+    seed: int = 0,
 ):
     """LoRA or QLoRA fine tuning."""
     np.random.seed(seed)
@@ -424,7 +346,3 @@ def load_and_train(
     if prompt is not None:
         print("Generating")
         generate(model, prompt, tokenizer, stream, temp, max_tokens)
-
-
-if __name__ == "__main__":
-    load_and_train()
