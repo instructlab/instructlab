@@ -44,136 +44,169 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 - Python 3.9+
 - Approximately 60GB disk space (entire process)
 
-On Fedora Linux this means installing:
-```shell
-$ sudo dnf install g++ gcc make pip python3 python3-devel python3-GitPython
-```
 
 ## ✅ Getting started
 
 ### 🧰 Installing `lab`
 
-To start, create a new directory called `instruct-lab` to store the files the `lab` CLI needs when running.
+1. If you are on Fedora Linux, install C++, Python 3.9+, and other necessary tools by running the following command:
 
-```
-mkdir instruct-lab
-cd instruct-lab
-python3 -m venv venv
-source venv/bin/activate
-pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
-```
-> **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection, if g++ is not found try 'gcc-c++'
+    ```shell
+   sudo dnf install g++ gcc make pip python3 python3-devel python3-GitPython
+   ```
 
-> **Note:** The steps shown in this document use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. However, if for managing Python environments on your machine you use another tool such as [pyenv](https://github.com/pyenv/pyenv) or [Conda Miniforge](https://github.com/conda-forge/miniforge) continue to use that tool instead. Otherwise, you may have issues with packages that are installed but not found in `venv`.
+   > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection.
 
-If `lab` is installed correctly, you can test the lab command:
+   Optional: If g++ is not found, try 'gcc-c++' by running the following command:
 
-```
-(venv) $ lab
-Usage: lab [OPTIONS] COMMAND [ARGS]...
+     ```shell
+     sudo dnf install gcc-c++ gcc make pip python3 python3-devel python3-GitPython
+     ```
 
-  CLI for interacting with InstructLab.
+2. Create a new directory called `instruct-lab` to store the files the `lab` CLI needs when running and CD into the directory by running the following command:
 
-  If this is your first time running `lab`, it's best to start with `lab init`
-  to create the environment
+   ```shell
+   mkdir instruct-lab
+   cd instruct-lab
+   ```
 
-Options:
-  --config PATH  Path to a configuration file.  [default: config.yaml]
-  --help         Show this message and exit.
+   > **NOTE:** The following steps in this document use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. However, if you use another tool such as [pyenv](https://github.com/pyenv/pyenv) or [Conda Miniforge](https://github.com/conda-forge/miniforge) for managing Python environments on your machine continue to use that tool instead. Otherwise, you may have issues with packages that are installed but not found in `venv`.
 
-Commands:
-  chat      Run a chat using the modified model
-  check     Check that taxonomy is valid
-  convert   Converts model to GGUF
-  download  Download the model(s) to train
-  generate  Generates synthetic data to enhance your example data
-  init      Initializes environment for InstructLab
-  list      Lists taxonomy files that have changed since a reference commit (default origin/main)
-  serve     Start a local server
-  test      Runs basic test to ensure model correctness
-  train     Takes synthetic data generated locally with `lab generate`...
-```
+3. Install and activate your `venv` environment by running the following command:
 
-**Every** `lab` command needs to be run from within your Python virtual environment. To enter the Python environment, run the following command:
+   ```shell
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
+   ```
 
-```
-source venv/bin/activate
-```
+4. From your `venv` environment, verify `lab` is installed correctly, by running the `lab` command.
+
+   ```shell
+   lab
+   ```
+
+   #### Example output:
+   ```
+   (venv) $ lab
+   Usage: lab [OPTIONS] COMMAND [ARGS]...
+
+   CLI for interacting with InstructLab.
+
+   If this is your first time running `lab`, it's best to start with `lab init`
+   to create the environment
+
+   Options:
+   --config PATH  Path to a configuration file.  [default: config.yaml]
+   --help         Show this message and exit.
+
+   Commands:
+   chat      Run a chat using the modified model
+   check     Check that taxonomy is valid
+   convert   Converts model to GGUF
+   download  Download the model(s) to train
+   generate  Generates synthetic data to enhance your example data
+   init      Initializes environment for InstructLab
+   list      Lists taxonomy files that have changed since a reference commit (default origin/main)
+   serve     Start a local server
+   test      Runs basic test to ensure model correctness
+   train     Takes synthetic data generated locally with `lab generate`...
+   ```
+
+   > **IMPORTANT:** every `lab` command needs to be run  from within your Python virtual environment.
 
 ### 🏗️ Initialize `lab`
 
-```shell
-lab init
-```
+1. Initialize the `lab` by running the following command:
 
-Initializing `lab` will:
+   ```shell
+   lab init
+   ```
 
-1. Add a new, default `config.yaml` file.
-2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory. If you want to point to an existing local clone of the `taxonomy` respository then pass the path interactively or alternatively with the `--taxonomy-path` flag.
+   #### Example output:
 
-```shell
-(venv) $ lab init
-Welcome to InstructLab CLI. This guide will help you set up your environment.
-Please provide the following values to initiate the environment [press Enter for defaults]:
-Path to taxonomy repo [taxonomy]: <ENTER>
-`taxonomy` seems to not exists or is empty. Should I clone git@github.com:instruct-lab/taxonomy.git for you? [y/N]: y
-Cloning git@github.com:instruct-lab/taxonomy.git...
-Generating `config.yaml` in the current directory...
-Initialization completed successfully, you're ready to start using `lab`. Enjoy!
-```
+   ```shell
+   Welcome to InstructLab CLI. This guide will help you set up your environment.
+   Please provide the following values to initiate the environment [press Enter for defaults]:
+   Path to taxonomy repo [taxonomy]: <ENTER>
+   ```
 
-`lab` will use the default configuration file unless otherwise specified.
+2. When prompted by the interface, press **Enter** to add a new default `config.yaml` file.
+
+3. When prompted, clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory by typing **y**.
+
+   **Optional**: If you want to point to an existing local clone of the `taxonomy` repository, you can pass the path interactively or alternatively with the `--taxonomy-path` flag.
+
+   #### Example output:
+
+   ```shell
+   (venv) $ lab init
+   Welcome to InstructLab CLI. This guide will help you set up your environment.
+   Please provide the following values to initiate the environment [press Enter for defaults]:
+   Path to taxonomy repo [taxonomy]: <ENTER>
+   `taxonomy` seems to not exists or is empty. Should I clone git@github.com:instruct-lab/taxonomy.git for you? [y/N]: y
+   Cloning git@github.com:instruct-lab/taxonomy.git...
+   Generating `config.yaml` in the current directory...
+   Initialization completed successfully, you're ready to start using `lab`. Enjoy!
+   ```
+
+   `lab` will use the default configuration file unless otherwise specified.
 You can override this behavior with the `--config` parameter for any `lab` command.
 
 ### 📥 Download the model
 
-```
-lab download
-```
+* Run the `lab download`command.
 
-`lab download` will download a pre-trained model from HuggingFace and store it in a `models` directory:
+   ```shell
+   $lab download
+   ```
+    The `lab download` command will download a pre-trained model from HuggingFace and store it in a `models` directory.
 
-```
-(venv) $ lab download
-Downloading model from ibm/merlinite-7b-GGUF@main to models...
-(venv) $ ls models
-merlinite-7b-Q4_K_M.gguf
-```
+    #### Example output
 
-> **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
+    ```shell
+   (venv) $ lab download
+    Downloading model from ibm/merlinite-7b-GGUF@main to models...
+   (venv) $ ls models
+    merlinite-7b-Q4_K_M.gguf
+    ```
+    > **NOTE** ⏳ The `lab download` command can take a few minutes or immediately depending on your internet connection or if the model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
 
 ### 🍴 Serving the model
+1. Serve the model by running the following command:
 
-```
-lab serve
-```
+    ```
+    $ lab serve
+    ```
 
-Once the model is served and ready, you'll see the following output:
+   Once the model is served and ready, you'll see the following output:
 
-```
-(venv) $ lab serve
-INFO 2024-03-02 02:21:11,352 lab.py:201 Using model 'models/ggml-merlinite-7b-0302-Q4_K_M.gguf' with -1 gpu-layers and 4096 max context size.
-Starting server process
-After application startup complete see http://127.0.0.1:8000/docs for API.
-Press CTRL+C to shut down the server.
-```
+    ```shell
+   (venv) $ lab serve
+    INFO 2024-03-02 02:21:11,352 lab.py:201 Using model 'models/ggml-merlinite-7b-0302-Q4_K_M.gguf' with -1 gpu-layers and 4096 max context size.
+    Starting server process
+    After application startup complete see http://127.0.0.1:8000/docs for API.
+    Press CTRL+C to shut down the server.
+    ```
 
 ### 📣 Chat with the model (Optional)
 
-Because you're serving the model in one terminal window, you likely have to create a new window and re-activate your Python virtual environment to run `lab chat`:
-```
+Because you're serving the model in one terminal window, you will have to create a new window and re-activate your Python virtual environment to run `lab chat` command:
+```shell
 source venv/bin/activate
-lab chat
+$lab chat
 ```
 
-Before you start adding new skills and knowledge to your model, you can check out its baseline performance (the model needs to be trained with the generated synthetic data to use the new skills or knowledge):
+Before you start adding new skills and knowledge to your model, you can check its baseline performance by asking it a question such as `what is the capital of Canada?`.
+
+> **NOTE:** the model needs to be trained with the generated synthetic data to use the new skills or knowledge
 
 ```
 (venv) $ lab chat
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────── system ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ Welcome to Chat CLI w/ GGML-MERLINITE-7B-0302-Q4_K_M (type /h for help)                                                                                                                                                                    │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
->>> what is the capital of canada                                                                                                                                                                                                 [S][default]
+>>> what is the capital of Canada                                                                                                                                                                                                 [S][default]
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────── ggml-merlinite-7b-0302-Q4_K_M ───────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ The capital city of Canada is Ottawa. It is located in the province of Ontario, on the southern banks of the Ottawa River in the eastern portion of southern Ontario. The city serves as the political center for Canada, as it is home to │
 │ Parliament Hill, which houses the House of Commons, Senate, Supreme Court, and Cabinet of Canada. Ottawa has a rich history and cultural significance, making it an essential part of Canada's identity.                                   │
@@ -190,62 +223,63 @@ Contribute new knowledge or compositional skills to your local [taxonomy](https:
 Detailed contribution instructions can be found in the [taxonomy respoitory](https://github.com/instruct-lab/taxonomy/blob/main/README.md).
 
 ### 📜 List your new data
+1. List your new data by running the following command:
 
-```
-lab list
-```
+    ```shell
+    $lab list
+    ```
 
-To ensure `lab` is registering your new knowledge or skills, you can run `lab list`.
+2. To ensure `lab` is registering your new knowledge or skills, you can run the `lab list` command. The following is the expected result after adding the new compositional skill foo-lang:
 
-The following is the expected result after adding the new compositional skill foo-lang:
-```
-(venv) $ lab list
-compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
-```
+    ```shell
+   (venv) $ lab list
+    compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
+    ```
+
 
 ### 📜 Check your new data
+3. Run the `lab check` command to ensure that your new knowledge or skills are valid.
+   ```shell
+   $ lab check
+   ```
+    #### Example output for skill foo-lang
 
-```
-lab check
-```
-
-To ensure that your new knowledge or skills are valid, you can run `lab check`.
-
-The following is the expected result after adding the new compositional skill foo-lang:
-```
-(venv) $ lab check 
-INFO 2024-03-15 11:33:23,973 generate_data.py:564 Found new taxonomy files :
-INFO 2024-03-15 11:33:23,973 generate_data.py:566 * compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
-```
+    ```shell
+    (venv) $ lab check
+    INFO 2024-03-15 11:33:23,973 generate_data.py:564 Found new taxonomy files :
+    INFO 2024-03-15 11:33:23,973 generate_data.py:566 * compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
+    ```
 
 ### 🚀 Generate a synthetic dataset
+4. To generate a synthetic dataset based on your newly added knowledge or skill set in [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository, run the following command:
 
-```
-lab generate
-```
+    ```shell
+    lab generate
+    ```
 
-The next step is to generate a synthetic dataset based on your newly added knowledge or skill set in the [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository:
+    #### Example output:
+    ```shell
+    (venv) $ lab generate
+    INFO 2024-02-29 19:09:48,804 lab.py:250 Generating model 'ggml-merlinite-7b-0302-Q4_K_M' using 10 CPUs,
+    taxonomy: '/home/username/instruct-lab/taxonomy' and seed 'seed_tasks.json'
 
-```
-(venv) $ lab generate
-INFO 2024-02-29 19:09:48,804 lab.py:250 Generating model 'ggml-merlinite-7b-0302-Q4_K_M' using 10 CPUs,
-taxonomy: '/home/username/instruct-lab/taxonomy' and seed 'seed_tasks.json'
+    0%|##########| 0/100 Cannot find prompt.txt. Using default prompt.
+    98%|##########| 98/100 INFO 2024-02-29 20:49:27,582 generate_data.py:428 Generation took 5978.78s
+    ```
 
-0%|##########| 0/100 Cannot find prompt.txt. Using default prompt.
-98%|##########| 98/100 INFO 2024-02-29 20:49:27,582 generate_data.py:428 Generation took 5978.78s
-```
+    The synthetic data set will be three files in the newly created `generated` directory named `generated*.json`, `test*.jsonl`, and `train*.jsonl`.
+5. Verify the files have been created by running the `ls generated` command.
 
-The synthetic data set will be three files in the newly created `generated` directory named `generated*.json`, `test*.jsonl`, and `train*.jsonl`:
-```
-(venv) $ ls generated/
- 'generated_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.json'   'train_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
- 'test_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
-```
+   ```shell
+    (venv) $ ls generated/
+    'generated_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.json'   'train_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
+    'test_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
+    ```
 
-> **NOTE:** ⏳ This can take from 15 minutes to 1+ hours to complete, depending on your computing resources.
+   > **NOTE:** ⏳ This can take from 15 minutes to 1+ hours to complete, depending on your computing resources.
 
-It is also possible to run the generate step against a different model via an
-OpenAI-compatible API. For example, the one spawned by `lab serve` or any remote or locally hosted LLM (e.g. via [ollama](ollama.ai/), [LM Studio](https://lmstudio.ai), etc.)
+    It is also possible to run the generate step against a different model via an
+    OpenAI-compatible API. For example, the one spawned by `lab serve` or any remote or locally hosted LLM (e.g. via [ollama](ollama.ai/), [LM Studio](https://lmstudio.ai), etc.)
 
 ```
 lab generate --endpoint-url http://localhost:8000/v1
