@@ -4,7 +4,6 @@ from os.path import basename, dirname, exists, splitext
 import json
 import logging
 import os
-import platform
 import shutil
 import sys
 
@@ -15,24 +14,8 @@ from huggingface_hub import hf_hub_download
 import click
 
 # Local
+# NOTE: Subcommands are using local imports to speed up startup time.
 from . import config, utils
-from .chat.chat import ChatException, chat_cli
-from .generator.generate_data import generate_data, get_taxonomy_diff, read_taxonomy
-from .generator.utils import GenerateException
-from .llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
-from .server import ServerException, ensure_server, server
-from .train.linux_train import linux_train
-
-if sys.platform == "darwin" and platform.machine() == "arm64":  # mlx requires macOS
-    # Local
-    from .mlx_explore import utils as mlx_utils
-    from .mlx_explore.gguf_convert_to_mlx import load
-    from .train.lora_mlx.convert import convert_between_mlx_and_pytorch
-    from .train.lora_mlx.fuse import fine_tune
-    from .train.lora_mlx.lora import load_and_train
-    from .train.lora_mlx.make_data import make_data
-else:
-    mlx_utils = None
 
 
 class Lab:
@@ -222,6 +205,10 @@ def list(ctx, taxonomy_path, taxonomy_base):
     Lists taxonomy files that have changed since <taxonomy-base>.
     Similar to 'git diff <ref>'
     """
+    # pylint: disable=C0415
+    # Local
+    from .generator.generate_data import get_taxonomy_diff
+
     if not taxonomy_base:
         taxonomy_base = ctx.obj.config.generate.taxonomy_base
     if not taxonomy_path:
@@ -251,6 +238,10 @@ def list(ctx, taxonomy_path, taxonomy_base):
 @click.pass_context
 def check(ctx, taxonomy_path, taxonomy_base):
     """Check that taxonomy is valid"""
+    # pylint: disable=C0415
+    # Local
+    from .generator.generate_data import read_taxonomy
+
     if not taxonomy_base:
         taxonomy_base = ctx.obj.config.generate.taxonomy_base
     if not taxonomy_path:
@@ -279,6 +270,10 @@ def check(ctx, taxonomy_path, taxonomy_base):
 @click.pass_context
 def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
     """Start a local server"""
+    # pylint: disable=C0415
+    # Local
+    from .server import ServerException, server
+
     ctx.obj.logger.info(
         f"Using model '{model_path}' with {gpu_layers} gpu-layers and {max_ctx_size} max context size."
     )
@@ -375,6 +370,12 @@ def generate(
     api_key,
 ):
     """Generates synthetic data to enhance your example data"""
+    # pylint: disable=C0415
+    # Local
+    from .generator.generate_data import generate_data
+    from .generator.utils import GenerateException
+    from .server import ensure_server
+
     server_process = None
     if endpoint_url:
         api_base = endpoint_url
@@ -454,6 +455,11 @@ def generate(
 @click.pass_context
 def chat(ctx, question, model, context, session, quick_question, greedy_mode):
     """Run a chat using the modified model"""
+    # pylint: disable=C0415
+    # Local
+    from .chat.chat import ChatException, chat_cli
+    from .server import ensure_server
+
     server_process, api_base = ensure_server(
         ctx.obj.logger,
         ctx.obj.config.serve,
@@ -591,6 +597,7 @@ def train(
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
+    # pylint: disable=C0415
     if not input_dir:
         # By default, generate output-dir is used as train input-dir
         input_dir = ctx.obj.config.generate.output_dir
@@ -634,6 +641,10 @@ def train(
             raise click.exceptions.Exit(1)
 
     if not utils.is_macos_with_m_chip():
+        # Local
+        from .llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
+        from .train.linux_train import linux_train
+
         linux_train(
             train_file=train_files[0], test_file=test_files[0], num_epochs=num_epochs
         )
@@ -694,6 +705,13 @@ def train(
         # checkpoint_dirs = glob(training_results_dir + "/checkpoint*")
         # shutil.rmtree(checkpoint_dirs[0])
     else:
+        # Local
+        from .mlx_explore.gguf_convert_to_mlx import load
+        from .mlx_explore.utils import fetch_tokenizer_from_hub
+        from .train.lora_mlx.convert import convert_between_mlx_and_pytorch
+        from .train.lora_mlx.lora import load_and_train
+        from .train.lora_mlx.make_data import make_data
+
         if not skip_preprocessing:
             make_data(data_dir=data_dir)
 
@@ -712,9 +730,8 @@ def train(
 
         if tokenizer_dir is not None and gguf_model_path is not None:
             if not local:
-                assert mlx_utils is not None
                 tokenizer_dir_local = tokenizer_dir.replace("/", "-")
-                mlx_utils.fetch_tokenizer_from_hub(tokenizer_dir, tokenizer_dir_local)
+                fetch_tokenizer_from_hub(tokenizer_dir, tokenizer_dir_local)
 
             # no need to pass quantize_arg for now, script automatically detects if quantization is necessary based on whether gguf model is quantized or not
             load(gguf=gguf_model_path, repo=tokenizer_dir, mlx_path=dest_model_dir)
@@ -775,6 +792,10 @@ def train(
 # pylint: disable=function-redefined
 def test(data_dir, model_dir, adapter_file):
     """Runs basic test to ensure model correctness"""
+    # pylint: disable=C0415
+    # Local
+    from .train.lora_mlx.lora import load_and_train
+
     if adapter_file is None:
         adapter_file = os.path.join(model_dir, "adapters.npz")
 
@@ -824,6 +845,12 @@ def test(data_dir, model_dir, adapter_file):
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
     """Converts model to GGUF"""
+    # pylint: disable=C0415
+    # Local
+    from .llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
+    from .train.lora_mlx.convert import convert_between_mlx_and_pytorch
+    from .train.lora_mlx.fuse import fine_tune
+
     if adapter_file is None:
         adapter_file = os.path.join(model_dir, "adapters.npz")
     cli_dir = os.path.dirname(os.path.abspath(__file__))
