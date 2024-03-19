@@ -22,9 +22,11 @@ generate:
   prompt_file: prompt.txt
   seed_file: seed_tasks.json
   taxonomy_path: /tmp/instruct-lab-taxonomy
+  taxonomy_base: origin/main
   output_dir: /tmp
 serve:
   gpu_layers: -1
+  max_ctx_size: 4096
   model_path: models/ggml-merlinite-7b-0302-Q4_K_M.gguf
   host_port: localhost:8000
 """
@@ -49,9 +51,11 @@ generate:
   prompt_file: prompt.txt
   seed_file: seed_tasks.json
   taxonomy_path: /tmp/instruct-lab-taxonomy
+  taxonomy_base: origin/main
   output_dir: /tmp
 serve:
   gpu_layers: -1
+  max_ctx_size: 4096
   model_path: models/ggml-merlinite-7b-0302-Q4_K_M.gguf
 """
 
@@ -72,6 +76,7 @@ class TestConfig(unittest.TestCase):
         assert cfg is not None
         assert cfg.serve is not None
         assert cfg.serve.gpu_layers == -1
+        assert cfg.serve.max_ctx_size == 4096
         assert cfg.serve.model_path == "models/ggml-merlinite-7b-0302-Q4_K_M.gguf"
         assert cfg.chat.context == "default"
         assert cfg.chat.model == "ggml-merlinite-7b-0302-Q4_K_M"
@@ -85,6 +90,7 @@ class TestConfig(unittest.TestCase):
         assert cfg.generate.prompt_file == "prompt.txt"
         assert cfg.generate.seed_file == "seed_tasks.json"
         assert cfg.generate.taxonomy_path == "/tmp/instruct-lab-taxonomy"
+        assert cfg.generate.taxonomy_base == "origin/main"
 
     # Tests that additional lines in the config do not cause errors
     def test_config_unexpected_arguments(self):

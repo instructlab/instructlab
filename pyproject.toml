@@ -31,7 +31,7 @@ lab = "cli.lab:cli"
 [tool.setuptools.packages.find]
 # defines where to look for sub-packages
 where = [""]
-include = ["cli", "cli.chat", "cli.generator", "cli.train", "cli.train.lora-mlx", "cli.train.lora-mlx.models", "cli.llamacpp"]
+include = ["cli", "cli.chat", "cli.generator", "cli.train", "cli.train.lora_mlx", "cli.train.lora_mlx.models", "cli.llamacpp", "cli.mlx_explore"]
 
 [tool.setuptools.package-data]
 "*" = ["quantize"]

@@ -42,6 +42,7 @@ def ensure_server(logger, serve_config):
                 "logger": logger,
                 "model_path": serve_config.model_path,
                 "gpu_layers": serve_config.gpu_layers,
+                "max_ctx_size": serve_config.max_ctx_size,
                 "port": port,
             },
             daemon=True,
@@ -50,16 +51,26 @@ def ensure_server(logger, serve_config):
         return (server_process, temp_api_base)
 
 
-def server(logger, model_path, gpu_layers, host="localhost", port=8000):
+def server(
+    logger,
+    model_path,
+    gpu_layers,
+    max_ctx_size,
+    threads=None,
+    host="localhost",
+    port=8000,
+):
     """Start OpenAI-compatible server"""
     settings = Settings(
         host=host,
         port=port,
         model=model_path,
-        n_ctx=4096,
+        n_ctx=max_ctx_size,
         n_gpu_layers=gpu_layers,
         verbose=logger.level == logging.DEBUG,
     )
+    if threads is not None:
+        settings.n_threads = threads
     try:
         app = create_app(settings=settings)
     except ValueError as exc:

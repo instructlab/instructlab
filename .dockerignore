@@ -1,0 +1,18 @@
+/.git
+/.github
+
+/CONTRIBUTING
+/docs
+/mac_inference
+/MAINTAINERS
+/notebooks
+/scripts
+/tests
+
+# Python
+/build
+/.tox
+*.egg-info
+*.dist-info
+__pycache__/
+*.pyc
