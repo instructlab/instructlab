@@ -1,6 +1,8 @@
 from prompt_toolkit import prompt
 from prompt_toolkit.validation import Validator, ValidationError
 from ruamel.yaml import YAML
+import http.server
+import socketserver
 
 class YorNValidator(Validator):
     def validate(self, document):
@@ -15,6 +17,15 @@ class KorSValidator(Validator):
 
         if text and not (text == 'k' or text == 's'):
             raise ValidationError(message='Answer must be k or s',cursor_position=0)
+
+def run_feed_html(taxonomy_path, num_questions):
+    port = 8080
+
+    Handler = http.server.SimpleHTTPRequestHandler
+
+    with socketserver.TCPServer(("", port), Handler) as httpd:
+        print("Feeding lab at http://localhost:{port}".format(port=port))
+        httpd.serve_forever()
 
 def run_feed_cli(taxonomy_path, num_questions):
     print("Welcome to Lab Feed")

@@ -27,7 +27,7 @@ from .train.lora_mlx.convert import convert_between_mlx_and_pytorch
 from .train.lora_mlx.fuse import fine_tune
 from .train.lora_mlx.lora import load_and_train
 from .train.lora_mlx.make_data import make_data
-from .feed.feed import run_feed_cli
+from .feed.feed import run_feed_cli, run_feed_html
 
 if sys.platform == "darwin" and platform.machine() == "arm64":  # mlx requires macOS
     # Local
@@ -217,15 +217,24 @@ def init(
     default=5,
     help=f"Number of questions",
 )
+@click.option(
+    "--html",
+    type=click.BOOL,
+    default=False,
+    help=f"Feed lab in a browser",
+)
 @click.pass_context
 # pylint: disable=redefined-builtin,unused-argument
-def feed(ctx, taxonomy_path, num_questions):
+def feed(ctx, taxonomy_path, num_questions, html):
     """
     Input content of new taxonomy files
     """
     if not taxonomy_path:
         taxonomy_path = ctx.obj.config.generate.taxonomy_path
-    run_feed_cli(taxonomy_path, num_questions)
+    if html:
+        run_feed_html(taxonomy_path, num_questions)
+    else:
+        run_feed_cli(taxonomy_path, num_questions)
 
 
 @cli.command()
