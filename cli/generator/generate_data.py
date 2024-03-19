@@ -147,9 +147,7 @@ def writeline2file(logfile, line):
 def post_process_gpt3_response(num_prompt_instructions, response, discarded_file):
     if response is None:
         return [], 0
-    raw_instructions = (
-        f"{num_prompt_instructions + 1}. Instruction:" + response.message.content
-    )
+    raw_instructions = f"{num_prompt_instructions + 1}. Instruction:" + response
     raw_instructions = re.split("###", raw_instructions)
     instructions = []
     discarded = 0
@@ -256,7 +254,6 @@ def get_instructions_from_model(
     api_key,
     model_name,
     num_prompt_instructions,
-    request_batch_size,
     temperature,
     top_p,
     output_file_discarded,
@@ -265,58 +262,48 @@ def get_instructions_from_model(
     tls_client_key,
     tls_client_passwd,
 ):
-    batch_inputs = []
-    for _ in range(request_batch_size):
-        # only sampling from the seed tasks
-        try:
-            prompt_instructions = random.sample(
-                instruction_data_pool, num_prompt_instructions
-            )
-        except ValueError as exc:
-            raise GenerateException(
-                f"There was a problem with the new data, please make sure the "
-                f"yaml is formatted correctly, and there is enough "
-                f"new data({num_prompt_instructions}+ Q&A))"
-            ) from exc
-        prompt = encode_prompt(prompt_instructions, prompt_template)
-        batch_inputs.append(prompt)
+    # only sampling from the seed tasks
+    try:
+        prompt_instructions = random.sample(
+            instruction_data_pool, num_prompt_instructions
+        )
+    except ValueError as exc:
+        raise utils.GenerateException(
+            f"There was a problem with the new data, please make sure the yaml is formatted correctly, and there is enough new data({num_prompt_instructions}+ Q&A)"
+        ) from exc
+    prompt = encode_prompt(prompt_instructions, prompt_template)
     decoding_args = utils.OpenAIDecodingArguments(
         temperature=temperature,
-        n=1,
-        # Hard-coded to maximize length.
-        # Requests will be automatically adjusted.
+        # Hard-coded to maximize length. Requests will be automatically adjusted.
         max_tokens=3072,
         top_p=top_p,
         stop=["\n5", "5.", "5."],
     )
     request_start = time.time()
-    results = utils.openai_completion(
+    result = utils.openai_completion(
         api_base=api_base,
         api_key=api_key,
-        prompts=batch_inputs,
+        prompt=prompt,
         model_name=model_name,
         tls_insecure=tls_insecure,
         tls_client_cert=tls_client_cert,
         tls_client_key=tls_client_key,
         tls_client_passwd=tls_client_passwd,
-        batch_size=request_batch_size,
         decoding_args=decoding_args,
     )
     request_duration = time.time() - request_start
 
     post_process_start = time.time()
-    instruction_data = []
-    for result in results:
-        new_instructions, discarded = post_process_gpt3_response(
-            num_prompt_instructions, result, output_file_discarded
-        )
-        # make sure the generated instruction carried over extra fields
-        prompt_ins_0 = prompt_instructions[0]
-        for new_ins in new_instructions:
-            new_ins["taxonomy_path"] = prompt_ins_0["taxonomy_path"]
-            new_ins["task_description"] = prompt_ins_0["task_description"]
-            new_ins["document"] = prompt_ins_0["document"]
-        instruction_data += new_instructions
+    instruction_data, discarded = post_process_gpt3_response(
+        num_prompt_instructions, result, output_file_discarded
+    )
+
+    # make sure the generated instruction carried over extra fields
+    prompt_ins_0 = prompt_instructions[0]
+    for new_ins in instruction_data:
+        new_ins["taxonomy_path"] = prompt_ins_0["taxonomy_path"]
+        new_ins["task_description"] = prompt_ins_0["task_description"]
+        new_ins["document"] = prompt_ins_0["document"]
 
     post_process_duration = time.time() - post_process_start
     logger.debug(
@@ -340,7 +327,6 @@ def generate_data(
     num_cpus: Optional[int] = None,
     num_instructions_to_generate: Optional[int] = None,
     num_prompt_instructions=2,
-    request_batch_size=5,
     temperature=1.0,
     top_p=1.0,
     rouge_threshold: Optional[float] = None,
@@ -470,7 +456,6 @@ def generate_data(
             api_key,
             model_name,
             num_prompt_instructions,
-            request_batch_size,
             temperature,
             top_p,
             output_file_discarded,

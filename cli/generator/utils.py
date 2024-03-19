@@ -1,13 +1,9 @@
 # Standard
 from typing import Optional, Sequence, Union
-import copy
 import dataclasses
 import io
 import json
-import logging
-import math
 import os
-import sys
 
 # Third Party
 from openai import OpenAI, OpenAIError
@@ -30,7 +26,6 @@ class OpenAIDecodingArguments:
     max_tokens: int = 1800
     temperature: float = 0.2
     top_p: float = 1.0
-    n: int = 1
     stream: bool = False
     stop: Optional[Sequence[str]] = None
     presence_penalty: float = 0.0
@@ -44,13 +39,9 @@ def openai_completion(
     tls_client_cert,
     tls_client_key,
     tls_client_passwd,
-    prompts: Union[str, Sequence[str], Sequence[dict[str, str]], dict[str, str]],
+    prompt: str,
     decoding_args: OpenAIDecodingArguments,
     model_name="ggml-merlinite-7b-0302-Q4_K_M",
-    batch_size=1,
-    max_instances=sys.maxsize,
-    max_batches=sys.maxsize,
-    return_text=False,
     api_key=DEFAULT_API_KEY,
     **decoding_kwargs,
 ) -> Union[
@@ -66,101 +57,54 @@ def openai_completion(
         tls_client_cert: Path to the TLS client certificate to use
         tls_client_key: Path to the TLS client key to use
         tls_client_passwd: TLS client certificate password
-        prompts: A string or a list of strings to complete. If it is a chat model the strings
-            should be formatted as explained here:
-            https://github.com/openai/openai-python/blob/main/chatml.md.
-            If it is a chat model it can also be a dictionary (or list thereof) as explained here:
-            https://github.com/openai/openai-cookbook/blob/main/examples/How_to_format_inputs_to_ChatGPT_models.ipynb
+        prompt: A string
         decoding_args: Decoding arguments.
         model_name: Model name. Can be either in the format of "org/model" or just "model".
-        batch_size: Number of prompts to send in a single request. Only for non chat model.
-        max_instances: Maximum number of prompts to decode.
-        max_batches: Maximum number of batches to decode. This will be deprecated in the future.
-        return_text: If True, return text instead of full completion object (e.g. includes logprob).
         api_key: API key API key for API endpoint where model is hosted
         decoding_kwargs: Extra decoding arguments. Pass in `best_of` and `logit_bias` if needed.
 
     Returns:
-        A completion or a list of completions. Depending on return_text, return_openai_object,
-        and decoding_args.n, the completion type can be one of:
-            - a string (if return_text is True)
-            - an openai_object.OpenAIObject object (if return_text is False)
-            - a list of objects of the above types (if decoding_args.n > 1)
+            - a string
     """
-    is_single_prompt = isinstance(prompts, (str, dict))
-    if is_single_prompt:
-        prompts = [prompts]
+    shared_kwargs = {
+        "model": model_name,
+        **decoding_args.__dict__,
+        **decoding_kwargs,
+    }
 
-    if max_batches < sys.maxsize:
-        logging.warning(
-            "`max_batches` will be deprecated in the future, please use `max_instances` instead."
-            "Setting `max_instances` to `max_batches * batch_size` for now."
-        )
-        max_instances = max_batches * batch_size
+    if not api_key:
+        # we need to explicitly set non-empty api-key, to ensure generate
+        # connects to our local server
+        api_key = "no_api_key"
 
-    prompts = prompts[:max_instances]
-    num_prompts = len(prompts)
-    prompt_batches = [
-        prompts[batch_id * batch_size : (batch_id + 1) * batch_size]
-        for batch_id in range(int(math.ceil(num_prompts / batch_size)))
+    # do not pass a lower timeout to this client since generating a dataset takes some time
+    # pylint: disable=R0801
+    orig_cert = (tls_client_cert, tls_client_key, tls_client_passwd)
+    cert = tuple(item for item in orig_cert if item)
+    verify = not tls_insecure
+    client = OpenAI(
+        base_url=api_base,
+        api_key=api_key,
+        http_client=httpx.Client(cert=cert, verify=verify),
+    )
+
+    messages = [
+        {"role": "system", "content": get_sysprompt()},
+        {"role": "user", "content": prompt},
     ]
 
-    completions = []
-    for batch_id, prompt_batch in enumerate(prompt_batches):
-        batch_decoding_args = copy.deepcopy(decoding_args)  # cloning the decoding_args
-
-        shared_kwargs = {
-            "model": model_name,
-            **batch_decoding_args.__dict__,
-            **decoding_kwargs,
-        }
-
-        if not api_key:
-            # we need to explicitly set non-empty api-key, to ensure generate
-            # connects to our local server
-            api_key = "no_api_key"
-
-        # do not pass a lower timeout to this client since generating a dataset takes some time
-        # pylint: disable=R0801
-        orig_cert = (tls_client_cert, tls_client_key, tls_client_passwd)
-        cert = tuple(item for item in orig_cert if item)
-        verify = not tls_insecure
-        client = OpenAI(
-            base_url=api_base,
-            api_key=api_key,
-            http_client=httpx.Client(cert=cert, verify=verify),
+    # Inference the model
+    try:
+        response = client.chat.completions.create(
+            messages=messages,
+            **shared_kwargs,
         )
+    except OpenAIError as exc:
+        raise GenerateException(
+            f"There was a problem connecting to the server {exc}"
+        ) from exc
 
-        messages = [
-            {"role": "system", "content": get_sysprompt()},
-            {"role": "user", "content": prompt_batch[batch_id]},
-        ]
-
-        # Inference the model
-        try:
-            response = client.chat.completions.create(
-                messages=messages,
-                **shared_kwargs,
-            )
-        except OpenAIError as exc:
-            raise GenerateException(
-                f"There was a problem connecting to the server {exc}"
-            ) from exc
-
-        completions.extend(response.choices)
-
-    if return_text:
-        completions = [completion.text for completion in completions]
-    if decoding_args.n > 1:
-        # make a nested list, where each entry is consecutive decoding_args.n of original entries.
-        completions = [
-            completions[i : i + decoding_args.n]
-            for i in range(0, len(completions), decoding_args.n)
-        ]
-    if is_single_prompt:
-        # Return non-tuple if only 1 input and 1 generation.
-        (completions,) = completions
-    return completions
+    return response.choices[0].message.content
 
 
 def _make_w_io_base(f, mode: str):
