@@ -270,7 +270,7 @@ def check(ctx, taxonomy_path, taxonomy_base):
     type=click.INT,
     help="The number of layers to put on the GPU. The rest will be on the CPU. Defaults to -1 to move all to GPU.",
 )
-@click.option("--num-threads", type=click.INT, help="The number of CPU threads to use")
+@click.option("--num-threads", type=click.INT, help="The number of CPU threads to use.")
 @click.option(
     "--max-ctx-size",
     type=click.INT,
@@ -329,7 +329,7 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
 @click.option(
     "--output-dir",
     type=click.Path(),
-    help="Path to output generated files",
+    help="Path to output generated files.",
 )
 @click.option(
     "--seed-file",
@@ -346,12 +346,12 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
 @click.option(
     "--quiet",
     is_flag=True,
-    help="Suppress output of synthesized instructions",
+    help="Suppress output of synthesized instructions.",
 )
 @click.option(
     "--has-document",
     is_flag=True,
-    help="Whether or not the examples contain the document field",
+    help="Whether or not the examples contain the document field.",
 )
 @click.option(
     "--endpoint-url",
@@ -438,19 +438,19 @@ def generate(
     "--context",
     default="default",
     show_default=True,
-    help="Name of system context in config file",
+    help="Name of system context in config file.",
 )
 @click.option(
     "-s",
     "--session",
     type=click.File("r"),
-    help="Filepath of a dialog session file",
+    help="Filepath of a dialog session file.",
 )
 @click.option(
     "-qq",
     "--quick-question",
     is_flag=True,
-    help="Exit after answering question",
+    help="Exit after answering question.",
 )
 @click.option(
     "-gm",
@@ -537,7 +537,7 @@ def download(ctx, repository, release, filename, model_dir):
     "--input-dir",
     type=click.Path(),
     show_default=True,  # TODO: set to None and change help message
-    help="Path to generated files to use as input",
+    help="Path to generated files to use as input.",
 )
 @click.option(
     "--skip-preprocessing",
@@ -551,7 +551,7 @@ def download(ctx, repository, release, filename, model_dir):
 )
 @click.option(
     "--gguf-model-path",
-    help="Local directory where gguf model is stored",
+    help="Local directory where gguf model is stored.",
     default=None,
     show_default=True,
 )
@@ -561,7 +561,7 @@ def download(ctx, repository, release, filename, model_dir):
     default="ibm/merlinite-7b",
     show_default=True,
 )
-@click.option("--iters", help="Number of iterations to train LoRA", default=100)
+@click.option("--iters", help="Number of iterations to train LoRA.", default=100)
 @click.option(
     "--local",
     is_flag=True,
@@ -571,14 +571,14 @@ def download(ctx, repository, release, filename, model_dir):
     "-sq",
     "--skip-quantize",
     is_flag=True,
-    help="Whether to skip quantization while converting to MLX. This parameter will be ignored if --gguf-model-path and --tokenizer-dir are specified",
+    help="Whether to skip quantization while converting to MLX. This parameter will be ignored if --gguf-model-path and --tokenizer-dir are specified.",
 )
 @click.option(
     "--num-epochs",
     type=click.INT,
     default=1,  # TODO: change this to a more reasonable default
     show_default=True,
-    help="Whether to skip quantization while converting to MLX.",
+    help="The number of times the training data is passed through the training algorithm. Please note that this value is used on Linux platforms only.",
 )
 @click.pass_context
 def train(
