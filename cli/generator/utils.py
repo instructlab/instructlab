@@ -12,6 +12,9 @@ import sys
 # Third Party
 from openai import OpenAI, OpenAIError
 
+# Local
+from ..config import DEFAULT_API_KEY
+
 StrOrOpenAIObject = Union[str, object]
 
 SYSTEM_PROMPT = "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
@@ -44,7 +47,7 @@ def openai_completion(
     max_instances=sys.maxsize,
     max_batches=sys.maxsize,
     return_text=False,
-    api_key="no_api_key",
+    api_key=DEFAULT_API_KEY,
     **decoding_kwargs,
 ) -> Union[
     Union[StrOrOpenAIObject],
@@ -101,6 +104,11 @@ def openai_completion(
             **batch_decoding_args.__dict__,
             **decoding_kwargs,
         }
+
+        if not api_key:
+            # we need to explicitly set non-empty api-key, to ensure generate
+            # connects to our local server
+            api_key = "no_api_key"
 
         client = OpenAI(base_url=api_base, api_key=api_key)
 
@@ -163,19 +171,16 @@ def jdump(obj, f, mode="w", indent=4, default=str):
         indent: Indent for storing json dictionaries.
         default: A function to handle non-serializable entries; defaults to `str`.
     """
-    f = _make_w_io_base(f, mode)
-    if isinstance(obj, (dict, list)):
-        json.dump(obj, f, indent=indent, default=default)
-    elif isinstance(obj, str):
-        f.write(obj)
-    else:
-        raise ValueError(f"Unexpected type: {type(obj)}")
-    f.close()
+    with _make_w_io_base(f, mode) as f_:
+        if isinstance(obj, (dict, list)):
+            json.dump(obj, f_, indent=indent, default=default)
+        elif isinstance(obj, str):
+            f_.write(obj)
+        else:
+            raise ValueError(f"Unexpected type: {type(obj)}")
 
 
 def jload(f, mode="r"):
     """Load a .json file into a dictionary."""
-    f = _make_r_io_base(f, mode)
-    jdict = json.load(f)
-    f.close()
-    return jdict
+    with _make_r_io_base(f, mode) as f_:
+        return json.load(f_)

@@ -32,10 +32,12 @@ class Generate(BaseModel):
     prompt_file: str
     seed_file: str
     taxonomy_path: str
+    taxonomy_base: str
 
 
 class Serve(BaseModel):
     gpu_layers: int
+    max_ctx_size: int
     model_path: str
 
 

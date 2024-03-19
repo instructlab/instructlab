@@ -17,6 +17,9 @@ from rich.panel import Panel
 from rich.text import Text
 import openai
 
+# Local
+from ..config import DEFAULT_API_KEY
+
 HELP_MD = """
 Help / TL;DR
 - `/q`: **q**uit
@@ -27,9 +30,9 @@ Help / TL;DR
 - `/M`: toggle **m**ultiline
 - `/n`: **n**ew session
 - `/N`: **n**ew session (ignoring loaded)
-- `/d [1]`: **d**isplay previous response
-- `/p [1]`: previous response in **p**lain text
-- `/md [1]`: previous response in **M**ark**d**own
+- `/d <int>`: **d**isplay previous response based on input, if passed 1 then previous, if 2 then second last response and so on.
+- `/p <int>`: previous response in **p**lain text based on input, if passed 1 then previous, if 2 then second last response and so on.
+- `/md <int>`: previous response in **M**ark**d**own based on input, if passed 1 then previous, if 2 then second last response and so on.
 - `/s filepath`: **s**ave current session to `filepath`
 - `/l filepath`: **l**oad `filepath` and start a new session
 - `/L filepath`: **l**oad `filepath` (permanently) and start a new session
@@ -43,13 +46,6 @@ CONTEXTS = {
 }
 
 PROMPT_HISTORY_FILEPATH = os.path.expanduser("~/.local/chat-cli.history")
-
-PRICING_RATE = {
-    "gpt-3.5-turbo": {"prompt": 0.0015, "completion": 0.002},
-    "gpt-3.5-turbo-16k": {"prompt": 0.003, "completion": 0.004},
-    "gpt-4": {"prompt": 0.03, "completion": 0.06},
-    "gpt-4-32k": {"prompt": 0.06, "completion": 0.12},
-}
 
 PROMPT_PREFIX = ">>> "
 
@@ -199,8 +195,16 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
     def __handle_replay(self, content, display_wrapper=(lambda x: x)):
         cs = content.split()
-        i = 1 if len(cs) == 1 else int(cs[1]) * 2 - 1
-        if len(self.info["messages"]) > i:
+        try:
+            i = 1 if len(cs) == 1 else int(cs[1]) * 2 - 1
+            if abs(i) >= len(self.info["messages"]):
+                raise IndexError
+        except (IndexError, ValueError):
+            self.console.print(
+                display_wrapper("Invalid index: " + content), style="bold red"
+            )
+            raise KeyboardInterrupt
+        if len(self.info["messages"]) > abs(i):
             self.console.print(display_wrapper(self.info["messages"][-i]["content"]))
         raise KeyboardInterrupt
 
@@ -244,6 +248,13 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             )
             raise KeyboardInterrupt
         filepath = cs[1]
+        if not os.path.exists(filepath):
+            self._sys_print(
+                Markdown(
+                    f"**WARNING**: File `{filepath}` specified in the `/l filepath` or `/L filepath` command does not exist."
+                )
+            )
+            raise KeyboardInterrupt
         with open(filepath, "r") as session:
             messages = json.loads(session.read())
         if content[:2] == "/L":
@@ -265,7 +276,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         message = {"role": role, "content": content}
         self.info["messages"].append(message)
 
-    def start_prompt(self, content=None, box=True):
+    def start_prompt(self, content=None, box=True, logger=None):
         handlers = {
             "/q": self._handle_quit,
             "quit": self._handle_quit,
@@ -317,15 +328,35 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
         # Get and parse response
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=self.info["messages"],
-                stream=True,
-                **create_params,
-            )
-            assert (
-                next(response).choices[0].delta.role == "assistant"
-            ), 'first response should be {"role": "assistant"}'
+            while True:
+                # Loop to catch situations where we need to retry, such as context length exceeded
+                try:
+                    response = self.client.chat.completions.create(
+                        model=self.model,
+                        messages=self.info["messages"],
+                        stream=True,
+                        **create_params,
+                    )
+                except openai.BadRequestError as e:
+                    if e.code == "context_length_exceeded":
+                        if len(self.info["messages"]) > 1:
+                            # Trim the oldest entry in our message history
+                            logger.debug(
+                                "Trimming message history to attempt to fit context length"
+                            )
+                            self.info["messages"] = self.info["messages"][1:]
+                            continue
+                        else:
+                            # We only have a single message and it's still to big.
+                            self.console.print(
+                                "Message too large for context size.", style="bold red"
+                            )
+                            self.info["messages"].pop()
+                            raise KeyboardInterrupt
+                assert (
+                    next(response).choices[0].delta.role == "assistant"
+                ), 'first response should be {"role": "assistant"}'
+                break
         except openai.AuthenticationError as e:
             self.console.print(
                 "Invalid API Key. Please set it in your config file.", style="bold red"
@@ -353,6 +384,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             if box
             else response_content
         )
+        subtitle = None
         with Live(
             panel,
             console=self.console,
@@ -367,9 +399,11 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
                 if box:
                     panel.subtitle = f"elapsed {time.time() - start_time:.3f} seconds"
+            subtitle = f"elapsed {time.time() - start_time:.3f} seconds"
 
         # Update chat logs
-        self.log_message("- " + panel.subtitle + " -\n")
+        if subtitle is not None:
+            self.log_message("- " + subtitle + " -\n")
         self.log_message(response_content.plain + "\n\n")
         # Update message history and token counters
         self._update_conversation(response_content.plain, "assistant")
@@ -379,7 +413,7 @@ def chat_cli(
     logger, api_base, config, question, model, context, session, qq, greedy_mode
 ):
     """Starts a CLI-based chat with the server"""
-    client = OpenAI(base_url=api_base, api_key="no_api_key")
+    client = OpenAI(base_url=api_base, api_key=DEFAULT_API_KEY)
 
     # Load context/session
     loaded = {}
@@ -443,7 +477,7 @@ def chat_cli(
     # Start chatting
     while True:
         try:
-            ccb.start_prompt()
+            ccb.start_prompt(logger=logger)
         except KeyboardInterrupt:
             continue
         except ChatException as exc:

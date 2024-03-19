@@ -11,7 +11,7 @@ Also, there is active work being done to support Linux, so if you have
 access to a Linux machine with GPUs, that might also be a better option. 
 
 Next, you'll get to fine-tune a LoRA (Low-Rank Adaptation of Large Language 
-Models) using a Jupyter notebook and (preferably) Google Collab platform or if 
+Models) using a Jupyter notebook and (preferably) Google Colab platform or if
 unable to use Colab, unmaintained instructions for
 [Kaggle](https://www.kaggle.com).
 
@@ -19,7 +19,7 @@ We've laid out the steps to get started with either platform below.
 
 ## Setting up the notebook
 
-### Google Collab
+### Google Colab
 
 Pre-requisites: 
 * [Google Colab](https://research.google.com/colaboratory/faq.html)
@@ -45,7 +45,7 @@ and the NVIDIA P100 provided in the free tier, we will fine tune a LoRA.
 
 #### Pre-requisites
 
-1. You'll need a Kaggle account, which you can create by visiting [Kaggle's Signup Page](https://www.kaggle.com/account/login?phase=startRegisterTab&returnUrl=%2F).
+1. You'll need a Kaggle account, which you can create by visiting [Kaggle's Sign-up Page](https://www.kaggle.com/account/login?phase=startRegisterTab&returnUrl=%2F).
 1. To use Kaggle's accelerators, you'll have to verify your account with a phone number. Visit the [account settings page](https://www.kaggle.com/settings) and select "Phone Verification".
 
 
