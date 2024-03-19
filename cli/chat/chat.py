@@ -248,6 +248,13 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             )
             raise KeyboardInterrupt
         filepath = cs[1]
+        if not os.path.exists(filepath):
+            self._sys_print(
+                Markdown(
+                    f"**WARNING**: File `{filepath}` specified in the `/l filepath` or `/L filepath` command does not exist."
+                )
+            )
+            raise KeyboardInterrupt
         with open(filepath, "r") as session:
             messages = json.loads(session.read())
         if content[:2] == "/L":
