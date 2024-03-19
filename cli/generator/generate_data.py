@@ -66,6 +66,28 @@ Here are some examples to help you understand the type of question that asked fo
 """
 
 
+_WORD_DENYLIST = [
+    "image",
+    "images",
+    "graph",
+    "graphs",
+    "picture",
+    "pictures",
+    "file",
+    "files",
+    "map",
+    "maps",
+    "draw",
+    "plot",
+    "go to",
+    "video",
+    "audio",
+    "music",
+    "flowchart",
+    "diagram",
+]
+
+
 class GenerateException(Exception):
     """An exception raised during generate step."""
 
@@ -151,28 +173,7 @@ def post_process_gpt3_response(num_prompt_instructions, response):
         if len(inst.split()) <= 3 or len(inst.split()) > 150:
             continue
         # filter based on keywords that are not suitable for language models.
-        blacklist = [
-            "image",
-            "images",
-            "graph",
-            "graphs",
-            "picture",
-            "pictures",
-            "file",
-            "files",
-            "map",
-            "maps",
-            "draw",
-            "plot",
-            "go to",
-            "video",
-            "audio",
-            "music",
-            "flowchart",
-            "diagram",
-        ]
-        blacklist += []
-        if any(find_word_in_string(word, inst) for word in blacklist):
+        if any(find_word_in_string(word, inst) for word in _WORD_DENYLIST):
             continue
         # We found that the model tends to add "write a program" to some existing instructions
         # which lead to a lot of such instructions and it's confusing whether the model needs
