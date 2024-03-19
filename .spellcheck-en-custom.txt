@@ -46,4 +46,7 @@ xcode
 Nvidia
 osbuild
 CUDA
+WebUI
+ollama
+webui
 

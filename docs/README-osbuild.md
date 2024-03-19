@@ -45,7 +45,7 @@ You should change the password of `ollama` because the current one (being "passw
 Tell your osbuild installation where the custom repositories are:
 
 (The files are next to this `README-osbuild.md` in this
-repository and neeed to be on your computer)
+repository and need to be on your computer)
 
 ```
 composer-cli sources add nvidia-cuda.toml
@@ -72,7 +72,7 @@ The "IMAGE ID" is the one written after `composer-cli compose start AIServer-nvi
 or you can check the IDs with `composer-cli compose status`
 
 Check e.g. with `lsblk` where your USB drive is.
-Please be careful to take the correct device and repace `/dev/sd_SOMETHING` in the command below.
+Please be careful to take the correct device and replace `/dev/sd_SOMETHING` in the command below.
 WARNING! This will erase all data on the disk given!
 
 ```
@@ -111,7 +111,7 @@ Everything will be local on your disk anyway!
 
 ## NOTES
 
-Cuda installation seems to be strange so if you need llama-cpp-python you might want to use this command
+CUDA installation seems to be strange so if you need llama-cpp-python you might want to use this command
 
 ```
 CUDACXX=/usr/local/cuda-12/bin/nvcc CMAKE_ARGS="-DLLAMA_CUBLAS=on -DCMAKE_CUDA_ARCHITECTURES=native" pip install --force-reinstall --no-cache-dir llama-cpp-python
