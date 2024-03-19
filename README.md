@@ -21,6 +21,7 @@
   - [🍴 Serve the newly trained model](#-serve-the-newly-trained-model)
   - [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
 - [🎁 Submit your new knowledge or skills](#-submit-your-new-knowledge-or-skills)
+- [🪣 Cleanup](#-cleanup)
 - [📬 Contributing to Instruct-Lab CLI](#-contributing)
 
 ## ❓ What is `ilab`
@@ -143,6 +144,9 @@ merlinite-7b-Q4_K_M.gguf
 ```
 
 > **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
+
+Make note of the downloaded model (`ibm/merlinite-7b-GGUF@main` in this case), so that it can be
+cleaned up once finished.
 
 ### 🍴 Serving the model
 
@@ -344,6 +348,59 @@ If you are interested in optimizing the quality of the model's responses, please
 ## 🎁 Submit your new knowledge or skills
 
 Of course, the final step is, if you've improved the model, to open a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy) that includes the files (e.g. `qna.yaml`) with your improved data.
+
+## 🪣 Cleanup
+
+Areas that can be cleaned up during development:
+
+* After `ilab generate` is run, generated data files are stored in the directory specified by the `output_dir`
+  field in the `config.yaml` file (which defaults to `generated`).
+  If `ilab generate` is going to be run again and the user no longer wants to train with the older generated data,
+  these files can be removed:
+
+    List the files:
+    ```
+    ls generated/
+    generated_merlinite-7b-Q4_K_M_2024-03-20T10_28_05.json	train_merlinite-7b-Q4_K_M_2024-03-20T10_28_05.jsonl
+    test_merlinite-7b-Q4_K_M_2024-03-20T10_28_05.jsonl
+    ```
+
+    Then delete the unneeded generated data:
+    ```
+    rm generated/generated_merlinite-7b-Q4_K_M_2024-03-20T10_28_05.json
+    rm generated/test_merlinite-7b-Q4_K_M_2024-03-20T10_28_05.jsonl
+    rm generated/train_merlinite-7b-Q4_K_M_2024-03-20T10_28_05.jsonl
+    ```
+
+* If `ilab train` is run locally on a Linux based system, there is a `training_results/` subdirectory that
+  contains versions of the model that were created during fine-tuning.
+  These directories can become quite large, so are worth cleaning up between training runs.
+
+  ```
+  rm -rf training_results/
+  ```
+
+Once finished with InstructLab and you wish to cleanup your system, run the following steps:
+
+* Remove your `instruct-lab` directory:
+
+    ```
+    rm -rf instruct-lab/
+    ```
+
+* Cleanup the downloaded Hugging Face model:
+
+    First, search for downloaded models:
+    ```
+    ls  ~/.cache/huggingface/hub/
+    models--ibm--merlinite-7b	models--ibm--merlinite-7b-GGUF	version.txt
+    ```
+
+    Then delete the models that were downloaded in [Download the model](#-download-the-model) section:
+    ```
+    rm -rf ~/.cache/huggingface/hub/models--ibm--merlinite-7b/
+    rm -rf ~/.cache/huggingface/hub/models--ibm--merlinite-7b-GGUF/
+    ```
 
 ## 📬 Contributing
 
