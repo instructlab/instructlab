@@ -20,17 +20,17 @@ from .chat.chat import ChatException, chat_cli
 from .generator.generate_data import generate_data, get_taxonomy_diff, read_taxonomy
 from .generator.utils import GenerateException
 from .llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
-from .mlx_explore.gguf_convert_to_mlx import load
 from .server import ServerException, ensure_server, server
 from .train.linux_train import linux_train
-from .train.lora_mlx.convert import convert_between_mlx_and_pytorch
-from .train.lora_mlx.fuse import fine_tune
-from .train.lora_mlx.lora import load_and_train
-from .train.lora_mlx.make_data import make_data
 
 if sys.platform == "darwin" and platform.machine() == "arm64":  # mlx requires macOS
     # Local
     from .mlx_explore import utils as mlx_utils
+    from .mlx_explore.gguf_convert_to_mlx import load
+    from .train.lora_mlx.convert import convert_between_mlx_and_pytorch
+    from .train.lora_mlx.fuse import fine_tune
+    from .train.lora_mlx.lora import load_and_train
+    from .train.lora_mlx.make_data import make_data
 else:
     mlx_utils = None
 
