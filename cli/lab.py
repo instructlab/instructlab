@@ -717,7 +717,14 @@ def train(
         from .train.lora_mlx.make_data import make_data
 
         if not skip_preprocessing:
-            make_data(data_dir=data_dir)
+            try:
+                make_data(data_dir=data_dir)
+            except FileNotFoundError as exc:
+                click.secho(
+                    f"Could not read from data directory: {exc}",
+                    fg="red",
+                )
+                raise click.exceptions.Exit(1)
 
         # NOTE we can skip this if we have a way ship MLX
         # PyTorch safetensors to MLX safetensors
