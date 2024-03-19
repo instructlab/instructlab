@@ -20,7 +20,7 @@ Help on open source projects is always welcome and there is always something tha
 
 When contributing, it's useful to start by looking at [issues](https://github.com/instruct-lab/cli/issues). After picking up an issue, writing code, or updating a document, make a pull request and your work will be reviewed and merged. If you're adding a new feature or find a bug, it's best to [write an issue](https://github.com/instruct-lab/cli/issues/new?assignees=&labels=&template=feature_request.md&title=) first to discuss it with maintainers.
 
-To contribute to this repo, you'll use the Fork and Pull model common in many open source repositories. For details on this process, check out [The GitHub Workflow
+To contribute to this repository, you'll use the Fork and Pull model common in many open source repositories. For details on this process, check out [The GitHub Workflow
 Guide](https://github.com/kubernetes/community/blob/master/contributors/guide/github-workflow.md)
 from Kubernetes.
 

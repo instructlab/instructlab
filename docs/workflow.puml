@@ -75,7 +75,7 @@ level 4              |   +---+----+                              |
                      +-->|creates/updates their PR in the    |   | 
                          |taxonomy repo                  cPNK|   |      
                          +-----------------+-----------------+   |                                           
-                                           |     PR reviewed by taxonomy reviwers;
+                                           |     PR reviewed by taxonomy reviewers;
                                            v       iterate if changes are requested  
 
 @endditaa
