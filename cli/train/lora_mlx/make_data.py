@@ -28,10 +28,11 @@ def make_data(data_dir: str, is_shiv: bool = False):
             # Add the "text" field with value "x" to each object
             data_new = []
             for obj in data:
-                obj_new = {}
-                obj_new["system"] = SYS_PROMPT
-                obj_new["user"] = obj["user"]
-                obj_new["assistant"] = obj["assistant"]
+                obj_new = {
+                    "system": SYS_PROMPT,
+                    "user": obj["user"],
+                    "assistant": obj["assistant"],
+                }
                 data_new.append(obj_new | {"text": format_text(obj_new)})
 
             # Save the modified objects back to the JSON Lines file
@@ -59,10 +60,11 @@ def make_data(data_dir: str, is_shiv: bool = False):
         # Add the "text" field with value "x" to each object
         data_new = []
         for obj in data:
-            obj_new = {}
-            obj_new["system"] = SYS_PROMPT
-            obj_new["user"] = obj["inputs"]
-            obj_new["assistant"] = obj["targets"]
+            obj_new = {
+                "system": SYS_PROMPT,
+                "user": obj["inputs"],
+                "assistant": obj["targets"],
+            }
             data_new.append(obj_new | {"text": format_text(obj_new)})
 
         # Save the modified objects back to the JSON Lines file

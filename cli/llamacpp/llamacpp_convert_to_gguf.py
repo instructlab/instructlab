@@ -865,7 +865,7 @@ def permute_part_lazy(
         return lazy_tensor.load().permute_part(n_part, n_head, n_head_kv)
 
     s = lazy_tensor.shape.copy()
-    s[0] = s[0] // 3
+    s[0] //= 3
     return LazyTensor(
         load,
         s,
@@ -879,7 +879,7 @@ def part_lazy(lazy_tensor: LazyTensor, n_part: int) -> LazyTensor:
         return lazy_tensor.load().part(n_part)
 
     s = lazy_tensor.shape.copy()
-    s[0] = s[0] // 3
+    s[0] //= 3
     return LazyTensor(load, s, lazy_tensor.data_type, "part " + lazy_tensor.description)
 
 
