@@ -12,6 +12,9 @@ import re
 import string
 import time
 
+# Third Party
+from jinja2 import Template
+
 try:
     # Third Party
     import git
@@ -29,40 +32,37 @@ import yaml
 from . import utils
 
 DEFAULT_PROMPT_TEMPLATE = """\
-You are asked to come up with a set of 5 diverse task instructions under {taxonomy}{task_description_str}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
+You are asked to come up with a set of 5 diverse task instructions under {{taxonomy}}{{" for the task \\"%s\\""|format(task_description)  if task_description}}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
 
 Here are the requirements:
 1. Try not to repeat the verb for each instruction to maximize diversity.
 2. The language used for the instruction also should be diverse. For example, you should combine questions with imperative instructions.
+{% if not document -%}
 3. The type of instructions should not have topic diversity. The list should follow the same topic and category.
+{% else -%}
+3. The type of instructions should be similar to provided examples. The generated instruction and the output should be grounded in the provided document.
+{% endif -%}
 4. A GPT language model should be able to complete the instruction. For example, do not ask the assistant to create any visual or audio output. For another example, do not ask the assistant to wake you up at 5pm or set a reminder because it cannot perform any action.
 5. The instructions should be in English.
 6. The instructions should be 1 to 2 sentences long. Either an imperative sentence or a question is permitted.
+{% if not document -%}
 7. You should generate an appropriate input to the instruction. The input field should contain a specific example provided for the instruction. It should involve realistic data and should not contain simple placeholders. The input should provide substantial content to make the instruction challenging but should ideally not exceed 100 words.
 8. Not all instructions require input. For example, when an instruction asks about some general information, "what is the highest peak in the world", it is not necessary to provide a specific context. In this case, we simply put "<noinput>" in the input field.
 9. The output should be an appropriate response to the instruction and the input. Make sure the output is less than 100 words.
-
-List of 5 tasks:
-"""
-
-DEFAULT_PROMPT_TEMPLATE_DOCUMENT = """\
-You are asked to come up with a set of 5 diverse task instructions under {taxonomy}{task_description_str}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
-
-Here are the requirements:
-1. Try not to repeat the verb for each instruction to maximize diversity.
-2. The language used for the instruction also should be diverse. For example, you should combine questions with imperative instructions.
-3. The type of instructions should be similar to provided examples. The generated instruction and the output should be grounded in the provided document.
-4. A GPT language model should be able to complete the instruction. For example, do not ask the assistant to create any visual or audio output. For another example, do not ask the assistant to wake you up at 5pm or set a reminder because it cannot perform any action.
-5. The instructions should be in English.
-6. The instructions should be 1 to 2 sentences long. Either an imperative sentence or a question is permitted.
+{% else -%}
 7. The output should be an appropriate response to the input and the instruction. Long outputs are preferable.
+{% endif %}
 
+{% if not document -%}
+List of 5 tasks:
+{% else -%}
 Based on below document provide a list of 5 tasks:
 
 Document:
-{document}
+{{document}}
 
 Here are some examples to help you understand the type of question that asked for this document:
+{% endif -%}
 """
 
 
@@ -92,43 +92,27 @@ class GenerateException(Exception):
     """An exception raised during generate step."""
 
 
-def check_prompt_file(prompt_file_path, has_document):
+def check_prompt_file(prompt_file_path):
     """Check for prompt file."""
     try:
         with open(prompt_file_path, encoding="utf=8") as file:
             prompt_template = file.read()
     except FileNotFoundError:
         print(f"Cannot find {prompt_file_path}. Using default prompt.")
-        if has_document:
-            prompt_template = DEFAULT_PROMPT_TEMPLATE_DOCUMENT
-        else:
-            prompt_template = DEFAULT_PROMPT_TEMPLATE
-    prompt_template = prompt_template + "\n"
+        prompt_template = DEFAULT_PROMPT_TEMPLATE
+    prompt_template = prompt_template.strip() + "\n"
     return prompt_template
 
 
 def encode_prompt(prompt_instructions, prompt):
     """Encode multiple prompt instructions into a single string."""
     idx = 0
-    task_description = prompt_instructions[0]["task_description"]
-    task_description_str = (
-        "" if task_description == "" else f' for the task "{task_description}"'
+    document = prompt_instructions[0].get("document")
+    prompt = Template(prompt).render(
+        taxonomy=prompt_instructions[0]["taxonomy_path"],
+        task_description=prompt_instructions[0]["task_description"],
+        document=document,
     )
-    if "document" in prompt_instructions[0]:
-        document = prompt_instructions[0]["document"]
-    else:
-        document = ""
-    if document == "":
-        prompt = prompt.format(
-            taxonomy=prompt_instructions[0]["taxonomy_path"],
-            task_description_str=task_description_str,
-        )
-    else:
-        prompt = prompt.format(
-            taxonomy=prompt_instructions[0]["taxonomy_path"],
-            task_description_str=task_description_str,
-            document=document,
-        )
 
     # pylint: disable=unused-variable
     for idx, task_dict in enumerate(prompt_instructions):
@@ -231,7 +215,6 @@ def generate_data(
     top_p=1.0,
     rouge_threshold: Optional[float] = None,
     console_output=True,
-    has_document=False,
     api_key: Optional[str] = None,
 ):
     seed_instruction_data = []
@@ -305,7 +288,7 @@ def generate_data(
         scorer._tokenizer.tokenize(inst) for inst in all_instructions
     ]
 
-    prompt_template = check_prompt_file(prompt_file_path, has_document)
+    prompt_template = check_prompt_file(prompt_file_path)
     if console_output:
         print(
             "Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help."
@@ -367,8 +350,7 @@ def generate_data(
             for new_ins in new_instructions:
                 new_ins["taxonomy_path"] = prompt_ins_0["taxonomy_path"]
                 new_ins["task_description"] = prompt_ins_0["task_description"]
-                if "document" in prompt_ins_0:
-                    new_ins["document"] = prompt_ins_0["document"]
+                new_ins["document"] = prompt_ins_0["document"]
             instruction_data += new_instructions
 
         total = len(instruction_data)
@@ -504,10 +486,7 @@ def read_taxonomy_file(logger, file_path):
                 return None, warnings, errors
             tax_path = "->".join(file_path.split(os.sep)[1:-1])
             task_description = contents.get("task_description")
-            if "document" in contents:
-                document = contents["document"]
-            else:
-                document = None
+            document = contents.get("document")
             for t in get_seed_examples(contents):
                 q = t["question"]
                 a = t["answer"]
@@ -531,8 +510,8 @@ def read_taxonomy_file(logger, file_path):
                         "output": a,
                         "taxonomy_path": tax_path,
                         "task_description": task_description,
+                        "document": document,
                     }
-                    | ({} if document is None else {"document": document})
                 )
     except Exception as e:
         errors += 1
