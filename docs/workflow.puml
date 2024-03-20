@@ -1,73 +1,81 @@
 @startditaa
-+--------+                                    
-|lab init|-=-taxonomy repo cloned         legend       
-+---+----+                                  +-------+    
-    |                                       |lab CLI|    
-    v                                       +-------+    
-+---+--------+                              +-----------+
-|lab download|-=-model weights downloaded   |manual cPNK|
-+---+--------+                              +-----------+
-    |                                       +----------+
-    v optional                              |colab cYEL| 
-+---+-----+                                 +----------+ 
-|lab serve|-=-start model server 
-+---+-----+
-    |
-    v
-+---+----+
-|lab chat|-=-chat with the model
-+---+----+
-    |
-    v
-+---+----+
-|lab list|-=-view the taxonomy
-+---+----+
-    |
-    v
-+---+-----------------------+
-|contributor creates/updates|
-|examples in taxonomy   cPNK|<----------+
-+---+-----------------------+           |
-    |                                   |
-    v                                   |
-+---+--------+                          |
-|lab generate|--------------------------+ -=-synthesize data;
-+---+-------++other hardware            |      iterate by modifying examples
-    |M chips|  +-------+--------+       |      if samples do not look good
-    v       +->+colab train cYEL|       | 
-+---+-----+    +-------+--------+       |
-|lab train|-=-w/ MLX   |                |
-+---+-----+            v                |
-    |          +-------+-------+        |
-    v          |colab test cYEL+-+      |
-+---+----+     +-------+-------+ |      |
-|lab test|-------------|---------+------+ -=-run unit/smoke tests;
-+---+----+             v                |      iterate if some test failed
-    |          +-------+----------+     |
-    v optional |download new model+     |
-+---+-------+  +-------+---------++     |
-|lab convert|-=-MLX to GGUF      |      |
-+---+-------+   +----------------+      |
-    |           |                       |
-    v optional  v                       |
-+---+-----------+---+                   |
-|kill lab serve cPNK|-=-kill old server |
-+---+---------------+                   |
-    |                                   |
-    v optional                          |
-+---+-----+                             |
-|lab serve|-=-start server with         |
-+---+-----+   new model                 |
-    |                                   |
-    v optional                          |
-+---+----+                              |
-|lab chat|------------------------------+ -=-chat with the model again;
-+---+----+                                     iterate if not happy with outputs
-    |
-    v
-+---+---------------------------+
-|contributor uses Git to commit |
-|changes to the taxonomy repo   |
-|and create a PR            cPNK|
-+---+---------------------------+
+                         +--------+                                                                      
+                         |lab init|-=-taxonomy repo cloned         legend                                
+                         +---+----+                                  +-------+                           
+                             |                                       |lab CLI|                           
+                             v                                       +-------+                           
+                         +---+--------+                              +-----------+                       
+                         |lab download|-=-model weights downloaded   |manual cPNK|                       
+                         +---+--------+                              +-----------+                       
+                             |                                       +-------------+                        
+                             v optional                              |notebook cYEL|                        
+                         +---+-----+                                 +-------------+                        
+                         |lab serve|-=-start model server                                                
+                         +---+-----+                                                                     
+                             |                                                                           
+                             v                                                                           
+                         +---+----+                                                                      
+                         |lab chat|-=-chat with the model                                                
+                         +---+----+                                                                      
+                             |                                                                           
+                             v                                                                           
+                         +---+----+                                                                      
+                         |lab list|-=-view the taxonomy                                                  
+                         +---+----+                                                                      
+                             |                                                                           
+                             v                                                                           
+                         +---+-----------------------+                                                   
+                         |contributor creates/updates|                                                   
+                         |examples in taxonomy   cPNK|<----------+                                       
+                         +---+-----------------------+           |                                       
+                             |                                   |                                       
+                             v                                   |                                       
+level 1                  +---+-----+                             |                                       
+  only validated     +---|lab check|-=-validate the YAML file    |                                       
+  the YAML file      |   +---+-----+                             |                                       
+                     |       |                                   |                                       
+                     |       v                                   |                                       
+level 2              |   +---+--------+                          |                                       
+  inspected the      +---|lab generate|--------------------------+ -=-synthesize data;                   
+  generated samples  |   +---+-------++other hardware            |      iterate by modifying examples    
+                     |       |mac or |   +---------+---------+   |      if samples do not look good      
+                     |       vLinux  +-->|notebook train cYEL|   |                                       
+                     |   +---+-----+     +---------+---------+   |                                       
+                     |   |lab train|-=-w/ MLX or   |             |                                       
+                     |   +---+-----+      PyTorch  v             |                                       
+                     |       |           +---------+--------+    |                                       
+                     |       v           |notebook test cYEL+--+ |                                       
+level 3              |   +---+----+      +---------+--------+  | |                                       
+  tested generated   +---|lab test|----------------|-----------+-+ -=-run unit/smoke tests;              
+  samples via LoRA   |   +---+----+                v             |      iterate if some test failed      
+                     |       |           +---------+--------+    |                                       
+                     |       v optional  |download new model|    |                                       
+                     |   +---+-------+   +-----------------++    |                                       
+                     |   |lab convert|-=-MLX to GGUF       |     |                                       
+                     |   +---+-------+   +-----------------+     |                                       
+                     |       |           |                       |                                       
+                     |       v optional  v                       |                                       
+                     |   +---+-----------+---+                   |                                       
+                     |   |kill lab serve cPNK|-=-kill old server |                                       
+                     |   +---+---------------+                   |                                       
+                     |       |                                   |                                       
+                     |       v optional                          |                                       
+                     |   +---+-----+                             |                                       
+                     |   |lab serve|-=-start server with         |                                       
+                     |   +---+-----+   new model                 |                                       
+                     |       |                                   |                                       
+                     |       v optional                          |                                       
+level 4              |   +---+----+                              |                                       
+  performed the full |   |lab chat|------------------------------+ -=-chat with the model again;         
+  local smoke test   |   +---+----+                              |      iterate if not happy with outputs
+                     |       |                                   |                                       
+                     |       v                                   |                                       
+                     |   +---+-------------------------------+   |                                       
+                     |   |contributor commits changes and    |   |                                       
+                     +-->|creates/updates their PR in the    |   | 
+                         |taxonomy repo                  cPNK|   |      
+                         +-----------------+-----------------+   |                                           
+                                           |     PR reviewed by taxonomy reviewers;
+                                           v       iterate if changes are requested  
+
 @endditaa

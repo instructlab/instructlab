@@ -1,10 +1,12 @@
 # We recommend using models here, but PLEASE don't commit them.
 models/
-!cli/train/lora-mlx/models
+!cli/train/lora_mlx/models
 # We recommend using taxonomy here, but not a submodule. Just a work dir.
 taxonomy/
 # We recommend putting generated files here, but PLEASE don't commit them.
 generated/
+# We recommend outputting training results on Linux here, but PLEASE don't commit them.
+training_results/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -148,3 +150,6 @@ dmypy.json
 
 # config
 config.yaml
+
+# Spelling
+dictionary.dic

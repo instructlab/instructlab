@@ -11,23 +11,22 @@ be general should you wish to use a custom dataset.
 
 ## Contents
 
-* [Setup](#Setup)
+* [Setup](#setup)
   * [Convert](#convert)
-* [Run](#Run)
-  * [Fine-tune](#Fine-tune)
-  * [Evaluate](#Evaluate)
-  * [Generate](#Generate)
-* [Results](#Results)
-* [Fuse and Upload](#Fuse-and-Upload)
-* [Custom Data](#Custom-Data)
-* [Memory Issues](#Memory-Issues)
+* [Run](#run)
+  * [Fine-tune](#fine-tune)
+  * [Evaluate](#evaluate)
+  * [Generate](#generate)
+* [Results](#results)
+* [Fuse and Upload](#fuse-and-upload)
+* [Custom Data](#custom-data)
+* [Memory Issues](#memory-issues)
 
-
-## Setup 
+## Setup
 
 Install the dependencies:
 
-```
+```shell
 pip install -r requirements.txt
 ```
 
@@ -42,20 +41,20 @@ upload to Hugging Face).
 
 To make a 4-bit quantized model, run:
 
-```
+```shell
 python convert.py --hf-path <hf_repo> -q
 ```
 
 For example, the following will make a 4-bit quantized Mistral 7B and by default
 store it in `mlx_model`:
 
-```
+```shell
 python convert.py --hf-path mistralai/Mistral-7B-v0.1 -q
 ```
 
 For more options run:
 
-```
+```shell
 python convert.py --help
 ```
 
@@ -67,18 +66,18 @@ to `convert.py`.
 
 The main script is `lora.py`. To see a full list of options run:
 
-```
+```shell
 python lora.py --help
 ```
 
 Note, in the following the `--model` argument can be any compatible Hugging
-Face repo or a local path to a converted mdoel. 
+Face repo or a local path to a converted model.
 
 ### Fine-tune
 
 To fine-tune a model use:
 
-```
+```shell
 python lora.py --model <path_to_model> \
                --train \
                --iters 600
@@ -91,13 +90,13 @@ By default, the adapter weights are saved in `adapters.npz`. You can specify
 the output location with `--adapter-file`.
 
 You can resume fine-tuning with an existing adapter with `--resume-adapter-file
-<path_to_adapters.npz>`. 
+<path_to_adapters.npz>`.
 
 ### Evaluate
 
 To compute test set perplexity use:
 
-```
+```shell
 python lora.py --model <path_to_model> \
                --adapter-file <path_to_adapters.npz> \
                --test
@@ -107,7 +106,7 @@ python lora.py --model <path_to_model> \
 
 For generation use:
 
-```
+```shell
 python lora.py --model <path_to_model> \
                --adapter-file <path_to_adapters.npz> \
                --max-tokens 50 \
@@ -143,7 +142,7 @@ Community](https://huggingface.co/mlx-community).
 
 To generate the fused model run:
 
-```
+```shell
 python fuse.py
 ```
 
@@ -151,7 +150,7 @@ This will by default load the base model from `mlx_model/`, the adapters from
 `adapters.npz`,  and save the fused model in the path `lora_fused_model/`. All
 of these are configurable. You can see the list of options with:
 
-```
+```shell
 python fuse.py --help
 ```
 
@@ -159,9 +158,9 @@ To upload a fused model, supply the `--upload-name` and `--hf-path` arguments
 to `fuse.py`. The latter is the repo name of the original model, which is
 useful for the sake of attribution and model versioning.
 
-For example, to fuse and upload a model derived from Mistral-7B-v0.1, run: 
+For example, to fuse and upload a model derived from Mistral-7B-v0.1, run:
 
-```
+```shell
 python fuse.py --upload-name My-4-bit-model --hf-repo mistralai/Mistral-7B-v0.1
 ```
 
@@ -176,7 +175,7 @@ For fine-tuning (`--train`), the data loader expects a `train.jsonl` and a
 loader expects a `test.jsonl` in the data directory. Each line in the `*.jsonl`
 file should look like:
 
-```
+```json
 {"text": "This is an example for the model."}
 ```
 
@@ -189,7 +188,7 @@ of memory. Here are some tips to reduce memory use should you need to do so:
 
 1. Try quantization (QLoRA). You can use QLoRA by generating a quantized model
    with `convert.py` and the `-q` flag. See the [Setup](#setup) section for
-   more details. 
+   more details.
 
 2. Try using a smaller batch size with `--batch-size`. The default is `4` so
    setting this to `2` or `1` will reduce memory consumption. This may slow
@@ -206,7 +205,7 @@ of memory. Here are some tips to reduce memory use should you need to do so:
 
 For example, for a machine with 32 GB the following should run reasonably fast:
 
-```
+```shell
 python lora.py \
    --model mistralai/Mistral-7B-v0.1 \
    --train \
@@ -216,15 +215,17 @@ python lora.py \
 
 The above command on an M1 Max with 32 GB runs at about 250 tokens-per-second.
 
-
 [^lora]: Refer to the [arXiv paper](https://arxiv.org/abs/2106.09685) for more details on LoRA.
 [^qlora]: Refer to the paper [QLoRA: Efficient Finetuning of Quantized LLMs](https://arxiv.org/abs/2305.14314)
 [^wikisql]: Refer to the [GitHub repo](https://github.com/salesforce/WikiSQL/tree/master) for more information about WikiSQL.
 
+## Notice
 
-# Notice
-The code in this folder is modified from https://github.com/ml-explore/mlx-examples/tree/main/lora with the following license.
-```
+The code in this folder is modified from the mlx-examples repository on GitHub.
+For the original code, see [mlx-examples/lora](https://github.com/ml-explore/mlx-examples/tree/main/lora)
+with the following license.
+
+```license
 MIT License
 
 Copyright © 2023 Apple Inc.

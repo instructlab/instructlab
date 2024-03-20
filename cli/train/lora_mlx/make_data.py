@@ -1,9 +1,6 @@
 # Standard
 import json
 
-# Third Party
-import click
-
 SYS_PROMPT = "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
 
 
@@ -18,10 +15,7 @@ def format_text(obj):
 """
 
 
-@click.command()
-@click.option("--data-dir")
-@click.option("--is-shiv", is_flag=True)
-def make_data(data_dir, is_shiv):
+def make_data(data_dir: str, is_shiv: bool = False):
     if not is_shiv:
         # This branch uses data from `lab generate`
         # train_gen.jsonl and test_gen.jsonl are the two files produced by `lab generate`
@@ -42,7 +36,7 @@ def make_data(data_dir, is_shiv):
 
             # Save the modified objects back to the JSON Lines file
             if "train_gen" in fn:
-                n = len(data_new) // 10 * 8
+                n = len(data_new) * 8 // 10
                 with open(f"{data_dir}/train.jsonl", "w") as f:
                     for obj in data_new[:n]:
                         f.write(json.dumps(obj) + "\n")
@@ -83,7 +77,3 @@ def make_data(data_dir, is_shiv):
         with open(f"{data_dir}/test.jsonl", "w") as f:
             for obj in data_new[:m]:
                 f.write(json.dumps(obj) + "\n")
-
-
-if __name__ == "__main__":
-    make_data()

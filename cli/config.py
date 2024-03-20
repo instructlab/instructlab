@@ -1,6 +1,5 @@
 # Standard
 from dataclasses import Field, asdict, dataclass
-import sys
 
 # Third Party
 import yaml
@@ -9,13 +8,14 @@ DEFAULT_CONFIG = "config.yaml"
 DEFAULT_CHAT_LOGS = "data/chatlogs"
 DEFAULT_MODEL = "merlinite-7b-Q4_K_M"
 DEFAULT_MODEL_PATH = f"models/{DEFAULT_MODEL}.gguf"
-DEFAULT_HOST_PORT = "localhost:8000"
+DEFAULT_HOST_PORT = "127.0.0.1:8000"
 DEFAULT_API_KEY = "no_api_key"
 DEFAULT_VI_MODE = False
 DEFAULT_VISIBLE_OVERFLOW = True
 DEFAULT_TAXONOMY_REPO = "git@github.com:instruct-lab/taxonomy.git"
 DEFAULT_TAXONOMY_PATH = "taxonomy"
 DEFAULT_TAXONOMY_BRANCH = "main"
+DEFAULT_TAXONOMY_BASE = "origin/main"
 DEFAULT_PROMPT_FILE = "prompt.txt"
 DEFAULT_SEED_FILE = "seed_tasks.json"
 DEFAULT_GENERATED_FILES_OUTPUT_DIR = "generated"
@@ -23,12 +23,12 @@ DEFAULT_GREEDY_MODE = False
 
 
 class ConfigException(Exception):
-    """An exception that a configuration file doesn't exists or it doesn't contain valid YAML."""
+    """An exception that a configuration file has an error."""
 
-    def __init__(self, filename):
-        super().__init__(
-            f"Configuration file {filename} does not exist or contains invalid YAML."
-        )
+    def __init__(self, filename, msg=None):
+        if not msg:
+            msg = "Configuration file does not exist or contains invalid YAML."
+        super().__init__(f"{filename}: {msg}")
 
 
 @dataclass
@@ -54,6 +54,7 @@ class _generate:
     num_cpus: int
     num_instructions: int
     taxonomy_path: str
+    taxonomy_base: str
     output_dir: str
     prompt_file: str
     seed_file: str
@@ -64,6 +65,7 @@ class _serve:
     host_port: str
     model_path: str
     gpu_layers: int
+    max_ctx_size: int
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
@@ -116,18 +118,16 @@ def read_config(config_file=DEFAULT_CONFIG):
     try:
         with open(config_file, "r", encoding="utf-8") as yamlfile:
             content = yaml.safe_load(yamlfile)
-            cfg, warnings = validateConfig(Config, content)
-            if warnings:
-                print(f"ERROR: Following issues were detected in {config_file}:")
-                for w in warnings:
-                    print(w)
-                print(
-                    f"Please update your {config_file} and re-run the tool. You can move {config_file} aside and generate a new one with 'lab init'"
-                )
-                sys.exit(1)
-            return Config(**cfg)
     except Exception as exc:
         raise ConfigException(config_file) from exc
+    cfg, warnings = validateConfig(Config, content)
+    if warnings:
+        warnings.insert(0, "The following issues were detected in the config")
+        warnings.append(
+            f"Please update {config_file}, or move it aside and generate a new one with 'lab init'"
+        )
+        raise ConfigException(config_file, "\n".join(warnings))
+    return Config(**cfg)
 
 
 def get_dict(cfg):
@@ -158,6 +158,7 @@ def get_default_config():
         num_cpus=10,
         num_instructions=100,
         taxonomy_path=DEFAULT_TAXONOMY_PATH,
+        taxonomy_base=DEFAULT_TAXONOMY_BASE,
         output_dir=DEFAULT_GENERATED_FILES_OUTPUT_DIR,
         prompt_file=DEFAULT_PROMPT_FILE,
         seed_file=DEFAULT_SEED_FILE,
@@ -167,6 +168,7 @@ def get_default_config():
         host_port=DEFAULT_HOST_PORT,
         model_path=DEFAULT_MODEL_PATH,
         gpu_layers=-1,
+        max_ctx_size=4096,
     )
     return Config(general=general, chat=chat, generate=generate, serve=serve)
 
