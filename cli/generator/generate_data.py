@@ -61,7 +61,7 @@ Based on below document provide a list of 5 tasks:
 Document:
 {{document}}
 
-Here are some examples to help you understand the type of question that asked for this document:
+Here are some examples to help you understand the type of questions that are asked for this document:
 {% endif -%}
 """
 
