@@ -320,6 +320,8 @@ Stop the server you have running via `ctrl+c` in the terminal it is running in.
 Before serving the newly trained model you must convert it to work with
 the `lab` cli. The `lab convert` command converts the new model into quantized [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format which is required by the server to host the model in the `lab serve` command.
 
+> **NOTE:** 🍎 This step is only implemented for macOS with M-series chips (for now)
+
 ```
 lab convert
 ```
