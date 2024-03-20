@@ -241,8 +241,15 @@ def list(ctx, taxonomy_path, taxonomy_base):
     "--taxonomy-base",
     help="Base git-ref to use when checking taxonomy.",
 )
+@click.option(
+    "--yaml-rules",
+    type=click.Path(),
+    default=config.DEFAULT_YAML_RULES,
+    show_default=True,
+    help="Custom rules file for YAML linting",
+)
 @click.pass_context
-def check(ctx, taxonomy_path, taxonomy_base):
+def check(ctx, taxonomy_path, taxonomy_base, yaml_rules):
     """Check that taxonomy is valid"""
     # pylint: disable=C0415
     # Local
@@ -252,8 +259,20 @@ def check(ctx, taxonomy_path, taxonomy_base):
         taxonomy_base = ctx.obj.config.generate.taxonomy_base
     if not taxonomy_path:
         taxonomy_path = ctx.obj.config.generate.taxonomy_path
-    ctx.obj.logger.debug(f"Checking taxonomy: '{taxonomy_path}:{taxonomy_base}'")
-    read_taxonomy(ctx.obj.logger, taxonomy_path, taxonomy_base)
+    if not yaml_rules:
+        yaml_rules = ctx.obj.config.generate.yaml_rules
+    if not ctx.obj:
+        logger = logging.getLogger(__name__)
+    else:
+        logger = ctx.obj.logger
+    # pylint: disable=logging-fstring-interpolation
+    logger.debug(f"Checking taxonomy: '{taxonomy_path}:{taxonomy_base}'")
+    read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
+    # below will only run if `read_taxonomy` throws no errors
+    click.secho(
+        f"Taxonomy in {taxonomy_path} is valid :)",
+        fg="green",
+    )
 
 
 @cli.command()
@@ -360,6 +379,13 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
     default=config.DEFAULT_API_KEY,  # Note: do not expose default API key
     help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
 )
+@click.option(
+    "--yaml-rules",
+    type=click.Path(),
+    default=config.DEFAULT_YAML_RULES,
+    show_default=True,
+    help="Rules file for YAML linting",
+)
 @click.pass_context
 def generate(
     ctx,
@@ -374,6 +400,7 @@ def generate(
     quiet,
     endpoint_url,
     api_key,
+    yaml_rules,
 ):
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=C0415
@@ -410,6 +437,7 @@ def generate(
             seed_tasks_path=seed_file,
             rouge_threshold=rouge_threshold,
             console_output=not quiet,
+            yaml_rules=yaml_rules,
         )
     except GenerateException as exc:
         click.secho(

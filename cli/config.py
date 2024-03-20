@@ -20,6 +20,7 @@ DEFAULT_PROMPT_FILE = "prompt.txt"
 DEFAULT_SEED_FILE = "seed_tasks.json"
 DEFAULT_GENERATED_FILES_OUTPUT_DIR = "generated"
 DEFAULT_GREEDY_MODE = False
+DEFAULT_YAML_RULES = "yaml_rules.yaml"
 
 
 class ConfigException(Exception):

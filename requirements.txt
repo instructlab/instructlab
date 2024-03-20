@@ -27,3 +27,4 @@ trl>=0.7.11,<0.8.0
 # see https://github.com/instruct-lab/cli/issues/579
 # bitsandbytes; sys_platform=='linux' and platform_machine=='x86_64'
 httpx
+yamllint
