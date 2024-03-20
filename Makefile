@@ -2,6 +2,7 @@ BUILD_ARGS = --ssh=default
 CENGINE = podman
 CONTAINER_PREFIX ?= localhost/instructlab
 TOOLBOX ?= instructlab
+MAKE = make
 
 NULL =
 COMMON_DEPS = \
@@ -36,14 +37,13 @@ help: ## Display this help.
 
 .PHONY: images
 images: ## Get the current controller, set the path, and build the Containerfile image. (auto-detect the compatible controller)
-	@if lspci | grep -q "NVIDIA"; then \
-		$(CENGINE) build --ssh=default -f containers/cuda/Containerfile; \
-		cuda \
-		break; \
-	elif lspci | grep -q "AMD"; then \
-		$(CENGINE) build --ssh=default -f containers/rocm/Containerfile; \
-		rocm \
-		break; \
+	@if lspci -d '10DE:*:0300'| grep -q "NVIDIA"; then \
+		$(MAKE) cuda; \
+	elif lspci -d '1002:*:0300' | grep -q "AMD"; then \
+		$(MAKE) rocm; \
+	else \
+		echo "ERROR: Unable to detect AMD / Nvidia GPU" >&2; \
+		exit 2; \
 	fi
 
 .PHONY: cuda
@@ -120,5 +120,4 @@ tests: ## Run tox -e unit against code
 
 .PHONY: verify
 verify: ## Run tox -e fmt, lint against code
-	tox -e fmt
-	tox -e lint
+	tox p -e fmt, lint
