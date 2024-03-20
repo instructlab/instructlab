@@ -11,14 +11,12 @@ for cmd in lab expect; do
     fi
 done
 
-PID1=
-PID2=
 PID_SERVE=
 PID_CHAT=
 
 cleanup() {
     set +e
-    for pid in $PID1 $PID2 $PID_SERVE $PID_CHAT; do
+    for pid in $PID_SERVE $PID_CHAT; do
         if [ -n "$pid" ]; then
             kill $pid
         fi
@@ -41,34 +39,29 @@ test_bind_port(){
     expect -c '
     spawn lab serve
     expect {
-        "http://localhost:8000/docs" { exit 0 }
-        eof
+        "http://127.0.0.1:8000/docs" { puts OK }
+        default { exit 1 }
     }
-
-    python -m http.server 8000 &
-    PID1=$!
 
     # check that lab serve is detecting the port is already in use
     # catch "error while attempting to bind on address ...."
     spawn lab serve
     expect {
-        "error while attempting to bind on address " { exit 1 }
-        eof
+        "error while attempting to bind on address " { puts OK }
+        default { exit 1 }
     }
 
     # configure a different port
-    sed -i 's/8000/9999/g' config.yaml
+    exec sed -i 's/8000/9999/g' config.yaml
 
     # check that lab serve is working on the new port
     # catch ERROR strings in the output
     spawn lab serve
     expect {
-        "http://localhost:9999/docs" { exit 0}
-        eof
+        "http://127.0.0.1:9999/docs" { puts OK }
+        default { exit 1 }
     }
 '
-    python -m http.server 9999 &
-    PID2=$!
 }
 
 test_ctx_size(){
