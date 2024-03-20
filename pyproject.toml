@@ -22,6 +22,8 @@ Homepage = "https://github.com/instruct-lab/cli"
 Issues = "https://github.com/instruct-lab/cli/issues"
 
 [tool.ruff]
+target-version = "py39"
+line-length = 88
 select = [
     "F",  # pyflakes
     "E",  # pycodestyle
