@@ -611,6 +611,7 @@ def download(ctx, repository, release, filename, model_dir):
             filename=filename,
             local_dir=model_dir,
         )
+        click.echo("==> Model ready!")
     except Exception as exc:
         click.secho(
             f"Downloading model failed with the following Hugging Face Hub error: {exc}",

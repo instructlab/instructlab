@@ -127,11 +127,24 @@ def server(
         raise ServerException(f"failed creating the server application: {exc}") from exc
 
     try:
-        llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
+        chatFormatterResponse = llama_chat_format.Jinja2ChatFormatter(
             template="{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}",
             eos_token="<|endoftext|>",
             bos_token="",
-        ).to_chat_handler()
+        )
+
+        # add extra stop tokens because Jinja2ChatFormatter only accepts one for template.
+        chatFormatterResponse.stop.extend(
+            [
+                "<|system|>",
+                "<|user|>",
+                "<|assistant|>",
+            ]
+        )
+
+        llama_app._llama_proxy._current_model.chat_handler = (
+            chatFormatterResponse.to_chat_handler()
+        )
     # pylint: disable=broad-exception-caught
     except Exception as exc:
         if queue:
