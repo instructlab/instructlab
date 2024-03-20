@@ -255,8 +255,7 @@ def get_instructions_from_model(
         for new_ins in new_instructions:
             new_ins["taxonomy_path"] = prompt_ins_0["taxonomy_path"]
             new_ins["task_description"] = prompt_ins_0["task_description"]
-            if "document" in prompt_ins_0:
-                new_ins["document"] = prompt_ins_0["document"]
+            new_ins["document"] = prompt_ins_0["document"]
         instruction_data += new_instructions
 
     post_process_duration = time.time() - post_process_start
