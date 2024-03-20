@@ -456,9 +456,16 @@ def generate_data(
     logger.info(f"Generation took {generate_duration:.2f}s")
 
 
+def istaxonomyfile(fn):
+    topleveldir = fn.split("/")[0]
+    if fn.endswith(".yaml") and topleveldir in ["compositional_skills", "knowledge"]:
+        return True
+    return False
+
+
 def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     repo = git.Repo(repo)
-    untracked_files = [u for u in repo.untracked_files if u.endswith(".yaml")]
+    untracked_files = [u for u in repo.untracked_files if istaxonomyfile(u)]
 
     head_commit = None
     if base == "HEAD":
@@ -488,7 +495,7 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     modified_files = [
         d.b_path
         for d in head_commit.diff(None)
-        if d.b_path.endswith(".yaml") and not d.deleted_file
+        if not d.deleted_file and istaxonomyfile(d.b_path)
     ]
 
     updated_taxonomy_files = list(set(untracked_files + modified_files))
