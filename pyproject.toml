@@ -51,8 +51,6 @@ select = [
     "RUF",  # ruff
 ]
 
-[tool.ruff.format]
-indent-style = "space"
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
