@@ -623,7 +623,7 @@ def train(
         input_dir = ctx.obj.config.generate.output_dir
 
     if four_bit_quant and device.type != "cuda":
-        raise click.ClickException("--4-bit-quant requires CUDA device")
+        ctx.fail("--4-bit-quant option requires --device=cuda")
 
     # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
     if data_dir is None:

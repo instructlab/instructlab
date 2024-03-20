@@ -33,6 +33,14 @@ class TorchDeviceParam(click.ParamType):
             # all layers on CPU
             return CPU_DEVICE
 
+        if not value.startswith("cuda"):
+            self.fail(
+                "Only 'cpu', 'cuda', cuda with device index (e.g. 'cuda:0') "
+                "are currently supported.",
+                param,
+                ctx,
+            )
+
         # Function local import, import torch can take more than a second
         # Third Party
         import torch

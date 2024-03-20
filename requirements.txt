@@ -21,4 +21,5 @@ peft
 datasets
 trl
 # 4-bit quantization does not work, yet
+# see https://github.com/instruct-lab/cli/issues/579
 # bitsandbytes; sys_platform=='linux' and platform_machine=='x86_64'
