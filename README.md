@@ -303,6 +303,8 @@ The model can also be downloaded and served locally.
 
 ### 📜 Test the newly trained model
 
+> **NOTE:** 🍎 This step is only implemented for macOS with M-series chips (for now)
+
 ```
 lab test
 ```
