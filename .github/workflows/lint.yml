@@ -20,11 +20,15 @@ on:
       - "main"
     paths:
       - '**.py'
+      - 'scripts/*.sh'
+      - 'tox.ini'
   pull_request:
     branches: 
       - "main"
     paths:
       - '**.py'
+      - 'scripts/*.sh'
+      - 'tox.ini'
 
 env:
   PYTHON_VERSION: 3.11
