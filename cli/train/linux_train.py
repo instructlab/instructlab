@@ -1,6 +1,5 @@
 # Standard
-import argparse
-import collections
+from typing import Optional
 
 # Third Party
 from datasets import load_dataset
@@ -15,11 +14,13 @@ from transformers import (
     TrainingArguments,
 )
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
-import click
 import torch
 
 # First Party
 from cli.chat.chat import CONTEXTS
+
+# Local
+from .param import CPU_DEVICE, TorchDeviceInfo
 
 # TODO CPU: Look into using these extensions
 # import intel_extension_for_pytorch as ipex
@@ -63,49 +64,6 @@ def formatting_prompts_func(example):
     return output_texts
 
 
-DeviceInfo = collections.namedtuple("DeviceInfo", "type index device_map")
-
-
-class TorchDeviceInfo(click.ParamType):
-    """Parse and convert device string
-
-    Returns DeviceInfo object:
-    - type is one of 'cpu' or 'cuda')
-    - index is None or CUDA/ROCm device index (0 for first GPU)
-    - device_map is a dict
-    """
-
-    name = "deviceinfo"
-
-    def convert(self, value, param, ctx):
-        if isinstance(value, DeviceInfo):
-            return value
-
-        if value == "cpu":
-            # all layers on CPU
-            return DeviceInfo("cpu", None, {"": "cpu"})
-        # CUDA/ROCm
-        if not torch.cuda.is_available():
-            self.fail(
-                f"{value}: Torch has no CUDA/ROCm support or could not detect "
-                "a compatible device.",
-                param,
-                ctx,
-            )
-        try:
-            device = torch.device(value)
-        except RuntimeError as e:
-            self.fail(str(e), param, ctx)
-        # map unqualified 'cuda' to current device
-        if device.index is None:
-            device = torch.device(device.type, torch.cuda.current_device())
-        # all layers on a single GPU
-        return DeviceInfo(device.type, device.index, {"": device.index})
-
-
-TORCH_DEVICE = TorchDeviceInfo()
-
-
 def report_cuda_device(args_device, min_vram=0):
     """Report CUDA/ROCm device properties"""
     print(f"  NVidia CUDA version: {torch.version.cuda or 'n/a'}")
@@ -142,57 +100,14 @@ def report_cuda_device(args_device, min_vram=0):
         )
 
 
-@click.command()
-@click.option(
-    "--train-file",
-    help="Absolute path to the training file",
-    type=click.STRING,
-    default=None,
-)
-@click.option(
-    "--test-file",
-    type=click.STRING,
-    help="Absolute path to the testing file",
-    default=None,
-)
-@click.option(
-    "--num-epochs",
-    type=click.INT,
-    help="Number of epochs to run during training",
-    default=None,
-)
-@click.option(
-    "--device",
-    type=TORCH_DEVICE,
-    show_default=True,
-    default="cpu",
-    help=(
-        "PyTorch device for Linux training (default: 'cpu'). Use 'cuda' "
-        "for NVidia CUDA / AMD ROCm GPU."
-    ),
-)
-@click.option(
-    "--4-bit-quant",
-    "four_bit_quant",
-    is_flag=True,
-    show_default=True,
-    default=False,
-    help=(
-        "Use BitsAndBytes for 4-bit quantization "
-        "(reduces GPU VRAM usage and may slow down training)"
-    ),
-)
-def train(
+def linux_train(
     train_file: str,
     test_file: str,
-    num_epochs: int,
-    device: TorchDeviceInfo,
-    four_bit_quant: bool,
+    num_epochs: Optional[int] = None,
+    device: TorchDeviceInfo = CPU_DEVICE,
+    four_bit_quant: bool = False,
 ):
     """Lab Train for Linux!"""
-    if four_bit_quant and device.type != "cuda":
-        raise click.ClickException("--4-bit-quant requires CUDA device")
-
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", num_epochs)
     print("LINUX_TRAIN.PY: TRAIN FILE IS: ", train_file)
     print("LINUX_TRAIN.PY: TEST FILE IS: ", test_file)
@@ -386,7 +301,3 @@ def train(
     model.save_pretrained("./training_results/merged_model")
 
     print("LINUX_TRAIN.PY: FINISHED")
-
-
-if __name__ == "__main__":
-    train()
