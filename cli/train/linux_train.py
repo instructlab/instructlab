@@ -8,6 +8,7 @@ from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
     AutoTokenizer,
+    BitsAndBytesConfig,
     StoppingCriteria,
     StoppingCriteriaList,
     TrainingArguments,
@@ -60,11 +61,59 @@ def formatting_prompts_func(example):
     return output_texts
 
 
-def linux_train(train_file: str, test_file: str, num_epochs: Optional[int] = None):
+def report_cuda_device(args_device, min_vram=0):
+    """Report CUDA/ROCm device properties"""
+    print(f"  NVidia CUDA version: {torch.version.cuda or 'n/a'}")
+    print(f"  AMD ROCm HIP version: {torch.version.hip or 'n/a'}")
+
+    def _gib(size: int) -> str:
+        return "{:.1f} GiB".format(size / 1024**3)
+
+    for idx in range(torch.cuda.device_count()):
+        device = torch.device("cuda", idx)
+        name = torch.cuda.get_device_name(device)
+        free, total = torch.cuda.mem_get_info(device)
+        capmin, capmax = torch.cuda.get_device_capability(device)
+        print(
+            f"  {device} is '{name}' ({_gib(free)} of {_gib(total)} free, "
+            f"capability: {capmin}.{capmax})"
+        )
+
+    if args_device.index is None:
+        index = torch.cuda.current_device()
+    else:
+        index = args_device.index
+
+    free = torch.cuda.mem_get_info(index)[0]
+    if free < min_vram:
+        print(
+            f"  WARNING: You have less than {min_vram} GiB of free GPU "
+            "memory on '{index}'. Training may fail, use slow shared "
+            "host memory, or move some layers to CPU."
+        )
+        print(
+            "  Training does not use the local lab serve. Consider "
+            "stopping the server to free up about 5 GiB of GPU memory."
+        )
+
+
+def linux_train(
+    train_file: str,
+    test_file: str,
+    num_epochs: Optional[int] = None,
+    device: torch.device = torch.device("cpu"),
+    four_bit_quant: bool = False,
+):
     """Lab Train for Linux!"""
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", num_epochs)
     print("LINUX_TRAIN.PY: TRAIN FILE IS: ", train_file)
     print("LINUX_TRAIN.PY: TEST FILE IS: ", test_file)
+
+    print(f"LINUX_TRAIN.PY: Using device '{device}'")
+    if device.type == "cuda":
+        # estimated by watching nvtop / radeontop during training
+        min_vram = 11 if four_bit_quant else 17
+        report_cuda_device(device, min_vram)
 
     print("LINUX_TRAIN.PY: LOADING DATASETS")
     # Get the file name
@@ -86,13 +135,19 @@ def linux_train(train_file: str, test_file: str, num_epochs: Optional[int] = Non
         response_template_ids, tokenizer=tokenizer
     )
 
-    # TODO GPU: bnb_config is needed quantize on Nvidia GPUs
-    # bnb_config = BitsAndBytesConfig(
-    #    load_in_4bit=True,
-    #    bnb_4bit_quant_type="nf4",
-    #    bnb_4bit_use_double_quant=True,
-    #    bnb_4bit_compute_dtype=torch.float16 # if not set will throw a warning about slow speeds when training
-    # )
+    if four_bit_quant:
+        print("LINUX_TRAIN.PY: USING 4-bit quantization with BitsAndBytes")
+        use_fp16 = True
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_compute_dtype=torch.float16,  # if not set will throw a warning about slow speeds when training
+        )
+    else:
+        print("LINUX_TRAIN.PY: NOT USING 4-bit quantization")
+        use_fp16 = False
+        bnb_config = None
 
     # Loading the model
     print("LINUX_TRAIN.PY: LOADING THE BASE MODEL")
@@ -103,11 +158,16 @@ def linux_train(train_file: str, test_file: str, num_epochs: Optional[int] = Non
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype="auto",
-        # quantization_config=bnb_config,
+        quantization_config=bnb_config,
         config=config,
         trust_remote_code=True,
         low_cpu_mem_usage=True,
     )
+    if model.device != device:
+        model = model.to(device)
+    print(f"LINUX_TRAIN.PY: Model device {model.device}")
+    if model.device.type == "cuda":
+        print(torch.cuda.memory_summary())
 
     print("LINUX_TRAIN.PY: SANITY CHECKING THE BASE MODEL")
     stop_words = ["<|endoftext|>", "<|assistant|>"]
@@ -124,9 +184,7 @@ def linux_train(train_file: str, test_file: str, num_epochs: Optional[int] = Non
     def model_generate(user):
         text = create_prompt(user=user)
 
-        # TODO GPU: the commented out line might be needed to work on Nvidia GPUs
-        # input_ids = tokenizer(text, return_tensors="pt").input_ids.to("cuda")
-        input_ids = tokenizer(text, return_tensors="pt").input_ids
+        input_ids = tokenizer(text, return_tensors="pt").input_ids.to(model.device)
         outputs = model.generate(
             input_ids=input_ids,
             max_new_tokens=256,
@@ -182,11 +240,21 @@ def linux_train(train_file: str, test_file: str, num_epochs: Optional[int] = Non
         output_dir=output_dir,
         num_train_epochs=num_epochs,
         per_device_train_batch_size=per_device_train_batch_size,
-        bf16=True,
+        fp16=use_fp16,
+        bf16=not use_fp16,
         # use_ipex=True, # TODO CPU test this possible optimization
-        use_cpu=True,
+        use_cpu=model.device.type == "cpu",
         save_strategy="epoch",
         report_to="none",
+        # options to reduce GPU memory usage and improve performance
+        # https://huggingface.co/docs/transformers/perf_train_gpu_one
+        # https://stackoverflow.com/a/75793317
+        # torch_compile=True,
+        # fp16=False,  # fp16 increases memory consumption 1.5x
+        # gradient_accumulation_steps=8,
+        # gradient_checkpointing=True,
+        # eval_accumulation_steps=1,
+        # per_device_eval_batch_size=1,
     )
 
     max_seq_length = 300

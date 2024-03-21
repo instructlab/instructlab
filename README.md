@@ -271,7 +271,11 @@ lab train
  ggml-merlinite-7b-0302-Q4_K_M.gguf  ggml-model-f16.gguf
 ```
 
-#### Train the model locally on an M-series Mac
+> **NOTE:** `lab train` ships with experimental support for GPU acceleration with Nvidia CUDA
+or AMD ROCm. See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for more
+details.
+
+#### Train the model locally on an M-series Mac:
 
 To train the model locally on your M-Series Mac is as easy as running:
 ```
