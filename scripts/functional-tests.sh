@@ -11,19 +11,18 @@ for cmd in lab expect; do
     fi
 done
 
-PID1=
-PID2=
 PID_SERVE=
 PID_CHAT=
 
 cleanup() {
     set +e
-    for pid in $PID1 $PID2 $PID_SERVE $PID_CHAT; do
+    for pid in $PID_SERVE $PID_CHAT; do
         if [ -n "$pid" ]; then
             kill $pid
         fi
     done
-    rm -f test_ctx_size_lab_serve_output.txt test_session_history
+    rm -f test_ctx_size_lab_serve_output.txt test_session_history simple_math.yaml
+    set -e
 }
 
 trap cleanup EXIT QUIT INT TERM
@@ -41,34 +40,29 @@ test_bind_port(){
     expect -c '
     spawn lab serve
     expect {
-        "http://localhost:8000/docs" { exit 0 }
-        eof
+        "http://127.0.0.1:8000/docs" { puts OK }
+        default { exit 1 }
     }
-
-    python -m http.server 8000 &
-    PID1=$!
 
     # check that lab serve is detecting the port is already in use
     # catch "error while attempting to bind on address ...."
     spawn lab serve
     expect {
-        "error while attempting to bind on address " { exit 1 }
-        eof
+        "error while attempting to bind on address " { puts OK }
+        default { exit 1 }
     }
 
     # configure a different port
-    sed -i 's/8000/9999/g' config.yaml
+    exec sed -i 's/8000/9999/g' config.yaml
 
     # check that lab serve is working on the new port
     # catch ERROR strings in the output
     spawn lab serve
     expect {
-        "http://localhost:9999/docs" { exit 0}
-        eof
+        "http://127.0.0.1:9999/docs" { puts OK }
+        default { exit 1 }
     }
 '
-    python -m http.server 9999 &
-    PID2=$!
 }
 
 test_ctx_size(){
@@ -146,6 +140,30 @@ test_loading_session_history(){
     '
 }
 
+test_generate(){
+    cat - <<EOF >  simple_math.yaml
+created_by: ci
+seed_examples:
+- question: what is 1+1
+  answer: it is 2
+- question: what is 1+3
+  answer: it is 4
+task_description: 'simple maths'
+EOF
+
+    sed -i -e 's/num_instructions:.*/num_instructions: 1/g' config.yaml
+
+    # This should be finished in a minut or so but time it out incase it goes wrong
+    timeout 5m lab generate --taxonomy-path simple_math.yaml
+
+    # Test if generated was created and contains files
+    ls -l generated/*
+    if [ $(cat $(ls -tr generated/generated_* | tail -n 1) | jq ". | length" ) -lt 1 ] ; then
+        echo "Not enough generated results"
+        exit 1
+    fi
+}
+
 ########
 # MAIN #
 ########
@@ -154,5 +172,7 @@ cleanup
 test_ctx_size
 cleanup
 test_loading_session_history
+cleanup
+test_generate
 
 exit 0
