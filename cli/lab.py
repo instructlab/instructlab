@@ -6,6 +6,7 @@ import logging
 import os
 import shutil
 import sys
+import typing
 
 # Third Party
 from click_didyoumean import DYMGroup
@@ -17,7 +18,10 @@ import click
 # Local
 # NOTE: Subcommands are using local imports to speed up startup time.
 from . import config, utils
-from .train.param import TORCH_DEVICE, TorchDeviceInfo
+
+if typing.TYPE_CHECKING:
+    # Third Party
+    import torch
 
 
 class Lab:
@@ -535,6 +539,58 @@ def download(ctx, repository, release, filename, model_dir):
         raise click.exceptions.Exit(1)
 
 
+class TorchDeviceParam(click.ParamType):
+    """Parse and convert device string
+
+    Returns a torch.device object:
+    - type is one of 'cpu' or 'cuda')
+    - index is None or CUDA/ROCm device index (0 for first GPU)
+    """
+
+    name = "deviceinfo"
+    supported_devices = {"cuda", "cpu"}
+
+    def convert(self, value, param, ctx) -> "torch.device":
+        # pylint: disable=C0415
+        # Function local import, import torch can take more than a second
+        # Third Party
+        import torch
+
+        if not isinstance(value, torch.device):
+            try:
+                device = torch.device(value)
+            except RuntimeError as e:
+                self.fail(str(e), param, ctx)
+
+        if device.type not in {"cuda", "cpu"}:
+            supported = ", ".join(repr(s) for s in sorted(self.supported_devices))
+            self.fail(
+                f"Unsupported device type '{device.type}'. Only devices "
+                f"types {supported}, and indexed device strings like 'cuda:0' "
+                "are supported for now.",
+                param,
+                ctx,
+            )
+
+        # Detect CUDA/ROCm device
+        if device.type == "cuda":
+            if not torch.cuda.is_available():
+                self.fail(
+                    f"{value}: Torch has no CUDA/ROCm support or could not detect "
+                    "a compatible device.",
+                    param,
+                    ctx,
+                )
+            # map unqualified 'cuda' to current device
+            if device.index is None:
+                device = torch.device(device.type, torch.cuda.current_device())
+
+        return device
+
+
+TORCH_DEVICE = TorchDeviceParam()
+
+
 @cli.command()
 @click.option("--data-dir", help="Base directory where data is stored.", default=None)
 @click.option(
@@ -591,7 +647,7 @@ def download(ctx, repository, release, filename, model_dir):
     default="cpu",
     help=(
         "PyTorch device for Linux training (default: 'cpu'). Use 'cuda' "
-        "for NVidia CUDA / AMD ROCm GPU."
+        "for NVidia CUDA / AMD ROCm GPU, 'cuda:0' for first GPU."
     ),
 )
 @click.option(
@@ -621,7 +677,7 @@ def train(
     local,
     skip_quantize,
     num_epochs,
-    device: TorchDeviceInfo,
+    device: "torch.device",
     four_bit_quant: bool,
 ):
     """

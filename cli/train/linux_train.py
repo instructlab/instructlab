@@ -19,9 +19,6 @@ import torch
 # First Party
 from cli.chat.chat import CONTEXTS
 
-# Local
-from .param import CPU_DEVICE, TorchDeviceInfo
-
 # TODO CPU: Look into using these extensions
 # import intel_extension_for_pytorch as ipex
 
@@ -104,7 +101,7 @@ def linux_train(
     train_file: str,
     test_file: str,
     num_epochs: Optional[int] = None,
-    device: TorchDeviceInfo = CPU_DEVICE,
+    device: torch.device = torch.device("cpu"),
     four_bit_quant: bool = False,
 ):
     """Lab Train for Linux!"""
@@ -165,9 +162,10 @@ def linux_train(
         config=config,
         trust_remote_code=True,
         low_cpu_mem_usage=True,
-        device_map=device.device_map,
     )
-    print(f"LINUX_TRAIN.PY: Model device {model.device}, map: {model.hf_device_map}")
+    if model.device != device:
+        model = model.to(device)
+    print(f"LINUX_TRAIN.PY: Model device {model.device}")
     if model.device.type == "cuda":
         print(torch.cuda.memory_summary())
 
