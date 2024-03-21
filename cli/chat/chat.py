@@ -138,7 +138,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         raise KeyboardInterrupt
 
     def _handle_multiline(self, content):
-        temp = content == "/m"  # soft multilien only for next prompt
+        temp = content == "/m"  # soft multiline only for next prompt
         self.multiline = not self.multiline
         self.multiline_mode = 1 if not temp else 2
         raise KeyboardInterrupt
@@ -268,7 +268,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             self.greet(new=True, session_name=filepath)
         raise KeyboardInterrupt
 
-    def _handle_empty():
+    def _handle_empty(self):
         raise KeyboardInterrupt
 
     def _update_conversation(self, content, role):
