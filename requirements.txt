@@ -1,6 +1,9 @@
 click>=8.1.7,<9.0.0
 click-didyoumean>=0.3.0,<0.4.0
-llama_cpp_python[server]>=0.2.55,<0.3.0
+llama_cpp_python[server]>=0.2.55,<0.3.0; sys_platform != 'darwin'
+# pin macOS version, lift restriction after testing >=0.2.58
+# see https://github.com/abetlen/llama-cpp-python/issues/1286
+llama_cpp_python[server]==0.2.55; sys_platform == 'darwin'
 rouge-score>=0.1.2,<0.2.0
 openai>=1.13.3,<2.0.0
 prompt-toolkit>=3.0.38,<4.0.0
