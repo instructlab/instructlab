@@ -75,6 +75,10 @@ test_ctx_size(){
     lab serve --max-ctx-size 1 > test_ctx_size_lab_serve_output.txt 2>&1 &
     PID_SERVE=$!
 
+    # Make sure the server has time to open the port
+    # if "lab chat" tests it before its open then it will run its own server without --max-ctx-size 1
+    sleep 5
+
     # the error is expected so let's ignore it to not fall into the trap
     set +e
     # now chat with the server

@@ -23,6 +23,7 @@ except ImportError:
 
 # Third Party
 from rouge_score import rouge_scorer
+import gitdb
 
 # import numpy as np
 import tqdm
@@ -467,13 +468,22 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     repo = git.Repo(repo)
     untracked_files = [u for u in repo.untracked_files if istaxonomyfile(u)]
 
+    branches = [b.name for b in repo.branches]
+
     head_commit = None
-    if base == "HEAD":
-        head_commit = repo.commit("HEAD")
-    elif "/" in base:
+    if "/" in base:
         re_git_branch = re.compile(f"remotes/{base}$", re.MULTILINE)
-    else:
+    elif base in branches:
         re_git_branch = re.compile(f"{base}$", re.MULTILINE)
+    else:
+        try:
+            head_commit = repo.commit(base)
+        except gitdb.exc.BadName as exc:
+            raise SystemExit(
+                yaml.YAMLError(
+                    f'Couldn\'t find the taxonomy git ref "{base}" from the current HEAD'
+                )
+            ) from exc
 
     # Move backwards from HEAD until we find the first commit that is part of base
     # then we can take our diff from there
