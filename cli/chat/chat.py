@@ -211,6 +211,18 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
     def _handle_display(self, content):
         return self.__handle_replay(content, display_wrapper=(lambda x: Panel(x)))
 
+    def _load_session_history(self, content=None):
+        data = self.info["messages"]
+        if content is not None:
+            data = content["messages"]
+        for m in data:
+            if m["role"] == "user":
+                self.console.print(
+                    "\n" + PROMPT_PREFIX + m["content"], style="dim grey0"
+                )
+            else:
+                self.console.print(Panel(m["content"]), style="dim grey0")
+
     def _handle_plain(self, content):
         return self.__handle_replay(content)
 
@@ -266,6 +278,9 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             self._reset_session()
             self.info["messages"] = [*messages]
             self.greet(new=True, session_name=filepath)
+
+        # now load session's history
+        self._load_session_history()
         raise KeyboardInterrupt
 
     def _handle_empty(self):
@@ -428,10 +443,14 @@ def chat_cli(
     loaded["messages"] = [{"role": "system", "content": CONTEXTS[context]}]
 
     # Session from CLI
-    # TODO Print history in session when loaded
     if session is not None:
         loaded["name"] = os.path.basename(session.name).strip(".json")
-        loaded["messages"] = json.loads(session.read())
+        try:
+            loaded["messages"] = json.loads(session.read())
+        except json.JSONDecodeError:
+            raise ChatException(
+                f"Session file {session.name} is not a valid JSON file."
+            )
 
     log_file = None
     if config.logs_dir:
@@ -455,7 +474,7 @@ def chat_cli(
         else config.greedy_mode,  # The CLI flag can only be used to enable
     )
 
-    if not qq:
+    if not qq and session is None:
         # Greet
         ccb.greet(help=True)
 
@@ -473,6 +492,10 @@ def chat_cli(
 
     if qq:
         return
+
+    # load the history
+    if session is not None:
+        ccb._load_session_history(loaded)
 
     # Start chatting
     while True:

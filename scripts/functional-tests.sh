@@ -21,7 +21,7 @@ cleanup() {
             kill $pid
         fi
     done
-    rm -f test_ctx_size_lab_serve_output.txt simple_math.yaml
+    rm -f test_ctx_size_lab_serve_output.txt test_session_history simple_math.yaml
     set -e
 }
 
@@ -105,6 +105,41 @@ EOF
     fi
 }
 
+test_loading_session_history(){
+    lab serve &
+    PID_SERVE=$!
+
+    # chat with the server
+    expect -c '
+        set timeout 120
+        spawn lab chat
+        expect ">>>"
+        send "hello this is session history test! give me a very short answer!\r"
+        send "/s test_session_history\r"
+        send "exit\r"
+        expect eof
+    '
+
+    # verify the session history file was created
+    if ! test -f test_session_history; then
+        echo "session history file not found"
+        exit 1
+    fi
+
+    expect -c '
+        spawn lab chat -s test_session_history
+        expect {
+            "hello this is session history test! give me a very short answer!" { exit 0 }
+            timeout { exit 1 }
+        }
+        send "/l test_session_history\r"
+        expect {
+            "hello this is session history test! give me a very short answer!" { exit 0 }
+            timeout { exit 1 }
+        }
+    '
+}
+
 test_generate(){
     cat - <<EOF >  simple_math.yaml
 created_by: ci
@@ -135,6 +170,8 @@ EOF
 test_bind_port
 cleanup
 test_ctx_size
+cleanup
+test_loading_session_history
 cleanup
 test_generate
 
