@@ -166,7 +166,7 @@ seed_examples:
 - question: what is 1+1
   answer: it is 2
 - question: what is 1+3
-  answer: it is 4
+  answer: 4
 task_description: 'simple maths'
 EOF
 

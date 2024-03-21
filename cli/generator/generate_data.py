@@ -539,9 +539,9 @@ def read_taxonomy_file(logger, file_path):
             task_description = contents.get("task_description")
             document = contents.get("document")
             for t in get_seed_examples(contents):
-                q = t["question"]
-                a = t["answer"]
-                c = t.get("context")
+                q = str(t["question"])
+                a = str(t["answer"])
+                c = str(t.get("context", ""))
                 if not q:
                     logger.warn(
                         f"Skipping entry in {file_path} " + "because question is empty!"
@@ -557,7 +557,7 @@ def read_taxonomy_file(logger, file_path):
                 seed_instruction_data.append(
                     {
                         "instruction": q,
-                        "input": "" if not c else c,
+                        "input": c,
                         "output": a,
                         "taxonomy_path": tax_path,
                         "task_description": task_description,
