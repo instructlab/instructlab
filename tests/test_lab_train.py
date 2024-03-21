@@ -311,7 +311,7 @@ class TestLabTrain(unittest.TestCase):
     @patch("cli.train.linux_train.linux_train")
     @patch("cli.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf")
     def test_train_linux(
-        self, linux_train_mock, convert_llama_to_gguf_mock, is_macos_with_m_chip_mock
+        self, convert_llama_to_gguf_mock, linux_train_mock, is_macos_with_m_chip_mock
     ):
         runner = CliRunner()
         with runner.isolated_filesystem():
@@ -319,23 +319,27 @@ class TestLabTrain(unittest.TestCase):
             setup_linux_dir()
             result = runner.invoke(lab.train, ["--input-dir", INPUT_DIR])
             self.assertEqual(result.exit_code, 0)
-            linux_train_mock.assert_called_once()
-            self.assertEqual(
-                linux_train_mock.call_args[1]["model"], "./training_results/final"
-            )
-            self.assertEqual(linux_train_mock.call_args[1]["pad_vocab"], True)
-            self.assertEqual(len(linux_train_mock.call_args[1]), 2)
             convert_llama_to_gguf_mock.assert_called_once()
             self.assertEqual(
-                convert_llama_to_gguf_mock.call_args[1]["train_file"],
+                convert_llama_to_gguf_mock.call_args[1]["model"],
+                "./training_results/final",
+            )
+            self.assertEqual(convert_llama_to_gguf_mock.call_args[1]["pad_vocab"], True)
+            self.assertEqual(len(convert_llama_to_gguf_mock.call_args[1]), 2)
+            linux_train_mock.assert_called_once()
+            print(linux_train_mock.call_args[1])
+            self.assertEqual(
+                linux_train_mock.call_args[1]["train_file"],
                 "test_generated/train_1.jsonl",
             )
             self.assertEqual(
-                convert_llama_to_gguf_mock.call_args[1]["test_file"],
+                linux_train_mock.call_args[1]["test_file"],
                 "test_generated/test_1.jsonl",
             )
-            self.assertEqual(convert_llama_to_gguf_mock.call_args[1]["num_epochs"], 1)
-            self.assertEqual(len(convert_llama_to_gguf_mock.call_args[1]), 3)
+            self.assertEqual(linux_train_mock.call_args[1]["num_epochs"], 1)
+            self.assertIsNotNone(linux_train_mock.call_args[1]["device"])
+            self.assertFalse(linux_train_mock.call_args[1]["four_bit_quant"])
+            self.assertEqual(len(linux_train_mock.call_args[1]), 5)
             is_macos_with_m_chip_mock.assert_called_once()
             self.assertFalse(os.path.isfile(LINUX_GGUF_FILE))
 
@@ -343,7 +347,7 @@ class TestLabTrain(unittest.TestCase):
     @patch("cli.train.linux_train.linux_train")
     @patch("cli.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf")
     def test_num_epochs(
-        self, linux_train_mock, convert_llama_to_gguf_mock, is_macos_with_m_chip_mock
+        self, convert_llama_to_gguf_mock, linux_train_mock, is_macos_with_m_chip_mock
     ):
         runner = CliRunner()
         with runner.isolated_filesystem():
@@ -353,9 +357,9 @@ class TestLabTrain(unittest.TestCase):
                 lab.train, ["--input-dir", INPUT_DIR, "--num-epochs", "2"]
             )
             self.assertEqual(result.exit_code, 0)
-            linux_train_mock.assert_called_once()
             convert_llama_to_gguf_mock.assert_called_once()
-            self.assertEqual(convert_llama_to_gguf_mock.call_args[1]["num_epochs"], 2)
+            linux_train_mock.assert_called_once()
+            self.assertEqual(linux_train_mock.call_args[1]["num_epochs"], 2)
             is_macos_with_m_chip_mock.assert_called_once()
             self.assertFalse(os.path.isfile(LINUX_GGUF_FILE))
 
