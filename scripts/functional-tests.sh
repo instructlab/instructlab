@@ -152,7 +152,7 @@ wait_for_pid_to_disappear(){
 }
 
 test_loading_session_history(){
-    lab serve &
+    lab serve --max-ctx-size 128 &
     PID_SERVE=$!
 
     # chat with the server
@@ -160,7 +160,7 @@ test_loading_session_history(){
         set timeout 120
         spawn lab chat
         expect ">>>"
-        send "hello this is session history test! give me a very short answer!\r"
+        send "this is a test! what are you? do not exceed ten words in your reply.\r"
         send "/s test_session_history\r"
         send "exit\r"
         expect eof
@@ -175,12 +175,12 @@ test_loading_session_history(){
     expect -c '
         spawn lab chat -s test_session_history
         expect {
-            "hello this is session history test! give me a very short answer!" { exit 0 }
+            "this is a test! what are you? do not exceed ten words in your reply." { exit 0 }
             timeout { exit 1 }
         }
         send "/l test_session_history\r"
         expect {
-            "hello this is session history test! give me a very short answer!" { exit 0 }
+            "this is a test! what are you? do not exceed ten words in your reply." { exit 0 }
             timeout { exit 1 }
         }
     '
