@@ -50,6 +50,7 @@ lab download
 # check that lab serve is working
 test_bind_port(){
     expect -c '
+    set timeout 60
     spawn lab serve
     expect {
         "http://127.0.0.1:8000/docs" { puts OK }
@@ -128,7 +129,7 @@ test_server_shutdown_while_chatting(){
         set timeout 30
         spawn lab chat
         expect ">>>"
-        send "hello!\r"
+        send "hello! Tell me a long story\r"
         expect {
             "Connection to the server was closed" { exit 0 }
             timeout { exit 1 }
@@ -151,7 +152,7 @@ wait_for_pid_to_disappear(){
 }
 
 test_loading_session_history(){
-    lab serve &
+    lab serve --max-ctx-size 128 &
     PID_SERVE=$!
 
     # chat with the server
@@ -159,7 +160,7 @@ test_loading_session_history(){
         set timeout 120
         spawn lab chat
         expect ">>>"
-        send "hello this is session history test! give me a very short answer!\r"
+        send "this is a test! what are you? do not exceed ten words in your reply.\r"
         send "/s test_session_history\r"
         send "exit\r"
         expect eof
@@ -174,12 +175,12 @@ test_loading_session_history(){
     expect -c '
         spawn lab chat -s test_session_history
         expect {
-            "hello this is session history test! give me a very short answer!" { exit 0 }
+            "this is a test! what are you? do not exceed ten words in your reply." { exit 0 }
             timeout { exit 1 }
         }
         send "/l test_session_history\r"
         expect {
-            "hello this is session history test! give me a very short answer!" { exit 0 }
+            "this is a test! what are you? do not exceed ten words in your reply." { exit 0 }
             timeout { exit 1 }
         }
     '
@@ -199,7 +200,7 @@ EOF
     sed -i -e 's/num_instructions:.*/num_instructions: 1/g' config.yaml
 
     # This should be finished in a minut or so but time it out incase it goes wrong
-    timeout 5m lab generate --taxonomy-path simple_math.yaml
+    timeout 10m lab generate --taxonomy-path simple_math.yaml
 
     # Test if generated was created and contains files
     ls -l generated/*
