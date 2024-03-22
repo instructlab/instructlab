@@ -8,7 +8,7 @@ import pytest
 # First Party
 from cli import lab
 
-TAXONOMY_BASE = "master"
+TAXONOMY_BASE = "main"
 
 
 class TestLabList(unittest.TestCase):
@@ -74,12 +74,12 @@ class TestLabList(unittest.TestCase):
                 ],
             )
             self.assertListEqual(self.taxonomy.untracked_files, [untracked_file])
-            # Invalid extension is silently filtered out.
+            # Invalid extension is silently filtered out
             self.assertNotIn(untracked_file, result.output)
             self.assertEqual(result.exit_code, 0)
 
     def test_list_invalid_base(self):
-        taxonomy_base = "main"
+        taxonomy_base = "invalid"
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
@@ -93,7 +93,7 @@ class TestLabList(unittest.TestCase):
             )
             self.assertIsNone(result.exception)
             self.assertIn(
-                f'Couldn\'t find the taxonomy base branch "{taxonomy_base}" '
+                f'Couldn\'t find the taxonomy git ref "{taxonomy_base}" '
                 "from the current HEAD",
                 result.output,
             )

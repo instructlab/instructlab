@@ -114,7 +114,7 @@ Initializing `lab` will:
 ```shell
 (venv) $ lab init
 Welcome to InstructLab CLI. This guide will help you set up your environment.
-Please provide the following values to initiate the environment:
+Please provide the following values to initiate the environment [press Enter for defaults]:
 Path to taxonomy repo [taxonomy]: <ENTER>
 `taxonomy` seems to not exists or is empty. Should I clone git@github.com:instruct-lab/taxonomy.git for you? [y/N]: y
 Cloning git@github.com:instruct-lab/taxonomy.git...
@@ -220,8 +220,6 @@ INFO 2024-03-15 11:33:23,973 generate_data.py:566 * compositional_skills/writing
 
 ### 🚀 Generate a synthetic dataset
 
-> **NOTE**: 🍴 This step needs the model to be served and ready, so ensure `lab serve` is running before generating
-
 ```
 lab generate
 ```
@@ -273,7 +271,11 @@ lab train
  ggml-merlinite-7b-0302-Q4_K_M.gguf  ggml-model-f16.gguf
 ```
 
-#### Train the model locally on an M-series Mac
+> **NOTE:** `lab train` ships with experimental support for GPU acceleration with Nvidia CUDA
+or AMD ROCm. See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for more
+details.
+
+#### Train the model locally on an M-series Mac:
 
 To train the model locally on your M-Series Mac is as easy as running:
 ```

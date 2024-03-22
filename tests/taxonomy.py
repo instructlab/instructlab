@@ -12,7 +12,7 @@ class MockTaxonomy:
 
     def __init__(self, path: Path) -> None:
         self.root = path
-        self._repo = git.Repo.init(path)
+        self._repo = git.Repo.init(path, initial_branch="main")
         with open(path / self.INIT_COMMIT_FILE, "wb"):
             pass
         self._repo.index.add([self.INIT_COMMIT_FILE])

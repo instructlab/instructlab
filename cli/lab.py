@@ -4,28 +4,24 @@ from os.path import basename, dirname, exists, splitext
 import json
 import logging
 import os
-import platform
 import shutil
 import sys
+import typing
 
 # Third Party
 from click_didyoumean import DYMGroup
 from git import GitError, Repo
 from huggingface_hub import hf_hub_download
+from huggingface_hub import logging as hf_logging
 import click
 
 # Local
+# NOTE: Subcommands are using local imports to speed up startup time.
 from . import config, utils
-from .chat.chat import ChatException, chat_cli
-from .generator.generate_data import generate_data, get_taxonomy_diff, read_taxonomy
-from .generator.utils import GenerateException
-from .server import ServerException, ensure_server, server
 
-if sys.platform == "darwin" and platform.machine() == "arm64":  # mlx requires macOS
-    # Local
-    from .mlx_explore import utils as mlx_utils
-else:
-    mlx_utils = None
+if typing.TYPE_CHECKING:
+    # Third Party
+    import torch
 
 
 class Lab:
@@ -76,7 +72,7 @@ def configure(ctx, param, filename):
 def cli(ctx, config):
     """CLI for interacting with InstructLab.
 
-    If this is your first time running lab, it's best to start with `lab init` to create the environment
+    If this is your first time running lab, it's best to start with `lab init` to create the environment.
     """
 
 
@@ -144,7 +140,10 @@ def init(
         click.echo(
             "Welcome to InstructLab CLI. This guide will help you to setup your environment."
         )
-        click.echo("Please provide the following values to initiate the environment:")
+        click.echo(
+            "Please provide the following values to initiate the "
+            "environment [press Enter for defaults]:"
+        )
 
         taxonomy_path = utils.expand_path(
             click.prompt("Path to taxonomy repo", default=taxonomy_path)
@@ -158,7 +157,7 @@ def init(
         clone_taxonomy_repo = False
     elif interactive:
         clone_taxonomy_repo = click.confirm(
-            f"`{taxonomy_path}` seems to not exists or is empty. Should I clone {repository} for you?"
+            f"`{taxonomy_path}` seems to not exist or is empty. Should I clone {repository} for you?"
         )
 
     # clone taxonomy repo if it needs to be cloned
@@ -212,6 +211,10 @@ def list(ctx, taxonomy_path, taxonomy_base):
     Lists taxonomy files that have changed since <taxonomy-base>.
     Similar to 'git diff <ref>'
     """
+    # pylint: disable=C0415
+    # Local
+    from .generator.generate_data import get_taxonomy_diff
+
     if not taxonomy_base:
         taxonomy_base = ctx.obj.config.generate.taxonomy_base
     if not taxonomy_path:
@@ -241,6 +244,10 @@ def list(ctx, taxonomy_path, taxonomy_base):
 @click.pass_context
 def check(ctx, taxonomy_path, taxonomy_base):
     """Check that taxonomy is valid"""
+    # pylint: disable=C0415
+    # Local
+    from .generator.generate_data import read_taxonomy
+
     if not taxonomy_base:
         taxonomy_base = ctx.obj.config.generate.taxonomy_base
     if not taxonomy_path:
@@ -260,7 +267,7 @@ def check(ctx, taxonomy_path, taxonomy_base):
     type=click.INT,
     help="The number of layers to put on the GPU. The rest will be on the CPU. Defaults to -1 to move all to GPU.",
 )
-@click.option("--num-threads", type=click.INT, help="The number of CPU threads to use")
+@click.option("--num-threads", type=click.INT, help="The number of CPU threads to use.")
 @click.option(
     "--max-ctx-size",
     type=click.INT,
@@ -269,6 +276,10 @@ def check(ctx, taxonomy_path, taxonomy_base):
 @click.pass_context
 def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
     """Start a local server"""
+    # pylint: disable=C0415
+    # Local
+    from .server import ServerException, server
+
     ctx.obj.logger.info(
         f"Using model '{model_path}' with {gpu_layers} gpu-layers and {max_ctx_size} max context size."
     )
@@ -319,7 +330,7 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
 @click.option(
     "--output-dir",
     type=click.Path(),
-    help="Path to output generated files",
+    help="Path to output generated files.",
 )
 @click.option(
     "--seed-file",
@@ -336,12 +347,7 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
 @click.option(
     "--quiet",
     is_flag=True,
-    help="Suppress output of synthesized instructions",
-)
-@click.option(
-    "--has-document",
-    is_flag=True,
-    help="Whether or not the examples contain the document field",
+    help="Suppress output of synthesized instructions.",
 )
 @click.option(
     "--endpoint-url",
@@ -366,11 +372,16 @@ def generate(
     seed_file,
     rouge_threshold,
     quiet,
-    has_document,
     endpoint_url,
     api_key,
 ):
     """Generates synthetic data to enhance your example data"""
+    # pylint: disable=C0415
+    # Local
+    from .generator.generate_data import generate_data
+    from .generator.utils import GenerateException
+    from .server import ensure_server
+
     server_process = None
     if endpoint_url:
         api_base = endpoint_url
@@ -399,7 +410,6 @@ def generate(
             seed_tasks_path=seed_file,
             rouge_threshold=rouge_threshold,
             console_output=not quiet,
-            has_document=has_document,
         )
     except GenerateException as exc:
         click.secho(
@@ -428,19 +438,19 @@ def generate(
     "--context",
     default="default",
     show_default=True,
-    help="Name of system context in config file",
+    help="Name of system context in config file.",
 )
 @click.option(
     "-s",
     "--session",
     type=click.File("r"),
-    help="Filepath of a dialog session file",
+    help="Filepath of a dialog session file.",
 )
 @click.option(
     "-qq",
     "--quick-question",
     is_flag=True,
-    help="Exit after answering question",
+    help="Exit after answering question.",
 )
 @click.option(
     "-gm",
@@ -451,6 +461,11 @@ def generate(
 @click.pass_context
 def chat(ctx, question, model, context, session, quick_question, greedy_mode):
     """Run a chat using the modified model"""
+    # pylint: disable=C0415
+    # Local
+    from .chat.chat import ChatException, chat_cli
+    from .server import ensure_server
+
     server_process, api_base = ensure_server(
         ctx.obj.logger,
         ctx.obj.config.serve,
@@ -507,6 +522,9 @@ def download(ctx, repository, release, filename, model_dir):
     """Download the model(s) to train"""
     click.echo(f"Downloading model from {repository}@{release} to {model_dir}...")
     try:
+        if ctx.obj is not None:
+            hf_logging.set_verbosity(ctx.obj.config.general.log_level.upper())
+
         hf_hub_download(
             repo_id=repository,
             revision=release,
@@ -521,13 +539,65 @@ def download(ctx, repository, release, filename, model_dir):
         raise click.exceptions.Exit(1)
 
 
+class TorchDeviceParam(click.ParamType):
+    """Parse and convert device string
+
+    Returns a torch.device object:
+    - type is one of 'cpu' or 'cuda')
+    - index is None or CUDA/ROCm device index (0 for first GPU)
+    """
+
+    name = "deviceinfo"
+    supported_devices = {"cuda", "cpu"}
+
+    def convert(self, value, param, ctx) -> "torch.device":
+        # pylint: disable=C0415
+        # Function local import, import torch can take more than a second
+        # Third Party
+        import torch
+
+        if not isinstance(value, torch.device):
+            try:
+                device = torch.device(value)
+            except RuntimeError as e:
+                self.fail(str(e), param, ctx)
+
+        if device.type not in {"cuda", "cpu"}:
+            supported = ", ".join(repr(s) for s in sorted(self.supported_devices))
+            self.fail(
+                f"Unsupported device type '{device.type}'. Only devices "
+                f"types {supported}, and indexed device strings like 'cuda:0' "
+                "are supported for now.",
+                param,
+                ctx,
+            )
+
+        # Detect CUDA/ROCm device
+        if device.type == "cuda":
+            if not torch.cuda.is_available():
+                self.fail(
+                    f"{value}: Torch has no CUDA/ROCm support or could not detect "
+                    "a compatible device.",
+                    param,
+                    ctx,
+                )
+            # map unqualified 'cuda' to current device
+            if device.index is None:
+                device = torch.device(device.type, torch.cuda.current_device())
+
+        return device
+
+
+TORCH_DEVICE = TorchDeviceParam()
+
+
 @cli.command()
 @click.option("--data-dir", help="Base directory where data is stored.", default=None)
 @click.option(
     "--input-dir",
     type=click.Path(),
     show_default=True,  # TODO: set to None and change help message
-    help="Path to generated files to use as input",
+    help="Path to generated files to use as input.",
 )
 @click.option(
     "--skip-preprocessing",
@@ -541,7 +611,7 @@ def download(ctx, repository, release, filename, model_dir):
 )
 @click.option(
     "--gguf-model-path",
-    help="Local directory where gguf model is stored",
+    help="Local directory where gguf model is stored.",
     default=None,
     show_default=True,
 )
@@ -551,7 +621,7 @@ def download(ctx, repository, release, filename, model_dir):
     default="ibm/merlinite-7b",
     show_default=True,
 )
-@click.option("--iters", help="Number of iterations to train LoRA", default=100)
+@click.option("--iters", help="Number of iterations to train LoRA.", default=100)
 @click.option(
     "--local",
     is_flag=True,
@@ -561,14 +631,38 @@ def download(ctx, repository, release, filename, model_dir):
     "-sq",
     "--skip-quantize",
     is_flag=True,
-    help="Whether to skip quantization while converting to MLX. This parameter will be ignored if --gguf-model-path and --tokenizer-dir are specified",
+    help="Whether to skip quantization while converting to MLX. This parameter will be ignored if --gguf-model-path and --tokenizer-dir are specified.",
 )
 @click.option(
     "--num-epochs",
     type=click.INT,
     default=1,  # TODO: change this to a more reasonable default
     show_default=True,
-    help="Whether to skip quantization while converting to MLX.",
+    help="The number of times the training data is passed through the training algorithm. Please note that this value is used on Linux platforms only.",
+)
+@click.option(
+    "--device",
+    type=TORCH_DEVICE,
+    show_default=True,
+    default="cpu",
+    help=(
+        "PyTorch device for Linux training (default: 'cpu'). Use 'cuda' "
+        "for NVidia CUDA / AMD ROCm GPU, 'cuda:0' for first GPU."
+    ),
+)
+@click.option(
+    "--4-bit-quant",
+    "four_bit_quant",
+    is_flag=True,
+    show_default=True,
+    default=False,
+    # TODO: hidden option until llamacpp_convert_to_gguf.py supports
+    # quantized models, https://github.com/instruct-lab/cli/issues/579
+    hidden=True,
+    help=(
+        "Use BitsAndBytes for 4-bit quantization "
+        "(reduces GPU VRAM usage and may slow down training)"
+    ),
 )
 @click.pass_context
 def train(
@@ -583,16 +677,20 @@ def train(
     local,
     skip_quantize,
     num_epochs,
+    device: "torch.device",
+    four_bit_quant: bool,
 ):
     """
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
-    cli_dir = os.path.dirname(os.path.abspath(__file__))
-
+    # pylint: disable=C0415
     if not input_dir:
         # By default, generate output-dir is used as train input-dir
         input_dir = ctx.obj.config.generate.output_dir
+
+    if four_bit_quant and device.type != "cuda":
+        ctx.fail("--4-bit-quant option requires --device=cuda")
 
     # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
     if data_dir is None:
@@ -633,12 +731,17 @@ def train(
             raise click.exceptions.Exit(1)
 
     if not utils.is_macos_with_m_chip():
-        script = os.path.join(cli_dir, "train/linux_train.py")
-        cmd = f"{script} --train-file {train_files[0]} --test-file {test_files[0]} --num-epochs {num_epochs}"
-        click.secho(
-            f"python {cmd}",
+        # Local
+        from .llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
+        from .train.linux_train import linux_train
+
+        linux_train(
+            train_file=train_files[0],
+            test_file=test_files[0],
+            num_epochs=num_epochs,
+            device=device,
+            four_bit_quant=four_bit_quant,
         )
-        os.system("python {}".format(cmd))
 
         training_results_dir = "./training_results"
         os.makedirs(training_results_dir, exist_ok=True)
@@ -683,9 +786,7 @@ def train(
             shutil.copy(file, final_results_dir)
             print("Copied ", file, "to ", final_results_dir)
 
-        script = os.path.join(cli_dir, "llamacpp/llamacpp_convert_to_gguf.py")
-        cmd = f"{script} {final_results_dir} --pad-vocab"
-        os.system("python {}".format(cmd))
+        convert_llama_to_gguf(model=final_results_dir, pad_vocab=True)
 
         gguf_models_dir = "./models"
         if not os.path.isdir(gguf_models_dir):
@@ -698,10 +799,22 @@ def train(
         # checkpoint_dirs = glob(training_results_dir + "/checkpoint*")
         # shutil.rmtree(checkpoint_dirs[0])
     else:
+        # Local
+        from .mlx_explore.gguf_convert_to_mlx import load
+        from .mlx_explore.utils import fetch_tokenizer_from_hub
+        from .train.lora_mlx.convert import convert_between_mlx_and_pytorch
+        from .train.lora_mlx.lora import load_and_train
+        from .train.lora_mlx.make_data import make_data
+
         if not skip_preprocessing:
-            script = os.path.join(cli_dir, "train/lora-mlx/make_data.py")
-            cmd = f"{script} --data-dir {data_dir}"
-            os.system("python {}".format(cmd))
+            try:
+                make_data(data_dir=data_dir)
+            except FileNotFoundError as exc:
+                click.secho(
+                    f"Could not read from data directory: {exc}",
+                    fg="red",
+                )
+                raise click.exceptions.Exit(1)
 
         # NOTE we can skip this if we have a way ship MLX
         # PyTorch safetensors to MLX safetensors
@@ -709,27 +822,20 @@ def train(
         model_dir_mlx = f"{model_dir_local}-mlx"
         model_dir_mlx_quantized = f"{model_dir_local}-mlx-q"
 
-        dest_model_dir = ""
-        quantize_arg = ""
-
-        if not skip_quantize:
-            dest_model_dir = model_dir_mlx_quantized
-            quantize_arg = "-q"
-        else:
+        if skip_quantize:
             dest_model_dir = model_dir_mlx
-
-        local_arg = "--local" if local else ""
+            quantize_arg = False
+        else:
+            dest_model_dir = model_dir_mlx_quantized
+            quantize_arg = True
 
         if tokenizer_dir is not None and gguf_model_path is not None:
             if not local:
-                assert mlx_utils is not None
                 tokenizer_dir_local = tokenizer_dir.replace("/", "-")
-                mlx_utils.fetch_tokenizer_from_hub(tokenizer_dir, tokenizer_dir_local)
+                fetch_tokenizer_from_hub(tokenizer_dir, tokenizer_dir_local)
 
-            script = os.path.join(cli_dir, "mlx_explore/gguf_convert_to_mlx.py")
             # no need to pass quantize_arg for now, script automatically detects if quantization is necessary based on whether gguf model is quantized or not
-            cmd = f"{script} --gguf {gguf_model_path} --repo {tokenizer_dir} --mlx-path {dest_model_dir}"
-            os.system("python {}".format(cmd))
+            load(gguf=gguf_model_path, repo=tokenizer_dir, mlx_path=dest_model_dir)
 
             for filename in os.listdir(model_dir_local):
                 shutil.copy(
@@ -739,15 +845,26 @@ def train(
             shutil.rmtree(model_dir_local, ignore_errors=True)
 
         else:
-            script = os.path.join(cli_dir, "train/lora-mlx/convert.py")
-            cmd = f"{script}  --hf-path {model_dir} --mlx-path {dest_model_dir} {quantize_arg} {local_arg}"
-            os.system("python {}".format(cmd))
+            # Downloading PyTorch SafeTensor and Converting to MLX SafeTensor
+            convert_between_mlx_and_pytorch(
+                hf_path=model_dir,
+                mlx_path=dest_model_dir,
+                quantize=quantize_arg,
+                local=local,
+            )
 
         adapter_file_path = f"{dest_model_dir}/adapters.npz"
-        script = os.path.join(cli_dir, "train/lora-mlx/lora.py")
         # train the model with LoRA
-        cmd = f"{script} --model {dest_model_dir} --train --data {data_dir} --adapter-file {adapter_file_path} --iters {iters} --save-every 10 --steps-per-eval 10"
-        os.system("python {}".format(cmd))
+
+        load_and_train(
+            model=dest_model_dir,
+            train=True,
+            data=data_dir,
+            adapter_file=adapter_file_path,
+            iters=iters,
+            save_every=10,
+            steps_per_eval=10,
+        )
 
         # TODO copy some downloaded files from the PyTorch model folder
         # Seems to be not a problem if working with a remote download with convert.py
@@ -776,10 +893,12 @@ def train(
 # pylint: disable=function-redefined
 def test(data_dir, model_dir, adapter_file):
     """Runs basic test to ensure model correctness"""
+    # pylint: disable=C0415
+    # Local
+    from .train.lora_mlx.lora import load_and_train
+
     if adapter_file is None:
         adapter_file = os.path.join(model_dir, "adapters.npz")
-    cli_dir = os.path.dirname(os.path.abspath(__file__))
-    script = os.path.join(cli_dir, "train/lora-mlx/lora.py")
 
     # Load the JSON Lines file
     test_data_dir = f"{data_dir}/test.jsonl"
@@ -792,13 +911,16 @@ def test(data_dir, model_dir, adapter_file):
         system = example["system"]
         user = example["user"]
         print("[{}]\n user prompt: {}".format(idx + 1, user))
+        prompt = f"<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>"
         print("expected output:", example["assistant"])
+
         print("\n-----model output BEFORE training----:\n")
-        cmd = f'{script} --model {model_dir} --no-adapter --max-tokens 100 --prompt "<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>\n"'
-        os.system("python {}".format(cmd))
+        load_and_train(model=model_dir, no_adapter=True, max_tokens=100, prompt=prompt)
+
         print("\n-----model output AFTER training----:\n")
-        cmd = f'{script} --model {model_dir} --adapter-file {adapter_file} --max-tokens 100 --prompt "<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>\n"'
-        os.system("python {}".format(cmd))
+        load_and_train(
+            model=model_dir, adapter_file=adapter_file, max_tokens=100, prompt=prompt
+        )
 
 
 @cli.command()
@@ -824,33 +946,35 @@ def test(data_dir, model_dir, adapter_file):
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
     """Converts model to GGUF"""
+    # pylint: disable=C0415
+    # Local
+    from .llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
+    from .train.lora_mlx.convert import convert_between_mlx_and_pytorch
+    from .train.lora_mlx.fuse import fine_tune
+
     if adapter_file is None:
         adapter_file = os.path.join(model_dir, "adapters.npz")
     cli_dir = os.path.dirname(os.path.abspath(__file__))
 
-    dequantize_arg = ""
     source_model_dir = model_dir
-    if not skip_de_quantize:
-        dequantize_arg = " -d "
-
     model_dir_fused = f"{source_model_dir}-fused"
 
-    script = os.path.join(cli_dir, "train/lora-mlx/fuse.py")
-    cmd = f"{script} --model {source_model_dir} --save-path {model_dir_fused} --adapter-file {adapter_file} {dequantize_arg}"
     # this combines adapter with the original model to produce the updated model
-    os.system("python {}".format(cmd))
+    fine_tune(
+        model=source_model_dir,
+        save_path=model_dir_fused,
+        adapter_file=adapter_file,
+        de_quantize=not skip_de_quantize,
+    )
 
     model_dir_fused_pt = f"{model_dir_fused}-pt"
 
-    script = os.path.join(cli_dir, "train/lora-mlx/convert.py ")
-    cmd = f"{script} --hf-path { model_dir_fused} --mlx-path {model_dir_fused_pt} --local --to-pt"
     # this converts MLX to PyTorch
-    os.system("{} {}".format("python", cmd))
+    convert_between_mlx_and_pytorch(
+        hf_path=model_dir_fused, mlx_path=model_dir_fused_pt, local=True, to_pt=True
+    )
 
-    script = os.path.join(cli_dir, "llamacpp/llamacpp_convert_to_gguf.py")
-    cmd = f"{script} { model_dir_fused_pt} --pad-vocab"
-    # use llama.cpp to convert back to GGUF
-    os.system("{} {}".format("python", cmd))
+    convert_llama_to_gguf(model=model_dir_fused_pt, pad_vocab=True)
 
     # quantize 4-bi GGUF (optional)
     if not skip_quantize:

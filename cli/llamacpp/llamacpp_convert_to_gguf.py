@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Future
 from __future__ import annotations
 
@@ -7,7 +6,16 @@ from abc import ABCMeta, abstractmethod
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
-from typing import IO, TYPE_CHECKING, Any, Callable, Iterable, Literal, TypeVar
+from typing import (
+    IO,
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterable,
+    Literal,
+    Optional,
+    TypeVar,
+)
 import concurrent.futures
 import enum
 import faulthandler
@@ -27,7 +35,6 @@ import zipfile
 
 # Third Party
 from sentencepiece import SentencePieceProcessor
-import click
 import numpy as np
 
 if "NO_LOCAL_GGUF" not in os.environ:
@@ -858,7 +865,7 @@ def permute_part_lazy(
         return lazy_tensor.load().permute_part(n_part, n_head, n_head_kv)
 
     s = lazy_tensor.shape.copy()
-    s[0] = s[0] // 3
+    s[0] //= 3
     return LazyTensor(
         load,
         s,
@@ -872,7 +879,7 @@ def part_lazy(lazy_tensor: LazyTensor, n_part: int) -> LazyTensor:
         return lazy_tensor.load().part(n_part)
 
     s = lazy_tensor.shape.copy()
-    s[0] = s[0] // 3
+    s[0] //= 3
     return LazyTensor(load, s, lazy_tensor.data_type, "part " + lazy_tensor.description)
 
 
@@ -1604,85 +1611,31 @@ def do_dump_model(model_plus: ModelPlus) -> None:
         )
 
 
-@click.command()
-@click.argument(
-    "model",
-    nargs=1,
-    type=click.Path(),
-)
-@click.option(
-    "--awq-path", type=click.Path(), help="Path to scale awq cache file", default=None
-)
-@click.option(
-    "--dump", is_flag=True, help="Don't convert, just show what's in the model"
-)
-@click.option(
-    "--dump-single",
-    is_flag=True,
-    help="Don't convert, just show what's in a single model file",
-)
-@click.option("--vocab-only", is_flag=True, help="Extract only the vocab")
-# We currently only support Q8_0 output on little endian systems.
-@click.option(
-    "--outtype",
-    type=click.Choice(
-        ["f32", "f16", "q8_0"]
-        if np.uint32(1) == np.uint32(1).newbyteorder("<")
-        else ["f32", "f16"],
-        case_sensitive=True,
-    ),
-    help="Output format - note: q8_0 may be very slow (default: f16 or f32 based on input)",
-)
-@click.option(
-    "--vocab-dir",
-    type=click.Path(),
-    help="Directory containing tokenizer.model, if separate from model file",
-)
-@click.option(
-    "--vocab-type",
-    help="Vocab types to try in order, choose from 'spm', 'bpe', 'hfft' (default: spm,hfft)",
-    default="spm,hfft",
-)
-@click.option(
-    "--outfile", type=click.Path(), help="Path to write to; default: based on input"
-)
-@click.option(
-    "--ctx", type=click.INT, help="Model training context (default: based on input)"
-)
-@click.option(
-    "--concurrency",
-    type=click.INT,
-    help=f"Concurrency used for conversion (default: {DEFAULT_CONCURRENCY})",
-    default=DEFAULT_CONCURRENCY,
-)
-@click.option(
-    "--big-endian", is_flag=True, help="Model is executed on big endian machine"
-)
-@click.option(
-    "--pad-vocab",
-    is_flag=True,
-    help="add pad tokens when model vocab expects more than tokenizer metadata provides",
-)
-@click.option(
-    "--skip-unknown", is_flag=True, help="skip unknown tensor names instead of failing"
-)
 def convert_llama_to_gguf(
-    model,
-    awq_path,
-    dump,
-    dump_single,
-    vocab_only,
-    outtype,
-    vocab_dir,
-    vocab_type,
-    outfile,
-    ctx,
-    concurrency,
-    big_endian,
-    pad_vocab,
-    skip_unknown,
+    model: str,
+    awq_path: Optional[str] = None,
+    dump: bool = False,
+    dump_single: bool = False,
+    vocab_only: bool = False,
+    outtype: Optional[str] = None,
+    vocab_dir: Optional[str] = None,
+    vocab_type: str = "spm,hfft",
+    outfile: Optional[str] = None,
+    ctx: Optional[int] = None,
+    concurrency: int = DEFAULT_CONCURRENCY,
+    big_endian: bool = False,
+    pad_vocab: bool = False,
+    skip_unknown: bool = False,
 ):
     """Convert a LLaMA model to a GGML compatible file"""
+    # TODO validate vocab_type as was done in click.option declaration:
+    # type=click.Choice(
+    #     ["f32", "f16", "q8_0"]
+    #     if np.uint32(1) == np.uint32(1).newbyteorder("<")
+    #     else ["f32", "f16"],
+    #     case_sensitive=True,
+    # )
+
     # click.argument doesn't seem to be returning a Path for model
     if isinstance(model, str):
         model = Path(model)
@@ -1789,7 +1742,3 @@ def convert_llama_to_gguf(
         pad_vocab=pad_vocab,
     )
     print(f"Wrote {outfile}")
-
-
-if __name__ == "__main__":
-    convert_llama_to_gguf()

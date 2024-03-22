@@ -30,9 +30,9 @@ Help / TL;DR
 - `/M`: toggle **m**ultiline
 - `/n`: **n**ew session
 - `/N`: **n**ew session (ignoring loaded)
-- `/d [1]`: **d**isplay previous response
-- `/p [1]`: previous response in **p**lain text
-- `/md [1]`: previous response in **M**ark**d**own
+- `/d <int>`: **d**isplay previous response based on input, if passed 1 then previous, if 2 then second last response and so on.
+- `/p <int>`: previous response in **p**lain text based on input, if passed 1 then previous, if 2 then second last response and so on.
+- `/md <int>`: previous response in **M**ark**d**own based on input, if passed 1 then previous, if 2 then second last response and so on.
 - `/s filepath`: **s**ave current session to `filepath`
 - `/l filepath`: **l**oad `filepath` and start a new session
 - `/L filepath`: **l**oad `filepath` (permanently) and start a new session
@@ -138,7 +138,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         raise KeyboardInterrupt
 
     def _handle_multiline(self, content):
-        temp = content == "/m"  # soft multilien only for next prompt
+        temp = content == "/m"  # soft multiline only for next prompt
         self.multiline = not self.multiline
         self.multiline_mode = 1 if not temp else 2
         raise KeyboardInterrupt
@@ -195,13 +195,33 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
     def __handle_replay(self, content, display_wrapper=(lambda x: x)):
         cs = content.split()
-        i = 1 if len(cs) == 1 else int(cs[1]) * 2 - 1
-        if len(self.info["messages"]) > i:
+        try:
+            i = 1 if len(cs) == 1 else int(cs[1]) * 2 - 1
+            if abs(i) >= len(self.info["messages"]):
+                raise IndexError
+        except (IndexError, ValueError):
+            self.console.print(
+                display_wrapper("Invalid index: " + content), style="bold red"
+            )
+            raise KeyboardInterrupt
+        if len(self.info["messages"]) > abs(i):
             self.console.print(display_wrapper(self.info["messages"][-i]["content"]))
         raise KeyboardInterrupt
 
     def _handle_display(self, content):
         return self.__handle_replay(content, display_wrapper=(lambda x: Panel(x)))
+
+    def _load_session_history(self, content=None):
+        data = self.info["messages"]
+        if content is not None:
+            data = content["messages"]
+        for m in data:
+            if m["role"] == "user":
+                self.console.print(
+                    "\n" + PROMPT_PREFIX + m["content"], style="dim grey0"
+                )
+            else:
+                self.console.print(Panel(m["content"]), style="dim grey0")
 
     def _handle_plain(self, content):
         return self.__handle_replay(content)
@@ -240,6 +260,13 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             )
             raise KeyboardInterrupt
         filepath = cs[1]
+        if not os.path.exists(filepath):
+            self._sys_print(
+                Markdown(
+                    f"**WARNING**: File `{filepath}` specified in the `/l filepath` or `/L filepath` command does not exist."
+                )
+            )
+            raise KeyboardInterrupt
         with open(filepath, "r") as session:
             messages = json.loads(session.read())
         if content[:2] == "/L":
@@ -251,9 +278,12 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             self._reset_session()
             self.info["messages"] = [*messages]
             self.greet(new=True, session_name=filepath)
+
+        # now load session's history
+        self._load_session_history()
         raise KeyboardInterrupt
 
-    def _handle_empty():
+    def _handle_empty(self):
         raise KeyboardInterrupt
 
     def _update_conversation(self, content, role):
@@ -413,10 +443,14 @@ def chat_cli(
     loaded["messages"] = [{"role": "system", "content": CONTEXTS[context]}]
 
     # Session from CLI
-    # TODO Print history in session when loaded
     if session is not None:
         loaded["name"] = os.path.basename(session.name).strip(".json")
-        loaded["messages"] = json.loads(session.read())
+        try:
+            loaded["messages"] = json.loads(session.read())
+        except json.JSONDecodeError:
+            raise ChatException(
+                f"Session file {session.name} is not a valid JSON file."
+            )
 
     log_file = None
     if config.logs_dir:
@@ -440,7 +474,7 @@ def chat_cli(
         else config.greedy_mode,  # The CLI flag can only be used to enable
     )
 
-    if not qq:
+    if not qq and session is None:
         # Greet
         ccb.greet(help=True)
 
@@ -458,6 +492,10 @@ def chat_cli(
 
     if qq:
         return
+
+    # load the history
+    if session is not None:
+        ccb._load_session_history(loaded)
 
     # Start chatting
     while True:
