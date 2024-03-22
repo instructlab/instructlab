@@ -200,7 +200,7 @@ EOF
     sed -i -e 's/num_instructions:.*/num_instructions: 1/g' config.yaml
 
     # This should be finished in a minut or so but time it out incase it goes wrong
-    timeout 5m lab generate --taxonomy-path simple_math.yaml
+    timeout 10m lab generate --taxonomy-path simple_math.yaml
 
     # Test if generated was created and contains files
     ls -l generated/*
