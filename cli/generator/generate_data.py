@@ -14,20 +14,16 @@ import time
 
 # Third Party
 from jinja2 import Template
+from rouge_score import rouge_scorer
+import gitdb
+import tqdm
+import yaml
 
 try:
     # Third Party
     import git
 except ImportError:
     pass
-
-# Third Party
-from rouge_score import rouge_scorer
-import gitdb
-
-# import numpy as np
-import tqdm
-import yaml
 
 # Local
 from . import utils
@@ -66,6 +62,13 @@ Here are some examples to help you understand the type of questions that are ask
 {% endif -%}
 """
 
+DEFAULT_YAML_RULES = """\
+extends: relaxed
+
+rules:
+  line-length:
+    max: 120
+"""
 
 _WORD_DENYLIST = [
     "image",
@@ -271,6 +274,7 @@ def get_instructions_from_model(
 def generate_data(
     logger,
     api_base,
+    yaml_rules: Optional[str] = None,
     output_dir: Optional[str] = None,
     taxonomy: Optional[str] = None,
     taxonomy_base: Optional[str] = None,
@@ -297,7 +301,9 @@ def generate_data(
     # throw an error if both not found
     # pylint: disable=broad-exception-caught,raise-missing-from
     if taxonomy and os.path.exists(taxonomy):
-        seed_instruction_data = read_taxonomy(logger, taxonomy, taxonomy_base)
+        seed_instruction_data = read_taxonomy(
+            logger, taxonomy, taxonomy_base, yaml_rules
+        )
     else:
         raise SystemExit(f"Error: taxonomy ({taxonomy}) does not exist.")
 
@@ -513,15 +519,37 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
 
 
 # pylint: disable=broad-exception-caught
-def read_taxonomy_file(logger, file_path):
+def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
+    # pylint: disable=C0415
+    # Third Party
+    from yamllint import linter
+    from yamllint.config import YamlLintConfig
+
     seed_instruction_data = []
     warnings = 0
     errors = 0
+    # file should end with ".yaml" explicitly
     if splitext(file_path)[1] != ".yaml":
         logger.warn(f"Skipping {file_path}! Use lowercase '.yaml' extension instead.")
         warnings += 1
         return None, warnings, errors
+    # read file if extension is correct
     try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            # do general YAML linting if specified
+            if yaml_rules:
+                try:
+                    yaml_config = YamlLintConfig(file=yaml_rules)
+                except FileNotFoundError:
+                    logger.warning(f"Cannot find {yaml_rules}. Using default rules.")
+                    yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
+                for p in linter.run(file, yaml_config):
+                    errors += 1
+                    logger.error(
+                        f"error found in file {file.name}: {p.desc} {p.line} {p.rule}"
+                    )
+                    return None, warnings, errors
+            # do more explict checking of file contents
         with open(file_path, "r", encoding="utf-8") as file:
             contents = yaml.safe_load(file)
             if not contents:
@@ -535,6 +563,7 @@ def read_taxonomy_file(logger, file_path):
                 )
                 warnings += 1
                 return None, warnings, errors
+            # get seed instruction data
             tax_path = "->".join(file_path.split(os.sep)[1:-1])
             task_description = contents.get("task_description")
             document = contents.get("document")
@@ -566,24 +595,25 @@ def read_taxonomy_file(logger, file_path):
                 )
     except Exception as e:
         errors += 1
-        print(e.__repr__, " in ", file_path)
-        logger.error(e)
+        logger.error(f"Exception {e} raised in {file_path}")
 
     return seed_instruction_data, warnings, errors
 
 
-def read_taxonomy(logger, taxonomy, taxonomy_base):
+def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
     seed_instruction_data = []
     is_file = os.path.isfile(taxonomy)
-    if is_file:
-        seed_instruction_data, warnings, errors = read_taxonomy_file(logger, taxonomy)
+    if is_file:  # taxonomy is file
+        seed_instruction_data, warnings, errors = read_taxonomy_file(
+            logger, taxonomy, yaml_rules
+        )
         if warnings:
             logger.warn(
                 f"{warnings} warnings (see above) due to taxonomy file not (fully) usable."
             )
         if errors:
             raise SystemExit(yaml.YAMLError("Taxonomy file with errors! Exiting."))
-    else:  # taxonomy is_dir
+    else:  # taxonomy is dir
         # Gather the new or changed YAMLs using git diff
         try:
             updated_taxonomy_files = get_taxonomy_diff(taxonomy, taxonomy_base)
@@ -592,12 +622,12 @@ def read_taxonomy(logger, taxonomy, taxonomy_base):
         total_errors = 0
         total_warnings = 0
         if updated_taxonomy_files:
-            logger.info("Found new taxonomy files :")
+            logger.info("Found new taxonomy files:")
             for e in updated_taxonomy_files:
                 logger.info(f"* {e}")
         for f in updated_taxonomy_files:
             file_path = os.path.join(taxonomy, f)
-            data, warnings, errors = read_taxonomy_file(logger, file_path)
+            data, warnings, errors = read_taxonomy_file(logger, file_path, yaml_rules)
             total_warnings += warnings
             total_errors += errors
             if data:

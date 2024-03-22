@@ -1,6 +1,6 @@
 # Standard
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 import shutil
 
 # Third Party
@@ -23,16 +23,20 @@ class MockTaxonomy:
         """List untracked files in the repository"""
         return self._repo.untracked_files
 
-    def create_untracked(self, rel_path: str) -> None:
+    def create_untracked(self, rel_path: str, contents: Optional[bytes] = None) -> None:
         """Create a new untracked file in the repository.
 
         Args:
-            rel_path (str): Relative path (from repository root) to the file.
+            rel_path (str):   Relative path (from repository root) to the file.
+            contents (bytes): (optional) Byte string to be written to the file.
         """
         assert not Path(rel_path).is_absolute()
         file_path = Path(self.root / rel_path)
         file_path.parent.mkdir(exist_ok=True, parents=True)
-        file_path.write_text("new taxonomy", encoding="utf-8")
+        if not contents:
+            file_path.write_text("new taxonomy", encoding="utf-8")
+        else:
+            file_path.write_bytes(contents)
 
     def add_tracked(self, rel_path: str) -> None:
         """Add a new tracked file to the repository (and commits it).
