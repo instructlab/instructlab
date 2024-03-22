@@ -4,6 +4,9 @@ set -ex
 
 pip install .
 
+export TEST_CTX_SIZE_LAB_SERVE_LOG_FILE=test_ctx_size_lab_serve.log
+export TEST_CTX_SIZE_LAB_CHAT_LOG_FILE=test_ctx_size_lab_chat.log
+
 for cmd in lab expect; do
     if ! type -p $cmd; then
         echo "Error: $cmd is not installed"
@@ -21,7 +24,10 @@ cleanup() {
             kill $pid
         fi
     done
-    rm -f test_ctx_size_lab_serve_output.txt test_session_history simple_math.yaml
+    rm -f "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" \
+        "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" \
+        test_session_history \
+        simple_math.yaml
     set -e
 }
 
@@ -66,7 +72,7 @@ test_bind_port(){
 }
 
 test_ctx_size(){
-    lab serve --max-ctx-size 1 > test_ctx_size_lab_serve_output.txt 2>&1 &
+    lab serve --max-ctx-size 1 &> "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" &
     PID_SERVE=$!
 
     # Make sure the server has time to open the port
@@ -76,33 +82,46 @@ test_ctx_size(){
     # the error is expected so let's ignore it to not fall into the trap
     set +e
     # now chat with the server
-    lab chat <<EOF &
+    lab chat &> "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" <<EOF &
 hello
 EOF
     PID_CHAT=$!
+    wait_for_pid_to_disappear $PID_CHAT
+    # reset the PID_CHAT variable so that the cleanup function doesn't try to kill it
+    PID_CHAT=
+
     # re-activate the error trap
     set -e
 
-    # wait a bit for the pid directory to disappear
+    # look for the context size error in the server logs
+    timeout 10 bash -c '
+        until grep -q "exceed context window of" "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE"; do
+        echo "waiting for context size error"
+        sleep 1
+    done
+'
+
+    # look for the context size error in the chat logs
+    timeout 10 bash -c '
+        until grep -q "Message too large for context size." "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE"; do
+        echo "waiting for chat error"
+        sleep 1
+    done
+'
+}
+
+wait_for_pid_to_disappear(){
     for i in $(seq 1 20); do
-        if ! test -d /proc/$PID_CHAT; then
+        if ! test -d /proc/$1; then
             break
         fi
-        # error if the process is still running after 10 seconds
+        # error if the process is still running
         if [ $i -eq 20 ]; then
             echo "chat process is still running"
             exit 1
         fi
         sleep 1
     done
-    # reset the PID_CHAT variable so that the cleanup function doesn't try to kill it
-    PID_CHAT=
-
-    # look for the context size error in the server logs
-    if ! grep -q "exceed context window of" test_ctx_size_lab_serve_output.txt; then
-        echo "context size error not found"
-        exit 1
-    fi
 }
 
 test_loading_session_history(){
@@ -167,6 +186,7 @@ EOF
 ########
 # MAIN #
 ########
+# call cleanup in-between each test so they can run without conflicting with the server/chat process
 test_bind_port
 cleanup
 test_ctx_size
