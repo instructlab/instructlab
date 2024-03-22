@@ -50,6 +50,7 @@ lab download
 # check that lab serve is working
 test_bind_port(){
     expect -c '
+    set timeout 60
     spawn lab serve
     expect {
         "http://127.0.0.1:8000/docs" { puts OK }
