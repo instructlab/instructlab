@@ -129,7 +129,7 @@ test_server_shutdown_while_chatting(){
         set timeout 30
         spawn lab chat
         expect ">>>"
-        send "hello!\r"
+        send "hello! Tell me a long story\r"
         expect {
             "Connection to the server was closed" { exit 0 }
             timeout { exit 1 }
