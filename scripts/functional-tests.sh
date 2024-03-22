@@ -51,7 +51,9 @@ check_file_exists() {
     fi
 }
 
+echo CHECKPOINT1
 trap 'cleanup "$?"' EXIT QUIT INT TERM
+echo CHECKPOINT2
 
 rm -f config.yaml
 
@@ -238,6 +240,10 @@ test_train() {
     done
 }
 
+test_test() {
+    timeout 5m lab test
+}
+
 ########
 # MAIN #
 ########
@@ -252,5 +258,8 @@ test_generate
 test_server_shutdown_while_chatting
 cleanup
 test_train
+cleanup
+test_test
+cleanup
 
 exit 0
