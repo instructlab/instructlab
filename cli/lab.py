@@ -396,16 +396,20 @@ def generate(
     # Local
     from .generator.generate_data import generate_data
     from .generator.utils import GenerateException
-    from .server import ensure_server
+    from .server import ServerException, ensure_server
 
     server_process = None
     if endpoint_url:
         api_base = endpoint_url
     else:
-        server_process, api_base = ensure_server(
-            ctx.obj.logger,
-            ctx.obj.config.serve,
-        )
+        try:
+            server_process, api_base = ensure_server(
+                ctx.obj.logger,
+                ctx.obj.config.serve,
+            )
+        except ServerException as exc:
+            click.secho(f"Error creating server: {exc}", fg="red")
+            raise click.exceptions.Exit(1)
         if not api_base:
             api_base = ctx.obj.config.serve.api_base()
     try:
@@ -481,12 +485,17 @@ def chat(ctx, question, model, context, session, quick_question, greedy_mode):
     # pylint: disable=C0415
     # Local
     from .chat.chat import ChatException, chat_cli
-    from .server import ensure_server
+    from .server import ServerException, ensure_server
 
-    server_process, api_base = ensure_server(
-        ctx.obj.logger,
-        ctx.obj.config.serve,
-    )
+    try:
+        server_process, api_base = ensure_server(
+            ctx.obj.logger,
+            ctx.obj.config.serve,
+        )
+    except ServerException as exc:
+        click.secho(f"Error creating server: {exc}", fg="red")
+        raise click.exceptions.Exit(1)
+
     if not api_base:
         api_base = ctx.obj.config.serve.api_base()
     try:

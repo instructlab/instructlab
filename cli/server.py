@@ -1,6 +1,7 @@
 # Standard
 import logging
 import multiprocessing
+import os
 import random
 
 # Third Party
@@ -37,6 +38,13 @@ def ensure_server(logger, serve_config):
         # create a temporary, throw-away logger
         logger = logging.getLogger(host_port)
         logger.setLevel(logging.FATAL)
+
+        if not os.path.exists(serve_config.model_path):
+            # pylint: disable=raise-missing-from
+            raise ServerException(
+                f"failed creating the server application: couldn't find model file '{serve_config.model_path}'"
+            )
+
         server_process = multiprocessing.Process(
             target=server,
             kwargs={
