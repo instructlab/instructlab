@@ -21,6 +21,8 @@ DEFAULT_SEED_FILE = "seed_tasks.json"
 DEFAULT_GENERATED_FILES_OUTPUT_DIR = "generated"
 DEFAULT_GREEDY_MODE = False
 DEFAULT_YAML_RULES = "yaml_rules.yaml"
+DEFAULT_NUM_CPUS = 10
+DEFAULT_NUM_INSTRUCTIONS = 100
 
 
 class ConfigException(Exception):
@@ -156,8 +158,8 @@ def get_default_config():
     )
     generate = _generate(
         model=DEFAULT_MODEL,
-        num_cpus=10,
-        num_instructions=100,
+        num_cpus=DEFAULT_NUM_CPUS,
+        num_instructions=DEFAULT_NUM_INSTRUCTIONS,
         taxonomy_path=DEFAULT_TAXONOMY_PATH,
         taxonomy_base=DEFAULT_TAXONOMY_BASE,
         output_dir=DEFAULT_GENERATED_FILES_OUTPUT_DIR,
