@@ -159,7 +159,7 @@ test_loading_session_history(){
         set timeout 120
         spawn lab chat
         expect ">>>"
-        send "hello this is session history test! give me a very short answer!\r"
+        send "hello this is session history test! what are you? do not exceed 10 words in your reply.\r"
         send "/s test_session_history\r"
         send "exit\r"
         expect eof
