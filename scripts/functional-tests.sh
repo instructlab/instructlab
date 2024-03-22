@@ -37,6 +37,20 @@ cleanup() {
     set -e
 }
 
+check_file_exists() {
+    if ! test -f $1; then
+        echo "file at path $1 does not exist"
+        exit 1
+    fi
+}
+
+check_file_exists() {
+    if ! test -f $1; then
+        echo "file at path $1 does not exist"
+        exit 1
+    fi
+}
+
 trap 'cleanup "$?"' EXIT QUIT INT TERM
 
 rm -f config.yaml
@@ -210,6 +224,20 @@ EOF
     fi
 }
 
+test_train() {
+    timeout 1m lab train --iters 1
+
+    check_file_exists "taxonomy_data/test.jsonl"
+
+    model_dir="ibm-merlinite-7b-mlx-q/"
+    model_files="adapters.npz config.json special_tokens_map.json tokenizer.model
+    added_tokens.json	model.safetensors tokenizer.json tokenizer_config.json"
+    for mf in $model_files
+    do
+        check_file_exists "${model_dir}${mf}"
+    done
+}
+
 ########
 # MAIN #
 ########
@@ -222,5 +250,7 @@ test_loading_session_history
 cleanup
 test_generate
 test_server_shutdown_while_chatting
+cleanup
+test_train
 
 exit 0
