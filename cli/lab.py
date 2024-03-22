@@ -67,6 +67,7 @@ def configure(ctx, param, filename):
     is_eager=True,
     help="Path to a configuration file.",
 )
+@click.version_option(package_name="cli")
 @click.pass_context
 # pylint: disable=redefined-outer-name
 def cli(ctx, config):

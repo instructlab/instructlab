@@ -23,6 +23,7 @@ Issues = "https://github.com/instruct-lab/cli/issues"
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
+version = {attr = "cli.__version__"}
 
 [project.scripts]
 # defines lab executable
