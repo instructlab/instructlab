@@ -2,6 +2,9 @@
 
 set -ex
 
+# build a prompt string that includes the time, source file, line number, and function name
+export PS4='+$(printf "%(%Y-%m-%d %T)T") ${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+
 pip install .
 
 export TEST_CTX_SIZE_LAB_SERVE_LOG_FILE=test_ctx_size_lab_serve.log
@@ -19,6 +22,9 @@ PID_CHAT=
 
 cleanup() {
     set +e
+    if [ $1 -ne 0 ]; then
+        echo "Error occurred in function: ${FUNCNAME[1]} with exit code: $1"
+    fi
     for pid in $PID_SERVE $PID_CHAT; do
         if [ -n "$pid" ]; then
             kill $pid
@@ -31,7 +37,7 @@ cleanup() {
     set -e
 }
 
-trap cleanup EXIT QUIT INT TERM
+trap 'cleanup "$?"' EXIT QUIT INT TERM
 
 rm -f config.yaml
 
