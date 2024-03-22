@@ -15,6 +15,7 @@ from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.text import Text
+import httpx
 import openai
 
 # Local
@@ -389,6 +390,10 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             raise KeyboardInterrupt
         except KeyboardInterrupt as e:
             raise e
+        except httpx.RemoteProtocolError as e:
+            self.console.print("Connection to the server was closed", style="bold red")
+            self.info["messages"].pop()
+            raise ChatException("Connection to the server was closed") from e
         except:
             self.console.print("Unknown error", style="bold red")
             raise ChatException(f"Unknown error: {sys.exc_info()[0]}")
@@ -505,3 +510,5 @@ def chat_cli(
             continue
         except ChatException as exc:
             raise ChatException(f"API issue found while executing chat: {exc}")
+        except httpx.RemoteProtocolError:
+            raise ChatException(f"Connection to the server was closed")
