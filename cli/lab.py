@@ -7,6 +7,7 @@ import os
 import shutil
 import sys
 import typing
+import functools
 
 # Third Party
 from click_didyoumean import DYMGroup
@@ -23,6 +24,17 @@ if typing.TYPE_CHECKING:
     # Third Party
     import torch
 
+
+def deprecated_alias(alias, deprecation_message):
+    def decorator(f):
+        @functools.wraps(f)
+        def new_func(*args, **kwargs):
+            click.echo(f'DEPRECATION WARNING: {deprecation_message}', err=True)
+            return f(*args, **kwargs)
+
+        new_func.__name__ = alias
+        return new_func
+    return decorator
 
 class Lab:
     """Lab object holds high-level information about lab CLI"""
@@ -198,48 +210,11 @@ def init(
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
-    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
-)
-@click.option(
-    "--taxonomy-base",
-    help="Base git-ref to use when listing new taxonomy.",
-)
-@click.pass_context
-# pylint: disable=redefined-builtin,unused-argument
-def list(ctx, taxonomy_path, taxonomy_base):
-    """
-    Lists taxonomy files that have changed since <taxonomy-base>.
-    Similar to 'git diff <ref>'
-    """
-    # pylint: disable=C0415
-    # Local
-    from .generator.generate_data import get_taxonomy_diff
-
-    if not taxonomy_base:
-        taxonomy_base = ctx.obj.config.generate.taxonomy_base
-    if not taxonomy_path:
-        taxonomy_path = ctx.obj.config.generate.taxonomy_path
-    try:
-        updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
-    except (SystemExit, GitError) as exc:
-        click.secho(
-            f"Generating dataset failed with the following error: {exc}",
-            fg="red",
-        )
-        return
-    for f in updated_taxonomy_files:
-        click.echo(f)
-
-
-@cli.command()
-@click.option(
-    "--taxonomy-path",
-    type=click.Path(),
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone or local file path.",
 )
 @click.option(
     "--taxonomy-base",
-    help="Base git-ref to use when checking taxonomy.",
+    help="Base git-ref to use for taxonomy.",
 )
 @click.option(
     "--yaml-rules",
@@ -248,12 +223,20 @@ def list(ctx, taxonomy_path, taxonomy_base):
     show_default=True,
     help="Custom rules file for YAML linting",
 )
+@click.option(
+    "--quiet",
+    is_flag=True,
+    help="Suppress the diff list.",
+)
 @click.pass_context
-def check(ctx, taxonomy_path, taxonomy_base, yaml_rules):
-    """Check that taxonomy is valid"""
+def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
+    """
+    Lists taxonomy files that have changed since <taxonomy-base>.
+    Similar to 'git diff <ref>' and check that taxonomy is valid.
+    """
     # pylint: disable=C0415
     # Local
-    from .generator.generate_data import read_taxonomy
+    from .generator.generate_data import get_taxonomy_diff, read_taxonomy
 
     if not taxonomy_base:
         taxonomy_base = ctx.obj.config.generate.taxonomy_base
@@ -265,14 +248,31 @@ def check(ctx, taxonomy_path, taxonomy_base, yaml_rules):
         logger = logging.getLogger(__name__)
     else:
         logger = ctx.obj.logger
-    # pylint: disable=logging-fstring-interpolation
-    logger.debug(f"Checking taxonomy: '{taxonomy_path}:{taxonomy_base}'")
-    read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
-    # below will only run if `read_taxonomy` throws no errors
-    click.secho(
-        f"Taxonomy in {taxonomy_path} is valid :)",
-        fg="green",
-    )
+    if quiet:
+        # pylint: disable=logging-fstring-interpolation
+        logger.debug(f"Checking taxonomy: '{taxonomy_path}:{taxonomy_base}'")
+        read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
+        # below will only run if `read_taxonomy` throws no errors
+        click.secho(
+            f"Taxonomy in {taxonomy_path} is valid :)",
+            fg="green",
+        )
+    else:
+        try:
+            updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
+        except (SystemExit, GitError) as exc:
+            click.secho(
+                f"Generating dataset failed with the following error: {exc}",
+                fg="red",
+            )
+            return
+        for f in updated_taxonomy_files:
+            click.echo(f)
+
+lab_list = deprecated_alias('lab_list', 'This command is deprecated. Use `lab diff` instead.')(diff)
+cli.add_command(lab_list)
+lab_check = deprecated_alias('lab_check', 'This command is deprecated. Use `lab diff` instead.')(diff)
+cli.add_command(lab_check)
 
 
 @cli.command()
