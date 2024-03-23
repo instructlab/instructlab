@@ -57,6 +57,10 @@ def expand_path(path):
 def make_lab_diff_aliases(cli, diff):
     lab_list = copy.deepcopy(diff)
     lab_list.name = "list"
+    lab_list.help = """
+    Lists taxonomy files that have changed since <taxonomy-base>.
+    Similar to 'git diff <ref>'
+    """
     lab_list.deprecated = True
 
     def lab_list_callback(*args, **kwargs):
@@ -72,6 +76,7 @@ def make_lab_diff_aliases(cli, diff):
 
     lab_check = copy.deepcopy(diff)
     lab_check.name = "check"
+    lab_check.help = "Check that taxonomy is valid"
     lab_check.deprecated = True
     # use `--quiet` for current `lab check` behavior
     lab_check.params = lab_check.params[:3]
