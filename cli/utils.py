@@ -65,7 +65,7 @@ def make_lab_diff_aliases(cli, diff):
 
     def lab_list_callback(*args, **kwargs):
         click.secho(
-            f"DeprecationWarning: Use `lab diff` instead.",
+            "DeprecationWarning: Use `lab diff` instead.",
             fg="red",
         )
         retval = diff.callback(*args, **kwargs)
@@ -83,7 +83,7 @@ def make_lab_diff_aliases(cli, diff):
 
     def lab_check_callback(*args, **kwargs):
         click.secho(
-            f"DeprecationWarning: Use `lab diff --quiet` instead.",
+            "DeprecationWarning: Use `lab diff --quiet` instead.",
             fg="red",
         )
         retval = diff.callback(*args, **kwargs, quiet=True)
