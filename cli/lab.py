@@ -259,14 +259,9 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
             click.echo(f)
 
 
-lab_list = utils.deprecated_alias(
-    "lab_list", "This command is deprecated. Use `lab diff` instead."
-)(diff)
-cli.add_command(lab_list)
-lab_check = utils.deprecated_alias(
-    "lab_check", "This command is deprecated. Use `lab diff` instead."
-)(diff)
-cli.add_command(lab_check)
+# lab list => lab diff
+# lab check => lab diff --quiet
+utils.make_lab_diff_aliases(cli, diff)
 
 
 @cli.command()

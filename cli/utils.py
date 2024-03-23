@@ -1,4 +1,5 @@
 # Standard
+import copy
 import functools
 import os
 import platform
@@ -53,14 +54,35 @@ def expand_path(path):
     return path
 
 
-def deprecated_alias(alias, deprecation_message):
-    def decorator(f):
-        @functools.wraps(f)
-        def new_func(*args, **kwargs):
-            click.echo(f"DEPRECATION WARNING: {deprecation_message}", err=True)
-            return f(*args, **kwargs)
+def make_lab_diff_aliases(cli, diff):
+    lab_list = copy.deepcopy(diff)
+    lab_list.name = "list"
+    lab_list.deprecated = True
 
-        new_func.__name__ = alias
-        return new_func
+    def lab_list_callback(*args, **kwargs):
+        click.secho(
+            f"DeprecationWarning: Use `lab diff` instead.",
+            fg="red",
+        )
+        retval = diff.callback(*args, **kwargs)
+        return retval
 
-    return decorator
+    lab_list.callback = lab_list_callback
+    cli.add_command(lab_list)
+
+    lab_check = copy.deepcopy(diff)
+    lab_check.name = "check"
+    lab_check.deprecated = True
+    # use `--quiet` for current `lab check` behavior
+    lab_check.params = lab_check.params[:3]
+
+    def lab_check_callback(*args, **kwargs):
+        click.secho(
+            f"DeprecationWarning: Use `lab diff --quiet` instead.",
+            fg="red",
+        )
+        retval = diff.callback(*args, **kwargs, quiet=True)
+        return retval
+
+    lab_check.callback = lab_check_callback
+    cli.add_command(lab_check)
