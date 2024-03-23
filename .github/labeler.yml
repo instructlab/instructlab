@@ -1,10 +1,14 @@
 documentation:
-- CODE_OF_CONDUCT.md
-- README.md
-- TROUBLESHOOTING.md
-- CONTRIBUTING/**/*
-- docs/**/*
+  - changed-files:
+    - any-glob-to-any-file:
+      - CODE_OF_CONDUCT.md
+      - README.md
+      - TROUBLESHOOTING.md
+      - CONTRIBUTING/**/*
+      - docs/**/*
 
 testing:
-- tests/**/*
-- scripts/functional-tests.sh
+  - changed-files:
+    - any-glob-to-any-file:
+      - tests/**/*
+      - scripts/functional-tests.sh
