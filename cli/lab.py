@@ -1,13 +1,13 @@
 # Standard
 from glob import glob
 from os.path import basename, dirname, exists, splitext
+import functools
 import json
 import logging
 import os
 import shutil
 import sys
 import typing
-import functools
 
 # Third Party
 from click_didyoumean import DYMGroup
@@ -29,12 +29,14 @@ def deprecated_alias(alias, deprecation_message):
     def decorator(f):
         @functools.wraps(f)
         def new_func(*args, **kwargs):
-            click.echo(f'DEPRECATION WARNING: {deprecation_message}', err=True)
+            click.echo(f"DEPRECATION WARNING: {deprecation_message}", err=True)
             return f(*args, **kwargs)
 
         new_func.__name__ = alias
         return new_func
+
     return decorator
+
 
 class Lab:
     """Lab object holds high-level information about lab CLI"""
@@ -269,9 +271,14 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
         for f in updated_taxonomy_files:
             click.echo(f)
 
-lab_list = deprecated_alias('lab_list', 'This command is deprecated. Use `lab diff` instead.')(diff)
+
+lab_list = deprecated_alias(
+    "lab_list", "This command is deprecated. Use `lab diff` instead."
+)(diff)
 cli.add_command(lab_list)
-lab_check = deprecated_alias('lab_check', 'This command is deprecated. Use `lab diff` instead.')(diff)
+lab_check = deprecated_alias(
+    "lab_check", "This command is deprecated. Use `lab diff` instead."
+)(diff)
 cli.add_command(lab_check)
 
 
