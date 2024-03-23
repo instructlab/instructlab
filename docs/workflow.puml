@@ -20,8 +20,8 @@
                              |                                                                           
                              v                                                                           
                          +---+----+                                                                      
-                         |lab list|-=-view the taxonomy                                                  
-                         +---+----+                                                                      
+                         |lab diff|-=-view the taxonomy diff
+                         +---+----+     expecting nothing
                              |                                                                           
                              v                                                                           
                          +---+-----------------------+                                                   
@@ -30,10 +30,10 @@
                          +---+-----------------------+           |                                       
                              |                                   |                                       
                              v                                   |                                       
-level 1                  +---+-----+                             |                                       
-  only validated     +---|lab check|-=-validate the YAML file    |                                       
-  the YAML file      |   +---+-----+                             |                                       
-                     |       |                                   |                                       
+level 1                  +---+----+                              |                                       
+  only validated     +---|lab diff|-=-view the taxonomy diff     |                                       
+  the YAML files     |   +---+----+     and validate YAML files  |
+                     |       |                                   |
                      |       v                                   |                                       
 level 2              |   +---+--------+                          |                                       
   inspected the      +---|lab generate|--------------------------+ -=-synthesize data;                   
