@@ -48,3 +48,16 @@ def expand_path(path):
     path = os.path.expanduser(path)
     path = os.path.expandvars(path)
     return path
+
+
+def deprecated_alias(alias, deprecation_message):
+    def decorator(f):
+        @functools.wraps(f)
+        def new_func(*args, **kwargs):
+            click.echo(f"DEPRECATION WARNING: {deprecation_message}", err=True)
+            return f(*args, **kwargs)
+
+        new_func.__name__ = alias
+        return new_func
+
+    return decorator
