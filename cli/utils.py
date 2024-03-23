@@ -4,6 +4,9 @@ import os
 import platform
 import subprocess
 
+# Third Party
+import click
+
 
 def macos_requirement(echo_func, exit_exception):
     """Adds a check for MacOS before running a method.
