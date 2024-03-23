@@ -8,10 +8,10 @@
 #  https://help.github.com/en/articles/about-code-owners
 #
 
-*   @soltysh @xukai92 @markstur @hickeyma @afrittoli @spzala @Tomcli @mrutkows
+* @soltysh @xukai92 @markstur @hickeyma @afrittoli @spzala @Tomcli @mrutkows @anik120
 
 /cli/lab.py @abhi1092
 /cli/generator/ @abhi1092
 /notebooks/ @rawkintrevo
-*.md   @mairin @kelbrown20 @jeremyeder
+*.md @mairin @kelbrown20 @jeremyeder
 /docs/ @mairin @kelbrown20 @jeremyeder
