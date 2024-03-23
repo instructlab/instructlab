@@ -1,7 +1,6 @@
 # Standard
 from glob import glob
 from os.path import basename, dirname, exists, splitext
-import functools
 import json
 import logging
 import os
