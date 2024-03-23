@@ -250,7 +250,7 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
             updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
         except (SystemExit, GitError) as exc:
             click.secho(
-                f"Generating dataset failed with the following error: {exc}",
+                f"Reading taxonomy failed with the following error: {exc}",
                 fg="red",
             )
             return
