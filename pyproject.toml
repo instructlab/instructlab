@@ -1,6 +1,9 @@
+[build-system]
+requires = ["setuptools>=64", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "cli"
-version = "0.0.1"
 authors = [
     { name="TBD", email="jon@example.com" },
 ]
@@ -15,7 +18,10 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Programming Language :: Python :: 3",
 ]
-dynamic = ["dependencies"]
+dynamic = ["dependencies", "version"]
+
+[tool.setuptools_scm]
+version_file = "cli/_version.py"
 
 [project.urls]
 Homepage = "https://github.com/instruct-lab/cli"
@@ -23,7 +29,6 @@ Issues = "https://github.com/instruct-lab/cli/issues"
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
-version = {attr = "cli.__version__"}
 
 [project.scripts]
 # defines lab executable

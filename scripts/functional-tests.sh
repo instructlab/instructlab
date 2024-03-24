@@ -45,6 +45,9 @@ trap 'cleanup "$?"' EXIT QUIT INT TERM
 
 rm -f config.yaml
 
+# print version
+lab --version
+
 # pipe 3 carriage returns to lab init to get past the prompts
 echo -e "\n\n\n" | lab init
 
