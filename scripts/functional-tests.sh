@@ -34,6 +34,10 @@ cleanup() {
         "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" \
         test_session_history \
         simple_math.yaml
+    # revert log level change from test_temp_server()
+    sed -i 's/DEBUG/INFO/g' config.yaml
+    # revert port change from test_bind_port()
+    sed -i 's/9999/8000/g' config.yaml
     set -e
 }
 
@@ -210,6 +214,20 @@ EOF
     fi
 }
 
+test_temp_server(){
+    nc -l 8000 --keep-open &
+    PID_SERVE=$!
+    sed -i 's/INFO/DEBUG/g' config.yaml
+    expect -c '
+        set timeout 120
+        spawn lab chat
+        expect {
+            "Starting a temporary server at" { exit 0 }
+            timeout { exit 1 }
+        }
+    '
+}
+
 ########
 # MAIN #
 ########
@@ -222,5 +240,7 @@ test_loading_session_history
 cleanup
 test_generate
 test_server_shutdown_while_chatting
+cleanup
+test_temp_server
 
 exit 0
