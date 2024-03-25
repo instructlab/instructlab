@@ -61,3 +61,40 @@ include = ["instructlab", "instructlab.chat", "instructlab.generator", "instruct
 #  instructlab/mlx_explore/LICENSE
 #  instructlab/train/lora_mlx/LICENSE
 ignore = ["W002"]
+
+[tool.ruff]
+target-version = "py39"
+# same as black's default line length
+line-length = 88
+
+[tool.ruff.lint]
+# Allow fix for all enabled rules (when `--fix`) is provided.
+fixable = ["ALL"]
+unfixable = []
+
+# Fixers will be enabled gradually.
+select = [
+    # "B",  # flake8-bugbear
+    # "E",  # pycodestyle
+    # "F",  # Pyflakes
+    "Q",  # flake8-quotes
+    # Ruff does not support isort's import_headings feature, yet.
+    # "I",  # isort
+    # "UP",  # pyupgrade
+    # "SIM",  # flake8-simplify
+]
+ignore = [
+    # some embedded strings are longer than 88 characters
+    "E501",  # line too long
+]
+
+[tool.ruff.lint.isort]
+# same as .isort.cfg
+from-first = true
+# not supported yet
+# import-heading-future=Future
+# import-heading-stdlib=Standard
+# import-heading-thirdparty=Third Party
+# import-heading-firstparty=First Party
+# import-heading-localfolder=Local
+known-local-folder = ["tuning"]

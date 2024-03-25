@@ -33,7 +33,6 @@ class TestUtils(unittest.TestCase):
 
     def test_chunk_docs_chunk_overlap_error(self):
         with self.assertRaises(ValueError) as exc:
-
             utils.chunk_document(
                 documents=testdata.documents,
                 chunk_word_count=5,

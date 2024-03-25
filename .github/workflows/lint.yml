@@ -64,11 +64,9 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install -r requirements-dev.txt
 
-      - name: Run formatting
+      - name: Run Ruff check
         run: |
-          tox \
-            -x testenv:fmt.system_site_packages=True \
-            -e fmt
+          tox -e ruff -- check
 
       - name: Run linting
         if: success() || failure()
