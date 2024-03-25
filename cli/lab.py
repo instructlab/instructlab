@@ -78,7 +78,6 @@ def cli(ctx, config):
 
 
 @cli.command()
-@click.pass_context
 @click.option(
     "--interactive/--non-interactive",
     default=True,
@@ -118,9 +117,7 @@ def cli(ctx, config):
     "Please do not use this option if you are planning to contribute back "
     "using the same taxonomy repository. ",
 )
-# pylint: disable=unused-argument
 def init(
-    ctx,
     interactive,
     model_path,
     taxonomy_path,

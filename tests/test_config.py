@@ -1,115 +1,159 @@
 # Standard
-import tempfile
 import unittest
+
+# Third Party
+import pytest
 
 # First Party
 from cli import config
 
-TEST_CONFIG_1 = b"""chat:
-  context: default
-  model: ggml-merlinite-7b-0302-Q4_K_M
-  session: null
-  vi_mode: false
-  visible_overflow: true
-  logs_dir: ./logs/
-  greedy_mode: false
-general:
-  log_level: INFO
-generate:
-  model: ggml-merlinite-7b-0302-Q4_K_M
-  num_cpus: 10
-  num_instructions: 100
-  prompt_file: prompt.txt
-  seed_file: seed_tasks.json
-  taxonomy_path: /tmp/instruct-lab-taxonomy
-  taxonomy_base: origin/main
-  output_dir: /tmp
-serve:
-  gpu_layers: -1
-  max_ctx_size: 4096
-  model_path: models/ggml-merlinite-7b-0302-Q4_K_M.gguf
-  host_port: localhost:8000
-"""
-
-TEST_CONFIG_UNEXPECTED_ARGS = b"""
-unexpected:
-  /this/is/an/unexpected/argument
-"""
-
-TEST_CONFIG_OLD = b"""chat:
-  context: default
-  model: ggml-merlinite-7b-0302-Q4_K_M
-  session: null
-  vi_mode: false
-  visible_overflow: true
-general:
-  log_level: INFO
-generate:
-  model: ggml-merlinite-7b-0302-Q4_K_M
-  num_cpus: 10
-  num_instructions: 100
-  prompt_file: prompt.txt
-  seed_file: seed_tasks.json
-  taxonomy_path: /tmp/instruct-lab-taxonomy
-  taxonomy_base: origin/main
-  output_dir: /tmp
-serve:
-  gpu_layers: -1
-  max_ctx_size: 4096
-  model_path: models/ggml-merlinite-7b-0302-Q4_K_M.gguf
-"""
-
 
 class TestConfig(unittest.TestCase):
-    def setUp(self):
-        # pylint: disable=consider-using-with
-        self.temp = tempfile.NamedTemporaryFile(
-            prefix="config", suffix=".yaml", delete=False
-        )
+    @pytest.fixture(autouse=True)
+    def _init_tmpdir(self, tmpdir):
+        self.tmpdir = tmpdir
 
-    # Tests basic config parsing
-    def test_config(self):
-        self.temp.write(TEST_CONFIG_1)
-        self.temp.flush()
+    def _assert_defaults(self, cfg):
+        self.assertIsNotNone(cfg.general)
+        self.assertEqual(cfg.general.log_level, "INFO")
 
-        cfg = config.read_config(self.temp.name)
-        assert cfg is not None
-        assert cfg.serve is not None
-        assert cfg.serve.gpu_layers == -1
-        assert cfg.serve.max_ctx_size == 4096
-        assert cfg.serve.model_path == "models/ggml-merlinite-7b-0302-Q4_K_M.gguf"
-        assert cfg.chat.context == "default"
-        assert cfg.chat.model == "ggml-merlinite-7b-0302-Q4_K_M"
-        assert cfg.chat.session is None
-        assert cfg.chat.vi_mode is False
-        assert cfg.chat.visible_overflow is True
-        assert cfg.general.log_level == "INFO"
-        assert cfg.generate.model == "ggml-merlinite-7b-0302-Q4_K_M"
-        assert cfg.generate.num_cpus == 10
-        assert cfg.generate.num_instructions == 100
-        assert cfg.generate.prompt_file == "prompt.txt"
-        assert cfg.generate.seed_file == "seed_tasks.json"
-        assert cfg.generate.taxonomy_path == "/tmp/instruct-lab-taxonomy"
-        assert cfg.generate.taxonomy_base == "origin/main"
+        self.assertIsNotNone(cfg.chat)
+        self.assertEqual(cfg.chat.model, "merlinite-7b-Q4_K_M")
+        self.assertFalse(cfg.chat.vi_mode)
+        self.assertTrue(cfg.chat.visible_overflow)
+        self.assertEqual(cfg.chat.context, "default")
+        self.assertIsNone(cfg.chat.session)
+        self.assertEqual(cfg.chat.logs_dir, "data/chatlogs")
+        self.assertFalse(cfg.chat.greedy_mode)
 
-    # Tests that additional lines in the config do not cause errors
-    def test_config_unexpected_arguments(self):
-        self.temp.write(TEST_CONFIG_1 + TEST_CONFIG_UNEXPECTED_ARGS)
-        self.temp.flush()
+        self.assertIsNotNone(cfg.generate)
+        self.assertEqual(cfg.generate.model, "merlinite-7b-Q4_K_M")
+        self.assertEqual(cfg.generate.taxonomy_path, "taxonomy")
+        self.assertEqual(cfg.generate.taxonomy_base, "origin/main")
+        self.assertEqual(cfg.generate.num_cpus, 10)
+        self.assertEqual(cfg.generate.num_instructions, 100)
+        self.assertEqual(cfg.generate.output_dir, "generated")
+        self.assertEqual(cfg.generate.prompt_file, "prompt.txt")
+        self.assertEqual(cfg.generate.seed_file, "seed_tasks.json")
 
-        cfg = config.read_config(self.temp.name)
-        assert cfg is not None
-        assert cfg.serve is not None
-        assert cfg.serve.gpu_layers == -1
+        self.assertIsNotNone(cfg.serve)
+        self.assertEqual(cfg.serve.model_path, "models/merlinite-7b-Q4_K_M.gguf")
+        self.assertEqual(cfg.serve.gpu_layers, -1)
+        self.assertEqual(cfg.serve.host_port, "127.0.0.1:8000")
+        self.assertEqual(cfg.serve.max_ctx_size, 4096)
 
-    # Tests that removed config produces an appropriate error
-    def test_config_missing_arguments(self):
-        self.temp.write(TEST_CONFIG_OLD)
-        self.temp.flush()
+    def test_default_config(self):
+        cfg = config.get_default_config()
+        self.assertIsNotNone(cfg)
+        self._assert_defaults(cfg)
 
-        try:
-            config.read_config(self.temp.name)
-            assert False  # should not be reached
-        except config.ConfigException as ex:
-            assert "greedy_mode" in str(ex)
-            assert "missing in section" in str(ex)
+    def test_minimal_config(self):
+        config_path = self.tmpdir.join("config.yaml")
+        with open(config_path, "w", encoding="utf-8") as config_file:
+            config_file.write(
+                """chat:
+  model: merlinite-7b-Q4_K_M
+generate:
+  model: merlinite-7b-Q4_K_M
+  taxonomy_base: origin/main
+  taxonomy_path: taxonomy
+serve:
+  model_path: models/merlinite-7b-Q4_K_M.gguf
+"""
+            )
+        cfg = config.read_config(config_path)
+        self.assertIsNotNone(cfg)
+        self._assert_defaults(cfg)
+
+    def test_full_config(self):
+        config_path = self.tmpdir.join("config.yaml")
+        with open(config_path, "w", encoding="utf-8") as config_file:
+            config_file.write(
+                """general:
+  log_level: INFO
+chat:
+  context: default
+  greedy_mode: false
+  logs_dir: data/chatlogs
+  model: merlinite-7b-Q4_K_M
+  session: null
+  vi_mode: false
+  visible_overflow: true
+generate:
+  model: merlinite-7b-Q4_K_M
+  num_cpus: 10
+  num_instructions: 100
+  output_dir: generated
+  prompt_file: prompt.txt
+  seed_file: seed_tasks.json
+  taxonomy_base: origin/main
+  taxonomy_path: taxonomy
+serve:
+  gpu_layers: -1
+  host_port: 127.0.0.1:8000
+  max_ctx_size: 4096
+  model_path: models/merlinite-7b-Q4_K_M.gguf
+"""
+            )
+        cfg = config.read_config(config_path)
+        self.assertIsNotNone(cfg)
+        self._assert_defaults(cfg)
+
+    def test_config_unexpected_fields(self):
+        print(dir(self.tmpdir))
+        config_path = self.tmpdir.join("config.yaml")
+        with open(config_path, "w", encoding="utf-8") as config_file:
+            config_file.write(
+                """chat:
+  model: merlinite-7b-Q4_K_M
+generate:
+  model: merlinite-7b-Q4_K_M
+  taxonomy_base: origin/main
+  taxonomy_path: taxonomy
+serve:
+  model_path: models/merlinite-7b-Q4_K_M.gguf
+unexpected:
+  field: value
+"""
+            )
+        cfg = config.read_config(config_path)
+        self._assert_defaults(cfg)
+
+    def test_config_missing_required_field_groups(self):
+        config_path = self.tmpdir.join("config.yaml")
+        with open(config_path, "w", encoding="utf-8") as config_file:
+            config_file.write(
+                """general:
+  log_level: INFO
+"""
+            )
+        with pytest.raises(
+            config.ConfigException,
+            match=r"""3 errors in [\/\w-]+config.yaml:
+- missing chat: field required
+- missing generate: field required
+- missing serve: field required
+""",
+        ):
+            config.read_config(config_path)
+
+    def test_config_missing_required_fields(self):
+        config_path = self.tmpdir.join("config.yaml")
+        with open(config_path, "w", encoding="utf-8") as config_file:
+            config_file.write(
+                """general:
+  log_level: INFO
+generate:
+  model: merlinite-7b-Q4_K_M
+"""
+            )
+        with pytest.raises(
+            config.ConfigException,
+            match=r"""4 errors in [\/\w-]+config.yaml:
+- missing chat: field required
+- missing generate->taxonomy_path: field required
+- missing generate->taxonomy_base: field required
+- missing serve: field required
+""",
+        ):
+            config.read_config(config_path)
