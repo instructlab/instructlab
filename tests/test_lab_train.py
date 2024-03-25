@@ -1,5 +1,5 @@
 # Standard
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 import os
 import platform
 import sys
@@ -22,6 +22,13 @@ FINAL_RESULTS_DIR = TRAINING_RESULTS_DIR + "/" + FINAL_RESULTS_DIR_NAME
 LINUX_GGUF_FILE = FINAL_RESULTS_DIR + "/ggml-model-f16.gguf"
 MODEL_DIR = "model"
 ENCODING = "UTF-8"
+
+# mlx isn't imported for Linux
+sys.modules["mlx"] = MagicMock()
+sys.modules["mlx.utils"] = MagicMock()
+sys.modules["mlx.core"] = MagicMock()
+sys.modules["mlx.nn"] = MagicMock()
+sys.modules["mlx.optimizers"] = MagicMock()
 
 
 def setup_input_dir():
