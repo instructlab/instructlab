@@ -239,8 +239,8 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
         else:
             logger = ctx.obj.logger
         # pylint: disable=logging-fstring-interpolation
-        logger.debug(f"Checking taxonomy: '{taxonomy_path}:{taxonomy_base}'")
-        read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
+        logger.debug("Checking taxonomy: '{}:{}'", taxonomy_path, taxonomy_base)
+        read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules, quiet)
         # below will only run if `read_taxonomy` throws no errors
         click.secho(
             f"Taxonomy in {taxonomy_path} is valid :)",

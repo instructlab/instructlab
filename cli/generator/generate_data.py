@@ -600,7 +600,7 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
     return seed_instruction_data, warnings, errors
 
 
-def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
+def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules, quiet=False):
     seed_instruction_data = []
     is_file = os.path.isfile(taxonomy)
     if is_file:  # taxonomy is file
@@ -621,7 +621,7 @@ def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
             raise utils.GenerateException("`git` binary not found") from exc
         total_errors = 0
         total_warnings = 0
-        if updated_taxonomy_files:
+        if updated_taxonomy_files and not quiet:
             logger.info("Found new taxonomy files:")
             for e in updated_taxonomy_files:
                 logger.info(f"* {e}")
