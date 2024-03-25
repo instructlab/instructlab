@@ -8,8 +8,9 @@ import torch
 
 
 def convert_bin_to_safetensors(input_dir, output_dir):
-    input_dir, output_dir = os.path.expanduser(input_dir), os.path.expanduser(
-        output_dir
+    input_dir, output_dir = (
+        os.path.expanduser(input_dir),
+        os.path.expanduser(output_dir),
     )
 
     model_path = os.path.expanduser(input_dir)

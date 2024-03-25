@@ -578,10 +578,14 @@ class HfVocab:
             token_text = reverse_vocab[token_id].encode("utf-8")
 
             # Yield token text, score, and type
-            yield token_text, self.get_token_score(token_id), self.get_token_type(
-                token_id,
+            yield (
                 token_text,
-                self.special_ids,  # Reuse already stored special IDs
+                self.get_token_score(token_id),
+                self.get_token_type(
+                    token_id,
+                    token_text,
+                    self.special_ids,  # Reuse already stored special IDs
+                ),
             )
 
     def get_token_type(
@@ -649,26 +653,21 @@ class Tensor(metaclass=ABCMeta):
     data_type: DataType
 
     @abstractmethod
-    def astype(self, data_type: DataType) -> Tensor:
-        ...
+    def astype(self, data_type: DataType) -> Tensor: ...
 
     @abstractmethod
-    def permute(self, n_head: int, n_head_kv: int) -> Tensor:
-        ...
+    def permute(self, n_head: int, n_head_kv: int) -> Tensor: ...
 
     @abstractmethod
     def permute_part(
         self, n_part: int, n_head: int, n_head_kv: int
-    ) -> UnquantizedTensor:
-        ...
+    ) -> UnquantizedTensor: ...
 
     @abstractmethod
-    def part(self, n_part: int) -> UnquantizedTensor:
-        ...
+    def part(self, n_part: int) -> UnquantizedTensor: ...
 
     @abstractmethod
-    def to_ggml(self) -> GGMLCompatibleTensor:
-        ...
+    def to_ggml(self) -> GGMLCompatibleTensor: ...
 
 
 def bf16_to_fp32(bf16_arr: np.ndarray[Any, np.dtype[np.uint16]]) -> NDArray:
