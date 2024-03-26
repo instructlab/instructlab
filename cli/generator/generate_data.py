@@ -541,7 +541,7 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
                 try:
                     yaml_config = YamlLintConfig(file=yaml_rules)
                 except FileNotFoundError:
-                    logger.warning(f"Cannot find {yaml_rules}. Using default rules.")
+                    logger.debug(f"Cannot find {yaml_rules}. Using default rules.")
                     yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
                 for p in linter.run(file, yaml_config):
                     errors += 1
@@ -595,12 +595,12 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
                 )
     except Exception as e:
         errors += 1
-        logger.error(f"Exception {e} raised in {file_path}")
+        raise Exception(f"Exception {e} raised in {file_path}")
 
     return seed_instruction_data, warnings, errors
 
 
-def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules, quiet=False):
+def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
     seed_instruction_data = []
     is_file = os.path.isfile(taxonomy)
     if is_file:  # taxonomy is file
@@ -612,7 +612,7 @@ def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules, quiet=False):
                 f"{warnings} warnings (see above) due to taxonomy file not (fully) usable."
             )
         if errors:
-            raise SystemExit(yaml.YAMLError("Taxonomy file with errors! Exiting."))
+            raise yaml.YAMLError("Taxonomy file with errors! Exiting.")
     else:  # taxonomy is dir
         # Gather the new or changed YAMLs using git diff
         try:
@@ -621,10 +621,10 @@ def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules, quiet=False):
             raise utils.GenerateException("`git` binary not found") from exc
         total_errors = 0
         total_warnings = 0
-        if updated_taxonomy_files and not quiet:
-            logger.info("Found new taxonomy files:")
+        if updated_taxonomy_files:
+            logger.debug("Found new taxonomy files:")
             for e in updated_taxonomy_files:
-                logger.info(f"* {e}")
+                logger.debug(f"* {e}")
         for f in updated_taxonomy_files:
             file_path = os.path.join(taxonomy, f)
             data, warnings, errors = read_taxonomy_file(logger, file_path, yaml_rules)
@@ -637,7 +637,5 @@ def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules, quiet=False):
                 f"{total_warnings} warnings (see above) due to taxonomy files that were not (fully) usable."
             )
         if total_errors:
-            raise SystemExit(
-                yaml.YAMLError(f"{total_errors} taxonomy files with errors! Exiting.")
-            )
+            raise yaml.YAMLError(f"{total_errors} taxonomy files with errors! Exiting.")
     return seed_instruction_data

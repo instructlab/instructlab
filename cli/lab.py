@@ -8,6 +8,7 @@ import shutil
 import sys
 import typing
 
+import yaml
 # Third Party
 from click_didyoumean import DYMGroup
 from git import GitError, Repo
@@ -231,21 +232,18 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
         taxonomy_base = ctx.obj.config.generate.taxonomy_base
     if not taxonomy_path:
         taxonomy_path = ctx.obj.config.generate.taxonomy_path
+    if not yaml_rules:
+        yaml_rules = ctx.obj.config.generate.yaml_rules
+    if not ctx.obj:
+        logger = logging.getLogger(__name__)
+    else:
+        logger = ctx.obj.logger
+
     if quiet:
-        if not yaml_rules:
-            yaml_rules = ctx.obj.config.generate.yaml_rules
-        if not ctx.obj:
-            logger = logging.getLogger(__name__)
-        else:
-            logger = ctx.obj.logger
-        # pylint: disable=logging-fstring-interpolation
-        logger.debug("Checking taxonomy: '{}:{}'", taxonomy_path, taxonomy_base)
-        read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules, quiet)
-        # below will only run if `read_taxonomy` throws no errors
-        click.secho(
-            f"Taxonomy in {taxonomy_path} is valid :)",
-            fg="green",
-        )
+        try:
+            read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
+        except (Exception, yaml.YAMLError):
+            raise SystemExit(1)
     else:
         try:
             updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
@@ -257,6 +255,10 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
             return
         for f in updated_taxonomy_files:
             click.echo(f)
+        try:
+            read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
+        except yaml.YAMLError as exc:
+            raise SystemExit(exc)
 
 
 # lab list => lab diff
