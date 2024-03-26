@@ -10,6 +10,7 @@ from click.testing import CliRunner
 
 # First Party
 from cli import lab
+from cli.train import linux_train
 
 INPUT_DIR = "test_generated"
 TRAINING_RESULTS_DIR = "training_results"
@@ -22,13 +23,6 @@ FINAL_RESULTS_DIR = TRAINING_RESULTS_DIR + "/" + FINAL_RESULTS_DIR_NAME
 LINUX_GGUF_FILE = FINAL_RESULTS_DIR + "/ggml-model-f16.gguf"
 MODEL_DIR = "model"
 ENCODING = "UTF-8"
-
-# mlx isn't imported for Linux
-sys.modules["mlx"] = MagicMock()
-sys.modules["mlx.utils"] = MagicMock()
-sys.modules["mlx.core"] = MagicMock()
-sys.modules["mlx.nn"] = MagicMock()
-sys.modules["mlx.optimizers"] = MagicMock()
 
 
 def setup_input_dir():
@@ -66,12 +60,22 @@ def is_arm_mac():
     return sys.platform == "darwin" and platform.machine() == "arm64"
 
 
+def mock_mlx(f):
+    """mlx is not available on Linux"""
+    mlx_modules = {
+        name: MagicMock()
+        for name in ["mlx", "mlx.core", "mlx.nn", "mlx.optimizers", "mlx.utils"]
+    }
+    return patch.dict(sys.modules, mlx_modules)(f)
+
+
 class TestLabTrain(unittest.TestCase):
     """Test collection for `lab train` command."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    @mock_mlx
     @patch("cli.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch("cli.mlx_explore.gguf_convert_to_mlx.load")
     @patch("cli.train.lora_mlx.make_data.make_data")
@@ -119,11 +123,13 @@ class TestLabTrain(unittest.TestCase):
             self.assertEqual(len(make_data_mock.call_args[1]), 1)
             is_macos_with_m_chip_mock.assert_called_once()
 
+    @mock_mlx
     @patch("cli.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch("cli.mlx_explore.gguf_convert_to_mlx.load")
     @patch("cli.train.lora_mlx.make_data.make_data")
     @patch("cli.train.lora_mlx.convert.convert_between_mlx_and_pytorch")
     @patch("cli.train.lora_mlx.lora.load_and_train")
+    @mock_mlx
     def test_skip_quantize(
         self,
         load_and_train_mock,
@@ -184,6 +190,7 @@ class TestLabTrain(unittest.TestCase):
                 )
                 self.assertEqual(result.exit_code, 1)
 
+    @mock_mlx
     @patch("cli.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch("cli.train.lora_mlx.make_data.make_data", side_effect=FileNotFoundError())
     def test_invalid_data_dir_synthetic(
@@ -204,6 +211,7 @@ class TestLabTrain(unittest.TestCase):
             self.assertEqual(result.exit_code, 1)
             is_macos_with_m_chip_mock.assert_called_once()
 
+    @mock_mlx
     @patch("cli.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch("cli.mlx_explore.gguf_convert_to_mlx.load")
     @patch("cli.train.lora_mlx.make_data.make_data")
@@ -230,6 +238,7 @@ class TestLabTrain(unittest.TestCase):
             make_data_mock.assert_not_called()
             is_macos_with_m_chip_mock.assert_called_once()
 
+    @mock_mlx
     @patch("cli.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch("cli.mlx_explore.utils.fetch_tokenizer_from_hub")
     @patch("cli.mlx_explore.gguf_convert_to_mlx.load")
@@ -273,6 +282,7 @@ class TestLabTrain(unittest.TestCase):
             self.assertEqual(len(fetch_tokenizer_from_hub_mock.call_args[0]), 2)
             is_macos_with_m_chip_mock.assert_called_once()
 
+    @mock_mlx
     @patch("cli.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch("cli.mlx_explore.utils.fetch_tokenizer_from_hub")
     @patch("cli.mlx_explore.gguf_convert_to_mlx.load")
@@ -315,10 +325,13 @@ class TestLabTrain(unittest.TestCase):
             is_macos_with_m_chip_mock.assert_called_once()
 
     @patch("cli.lab.utils.is_macos_with_m_chip", return_value=False)
-    @patch("cli.train.linux_train.linux_train")
+    @patch.object(linux_train, "linux_train")
     @patch("cli.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf")
     def test_train_linux(
-        self, convert_llama_to_gguf_mock, linux_train_mock, is_macos_with_m_chip_mock
+        self,
+        convert_llama_to_gguf_mock,
+        linux_train_mock,
+        is_macos_with_m_chip_mock,
     ):
         runner = CliRunner()
         with runner.isolated_filesystem():
@@ -350,6 +363,7 @@ class TestLabTrain(unittest.TestCase):
             is_macos_with_m_chip_mock.assert_called_once()
             self.assertFalse(os.path.isfile(LINUX_GGUF_FILE))
 
+    @mock_mlx
     @patch("cli.lab.utils.is_macos_with_m_chip", return_value=False)
     @patch("cli.train.linux_train.linux_train")
     @patch("cli.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf")
