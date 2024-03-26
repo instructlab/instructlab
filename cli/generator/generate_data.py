@@ -595,7 +595,7 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
                 )
     except Exception as e:
         errors += 1
-        raise Exception(f"Exception {e} raised in {file_path}")
+        raise (f"Exception {e} raised in {file_path}") from e
 
     return seed_instruction_data, warnings, errors
 

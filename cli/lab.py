@@ -8,13 +8,13 @@ import shutil
 import sys
 import typing
 
-import yaml
 # Third Party
 from click_didyoumean import DYMGroup
 from git import GitError, Repo
 from huggingface_hub import hf_hub_download
 from huggingface_hub import logging as hf_logging
 import click
+import yaml
 
 # Local
 # NOTE: Subcommands are using local imports to speed up startup time.
@@ -238,27 +238,33 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
         logger = logging.getLogger(__name__)
     else:
         logger = ctx.obj.logger
-
     if quiet:
         try:
             read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
-        except (Exception, yaml.YAMLError):
-            raise SystemExit(1)
-    else:
-        try:
-            updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
-        except (SystemExit, GitError) as exc:
-            click.secho(
-                f"Reading taxonomy failed with the following error: {exc}",
-                fg="red",
-            )
-            return
-        for f in updated_taxonomy_files:
-            click.echo(f)
-        try:
-            read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
-        except yaml.YAMLError as exc:
-            raise SystemExit(exc)
+        except (Exception, yaml.YAMLError) as exc:
+            raise SystemExit(1) from exc
+        raise SystemExit(0)
+
+    try:
+        updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
+    except (SystemExit, GitError) as exc:
+        click.secho(
+            f"Reading taxonomy failed with the following error: {exc}",
+            fg="red",
+        )
+        return
+    for f in updated_taxonomy_files:
+        click.echo(f)
+    try:
+        read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
+    except yaml.YAMLError as exc:
+        raise SystemExit(exc) from exc
+
+    # below will only run if `read_taxonomy` throws no errors
+    click.secho(
+        f"Taxonomy in /{taxonomy_path}/ is valid :)",
+        fg="green",
+    )
 
 
 # lab list => lab diff
