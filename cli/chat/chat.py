@@ -38,7 +38,7 @@ Help / TL;DR
 - `/l filepath`: **l**oad `filepath` and start a new session
 - `/L filepath`: **l**oad `filepath` (permanently) and start a new session
 
-Press Meta+Enter or Esc Enter to end multiline input.
+Press Alt (or Meta) and Enter or Esc Enter to end multiline input.
 """
 
 CONTEXTS = {
