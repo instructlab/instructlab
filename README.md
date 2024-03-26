@@ -131,7 +131,7 @@ You can override this behavior with the `--config` parameter for any `lab` comma
 lab download
 ```
 
-`lab download` will download a pre-trained model from HuggingFace and store it in a `models` directory:
+`lab download` will download a pre-trained [model](https://huggingface.co/ibm/) (~4.4G) from HuggingFace and store it in a `models` directory:
 
 ```
 (venv) $ lab download
