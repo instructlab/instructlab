@@ -189,33 +189,19 @@ Contribute new knowledge or compositional skills to your local [taxonomy](https:
 
 Detailed contribution instructions can be found in the [taxonomy respoitory](https://github.com/instruct-lab/taxonomy/blob/main/README.md).
 
-### 📜 List your new data
+### 📜 List and validate your new data
 
 ```
-lab list
+lab diff
 ```
 
-To ensure `lab` is registering your new knowledge or skills, you can run `lab list`.
+To ensure `lab` is registering your new knowledge or skills and that they're valid, you can run `lab diff`.
 
-The following is the expected result after adding the new compositional skill foo-lang:
+The following is the expected result after adding the new compositional skill `foo-lang`:
 ```
-(venv) $ lab list
+(venv) $ lab diff
 compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
-```
-
-### 📜 Check your new data
-
-```
-lab check
-```
-
-To ensure that your new knowledge or skills are valid, you can run `lab check`.
-
-The following is the expected result after adding the new compositional skill foo-lang:
-```
-(venv) $ lab check 
-INFO 2024-03-15 11:33:23,973 generate_data.py:564 Found new taxonomy files :
-INFO 2024-03-15 11:33:23,973 generate_data.py:566 * compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
+Taxonomy in /taxonomy/ is valid :)
 ```
 
 ### 🚀 Generate a synthetic dataset
