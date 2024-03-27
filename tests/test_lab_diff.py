@@ -148,6 +148,22 @@ class TestLabDiff(unittest.TestCase):
                 TAXONOMY_BASE,
                 "--taxonomy-path",
                 self.taxonomy.root,
+            ],
+        )
+        self.assertIn(f"Taxonomy in /{self.taxonomy.root}/ is valid :)", result.output)
+        self.assertEqual(result.exit_code, 0)
+
+    def test_diff_valid_yaml_quiet(self):
+        valid_yaml_file = "compositional_skills/qna_valid.yaml"
+        self.taxonomy.create_untracked(valid_yaml_file, TEST_VALID_YAML)
+        runner = CliRunner()
+        result = runner.invoke(
+            lab.diff,
+            [
+                "--taxonomy-base",
+                TAXONOMY_BASE,
+                "--taxonomy-path",
+                self.taxonomy.root,
                 "--quiet",
             ],
         )
@@ -155,6 +171,22 @@ class TestLabDiff(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
 
     def test_diff_invalid_yaml(self):
+        invalid_yaml_file = "compositional_skills/qna_invalid.yaml"
+        self.taxonomy.create_untracked(invalid_yaml_file, TEST_INVALID_YAML)
+        runner = CliRunner()
+        result = runner.invoke(
+            lab.diff,
+            [
+                "--taxonomy-base",
+                TAXONOMY_BASE,
+                "--taxonomy-path",
+                self.taxonomy.root,
+            ],
+        )
+        self.assertIn("Reading taxonomy failed", result.output)
+        self.assertEqual(result.exit_code, 1)
+
+    def test_diff_invalid_yaml_quiet(self):
         invalid_yaml_file = "compositional_skills/qna_invalid.yaml"
         self.taxonomy.create_untracked(invalid_yaml_file, TEST_INVALID_YAML)
         runner = CliRunner()

@@ -195,7 +195,8 @@ Detailed contribution instructions can be found in the [taxonomy respoitory](htt
 lab diff
 ```
 
-To ensure `lab` is registering your new knowledge or skills and that they're valid, you can run `lab diff`.
+To ensure `lab` is registering your new knowledge or skills and that they're valid, you can run `lab diff`. You can use
+`lab diff --quiet` to supress the output. 
 
 The following is the expected result after adding the new compositional skill `foo-lang`:
 ```

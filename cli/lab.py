@@ -240,7 +240,6 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
             read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
         except (Exception, yaml.YAMLError) as exc:
             raise SystemExit(1) from exc
-        raise SystemExit(0)
     try:
         updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
     except (SystemExit, GitError) as exc:
@@ -252,9 +251,13 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
     for f in updated_taxonomy_files:
         click.echo(f)
     try:
-        _ = read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
-    except Exception as exc:
-        raise SystemExit(exc) from exc
+        read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
+    except (SystemExit, yaml.YAMLError) as exc:
+        click.secho(
+            f"Reading taxonomy failed with the following error: {exc}",
+            fg="red",
+        )
+        raise SystemExit(1) from exc
     click.secho(
         f"Taxonomy in /{taxonomy_path}/ is valid :)",
         fg="green",

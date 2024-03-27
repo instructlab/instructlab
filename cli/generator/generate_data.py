@@ -618,7 +618,7 @@ def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
                 f"{warnings} warnings (see above) due to taxonomy file not (fully) usable."
             )
         if errors:
-            raise yaml.YAMLError("Taxonomy file with errors! Exiting.")
+            raise SystemExit(yaml.YAMLError("Taxonomy file with errors! Exiting."))
     else:  # taxonomy is dir
         # Gather the new or changed YAMLs using git diff
         try:
@@ -643,5 +643,7 @@ def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
                 f"{total_warnings} warnings (see above) due to taxonomy files that were not (fully) usable."
             )
         if total_errors:
-            raise yaml.YAMLError(f"{total_errors} taxonomy files with errors! Exiting.")
+            raise SystemExit(
+                yaml.YAMLError(f"{total_errors} taxonomy files with errors! Exiting.")
+            )
     return seed_instruction_data
