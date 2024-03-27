@@ -21,7 +21,7 @@ CHECKPOINT_DIR = TRAINING_RESULTS_DIR + "/" + CHECKPOINT_DIR_NAME
 MERGED_MODEL_DIR = TRAINING_RESULTS_DIR + "/" + MERGED_MODEL_DIR_NAME
 FINAL_RESULTS_DIR = TRAINING_RESULTS_DIR + "/" + FINAL_RESULTS_DIR_NAME
 LINUX_GGUF_FILE = FINAL_RESULTS_DIR + "/ggml-model-f16.gguf"
-MODEL_DIR = "model"
+MODEL_PATH = "model"
 ENCODING = "UTF-8"
 
 
@@ -53,7 +53,7 @@ def setup_linux_dir():
 
 
 def setup_load():
-    os.makedirs(MODEL_DIR)
+    os.makedirs(MODEL_PATH)
 
 
 def is_arm_mac():
@@ -267,8 +267,8 @@ class TestLabTrain(unittest.TestCase):
                     "tokenizer",
                     "--gguf-model-path",
                     "gguf_model",
-                    "--model-dir",
-                    MODEL_DIR,
+                    "--model-path",
+                    MODEL_PATH,
                 ],
             )
             self.assertEqual(result.exit_code, 0)
@@ -311,8 +311,8 @@ class TestLabTrain(unittest.TestCase):
                     "tokenizer",
                     "--gguf-model-path",
                     "gguf_model",
-                    "--model-dir",
-                    MODEL_DIR,
+                    "--model-path",
+                    MODEL_PATH,
                     "--local",
                 ],
             )

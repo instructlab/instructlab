@@ -537,15 +537,15 @@ def chat(ctx, question, model, context, session, quick_question, greedy_mode):
     help="Name of the model file to download from the Hugging Face repository.",
 )
 @click.option(
-    "--model-dir",
+    "--model-path",
     default=dirname(config.DEFAULT_MODEL_PATH),
     show_default=True,
-    help="The local directory to download the model files into.",
+    help="The local path to download the model files into.",
 )
 @click.pass_context
-def download(ctx, repository, release, filename, model_dir):
+def download(ctx, repository, release, filename, model_path):
     """Download the model(s) to train"""
-    click.echo(f"Downloading model from {repository}@{release} to {model_dir}...")
+    click.echo(f"Downloading model from {repository}@{release} to {model_path}...")
     try:
         if ctx.obj is not None:
             hf_logging.set_verbosity(ctx.obj.config.general.log_level.upper())
@@ -554,7 +554,7 @@ def download(ctx, repository, release, filename, model_dir):
             repo_id=repository,
             revision=release,
             filename=filename,
-            local_dir=model_dir,
+            local_dir=model_path,
         )
     except Exception as exc:
         click.secho(
@@ -641,8 +641,8 @@ TORCH_DEVICE = TorchDeviceParam()
     show_default=True,
 )
 @click.option(
-    "--model-dir",
-    help="Base directory where model is stored.",
+    "--model-path",
+    help="Base path where model is stored.",
     default="ibm/merlinite-7b",
     show_default=True,
 )
@@ -650,7 +650,7 @@ TORCH_DEVICE = TorchDeviceParam()
 @click.option(
     "--local",
     is_flag=True,
-    help="Whether or not `model_dir` is remote from HuggingFace.",
+    help="Whether or not `model_path` is remote from HuggingFace.",
 )
 @click.option(
     "-sq",
@@ -697,7 +697,7 @@ def train(
     skip_preprocessing,
     tokenizer_dir,
     gguf_model_path,
-    model_dir,
+    model_path,
     iters,
     local,
     skip_quantize,
@@ -707,7 +707,7 @@ def train(
 ):
     """
     Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
-    On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
+    On success, writes newly learned model to {model_path}/mlx_model, which is where `chatmlx` will look for a model.
     """
     # pylint: disable=C0415
     if not input_dir:
@@ -843,15 +843,15 @@ def train(
 
         # NOTE we can skip this if we have a way ship MLX
         # PyTorch safetensors to MLX safetensors
-        model_dir_local = model_dir.replace("/", "-")
-        model_dir_mlx = f"{model_dir_local}-mlx"
-        model_dir_mlx_quantized = f"{model_dir_local}-mlx-q"
+        model_path_local = model_path.replace("/", "-")
+        model_path_mlx = f"{model_path_local}-mlx"
+        model_path_mlx_quantized = f"{model_path_local}-mlx-q"
 
         if skip_quantize:
-            dest_model_dir = model_dir_mlx
+            dest_model_path = model_path_mlx
             quantize_arg = False
         else:
-            dest_model_dir = model_dir_mlx_quantized
+            dest_model_path = model_path_mlx_quantized
             quantize_arg = True
 
         if tokenizer_dir is not None and gguf_model_path is not None:
@@ -860,29 +860,29 @@ def train(
                 fetch_tokenizer_from_hub(tokenizer_dir, tokenizer_dir_local)
 
             # no need to pass quantize_arg for now, script automatically detects if quantization is necessary based on whether gguf model is quantized or not
-            load(gguf=gguf_model_path, repo=tokenizer_dir, mlx_path=dest_model_dir)
+            load(gguf=gguf_model_path, repo=tokenizer_dir, mlx_path=dest_model_path)
 
-            for filename in os.listdir(model_dir_local):
+            for filename in os.listdir(model_path_local):
                 shutil.copy(
-                    os.path.join(model_dir_local, filename),
-                    os.path.join(dest_model_dir, filename),
+                    os.path.join(model_path_local, filename),
+                    os.path.join(dest_model_path, filename),
                 )
-            shutil.rmtree(model_dir_local, ignore_errors=True)
+            shutil.rmtree(model_path_local, ignore_errors=True)
 
         else:
             # Downloading PyTorch SafeTensor and Converting to MLX SafeTensor
             convert_between_mlx_and_pytorch(
-                hf_path=model_dir,
-                mlx_path=dest_model_dir,
+                hf_path=model_path,
+                mlx_path=dest_model_path,
                 quantize=quantize_arg,
                 local=local,
             )
 
-        adapter_file_path = f"{dest_model_dir}/adapters.npz"
+        adapter_file_path = f"{dest_model_path}/adapters.npz"
         # train the model with LoRA
 
         load_and_train(
-            model=dest_model_dir,
+            model=dest_model_path,
             train=True,
             data=data_dir,
             adapter_file=adapter_file_path,
@@ -903,8 +903,8 @@ def train(
     show_default=True,
 )
 @click.option(
-    "--model-dir",
-    help="Base directory where model is stored.",
+    "--model-path",
+    help="Base path where model is stored.",
     default="ibm-merlinite-7b-mlx-q",
     show_default=True,
 )
@@ -916,14 +916,14 @@ def train(
 )
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 # pylint: disable=function-redefined
-def test(data_dir, model_dir, adapter_file):
+def test(data_dir, model_path, adapter_file):
     """Runs basic test to ensure model correctness"""
     # pylint: disable=C0415
     # Local
     from .train.lora_mlx.lora import load_and_train
 
     if adapter_file is None:
-        adapter_file = os.path.join(model_dir, "adapters.npz")
+        adapter_file = os.path.join(model_path, "adapters.npz")
 
     # Load the JSON Lines file
     test_data_dir = f"{data_dir}/test.jsonl"
@@ -940,18 +940,18 @@ def test(data_dir, model_dir, adapter_file):
         print("expected output:", example["assistant"])
 
         print("\n-----model output BEFORE training----:\n")
-        load_and_train(model=model_dir, no_adapter=True, max_tokens=100, prompt=prompt)
+        load_and_train(model=model_path, no_adapter=True, max_tokens=100, prompt=prompt)
 
         print("\n-----model output AFTER training----:\n")
         load_and_train(
-            model=model_dir, adapter_file=adapter_file, max_tokens=100, prompt=prompt
+            model=model_path, adapter_file=adapter_file, max_tokens=100, prompt=prompt
         )
 
 
 @cli.command()
 @click.option(
-    "--model-dir",
-    help="Base directory where model is stored.",
+    "--model-path",
+    help="Base path where model is stored.",
     default="ibm-merlinite-7b-mlx-q",
     show_default=True,
 )
@@ -969,7 +969,7 @@ def test(data_dir, model_dir, adapter_file):
     help="Whether to skip quantization while converting to GGUF.",
 )
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
-def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
+def convert(model_path, adapter_file, skip_de_quantize, skip_quantize):
     """Converts model to GGUF"""
     # pylint: disable=C0415
     # Local
@@ -978,33 +978,33 @@ def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
     from .train.lora_mlx.fuse import fine_tune
 
     if adapter_file is None:
-        adapter_file = os.path.join(model_dir, "adapters.npz")
+        adapter_file = os.path.join(model_path, "adapters.npz")
     cli_dir = os.path.dirname(os.path.abspath(__file__))
 
-    source_model_dir = model_dir
-    model_dir_fused = f"{source_model_dir}-fused"
+    source_model_path = model_path
+    model_path_fused = f"{source_model_path}-fused"
 
     # this combines adapter with the original model to produce the updated model
     fine_tune(
-        model=source_model_dir,
-        save_path=model_dir_fused,
+        model=source_model_path,
+        save_path=model_path_fused,
         adapter_file=adapter_file,
         de_quantize=not skip_de_quantize,
     )
 
-    model_dir_fused_pt = f"{model_dir_fused}-pt"
+    model_path_fused_pt = f"{model_path_fused}-pt"
 
     # this converts MLX to PyTorch
     convert_between_mlx_and_pytorch(
-        hf_path=model_dir_fused, mlx_path=model_dir_fused_pt, local=True, to_pt=True
+        hf_path=model_path_fused, mlx_path=model_path_fused_pt, local=True, to_pt=True
     )
 
-    convert_llama_to_gguf(model=model_dir_fused_pt, pad_vocab=True)
+    convert_llama_to_gguf(model=model_path_fused_pt, pad_vocab=True)
 
     # quantize 4-bi GGUF (optional)
     if not skip_quantize:
-        gguf_model_dir = f"{model_dir_fused_pt}/ggml-model-f16.gguf"
-        gguf_model_q_dir = f"{model_dir_fused_pt}/ggml-model-Q4_K_M.gguf"
+        gguf_model_path = f"{model_path_fused_pt}/ggml-model-f16.gguf"
+        gguf_model_q_path = f"{model_path_fused_pt}/ggml-model-Q4_K_M.gguf"
         script = os.path.join(cli_dir, "llamacpp/quantize")
-        cmd = f"{script} {gguf_model_dir} {gguf_model_q_dir} Q4_K_M"
+        cmd = f"{script} {gguf_model_path} {gguf_model_q_path} Q4_K_M"
         os.system("{}".format(cmd))
