@@ -513,7 +513,6 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
         for d in head_commit.diff(None)
         if not d.deleted_file and istaxonomyfile(d.b_path)
     ]
-
     updated_taxonomy_files = list(set(untracked_files + modified_files))
     return updated_taxonomy_files
 
@@ -537,19 +536,21 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
     try:
         with open(file_path, "r", encoding="utf-8") as file:
             # do general YAML linting if specified
-            if yaml_rules:
+            if yaml_rules is not None:
                 try:
                     yaml_config = YamlLintConfig(file=yaml_rules)
                 except FileNotFoundError:
                     logger.debug(f"Cannot find {yaml_rules}. Using default rules.")
                     yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
-                for p in linter.run(file, yaml_config):
-                    errors += 1
-                    logger.error(
-                        f"error found in file {file.name}: {p.desc} {p.line} {p.rule}"
-                    )
-                    return None, warnings, errors
-            # do more explict checking of file contents
+            else:
+                yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
+            for p in linter.run(file, yaml_config):
+                errors += 1
+                logger.error(
+                    f"error found in file {file.name}: {p.desc} {p.line} {p.rule}"
+                )
+                return None, warnings, errors
+        # do more explict checking of file contents
         with open(file_path, "r", encoding="utf-8") as file:
             contents = yaml.safe_load(file)
             if not contents:

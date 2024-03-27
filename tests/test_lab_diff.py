@@ -151,7 +151,7 @@ class TestLabDiff(unittest.TestCase):
                 "--quiet",
             ],
         )
-        self.assertIn(f"", result.output)
+        self.assertIn("", result.output)
         self.assertEqual(result.exit_code, 0)
 
     def test_diff_invalid_yaml(self):

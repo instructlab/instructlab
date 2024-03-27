@@ -6,6 +6,14 @@ import shutil
 # Third Party
 import git
 
+TEST_VALID_YAML = """created_by: rafael-vasquez
+seed_examples:
+- answer: "Sure thing!"
+  context: "There's a TypeError."
+  question: "Can you help me debug this failing unit test?"
+task_description: ''
+"""
+
 
 class MockTaxonomy:
     INIT_COMMIT_FILE = "README.md"
@@ -34,7 +42,7 @@ class MockTaxonomy:
         file_path = Path(self.root / rel_path)
         file_path.parent.mkdir(exist_ok=True, parents=True)
         if not contents:
-            file_path.write_text("new taxonomy", encoding="utf-8")
+            file_path.write_text(TEST_VALID_YAML, encoding="utf-8")
         else:
             file_path.write_bytes(contents)
 

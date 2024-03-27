@@ -209,20 +209,19 @@ def init(
 @click.option(
     "--yaml-rules",
     type=click.Path(),
-    default=config.DEFAULT_YAML_RULES,
-    show_default=True,
-    help="Custom rules file for YAML linting",
+    default=None,
+    help="Custom rules file for YAML linting.",
 )
 @click.option(
     "--quiet",
     is_flag=True,
-    help="Suppress the diff list.",
+    help="Suppress all output.",
 )
 @click.pass_context
 def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
     """
-    Lists taxonomy files that have changed since <taxonomy-base>.
-    Similar to 'git diff <ref>' and check that taxonomy is valid.
+    Lists taxonomy files that have changed since <taxonomy-base>
+    and checks that taxonomy is valid. Similar to 'git diff <ref>'.
     """
     # pylint: disable=C0415
     # Local
@@ -232,8 +231,6 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
         taxonomy_base = ctx.obj.config.generate.taxonomy_base
     if not taxonomy_path:
         taxonomy_path = ctx.obj.config.generate.taxonomy_path
-    if not yaml_rules:
-        yaml_rules = ctx.obj.config.generate.yaml_rules
     if not ctx.obj:
         logger = logging.getLogger(__name__)
     else:
@@ -244,7 +241,6 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
         except (Exception, yaml.YAMLError) as exc:
             raise SystemExit(1) from exc
         raise SystemExit(0)
-
     try:
         updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
     except (SystemExit, GitError) as exc:
@@ -256,11 +252,9 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
     for f in updated_taxonomy_files:
         click.echo(f)
     try:
-        read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
-    except yaml.YAMLError as exc:
+        _ = read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
+    except Exception as exc:
         raise SystemExit(exc) from exc
-
-    # below will only run if `read_taxonomy` throws no errors
     click.secho(
         f"Taxonomy in /{taxonomy_path}/ is valid :)",
         fg="green",
