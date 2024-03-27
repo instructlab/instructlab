@@ -105,10 +105,10 @@ Running unit tests can be done with:
 tox -e unit
 ```
 
-By default, all tests found within the `tests` directory are run. However, specific unit tests can run by passing filenames, classes and/or methods to `pytest` using tox positional arguments.  The following example invokes a single test method `test_list_invalid_base` within the `TestLabList` class that is declared in the `tests/test_lab_list.py` file:
+By default, all tests found within the `tests` directory are run. However, specific unit tests can run by passing filenames, classes and/or methods to `pytest` using tox positional arguments.  The following example invokes a single test method `test_diff_invalid_base` within the `TestLabDiff` class that is declared in the `tests/test_lab_diff.py` file:
 
 ```shell
-tox -e unit -- tests/test_lab_list.py::TestLabList::test_list_invalid_base
+tox -e unit -- tests/test_lab_diff.py::TestLabDiff::test_diff_invalid_base
 ```
 
 #### Functional tests
