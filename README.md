@@ -228,7 +228,7 @@ The next step is to generate a synthetic dataset based on your newly added knowl
 
 > **NOTE:** ⏳ This can take from 15 minutes to 1+ hours to complete, depending on your computing resources.
 
-> **IMPORTANT:** Do not use `lab generate` and `lab chat` in parallel, it could cause the model to crash ([#346](https://github.com/instruct-lab/cli/issues/346)).
+> **IMPORTANT:** Do not use `lab generate` and `lab chat` in parallel for the same model, it could cause the model to crash.
 
 ```
 (venv) $ lab generate
