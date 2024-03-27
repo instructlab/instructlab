@@ -15,17 +15,12 @@ import time
 # Third Party
 from jinja2 import Template
 from rouge_score import rouge_scorer
-import gitdb
+import click
 import tqdm
 import yaml
 
-try:
-    # Third Party
-    import git
-except ImportError:
-    pass
-
 # Local
+from ..utils import get_taxonomy_diff
 from . import utils
 
 DEFAULT_PROMPT_TEMPLATE = """\
@@ -325,7 +320,6 @@ def generate_data(
     output_dir: Optional[str] = None,
     taxonomy: Optional[str] = None,
     taxonomy_base: Optional[str] = None,
-    seed_tasks_path: Optional[str] = None,
     prompt_file_path: Optional[str] = None,
     model_name: Optional[str] = None,
     num_cpus: Optional[int] = None,
@@ -355,10 +349,7 @@ def generate_data(
         raise SystemExit(f"Error: taxonomy ({taxonomy}) does not exist.")
 
     seeds = len(seed_instruction_data)
-    logger.debug(
-        f"Loaded {seeds} human-written seed instructions from "
-        f"{taxonomy or seed_tasks_path}"
-    )
+    logger.debug(f"Loaded {seeds} human-written seed instructions from {taxonomy}")
     if not seeds:
         raise SystemExit("Nothing to generate. Exiting.")
 
@@ -370,13 +361,20 @@ def generate_data(
         user = seed_example["instruction"]
         if len(seed_example["input"]) > 0:
             user += "\n" + seed_example["input"]
-        test_data.append(
-            {
-                "system": utils.SYSTEM_PROMPT,
-                "user": unescape(user),
-                "assistant": unescape(seed_example["output"]),
-            }
-        )
+        try:
+            test_data.append(
+                {
+                    "system": utils.SYSTEM_PROMPT,
+                    "user": unescape(user),
+                    "assistant": unescape(seed_example["output"]),
+                }
+            )
+        except TypeError as exc:
+            click.secho(
+                f"Error reading seed examples: {exc}. Please make sure your answers are verbose enough.",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
 
     name = Path(model_name).stem  # Just in case it is a file path
     date_suffix = datetime.now().replace(microsecond=0).isoformat().replace(":", "_")
@@ -522,61 +520,6 @@ def generate_data(
         )
     generate_duration = time.time() - generate_start
     logger.info(f"Generation took {generate_duration:.2f}s")
-
-
-def istaxonomyfile(fn):
-    topleveldir = fn.split("/")[0]
-    if fn.endswith(".yaml") and topleveldir in ["compositional_skills", "knowledge"]:
-        return True
-    return False
-
-
-def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
-    repo = git.Repo(repo)
-    untracked_files = [u for u in repo.untracked_files if istaxonomyfile(u)]
-
-    branches = [b.name for b in repo.branches]
-
-    head_commit = None
-    if "/" in base:
-        re_git_branch = re.compile(f"remotes/{base}$", re.MULTILINE)
-    elif base in branches:
-        re_git_branch = re.compile(f"{base}$", re.MULTILINE)
-    else:
-        try:
-            head_commit = repo.commit(base)
-        except gitdb.exc.BadName as exc:
-            raise SystemExit(
-                yaml.YAMLError(
-                    f'Couldn\'t find the taxonomy git ref "{base}" from the current HEAD'
-                )
-            ) from exc
-
-    # Move backwards from HEAD until we find the first commit that is part of base
-    # then we can take our diff from there
-    current_commit = repo.commit("HEAD")
-    while not head_commit:
-        branches = repo.git.branch("-a", "--contains", current_commit.hexsha)
-        if re_git_branch.findall(branches):
-            head_commit = current_commit
-            break
-        try:
-            current_commit = current_commit.parents[0]
-        except IndexError as exc:
-            raise SystemExit(
-                yaml.YAMLError(
-                    f'Couldn\'t find the taxonomy base branch "{base}" from the current HEAD'
-                )
-            ) from exc
-
-    modified_files = [
-        d.b_path
-        for d in head_commit.diff(None)
-        if not d.deleted_file and istaxonomyfile(d.b_path)
-    ]
-
-    updated_taxonomy_files = list(set(untracked_files + modified_files))
-    return updated_taxonomy_files
 
 
 # pylint: disable=broad-exception-caught

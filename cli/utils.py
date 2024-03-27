@@ -3,10 +3,14 @@ import copy
 import functools
 import os
 import platform
+import re
 import subprocess
 
 # Third Party
 import click
+import git
+import gitdb
+import yaml
 
 
 def macos_requirement(echo_func, exit_exception):
@@ -91,3 +95,58 @@ def make_lab_diff_aliases(cli, diff):
 
     lab_check.callback = lab_check_callback
     cli.add_command(lab_check)
+
+
+def istaxonomyfile(fn):
+    topleveldir = fn.split("/")[0]
+    if fn.endswith(".yaml") and topleveldir in ["compositional_skills", "knowledge"]:
+        return True
+    return False
+
+
+def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
+    repo = git.Repo(repo)
+    untracked_files = [u for u in repo.untracked_files if istaxonomyfile(u)]
+
+    branches = [b.name for b in repo.branches]
+
+    head_commit = None
+    if "/" in base:
+        re_git_branch = re.compile(f"remotes/{base}$", re.MULTILINE)
+    elif base in branches:
+        re_git_branch = re.compile(f"{base}$", re.MULTILINE)
+    else:
+        try:
+            head_commit = repo.commit(base)
+        except gitdb.exc.BadName as exc:
+            raise SystemExit(
+                yaml.YAMLError(
+                    f'Couldn\'t find the taxonomy git ref "{base}" from the current HEAD'
+                )
+            ) from exc
+
+    # Move backwards from HEAD until we find the first commit that is part of base
+    # then we can take our diff from there
+    current_commit = repo.commit("HEAD")
+    while not head_commit:
+        branches = repo.git.branch("-a", "--contains", current_commit.hexsha)
+        if re_git_branch.findall(branches):
+            head_commit = current_commit
+            break
+        try:
+            current_commit = current_commit.parents[0]
+        except IndexError as exc:
+            raise SystemExit(
+                yaml.YAMLError(
+                    f'Couldn\'t find the taxonomy base branch "{base}" from the current HEAD'
+                )
+            ) from exc
+
+    modified_files = [
+        d.b_path
+        for d in head_commit.diff(None)
+        if not d.deleted_file and istaxonomyfile(d.b_path)
+    ]
+
+    updated_taxonomy_files = list(set(untracked_files + modified_files))
+    return updated_taxonomy_files
