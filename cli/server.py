@@ -1,4 +1,6 @@
 # Standard
+from multiprocessing import Queue
+from time import sleep
 import logging
 import multiprocessing
 import random
@@ -30,6 +32,8 @@ def ensure_server(logger, serve_config):
         return (None, None)
     except ClientException:
         tried_ports = set()
+        # use a queue to communicate between the main process and the server process
+        queue = Queue()
         port = random.randint(1024, 65535)
         host = serve_config.host_port.rsplit(":", 1)[0]
         logger.debug(f"Trying port {port}...")
@@ -71,10 +75,25 @@ def ensure_server(logger, serve_config):
                 "max_ctx_size": serve_config.max_ctx_size,
                 "port": port,
                 "host": host,
+                "queue": queue,
             },
             daemon=True,
         )
         server_process.start()
+
+        # in case the server takes some time to fail we wait a bit
+        count = 0
+        while server_process.is_alive():
+            sleep(0.1)
+            if count > 10:
+                break
+            count += 1
+
+        # if the queue is not empty it means the server failed to start
+        if not queue.empty():
+            # pylint: disable=raise-missing-from
+            raise queue.get()
+
         return (server_process, temp_api_base)
 
 
@@ -86,6 +105,7 @@ def server(
     threads=None,
     host="localhost",
     port=8000,
+    queue=None,
 ):
     """Start OpenAI-compatible server"""
     settings = Settings(
@@ -101,6 +121,9 @@ def server(
     try:
         app = create_app(settings=settings)
     except ValueError as exc:
+        if queue:
+            queue.put(exc)
+            return
         raise ServerException(f"failed creating the server application: {exc}") from exc
 
     try:
@@ -111,6 +134,9 @@ def server(
         ).to_chat_handler()
     # pylint: disable=broad-exception-caught
     except Exception as exc:
+        if queue:
+            queue.put(exc)
+            return
         raise ServerException(f"failed creating the server application: {exc}") from exc
 
     logger.info("Starting server process, press CTRL+C to shutdown server...")
