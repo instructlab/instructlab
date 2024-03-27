@@ -35,7 +35,7 @@ class MockTaxonomy:
         """Create a new untracked file in the repository.
 
         Args:
-            rel_path (str):   Relative path (from repository root) to the file.
+            rel_path (str): Relative path (from repository root) to the file.
             contents (bytes): (optional) Byte string to be written to the file.
         """
         assert not Path(rel_path).is_absolute()

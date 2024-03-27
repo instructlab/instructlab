@@ -314,21 +314,29 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
 @cli.command()
 @click.option(
     "--model",
+    default=config.DEFAULT_MODEL,
+    show_default=True,
     help="Name of the model used during generation.",
 )
 @click.option(
     "--num-cpus",
     type=click.INT,
-    help="Number of processes to use. Defaults to 10.",
+    help="Number of processes to use.",
+    default=config.DEFAULT_NUM_CPUS,
+    show_default=True,
 )
 @click.option(
     "--num-instructions",
     type=click.INT,
-    help="Number of instructions to generate. Defaults to 100.",
+    help="Number of instructions to generate.",
+    default=config.DEFAULT_NUM_INSTRUCTIONS,
+    show_default=True,
 )
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
+    default=config.DEFAULT_TAXONOMY_PATH,
+    show_default=True,
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone or local file path.",
 )
 @click.option(
@@ -340,12 +348,8 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
 @click.option(
     "--output-dir",
     type=click.Path(),
+    default=config.DEFAULT_GENERATED_FILES_OUTPUT_DIR,
     help="Path to output generated files.",
-)
-@click.option(
-    "--seed-file",
-    type=click.Path(),
-    help="Path to a seed file.",
 )
 @click.option(
     "--rouge-threshold",
@@ -386,7 +390,6 @@ def generate(
     taxonomy_path,
     taxonomy_base,
     output_dir,
-    seed_file,
     rouge_threshold,
     quiet,
     endpoint_url,
@@ -401,6 +404,12 @@ def generate(
     from .server import ensure_server
 
     server_process = None
+    logger = logging.getLogger("TODO")
+    prompt_file_path = config.DEFAULT_PROMPT_FILE
+    if ctx.obj is not None:
+        logger = ctx.obj.logger
+        prompt_file_path = ctx.obj.config.generate.prompt_file
+
     if endpoint_url:
         api_base = endpoint_url
     else:
@@ -411,11 +420,11 @@ def generate(
         if not api_base:
             api_base = ctx.obj.config.serve.api_base()
     try:
-        ctx.obj.logger.info(
-            f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}' against {api_base} server"
+        click.echo(
+            f"Generating synthetic data using '{model}' model, taxonomy:'{taxonomy_path}' against {api_base} server"
         )
         generate_data(
-            logger=ctx.obj.logger,
+            logger=logger,
             api_base=api_base,
             api_key=api_key,
             model_name=model,
@@ -424,8 +433,7 @@ def generate(
             taxonomy=taxonomy_path,
             taxonomy_base=taxonomy_base,
             output_dir=output_dir,
-            prompt_file_path=ctx.obj.config.generate.prompt_file,
-            seed_tasks_path=seed_file,
+            prompt_file_path=prompt_file_path,
             rouge_threshold=rouge_threshold,
             console_output=not quiet,
             yaml_rules=yaml_rules,

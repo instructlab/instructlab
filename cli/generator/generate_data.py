@@ -15,17 +15,12 @@ import time
 # Third Party
 from jinja2 import Template
 from rouge_score import rouge_scorer
-import gitdb
+import click
 import tqdm
 import yaml
 
-try:
-    # Third Party
-    import git
-except ImportError:
-    pass
-
 # Local
+from ..utils import get_taxonomy_diff
 from . import utils
 
 DEFAULT_PROMPT_TEMPLATE = """\
@@ -137,21 +132,38 @@ def encode_prompt(prompt_instructions, prompt):
     return prompt
 
 
-def post_process_gpt3_response(num_prompt_instructions, response):
+def writeline2file(logfile, line):
+    t = datetime.now().replace(microsecond=0).isoformat()
+    with open(logfile, "a", encoding="utf-8") as fp:
+        fp.write(f"{t} - {line}\n")
+
+
+def post_process_gpt3_response(num_prompt_instructions, response, discarded_file):
     if response is None:
-        return []
+        return [], 0
     raw_instructions = (
         f"{num_prompt_instructions + 1}. Instruction:" + response.message.content
     )
     raw_instructions = re.split("###", raw_instructions)
     instructions = []
+    discarded = 0
     for idx, inst in enumerate(raw_instructions):
         # if the decoding stops due to length, the last example is likely truncated so we discard it
         # if idx == len(raw_instructions) - 1 and response["finish_reason"] == "length":
         #     continue
         idx += num_prompt_instructions + 1
+
+        if not inst.strip():
+            continue
+
         splitted_data = re.split(rf"{idx}\.\s+(Instruction|Input|Output):", inst)
         if len(splitted_data) != 7:
+            writeline2file(
+                discarded_file,
+                f"Discarded instruction(didn't match expected format, idx={idx}): "
+                + repr(inst),
+            )
+            discarded += 1
             continue
         inst = splitted_data[2].strip()
         prompt_input = splitted_data[4].strip()
@@ -159,26 +171,53 @@ def post_process_gpt3_response(num_prompt_instructions, response):
         prompt_output = splitted_data[6].strip()
         # filter out too short or too long instructions
         if len(inst.split()) <= 3 or len(inst.split()) > 150:
+            writeline2file(
+                discarded_file,
+                "Discarded instruction(wrong number of words): " + repr(splitted_data),
+            )
+            discarded += 1
             continue
         # filter based on keywords that are not suitable for language models.
         if any(find_word_in_string(word, inst) for word in _WORD_DENYLIST):
+            writeline2file(
+                discarded_file,
+                "Discarded instruction(contained a word from the denylist): "
+                + repr(splitted_data),
+            )
+            discarded += 1
             continue
         # We found that the model tends to add "write a program" to some existing instructions
         # which lead to a lot of such instructions and it's confusing whether the model needs
         # to write a program or directly output the result, so here we filter them out.
         # NOTE: this is not a comprehensive filtering for all programming instructions.
         if inst.startswith("Write a program"):
+            writeline2file(
+                discarded_file,
+                "Discarded instruction(began with 'Write a program'): "
+                + repr(splitted_data),
+            )
+            discarded += 1
             continue
         # filter those starting with punctuation
         if inst[0] in string.punctuation:
+            writeline2file(
+                discarded_file,
+                "Discarded instruction(began with punctuation): " + repr(splitted_data),
+            )
+            discarded += 1
             continue
         # filter those starting with non-english character
         if not inst[0].isascii():
+            writeline2file(
+                discarded_file,
+                "Discarded instruction(began with non-ascii): " + repr(splitted_data),
+            )
+            discarded += 1
             continue
         instructions.append(
             {"instruction": inst, "input": prompt_input, "output": prompt_output}
         )
-    return instructions
+    return instructions, discarded
 
 
 def find_word_in_string(w, s):
@@ -214,6 +253,7 @@ def get_instructions_from_model(
     request_batch_size,
     temperature,
     top_p,
+    output_file_discarded,
 ):
     batch_inputs = []
     for _ in range(request_batch_size):
@@ -253,7 +293,9 @@ def get_instructions_from_model(
     post_process_start = time.time()
     instruction_data = []
     for result in results:
-        new_instructions = post_process_gpt3_response(num_prompt_instructions, result)
+        new_instructions, discarded = post_process_gpt3_response(
+            num_prompt_instructions, result, output_file_discarded
+        )
         # make sure the generated instruction carried over extra fields
         prompt_ins_0 = prompt_instructions[0]
         for new_ins in new_instructions:
@@ -268,7 +310,7 @@ def get_instructions_from_model(
         f"post-processing took {post_process_duration:.2f}s"
     )
 
-    return instruction_data
+    return instruction_data, discarded
 
 
 def generate_data(
@@ -278,7 +320,6 @@ def generate_data(
     output_dir: Optional[str] = None,
     taxonomy: Optional[str] = None,
     taxonomy_base: Optional[str] = None,
-    seed_tasks_path: Optional[str] = None,
     prompt_file_path: Optional[str] = None,
     model_name: Optional[str] = None,
     num_cpus: Optional[int] = None,
@@ -308,10 +349,7 @@ def generate_data(
         raise SystemExit(f"Error: taxonomy ({taxonomy}) does not exist.")
 
     seeds = len(seed_instruction_data)
-    logger.debug(
-        f"Loaded {seeds} human-written seed instructions from "
-        f"{taxonomy or seed_tasks_path}"
-    )
+    logger.debug(f"Loaded {seeds} human-written seed instructions from {taxonomy}")
     if not seeds:
         raise SystemExit("Nothing to generate. Exiting.")
 
@@ -323,19 +361,29 @@ def generate_data(
         user = seed_example["instruction"]
         if len(seed_example["input"]) > 0:
             user += "\n" + seed_example["input"]
-        test_data.append(
-            {
-                "system": utils.SYSTEM_PROMPT,
-                "user": unescape(user),
-                "assistant": unescape(seed_example["output"]),
-            }
-        )
+        try:
+            test_data.append(
+                {
+                    "system": utils.SYSTEM_PROMPT,
+                    "user": unescape(user),
+                    "assistant": unescape(seed_example["output"]),
+                }
+            )
+        except TypeError as exc:
+            click.secho(
+                f"Error reading seed examples: {exc}. Please make sure your answers are verbose enough.",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
 
     name = Path(model_name).stem  # Just in case it is a file path
     date_suffix = datetime.now().replace(microsecond=0).isoformat().replace(":", "_")
     output_file = f"generated_{name}_{date_suffix}.json"
     output_file_train = f"train_{name}_{date_suffix}.jsonl"
     output_file_test = f"test_{name}_{date_suffix}.jsonl"
+    output_file_discarded = os.path.join(
+        output_dir, f"discarded_{name}_{date_suffix}.log"
+    )
     logger.debug(f"Generating to: {os.path.join(output_dir, output_file)}")
 
     request_idx = 0
@@ -369,7 +417,10 @@ def generate_data(
         print(
             "Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help."
         )
+
     all_taxonomy_paths = list(set(e["taxonomy_path"] for e in seed_instruction_data))
+    total_discarded = 0
+    total_rouged = 0
     while len(machine_instruction_data) < num_instructions_to_generate:
         request_idx += 1
 
@@ -382,7 +433,7 @@ def generate_data(
             for e in seed_instruction_data + machine_instruction_data
             if e["taxonomy_path"] == selected_taxonomy
         ]
-        instruction_data = get_instructions_from_model(
+        instruction_data, discarded = get_instructions_from_model(
             logger,
             request_idx,
             instruction_data_pool,
@@ -394,8 +445,9 @@ def generate_data(
             request_batch_size,
             temperature,
             top_p,
+            output_file_discarded,
         )
-
+        total_discarded += discarded
         total = len(instruction_data)
         keep = 0
         assess_start = time.time()
@@ -416,6 +468,7 @@ def generate_data(
             #    all_instructions[i]: rouge_scores[i] for i in np.argsort(rouge_scores)[-10:][::-1]
             # }
             if max(rouge_scores) > rouge_threshold:
+                total_rouged += 1
                 continue
             keep += 1
             # Comment out extra info not currently being used:
@@ -431,7 +484,9 @@ def generate_data(
         progress_bar.update(keep)
         assess_duration = time.time() - assess_start
         logger.debug(f"Assessing generated samples took {assess_duration:.2f}s")
-        logger.debug(f"Generated {total} instructions, kept {keep} instructions")
+        logger.debug(
+            f"Generated {total} instructions(discarded {discarded}), rouged {total - keep}, kept {keep} instructions"
+        )
         utils.jdump(machine_instruction_data, os.path.join(output_dir, output_file))
         for synth_example in machine_instruction_data:
             user = synth_example["instruction"]
@@ -459,62 +514,12 @@ def generate_data(
                 json.dump(entry, outfile, ensure_ascii=False)
                 outfile.write("\n")
 
+    if total_discarded or total_rouged:
+        logger.info(
+            f"{len(machine_instruction_data)} instructions generated, {total_discarded} discarded due to format (see {output_file_discarded}), {total_rouged} discarded due to rouge score"
+        )
     generate_duration = time.time() - generate_start
     logger.info(f"Generation took {generate_duration:.2f}s")
-
-
-def istaxonomyfile(fn):
-    topleveldir = fn.split("/")[0]
-    if fn.endswith(".yaml") and topleveldir in ["compositional_skills", "knowledge"]:
-        return True
-    return False
-
-
-def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
-    repo = git.Repo(repo)
-    untracked_files = [u for u in repo.untracked_files if istaxonomyfile(u)]
-
-    branches = [b.name for b in repo.branches]
-
-    head_commit = None
-    if "/" in base:
-        re_git_branch = re.compile(f"remotes/{base}$", re.MULTILINE)
-    elif base in branches:
-        re_git_branch = re.compile(f"{base}$", re.MULTILINE)
-    else:
-        try:
-            head_commit = repo.commit(base)
-        except gitdb.exc.BadName as exc:
-            raise SystemExit(
-                yaml.YAMLError(
-                    f'Couldn\'t find the taxonomy git ref "{base}" from the current HEAD'
-                )
-            ) from exc
-
-    # Move backwards from HEAD until we find the first commit that is part of base
-    # then we can take our diff from there
-    current_commit = repo.commit("HEAD")
-    while not head_commit:
-        branches = repo.git.branch("-a", "--contains", current_commit.hexsha)
-        if re_git_branch.findall(branches):
-            head_commit = current_commit
-            break
-        try:
-            current_commit = current_commit.parents[0]
-        except IndexError as exc:
-            raise SystemExit(
-                yaml.YAMLError(
-                    f'Couldn\'t find the taxonomy base branch "{base}" from the current HEAD'
-                )
-            ) from exc
-
-    modified_files = [
-        d.b_path
-        for d in head_commit.diff(None)
-        if not d.deleted_file and istaxonomyfile(d.b_path)
-    ]
-    updated_taxonomy_files = list(set(untracked_files + modified_files))
-    return updated_taxonomy_files
 
 
 # pylint: disable=broad-exception-caught
