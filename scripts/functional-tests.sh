@@ -22,7 +22,7 @@ PID_CHAT=
 
 cleanup() {
     set +e
-    if [ $1 -ne 0 ]; then
+    if [ "${1:-0}" -ne 0 ]; then
         echo "Error occurred in function: ${FUNCNAME[1]} with exit code: $1"
     fi
     for pid in $PID_SERVE $PID_CHAT; do
