@@ -48,6 +48,9 @@ rm -f config.yaml
 # pipe 3 carriage returns to lab init to get past the prompts
 echo -e "\n\n\n" | lab init
 
+# Enable Debug in func tests
+sed -i -e 's/log_level:.*/log_level: DEBUG/g;' config.yaml
+
 # download the latest version of the lab
 lab download
 
