@@ -76,8 +76,8 @@ jobs:
       - name: Run unit tests with code coverage
         run: |
           tox \
-            -x testenv:unit.system_site_packages=True \
-            -x testenv:unit.skip_install=True \
+            -x testenv:unitcov.system_site_packages=True \
+            -x testenv:unitcov.skip_install=True \
             -e unitcov
 
       - name: Install the expect package
