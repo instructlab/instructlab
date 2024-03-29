@@ -1,15 +1,15 @@
-# 🏎️ Making `lab` go fast
+# 🏎️ Making `ilab` go fast
 
-By default, `lab` will attempt to use your GPU for inference and synthesis. This
+By default, `ilab` will attempt to use your GPU for inference and synthesis. This
 works on a wide variety of common systems, but less-common configurations may
 require some additional tinkering to get it enabled. This document aims to
-describe how you can GPU-accelerate `lab` on a variety of different
+describe how you can GPU-accelerate `ilab` on a variety of different
 environments.
 
-`lab` relies on two Python packages that can be GPU accelerated: `torch`
+`ilab` relies on two Python packages that can be GPU accelerated: `torch`
 and `llama-cpp-python`. In short, you'll need to replace the default versions of
 these packages with versions that have been compiled for GPU-specific support,
-recompile `lab`, then run it.
+recompile `ilab`, then run it.
 
 ## Python 3.11 (Linux only)
 
@@ -18,7 +18,7 @@ recompile `lab`, then run it.
 
 Unfortunately, at the time of writing, `torch` does not have GPU-specific
 support for the latest Python (3.12), so if you're on Linux, it's recommended
-to set up a Python 3.11-specific `venv` and install `lab` to that to minimize
+to set up a Python 3.11-specific `venv` and install `ilab` to that to minimize
 issues. (MacOS ships Python 3.9, so this step shouldn't be necessary.) Here's
 how to do that on Fedora with `dnf`:
 
@@ -103,14 +103,14 @@ export PATH=$PATH:$CUDA_HOME/bin
 # Recompile llama-cpp-python using CUDA
 CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip3 install --force-reinstall --no-cache-dir llama-cpp-python
 
-# Recompile lab 
+# Recompile ilab 
 pip3 install cli/.
 ```
 
 Proceed to the `Initialize` section of
 the [CLI Readme](https://github.com/instruct-lab/cli?tab=readme-ov-file#%EF%B8%8F-initialize-lab),
 and use the `nvtop` utility to validate GPU utilization when interacting
-with `lab chat` or `lab generate`
+with `ilab chat` or `ilab generate`
 
 ### AMD/ROCm
 
@@ -203,7 +203,7 @@ CMAKE_ARGS="-DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang -DCMA
 > `CMAKE_ARGS="-DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER=/usr/bin/clang
 > -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DAMDGPU_TARGETS=gfx1100"` instead.
 
-Once that package is installed, recompile `lab` with `pip3 install .`.  You also
+Once that package is installed, recompile `ilab` with `pip3 install .`.  You also
 need to tell `HIP` which GPU to use - you can find this out via `rocminfo`
 although it is typically GPU 0.  To set which device is visible to HIP, we'll
 set `export HIP_VISIBLE_DEVICES=0` for GPU 0.   You may also have to set
@@ -223,12 +223,12 @@ Your final command should look like so (this uses `CLBlast`):
 CMAKE_ARGS="-DLLAMA_CLBLAST=on" pip3 install --force-reinstall --no-cache-dir llama-cpp-python
 ```
 
-Once that package is installed, recompile `lab` with `pip3 install .` and skip
+Once that package is installed, recompile `ilab` with `pip3 install .` and skip
 to the `Testing` section.
 
 ### Metal/Apple Silicon
 
-The `lab` default installation should have Metal support by default. If that
+The `ilab` default installation should have Metal support by default. If that
 isn't the case, these steps might help to enable it.
 
 `torch` should already ship with Metal support, so you only have to
@@ -242,14 +242,14 @@ add a few options to ensure it gets installed over the existing package:
 CMAKE_ARGS="-DLLAMA_METAL=on" pip3 install --force-reinstall --no-cache-dir llama-cpp-python
 ```
 
-Once that package is installed, recompile `lab` with `pip3 install .` and skip
+Once that package is installed, recompile `ilab` with `pip3 install .` and skip
 to the `Testing` section.
 
 ### Testing
 
-Test your changes by chatting to the LLM. Run `lab serve` and `lab chat` and
+Test your changes by chatting to the LLM. Run `ilab serve` and `ilab chat` and
 chat to the LLM. If you notice significantly faster inference, congratulations!
-You've enabled GPU acceleration. You should also notice that the `lab generate`
+You've enabled GPU acceleration. You should also notice that the `ilab generate`
 step will take significantly less time.  You can use tools like `nvtop` and
 `radeontop` to monitor GPU usage.
 
@@ -290,7 +290,7 @@ ggml_init_cublas: found 1 ROCm devices:
 
 ## Training
 
-`lab train`  also experimentally supports GPU acceleration on Linux. Details
+`ilab train`  also experimentally supports GPU acceleration on Linux. Details
 of a working set up is included above. Training is memory-intensive and requires
 a modern GPU to work. The GPU must support `bfloat16` or `fp16` and have at
 least 17 GiB of free GPU memory. Nvidia CUDA on WSL2 is able to use shared host
@@ -317,11 +317,11 @@ Incompatible devices:
 > and treats AMD GPUs as CUDA devices. In a ROCm build of PyTorch, `cuda:0` is
 > actually the first ROCm device.
 <!-- -->
-> **Note:** Training does not use a local lab server. You can stop `lab serve`
+> **Note:** Training does not use a local lab server. You can stop `ilab serve`
 > to free up GPU memory.
 
 ```shell
-lab train --device cuda
+ilab train --device cuda
 ```
 
 ```shell
