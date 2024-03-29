@@ -20,7 +20,7 @@ import tqdm
 import yaml
 
 # Local
-from ..utils import get_taxonomy_diff
+from ..utils import get_document, get_taxonomy_diff
 from . import utils
 
 DEFAULT_PROMPT_TEMPLATE = """\
@@ -104,9 +104,14 @@ def check_prompt_file(prompt_file_path):
 
 
 def encode_prompt(prompt_instructions, prompt):
-    """Encode multiple prompt instructions into a single string."""
+    """Encode multiple prompt instructions into a single string.
+    If document exists, randomly select one."""
     idx = 0
     document = prompt_instructions[0].get("document")
+
+    if document:
+        document = random.choice(document)
+
     prompt = Template(prompt).render(
         taxonomy=prompt_instructions[0]["taxonomy_path"],
         task_description=prompt_instructions[0]["task_description"],
@@ -571,6 +576,9 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
             tax_path = "->".join(file_path.split(os.sep)[1:-1])
             task_description = contents.get("task_description")
             document = contents.get("document")
+            if document:
+                document = get_document(document)
+                logger.info("Content from git repo fetched")
             for t in get_seed_examples(contents):
                 q = t["question"]
                 a = t["answer"]

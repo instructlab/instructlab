@@ -1,9 +1,12 @@
 # Standard
+from typing import Dict, List, Union
 import copy
 import functools
+import glob
 import os
 import platform
 import re
+import shutil
 import subprocess
 
 # Third Party
@@ -150,3 +153,67 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
 
     updated_taxonomy_files = list(set(untracked_files + modified_files))
     return updated_taxonomy_files
+
+
+def get_document(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
+    """
+    Retrieve the content of files from a Git repository.
+
+    Args:
+        input_pattern (dict): Input dictionary containing repository URL, commit hash, and list of file patterns.
+
+    Returns:
+         List[str]: List of document contents.
+    """ ""
+
+    # Extract input parameters
+
+    repo_url = input_pattern.get("repo")
+    commit_hash = input_pattern.get("commit")
+    file_patterns = input_pattern.get("pattern")
+    temp_dir = os.path.join(os.getcwd(), "temp_repo")
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)
+    try:
+        # Create a temporary directory to clone the repository
+        os.makedirs(temp_dir, exist_ok=True)
+
+        # Clone the repository to the temporary directory
+        repo = git.Repo.clone_from(repo_url, temp_dir)
+
+        # Checkout the specified commit
+        repo.git.checkout(commit_hash)
+
+        file_contents = []
+
+        if (
+            not file_patterns
+        ):  # If file_patterns is empty, consider all .md files from root folder
+            pattern_path = os.path.join(temp_dir, "*.md")
+        else:
+            pattern_path = os.path.join(temp_dir, file_patterns)
+        if os.path.isdir(pattern_path) or os.path.isfile(
+            pattern_path
+        ):  # If pattern is a directory or a file
+            for file_path in glob.glob(pattern_path):
+                if os.path.isfile(file_path) and file_path.endswith(".md"):
+                    with open(file_path, "r", encoding="utf-8") as file:
+                        file_contents.append(file.read())
+        else:  # If pattern is a wildcard
+            for file_path in glob.glob(pattern_path):
+                if os.path.isfile(file_path) and file_path.endswith(".md"):
+                    with open(file_path, "r", encoding="utf-8") as file:
+                        file_contents.append(file.read())
+        # Cleanup: Remove the temporary directory
+        repo.close()
+        shutil.rmtree(temp_dir)
+        return file_contents
+
+    except (OSError, git.exc.GitCommandError, FileNotFoundError) as e:
+        print(f"Error: {str(e)}")
+        return [f"Error: {str(e)}"]
+
+    finally:
+        # Cleanup: Remove the temporary directory if it exists
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
