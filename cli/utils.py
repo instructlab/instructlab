@@ -12,8 +12,7 @@ import git
 import gitdb
 import yaml
 from typing import Dict, Union, List
-
-
+import glob
 def macos_requirement(echo_func, exit_exception):
     """Adds a check for MacOS before running a method.
 
@@ -153,21 +152,20 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     return updated_taxonomy_files
 
 
-def get_document(input_pattern: Dict[str, Union[str, List[str]]]):
+def get_document(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
     """
     Retrieve the content of files from a Git repository.
 
     Args:
-        input_data (dict): Input dictionary containing repository URL, commit hash, and list of file patterns.
+        input_pattern (dict): Input dictionary containing repository URL, commit hash, and list of file patterns.
 
     Returns:
-        str: Content of the specified files.
+         List[str]: List of document contents.
     """
     # Extract input parameters
     repo_url = input_pattern.get('repo')
     commit_hash = input_pattern.get('commit')
     file_patterns = input_pattern.get('pattern')
-    print(f"repo_url{repo_url},commit_hash{commit_hash},file_patterns{file_patterns}")
     try:
         # Create a temporary directory to clone the repository
         temp_dir = os.path.join(os.getcwd(), 'temp_repo')
@@ -181,18 +179,31 @@ def get_document(input_pattern: Dict[str, Union[str, List[str]]]):
 
         file_contents = []
 
-        # Access each specified file
-        # for file_pattern in file_patterns:
-        file_path = os.path.join(temp_dir, file_patterns)
-        print("file_path",file_path)
-        with open(file_path, 'r') as file:
-            file_contents.append(file.read())
-
+        pattern_path = os.path.join(temp_dir, file_patterns)
+        print("pattern_path",pattern_path)
+        if os.path.isdir(pattern_path) or os.path.isfile(pattern_path):  # If pattern is a directory or a file
+            print("if")
+            for file_path in glob.glob(pattern_path):
+                if os.path.isfile(file_path) and file_path.endswith('.md'):
+                    with open(file_path, 'r') as file:
+                        file_contents.append(file.read())
+        else:  # If pattern is a wildcard
+            print("else")
+            for file_path in glob.glob(pattern_path):
+                if os.path.isfile(file_path) and file_path.endswith('.md'):
+                    with open(file_path, 'r') as file:
+                        file_contents.append(file.read())
         # Cleanup: Remove the temporary directory
         repo.close()
         os.system(f'rm -rf {temp_dir}')
-        print("file_contents",file_contents)
+        print("file_contents", file_contents)
         return file_contents
 
     except Exception as e:
-        return f"Error: {str(e)}"
+        print(f"Error: {str(e)}")
+        return [f"Error: {str(e)}"]
+
+    finally:
+        # Cleanup: Remove the temporary directory if it exists
+        if temp_dir:
+            os.system(f'rm -rf {temp_dir}')
