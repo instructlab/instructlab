@@ -25,7 +25,7 @@ if typing.TYPE_CHECKING:
 
 
 class Lab:
-    """Lab object holds high-level information about lab CLI"""
+    """Lab object holds high-level information about ilab CLI"""
 
     def __init__(self, filename):
         self.config_file = filename
@@ -45,7 +45,7 @@ def configure(ctx, param, filename):
 
     if not exists(filename):
         raise click.ClickException(
-            f"`{filename}` does not exists, please run `lab init` or point to a valid configuration file using `--config=<path>`."
+            f"`{filename}` does not exists, please run `ilab init` or point to a valid configuration file using `--config=<path>`."
         )
 
     try:
@@ -73,7 +73,7 @@ def configure(ctx, param, filename):
 def cli(ctx, config):
     """CLI for interacting with InstructLab.
 
-    If this is your first time running lab, it's best to start with `lab init` to create the environment.
+    If this is your first time running ilab, it's best to start with `ilab init` to create the environment.
     """
 
 
@@ -188,7 +188,7 @@ def init(
     config.write_config(cfg)
 
     click.echo(
-        "Initialization completed successfully, you're ready to start using `lab`. Enjoy!"
+        "Initialization completed successfully, you're ready to start using `ilab`. Enjoy!"
     )
 
 
@@ -256,8 +256,8 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
             click.echo(f)
 
 
-# lab list => lab diff
-# lab check => lab diff --quiet
+# ilab list => ilab diff
+# ilab check => ilab diff --quiet
 utils.make_lab_diff_aliases(cli, diff)
 
 
@@ -361,7 +361,7 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
 @click.option(
     "--endpoint-url",
     type=click.STRING,
-    help="Custom URL endpoint for OpenAI-compatible API. Defaults to the `lab serve` endpoint.",
+    help="Custom URL endpoint for OpenAI-compatible API. Defaults to the `ilab serve` endpoint.",
 )
 @click.option(
     "--api-key",
@@ -703,7 +703,7 @@ def train(
     four_bit_quant: bool,
 ):
     """
-    Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
+    Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
     # pylint: disable=C0415
@@ -727,7 +727,7 @@ def train(
             if len(train_files) > 1 or len(test_files) > 1:
                 # pylint: disable=f-string-without-interpolation
                 click.secho(
-                    f"Found multiple files from `lab generate`. Using the most recent generation.",
+                    f"Found multiple files from `ilab generate`. Using the most recent generation.",
                     fg="yellow",
                 )
             # First file is latest (by above reverse sort and timestamped names)
