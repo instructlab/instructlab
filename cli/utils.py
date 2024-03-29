@@ -3,6 +3,7 @@ from typing import Dict, List, Union
 import copy
 import functools
 import glob
+import logging
 import os
 import platform
 import re
@@ -14,6 +15,13 @@ import click
 import git
 import gitdb
 import yaml
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s",
+)
+
+logger = logging.getLogger(__name__)
 
 
 def macos_requirement(echo_func, exit_exception):
@@ -155,7 +163,8 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     return updated_taxonomy_files
 
 
-def get_document(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
+
+def get_documents(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
     """
     Retrieve the content of files from a Git repository.
 
@@ -186,31 +195,26 @@ def get_document(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
 
         file_contents = []
 
-        if (
-            not file_patterns
-        ):  # If file_patterns is empty, consider all .md files from root folder
+        # Adjust pattern_path based on file_patterns
+        if file_patterns:
+            if file_patterns.endswith("/"):  # If file_patterns is just a folder name
+                pattern_path = os.path.join(temp_dir, file_patterns, "*.md")
+            else:
+                pattern_path = os.path.join(temp_dir, file_patterns)
+        else:  # If file_patterns is None, consider all .md files from root folder
             pattern_path = os.path.join(temp_dir, "*.md")
-        else:
-            pattern_path = os.path.join(temp_dir, file_patterns)
-        if os.path.isdir(pattern_path) or os.path.isfile(
-            pattern_path
-        ):  # If pattern is a directory or a file
-            for file_path in glob.glob(pattern_path):
-                if os.path.isfile(file_path) and file_path.endswith(".md"):
-                    with open(file_path, "r", encoding="utf-8") as file:
-                        file_contents.append(file.read())
-        else:  # If pattern is a wildcard
-            for file_path in glob.glob(pattern_path):
-                if os.path.isfile(file_path) and file_path.endswith(".md"):
-                    with open(file_path, "r", encoding="utf-8") as file:
-                        file_contents.append(file.read())
-        # Cleanup: Remove the temporary directory
+
+        logger.info("Processing files...")
+        for file_path in glob.glob(pattern_path):
+            if os.path.isfile(file_path) and file_path.endswith(".md"):
+                with open(file_path, "r", encoding="utf-8") as file:
+                    file_contents.append(file.read())
         repo.close()
         shutil.rmtree(temp_dir)
         return file_contents
 
     except (OSError, git.exc.GitCommandError, FileNotFoundError) as e:
-        print(f"Error: {str(e)}")
+        logger.error("Error: {}".format(str(e)))
         return [f"Error: {str(e)}"]
 
     finally:
