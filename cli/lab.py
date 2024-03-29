@@ -912,8 +912,8 @@ def train(
 )
 @click.option(
     "--adapter-file",
-    help="LoRA adapter to use for test.",
-    default=None,
+    help="LoRA adapter to use for test. Set to 'None' to force only testing behavior from before training.",
+    default="auto",
     show_default=True,
 )
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
@@ -924,8 +924,17 @@ def test(data_dir, model_dir, adapter_file):
     # Local
     from .train.lora_mlx.lora import load_and_train
 
-    if adapter_file is None:
+    if adapter_file == "auto":
         adapter_file = os.path.join(model_dir, "adapters.npz")
+    elif adapter_file.lower() == "none":
+        adapter_file = None
+
+    adapter_file_exists = adapter_file and os.path.exists(adapter_file)
+    if adapter_file and not adapter_file_exists:
+        print(
+            "NOTE: Adapter file does not exist. Testing behavior before training only. - %s\n"
+            % adapter_file
+        )
 
     # Load the JSON Lines file
     test_data_dir = f"{data_dir}/test.jsonl"
@@ -944,10 +953,14 @@ def test(data_dir, model_dir, adapter_file):
         print("\n-----model output BEFORE training----:\n")
         load_and_train(model=model_dir, no_adapter=True, max_tokens=100, prompt=prompt)
 
-        print("\n-----model output AFTER training----:\n")
-        load_and_train(
-            model=model_dir, adapter_file=adapter_file, max_tokens=100, prompt=prompt
-        )
+        if adapter_file_exists:
+            print("\n-----model output AFTER training----:\n")
+            load_and_train(
+                model=model_dir,
+                adapter_file=adapter_file,
+                max_tokens=100,
+                prompt=prompt,
+            )
 
 
 @cli.command()
