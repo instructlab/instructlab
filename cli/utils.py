@@ -1,9 +1,12 @@
 # Standard
+from typing import Dict, List, Union
 import copy
 import functools
+import glob
 import os
 import platform
 import re
+import shutil
 import subprocess
 
 # Third Party
@@ -11,9 +14,8 @@ import click
 import git
 import gitdb
 import yaml
-from typing import Dict, Union, List
-import glob
-import shutil
+
+
 def macos_requirement(echo_func, exit_exception):
     """Adds a check for MacOS before running a method.
 
@@ -162,14 +164,14 @@ def get_document(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
 
     Returns:
          List[str]: List of document contents.
-    """""
+    """ ""
 
     # Extract input parameters
 
-    repo_url = input_pattern.get('repo')
-    commit_hash = input_pattern.get('commit')
-    file_patterns = input_pattern.get('pattern')
-    temp_dir = os.path.join(os.getcwd(), 'temp_repo')
+    repo_url = input_pattern.get("repo")
+    commit_hash = input_pattern.get("commit")
+    file_patterns = input_pattern.get("pattern")
+    temp_dir = os.path.join(os.getcwd(), "temp_repo")
     if os.path.exists(temp_dir):
         shutil.rmtree(temp_dir)
     try:
@@ -184,24 +186,27 @@ def get_document(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
 
         file_contents = []
 
-        if not file_patterns:  # If file_patterns is empty, consider all .md files from root folder
-            pattern_path = os.path.join(temp_dir, '*.md')
+        if (
+            not file_patterns
+        ):  # If file_patterns is empty, consider all .md files from root folder
+            pattern_path = os.path.join(temp_dir, "*.md")
         else:
             pattern_path = os.path.join(temp_dir, file_patterns)
-        if os.path.isdir(pattern_path) or os.path.isfile(pattern_path):  # If pattern is a directory or a file
+        if os.path.isdir(pattern_path) or os.path.isfile(
+            pattern_path
+        ):  # If pattern is a directory or a file
             for file_path in glob.glob(pattern_path):
-                if os.path.isfile(file_path) and file_path.endswith('.md'):
-                    with open(file_path, 'r') as file:
+                if os.path.isfile(file_path) and file_path.endswith(".md"):
+                    with open(file_path, "r") as file:
                         file_contents.append(file.read())
         else:  # If pattern is a wildcard
             for file_path in glob.glob(pattern_path):
-                if os.path.isfile(file_path) and file_path.endswith('.md'):
-                    with open(file_path, 'r') as file:
+                if os.path.isfile(file_path) and file_path.endswith(".md"):
+                    with open(file_path, "r") as file:
                         file_contents.append(file.read())
         # Cleanup: Remove the temporary directory
         repo.close()
         shutil.rmtree(temp_dir)
-        print(file_contents)
         return file_contents
 
     except Exception as e:
