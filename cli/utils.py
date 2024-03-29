@@ -174,7 +174,6 @@ def get_document(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
         shutil.rmtree(temp_dir)
     try:
         # Create a temporary directory to clone the repository
-        temp_dir = os.path.join(os.getcwd(), 'temp_repo')
         os.makedirs(temp_dir, exist_ok=True)
 
         # Clone the repository to the temporary directory
@@ -185,7 +184,10 @@ def get_document(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
 
         file_contents = []
 
-        pattern_path = os.path.join(temp_dir, file_patterns)
+        if not file_patterns:  # If file_patterns is empty, consider all .md files from root folder
+            pattern_path = os.path.join(temp_dir, '*.md')
+        else:
+            pattern_path = os.path.join(temp_dir, file_patterns)
         if os.path.isdir(pattern_path) or os.path.isfile(pattern_path):  # If pattern is a directory or a file
             for file_path in glob.glob(pattern_path):
                 if os.path.isfile(file_path) and file_path.endswith('.md'):
@@ -199,6 +201,7 @@ def get_document(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
         # Cleanup: Remove the temporary directory
         repo.close()
         shutil.rmtree(temp_dir)
+        print(file_contents)
         return file_contents
 
     except Exception as e:
