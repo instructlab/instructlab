@@ -11,6 +11,7 @@ import click
 import git
 import gitdb
 import yaml
+from typing import Dict, Union, List
 
 
 def macos_requirement(echo_func, exit_exception):
@@ -150,3 +151,48 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
 
     updated_taxonomy_files = list(set(untracked_files + modified_files))
     return updated_taxonomy_files
+
+
+def get_document(input_pattern: Dict[str, Union[str, List[str]]]):
+    """
+    Retrieve the content of files from a Git repository.
+
+    Args:
+        input_data (dict): Input dictionary containing repository URL, commit hash, and list of file patterns.
+
+    Returns:
+        str: Content of the specified files.
+    """
+    # Extract input parameters
+    repo_url = input_pattern.get('repo')
+    commit_hash = input_pattern.get('commit')
+    file_patterns = input_pattern.get('pattern')
+    print(f"repo_url{repo_url},commit_hash{commit_hash},file_patterns{file_patterns}")
+    try:
+        # Create a temporary directory to clone the repository
+        temp_dir = os.path.join(os.getcwd(), 'temp_repo')
+        os.makedirs(temp_dir, exist_ok=True)
+
+        # Clone the repository to the temporary directory
+        repo = git.Repo.clone_from(repo_url, temp_dir)
+
+        # Checkout the specified commit
+        repo.git.checkout(commit_hash)
+
+        file_contents = []
+
+        # Access each specified file
+        # for file_pattern in file_patterns:
+        file_path = os.path.join(temp_dir, file_patterns)
+        print("file_path",file_path)
+        with open(file_path, 'r') as file:
+            file_contents.append(file.read())
+
+        # Cleanup: Remove the temporary directory
+        repo.close()
+        os.system(f'rm -rf {temp_dir}')
+        print("file_contents",file_contents)
+        return file_contents
+
+    except Exception as e:
+        return f"Error: {str(e)}"
