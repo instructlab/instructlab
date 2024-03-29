@@ -31,6 +31,7 @@ ditaa
 dr
 env
 gpu
+ilab
 lora
 orchestrator
 pre

@@ -1,9 +1,12 @@
-<a name="model-convert-quant"></a>
+# Optional: Converting a Model to GGUF and Quantizing
 
-# Optional: Converting a Model to GGUF and Quantizing 
-
-The latest [llama.cpp](https://github.com/ggerganov/llama.cpp) framework 
-requires the model to be converted into [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format. [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) is a quantization technique. [Quantization](https://www.tensorops.ai/post/what-are-quantized-llms) is a technique used to reduce the size of large neural networks, including large language models (LLMs) by modifying the precision of their weights. If you have a model already in GGUF format, you can skip this step.
+The latest [llama.cpp](https://github.com/ggerganov/llama.cpp) framework
+requires the model to be converted into [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9)
+format. [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9)
+is a quantization technique. [Quantization](https://www.tensorops.ai/post/what-are-quantized-llms)
+is a technique used to reduce the size of large neural networks, including large
+language models (LLMs) by modifying the precision of their weights. If you have a
+model already in GGUF format, you can skip this step.
 
 ## Clone the llama.cpp repository
 
@@ -42,7 +45,8 @@ def write(self):
 
 ## Convert a model to GGUF
 
-The following command converts a Hugging Face model (safetensors) to [GGUF](https://github.com/ggerganov/ggml/blob/master/docs/gguf.md) format and saves it in your model directory with a `.gguf` extension.
+The following command converts a Hugging Face model (safetensors) to [GGUF](https://github.com/ggerganov/ggml/blob/master/docs/gguf.md)
+format and saves it in your model directory with a `.gguf` extension.
 
 ```shell
 export MODEL_DIR={model_directory}
@@ -53,9 +57,10 @@ python convert-hf-to-gguf.py $MODEL_DIR --outtype f16
 
 ## Quantize
 
-Optionally, for smaller/faster models with varying loss of quality use a quantized model.
+Optionally, for smaller/faster models with varying loss of quality use a
+quantized model.
 
-#### Make the llama.cpp binaries
+### Make the llama.cpp binaries
 
 Build binaries like `quantize` etc. for your environment.
 
@@ -65,15 +70,17 @@ make
 
 #### Run quantize command
 
-
 ```shell
 ./quantize {model_directory}/{f16_gguf_model} <type>
 ```
 
-For example, the following command converts the f16 GGUF model to a Q4_K_M quantized model and saves it in your model directory with a `<type>.gguf` suffix (e.g. ggml-model-Q4_K_M.gguf).
+For example, the following command converts the f16 GGUF model to a Q4_K_M
+quantized model and saves it in your model directory with a `<type>.gguf`
+suffix (e.g. ggml-model-Q4_K_M.gguf).
 
 ```shell
 ./quantize $MODEL_DIR/ggml-model-f16.gguf Q4_K_M
 ```
 
-> Tip: Use `./quantize help` for a list of quantization types with their relative size and output quality along with additional usage parameters.
+> Tip: Use `./quantize help` for a list of quantization types with their
+> relative size and output quality along with additional usage parameters.

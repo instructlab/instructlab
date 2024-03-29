@@ -4,7 +4,7 @@ The ROCm container file is designed for AMD GPUs with RDNA3 architecture (`gfx11
 
 The container file creates a [toolbox](https://github.com/containers/toolbox) container for [`toolbox(1)`](https://www.mankier.com/1/toolbox) command line tool. A toolbox containers has seamless access to the entire system including user's home directory, networking, hardware, SSH agent, and more.
 
-The container has all Python dependencies installed in a virtual env. The virtual env is already activated when you enter the container. However the lab `cli` is **not** installed. 
+The container has all Python dependencies installed in a virtual env. The virtual env is already activated when you enter the container. However the ilab `cli` is **not** installed. 
 
 ## Quick start
 
@@ -16,11 +16,11 @@ The container has all Python dependencies installed in a virtual env. The virtua
 5. create a toolbox `toolbox create --image localhost/instructlab:rocm-gf1100 instructlab`
 6. enter toolbox `toolbox enter instructlab`. The container has your
    home directory mounted.
-7. install lab cli with `pip install -e ~/path/to/instruct-lab/cli/`
+7. install ilab cli with `pip install -e ~/path/to/instruct-lab/cli/`
 
-`lab generate` and `lab chat` use the GPU automatically. `lab train` needs
+`ilab generate` and `ilab chat` use the GPU automatically. `ilab train` needs
 more powerful and recent GPU and therefore does not use GPU by default. To
-train on a GPU, run `lab train --device cuda`.
+train on a GPU, run `ilab train --device cuda`.
 
 
 ## Building for other GPU architectures

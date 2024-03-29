@@ -10,7 +10,7 @@ pip install .
 export TEST_CTX_SIZE_LAB_SERVE_LOG_FILE=test_ctx_size_lab_serve.log
 export TEST_CTX_SIZE_LAB_CHAT_LOG_FILE=test_ctx_size_lab_chat.log
 
-for cmd in lab expect; do
+for cmd in ilab expect; do
     if ! type -p $cmd; then
         echo "Error: $cmd is not installed"
         exit 1
@@ -22,7 +22,7 @@ PID_CHAT=
 
 cleanup() {
     set +e
-    if [ $1 -ne 0 ]; then
+    if [ "${1:-0}" -ne 0 ]; then
         echo "Error occurred in function: ${FUNCNAME[1]} with exit code: $1"
     fi
     for pid in $PID_SERVE $PID_CHAT; do
@@ -45,25 +45,28 @@ trap 'cleanup "$?"' EXIT QUIT INT TERM
 
 rm -f config.yaml
 
-# pipe 3 carriage returns to lab init to get past the prompts
-echo -e "\n\n\n" | lab init
+# pipe 3 carriage returns to ilab init to get past the prompts
+echo -e "\n\n\n" | ilab init
 
-# download the latest version of the lab
-lab download
+# Enable Debug in func tests
+sed -i -e 's/log_level:.*/log_level: DEBUG/g;' config.yaml
 
-# check that lab serve is working
+# download the latest version of the ilab
+ilab download
+
+# check that ilab serve is working
 test_bind_port(){
     expect -c '
     set timeout 60
-    spawn lab serve
+    spawn ilab serve
     expect {
         "http://127.0.0.1:8000/docs" { puts OK }
         default { exit 1 }
     }
 
-    # check that lab serve is detecting the port is already in use
+    # check that ilab serve is detecting the port is already in use
     # catch "error while attempting to bind on address ...."
-    spawn lab serve
+    spawn ilab serve
     expect {
         "error while attempting to bind on address " { puts OK }
         default { exit 1 }
@@ -72,9 +75,9 @@ test_bind_port(){
     # configure a different port
     exec sed -i 's/8000/9999/g' config.yaml
 
-    # check that lab serve is working on the new port
+    # check that ilab serve is working on the new port
     # catch ERROR strings in the output
-    spawn lab serve
+    spawn ilab serve
     expect {
         "http://127.0.0.1:9999/docs" { puts OK }
         default { exit 1 }
@@ -83,18 +86,22 @@ test_bind_port(){
 }
 
 test_ctx_size(){
-    lab serve --max-ctx-size 1 &> "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" &
+    # A context size of 55 will allow a small message
+    ilab serve --max-ctx-size 55 &> "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" &
     PID_SERVE=$!
 
     # Make sure the server has time to open the port
-    # if "lab chat" tests it before its open then it will run its own server without --max-ctx-size 1
+    # if "ilab chat" tests it before its open then it will run its own server without --max-ctx-size 1
     sleep 5
+
+    # Should succeed
+    ilab chat -qq "Hello"
 
     # the error is expected so let's ignore it to not fall into the trap
     set +e
-    # now chat with the server
-    lab chat &> "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" <<EOF &
-hello
+    # now chat with the server and exceed the context size
+    ilab chat &> "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" <<EOF &
+hello, I am a ci message that should not finish because I am too long for the context window, tell me about your day please, I love to hear all about it, tell me about the time you could only take 55 tokens
 EOF
     PID_CHAT=$!
     wait_for_pid_to_disappear $PID_CHAT
@@ -124,14 +131,14 @@ EOF
 test_server_shutdown_while_chatting(){
     # we don't want to fall into the trap function since the failure is expected
     # so we force the command to return 0
-    timeout 10 lab serve || true &
+    timeout 10 ilab serve || true &
 
     # add the pid to the list of PID to kill in case something fails before the 5s timeout
     PID_SERVE=$!
 
     expect -c '
         set timeout 30
-        spawn lab chat
+        spawn ilab chat
         expect ">>>"
         send "hello! Tell me a long story\r"
         expect {
@@ -156,13 +163,13 @@ wait_for_pid_to_disappear(){
 }
 
 test_loading_session_history(){
-    lab serve --max-ctx-size 128 &
+    ilab serve --max-ctx-size 128 &
     PID_SERVE=$!
 
     # chat with the server
     expect -c '
         set timeout 120
-        spawn lab chat
+        spawn ilab chat
         expect ">>>"
         send "this is a test! what are you? do not exceed ten words in your reply.\r"
         send "/s test_session_history\r"
@@ -177,7 +184,7 @@ test_loading_session_history(){
     fi
 
     expect -c '
-        spawn lab chat -s test_session_history
+        spawn ilab chat -s test_session_history
         expect {
             "this is a test! what are you? do not exceed ten words in your reply." { exit 0 }
             timeout { exit 1 }
@@ -204,7 +211,7 @@ EOF
     sed -i -e 's/num_instructions:.*/num_instructions: 1/g' config.yaml
 
     # This should be finished in a minut or so but time it out incase it goes wrong
-    timeout 10m lab generate --taxonomy-path simple_math.yaml
+    timeout 10m ilab generate --taxonomy-path simple_math.yaml
 
     # Test if generated was created and contains files
     ls -l generated/*
@@ -220,7 +227,7 @@ test_temp_server(){
     sed -i 's/INFO/DEBUG/g' config.yaml
     expect -c '
         set timeout 120
-        spawn lab chat
+        spawn ilab chat
         expect {
             "Starting a temporary server at" { exit 0 }
             timeout { exit 1 }

@@ -61,9 +61,10 @@ jobs:
         id: cache
         with:
           path: ${{ env.pythonLocation }}
-          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-${{ hashFiles('requirements-dev.txt') }}
+          # v2: previous restore key did not depend on requirements.txt and contained 'mlx'
+          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-v2-${{ hashFiles('requirements-dev.txt') }}
           restore-keys:
-            ${{ env.pythonLocation }}-
+            ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-v2-
 
       - name: Install dependencies
         if: steps.cache.outputs.cache-hit != 'true'
@@ -72,12 +73,12 @@ jobs:
           python -m pip install -r requirements.txt
           python -m pip install -r requirements-dev.txt
 
-      - name: Run unit tests
+      - name: Run unit tests with code coverage
         run: |
           tox \
-            -x testenv:unit.system_site_packages=True \
-            -x testenv:unit.skip_install=True \
-            -e unit
+            -x testenv:unitcov.system_site_packages=True \
+            -x testenv:unitcov.skip_install=True \
+            -e unitcov
 
       - name: Install the expect package
         run: |

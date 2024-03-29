@@ -26,8 +26,6 @@ from cli.chat.chat import CONTEXTS
 class StoppingCriteriaSub(StoppingCriteria):
     def __init__(self, stops=[], encounters=1):
         super().__init__()
-        # TODO GPU: the commented out version might be needed to work on Nvidia GPUs
-        # self.stops = [stop.to("cuda") for stop in stops]
         self.stops = [stop for stop in stops]
 
     def __call__(
@@ -92,7 +90,7 @@ def report_cuda_device(args_device, min_vram=0):
             "host memory, or move some layers to CPU."
         )
         print(
-            "  Training does not use the local lab serve. Consider "
+            "  Training does not use the local ilab serve. Consider "
             "stopping the server to free up about 5 GiB of GPU memory."
         )
 
