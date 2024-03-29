@@ -1,9 +1,13 @@
 # Standard
+from typing import Dict, List, Union
 import copy
 import functools
+import glob
+import logging
 import os
 import platform
 import re
+import shutil
 import subprocess
 
 # Third Party
@@ -11,6 +15,13 @@ import click
 import git
 import gitdb
 import yaml
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s",
+)
+
+logger = logging.getLogger(__name__)
 
 
 def macos_requirement(echo_func, exit_exception):
@@ -150,3 +161,62 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
 
     updated_taxonomy_files = list(set(untracked_files + modified_files))
     return updated_taxonomy_files
+
+
+def get_documents(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
+    """
+    Retrieve the content of files from a Git repository.
+
+    Args:
+        input_pattern (dict): Input dictionary containing repository URL, commit hash, and list of file patterns.
+
+    Returns:
+         List[str]: List of document contents.
+    """ ""
+
+    # Extract input parameters
+
+    repo_url = input_pattern.get("repo")
+    commit_hash = input_pattern.get("commit")
+    file_patterns = input_pattern.get("pattern")
+    temp_dir = os.path.join(os.getcwd(), "temp_repo")
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)
+    try:
+        # Create a temporary directory to clone the repository
+        os.makedirs(temp_dir, exist_ok=True)
+
+        # Clone the repository to the temporary directory
+        repo = git.Repo.clone_from(repo_url, temp_dir)
+
+        # Checkout the specified commit
+        repo.git.checkout(commit_hash)
+
+        file_contents = []
+
+        # Adjust pattern_path based on file_patterns
+        if file_patterns:
+            if file_patterns.endswith("/"):  # If file_patterns is just a folder name
+                pattern_path = os.path.join(temp_dir, file_patterns, "*.md")
+            else:
+                pattern_path = os.path.join(temp_dir, file_patterns)
+        else:  # If file_patterns is None, consider all .md files from root folder
+            pattern_path = os.path.join(temp_dir, "*.md")
+
+        logger.info("Processing files...")
+        for file_path in glob.glob(pattern_path):
+            if os.path.isfile(file_path) and file_path.endswith(".md"):
+                with open(file_path, "r", encoding="utf-8") as file:
+                    file_contents.append(file.read())
+        repo.close()
+        shutil.rmtree(temp_dir)
+        return file_contents
+
+    except (OSError, git.exc.GitCommandError, FileNotFoundError) as e:
+        logger.error("Error: {}".format(str(e)))
+        return [f"Error: {str(e)}"]
+
+    finally:
+        # Cleanup: Remove the temporary directory if it exists
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
