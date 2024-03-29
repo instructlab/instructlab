@@ -70,7 +70,7 @@ def mock_mlx(f):
 
 
 class TestLabTrain(unittest.TestCase):
-    """Test collection for `lab train` command."""
+    """Test collection for `ilab train` command."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

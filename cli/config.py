@@ -91,7 +91,7 @@ class _serve(BaseModel):
 
 
 class Config(BaseModel):
-    """Configuration for the lab command."""
+    """Configuration for the ilab command."""
 
     # required fields
     chat: _chat

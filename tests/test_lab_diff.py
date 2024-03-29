@@ -33,7 +33,7 @@ rules:
 
 
 class TestLabDiff(unittest.TestCase):
-    """Test collection for `lab list` command."""
+    """Test collection for `ilab diff` command."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
