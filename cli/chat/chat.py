@@ -195,6 +195,12 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         raise KeyboardInterrupt
 
     def __handle_replay(self, content, display_wrapper=(lambda x: x)):
+        # if the history is empty, then return
+        if (
+            len(self.info["messages"]) == 1
+            and self.info["messages"][0]["role"] == "system"
+        ):
+            raise KeyboardInterrupt
         cs = content.split()
         try:
             i = 1 if len(cs) == 1 else int(cs[1]) * 2 - 1
