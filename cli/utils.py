@@ -25,7 +25,7 @@ def macos_requirement(echo_func, exit_exception):
         def wrapper(*args, **kwargs):
             if not is_macos_with_m_chip():
                 echo_func(
-                    message=f"`lab {func.__name__}` is only implemented for macOS with M-series chips for now",
+                    message=f"`ilab {func.__name__}` is only implemented for macOS with M-series chips for now",
                     fg="red",
                 )
                 raise exit_exception(1)
@@ -69,7 +69,7 @@ def make_lab_diff_aliases(cli, diff):
 
     def lab_list_callback(*args, **kwargs):
         click.secho(
-            "DeprecationWarning: Use `lab diff` instead.",
+            "DeprecationWarning: Use `ilab diff` instead.",
             fg="red",
         )
         retval = diff.callback(*args, **kwargs)
@@ -87,7 +87,7 @@ def make_lab_diff_aliases(cli, diff):
 
     def lab_check_callback(*args, **kwargs):
         click.secho(
-            "DeprecationWarning: Use `lab diff --quiet` instead.",
+            "DeprecationWarning: Use `ilab diff --quiet` instead.",
             fg="red",
         )
         retval = diff.callback(*args, **kwargs, quiet=True)

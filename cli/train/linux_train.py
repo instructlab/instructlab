@@ -90,7 +90,7 @@ def report_cuda_device(args_device, min_vram=0):
             "host memory, or move some layers to CPU."
         )
         print(
-            "  Training does not use the local lab serve. Consider "
+            "  Training does not use the local ilab serve. Consider "
             "stopping the server to free up about 5 GiB of GPU memory."
         )
 

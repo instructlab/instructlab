@@ -55,7 +55,7 @@ generate_data_return_value = [
 
 
 class TestLabGenerate(unittest.TestCase):
-    """Test collection for `lab generate` command."""
+    """Test collection for `ilab generate` command."""
 
     @patch(
         "cli.generator.generate_data.generate_data",
