@@ -20,7 +20,7 @@ import tqdm
 import yaml
 
 # Local
-from ..utils import get_taxonomy_diff
+from ..utils import get_documents, get_taxonomy_diff
 from . import utils
 
 DEFAULT_PROMPT_TEMPLATE = """\
@@ -571,6 +571,9 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
             tax_path = "->".join(file_path.split(os.sep)[1:-1])
             task_description = contents.get("task_description")
             document = contents.get("document")
+            if document:
+                document = get_documents(document)
+                logger.info("Content from git repo fetched")
             for t in get_seed_examples(contents):
                 q = t["question"]
                 a = t["answer"]
