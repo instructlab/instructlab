@@ -105,7 +105,7 @@ def check_prompt_file(prompt_file_path):
 
 def encode_prompt(prompt_instructions, prompt):
     """Encode multiple prompt instructions into a single string.
-    If document exists, randomly select one."""
+    If documents exist, randomly select one."""
     idx = 0
     document = prompt_instructions[0].get("document")
 
