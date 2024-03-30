@@ -117,6 +117,7 @@ def encode_prompt(prompt_instructions, prompt):
         task_description=prompt_instructions[0]["task_description"],
         document=document,
     )
+    print("***prompt***", prompt)
 
     # pylint: disable=unused-variable
     for idx, task_dict in enumerate(prompt_instructions):
@@ -575,9 +576,9 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
             # get seed instruction data
             tax_path = "->".join(file_path.split(os.sep)[1:-1])
             task_description = contents.get("task_description")
-            document = contents.get("document")
-            if document:
-                document = get_documents(document)
+            documents = contents.get("document")
+            if documents:
+                documents = get_documents(documents)
                 logger.info("Content from git repo fetched")
             for t in get_seed_examples(contents):
                 q = t["question"]
@@ -602,7 +603,7 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
                         "output": a,
                         "taxonomy_path": tax_path,
                         "task_description": task_description,
-                        "document": document,
+                        "document": documents,
                     }
                 )
     except Exception as e:
