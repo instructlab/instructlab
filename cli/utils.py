@@ -163,7 +163,6 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     return updated_taxonomy_files
 
 
-
 def get_documents(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
     """
     Retrieve the content of files from a Git repository.
