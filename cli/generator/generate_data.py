@@ -117,7 +117,6 @@ def encode_prompt(prompt_instructions, prompt):
         task_description=prompt_instructions[0]["task_description"],
         document=document,
     )
-    print("***prompt***", prompt)
 
     # pylint: disable=unused-variable
     for idx, task_dict in enumerate(prompt_instructions):
