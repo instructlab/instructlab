@@ -104,9 +104,15 @@ def check_prompt_file(prompt_file_path):
 
 
 def encode_prompt(prompt_instructions, prompt):
-    """Encode multiple prompt instructions into a single string."""
+    """Encode multiple prompt instructions into a single string.
+    If documents exist, randomly select one."""
     idx = 0
-    document = prompt_instructions[0].get("document")
+    document = None
+    document_list = prompt_instructions[0].get("document")
+
+    if document_list:
+        document = random.choice(document_list)
+
     prompt = Template(prompt).render(
         taxonomy=prompt_instructions[0]["taxonomy_path"],
         task_description=prompt_instructions[0]["task_description"],
@@ -570,9 +576,9 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
             # get seed instruction data
             tax_path = "->".join(file_path.split(os.sep)[1:-1])
             task_description = contents.get("task_description")
-            document = contents.get("document")
-            if document:
-                document = get_documents(document)
+            documents = contents.get("document")
+            if documents:
+                documents = get_documents(documents)
                 logger.info("Content from git repo fetched")
             for t in get_seed_examples(contents):
                 q = t["question"]
@@ -597,7 +603,7 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
                         "output": a,
                         "taxonomy_path": tax_path,
                         "task_description": task_description,
-                        "document": document,
+                        "document": documents,
                     }
                 )
     except Exception as e:
