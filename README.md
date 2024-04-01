@@ -195,8 +195,7 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
 ilab diff
 ```
 
-To ensure `ilab` is registering your new knowledge or skills and that they're valid, you can run `ilab diff`. You can use
-`ilab diff --quiet` to supress the output. 
+To ensure `ilab` is registering your new knowledge or skills and that they're valid, you can run `ilab diff`.
 
 The following is the expected result after adding the new compositional skill `foo-lang`:
 
