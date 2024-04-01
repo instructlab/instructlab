@@ -9,7 +9,7 @@ import git
 TEST_VALID_YAML = """created_by: rafael-vasquez
 seed_examples:
 - answer: "Sure thing!"
-  context: "There's a TypeError."
+  context: "This is a valid YAML."
   question: "Can you help me debug this failing unit test?"
 task_description: ''
 """
