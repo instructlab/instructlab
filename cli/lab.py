@@ -14,6 +14,7 @@ from git import GitError, Repo
 from huggingface_hub import hf_hub_download
 from huggingface_hub import logging as hf_logging
 import click
+import yaml
 
 # Local
 # NOTE: Subcommands are using local imports to speed up startup time.
@@ -205,20 +206,19 @@ def init(
 @click.option(
     "--yaml-rules",
     type=click.Path(),
-    default=config.DEFAULT_YAML_RULES,
-    show_default=True,
-    help="Custom rules file for YAML linting",
+    default=None,
+    help="Custom rules file for YAML linting.",
 )
 @click.option(
     "--quiet",
     is_flag=True,
-    help="Suppress the diff list.",
+    help="Suppress all output. Call returns 0 if check passes, 1 otherwise.",
 )
 @click.pass_context
 def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
     """
-    Lists taxonomy files that have changed since <taxonomy-base>.
-    Similar to 'git diff <ref>' and check that taxonomy is valid.
+    Lists taxonomy files that have changed since <taxonomy-base>
+    and checks that taxonomy is valid. Similar to 'git diff <ref>'.
     """
     # pylint: disable=C0415
     # Local
@@ -228,32 +228,37 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
         taxonomy_base = ctx.obj.config.generate.taxonomy_base
     if not taxonomy_path:
         taxonomy_path = ctx.obj.config.generate.taxonomy_path
-    if quiet:
-        if not yaml_rules:
-            yaml_rules = ctx.obj.config.generate.yaml_rules
-        if not ctx.obj:
-            logger = logging.getLogger(__name__)
-        else:
-            logger = ctx.obj.logger
-        # pylint: disable=logging-fstring-interpolation
-        logger.debug(f"Checking taxonomy: '{taxonomy_path}:{taxonomy_base}'")
-        read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
-        # below will only run if `read_taxonomy` throws no errors
-        click.secho(
-            f"Taxonomy in {taxonomy_path} is valid :)",
-            fg="green",
-        )
+    if not ctx.obj:
+        logger = logging.getLogger(__name__)
     else:
+        logger = ctx.obj.logger
+    if quiet:
         try:
-            updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
-        except (SystemExit, GitError) as exc:
-            click.secho(
-                f"Reading taxonomy failed with the following error: {exc}",
-                fg="red",
-            )
-            return
-        for f in updated_taxonomy_files:
-            click.echo(f)
+            read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
+        except (Exception, yaml.YAMLError) as exc:
+            raise SystemExit(1) from exc
+    try:
+        updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
+    except (SystemExit, GitError) as exc:
+        click.secho(
+            f"Reading taxonomy failed with the following error: {exc}",
+            fg="red",
+        )
+        return
+    for f in updated_taxonomy_files:
+        click.echo(f)
+    try:
+        read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
+    except (SystemExit, yaml.YAMLError) as exc:
+        click.secho(
+            f"Reading taxonomy failed with the following error: {exc}",
+            fg="red",
+        )
+        raise SystemExit(1) from exc
+    click.secho(
+        f"Taxonomy in /{taxonomy_path}/ is valid :)",
+        fg="green",
+    )
 
 
 # ilab list => ilab diff

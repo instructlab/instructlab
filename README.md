@@ -187,35 +187,22 @@ Before you start adding new skills and knowledge to your model, you can check ou
 
 Contribute new knowledge or compositional skills to your local [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository.
 
-Detailed contribution instructions can be found in the [taxonomy respoitory](https://github.com/instruct-lab/taxonomy/blob/main/README.md).
+Detailed contribution instructions can be found in the [taxonomy repository](https://github.com/instruct-lab/taxonomy/blob/main/README.md).
 
-### 📜 List your new data
+### 📜 List and validate your new data
 
 ```
-ilab list
+ilab diff
 ```
 
-To ensure `ilab` is registering your new knowledge or skills, you can run `ilab list`.
+To ensure `ilab` is registering your new knowledge or skills and that they're valid, you can run `ilab diff`.
 
-The following is the expected result after adding the new compositional skill foo-lang:
+The following is the expected result after adding the new compositional skill `foo-lang`:
+
 ```
-(venv) $ ilab list
+(venv) $ ilab diff
 compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
-```
-
-### 📜 Check your new data
-
-```
-ilab check
-```
-
-To ensure that your new knowledge or skills are valid, you can run `ilab check`.
-
-The following is the expected result after adding the new compositional skill foo-lang:
-```
-(venv) $ ilab check 
-INFO 2024-03-15 11:33:23,973 generate_data.py:564 Found new taxonomy files :
-INFO 2024-03-15 11:33:23,973 generate_data.py:566 * compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
+Taxonomy in /taxonomy/ is valid :)
 ```
 
 ### 🚀 Generate a synthetic dataset

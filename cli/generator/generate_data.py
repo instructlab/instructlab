@@ -547,19 +547,21 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
     try:
         with open(file_path, "r", encoding="utf-8") as file:
             # do general YAML linting if specified
-            if yaml_rules:
+            if yaml_rules is not None:
                 try:
                     yaml_config = YamlLintConfig(file=yaml_rules)
                 except FileNotFoundError:
-                    logger.warning(f"Cannot find {yaml_rules}. Using default rules.")
+                    logger.debug(f"Cannot find {yaml_rules}. Using default rules.")
                     yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
-                for p in linter.run(file, yaml_config):
-                    errors += 1
-                    logger.error(
-                        f"error found in file {file.name}: {p.desc} {p.line} {p.rule}"
-                    )
-                    return None, warnings, errors
-            # do more explict checking of file contents
+            else:
+                yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
+            for p in linter.run(file, yaml_config):
+                errors += 1
+                logger.error(
+                    f"error found in file {file.name}: {p.desc} {p.line} {p.rule}"
+                )
+                return None, warnings, errors
+        # do more explict checking of file contents
         with open(file_path, "r", encoding="utf-8") as file:
             contents = yaml.safe_load(file)
             if not contents:
@@ -608,7 +610,7 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
                 )
     except Exception as e:
         errors += 1
-        logger.error(f"Exception {e} raised in {file_path}")
+        raise (f"Exception {e} raised in {file_path}") from e
 
     return seed_instruction_data, warnings, errors
 
@@ -635,9 +637,9 @@ def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
         total_errors = 0
         total_warnings = 0
         if updated_taxonomy_files:
-            logger.info("Found new taxonomy files:")
+            logger.debug("Found new taxonomy files:")
             for e in updated_taxonomy_files:
-                logger.info(f"* {e}")
+                logger.debug(f"* {e}")
         for f in updated_taxonomy_files:
             file_path = os.path.join(taxonomy, f)
             data, warnings, errors = read_taxonomy_file(logger, file_path, yaml_rules)
