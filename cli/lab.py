@@ -212,7 +212,7 @@ def init(
 @click.option(
     "--quiet",
     is_flag=True,
-    help="Suppress all output.",
+    help="Suppress all output. Call returns 0 if tests pass, 1 otherwise.",
 )
 @click.pass_context
 def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
