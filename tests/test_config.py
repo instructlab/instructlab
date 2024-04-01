@@ -32,6 +32,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(cfg.generate.taxonomy_base, "origin/main")
         self.assertEqual(cfg.generate.num_cpus, 10)
         self.assertEqual(cfg.generate.num_instructions, 100)
+        self.assertEqual(cfg.generate.chunk_word_count, 1000)
         self.assertEqual(cfg.generate.output_dir, "generated")
         self.assertEqual(cfg.generate.prompt_file, "prompt.txt")
         self.assertEqual(cfg.generate.seed_file, "seed_tasks.json")
@@ -88,6 +89,7 @@ generate:
   seed_file: seed_tasks.json
   taxonomy_base: origin/main
   taxonomy_path: taxonomy
+  chunk_word_count: 1000
 serve:
   gpu_layers: -1
   host_port: 127.0.0.1:8000
