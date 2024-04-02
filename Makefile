@@ -1,8 +1,7 @@
 BUILD_ARGS = --ssh=default
-CENGINE = podman
+CENGINE ?= podman
 CONTAINER_PREFIX ?= localhost/instructlab
 TOOLBOX ?= instructlab
-MAKE = make
 
 NULL =
 COMMON_DEPS = \
@@ -25,7 +24,7 @@ ROCM_DEPS = \
 # so users can do "make rocm-gfx1100 rocm-toolbox"
 .NOTPARALLEL:
 .PHONY: all
-all: images tests functional verify
+all: images tests verify
 
 ##@ General
 
@@ -120,4 +119,4 @@ tests: ## Run tox -e unit against code
 
 .PHONY: verify
 verify: ## Run tox -e fmt, lint against code
-	tox p -e fmt, lint
+	tox p -e fmt,lint
