@@ -167,7 +167,7 @@ class TestLabDiff(unittest.TestCase):
                 "--quiet",
             ],
         )
-        self.assertIn("", result.output)
+        self.assertEqual(result.output, "")
         self.assertEqual(result.exit_code, 0)
 
     def test_diff_invalid_yaml(self):
@@ -200,10 +200,7 @@ class TestLabDiff(unittest.TestCase):
                 "--quiet",
             ],
         )
-        self.assertIn(
-            "",
-            result.output,
-        )
+        self.assertIsNotNone(result.exception)
         self.assertEqual(result.exit_code, 1)
 
     def test_diff_custom_yaml(self):
@@ -225,6 +222,6 @@ class TestLabDiff(unittest.TestCase):
             ],
         )
         # custom yaml rules mean "invalid" yaml file should pass
-        self.assertIn("", result.output)
+        self.assertEqual(result.output, "")
         self.assertEqual(result.exit_code, 0)
         Path.unlink(custom_rules_file)
