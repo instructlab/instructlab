@@ -20,6 +20,7 @@ DEFAULT_NUM_INSTRUCTIONS = 100
 DEFAULT_PROMPT_FILE = "prompt.txt"
 DEFAULT_GENERATED_FILES_OUTPUT_DIR = "generated"
 DEFAULT_CONNECTION_TIMEOUT = httpx.Timeout(timeout=30.0)
+DEFAULT_KNOWLEDGE_DOC_WC = 1000
 
 
 class ConfigException(Exception):
@@ -69,6 +70,7 @@ class _generate(BaseModel):
     num_cpus: Optional[PositiveInt] = DEFAULT_NUM_CPUS
     num_instructions: Optional[PositiveInt] = DEFAULT_NUM_INSTRUCTIONS
     output_dir: Optional[StrictStr] = DEFAULT_GENERATED_FILES_OUTPUT_DIR
+    knowledge_doc_wc: Optional[PositiveInt] = DEFAULT_KNOWLEDGE_DOC_WC
     prompt_file: Optional[StrictStr] = DEFAULT_PROMPT_FILE
     seed_file: Optional[StrictStr] = "seed_tasks.json"
 

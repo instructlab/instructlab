@@ -9,8 +9,10 @@ import platform
 import re
 import shutil
 import subprocess
+import sys
 
 # Third Party
+from langchain.text_splitter import RecursiveCharacterTextSplitter
 import click
 import git
 import gitdb
@@ -220,3 +222,37 @@ def get_documents(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
         # Cleanup: Remove the temporary directory if it exists
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
+
+
+def split_knowledge_docs(documents: List, max_context_size, split_kd_wc) -> List[str]:
+    """
+    Iterates over large documents and splits them into smaller ones.
+    Args:
+        document (dict): List of large documents
+        max_context_size (int): Defaults to 4096
+        split_kd_wc (int): Maximum number of words to include in each document split from a large one.
+    Returns:
+         List[str]: List of split documents.
+    """
+
+    ## We ask the user to input word count, but the actually value we
+    ## use is Tokens. Converting the value input by the user, to tokens,
+    ## and using that value.
+
+    no_of_tokens = int(split_kd_wc * 1.3)  # 1 word ~ 1.3 token
+    if no_of_tokens >= (max_context_size - 1024):
+        logger.error("Error: Word count for each doc cannot be more than 2400")
+        sys.exit(1)
+
+    split_docs = []
+    text_splitter = RecursiveCharacterTextSplitter(
+        separators=["\n\n", "\n"],
+        chunk_size=int(no_of_tokens * 4),  # 1 token ~ 4 English character
+        chunk_overlap=100,
+    )
+
+    for docs in documents:
+        temp = text_splitter.create_documents([docs])
+        split_docs.extend([item.page_content for item in temp])
+
+    return split_docs

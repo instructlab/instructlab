@@ -216,8 +216,9 @@ def init(
 )
 @click.pass_context
 def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
+
     """
-    Lists taxonomy files that have changed since <taxonomy-base>
+    List taxonomy files that have changed since <taxonomy-base>
     and checks that taxonomy is valid. Similar to 'git diff <ref>'.
     """
     # pylint: disable=C0415
