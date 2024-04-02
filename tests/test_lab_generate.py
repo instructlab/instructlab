@@ -18,11 +18,18 @@ from cli.generator.utils import GenerateException
 from .taxonomy import MockTaxonomy
 
 test_skill_valid_answer = b"""created_by: test-bot
+version: 1
 seed_examples:
 - answer: Yes, it is.
   question: Is this for a test?
 - answer: Yes I am very sure.
   question: Are you sure it's for a test?
+- answer: "answer3"
+  question: "question3"
+- answer: "answer4"
+  question: "question4"
+- answer: "answer5"
+  question: "question5"
 task_description: for testing
 """
 
@@ -31,6 +38,14 @@ test_skill_invalid_answer = b"""created_by: test-bot
 seed_examples:
 - answer: Yes
   question: Is this for a test?
+- answer: "answer2"
+  question: "question2"
+- answer: "answer3"
+  question: "question3"
+- answer: "answer4"
+  question: "question4"
+- answer: "answer5"
+  question: "question5"
 task_description: for testing
 """
 
@@ -148,7 +163,7 @@ class TestLabGenerate(unittest.TestCase):
                 result.exit_code, 1, "command finished with an unexpected exit code"
             )
             self.assertIn(
-                "Error reading seed examples: encoding without a string argument. Please make sure your answers are verbose enough",
+                "taxonomy files with errors",
                 result.output,
             )
 
