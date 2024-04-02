@@ -2,7 +2,7 @@
 from openai import OpenAI, OpenAIError
 
 # Local
-from .config import DEFAULT_API_KEY
+from .config import DEFAULT_API_KEY, DEFAULT_CONNECTION_TIMEOUT
 
 
 class ClientException(Exception):
@@ -12,7 +12,9 @@ class ClientException(Exception):
 def list_models(api_base, api_key=DEFAULT_API_KEY):
     """List models from OpenAI-compatible server"""
     try:
-        client = OpenAI(base_url=api_base, api_key=api_key)
+        client = OpenAI(
+            base_url=api_base, api_key=api_key, timeout=DEFAULT_CONNECTION_TIMEOUT
+        )
         return client.models.list()
     except OpenAIError as exc:
         raise ClientException(f"Connection Error {exc}") from exc

@@ -3,6 +3,7 @@ from typing import Optional
 
 # Third Party
 from pydantic import BaseModel, ConfigDict, PositiveInt, StrictStr, ValidationError
+import httpx
 import yaml
 
 DEFAULT_API_KEY = "no_api_key"
@@ -18,6 +19,7 @@ DEFAULT_NUM_CPUS = 10
 DEFAULT_NUM_INSTRUCTIONS = 100
 DEFAULT_PROMPT_FILE = "prompt.txt"
 DEFAULT_GENERATED_FILES_OUTPUT_DIR = "generated"
+DEFAULT_CONNECTION_TIMEOUT = httpx.Timeout(timeout=30.0)
 
 
 class ConfigException(Exception):

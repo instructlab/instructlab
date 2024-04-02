@@ -19,7 +19,7 @@ import httpx
 import openai
 
 # Local
-from ..config import DEFAULT_API_KEY
+from ..config import DEFAULT_API_KEY, DEFAULT_CONNECTION_TIMEOUT
 
 HELP_MD = """
 Help / TL;DR
@@ -439,7 +439,9 @@ def chat_cli(
     logger, api_base, config, question, model, context, session, qq, greedy_mode
 ):
     """Starts a CLI-based chat with the server"""
-    client = OpenAI(base_url=api_base, api_key=DEFAULT_API_KEY)
+    client = OpenAI(
+        base_url=api_base, api_key=DEFAULT_API_KEY, timeout=DEFAULT_CONNECTION_TIMEOUT
+    )
 
     # Load context/session
     loaded = {}
