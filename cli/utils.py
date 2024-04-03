@@ -194,20 +194,12 @@ def get_documents(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
 
         file_contents = []
 
-        # Adjust pattern_path based on file_patterns
-        if file_patterns:
-            if file_patterns.endswith("/"):  # If file_patterns is just a folder name
-                pattern_path = os.path.join(temp_dir, file_patterns, "*.md")
-            else:
-                pattern_path = os.path.join(temp_dir, file_patterns)
-        else:  # If file_patterns is None, consider all .md files from root folder
-            pattern_path = os.path.join(temp_dir, "*.md")
-
         logger.info("Processing files...")
-        for file_path in glob.glob(pattern_path):
-            if os.path.isfile(file_path) and file_path.endswith(".md"):
-                with open(file_path, "r", encoding="utf-8") as file:
-                    file_contents.append(file.read())
+        for pattern in file_patterns:
+            for file_path in glob.glob(os.path.join(temp_dir, pattern)):
+                if os.path.isfile(file_path) and file_path.endswith(".md"):
+                    with open(file_path, "r", encoding="utf-8") as file:
+                        file_contents.append(file.read())
         repo.close()
         shutil.rmtree(temp_dir)
         return file_contents
