@@ -20,7 +20,7 @@ import tqdm
 import yaml
 
 # Local
-from ..utils import get_documents, get_taxonomy_diff
+from ..utils import get_documents, get_taxonomy_diff, split_knowledge_docs
 from . import utils
 
 DEFAULT_PROMPT_TEMPLATE = """\
@@ -365,6 +365,13 @@ def generate_data(
     test_data = []
     for seed_example in seed_instruction_data:
         user = seed_example["instruction"]
+        documents = seed_instruction_data[0]["document"]
+        if documents:
+            documents = split_knowledge_docs(
+                documents=documents,
+                split_kd_wc=1000,
+            )
+
         if len(seed_example["input"]) > 0:
             user += "\n" + seed_example["input"]
         try:
