@@ -235,9 +235,9 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
     if quiet:
         try:
             read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
-        except (Exception, yaml.YAMLError) as exc:
+        except (SystemExit, yaml.YAMLError) as exc:
             raise SystemExit(1) from exc
-        raise SystemExit(0)
+        return
     try:
         updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
     except (SystemExit, GitError) as exc:
