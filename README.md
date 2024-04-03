@@ -259,7 +259,11 @@ lab generate --endpoint-url http://localhost:8000/v1
 
 There are three options to train the model on your synthetic data-enhanced dataset.
 
-> **Note:** **Every** `lab` command needs to be run from within your Python virtual environment.
+> [!NOTE]
+> **Every** `lab` command needs to be run from within your Python virtual environment.
+
+> [!IMPORTANT]
+> Do not use `lab train` and `lab chat` in parallel for the same model, it could cause the model to crash.
 
 #### Train the model locally on Linux
 
