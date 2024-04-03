@@ -337,7 +337,8 @@ def generate_data(
     rouge_threshold: Optional[float] = None,
     console_output=True,
     api_key: Optional[str] = None,
-    kdoc_wc=None,
+    kdoc_wc: int = None,
+    ctx_window_size: int = None,
 ):
     seed_instruction_data = []
     generate_start = time.time()
@@ -367,6 +368,7 @@ def generate_data(
     if documents:
         documents = split_knowledge_docs(
             documents=documents,
+            ctx_window_size=ctx_window_size,
             split_kd_wc=kdoc_wc,
         )
 

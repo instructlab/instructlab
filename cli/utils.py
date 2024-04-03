@@ -215,7 +215,7 @@ def get_documents(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
             shutil.rmtree(temp_dir)
 
 
-def split_knowledge_docs(documents: List, split_kd_wc) -> List[str]:
+def split_knowledge_docs(documents: List, ctx_window_size, split_kd_wc) -> List[str]:
     """
     Iterates over large documents and splits them into smaller ones.
     Args:
@@ -225,8 +225,9 @@ def split_knowledge_docs(documents: List, split_kd_wc) -> List[str]:
          List[str]: List of split documents.
     """
 
-    if split_kd_wc > 2400:
-        logger.error("Error: Word count for each doc cannot be more than 2400")
+    no_tokens_per_doc = int(split_kd_wc * 1.3)  # 1 word =~ 1.3 token
+    if no_tokens_per_doc > int(ctx_window_size - 1024):
+        logger.error("Error: Word count for each doc will exceed context window size")
         sys.exit(1)
 
     split_docs = []
