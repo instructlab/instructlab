@@ -1,5 +1,7 @@
 # InstructLab 🥼 (`ilab`)
 
+![Tests](https://github.com/instruct-lab/cli/actions/workflows/test.yml/badge.svg)
+
 ## 📖 Contents
 - [❓What is `ilab`](#-what-is-ilab)
 - [📋 Requirements](#-requirements)
