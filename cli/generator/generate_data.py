@@ -20,7 +20,7 @@ import tqdm
 import yaml
 
 # Local
-from ..utils import get_documents, get_taxonomy_diff
+from ..utils import get_documents, get_taxonomy_diff, split_knowledge_docs
 from . import utils
 
 DEFAULT_PROMPT_TEMPLATE = """\
@@ -337,6 +337,7 @@ def generate_data(
     rouge_threshold: Optional[float] = None,
     console_output=True,
     api_key: Optional[str] = None,
+    kdoc_wc=None,
 ):
     seed_instruction_data = []
     generate_start = time.time()
@@ -361,6 +362,13 @@ def generate_data(
 
     def unescape(s):
         return bytes(s, "utf-8").decode("utf-8")
+
+    documents = seed_instruction_data[0]["document"]
+    if documents:
+        documents = split_knowledge_docs(
+            documents=documents,
+            split_kd_wc=kdoc_wc,
+        )
 
     test_data = []
     for seed_example in seed_instruction_data:

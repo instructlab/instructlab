@@ -281,7 +281,9 @@ utils.make_lab_diff_aliases(cli, diff)
 @click.option(
     "--max-ctx-size",
     type=click.INT,
-    help="The context size is the maximum number of tokens considered by the model, for both the prompt and response. Defaults to 4096.",
+    default=config.MAX_CONTEXT_SIZE,
+    show_default=True,
+    help="The context size is the maximum number of tokens considered by the model, for both the prompt and response.",
 )
 @click.pass_context
 def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
@@ -323,6 +325,13 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
     type=click.INT,
     help="Number of processes to use.",
     default=config.DEFAULT_NUM_CPUS,
+    show_default=True,
+)
+@click.option(
+    "--kdoc-wc",
+    type=click.INT,
+    help="The word count of each knowledge doc that'll be created after large knowledge docs are split into smaller docs. Max value allowed: 2400",
+    default=config.DEFAULT_KNOWLEDGE_DOC_WC,
     show_default=True,
 )
 @click.option(
@@ -395,6 +404,7 @@ def generate(
     endpoint_url,
     api_key,
     yaml_rules,
+    kdoc_wc,
 ):
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=C0415
@@ -441,6 +451,7 @@ def generate(
             rouge_threshold=rouge_threshold,
             console_output=not quiet,
             yaml_rules=yaml_rules,
+            kdoc_wc=kdoc_wc,
         )
     except GenerateException as exc:
         click.secho(

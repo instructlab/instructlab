@@ -16,6 +16,8 @@ DEFAULT_TAXONOMY_BASE = "origin/main"
 DEFAULT_YAML_RULES = "yaml_rules.yaml"
 # TODO: these constants should be removed, they should not leak out
 DEFAULT_NUM_CPUS = 10
+DEFAULT_KNOWLEDGE_DOC_WC = 1000
+MAX_CONTEXT_SIZE = 4096
 DEFAULT_NUM_INSTRUCTIONS = 100
 DEFAULT_PROMPT_FILE = "prompt.txt"
 DEFAULT_GENERATED_FILES_OUTPUT_DIR = "generated"
@@ -67,6 +69,7 @@ class _generate(BaseModel):
 
     # optional fields
     num_cpus: Optional[PositiveInt] = DEFAULT_NUM_CPUS
+    knowledge_doc_wc: Optional[PositiveInt] = DEFAULT_KNOWLEDGE_DOC_WC
     num_instructions: Optional[PositiveInt] = DEFAULT_NUM_INSTRUCTIONS
     output_dir: Optional[StrictStr] = DEFAULT_GENERATED_FILES_OUTPUT_DIR
     prompt_file: Optional[StrictStr] = DEFAULT_PROMPT_FILE
@@ -85,7 +88,7 @@ class _serve(BaseModel):
     # optional fields
     host_port: Optional[StrictStr] = "127.0.0.1:8000"
     gpu_layers: Optional[int] = -1
-    max_ctx_size: Optional[PositiveInt] = 4096
+    max_ctx_size: Optional[PositiveInt] = MAX_CONTEXT_SIZE
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""

@@ -9,6 +9,7 @@ import platform
 import re
 import shutil
 import subprocess
+import sys
 
 # Third Party
 import click
@@ -212,3 +213,35 @@ def get_documents(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
         # Cleanup: Remove the temporary directory if it exists
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
+
+
+def split_knowledge_docs(documents: List, split_kd_wc) -> List[str]:
+    """
+    Iterates over large documents and splits them into smaller ones.
+    Args:
+        document (dict): List of large documents
+        split_kd_wc (int): Maximum number of words to include in each document split from a large one.
+    Returns:
+         List[str]: List of split documents.
+    """
+
+    if split_kd_wc > 2400:
+        logger.error("Error: Word count for each doc cannot be more than 2400")
+        sys.exit(1)
+
+    split_docs = []
+    for doc in documents:
+        d = ""
+        for doc_line in doc.splitlines():
+            d_extended = d + "\n" + doc_line
+            if word_count(d_extended) < split_kd_wc:
+                d = d_extended
+            else:
+                split_docs.append(d)
+                d = ""
+        split_docs.append(d)
+    return split_docs
+
+
+def word_count(doc: str) -> int:
+    return len(doc.split(" "))
