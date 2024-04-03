@@ -364,13 +364,11 @@ def generate_data(
     def unescape(s):
         return bytes(s, "utf-8").decode("utf-8")
 
-    cfg = config.get_default_config()
-
     placeholder = seed_instruction_data[0]["document"]
     if placeholder:
         documents = chunk_document(
             documents=placeholder,
-            max_context_size=cfg.serve.max_ctx_size,
+            max_context_size=config.MAX_CONTEXT_SIZE,
             chunk_word_count=chunk_word_count,
         )
 
