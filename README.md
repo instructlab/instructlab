@@ -226,9 +226,11 @@ lab generate
 
 The next step is to generate a synthetic dataset based on your newly added knowledge or skill set in the [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository.
 
-> **NOTE:** ⏳ This can take from 15 minutes to 1+ hours to complete, depending on your computing resources.
+> [!NOTE]
+> ⏳ This can take from 15 minutes to 1+ hours to complete, depending on your computing resources.
 
-> **IMPORTANT:** Do not use `lab generate` and `lab chat` in parallel for the same model, it could cause the model to crash.
+> [!IMPORTANT]
+> Do not use `lab generate` and `lab chat` in parallel for the same model, it could cause the model to crash.
 
 ```
 (venv) $ lab generate
