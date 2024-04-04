@@ -507,28 +507,55 @@ def generate(
     is_flag=True,
     help="Use model greedy decoding. Useful for debugging and reproducing errors.",
 )
+@click.option(
+    "--endpoint-url",
+    type=click.STRING,
+    help="Custom URL endpoint for OpenAI-compatible API. Defaults to the `ilab serve` endpoint.",
+)
+@click.option(
+    "--api-key",
+    type=click.STRING,
+    default=config.DEFAULT_API_KEY,  # Note: do not expose default API key
+    help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
+)
 @click.pass_context
-def chat(ctx, question, model, context, session, quick_question, greedy_mode):
+def chat(
+    ctx,
+    question,
+    model,
+    context,
+    session,
+    quick_question,
+    greedy_mode,
+    endpoint_url,
+    api_key,
+):
     """Run a chat using the modified model"""
     # pylint: disable=C0415
     # Local
     from .chat.chat import ChatException, chat_cli
     from .server import ensure_server
 
-    try:
-        server_process, api_base = ensure_server(
-            ctx.obj.logger,
-            ctx.obj.config.serve,
-        )
-    except Exception as exc:
-        click.secho(f"Failed to start server: {exc}", fg="red")
-        raise click.exceptions.Exit(1)
-    if not api_base:
-        api_base = ctx.obj.config.serve.api_base()
+    if endpoint_url:
+        api_base = endpoint_url
+        server_process = None
+    else:
+        try:
+            server_process, api_base = ensure_server(
+                ctx.obj.logger,
+                ctx.obj.config.serve,
+            )
+        except Exception as exc:
+            click.secho(f"Failed to start server: {exc}", fg="red")
+            raise click.exceptions.Exit(1)
+        if not api_base:
+            api_base = ctx.obj.config.serve.api_base()
+
     try:
         chat_cli(
             logger=ctx.obj.logger,
             api_base=api_base,
+            api_key=api_key,
             config=ctx.obj.config.chat,
             question=question,
             model=model,

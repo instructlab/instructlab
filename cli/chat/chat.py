@@ -436,11 +436,20 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
 
 def chat_cli(
-    logger, api_base, config, question, model, context, session, qq, greedy_mode
+    logger,
+    api_base,
+    api_key,
+    config,
+    question,
+    model,
+    context,
+    session,
+    qq,
+    greedy_mode,
 ):
     """Starts a CLI-based chat with the server"""
     client = OpenAI(
-        base_url=api_base, api_key=DEFAULT_API_KEY, timeout=DEFAULT_CONNECTION_TIMEOUT
+        base_url=api_base, api_key=api_key, timeout=DEFAULT_CONNECTION_TIMEOUT
     )
 
     # Load context/session
