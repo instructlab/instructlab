@@ -45,6 +45,9 @@ trap 'cleanup "$?"' EXIT QUIT INT TERM
 
 rm -f config.yaml
 
+# print version
+ilab --version
+
 # pipe 3 carriage returns to ilab init to get past the prompts
 echo -e "\n\n\n" | ilab init
 

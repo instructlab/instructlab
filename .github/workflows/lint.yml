@@ -20,15 +20,19 @@ on:
       - "main"
     paths:
       - '**.py'
-      - 'scripts/*.sh'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
       - 'tox.ini'
+      - 'scripts/*.sh'
   pull_request:
     branches: 
       - "main"
     paths:
       - '**.py'
-      - 'scripts/*.sh'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
       - 'tox.ini'
+      - 'scripts/*.sh'
 
 env:
   PYTHON_VERSION: 3.11
@@ -39,6 +43,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # https://github.com/actions/checkout/issues/249
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
