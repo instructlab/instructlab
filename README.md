@@ -234,7 +234,7 @@ The synthetic data set will be three files in the newly created `generated` dire
 > **NOTE:** ⏳ This can take from 15 minutes to 1+ hours to complete, depending on your computing resources.
 
 It is also possible to run the generate step against a different model via an
-OpenAI-compatible API. For example, the one spawned by `ilab serve` or any remote or locally hosted LLM (e.g. via [ollama](ollama.ai/), [LM Studio](https://lmstudio.ai), etc.)
+OpenAI-compatible API. For example, the one spawned by `ilab serve` or any remote or locally hosted LLM (e.g. via [ollama](https://ollama.com/), [LM Studio](https://lmstudio.ai), etc.)
 
 ```
 ilab generate --endpoint-url http://localhost:8000/v1
