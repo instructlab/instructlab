@@ -326,6 +326,13 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
     show_default=True,
 )
 @click.option(
+    "--chunk-word-count",
+    type=click.INT,
+    help="Number of words to chunk the document",
+    default=config.DEFAULT_CHUNK_WORD_COUNT,
+    show_default=True,
+)
+@click.option(
     "--num-instructions",
     type=click.INT,
     help="Number of instructions to generate.",
@@ -395,6 +402,7 @@ def generate(
     endpoint_url,
     api_key,
     yaml_rules,
+    chunk_word_count,
 ):
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=C0415
@@ -441,6 +449,7 @@ def generate(
             rouge_threshold=rouge_threshold,
             console_output=not quiet,
             yaml_rules=yaml_rules,
+            chunk_word_count=chunk_word_count,
         )
     except GenerateException as exc:
         click.secho(

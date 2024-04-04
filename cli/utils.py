@@ -9,8 +9,10 @@ import platform
 import re
 import shutil
 import subprocess
+import sys
 
 # Third Party
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 import click
 import git
 import gitdb
@@ -212,3 +214,35 @@ def get_documents(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
         # Cleanup: Remove the temporary directory if it exists
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
+
+
+def chunk_document(documents: List, max_context_size, chunk_word_count) -> List[str]:
+    """
+    Iterates over the documents and splits them into chunks based on the word count provided by the user.
+    Args:
+        document (dict): List of documents retrieved from git (can also consist of a single document)
+        max_context_size (int): Defaults to 4096
+        chunk_word_count (int): Maximum number of words to chunk a document.
+    Returns:
+         List[str]: List of chunked documents.
+    """
+    token_size = int(chunk_word_count * 1.3)  # 1 word ~ 1.3 token
+    content = []
+    if token_size < int(max_context_size - 1024):
+        text_splitter = RecursiveCharacterTextSplitter(
+            separators=["\n\n", "\n"],
+            chunk_size=int(token_size * 4),  # 1 token ~ 4 English character
+            chunk_overlap=100,
+        )
+
+        for docs in documents:
+            temp = text_splitter.create_documents([docs])
+            content.extend([item.page_content for item in temp])
+
+    else:
+        logger.error(
+            "Error: Given word count exceeds the required chunk limit i.e. 2400"
+        )
+        sys.exit()
+
+    return content
