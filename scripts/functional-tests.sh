@@ -3,7 +3,7 @@
 set -ex
 
 # build a prompt string that includes the time, source file, line number, and function name
-export PS4='+$(printf "%(%Y-%m-%d %T)T") ${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+export PS4='+$(date +"%Y-%m-%d %T") ${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
 pip install .
 
@@ -35,9 +35,9 @@ cleanup() {
         test_session_history \
         simple_math.yaml
     # revert log level change from test_temp_server()
-    sed -i 's/DEBUG/INFO/g' config.yaml
+    sed -i '' 's/DEBUG/INFO/g' config.yaml
     # revert port change from test_bind_port()
-    sed -i 's/9999/8000/g' config.yaml
+    sed -i '' 's/9999/8000/g' config.yaml
     set -e
 }
 
@@ -52,7 +52,7 @@ ilab --version
 echo -e "\n\n\n" | ilab init
 
 # Enable Debug in func tests
-sed -i -e 's/log_level:.*/log_level: DEBUG/g;' config.yaml
+sed -i '' -e 's/log_level:.*/log_level: DEBUG/g;' config.yaml
 
 # download the latest version of the ilab
 ilab download
@@ -76,7 +76,7 @@ test_bind_port(){
     }
 
     # configure a different port
-    exec sed -i 's/8000/9999/g' config.yaml
+    exec sed -i '' 's/8000/9999/g' config.yaml
 
     # check that ilab serve is working on the new port
     # catch ERROR strings in the output
@@ -211,7 +211,7 @@ seed_examples:
 task_description: 'simple maths'
 EOF
 
-    sed -i -e 's/num_instructions:.*/num_instructions: 1/g' config.yaml
+    sed -i '' -e 's/num_instructions:.*/num_instructions: 1/g' config.yaml
 
     # This should be finished in a minut or so but time it out incase it goes wrong
     timeout 10m ilab generate --taxonomy-path simple_math.yaml
@@ -227,7 +227,7 @@ EOF
 test_temp_server(){
     nc -l 8000 --keep-open &
     PID_SERVE=$!
-    sed -i 's/INFO/DEBUG/g' config.yaml
+    sed -i '' 's/INFO/DEBUG/g' config.yaml
     expect -c '
         set timeout 120
         spawn ilab chat
