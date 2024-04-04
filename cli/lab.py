@@ -14,6 +14,7 @@ from git import GitError, Repo
 from huggingface_hub import hf_hub_download
 from huggingface_hub import logging as hf_logging
 import click
+import yaml
 
 # Local
 # NOTE: Subcommands are using local imports to speed up startup time.
@@ -25,7 +26,7 @@ if typing.TYPE_CHECKING:
 
 
 class Lab:
-    """Lab object holds high-level information about lab CLI"""
+    """Lab object holds high-level information about ilab CLI"""
 
     def __init__(self, filename):
         self.config_file = filename
@@ -45,7 +46,7 @@ def configure(ctx, param, filename):
 
     if not exists(filename):
         raise click.ClickException(
-            f"`{filename}` does not exists, please run `lab init` or point to a valid configuration file using `--config=<path>`."
+            f"`{filename}` does not exists, please run `ilab init` or point to a valid configuration file using `--config=<path>`."
         )
 
     try:
@@ -73,12 +74,11 @@ def configure(ctx, param, filename):
 def cli(ctx, config):
     """CLI for interacting with InstructLab.
 
-    If this is your first time running lab, it's best to start with `lab init` to create the environment.
+    If this is your first time running ilab, it's best to start with `ilab init` to create the environment.
     """
 
 
 @cli.command()
-@click.pass_context
 @click.option(
     "--interactive/--non-interactive",
     default=True,
@@ -118,9 +118,7 @@ def cli(ctx, config):
     "Please do not use this option if you are planning to contribute back "
     "using the same taxonomy repository. ",
 )
-# pylint: disable=unused-argument
 def init(
-    ctx,
     interactive,
     model_path,
     taxonomy_path,
@@ -191,7 +189,7 @@ def init(
     config.write_config(cfg)
 
     click.echo(
-        "Initialization completed successfully, you're ready to start using `lab`. Enjoy!"
+        "Initialization completed successfully, you're ready to start using `ilab`. Enjoy!"
     )
 
 
@@ -208,20 +206,19 @@ def init(
 @click.option(
     "--yaml-rules",
     type=click.Path(),
-    default=config.DEFAULT_YAML_RULES,
-    show_default=True,
-    help="Custom rules file for YAML linting",
+    default=None,
+    help="Custom rules file for YAML linting.",
 )
 @click.option(
     "--quiet",
     is_flag=True,
-    help="Suppress the diff list.",
+    help="Suppress all output. Call returns 0 if check passes, 1 otherwise.",
 )
 @click.pass_context
 def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
     """
-    Lists taxonomy files that have changed since <taxonomy-base>.
-    Similar to 'git diff <ref>' and check that taxonomy is valid.
+    Lists taxonomy files that have changed since <taxonomy-base>
+    and checks that taxonomy is valid. Similar to 'git diff <ref>'.
     """
     # pylint: disable=C0415
     # Local
@@ -231,36 +228,41 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
         taxonomy_base = ctx.obj.config.generate.taxonomy_base
     if not taxonomy_path:
         taxonomy_path = ctx.obj.config.generate.taxonomy_path
-    if quiet:
-        if not yaml_rules:
-            yaml_rules = ctx.obj.config.generate.yaml_rules
-        if not ctx.obj:
-            logger = logging.getLogger(__name__)
-        else:
-            logger = ctx.obj.logger
-        # pylint: disable=logging-fstring-interpolation
-        logger.debug(f"Checking taxonomy: '{taxonomy_path}:{taxonomy_base}'")
-        read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
-        # below will only run if `read_taxonomy` throws no errors
-        click.secho(
-            f"Taxonomy in {taxonomy_path} is valid :)",
-            fg="green",
-        )
+    if not ctx.obj:
+        logger = logging.getLogger(__name__)
     else:
+        logger = ctx.obj.logger
+    if quiet:
         try:
-            updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
-        except (SystemExit, GitError) as exc:
-            click.secho(
-                f"Reading taxonomy failed with the following error: {exc}",
-                fg="red",
-            )
-            return
-        for f in updated_taxonomy_files:
-            click.echo(f)
+            read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
+        except (Exception, yaml.YAMLError) as exc:
+            raise SystemExit(1) from exc
+    try:
+        updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
+    except (SystemExit, GitError) as exc:
+        click.secho(
+            f"Reading taxonomy failed with the following error: {exc}",
+            fg="red",
+        )
+        return
+    for f in updated_taxonomy_files:
+        click.echo(f)
+    try:
+        read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
+    except (SystemExit, yaml.YAMLError) as exc:
+        click.secho(
+            f"Reading taxonomy failed with the following error: {exc}",
+            fg="red",
+        )
+        raise SystemExit(1) from exc
+    click.secho(
+        f"Taxonomy in /{taxonomy_path}/ is valid :)",
+        fg="green",
+    )
 
 
-# lab list => lab diff
-# lab check => lab diff --quiet
+# ilab list => ilab diff
+# ilab check => ilab diff --quiet
 utils.make_lab_diff_aliases(cli, diff)
 
 
@@ -312,21 +314,36 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
 @cli.command()
 @click.option(
     "--model",
+    default=config.DEFAULT_MODEL,
+    show_default=True,
     help="Name of the model used during generation.",
 )
 @click.option(
     "--num-cpus",
     type=click.INT,
-    help="Number of processes to use. Defaults to 10.",
+    help="Number of processes to use.",
+    default=config.DEFAULT_NUM_CPUS,
+    show_default=True,
+)
+@click.option(
+    "--chunk-word-count",
+    type=click.INT,
+    help="Number of words to chunk the document",
+    default=config.DEFAULT_CHUNK_WORD_COUNT,
+    show_default=True,
 )
 @click.option(
     "--num-instructions",
     type=click.INT,
-    help="Number of instructions to generate. Defaults to 100.",
+    help="Number of instructions to generate.",
+    default=config.DEFAULT_NUM_INSTRUCTIONS,
+    show_default=True,
 )
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
+    default=config.DEFAULT_TAXONOMY_PATH,
+    show_default=True,
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone or local file path.",
 )
 @click.option(
@@ -338,12 +355,8 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
 @click.option(
     "--output-dir",
     type=click.Path(),
+    default=config.DEFAULT_GENERATED_FILES_OUTPUT_DIR,
     help="Path to output generated files.",
-)
-@click.option(
-    "--seed-file",
-    type=click.Path(),
-    help="Path to a seed file.",
 )
 @click.option(
     "--rouge-threshold",
@@ -360,7 +373,7 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
 @click.option(
     "--endpoint-url",
     type=click.STRING,
-    help="Custom URL endpoint for OpenAI-compatible API. Defaults to the `lab serve` endpoint.",
+    help="Custom URL endpoint for OpenAI-compatible API. Defaults to the `ilab serve` endpoint.",
 )
 @click.option(
     "--api-key",
@@ -375,6 +388,13 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
     show_default=True,
     help="Rules file for YAML linting",
 )
+@click.option(
+    "--server-ctx-size",
+    type=click.INT,
+    default=config.MAX_CONTEXT_SIZE,
+    show_default=True,
+    help="The context size is the maximum number of tokens the server will consider.",
+)
 @click.pass_context
 def generate(
     ctx,
@@ -384,12 +404,13 @@ def generate(
     taxonomy_path,
     taxonomy_base,
     output_dir,
-    seed_file,
     rouge_threshold,
     quiet,
     endpoint_url,
     api_key,
     yaml_rules,
+    chunk_word_count,
+    server_ctx_size,
 ):
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=C0415
@@ -399,21 +420,31 @@ def generate(
     from .server import ensure_server
 
     server_process = None
+    logger = logging.getLogger("TODO")
+    prompt_file_path = config.DEFAULT_PROMPT_FILE
+    if ctx.obj is not None:
+        logger = ctx.obj.logger
+        prompt_file_path = ctx.obj.config.generate.prompt_file
+
     if endpoint_url:
         api_base = endpoint_url
     else:
-        server_process, api_base = ensure_server(
-            ctx.obj.logger,
-            ctx.obj.config.serve,
-        )
+        try:
+            server_process, api_base = ensure_server(
+                ctx.obj.logger,
+                ctx.obj.config.serve,
+            )
+        except Exception as exc:
+            click.secho(f"Failed to start server: {exc}", fg="red")
+            raise click.exceptions.Exit(1)
         if not api_base:
             api_base = ctx.obj.config.serve.api_base()
     try:
-        ctx.obj.logger.info(
-            f"Generating model '{model}' using {num_cpus} cpus, taxonomy: '{taxonomy_path}' and seed '{seed_file}' against {api_base} server"
+        click.echo(
+            f"Generating synthetic data using '{model}' model, taxonomy:'{taxonomy_path}' against {api_base} server"
         )
         generate_data(
-            logger=ctx.obj.logger,
+            logger=logger,
             api_base=api_base,
             api_key=api_key,
             model_name=model,
@@ -422,11 +453,12 @@ def generate(
             taxonomy=taxonomy_path,
             taxonomy_base=taxonomy_base,
             output_dir=output_dir,
-            prompt_file_path=ctx.obj.config.generate.prompt_file,
-            seed_tasks_path=seed_file,
+            prompt_file_path=prompt_file_path,
             rouge_threshold=rouge_threshold,
             console_output=not quiet,
             yaml_rules=yaml_rules,
+            chunk_word_count=chunk_word_count,
+            server_ctx_size=server_ctx_size,
         )
     except GenerateException as exc:
         click.secho(
@@ -475,24 +507,55 @@ def generate(
     is_flag=True,
     help="Use model greedy decoding. Useful for debugging and reproducing errors.",
 )
+@click.option(
+    "--endpoint-url",
+    type=click.STRING,
+    help="Custom URL endpoint for OpenAI-compatible API. Defaults to the `ilab serve` endpoint.",
+)
+@click.option(
+    "--api-key",
+    type=click.STRING,
+    default=config.DEFAULT_API_KEY,  # Note: do not expose default API key
+    help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
+)
 @click.pass_context
-def chat(ctx, question, model, context, session, quick_question, greedy_mode):
+def chat(
+    ctx,
+    question,
+    model,
+    context,
+    session,
+    quick_question,
+    greedy_mode,
+    endpoint_url,
+    api_key,
+):
     """Run a chat using the modified model"""
     # pylint: disable=C0415
     # Local
     from .chat.chat import ChatException, chat_cli
     from .server import ensure_server
 
-    server_process, api_base = ensure_server(
-        ctx.obj.logger,
-        ctx.obj.config.serve,
-    )
-    if not api_base:
-        api_base = ctx.obj.config.serve.api_base()
+    if endpoint_url:
+        api_base = endpoint_url
+        server_process = None
+    else:
+        try:
+            server_process, api_base = ensure_server(
+                ctx.obj.logger,
+                ctx.obj.config.serve,
+            )
+        except Exception as exc:
+            click.secho(f"Failed to start server: {exc}", fg="red")
+            raise click.exceptions.Exit(1)
+        if not api_base:
+            api_base = ctx.obj.config.serve.api_base()
+
     try:
         chat_cli(
             logger=ctx.obj.logger,
             api_base=api_base,
+            api_key=api_key,
             config=ctx.obj.config.chat,
             question=question,
             model=model,
@@ -698,7 +761,7 @@ def train(
     four_bit_quant: bool,
 ):
     """
-    Takes synthetic data generated locally with `lab generate` and the previous model and learns a new model using the MLX API.
+    Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
     # pylint: disable=C0415
@@ -722,7 +785,7 @@ def train(
             if len(train_files) > 1 or len(test_files) > 1:
                 # pylint: disable=f-string-without-interpolation
                 click.secho(
-                    f"Found multiple files from `lab generate`. Using the most recent generation.",
+                    f"Found multiple files from `ilab generate`. Using the most recent generation.",
                     fg="yellow",
                 )
             # First file is latest (by above reverse sort and timestamped names)
@@ -902,8 +965,8 @@ def train(
 )
 @click.option(
     "--adapter-file",
-    help="LoRA adapter to use for test.",
-    default=None,
+    help="LoRA adapter to use for test. Set to 'None' to force only testing behavior from before training.",
+    default="auto",
     show_default=True,
 )
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
@@ -914,8 +977,17 @@ def test(data_dir, model_dir, adapter_file):
     # Local
     from .train.lora_mlx.lora import load_and_train
 
-    if adapter_file is None:
+    if adapter_file == "auto":
         adapter_file = os.path.join(model_dir, "adapters.npz")
+    elif adapter_file.lower() == "none":
+        adapter_file = None
+
+    adapter_file_exists = adapter_file and os.path.exists(adapter_file)
+    if adapter_file and not adapter_file_exists:
+        print(
+            "NOTE: Adapter file does not exist. Testing behavior before training only. - %s\n"
+            % adapter_file
+        )
 
     # Load the JSON Lines file
     test_data_dir = f"{data_dir}/test.jsonl"
@@ -934,10 +1006,14 @@ def test(data_dir, model_dir, adapter_file):
         print("\n-----model output BEFORE training----:\n")
         load_and_train(model=model_dir, no_adapter=True, max_tokens=100, prompt=prompt)
 
-        print("\n-----model output AFTER training----:\n")
-        load_and_train(
-            model=model_dir, adapter_file=adapter_file, max_tokens=100, prompt=prompt
-        )
+        if adapter_file_exists:
+            print("\n-----model output AFTER training----:\n")
+            load_and_train(
+                model=model_dir,
+                adapter_file=adapter_file,
+                max_tokens=100,
+                prompt=prompt,
+            )
 
 
 @cli.command()

@@ -15,17 +15,12 @@ import time
 # Third Party
 from jinja2 import Template
 from rouge_score import rouge_scorer
-import gitdb
+import click
 import tqdm
 import yaml
 
-try:
-    # Third Party
-    import git
-except ImportError:
-    pass
-
 # Local
+from ..utils import chunk_document, get_documents, get_taxonomy_diff
 from . import utils
 
 DEFAULT_PROMPT_TEMPLATE = """\
@@ -109,9 +104,15 @@ def check_prompt_file(prompt_file_path):
 
 
 def encode_prompt(prompt_instructions, prompt):
-    """Encode multiple prompt instructions into a single string."""
+    """Encode multiple prompt instructions into a single string.
+    If documents exist, randomly select one."""
     idx = 0
-    document = prompt_instructions[0].get("document")
+    document = None
+    document_list = prompt_instructions[0].get("document")
+
+    if document_list:
+        document = random.choice(document_list)
+
     prompt = Template(prompt).render(
         taxonomy=prompt_instructions[0]["taxonomy_path"],
         task_description=prompt_instructions[0]["task_description"],
@@ -325,7 +326,6 @@ def generate_data(
     output_dir: Optional[str] = None,
     taxonomy: Optional[str] = None,
     taxonomy_base: Optional[str] = None,
-    seed_tasks_path: Optional[str] = None,
     prompt_file_path: Optional[str] = None,
     model_name: Optional[str] = None,
     num_cpus: Optional[int] = None,
@@ -337,6 +337,8 @@ def generate_data(
     rouge_threshold: Optional[float] = None,
     console_output=True,
     api_key: Optional[str] = None,
+    chunk_word_count=None,
+    server_ctx_size=None,
 ):
     seed_instruction_data = []
     generate_start = time.time()
@@ -355,10 +357,7 @@ def generate_data(
         raise SystemExit(f"Error: taxonomy ({taxonomy}) does not exist.")
 
     seeds = len(seed_instruction_data)
-    logger.debug(
-        f"Loaded {seeds} human-written seed instructions from "
-        f"{taxonomy or seed_tasks_path}"
-    )
+    logger.debug(f"Loaded {seeds} human-written seed instructions from {taxonomy}")
     if not seeds:
         raise SystemExit("Nothing to generate. Exiting.")
 
@@ -368,15 +367,31 @@ def generate_data(
     test_data = []
     for seed_example in seed_instruction_data:
         user = seed_example["instruction"]
+
+        documents = seed_example["document"]
+        if documents:
+            seed_example["document"] = chunk_document(
+                documents=documents,
+                server_ctx_size=server_ctx_size,
+                chunk_word_count=chunk_word_count,
+            )
+
         if len(seed_example["input"]) > 0:
             user += "\n" + seed_example["input"]
-        test_data.append(
-            {
-                "system": utils.SYSTEM_PROMPT,
-                "user": unescape(user),
-                "assistant": unescape(seed_example["output"]),
-            }
-        )
+        try:
+            test_data.append(
+                {
+                    "system": utils.SYSTEM_PROMPT,
+                    "user": unescape(user),
+                    "assistant": unescape(seed_example["output"]),
+                }
+            )
+        except TypeError as exc:
+            click.secho(
+                f"Error reading seed examples: {exc}. Please make sure your answers are verbose enough.",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
 
     name = Path(model_name).stem  # Just in case it is a file path
     date_suffix = datetime.now().replace(microsecond=0).isoformat().replace(":", "_")
@@ -391,7 +406,6 @@ def generate_data(
     request_idx = 0
     # load the LM-generated instructions
     machine_instruction_data = []
-    train_data = []
     if os.path.exists(os.path.join(output_dir, "regen.json")):
         machine_instruction_data = utils.jload(os.path.join(output_dir, "regen.json"))
         logger.debug(
@@ -490,6 +504,7 @@ def generate_data(
             f"Generated {total} instructions(discarded {discarded}), rouged {total - keep}, kept {keep} instructions"
         )
         utils.jdump(machine_instruction_data, os.path.join(output_dir, output_file))
+        train_data = []
         for synth_example in machine_instruction_data:
             user = synth_example["instruction"]
             if len(synth_example["input"]) > 0:
@@ -524,61 +539,6 @@ def generate_data(
     logger.info(f"Generation took {generate_duration:.2f}s")
 
 
-def istaxonomyfile(fn):
-    topleveldir = fn.split("/")[0]
-    if fn.endswith(".yaml") and topleveldir in ["compositional_skills", "knowledge"]:
-        return True
-    return False
-
-
-def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
-    repo = git.Repo(repo)
-    untracked_files = [u for u in repo.untracked_files if istaxonomyfile(u)]
-
-    branches = [b.name for b in repo.branches]
-
-    head_commit = None
-    if "/" in base:
-        re_git_branch = re.compile(f"remotes/{base}$", re.MULTILINE)
-    elif base in branches:
-        re_git_branch = re.compile(f"{base}$", re.MULTILINE)
-    else:
-        try:
-            head_commit = repo.commit(base)
-        except gitdb.exc.BadName as exc:
-            raise SystemExit(
-                yaml.YAMLError(
-                    f'Couldn\'t find the taxonomy git ref "{base}" from the current HEAD'
-                )
-            ) from exc
-
-    # Move backwards from HEAD until we find the first commit that is part of base
-    # then we can take our diff from there
-    current_commit = repo.commit("HEAD")
-    while not head_commit:
-        branches = repo.git.branch("-a", "--contains", current_commit.hexsha)
-        if re_git_branch.findall(branches):
-            head_commit = current_commit
-            break
-        try:
-            current_commit = current_commit.parents[0]
-        except IndexError as exc:
-            raise SystemExit(
-                yaml.YAMLError(
-                    f'Couldn\'t find the taxonomy base branch "{base}" from the current HEAD'
-                )
-            ) from exc
-
-    modified_files = [
-        d.b_path
-        for d in head_commit.diff(None)
-        if not d.deleted_file and istaxonomyfile(d.b_path)
-    ]
-
-    updated_taxonomy_files = list(set(untracked_files + modified_files))
-    return updated_taxonomy_files
-
-
 # pylint: disable=broad-exception-caught
 def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
     # pylint: disable=C0415
@@ -598,19 +558,21 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
     try:
         with open(file_path, "r", encoding="utf-8") as file:
             # do general YAML linting if specified
-            if yaml_rules:
+            if yaml_rules is not None:
                 try:
                     yaml_config = YamlLintConfig(file=yaml_rules)
                 except FileNotFoundError:
-                    logger.warning(f"Cannot find {yaml_rules}. Using default rules.")
+                    logger.debug(f"Cannot find {yaml_rules}. Using default rules.")
                     yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
-                for p in linter.run(file, yaml_config):
-                    errors += 1
-                    logger.error(
-                        f"error found in file {file.name}: {p.desc} {p.line} {p.rule}"
-                    )
-                    return None, warnings, errors
-            # do more explict checking of file contents
+            else:
+                yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
+            for p in linter.run(file, yaml_config):
+                errors += 1
+                logger.error(
+                    f"error found in file {file.name}: {p.desc} {p.line} {p.rule}"
+                )
+                return None, warnings, errors
+        # do more explict checking of file contents
         with open(file_path, "r", encoding="utf-8") as file:
             contents = yaml.safe_load(file)
             if not contents:
@@ -627,7 +589,11 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
             # get seed instruction data
             tax_path = "->".join(file_path.split(os.sep)[1:-1])
             task_description = contents.get("task_description")
-            document = contents.get("document")
+            documents = contents.get("document")
+            if documents:
+                documents = get_documents(documents)
+                logger.info("Content from git repo fetched")
+
             for t in get_seed_examples(contents):
                 q = t["question"]
                 a = t["answer"]
@@ -651,12 +617,12 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
                         "output": a,
                         "taxonomy_path": tax_path,
                         "task_description": task_description,
-                        "document": document,
+                        "document": documents,
                     }
                 )
     except Exception as e:
         errors += 1
-        logger.error(f"Exception {e} raised in {file_path}")
+        raise (f"Exception {e} raised in {file_path}") from e
 
     return seed_instruction_data, warnings, errors
 
@@ -683,9 +649,9 @@ def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
         total_errors = 0
         total_warnings = 0
         if updated_taxonomy_files:
-            logger.info("Found new taxonomy files:")
+            logger.debug("Found new taxonomy files:")
             for e in updated_taxonomy_files:
-                logger.info(f"* {e}")
+                logger.debug(f"* {e}")
         for f in updated_taxonomy_files:
             file_path = os.path.join(taxonomy, f)
             data, warnings, errors = read_taxonomy_file(logger, file_path, yaml_rules)

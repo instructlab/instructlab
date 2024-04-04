@@ -1,7 +1,10 @@
 # Standard
+from multiprocessing import Queue
+from time import sleep
 import logging
 import multiprocessing
 import random
+import socket
 
 # Third Party
 from llama_cpp import llama_chat_format
@@ -20,15 +23,41 @@ class ServerException(Exception):
 
 
 def ensure_server(logger, serve_config):
-    """Checks if server is running, if not starts one as a subprocess. Returns the server process and the URL where it's available."""
+    """Checks if server is running, if not starts one as a subprocess. Returns the server process
+    and the URL where it's available."""
     try:
         api_base = serve_config.api_base()
         logger.debug(f"Trying to connect to {api_base}...")
         list_models(api_base)
         return (None, None)
     except ClientException:
+        tried_ports = set()
+        # use a queue to communicate between the main process and the server process
+        queue = Queue()
         port = random.randint(1024, 65535)
         host = serve_config.host_port.rsplit(":", 1)[0]
+        logger.debug(f"Trying port {port}...")
+
+        # extract address provided in the config
+        while not can_bind_to_port(host, port):
+            logger.debug(f"Port {port} is not available.")
+            # add the port to the map so that we can avoid using the same one
+            tried_ports.add(port)
+            port = random.randint(1024, 65535)
+            while True:
+                # if all the ports have been tried, exit
+                if len(tried_ports) == 65535 - 1024:
+                    # pylint: disable=raise-missing-from
+                    raise SystemExit(
+                        "No available ports to start the temporary server."
+                    )
+                if port in tried_ports:
+                    logger.debug(f"Port {port} has already been tried.")
+                    port = random.randint(1024, 65535)
+                else:
+                    break
+        logger.debug(f"Port {port} is available.")
+
         host_port = f"{host}:{port}"
         temp_api_base = get_api_base(host_port)
         logger.debug(
@@ -46,10 +75,25 @@ def ensure_server(logger, serve_config):
                 "max_ctx_size": serve_config.max_ctx_size,
                 "port": port,
                 "host": host,
+                "queue": queue,
             },
             daemon=True,
         )
         server_process.start()
+
+        # in case the server takes some time to fail we wait a bit
+        count = 0
+        while server_process.is_alive():
+            sleep(0.1)
+            if count > 10:
+                break
+            count += 1
+
+        # if the queue is not empty it means the server failed to start
+        if not queue.empty():
+            # pylint: disable=raise-missing-from
+            raise queue.get()
+
         return (server_process, temp_api_base)
 
 
@@ -61,6 +105,7 @@ def server(
     threads=None,
     host="localhost",
     port=8000,
+    queue=None,
 ):
     """Start OpenAI-compatible server"""
     settings = Settings(
@@ -76,6 +121,9 @@ def server(
     try:
         app = create_app(settings=settings)
     except ValueError as exc:
+        if queue:
+            queue.put(exc)
+            return
         raise ServerException(f"failed creating the server application: {exc}") from exc
 
     try:
@@ -86,6 +134,9 @@ def server(
         ).to_chat_handler()
     # pylint: disable=broad-exception-caught
     except Exception as exc:
+        if queue:
+            queue.put(exc)
+            return
         raise ServerException(f"failed creating the server application: {exc}") from exc
 
     logger.info("Starting server process, press CTRL+C to shutdown server...")
@@ -93,3 +144,12 @@ def server(
         f"After application startup complete see http://{host}:{port}/docs for API."
     )
     uvicorn.run(app, host=host, port=port, log_level=logging.ERROR)
+
+
+def can_bind_to_port(host, port):
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        try:
+            s.bind((host, port))
+            return True
+        except socket.error:
+            return False

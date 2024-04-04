@@ -19,7 +19,7 @@ import httpx
 import openai
 
 # Local
-from ..config import DEFAULT_API_KEY
+from ..config import DEFAULT_API_KEY, DEFAULT_CONNECTION_TIMEOUT
 
 HELP_MD = """
 Help / TL;DR
@@ -38,7 +38,7 @@ Help / TL;DR
 - `/l filepath`: **l**oad `filepath` and start a new session
 - `/L filepath`: **l**oad `filepath` (permanently) and start a new session
 
-Press Meta+Enter or Esc Enter to end multiline input.
+Press Alt (or Meta) and Enter or Esc Enter to end multiline input.
 """
 
 CONTEXTS = {
@@ -195,6 +195,12 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         raise KeyboardInterrupt
 
     def __handle_replay(self, content, display_wrapper=(lambda x: x)):
+        # if the history is empty, then return
+        if (
+            len(self.info["messages"]) == 1
+            and self.info["messages"][0]["role"] == "system"
+        ):
+            raise KeyboardInterrupt
         cs = content.split()
         try:
             i = 1 if len(cs) == 1 else int(cs[1]) * 2 - 1
@@ -430,10 +436,21 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
 
 def chat_cli(
-    logger, api_base, config, question, model, context, session, qq, greedy_mode
+    logger,
+    api_base,
+    api_key,
+    config,
+    question,
+    model,
+    context,
+    session,
+    qq,
+    greedy_mode,
 ):
     """Starts a CLI-based chat with the server"""
-    client = OpenAI(base_url=api_base, api_key=DEFAULT_API_KEY)
+    client = OpenAI(
+        base_url=api_base, api_key=api_key, timeout=DEFAULT_CONNECTION_TIMEOUT
+    )
 
     # Load context/session
     loaded = {}

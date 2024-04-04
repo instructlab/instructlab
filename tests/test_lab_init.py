@@ -6,13 +6,10 @@ import unittest
 # Third Party
 from click.testing import CliRunner
 from git import GitError
-import pydantic
-import pydantic_yaml
 
 # First Party
 from cli import lab
 from cli.config import read_config
-from tests.schema import Config
 
 
 class TestLabInit(unittest.TestCase):
@@ -28,24 +25,6 @@ class TestLabInit(unittest.TestCase):
             self.assertEqual(result.exit_code, 0)
             self.assertIn("config.yaml", os.listdir())
             mock_clone_from.assert_called_once()
-
-    @patch("cli.lab.Repo.clone_from")
-    def test_init_config(self, mock_clone_from):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(lab.init, args=["--non-interactive"])
-            self.assertEqual(result.exit_code, 0)
-            self.assertIn("config.yaml", os.listdir())
-            mock_clone_from.assert_called_once()
-            try:
-                pydantic_yaml.parse_yaml_file_as(model_type=Config, file="config.yaml")
-                self.assertTrue
-            except TypeError as e:
-                print(e)
-                self.assertFalse
-            except pydantic.ValidationError as e:
-                print(e)
-                assert self.assertFalse
 
     def test_init_interactive(self):
         runner = CliRunner()

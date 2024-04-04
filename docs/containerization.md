@@ -1,10 +1,12 @@
-# Putting `lab` in a Container AND making it go fast 
+# Putting ilab` in a Container AND making it go fast
 
-Containerization of `lab` allows for portability and ease of setup. With this, users can now run lab on OpenShift to test the speed of `lab train` and `generate` using dedicated GPUs. This guide shows you how to put the `lab`CLI, all of its dependencies,
-and your GPU into a container for an isolated and easily reproducible experience.
+Containerization of `ilab` allows for portability and ease of setup. With this,
+users can now run lab on OpenShift to test the speed of `ilab train` and `generate`
+using dedicated GPUs. This guide shows you how to put the `ilab`CLI, all of its
+dependencies, and your GPU into a container for an isolated and easily reproducible
+experience.
 
-
-## Steps to build an image then run a container:
+## Steps to build an image then run a container
 
 **Containerfile:**
 
@@ -30,25 +32,35 @@ CMD ["/bin/bash"]
 
 Or image: TBD (am I allowed to have a public image with references to lab in it?)
 
-This containerfile is based on Nvidia's CUDA image, which lucky for us plugs directly into Podman via their `nvidia-container-toolkit`! The ubi9 base image does not have most packages installed. The bulk of the `containerfile` is spent configuring your system so `lab` can be installed and run properly. ubi9 as compared to ubuntu cannot install the entire nvidia-12-4 toolkit. This did not impact performance during testing.
+This containerfile is based on Nvidia's CUDA image, which lucky for us plugs
+directly into Podman via their `nvidia-container-toolkit`! The ubi9 base image
+does not have most packages installed. The bulk of the `containerfile` is spent
+configuring your system so `ilab` can be installed and run properly. ubi9 as compared
+to ubuntu cannot install the entire nvidia-12-4 toolkit. This did not impact
+performance during testing.
 
-1. Podman build –ssh=default -f <Containerfile_Path>
+```shell
+1. podman build –ssh=default -f <Containerfile_Path>
 2. curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo |   sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
 3. sudo yum-config-manager --enable nvidia-container-toolkit-experimental
 4. sudo dnf install -y nvidia-container-toolkit
 5. sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
 6. nvidia-ctk cdi list
     Example output: 
-    INFO[0000] Found 2 CDI devices                     	 
+    INFO[0000] Found 2 CDI devices
     nvidia.com/gpu=0
     nvidia.com/gpu=all
 7. podman run --device nvidia.com/gpu=0  --security-opt=label=disable -it <IMAGE_ID>
+```
 
 Voila! You now have a container with CUDA and GPUs enabled!
 
-#### Sources:
-https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html – nvidia container toolkit
-https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/cdi-support.html podman
+### Sources
 
-#### Notes:
+[Nvidia Container Toolkit Install Guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+
+[Podman Support for Container Device Interface](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/cdi-support.html)
+
+### Notes
+
 Thanks to Taj Salawu for figuring out how to pass the git ssh keys properly!

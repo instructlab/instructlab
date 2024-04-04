@@ -32,7 +32,7 @@ dependencies = {file = ["requirements.txt"]}
 
 [project.scripts]
 # defines lab executable
-lab = "cli.lab:cli"
+ilab = "cli.lab:cli"
 
 [tool.setuptools.packages.find]
 # defines where to look for sub-packages
