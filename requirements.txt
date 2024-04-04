@@ -2,22 +2,19 @@ click>=8.1.7,<9.0.0
 click-didyoumean>=0.3.0,<0.4.0
 datasets>=2.18.0,<3.0.0
 gguf>=0.6.0,<0.7.0
-GitPython>=3.1.42,<4.0.0
+GitPython==3.1.43
 # Linux: 4-bit quantization with BitsAndBytes is not ready to use, yet.
 # see https://github.com/instruct-lab/cli/issues/579
 # bitsandbytes; sys_platform=='linux' and platform_machine=='x86_64'
 httpx
-llama_cpp_python[server]>=0.2.55,<0.3.0; sys_platform != 'darwin'
-# pin macOS version, lift restriction after testing >=0.2.58
-# see https://github.com/abetlen/llama-cpp-python/issues/1286
-llama_cpp_python[server]==0.2.55; sys_platform == 'darwin'
+llama_cpp_python[server]==0.2.58
 mlx>=0.5.1,<0.6.0; sys_platform == 'darwin' and platform_machine == 'arm64'
 numpy>=1.26.4,<2.0.0
 openai>=1.13.3,<1.16.0
 peft>=0.9.0,<0.10.0
 prompt-toolkit>=3.0.38,<4.0.0
 pydantic
-pydantic_yaml
+pydantic_yaml==1.2.1
 PyYAML>=6.0.1,<7.0.0
 rich>=13.3.1,<14.0.0
 rouge-score>=0.1.2,<0.2.0
