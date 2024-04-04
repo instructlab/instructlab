@@ -216,33 +216,35 @@ def get_documents(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
             shutil.rmtree(temp_dir)
 
 
-def chunk_document(documents: List, max_context_size, chunk_word_count) -> List[str]:
+def chunk_document(documents: List, server_ctx_size, chunk_word_count) -> List[str]:
     """
     Iterates over the documents and splits them into chunks based on the word count provided by the user.
     Args:
-        document (dict): List of documents retrieved from git (can also consist of a single document)
-        max_context_size (int): Defaults to 4096
+        documents (dict): List of documents retrieved from git (can also consist of a single document).
+        server_ctx_size (int): Context window size of server.
         chunk_word_count (int): Maximum number of words to chunk a document.
     Returns:
          List[str]: List of chunked documents.
     """
-    token_size = int(chunk_word_count * 1.3)  # 1 word ~ 1.3 token
-    content = []
-    if token_size < int(max_context_size - 1024):
-        text_splitter = RecursiveCharacterTextSplitter(
-            separators=["\n\n", "\n"],
-            chunk_size=int(token_size * 4),  # 1 token ~ 4 English character
-            chunk_overlap=100,
-        )
-
-        for docs in documents:
-            temp = text_splitter.create_documents([docs])
-            content.extend([item.page_content for item in temp])
-
-    else:
+    no_tokens_per_doc = int(chunk_word_count * 1.3)  # 1 word ~ 1.3 token
+    if no_tokens_per_doc > int(server_ctx_size - 1024):
         logger.error(
-            "Error: Given word count exceeds the required chunk limit i.e. 2400"
+            "Error: {}".format(
+                str(
+                    f"Given word count per doc will exceed the server context window size {server_ctx_size}"
+                )
+            )
         )
         sys.exit()
+    content = []
+    text_splitter = RecursiveCharacterTextSplitter(
+        separators=["\n\n", "\n"],
+        chunk_size=int(no_tokens_per_doc * 4),  # 1 token ~ 4 English character
+        chunk_overlap=100,
+    )
+
+    for docs in documents:
+        temp = text_splitter.create_documents([docs])
+        content.extend([item.page_content for item in temp])
 
     return content

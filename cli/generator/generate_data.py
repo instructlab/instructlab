@@ -20,7 +20,6 @@ import tqdm
 import yaml
 
 # Local
-from .. import config
 from ..utils import chunk_document, get_documents, get_taxonomy_diff
 from . import utils
 
@@ -339,6 +338,7 @@ def generate_data(
     console_output=True,
     api_key: Optional[str] = None,
     chunk_word_count=None,
+    server_ctx_size=None,
 ):
     seed_instruction_data = []
     generate_start = time.time()
@@ -364,20 +364,17 @@ def generate_data(
     def unescape(s):
         return bytes(s, "utf-8").decode("utf-8")
 
-    placeholder = seed_instruction_data[0]["document"]
-    if placeholder:
-        documents = chunk_document(
-            documents=placeholder,
-            max_context_size=config.MAX_CONTEXT_SIZE,
-            chunk_word_count=chunk_word_count,
-        )
-
     test_data = []
     for seed_example in seed_instruction_data:
         user = seed_example["instruction"]
 
-        if placeholder:
-            seed_example["document"] = documents
+        documents = seed_example["document"]
+        if documents:
+            seed_example["document"] = chunk_document(
+                documents=documents,
+                server_ctx_size=server_ctx_size,
+                chunk_word_count=chunk_word_count,
+            )
 
         if len(seed_example["input"]) > 0:
             user += "\n" + seed_example["input"]
@@ -597,12 +594,6 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
                 documents = get_documents(documents)
                 logger.info("Content from git repo fetched")
 
-                # cfg = config.get_default_config()
-                # documents = chunk_document(
-                #     documents=documents,
-                #     max_context_size=cfg.serve.max_ctx_size,
-                #     chunk_word_count=chunk_word_count,
-                # )
             for t in get_seed_examples(contents):
                 q = t["question"]
                 a = t["answer"]

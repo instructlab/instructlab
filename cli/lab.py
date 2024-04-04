@@ -388,6 +388,13 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
     show_default=True,
     help="Rules file for YAML linting",
 )
+@click.option(
+    "--server-ctx-size",
+    type=click.INT,
+    default=config.MAX_CONTEXT_SIZE,
+    show_default=True,
+    help="The context size is the maximum number of tokens the server will consider.",
+)
 @click.pass_context
 def generate(
     ctx,
@@ -403,6 +410,7 @@ def generate(
     api_key,
     yaml_rules,
     chunk_word_count,
+    server_ctx_size,
 ):
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=C0415
@@ -450,6 +458,7 @@ def generate(
             console_output=not quiet,
             yaml_rules=yaml_rules,
             chunk_word_count=chunk_word_count,
+            server_ctx_size=server_ctx_size,
         )
     except GenerateException as exc:
         click.secho(
