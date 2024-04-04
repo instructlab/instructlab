@@ -406,7 +406,6 @@ def generate_data(
     request_idx = 0
     # load the LM-generated instructions
     machine_instruction_data = []
-    train_data = []
     if os.path.exists(os.path.join(output_dir, "regen.json")):
         machine_instruction_data = utils.jload(os.path.join(output_dir, "regen.json"))
         logger.debug(
@@ -505,6 +504,7 @@ def generate_data(
             f"Generated {total} instructions(discarded {discarded}), rouged {total - keep}, kept {keep} instructions"
         )
         utils.jdump(machine_instruction_data, os.path.join(output_dir, output_file))
+        train_data = []
         for synth_example in machine_instruction_data:
             user = synth_example["instruction"]
             if len(synth_example["input"]) > 0:
