@@ -2,6 +2,7 @@ CLI
 Colab
 Conda
 Containerfile
+coreutils
 Dropdown
 Eval
 GGUF
