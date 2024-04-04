@@ -44,3 +44,4 @@ tox
 venv
 wikisql
 xcode
+tatsu
