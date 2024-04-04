@@ -46,12 +46,14 @@ class MockTaxonomy:
         """List untracked files in the repository"""
         return self._repo.untracked_files
 
-    def create_untracked(self, rel_path: str, contents: Optional[bytes] = None) -> None:
+    def create_untracked(self, rel_path: str, contents: Optional[bytes] = None) -> Path:
         """Create a new untracked file in the repository.
 
         Args:
             rel_path (str): Relative path (from repository root) to the file.
             contents (bytes): (optional) Byte string to be written to the file.
+        Returns:
+            file_path: The path to the created file.
         """
         taxonomy_path = Path(rel_path)
         assert not taxonomy_path.is_absolute()
@@ -62,16 +64,20 @@ class MockTaxonomy:
             file_path.write_text(TEST_VALID_COMPOSITIONAL_SKILL_YAML, encoding="utf-8")
         else:
             file_path.write_bytes(contents)
+        return file_path
 
-    def add_tracked(self, rel_path: str) -> None:
+    def add_tracked(self, rel_path: str) -> Path:
         """Add a new tracked file to the repository (and commits it).
 
         Args:
             rel_path (str): Relative path (from repository root) to the file.
+        Returns:
+            file_path: The path to the added file.
         """
-        self.create_untracked(rel_path)
+        file_path = self.create_untracked(rel_path)
         self._repo.index.add([rel_path])
         self._repo.index.commit("new commit")
+        return file_path
 
     def remove_file(self, rel_path: str) -> None:
         """Remove a file in the repository (tracked or not)
