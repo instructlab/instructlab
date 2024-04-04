@@ -2,13 +2,6 @@
 
 set -ex
 
-UNAME="$(uname -s)"
-if [[ "$UNAME" = "Darwin" ]]; then
-    SEDI='sed -i ""'
-else
-    SEDI='sed -i'
-fi
-
 # build a prompt string that includes the time, source file, line number, and function name
 export PS4='+$(date +"%Y-%m-%d %T") ${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
@@ -42,9 +35,9 @@ cleanup() {
         test_session_history \
         simple_math.yaml
     # revert log level change from test_temp_server()
-    $SEDI 's/DEBUG/INFO/g' config.yaml
+    sed -i.bak 's/DEBUG/INFO/g' config.yaml
     # revert port change from test_bind_port()
-    $SEDI 's/9999/8000/g' config.yaml
+    sed -i.bak 's/9999/8000/g' config.yaml
     set -e
 }
 
@@ -59,7 +52,7 @@ ilab --version
 echo -e "\n\n\n" | ilab init
 
 # Enable Debug in func tests
-$SEDI -e 's/log_level:.*/log_level: DEBUG/g;' config.yaml
+sed -i.bak -e 's/log_level:.*/log_level: DEBUG/g;' config.yaml
 
 # download the latest version of the ilab
 ilab download
@@ -83,7 +76,7 @@ test_bind_port(){
     }
 
     # configure a different port
-    exec $SEDI 's/8000/9999/g' config.yaml
+    exec sed -i.bak 's/8000/9999/g' config.yaml
 
     # check that ilab serve is working on the new port
     # catch ERROR strings in the output
@@ -218,7 +211,7 @@ seed_examples:
 task_description: 'simple maths'
 EOF
 
-    $SEDI -e 's/num_instructions:.*/num_instructions: 1/g' config.yaml
+    sed -i.bak -e 's/num_instructions:.*/num_instructions: 1/g' config.yaml
 
     # This should be finished in a minut or so but time it out incase it goes wrong
     timeout 10m ilab generate --taxonomy-path simple_math.yaml
@@ -234,7 +227,7 @@ EOF
 test_temp_server(){
     nc -l 8000 --keep-open &
     PID_SERVE=$!
-    $SEDI 's/INFO/DEBUG/g' config.yaml
+    sed -i.bak 's/INFO/DEBUG/g' config.yaml
     expect -c '
         set timeout 120
         spawn ilab chat
