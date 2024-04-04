@@ -27,7 +27,7 @@ task_description: for testing
 """
 
 
-test_skill_invalid_answer = b"""created_by: test-bot
+test_skill_yes_answer = b"""created_by: test-bot
 seed_examples:
 - answer: Yes
   question: Is this for a test?
@@ -126,12 +126,13 @@ class TestLabGenerate(unittest.TestCase):
                 result.output,
             )
 
-    def test_new_data_invalid_answer(self):
+    # Make sure "Yes" answer is not converted to bool(True) by yaml loader
+    def test_new_data_yes_answer(self):
         runner = CliRunner()
         with runner.isolated_filesystem():
             mt = MockTaxonomy(pathlib.Path("taxonomy"))
             mt.create_untracked(
-                "compositional_skills/tracked/qna.yaml", test_skill_invalid_answer
+                "compositional_skills/tracked/qna.yaml", test_skill_yes_answer
             )
             result = runner.invoke(
                 lab.generate,
@@ -144,11 +145,14 @@ class TestLabGenerate(unittest.TestCase):
                     "localhost:8000",
                 ],
             )
+
             self.assertEqual(
                 result.exit_code, 1, "command finished with an unexpected exit code"
             )
+
+            # Meaning, generate reached picking examples from loaded samples
             self.assertIn(
-                "Error reading seed examples: encoding without a string argument. Please make sure your answers are verbose enough",
+                "Generating dataset failed with the following error: There was a problem with the new data",
                 result.output,
             )
 

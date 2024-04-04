@@ -15,7 +15,6 @@ import time
 # Third Party
 from jinja2 import Template
 from rouge_score import rouge_scorer
-import click
 import tqdm
 import yaml
 
@@ -374,20 +373,13 @@ def generate_data(
 
         if len(seed_example["input"]) > 0:
             user += "\n" + seed_example["input"]
-        try:
-            test_data.append(
-                {
-                    "system": utils.SYSTEM_PROMPT,
-                    "user": unescape(user),
-                    "assistant": unescape(seed_example["output"]),
-                }
-            )
-        except TypeError as exc:
-            click.secho(
-                f"Error reading seed examples: {exc}. Please make sure your answers are verbose enough.",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
+        test_data.append(
+            {
+                "system": utils.SYSTEM_PROMPT,
+                "user": unescape(user),
+                "assistant": unescape(seed_example["output"]),
+            }
+        )
 
     name = Path(model_name).stem  # Just in case it is a file path
     date_suffix = datetime.now().replace(microsecond=0).isoformat().replace(":", "_")
