@@ -179,6 +179,7 @@ class TestLabGenerate(unittest.TestCase):
                     rouge_threshold=0.9,
                     console_output=True,
                     chunk_word_count=1000,
+                    server_ctx_size=4096,
                 )
             self.assertIn(
                 "There was a problem connecting to the OpenAI server",
@@ -210,6 +211,7 @@ class TestLabGenerate(unittest.TestCase):
                 rouge_threshold=0.9,
                 console_output=True,
                 chunk_word_count=1000,
+                server_ctx_size=4096,
             )
             get_instructions_from_model.assert_called_once()
             expected_files = [
