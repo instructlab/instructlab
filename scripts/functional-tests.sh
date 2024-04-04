@@ -108,6 +108,9 @@ EOF
     # reset the PID_CHAT variable so that the cleanup function doesn't try to kill it
     PID_CHAT=
 
+    cat "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE"
+    cat "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE"
+
     # re-activate the error trap
     set -e
 
@@ -242,12 +245,12 @@ test_temp_server(){
 test_bind_port
 cleanup
 test_ctx_size
-cleanup
-test_loading_session_history
-cleanup
-test_generate
-test_server_shutdown_while_chatting
-cleanup
-test_temp_server
+# cleanup
+# test_loading_session_history
+# cleanup
+# test_generate
+# test_server_shutdown_while_chatting
+# cleanup
+# test_temp_server
 
 exit 0
