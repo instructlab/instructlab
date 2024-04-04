@@ -566,11 +566,15 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
                     yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
             else:
                 yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
-            for p in linter.run(file, yaml_config):
-                errors += 1
-                logger.error(
-                    f"error found in file {file.name}: {p.desc} {p.line} {p.rule}"
-                )
+            linter_problems = list(linter.run(file, yaml_config))
+            if linter_problems:
+                lint_messages = [f"Problems found in file {file.name}"]
+                for p in linter_problems:
+                    errors += 1
+                    loc = f"{p.line}:{p.column}"
+                    desc = f"{p.desc} ({p.rule})" if p.rule else p.desc
+                    lint_messages.append(f"  {loc:<9} {p.level:<9} {desc}")
+                logger.error("\n".join(lint_messages))
                 return None, warnings, errors
         # do more explict checking of file contents
         with open(file_path, "r", encoding="utf-8") as file:
