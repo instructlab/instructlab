@@ -87,10 +87,6 @@ _WORD_DENYLIST = [
 ]
 
 
-class GenerateException(Exception):
-    """An exception raised during generate step."""
-
-
 def check_prompt_file(prompt_file_path):
     """Check for prompt file."""
     try:
@@ -269,7 +265,7 @@ def get_instructions_from_model(
                 instruction_data_pool, num_prompt_instructions
             )
         except ValueError as exc:
-            raise GenerateException(
+            raise utils.GenerateException(
                 f"There was a problem with the new data, please make sure the "
                 f"yaml is formatted correctly, and there is enough "
                 f"new data({num_prompt_instructions}+ Q&A))"
