@@ -216,7 +216,7 @@ python lora.py \
 The above command on an M1 Max with 32 GB runs at about 250 tokens-per-second.
 
 [^lora]: Refer to the [arXiv paper](https://arxiv.org/abs/2106.09685) for more details on LoRA.
-[^qlora]: Refer to the paper [QLoRA: Efficient Finetuning of Quantized LLMs](https://arxiv.org/abs/2305.14314)
+[^qlora]: Refer to the paper [QLoRA: Efficient Fine-tuning of Quantized LLMs](https://arxiv.org/abs/2305.14314)
 [^wikisql]: Refer to the [GitHub repo](https://github.com/salesforce/WikiSQL/tree/master) for more information about WikiSQL.
 
 ## Notice

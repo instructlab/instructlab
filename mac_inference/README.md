@@ -55,7 +55,7 @@ def write(self):
 
 ### Convert a model to GGUF
 
-The following command converts a Hugging Face model (safetensors) to [GGUF](https://github.com/ggerganov/ggml/blob/master/docs/gguf.md) format and saves it in your model directory with a `.gguf` extension.
+The following command converts a Hugging Face model (`safetensors`) to [GGUF](https://github.com/ggerganov/ggml/blob/master/docs/gguf.md) format and saves it in your model directory with a `.gguf` extension.
 
 ```shell
 export MODEL_DIR={model_directory}
@@ -83,7 +83,7 @@ make
 ./quantize {model_directory}/{f16_gguf_model} <type>
 ```
 
-For example, the following command converts the f16 GGUF model to a Q4_K_M quantized model and saves it in your model directory with a `<type>.gguf` suffix (e.g. ggml-model-Q4_K_M.gguf).
+For example, the following command converts the f16 GGUF model to a Q4_K_M quantized model and saves it in your model directory with a `<type>.gguf` suffix (e.g. `ggml-model-Q4_K_M.gguf`).
 
 ```shell
 ./quantize $MODEL_DIR/ggml-model-f16.gguf Q4_K_M
@@ -97,11 +97,11 @@ Use the [llama.cpp](https://github.com/ggerganov/llama.cpp) framework to load an
 
 We are using [llama-cpp-python](https://github.com/abetlen/llama-cpp-python/) to provide python bindings to the [llama.cpp](https://github.com/ggerganov/llama.cpp) framework which is C/C++.
 
-> *Note:* From here down, use a new project dir (not the above). There is a [requirements.txt](./requirements.txt) file which will install the Python package dependencies for all the examples that follow in this section. You can use this or the individual requirements file [here](./requirements/). If you would prefer to just install the packages required per example, then follow the manual instructions in the example instead.
+> *Note:* From here down, use a new project directory (not the above). There is a [requirements.txt](./requirements.txt) file which will install the Python package dependencies for all the examples that follow in this section. You can use this or the individual requirements file [here](./requirements/). If you would prefer to just install the packages required per example, then follow the manual instructions in the example instead.
 
 ### Load and run model using python
 
-Choose your own directory name in place of _project_dir_!
+Choose your own directory name in place of `_project_dir_`!
 
 ```shell
 mkdir project_dir
@@ -178,7 +178,7 @@ Run the server which loads the model and provides an [OpenAI API](https://llama-
 python3 -m llama_cpp.server --model $MODEL_FILE --api_key "foo" --n_gpu_layers -1
 ```
 
-**Note:** MODEL_FILE is env variable for the full pathname of the model file.
+**Note:** MODEL_FILE is environment variable for the full pathname of the model file.
 
 **Note:** Exclude `--n_gpu_layers -1` flag if want to run for CPU
 

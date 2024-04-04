@@ -52,7 +52,7 @@ Map the name to a LLVM GPU target and an override GFX version. PyTorch 2.2.1+roc
 | `gfx1101` |           |          | ❌      | ✅     |
 | `gfx1102` |           |          | ❌      | ✅     |
 
-If your card is not listed or unsupported, try the closest smaller value, e.g. for `gfx1031` use target `gfx1030` and override `10.3.0`. See [ROCm/ROCR-Runtime `isa.cpp`](https://github.com/ROCm/ROCR-Runtime/blob/rocm-6.0.2/src/core/runtime/isa.cpp#L245) and [LLVM User Guide for AMDGPU](https://llvm.org/docs/AMDGPUUsage.html#processors) for more information.
+If your card is not listed or unsupported, try the closest smaller value, e.g. for `gfx1031` use target `gfx1030` and override `10.3.0`. See [ROCm/ROCR-Runtime `isa.cpp`](https://github.com/ROCm/ROCR-Runtime/blob/rocm-6.0.2/src/core/runtime/isa.cpp#L245) and [LLVM User Guide for `AMDGPU`](https://llvm.org/docs/AMDGPUUsage.html#processors) for more information.
 
 | Marketing Name         | Name      | Arch  | Target    | GFX version | Memory | Chat | Train |
 |------------------------|-----------|-------|-----------|-------------|--------|:----:|:-----:|

@@ -47,6 +47,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 - Approximately 60GB disk space (entire process)
 
 On Fedora Linux this means installing:
+
 ```shell
 $ sudo dnf install gcc-c++ gcc make pip python3 python3-devel python3-GitPython
 ```
@@ -57,20 +58,21 @@ $ sudo dnf install gcc-c++ gcc make pip python3 python3-devel python3-GitPython
 
 To start, create a new directory called `instruct-lab` to store the files the `ilab` CLI needs when running.
 
-```
+```shell
 mkdir instruct-lab
 cd instruct-lab
 python3 -m venv venv
 source venv/bin/activate
 pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
 ```
-> **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection, if g++ is not found try 'gcc-c++'
+
+> **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection, if `g++` is not found try `gcc-c++`
 
 > **Note:** The steps shown in this document use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. However, if for managing Python environments on your machine you use another tool such as [pyenv](https://github.com/pyenv/pyenv) or [Conda Miniforge](https://github.com/conda-forge/miniforge) continue to use that tool instead. Otherwise, you may have issues with packages that are installed but not found in `venv`.
 
 If `ilab` is installed correctly, you can test the lab command:
 
-```
+```shell
 (venv) $ ilab
 Usage: ilab [OPTIONS] COMMAND [ARGS]...
 
@@ -98,7 +100,7 @@ Commands:
 
 **Every** `ilab` command needs to be run from within your Python virtual environment. To enter the Python environment, run the following command:
 
-```
+```shell
 source venv/bin/activate
 ```
 
@@ -111,7 +113,7 @@ ilab init
 Initializing `ilab` will:
 
 1. Add a new, default `config.yaml` file.
-2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory. If you want to point to an existing local clone of the `taxonomy` respository then pass the path interactively or alternatively with the `--taxonomy-path` flag.
+2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory. If you want to point to an existing local clone of the `taxonomy` repository then pass the path interactively or alternatively with the `--taxonomy-path` flag.
 
 ```shell
 (venv) $ ilab init
@@ -129,7 +131,7 @@ You can override this behavior with the `--config` parameter for any `ilab` comm
 
 ### 📥 Download the model
 
-```
+```shell
 ilab download
 ```
 
@@ -146,7 +148,7 @@ merlinite-7b-Q4_K_M.gguf
 
 ### 🍴 Serving the model
 
-```
+```shell
 ilab serve
 ```
 
@@ -163,7 +165,7 @@ Press CTRL+C to shut down the server.
 ### 📣 Chat with the model (Optional)
 
 Because you're serving the model in one terminal window, you likely have to create a new window and re-activate your Python virtual environment to run `ilab chat`:
-```
+```shell
 source venv/bin/activate
 ilab chat
 ```
@@ -193,7 +195,7 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
 
 ### 📜 List and validate your new data
 
-```
+```shell
 ilab diff
 ```
 
@@ -209,7 +211,7 @@ Taxonomy in /taxonomy/ is valid :)
 
 ### 🚀 Generate a synthetic dataset
 
-```
+```shell
 ilab generate
 ```
 
@@ -236,7 +238,7 @@ The synthetic data set will be three files in the newly created `generated` dire
 It is also possible to run the generate step against a different model via an
 OpenAI-compatible API. For example, the one spawned by `ilab serve` or any remote or locally hosted LLM (e.g. via [ollama](https://ollama.com/), [LM Studio](https://lmstudio.ai), etc.)
 
-```
+```shell
 ilab generate --endpoint-url http://localhost:8000/v1
 ```
 
@@ -248,14 +250,14 @@ There are three options to train the model on your synthetic data-enhanced datas
 
 #### Train the model locally on Linux
 
-```
+```shell
 ilab train
 ```
 
 > **NOTE:** ⏳ This step can take **several hours** to complete depending on your computing resources.
 
 `ilab train` outputs a brand-new model that can be served in the `models` directory called `ggml-model-f16.gguf`.
-```
+```shell
  (venv) $ ls models
  ggml-merlinite-7b-0302-Q4_K_M.gguf  ggml-model-f16.gguf
 ```
@@ -267,7 +269,7 @@ details.
 #### Train the model locally on an M-series Mac:
 
 To train the model locally on your M-Series Mac is as easy as running:
-```
+```shell
 ilab train
 ```
 
@@ -275,7 +277,7 @@ ilab train
 and output of `ilab generate` but on the order of 20 minutes to 1+ hours)
 
 `ilab train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory called `adapters.npz` (in Numpy's compressed array format). For example:
-```
+```shell
 (venv) $ ls ibm-merlinite-7b-mlx-q
 adapters-010.npz        adapters-050.npz        adapters-090.npz        config.json             tokenizer.model
 adapters-020.npz        adapters-060.npz        adapters-100.npz        model.safetensors       tokenizer_config.json
@@ -298,7 +300,7 @@ The model can also be downloaded and served locally.
 
 > **NOTE:** 🍎 This step is only implemented for macOS with M-series chips (for now)
 
-```
+```shell
 ilab test
 ```
 
@@ -315,14 +317,14 @@ the `ilab` cli. The `ilab convert` command converts the new model into quantized
 
 > **NOTE:** 🍎 This step is only implemented for macOS with M-series chips (for now)
 
-```
+```shell
 ilab convert
 ```
 
 Serve the newly trained model locally via `ilab serve` with the `--model`
 argument to specify your new model:
 
-```
+```shell
 ilab serve --model-path <New model name>
 ```
 
@@ -335,7 +337,7 @@ and will exist in a directory with the suffix `fused-pt`. For example:
 
 Try the fine-tuned model out live using the chat interface, and see if the results are better than the untrained version of the model with chat.
 
-```
+```shell
 ilab chat -m <New model name>
 ```
 

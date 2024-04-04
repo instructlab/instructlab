@@ -1,4 +1,4 @@
-# Putting ilab` in a Container AND making it go fast
+# Putting `ilab` in a Container AND making it go fast
 
 Containerization of `ilab` allows for portability and ease of setup. With this,
 users can now run lab on OpenShift to test the speed of `ilab train` and `generate`
@@ -36,12 +36,12 @@ This containerfile is based on Nvidia's CUDA image, which lucky for us plugs
 directly into Podman via their `nvidia-container-toolkit`! The ubi9 base image
 does not have most packages installed. The bulk of the `containerfile` is spent
 configuring your system so `ilab` can be installed and run properly. ubi9 as compared
-to ubuntu cannot install the entire nvidia-12-4 toolkit. This did not impact
+to Ubuntu cannot install the entire nvidia-12-4 toolkit. This did not impact
 performance during testing.
 
 ```shell
 1. podman build –ssh=default -f <Containerfile_Path>
-2. curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo |   sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
+2. curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
 3. sudo yum-config-manager --enable nvidia-container-toolkit-experimental
 4. sudo dnf install -y nvidia-container-toolkit
 5. sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml

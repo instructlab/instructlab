@@ -34,7 +34,7 @@ Changes to the `ilab` code in `cli/cli` **won't** automatically show up when you
 
 Simply execute:
 
-```
+```shell
 pip3 install .
 ```
 

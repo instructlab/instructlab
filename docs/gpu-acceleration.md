@@ -47,7 +47,7 @@ With Python 3.11 installed, it's time to replace some packages!
 `torch` should already ship with CUDA support, so you only have to replace
 `llama-cpp-python`.
 
-Ensure you have the latest proprietary Nvidia drivers installed.  You can
+Ensure you have the latest proprietary Nvidia drivers installed. You can
 easily validate whether you are using `nouveau` or `nvidia` kernel drivers with
 the following command.  If your output shows "Kernel driver in use: nouveau",
 you are **not running** with the proprietary Nvidia drivers.
@@ -76,8 +76,11 @@ sudo reboot
 lspci -n -n -k | grep -A 2 -e VGA -e 3D
 ```
 
-You should now see "Kernel driver in use: nvidia". The next step is to ensure
-CUDA 12.4 is installed.
+You should now see:
+
+```text
+"Kernel driver in use: nvidia". The next step is to ensure CUDA 12.4 is installed.
+```
 
 ```shell
 # Install CUDA 12.4 and nvtop to monitor GPU usage
@@ -87,7 +90,7 @@ sudo dnf clean all
 sudo dnf -y install cuda-toolkit-12-4 nvtop
 ```
 
-Go to the project's Github to see the
+Go to the project's GitHub to see the
 [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends).
 Find the `cuBLAS (CUDA)` backend. You'll see a `pip3 install` command.
 You'll want to add a few options to ensure it gets installed over the
@@ -146,7 +149,7 @@ pip3 install torch --force-reinstall --no-cache-dir --index-url https://download
 
 With that done, it's time to move on to `llama-cpp-python`.
 
-Go to the project's Github to see
+Go to the project's GitHub to see
 the [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends).
 There are several possible backends that may work on AMD; `CLBlast (OpenCL)`
 and `hipBLAS (ROCm)` have been tested to work. It may be worth installing others
@@ -211,7 +214,7 @@ set `export HIP_VISIBLE_DEVICES=0` for GPU 0.   You may also have to set
 `export HSA_OVERRIDE_GFX_VERSION=10.3.0` to force an unsupported `gfx1032` card
 to use use supported `gfx1030` version.  The environment variable
 `AMD_LOG_LEVEL` enables debug logging of ROCm libraries, for example
-`AMD_LOG_LEVEL=3` to print API calls to stderr.
+`AMD_LOG_LEVEL=3` to print API calls to `stderr`.
 
 Now you can skip to the `Testing` section.
 
@@ -232,7 +235,7 @@ The `ilab` default installation should have Metal support by default. If that
 isn't the case, these steps might help to enable it.
 
 `torch` should already ship with Metal support, so you only have to
-replace `llama-cpp-python`. Go to the project's Github to see the
+replace `llama-cpp-python`. Go to the project's GitHub to see the
 [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends).
 Find the `Metal` backend. You'll see a `pip3 install` command. You'll want to
 add a few options to ensure it gets installed over the existing package:
