@@ -156,7 +156,14 @@ def server(
     logger.info(
         f"After application startup complete see http://{host}:{port}/docs for API."
     )
-    uvicorn.run(app, host=host, port=port, log_level=logging.ERROR)
+    uvicorn.run(
+        app,
+        host=host,
+        port=port,
+        log_level=logging.ERROR,
+        limit_concurrency=2,  # Make sure we only serve a single client at a time
+        timeout_keep_alive=0,  # prevent clients holding connections open (we only have 1)
+    )
 
 
 def can_bind_to_port(host, port):
