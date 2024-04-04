@@ -196,7 +196,7 @@ def get_documents(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
 
         file_contents = []
 
-        logger.info("Processing files...")
+        logger.debug("Processing files...")
         for pattern in file_patterns:
             for file_path in glob.glob(os.path.join(temp_dir, pattern)):
                 if os.path.isfile(file_path) and file_path.endswith(".md"):
