@@ -364,10 +364,10 @@ def generate_data(
     def unescape(s):
         return bytes(s, "utf-8").decode("utf-8")
 
-    placeholder = seed_instruction_data[0]["document"]
-    if placeholder:
+    doc_from_schema = seed_instruction_data[0]["document"]
+    if doc_from_schema:
         documents = chunk_document(
-            documents=placeholder,
+            documents=doc_from_schema,
             max_context_size=config.MAX_CONTEXT_SIZE,
             chunk_word_count=chunk_word_count,
         )
@@ -376,7 +376,7 @@ def generate_data(
     for seed_example in seed_instruction_data:
         user = seed_example["instruction"]
 
-        if placeholder:
+        if doc_from_schema:
             seed_example["document"] = documents
 
         if len(seed_example["input"]) > 0:
@@ -597,12 +597,6 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
                 documents = get_documents(documents)
                 logger.info("Content from git repo fetched")
 
-                # cfg = config.get_default_config()
-                # documents = chunk_document(
-                #     documents=documents,
-                #     max_context_size=cfg.serve.max_ctx_size,
-                #     chunk_word_count=chunk_word_count,
-                # )
             for t in get_seed_examples(contents):
                 q = t["question"]
                 a = t["answer"]
