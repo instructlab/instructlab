@@ -180,7 +180,7 @@ def get_documents(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
 
     repo_url = input_pattern.get("repo")
     commit_hash = input_pattern.get("commit")
-    file_patterns = input_pattern.get("pattern")
+    file_patterns = input_pattern.get("patterns")
     temp_dir = os.path.join(os.getcwd(), "temp_repo")
     if os.path.exists(temp_dir):
         shutil.rmtree(temp_dir)
