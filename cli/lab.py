@@ -7,7 +7,8 @@ import os
 import shutil
 import sys
 import typing
-
+import click 
+from cli.config import manage
 # Third Party
 from click_didyoumean import DYMGroup
 from git import GitError, Repo
@@ -30,7 +31,7 @@ class Lab:
 
     def __init__(self, filename):
         self.config_file = filename
-        self.config = config.read_config(filename)
+        self.config = manage.read_config(filename)
         FORMAT = "%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s"
         logging.basicConfig(format=FORMAT)
         self.logger = logging.getLogger(__name__)
@@ -51,18 +52,18 @@ def configure(ctx, param, filename):
 
     try:
         ctx.obj = Lab(filename)
-    except config.ConfigException as ex:
+    except manage.ConfigException as ex:
         raise click.ClickException(str(ex))
 
     # default_map holds a dictionary with default values for each command parameters
-    ctx.default_map = config.get_dict(ctx.obj.config)
+    ctx.default_map = manage.get_dict(ctx.obj.config)
 
 
 @click.group(cls=DYMGroup)
 @click.option(
     "--config",
     type=click.Path(),
-    default=config.DEFAULT_CONFIG,
+    default=manage.DEFAULT_CONFIG,
     show_default=True,
     callback=configure,
     is_eager=True,
@@ -71,14 +72,14 @@ def configure(ctx, param, filename):
 @click.version_option(package_name="cli")
 @click.pass_context
 # pylint: disable=redefined-outer-name
-def cli(ctx, config):
+def ilab(ctx, config):
     """CLI for interacting with InstructLab.
 
     If this is your first time running ilab, it's best to start with `ilab init` to create the environment.
     """
 
 
-@cli.command()
+@ilab.command()
 @click.option(
     "--interactive/--non-interactive",
     default=True,
@@ -88,26 +89,26 @@ def cli(ctx, config):
 @click.option(
     "--model-path",
     type=click.Path(),
-    default=config.DEFAULT_MODEL_PATH,
+    default=manage.DEFAULT_MODEL_PATH,
     show_default=True,
     help="Path to the model used during generation.",
 )
 @click.option(
     "--taxonomy-base",
-    default=config.DEFAULT_TAXONOMY_BASE,
+    default=manage.DEFAULT_TAXONOMY_BASE,
     show_default=True,
     help="Base git-ref to use when listing/generating new taxonomy.",
 )
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
-    default=config.DEFAULT_TAXONOMY_PATH,
+    default=manage.DEFAULT_TAXONOMY_PATH,
     show_default=True,
-    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
+    help=f"Path to {manage.DEFAULT_TAXONOMY_REPO} clone.",
 )
 @click.option(
     "--repository",
-    default=config.DEFAULT_TAXONOMY_REPO,
+    default=manage.DEFAULT_TAXONOMY_REPO,
     show_default=True,
     help="Taxonomy repository location.",
 )
@@ -127,9 +128,9 @@ def init(
     min_taxonomy,
 ):
     """Initializes environment for InstructLab"""
-    if exists(config.DEFAULT_CONFIG):
+    if exists(manage.DEFAULT_CONFIG):
         overwrite = click.confirm(
-            f"Found {config.DEFAULT_CONFIG} in the current directory, do you still want to continue?"
+            f"Found {manage.DEFAULT_CONFIG} in the current directory, do you still want to continue?"
         )
         if not overwrite:
             return
@@ -178,26 +179,26 @@ def init(
         model_path = utils.expand_path(
             click.prompt("Path to your model", default=model_path)
         )
-    click.echo(f"Generating `{config.DEFAULT_CONFIG}` in the current directory...")
-    cfg = config.get_default_config()
+    click.echo(f"Generating `{manage.DEFAULT_CONFIG}` in the current directory...")
+    cfg = manage.get_default_config()
     model = splitext(basename(model_path))[0]
     cfg.chat.model = model
     cfg.generate.model = model
     cfg.serve.model_path = model_path
     cfg.generate.taxonomy_path = taxonomy_path
     cfg.generate.taxonomy_base = taxonomy_base
-    config.write_config(cfg)
+    manage.write_config(cfg)
 
     click.echo(
         "Initialization completed successfully, you're ready to start using `ilab`. Enjoy!"
     )
 
 
-@cli.command()
+@ilab.command()
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
-    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone or local file path.",
+    help=f"Path to {manage.DEFAULT_TAXONOMY_REPO} clone or local file path.",
 )
 @click.option(
     "--taxonomy-base",
@@ -263,10 +264,10 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
 
 # ilab list => ilab diff
 # ilab check => ilab diff --quiet
-utils.make_lab_diff_aliases(cli, diff)
+utils.make_lab_diff_aliases(ilab, diff)
 
 
-@cli.command()
+@ilab.command()
 @click.option(
     "--model-path",
     type=click.Path(),
@@ -311,10 +312,10 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
         raise click.exceptions.Exit(1)
 
 
-@cli.command()
+@ilab.command()
 @click.option(
     "--model",
-    default=config.DEFAULT_MODEL,
+    default=manage.DEFAULT_MODEL,
     show_default=True,
     help="Name of the model used during generation.",
 )
@@ -322,40 +323,40 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
     "--num-cpus",
     type=click.INT,
     help="Number of processes to use.",
-    default=config.DEFAULT_NUM_CPUS,
+    default=manage.DEFAULT_NUM_CPUS,
     show_default=True,
 )
 @click.option(
     "--chunk-word-count",
     type=click.INT,
     help="Number of words to chunk the document",
-    default=config.DEFAULT_CHUNK_WORD_COUNT,
+    default=manage.DEFAULT_CHUNK_WORD_COUNT,
     show_default=True,
 )
 @click.option(
     "--num-instructions",
     type=click.INT,
     help="Number of instructions to generate.",
-    default=config.DEFAULT_NUM_INSTRUCTIONS,
+    default=manage.DEFAULT_NUM_INSTRUCTIONS,
     show_default=True,
 )
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
-    default=config.DEFAULT_TAXONOMY_PATH,
+    default=manage.DEFAULT_TAXONOMY_PATH,
     show_default=True,
-    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone or local file path.",
+    help=f"Path to {manage.DEFAULT_TAXONOMY_REPO} clone or local file path.",
 )
 @click.option(
     "--taxonomy-base",
-    default=config.DEFAULT_TAXONOMY_BASE,
+    default=manage.DEFAULT_TAXONOMY_BASE,
     show_default=True,
     help="Base git-ref to use when generating new taxonomy.",
 )
 @click.option(
     "--output-dir",
     type=click.Path(),
-    default=config.DEFAULT_GENERATED_FILES_OUTPUT_DIR,
+    default=manage.DEFAULT_GENERATED_FILES_OUTPUT_DIR,
     help="Path to output generated files.",
 )
 @click.option(
@@ -378,20 +379,20 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
 @click.option(
     "--api-key",
     type=click.STRING,
-    default=config.DEFAULT_API_KEY,  # Note: do not expose default API key
-    help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
+    default=manage.DEFAULT_API_KEY,  # Note: do not expose default API key
+    help="API key for API endpoint. [default: manage.DEFAULT_API_KEY]",
 )
 @click.option(
     "--yaml-rules",
     type=click.Path(),
-    default=config.DEFAULT_YAML_RULES,
+    default=manage.DEFAULT_YAML_RULES,
     show_default=True,
     help="Rules file for YAML linting",
 )
 @click.option(
     "--server-ctx-size",
     type=click.INT,
-    default=config.MAX_CONTEXT_SIZE,
+    default=manage.MAX_CONTEXT_SIZE,
     show_default=True,
     help="The context size is the maximum number of tokens the server will consider.",
 )
@@ -421,7 +422,7 @@ def generate(
 
     server_process = None
     logger = logging.getLogger("TODO")
-    prompt_file_path = config.DEFAULT_PROMPT_FILE
+    prompt_file_path = manage.DEFAULT_PROMPT_FILE
     if ctx.obj is not None:
         logger = ctx.obj.logger
         prompt_file_path = ctx.obj.config.generate.prompt_file
@@ -471,7 +472,7 @@ def generate(
             server_process.terminate()
 
 
-@cli.command()
+@ilab.command()
 @click.argument(
     "question",
     nargs=-1,
@@ -515,8 +516,8 @@ def generate(
 @click.option(
     "--api-key",
     type=click.STRING,
-    default=config.DEFAULT_API_KEY,  # Note: do not expose default API key
-    help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
+    default=manage.DEFAULT_API_KEY,  # Note: do not expose default API key
+    help="API key for API endpoint. [default: manage.DEFAULT_API_KEY]",
 )
 @click.pass_context
 def chat(
@@ -572,28 +573,28 @@ def chat(
             server_process.terminate()
 
 
-@cli.command()
+@ilab.command()
 @click.option(
     "--repository",
-    default="ibm/merlinite-7b-GGUF",  # TODO: add to config.yaml
+    default="ibm/merlinite-7b-GGUF",  # TODO: add to manage.yaml
     show_default=True,
     help="Hugging Face repository of the model to download.",
 )
 @click.option(
     "--release",
-    default="main",  # TODO: add to config.yaml
+    default="main",  # TODO: add to manage.yaml
     show_default=True,
     help="The git revision of the model to download - e.g. a branch, tag, or commit hash.",
 )
 @click.option(
     "--filename",
-    default=basename(config.DEFAULT_MODEL_PATH),
+    default=basename(manage.DEFAULT_MODEL_PATH),
     show_default=True,
     help="Name of the model file to download from the Hugging Face repository.",
 )
 @click.option(
     "--model-dir",
-    default=dirname(config.DEFAULT_MODEL_PATH),
+    default=dirname(manage.DEFAULT_MODEL_PATH),
     show_default=True,
     help="The local directory to download the model files into.",
 )
@@ -671,7 +672,7 @@ class TorchDeviceParam(click.ParamType):
 TORCH_DEVICE = TorchDeviceParam()
 
 
-@cli.command()
+@ilab.command()
 @click.option("--data-dir", help="Base directory where data is stored.", default=None)
 @click.option(
     "--input-dir",
@@ -840,11 +841,11 @@ def train(
         tokenizer_json = glob(training_results_dir + "/checkpoint-*/tokenizer.json")
         tokenizer_model = glob(training_results_dir + "/checkpoint-*/tokenizer.model")
         tokenizer_config_json = glob(
-            training_results_dir + "/checkpoint-*/tokenizer_config.json"
+            training_results_dir + "/checkpoint-*/tokenizer_manage.json"
         )
-        config_json = glob(training_results_dir + "/merged_model/config.json")
+        config_json = glob(training_results_dir + "/merged_model/manage.json")
         generation_config_json = glob(
-            training_results_dir + "/merged_model/generation_config.json"
+            training_results_dir + "/merged_model/generation_manage.json"
         )
         safe_tensors = glob(training_results_dir + "/merged_model/*.safetensors")
 
@@ -950,7 +951,7 @@ def train(
         # Seems to be not a problem if working with a remote download with convert.py
 
 
-@cli.command()
+@ilab.command()
 @click.option(
     "--data-dir",
     help="Base directory where data is stored.",
@@ -1016,7 +1017,7 @@ def test(data_dir, model_dir, adapter_file):
             )
 
 
-@cli.command()
+@ilab.command()
 @click.option(
     "--model-dir",
     help="Base directory where model is stored.",

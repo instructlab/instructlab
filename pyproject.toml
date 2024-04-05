@@ -27,12 +27,12 @@ version = {attr = "cli.__version__"}
 
 [project.scripts]
 # defines lab executable
-ilab = "cli.lab:cli"
+ilab = "cli.lab:ilab"
 
 [tool.setuptools.packages.find]
 # defines where to look for sub-packages
 where = [""]
-include = ["cli", "cli.chat", "cli.generator", "cli.train", "cli.train.lora_mlx", "cli.train.lora_mlx.models", "cli.llamacpp", "cli.mlx_explore"]
+include = ["cli", "cli.config", "cli.model", "cli.chat", "cli.generator", "cli.train", "cli.train.lora_mlx", "cli.train.lora_mlx.models", "cli.llamacpp", "cli.mlx_explore"]
 
 [tool.setuptools.package-data]
 "*" = ["quantize"]

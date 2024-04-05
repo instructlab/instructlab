@@ -4,10 +4,13 @@ from typing import Optional
 # Third Party
 from pydantic import BaseModel, ConfigDict, PositiveInt, StrictStr, ValidationError
 import httpx
-import yaml
+import configparser
+import os
+from pathlib import Path
 
+HOME = os.getenv("HOME")
 DEFAULT_API_KEY = "no_api_key"
-DEFAULT_CONFIG = "config.yaml"
+DEFAULT_CONFIG = f"{HOME}/.config/models/ilab.conf"
 DEFAULT_MODEL = "merlinite-7b-Q4_K_M"
 DEFAULT_MODEL_PATH = f"models/{DEFAULT_MODEL}.gguf"
 DEFAULT_TAXONOMY_REPO = "git@github.com:instruct-lab/taxonomy.git"
@@ -126,8 +129,10 @@ def get_default_config():
 def read_config(config_file=DEFAULT_CONFIG):
     """Reads configuration from disk."""
     try:
-        with open(config_file, "r", encoding="utf-8") as yamlfile:
-            content = yaml.safe_load(yamlfile)
+        with open(config_file, "r", encoding="utf-8") as conffile:
+            configParser = configparser.RawConfigParser()   
+            configFilePath = conffile
+            content = configParser.read(configFilePath)            
             return Config(**content)
     except ValidationError as exc:
         msg = f"{exc.error_count()} errors in {config_file}:\n"
@@ -149,10 +154,19 @@ def get_dict(cfg):
     return cfg.model_dump()
 
 
-def write_config(cfg, config_file=DEFAULT_CONFIG):
+def write_config(cfg: Config, config_file=DEFAULT_CONFIG):
+    f = Path(os.path.dirname(os.path.abspath(config_file)))
+    f.mkdir(parents=True, exist_ok=True)
     """Writes configuration to a disk"""
-    with open(config_file, "w", encoding="utf-8") as yamlfile:
-        yaml.safe_dump(get_dict(cfg), stream=yamlfile)
+    with open(config_file, "w+", encoding="utf-8") as conffile:
+        configP = configparser.RawConfigParser()
+        dict = get_dict(cfg)
+        for item in dict:
+            configP[item] = dict[item]
+
+       # configP['conf'] = get_dict(cfg)
+        configP.write(conffile)
+        #.safe_dump(, stream=yamlfile)
 
 
 def get_api_base(host_port):
