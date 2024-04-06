@@ -20,6 +20,7 @@ import openai
 
 # Local
 from ..config import DEFAULT_API_KEY, DEFAULT_CONNECTION_TIMEOUT
+from ..utils import get_sysprompt
 
 HELP_MD = """
 Help / TL;DR
@@ -42,7 +43,7 @@ Press Alt (or Meta) and Enter or Esc Enter to end multiline input.
 """
 
 CONTEXTS = {
-    "default": "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior.",
+    "default": get_sysprompt(),
     "cli_helper": "You are an expert for command line interface and know all common commands. Answer the command to execute as it without any explanation.",
 }
 

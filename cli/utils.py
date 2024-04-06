@@ -18,6 +18,9 @@ import git
 import gitdb
 import yaml
 
+# Local
+from . import common
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s",
@@ -248,3 +251,15 @@ def chunk_document(documents: List, server_ctx_size, chunk_word_count) -> List[s
         content.extend([item.page_content for item in temp])
 
     return content
+
+
+# pylint: disable=unused-argument
+def get_sysprompt(model=None):
+    """
+    Gets a system prompt specific to a model
+    Args:
+        model (str): currently not implemented
+    Returns:
+        str: The system prompt for the model being used
+    """
+    return common.SYS_PROMPT

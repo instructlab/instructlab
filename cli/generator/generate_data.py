@@ -381,7 +381,7 @@ def generate_data(
         try:
             test_data.append(
                 {
-                    "system": utils.SYSTEM_PROMPT,
+                    "system": utils.get_sysprompt(),
                     "user": unescape(user),
                     "assistant": unescape(seed_example["output"]),
                 }
@@ -511,7 +511,7 @@ def generate_data(
                 user += "\n" + synth_example["input"]
             train_data.append(
                 {
-                    "system": utils.SYSTEM_PROMPT,
+                    "system": utils.get_sysprompt(),
                     "user": unescape(user),
                     "assistant": unescape(synth_example["output"]),
                 }
