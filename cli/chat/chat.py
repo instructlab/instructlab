@@ -449,7 +449,10 @@ def chat_cli(
 ):
     """Starts a CLI-based chat with the server"""
     client = OpenAI(
-        base_url=api_base, api_key=api_key, timeout=DEFAULT_CONNECTION_TIMEOUT
+        base_url=api_base,
+        api_key=api_key,
+        timeout=DEFAULT_CONNECTION_TIMEOUT,
+        http_client=httpx.Client(verify=False),
     )
 
     # Load context/session

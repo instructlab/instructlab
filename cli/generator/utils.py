@@ -11,6 +11,7 @@ import sys
 
 # Third Party
 from openai import OpenAI, OpenAIError
+import httpx
 
 # Local
 from ..config import DEFAULT_API_KEY
@@ -111,7 +112,9 @@ def openai_completion(
             api_key = "no_api_key"
 
         # do not pass a lower timeout to this client since generating a dataset takes some time
-        client = OpenAI(base_url=api_base, api_key=api_key)
+        client = OpenAI(
+            base_url=api_base, api_key=api_key, http_client=httpx.Client(verify=False)
+        )
 
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
