@@ -104,6 +104,8 @@ source venv/bin/activate
 
 ### 🏗️ Initialize `ilab`
 
+Next, you will need to initialize `ilab`:
+
 ```shell
 ilab init
 ```
@@ -111,7 +113,9 @@ ilab init
 Initializing `ilab` will:
 
 1. Add a new, default `config.yaml` file.
-2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory. If you want to point to an existing local clone of the `taxonomy` respository then pass the path interactively or alternatively with the `--taxonomy-path` flag.
+2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory. If you want to point to an existing local clone of the `taxonomy` repository then pass the path interactively or alternatively with the `--taxonomy-path` flag.
+
+You will be prompted through these steps as shown in the shell session below:
 
 ```shell
 (venv) $ ilab init
