@@ -41,7 +41,12 @@ def datagen_svc(url, taxonomy_files, output_dir, cert, verify, num_samples):
             output_dir, f"sdg_{int(time.time())}_{os.path.basename(tf)}.json"
         )
         with open(fn, "w", encoding="utf-8") as f:
-            f.write(json.dumps(response.json(), indent=4))
+            try:
+                f.write(json.dumps(response.json(), indent=4))
+            except requests.exceptions.JSONDecodeError:
+                f.write("Error: Response from SDG service was not valid JSON.\n\n")
+                f.write("---\n\n")
+                f.write(response.text)
 
         output_files.append(fn)
 
