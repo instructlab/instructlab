@@ -19,6 +19,7 @@ prompt-toolkit>=3.0.38,<4.0.0
 pydantic
 pydantic_yaml
 PyYAML>=6.0.1,<7.0.0
+requests
 rich>=13.3.1,<14.0.0
 rouge-score>=0.1.2,<0.2.0
 sentencepiece>=0.2.0,<0.3.0

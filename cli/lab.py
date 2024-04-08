@@ -1152,3 +1152,93 @@ def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
         script = os.path.join(cli_dir, "llamacpp/quantize")
         cmd = f"{script} {gguf_model_dir} {gguf_model_q_dir} Q4_K_M"
         os.system("{}".format(cmd))
+
+
+@cli.command(hidden=True)
+@click.option(
+    "--endpoint-url",
+    help="Endpoint URL for the SDG web service.",
+    default="",
+)
+@click.option(
+    "--tls-client-cert",
+    type=click.Path(),
+    help="path to the TLS client certificate to use",
+    default="",
+)
+@click.option(
+    "--tls-client-key",
+    type=click.Path(),
+    help="path to the TLS client key to use",
+    default="",
+)
+@click.option(
+    "--tls-server-ca-cert",
+    type=click.Path(),
+    help="path to the TLS server CA cert to use",
+    default="",
+)
+@click.option(
+    "--output-dir",
+    type=click.Path(),
+    default=config.DEFAULT_GENERATED_FILES_OUTPUT_DIR,
+    help="Path to output generated files.",
+)
+@click.option(
+    "--taxonomy-path",
+    type=click.Path(),
+    default=config.DEFAULT_TAXONOMY_PATH,
+    show_default=True,
+    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone or local file path.",
+)
+@click.option(
+    "--taxonomy-base",
+    default=config.DEFAULT_TAXONOMY_BASE,
+    show_default=True,
+    help="Base git-ref to use when generating new taxonomy.",
+)
+@click.option(
+    "--num-instructions",
+    type=click.INT,
+    help="Number of instructions to generate.",
+    default=config.DEFAULT_NUM_INSTRUCTIONS,
+    show_default=True,
+)
+def sdg_svc(
+    endpoint_url,
+    tls_client_cert,
+    tls_client_key,
+    tls_server_ca_cert,
+    output_dir,
+    taxonomy_path,
+    taxonomy_base,
+    num_instructions,
+):
+    """Hit a remote SDG service for changed taxonomy files
+
+    Note that this is experimental and the API is not necessarily stable.
+    It requires a service that has not yet been implemented in a reusable way.
+    However, it represents a start of the client side for a service we would
+    like to have available as part of the backend pipeline architecture.
+    """
+    # pylint: disable=C0415
+    # Local
+    from .generator.generate_data import get_taxonomy_diff
+    from .sdgsvc.sdgsvc import datagen_svc
+
+    try:
+        taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
+        taxonomy_files = [os.path.join(taxonomy_path, fn) for fn in taxonomy_files]
+        print("Using taxonomy files: %s" % taxonomy_files)
+        output_files = datagen_svc(
+            endpoint_url,
+            taxonomy_files,
+            output_dir,
+            (tls_client_cert, tls_client_key),
+            tls_server_ca_cert,
+            num_instructions,
+        )
+        print("Generated data written to %s" % output_files)
+    except Exception as e:
+        print("Failed to get data from sdg service: %s" % e)
+        raise
