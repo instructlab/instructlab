@@ -1,4 +1,5 @@
 # Standard
+from pathlib import Path
 from typing import Dict, List, Union
 import copy
 import functools
@@ -113,9 +114,13 @@ def make_lab_diff_aliases(cli, diff):
     cli.add_command(lab_check)
 
 
+TAXONOMY_FOLDERS: List[str] = ["compositional_skills", "knowledge"]
+"""Taxonomy folders which are also the schema names"""
+
+
 def istaxonomyfile(fn):
-    topleveldir = fn.split("/")[0]
-    if fn.endswith(".yaml") and topleveldir in ["compositional_skills", "knowledge"]:
+    path = Path(fn)
+    if path.suffix == ".yaml" and path.parts[0] in TAXONOMY_FOLDERS:
         return True
     return False
 

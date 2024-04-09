@@ -6,12 +6,25 @@ import shutil
 # Third Party
 import git
 
-TEST_VALID_YAML = """created_by: rafael-vasquez
+TEST_VALID_COMPOSITIONAL_SKILL_YAML = """created_by: rafael-vasquez
+version: 1
 seed_examples:
 - answer: "Sure thing!"
   context: "This is a valid YAML."
   question: "Can you help me debug this failing unit test?"
-task_description: ''
+- answer: "answer2"
+  context: "context2"
+  question: "question2"
+- answer: "answer3"
+  context: "context3"
+  question: "question3"
+- answer: "answer4"
+  context: "context4"
+  question: "question4"
+- answer: "answer5"
+  context: "context5"
+  question: "question5"
+task_description: 'This is a task'
 """
 
 
@@ -38,11 +51,13 @@ class MockTaxonomy:
             rel_path (str): Relative path (from repository root) to the file.
             contents (bytes): (optional) Byte string to be written to the file.
         """
-        assert not Path(rel_path).is_absolute()
-        file_path = Path(self.root / rel_path)
+        taxonomy_path = Path(rel_path)
+        assert not taxonomy_path.is_absolute()
+        file_path = self.root.joinpath(taxonomy_path)
         file_path.parent.mkdir(exist_ok=True, parents=True)
         if not contents:
-            file_path.write_text(TEST_VALID_YAML, encoding="utf-8")
+            assert taxonomy_path.parts[0] == "compositional_skills"
+            file_path.write_text(TEST_VALID_COMPOSITIONAL_SKILL_YAML, encoding="utf-8")
         else:
             file_path.write_bytes(contents)
 
@@ -62,7 +77,7 @@ class MockTaxonomy:
         Args:
             rel_path (str): Relative path (from repository root) to the file.
         """
-        Path(self.root / rel_path).unlink(missing_ok=True)
+        self.root.joinpath(rel_path).unlink(missing_ok=True)
 
     def teardown(self) -> None:
         """Recursively remove the temporary repository and all of its
