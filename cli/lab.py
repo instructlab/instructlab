@@ -1,3 +1,5 @@
+# pylint: disable=too-many-lines
+
 # Standard
 from glob import glob
 from os.path import basename, dirname, exists, splitext
@@ -395,6 +397,31 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
     show_default=True,
     help="The context size is the maximum number of tokens the server will consider.",
 )
+@click.option(
+    "--tls-secure",
+    is_flag=False,
+    help="Use TLS verification if enabled.",
+)
+@click.option(
+    "--tls-client-cert",
+    type=click.Path(),
+    default="",
+    show_default=True,
+    help="Path to the TLS client certificate to use.",
+)
+@click.option(
+    "--tls-client-key",
+    type=click.Path(),
+    default="",
+    show_default=True,
+    help="Path to the TLS client key to use.",
+)
+@click.option(
+    "--tls-client-passwd",
+    type=click.STRING,
+    default="",
+    help="TLS client certificate password.",
+)
 @click.pass_context
 def generate(
     ctx,
@@ -411,6 +438,10 @@ def generate(
     yaml_rules,
     chunk_word_count,
     server_ctx_size,
+    tls_secure,
+    tls_client_cert,
+    tls_client_key,
+    tls_client_passwd,
 ):
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=C0415
@@ -433,6 +464,10 @@ def generate(
             server_process, api_base = ensure_server(
                 ctx.obj.logger,
                 ctx.obj.config.serve,
+                tls_secure,
+                tls_client_cert,
+                tls_client_key,
+                tls_client_passwd,
             )
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
@@ -459,6 +494,10 @@ def generate(
             yaml_rules=yaml_rules,
             chunk_word_count=chunk_word_count,
             server_ctx_size=server_ctx_size,
+            tls_secure=tls_secure,
+            tls_client_cert=tls_client_cert,
+            tls_client_key=tls_client_key,
+            tls_client_passwd=tls_client_passwd,
         )
     except GenerateException as exc:
         click.secho(
@@ -518,6 +557,31 @@ def generate(
     default=config.DEFAULT_API_KEY,  # Note: do not expose default API key
     help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
 )
+@click.option(
+    "--tls-secure",
+    is_flag=False,
+    help="Use TLS verification if enabled.",
+)
+@click.option(
+    "--tls-client-cert",
+    type=click.Path(),
+    default="",
+    show_default=True,
+    help="Path to the TLS client certificate to use.",
+)
+@click.option(
+    "--tls-client-key",
+    type=click.Path(),
+    default="",
+    show_default=True,
+    help="Path to the TLS client key to use.",
+)
+@click.option(
+    "--tls-client-passwd",
+    type=click.STRING,
+    default="",
+    help="TLS client certificate password.",
+)
 @click.pass_context
 def chat(
     ctx,
@@ -529,6 +593,10 @@ def chat(
     greedy_mode,
     endpoint_url,
     api_key,
+    tls_secure,
+    tls_client_cert,
+    tls_client_key,
+    tls_client_passwd,
 ):
     """Run a chat using the modified model"""
     # pylint: disable=C0415
@@ -544,6 +612,10 @@ def chat(
             server_process, api_base = ensure_server(
                 ctx.obj.logger,
                 ctx.obj.config.serve,
+                tls_secure,
+                tls_client_cert,
+                tls_client_key,
+                tls_client_passwd,
             )
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
@@ -563,6 +635,10 @@ def chat(
             session=session,
             qq=quick_question,
             greedy_mode=greedy_mode,
+            tls_secure=tls_secure,
+            tls_client_cert=tls_client_cert,
+            tls_client_key=tls_client_key,
+            tls_client_passwd=tls_client_passwd,
         )
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
