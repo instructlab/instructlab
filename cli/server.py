@@ -23,7 +23,12 @@ class ServerException(Exception):
 
 
 def ensure_server(
-    logger, serve_config, tls_secure, tls_client_cert, tls_client_key, tls_client_passwd
+    logger,
+    serve_config,
+    tls_insecure,
+    tls_client_cert,
+    tls_client_key,
+    tls_client_passwd,
 ):
     """Checks if server is running, if not starts one as a subprocess. Returns the server process
     and the URL where it's available."""
@@ -32,7 +37,7 @@ def ensure_server(
         logger.debug(f"Trying to connect to {api_base}...")
         list_models(
             api_base,
-            tls_secure,
+            tls_insecure,
             tls_client_cert,
             tls_client_key,
             tls_client_passwd,

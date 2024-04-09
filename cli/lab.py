@@ -398,9 +398,9 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
     help="The context size is the maximum number of tokens the server will consider.",
 )
 @click.option(
-    "--tls-secure",
+    "--tls-insecure",
     is_flag=True,
-    help="Use TLS verification.",
+    help="Disable TLS verification.",
 )
 @click.option(
     "--tls-client-cert",
@@ -438,7 +438,7 @@ def generate(
     yaml_rules,
     chunk_word_count,
     server_ctx_size,
-    tls_secure,
+    tls_insecure,
     tls_client_cert,
     tls_client_key,
     tls_client_passwd,
@@ -464,7 +464,7 @@ def generate(
             server_process, api_base = ensure_server(
                 ctx.obj.logger,
                 ctx.obj.config.serve,
-                tls_secure,
+                tls_insecure,
                 tls_client_cert,
                 tls_client_key,
                 tls_client_passwd,
@@ -494,7 +494,7 @@ def generate(
             yaml_rules=yaml_rules,
             chunk_word_count=chunk_word_count,
             server_ctx_size=server_ctx_size,
-            tls_secure=tls_secure,
+            tls_insecure=tls_insecure,
             tls_client_cert=tls_client_cert,
             tls_client_key=tls_client_key,
             tls_client_passwd=tls_client_passwd,
@@ -558,9 +558,9 @@ def generate(
     help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
 )
 @click.option(
-    "--tls-secure",
+    "--tls-insecure",
     is_flag=True,
-    help="Use TLS verification.",
+    help="Disable TLS verification.",
 )
 @click.option(
     "--tls-client-cert",
@@ -593,7 +593,7 @@ def chat(
     greedy_mode,
     endpoint_url,
     api_key,
-    tls_secure,
+    tls_insecure,
     tls_client_cert,
     tls_client_key,
     tls_client_passwd,
@@ -612,7 +612,7 @@ def chat(
             server_process, api_base = ensure_server(
                 ctx.obj.logger,
                 ctx.obj.config.serve,
-                tls_secure,
+                tls_insecure,
                 tls_client_cert,
                 tls_client_key,
                 tls_client_passwd,
@@ -635,7 +635,7 @@ def chat(
             session=session,
             qq=quick_question,
             greedy_mode=greedy_mode,
-            tls_secure=tls_secure,
+            tls_insecure=tls_insecure,
             tls_client_cert=tls_client_cert,
             tls_client_key=tls_client_key,
             tls_client_passwd=tls_client_passwd,

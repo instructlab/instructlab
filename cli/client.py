@@ -15,8 +15,8 @@ class ClientException(Exception):
 
 def list_models(
     api_base,
+    tls_insecure,
     api_key=DEFAULT_API_KEY,
-    tls_secure=True,
     tls_client_cert: Optional[str] = None,
     tls_client_key: Optional[str] = None,
     tls_client_passwd: Optional[str] = None,
@@ -25,11 +25,12 @@ def list_models(
     try:
         orig_cert = (tls_client_cert, tls_client_key, tls_client_passwd)
         cert = tuple(item for item in orig_cert if item)
+        verify = not tls_insecure
         client = OpenAI(
             base_url=api_base,
             api_key=api_key,
             timeout=DEFAULT_CONNECTION_TIMEOUT,
-            http_client=httpx.Client(cert=cert, verify=tls_secure),
+            http_client=httpx.Client(cert=cert, verify=verify),
         )
         return client.models.list()
     except OpenAIError as exc:
