@@ -216,8 +216,7 @@ def get_documents(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
 
     except (OSError, git.exc.GitCommandError, FileNotFoundError) as e:
         logger.error("Error: {}".format(str(e)))
-        return [f"Error: {str(e)}"]
-
+        sys.exit()
     finally:
         # Cleanup: Remove the temporary directory if it exists
         if os.path.exists(temp_dir):
