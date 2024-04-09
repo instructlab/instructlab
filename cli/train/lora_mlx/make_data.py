@@ -2,7 +2,7 @@
 import json
 
 # Local
-from . import utils
+from ...utils import get_sysprompt
 
 
 def format_text(obj):
@@ -30,7 +30,7 @@ def make_data(data_dir: str, is_shiv: bool = False):
             data_new = []
             for obj in data:
                 obj_new = {
-                    "system": utils.get_sysprompt(),
+                    "system": get_sysprompt(),
                     "user": obj["user"],
                     "assistant": obj["assistant"],
                 }
@@ -62,7 +62,7 @@ def make_data(data_dir: str, is_shiv: bool = False):
         data_new = []
         for obj in data:
             obj_new = {
-                "system": utils.get_sysprompt(),
+                "system": get_sysprompt(),
                 "user": obj["inputs"],
                 "assistant": obj["targets"],
             }
