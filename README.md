@@ -104,6 +104,8 @@ source venv/bin/activate
 
 ### 🏗️ Initialize `ilab`
 
+Next, you will need to initialize `ilab`:
+
 ```shell
 ilab init
 ```
@@ -111,7 +113,9 @@ ilab init
 Initializing `ilab` will:
 
 1. Add a new, default `config.yaml` file.
-2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory. If you want to point to an existing local clone of the `taxonomy` respository then pass the path interactively or alternatively with the `--taxonomy-path` flag.
+2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory. If you want to point to an existing local clone of the `taxonomy` repository then pass the path interactively or alternatively with the `--taxonomy-path` flag.
+
+You will be prompted through these steps as shown in the shell session below:
 
 ```shell
 (venv) $ ilab init
@@ -234,7 +238,7 @@ The synthetic data set will be three files in the newly created `generated` dire
 > **NOTE:** ⏳ This can take from 15 minutes to 1+ hours to complete, depending on your computing resources.
 
 It is also possible to run the generate step against a different model via an
-OpenAI-compatible API. For example, the one spawned by `ilab serve` or any remote or locally hosted LLM (e.g. via [ollama](ollama.ai/), [LM Studio](https://lmstudio.ai), etc.)
+OpenAI-compatible API. For example, the one spawned by `ilab serve` or any remote or locally hosted LLM (e.g. via [ollama](https://ollama.com/), [LM Studio](https://lmstudio.ai), etc.)
 
 ```
 ilab generate --endpoint-url http://localhost:8000/v1

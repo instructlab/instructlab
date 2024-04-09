@@ -1,4 +1,5 @@
 # Standard
+from pathlib import Path
 from typing import Dict, List, Union
 import copy
 import functools
@@ -9,12 +10,17 @@ import platform
 import re
 import shutil
 import subprocess
+import sys
 
 # Third Party
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 import click
 import git
 import gitdb
 import yaml
+
+# Local
+from . import common
 
 logging.basicConfig(
     level=logging.INFO,
@@ -108,9 +114,13 @@ def make_lab_diff_aliases(cli, diff):
     cli.add_command(lab_check)
 
 
+TAXONOMY_FOLDERS: List[str] = ["compositional_skills", "knowledge"]
+"""Taxonomy folders which are also the schema names"""
+
+
 def istaxonomyfile(fn):
-    topleveldir = fn.split("/")[0]
-    if fn.endswith(".yaml") and topleveldir in ["compositional_skills", "knowledge"]:
+    path = Path(fn)
+    if path.suffix == ".yaml" and path.parts[0] in TAXONOMY_FOLDERS:
         return True
     return False
 
@@ -178,7 +188,7 @@ def get_documents(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
 
     repo_url = input_pattern.get("repo")
     commit_hash = input_pattern.get("commit")
-    file_patterns = input_pattern.get("pattern")
+    file_patterns = input_pattern.get("patterns")
     temp_dir = os.path.join(os.getcwd(), "temp_repo")
     if os.path.exists(temp_dir):
         shutil.rmtree(temp_dir)
@@ -194,7 +204,7 @@ def get_documents(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
 
         file_contents = []
 
-        logger.info("Processing files...")
+        logger.debug("Processing files...")
         for pattern in file_patterns:
             for file_path in glob.glob(os.path.join(temp_dir, pattern)):
                 if os.path.isfile(file_path) and file_path.endswith(".md"):
@@ -212,3 +222,49 @@ def get_documents(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
         # Cleanup: Remove the temporary directory if it exists
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
+
+
+def chunk_document(documents: List, server_ctx_size, chunk_word_count) -> List[str]:
+    """
+    Iterates over the documents and splits them into chunks based on the word count provided by the user.
+    Args:
+        documents (dict): List of documents retrieved from git (can also consist of a single document).
+        server_ctx_size (int): Context window size of server.
+        chunk_word_count (int): Maximum number of words to chunk a document.
+    Returns:
+         List[str]: List of chunked documents.
+    """
+    no_tokens_per_doc = int(chunk_word_count * 1.3)  # 1 word ~ 1.3 token
+    if no_tokens_per_doc > int(server_ctx_size - 1024):
+        logger.error(
+            "Error: {}".format(
+                str(
+                    f"Given word count per doc will exceed the server context window size {server_ctx_size}"
+                )
+            )
+        )
+        sys.exit()
+    content = []
+    text_splitter = RecursiveCharacterTextSplitter(
+        separators=["\n\n", "\n"],
+        chunk_size=int(no_tokens_per_doc * 4),  # 1 token ~ 4 English character
+        chunk_overlap=100,
+    )
+
+    for docs in documents:
+        temp = text_splitter.create_documents([docs])
+        content.extend([item.page_content for item in temp])
+
+    return content
+
+
+# pylint: disable=unused-argument
+def get_sysprompt(model=None):
+    """
+    Gets a system prompt specific to a model
+    Args:
+        model (str): currently not implemented
+    Returns:
+        str: The system prompt for the model being used
+    """
+    return common.SYS_PROMPT

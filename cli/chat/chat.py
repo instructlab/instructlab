@@ -1,4 +1,5 @@
 # Standard
+from typing import Optional
 import datetime
 import json
 import os
@@ -20,6 +21,7 @@ import openai
 
 # Local
 from ..config import DEFAULT_API_KEY, DEFAULT_CONNECTION_TIMEOUT
+from ..utils import get_sysprompt
 
 HELP_MD = """
 Help / TL;DR
@@ -42,7 +44,7 @@ Press Alt (or Meta) and Enter or Esc Enter to end multiline input.
 """
 
 CONTEXTS = {
-    "default": "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior.",
+    "default": get_sysprompt(),
     "cli_helper": "You are an expert for command line interface and know all common commands. Answer the command to execute as it without any explanation.",
 }
 
@@ -436,11 +438,30 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
 
 def chat_cli(
-    logger, api_base, config, question, model, context, session, qq, greedy_mode
+    logger,
+    api_base,
+    api_key,
+    config,
+    question,
+    model,
+    context,
+    session,
+    qq,
+    greedy_mode,
+    tls_insecure,
+    tls_client_cert: Optional[str] = None,
+    tls_client_key: Optional[str] = None,
+    tls_client_passwd: Optional[str] = None,
 ):
     """Starts a CLI-based chat with the server"""
+    orig_cert = (tls_client_cert, tls_client_key, tls_client_passwd)
+    cert = tuple(item for item in orig_cert if item)
+    verify = not tls_insecure
     client = OpenAI(
-        base_url=api_base, api_key=DEFAULT_API_KEY, timeout=DEFAULT_CONNECTION_TIMEOUT
+        base_url=api_base,
+        api_key=api_key,
+        timeout=DEFAULT_CONNECTION_TIMEOUT,
+        http_client=httpx.Client(cert=cert, verify=verify),
     )
 
     # Load context/session

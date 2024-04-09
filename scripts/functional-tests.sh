@@ -32,8 +32,8 @@ cleanup() {
     done
     rm -f "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" \
         "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" \
-        test_session_history \
-        simple_math.yaml
+        test_session_history
+    rm -rf test_taxonomy
     # revert log level change from test_temp_server()
     sed -i 's/DEBUG/INFO/g' config.yaml
     # revert port change from test_bind_port()
@@ -44,6 +44,9 @@ cleanup() {
 trap 'cleanup "$?"' EXIT QUIT INT TERM
 
 rm -f config.yaml
+
+# print version
+ilab --version
 
 # pipe 3 carriage returns to ilab init to get past the prompts
 echo -e "\n\n\n" | ilab init
@@ -198,20 +201,27 @@ test_loading_session_history(){
 }
 
 test_generate(){
-    cat - <<EOF >  simple_math.yaml
+    mkdir -p test_taxonomy/compositional_skills
+    cat - <<EOF >  test_taxonomy/compositional_skills/simple_math.yaml
 created_by: ci
 seed_examples:
-- question: what is 1+1
-  answer: it is 2
-- question: what is 1+3
-  answer: it is 4
-task_description: 'simple maths'
+  - question: what is 1+1
+    answer: it is 2
+  - question: what is 1+3
+    answer: it is 4
+  - question: what is 2+3
+    answer: it is 5
+  - question: what is 2+5
+    answer: it is 7
+  - question: what is 7+3
+    answer: it is 10
+task_description: "simple maths"
 EOF
 
     sed -i -e 's/num_instructions:.*/num_instructions: 1/g' config.yaml
 
     # This should be finished in a minut or so but time it out incase it goes wrong
-    timeout 10m ilab generate --taxonomy-path simple_math.yaml
+    timeout 10m ilab generate --taxonomy-path test_taxonomy/compositional_skills/simple_math.yaml
 
     # Test if generated was created and contains files
     ls -l generated/*

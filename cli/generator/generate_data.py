@@ -1,10 +1,10 @@
 # Standard
 from datetime import datetime
-from functools import partial
+from functools import cache, partial
+from logging import Logger
 from multiprocessing import Pool
-from os.path import splitext
 from pathlib import Path
-from typing import Optional
+from typing import Any, Mapping, Optional
 import json
 import os
 import random
@@ -20,7 +20,7 @@ import tqdm
 import yaml
 
 # Local
-from ..utils import get_documents, get_taxonomy_diff
+from ..utils import TAXONOMY_FOLDERS, chunk_document, get_documents, get_taxonomy_diff
 from . import utils
 
 DEFAULT_PROMPT_TEMPLATE = """\
@@ -236,15 +236,15 @@ def get_seed_examples(contents):
     return contents
 
 
-def get_version(contents):
-    if "version" in contents:
-        version = contents["version"]
+def get_version(contents: Mapping) -> int:
+    version = contents.get("version", 1)
+    if not isinstance(version, int):
+        # schema validation will complain about the type
         try:
             version = int(version)
         except ValueError:
-            pass
-        return version
-    return 1
+            version = 1  # fallback to version 1
+    return version
 
 
 def get_instructions_from_model(
@@ -260,6 +260,10 @@ def get_instructions_from_model(
     temperature,
     top_p,
     output_file_discarded,
+    tls_insecure,
+    tls_client_cert,
+    tls_client_key,
+    tls_client_passwd,
 ):
     batch_inputs = []
     for _ in range(request_batch_size):
@@ -291,6 +295,10 @@ def get_instructions_from_model(
         api_key=api_key,
         prompts=batch_inputs,
         model_name=model_name,
+        tls_insecure=tls_insecure,
+        tls_client_cert=tls_client_cert,
+        tls_client_key=tls_client_key,
+        tls_client_passwd=tls_client_passwd,
         batch_size=request_batch_size,
         decoding_args=decoding_args,
     )
@@ -322,6 +330,7 @@ def get_instructions_from_model(
 def generate_data(
     logger,
     api_base,
+    tls_insecure,
     yaml_rules: Optional[str] = None,
     output_dir: Optional[str] = None,
     taxonomy: Optional[str] = None,
@@ -337,6 +346,11 @@ def generate_data(
     rouge_threshold: Optional[float] = None,
     console_output=True,
     api_key: Optional[str] = None,
+    chunk_word_count=None,
+    server_ctx_size=None,
+    tls_client_cert: Optional[str] = None,
+    tls_client_key: Optional[str] = None,
+    tls_client_passwd: Optional[str] = None,
 ):
     seed_instruction_data = []
     generate_start = time.time()
@@ -365,12 +379,21 @@ def generate_data(
     test_data = []
     for seed_example in seed_instruction_data:
         user = seed_example["instruction"]
+
+        documents = seed_example["document"]
+        if documents:
+            seed_example["document"] = chunk_document(
+                documents=documents,
+                server_ctx_size=server_ctx_size,
+                chunk_word_count=chunk_word_count,
+            )
+
         if len(seed_example["input"]) > 0:
             user += "\n" + seed_example["input"]
         try:
             test_data.append(
                 {
-                    "system": utils.SYSTEM_PROMPT,
+                    "system": utils.get_sysprompt(),
                     "user": unescape(user),
                     "assistant": unescape(seed_example["output"]),
                 }
@@ -395,7 +418,6 @@ def generate_data(
     request_idx = 0
     # load the LM-generated instructions
     machine_instruction_data = []
-    train_data = []
     if os.path.exists(os.path.join(output_dir, "regen.json")):
         machine_instruction_data = utils.jload(os.path.join(output_dir, "regen.json"))
         logger.debug(
@@ -452,6 +474,10 @@ def generate_data(
             temperature,
             top_p,
             output_file_discarded,
+            tls_insecure,
+            tls_client_cert,
+            tls_client_key,
+            tls_client_passwd,
         )
         total_discarded += discarded
         total = len(instruction_data)
@@ -494,13 +520,14 @@ def generate_data(
             f"Generated {total} instructions(discarded {discarded}), rouged {total - keep}, kept {keep} instructions"
         )
         utils.jdump(machine_instruction_data, os.path.join(output_dir, output_file))
+        train_data = []
         for synth_example in machine_instruction_data:
             user = synth_example["instruction"]
             if len(synth_example["input"]) > 0:
                 user += "\n" + synth_example["input"]
             train_data.append(
                 {
-                    "system": utils.SYSTEM_PROMPT,
+                    "system": utils.get_sysprompt(),
                     "user": unescape(user),
                     "assistant": unescape(synth_example["output"]),
                 }
@@ -528,6 +555,101 @@ def generate_data(
     logger.info(f"Generation took {generate_duration:.2f}s")
 
 
+@cache
+def _load_schema(path: "importlib.resources.abc.Traversable") -> "referencing.Resource":
+    """Load the schema from the path into a Resource object.
+
+    Args:
+        path (Traversable): Path to the schema to be loaded.
+
+    Raises:
+        NoSuchResource: If the resource cannot be loaded.
+
+    Returns:
+        Resource: A Resource containing the requested schema.
+    """
+    # pylint: disable=C0415
+    # Third Party
+    from referencing import Resource
+    from referencing.exceptions import NoSuchResource
+    from referencing.jsonschema import DRAFT202012
+
+    try:
+        contents = json.loads(path.read_text(encoding="utf-8"))
+        resource = Resource.from_contents(
+            contents=contents, default_specification=DRAFT202012
+        )
+    except Exception as e:
+        raise NoSuchResource(ref=str(path)) from e
+    return resource
+
+
+def validate_yaml(
+    logger: Logger, contents: Mapping[str, Any], taxonomy_path: Path
+) -> int:
+    """Validate the parsed yaml document using the taxonomy path to
+    determine the proper schema.
+
+    Args:
+        logger (Logger): The logger for errors/warnings.
+        contents (Mapping): The parsed yaml document to validate against the schema.
+        taxonomy_path (Path): Relative path of the taxonomy yaml document where the
+        first element is the schema to use.
+
+    Returns:
+        int: The number of errors found during validation.
+        Messages for each error have been logged.
+    """
+    # pylint: disable=C0415
+    # Standard
+    from importlib import resources
+
+    # Third Party
+    from jsonschema.protocols import Validator
+    from jsonschema.validators import validator_for
+    from referencing import Registry, Resource
+    from referencing.exceptions import NoSuchResource
+    from referencing.typing import URI
+
+    errors = 0
+    version = get_version(contents)
+    schemas_path = resources.files("cli").joinpath(f"schema/v{version}")
+
+    def retrieve(uri: URI) -> Resource:
+        path = schemas_path.joinpath(uri)
+        return _load_schema(path)
+
+    schema_name = taxonomy_path.parts[0]
+    if schema_name not in TAXONOMY_FOLDERS:
+        schema_name = "knowledge" if "document" in contents else "compositional_skills"
+        logger.info(
+            f"Cannot determine schema name from path {taxonomy_path}. Using {schema_name} schema."
+        )
+
+    try:
+        schema_resource = retrieve(f"{schema_name}.json")
+        schema = schema_resource.contents
+        validator_cls = validator_for(schema)
+        validator: Validator = validator_cls(
+            schema, registry=Registry(retrieve=retrieve)
+        )
+
+        for error in validator.iter_errors(contents):
+            errors += 1
+            error_path = error.json_path[1:]
+            if not error_path:
+                error_path = "."
+            logger.error(
+                f"Validation error in {taxonomy_path} on {error_path}: {error.message}"
+            )
+    except NoSuchResource as e:
+        cause = e.__cause__ if e.__cause__ is not None else e
+        errors += 1
+        logger.error(f"Cannot load schema file {e.ref}. {cause}")
+
+    return errors
+
+
 # pylint: disable=broad-exception-caught
 def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
     # pylint: disable=C0415
@@ -538,11 +660,18 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
     seed_instruction_data = []
     warnings = 0
     errors = 0
+    file_path = Path(file_path).resolve()
     # file should end with ".yaml" explicitly
-    if splitext(file_path)[1] != ".yaml":
+    if file_path.suffix != ".yaml":
         logger.warn(f"Skipping {file_path}! Use lowercase '.yaml' extension instead.")
         warnings += 1
         return None, warnings, errors
+    for i in range(len(file_path.parts) - 1, -1, -1):
+        if file_path.parts[i] in TAXONOMY_FOLDERS:
+            taxonomy_path = Path(*file_path.parts[i:])
+            break
+    else:
+        taxonomy_path = file_path
     # read file if extension is correct
     try:
         with open(file_path, "r", encoding="utf-8") as file:
@@ -555,11 +684,15 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
                     yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
             else:
                 yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
-            for p in linter.run(file, yaml_config):
-                errors += 1
-                logger.error(
-                    f"error found in file {file.name}: {p.desc} {p.line} {p.rule}"
-                )
+            linter_problems = list(linter.run(file, yaml_config))
+            if linter_problems:
+                lint_messages = [f"Problems found in file {file.name}"]
+                for p in linter_problems:
+                    errors += 1
+                    loc = f"{p.line}:{p.column}"
+                    desc = f"{p.desc} ({p.rule})" if p.rule else p.desc
+                    lint_messages.append(f"  {loc:<9} {p.level:<9} {desc}")
+                logger.error("\n".join(lint_messages))
                 return None, warnings, errors
         # do more explict checking of file contents
         with open(file_path, "r", encoding="utf-8") as file:
@@ -568,20 +701,19 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
                 logger.warn(f"Skipping {file_path} because it is empty!")
                 warnings += 1
                 return None, warnings, errors
-            version = get_version(contents)
-            if version != 1:
-                logger.warn(
-                    f"Skipping {file_path} because its version, {version}, is not understood. You may need a newer version of this command."
-                )
-                warnings += 1
+            validation_errors = validate_yaml(logger, contents, taxonomy_path)
+            if validation_errors:
+                errors += validation_errors
                 return None, warnings, errors
+
             # get seed instruction data
-            tax_path = "->".join(file_path.split(os.sep)[1:-1])
+            tax_path = "->".join(taxonomy_path.parent.parts)
             task_description = contents.get("task_description")
             documents = contents.get("document")
             if documents:
                 documents = get_documents(documents)
-                logger.info("Content from git repo fetched")
+                logger.debug("Content from git repo fetched")
+
             for t in get_seed_examples(contents):
                 q = t["question"]
                 a = t["answer"]
@@ -610,7 +742,7 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
                 )
     except Exception as e:
         errors += 1
-        raise (f"Exception {e} raised in {file_path}") from e
+        raise GenerateException(f"Exception {e} raised in {file_path}") from e
 
     return seed_instruction_data, warnings, errors
 

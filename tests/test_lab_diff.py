@@ -15,15 +15,43 @@ seed_examples:
 - answer: "Yes I can!"
   context: "This unit test is valid!"
   question: "Could you write a unit test?"
-task_description: ''
+- answer: answer 2
+  context: context 2
+  question: question 2
+- answer: answer 3
+  context: context 3
+  question: question 3
+- answer: answer 4
+  context: context 4
+  question: question 4
+- answer: answer 5
+  context: context 5
+  question: question 5
+task_description: 'This is a task'
 """
 TEST_INVALID_YAML = b"""created_by: nathan-weinberg
 seed_examples:
 - answer: "Yes I can!"
   context: "This unit test has a line with 124 characters! It is too long for the default rules but not too long for the customer rules!"
   question: "Could you write a unit test?"
-task_description: ''
+- answer: "answer2"
+  question: "question2"
+- answer: "answer3"
+  question: "question3"
+- answer: "answer4"
+  question: "question4"
+- answer: "answer5"
+  question: "question5"
+task_description: 'This is a task'
 """
+TEST_FAILING_COMPOSITIONAL_SKILL_YAML = b"""created_by: test
+version: 1
+seed_examples:
+- question: "Does this yaml pass schema validation?"
+  answer: "No, it does not! It should have 5 examples."
+task_description: 'This yaml does not conform to the schema'
+"""
+
 TEST_CUSTOM_YAML_RULES = b"""extends: relaxed
 
 rules:
@@ -225,3 +253,21 @@ class TestLabDiff(unittest.TestCase):
         self.assertEqual(result.output, "")
         self.assertEqual(result.exit_code, 0)
         Path.unlink(custom_rules_file)
+
+    def test_diff_failing_schema_yaml(self):
+        failing_yaml_file = "compositional_skills/failing/qna.yaml"
+        self.taxonomy.create_untracked(
+            failing_yaml_file, TEST_FAILING_COMPOSITIONAL_SKILL_YAML
+        )
+        runner = CliRunner()
+        result = runner.invoke(
+            lab.diff,
+            [
+                "--taxonomy-base",
+                TAXONOMY_BASE,
+                "--taxonomy-path",
+                self.taxonomy.root,
+            ],
+        )
+        self.assertIn("Reading taxonomy failed", result.output)
+        self.assertEqual(result.exit_code, 1)

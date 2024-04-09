@@ -1,3 +1,5 @@
+# pylint: disable=too-many-lines
+
 # Standard
 from glob import glob
 from os.path import basename, dirname, exists, splitext
@@ -327,6 +329,13 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
     show_default=True,
 )
 @click.option(
+    "--chunk-word-count",
+    type=click.INT,
+    help="Number of words to chunk the document",
+    default=config.DEFAULT_CHUNK_WORD_COUNT,
+    show_default=True,
+)
+@click.option(
     "--num-instructions",
     type=click.INT,
     help="Number of instructions to generate.",
@@ -382,6 +391,38 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
     show_default=True,
     help="Rules file for YAML linting",
 )
+@click.option(
+    "--server-ctx-size",
+    type=click.INT,
+    default=config.MAX_CONTEXT_SIZE,
+    show_default=True,
+    help="The context size is the maximum number of tokens the server will consider.",
+)
+@click.option(
+    "--tls-insecure",
+    is_flag=True,
+    help="Disable TLS verification.",
+)
+@click.option(
+    "--tls-client-cert",
+    type=click.Path(),
+    default="",
+    show_default=True,
+    help="Path to the TLS client certificate to use.",
+)
+@click.option(
+    "--tls-client-key",
+    type=click.Path(),
+    default="",
+    show_default=True,
+    help="Path to the TLS client key to use.",
+)
+@click.option(
+    "--tls-client-passwd",
+    type=click.STRING,
+    default="",
+    help="TLS client certificate password.",
+)
 @click.pass_context
 def generate(
     ctx,
@@ -396,6 +437,12 @@ def generate(
     endpoint_url,
     api_key,
     yaml_rules,
+    chunk_word_count,
+    server_ctx_size,
+    tls_insecure,
+    tls_client_cert,
+    tls_client_key,
+    tls_client_passwd,
 ):
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=C0415
@@ -418,6 +465,10 @@ def generate(
             server_process, api_base = ensure_server(
                 ctx.obj.logger,
                 ctx.obj.config.serve,
+                tls_insecure,
+                tls_client_cert,
+                tls_client_key,
+                tls_client_passwd,
             )
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
@@ -442,6 +493,12 @@ def generate(
             rouge_threshold=rouge_threshold,
             console_output=not quiet,
             yaml_rules=yaml_rules,
+            chunk_word_count=chunk_word_count,
+            server_ctx_size=server_ctx_size,
+            tls_insecure=tls_insecure,
+            tls_client_cert=tls_client_cert,
+            tls_client_key=tls_client_key,
+            tls_client_passwd=tls_client_passwd,
         )
     except GenerateException as exc:
         click.secho(
@@ -490,28 +547,88 @@ def generate(
     is_flag=True,
     help="Use model greedy decoding. Useful for debugging and reproducing errors.",
 )
+@click.option(
+    "--endpoint-url",
+    type=click.STRING,
+    help="Custom URL endpoint for OpenAI-compatible API. Defaults to the `ilab serve` endpoint.",
+)
+@click.option(
+    "--api-key",
+    type=click.STRING,
+    default=config.DEFAULT_API_KEY,  # Note: do not expose default API key
+    help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
+)
+@click.option(
+    "--tls-insecure",
+    is_flag=True,
+    help="Disable TLS verification.",
+)
+@click.option(
+    "--tls-client-cert",
+    type=click.Path(),
+    default="",
+    show_default=True,
+    help="Path to the TLS client certificate to use.",
+)
+@click.option(
+    "--tls-client-key",
+    type=click.Path(),
+    default="",
+    show_default=True,
+    help="Path to the TLS client key to use.",
+)
+@click.option(
+    "--tls-client-passwd",
+    type=click.STRING,
+    default="",
+    help="TLS client certificate password.",
+)
 @click.pass_context
-def chat(ctx, question, model, context, session, quick_question, greedy_mode):
+def chat(
+    ctx,
+    question,
+    model,
+    context,
+    session,
+    quick_question,
+    greedy_mode,
+    endpoint_url,
+    api_key,
+    tls_insecure,
+    tls_client_cert,
+    tls_client_key,
+    tls_client_passwd,
+):
     """Run a chat using the modified model"""
     # pylint: disable=C0415
     # Local
     from .chat.chat import ChatException, chat_cli
     from .server import ensure_server
 
-    try:
-        server_process, api_base = ensure_server(
-            ctx.obj.logger,
-            ctx.obj.config.serve,
-        )
-    except Exception as exc:
-        click.secho(f"Failed to start server: {exc}", fg="red")
-        raise click.exceptions.Exit(1)
-    if not api_base:
-        api_base = ctx.obj.config.serve.api_base()
+    if endpoint_url:
+        api_base = endpoint_url
+        server_process = None
+    else:
+        try:
+            server_process, api_base = ensure_server(
+                ctx.obj.logger,
+                ctx.obj.config.serve,
+                tls_insecure,
+                tls_client_cert,
+                tls_client_key,
+                tls_client_passwd,
+            )
+        except Exception as exc:
+            click.secho(f"Failed to start server: {exc}", fg="red")
+            raise click.exceptions.Exit(1)
+        if not api_base:
+            api_base = ctx.obj.config.serve.api_base()
+
     try:
         chat_cli(
             logger=ctx.obj.logger,
             api_base=api_base,
+            api_key=api_key,
             config=ctx.obj.config.chat,
             question=question,
             model=model,
@@ -519,6 +636,10 @@ def chat(ctx, question, model, context, session, quick_question, greedy_mode):
             session=session,
             qq=quick_question,
             greedy_mode=greedy_mode,
+            tls_insecure=tls_insecure,
+            tls_client_cert=tls_client_cert,
+            tls_client_key=tls_client_key,
+            tls_client_passwd=tls_client_passwd,
         )
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
@@ -950,8 +1071,7 @@ def test(data_dir, model_dir, adapter_file):
     with open(test_data_dir, "r", encoding="utf-8") as f:
         test_data = [json.loads(line) for line in f]
 
-    SYS_PROMPT = "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
-    print("system prompt:", SYS_PROMPT)
+    print("system prompt:", utils.get_sysprompt())
     for idx, example in enumerate(test_data):
         system = example["system"]
         user = example["user"]

@@ -4,6 +4,9 @@ import os
 # Third Party
 from llama_cpp import Llama
 
+# Local
+from . import utils
+
 # Get model_path from env
 MODEL_FILE = os.getenv("MODEL_FILE")
 
@@ -14,9 +17,14 @@ MODEL_FILE = os.getenv("MODEL_FILE")
 model = Llama(model_path=MODEL_FILE, n_gpu_layers=-1)
 
 # System prompt
-sys_prompt = "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
 usr_prompt = "what is ibm?"
-prompt = "<|system|>\n" + sys_prompt + "\n<|user|>\n" + usr_prompt + "\n<|assistant|>\n"
+prompt = (
+    "<|system|>\n"
+    + utils.get_sysprompt()
+    + "\n<|user|>\n"
+    + usr_prompt
+    + "\n<|assistant|>\n"
+)
 
 # Inference the model
 result = model(prompt, max_tokens=200, echo=True, stop="<|endoftext|>")

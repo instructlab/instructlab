@@ -18,11 +18,18 @@ from cli.generator.utils import GenerateException
 from .taxonomy import MockTaxonomy
 
 test_skill_valid_answer = b"""created_by: test-bot
+version: 1
 seed_examples:
 - answer: Yes, it is.
   question: Is this for a test?
 - answer: Yes I am very sure.
   question: Are you sure it's for a test?
+- answer: "answer3"
+  question: "question3"
+- answer: "answer4"
+  question: "question4"
+- answer: "answer5"
+  question: "question5"
 task_description: for testing
 """
 
@@ -31,6 +38,14 @@ test_skill_invalid_answer = b"""created_by: test-bot
 seed_examples:
 - answer: Yes
   question: Is this for a test?
+- answer: "answer2"
+  question: "question2"
+- answer: "answer3"
+  question: "question3"
+- answer: "answer4"
+  question: "question4"
+- answer: "answer5"
+  question: "question5"
 task_description: for testing
 """
 
@@ -148,7 +163,7 @@ class TestLabGenerate(unittest.TestCase):
                 result.exit_code, 1, "command finished with an unexpected exit code"
             )
             self.assertIn(
-                "Error reading seed examples: encoding without a string argument. Please make sure your answers are verbose enough",
+                "taxonomy files with errors",
                 result.output,
             )
 
@@ -178,6 +193,9 @@ class TestLabGenerate(unittest.TestCase):
                     prompt_file_path="prompt.txt",
                     rouge_threshold=0.9,
                     console_output=True,
+                    chunk_word_count=1000,
+                    server_ctx_size=4096,
+                    tls_insecure=False,
                 )
             self.assertIn(
                 "There was a problem connecting to the OpenAI server",
@@ -208,6 +226,9 @@ class TestLabGenerate(unittest.TestCase):
                 prompt_file_path="prompt.txt",
                 rouge_threshold=0.9,
                 console_output=True,
+                chunk_word_count=1000,
+                server_ctx_size=4096,
+                tls_insecure=False,
             )
             get_instructions_from_model.assert_called_once()
             expected_files = [
