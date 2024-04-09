@@ -36,11 +36,11 @@ def ensure_server(
         api_base = serve_config.api_base()
         logger.debug(f"Trying to connect to {api_base}...")
         list_models(
-            api_base,
-            tls_insecure,
-            tls_client_cert,
-            tls_client_key,
-            tls_client_passwd,
+            api_base=api_base,
+            tls_insecure=tls_insecure,
+            tls_client_cert=tls_client_cert,
+            tls_client_key=tls_client_key,
+            tls_client_passwd=tls_client_passwd,
         )
         return (None, None)
     except ClientException:
