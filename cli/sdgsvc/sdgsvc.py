@@ -38,7 +38,7 @@ def datagen_svc(url, taxonomy_files, output_dir, cert, verify, num_samples):
         )
 
         fn = os.path.join(
-            output_dir, f"sdg_{int(time.time())}_{os.path.basename(tf)}.json"
+            output_dir, f"sdg_{int(time.time())}_{tf.split('/')[-2]}.json"
         )
         with open(fn, "w", encoding="utf-8") as f:
             try:
