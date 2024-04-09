@@ -1157,32 +1157,38 @@ def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
 @cli.command(hidden=True)
 @click.option(
     "--endpoint-url",
+    type=click.STRING,
     help="Endpoint URL for the SDG web service.",
     default="",
+    show_default=True,
 )
 @click.option(
     "--tls-client-cert",
     type=click.Path(),
     help="path to the TLS client certificate to use",
     default="",
+    show_default=True,
 )
 @click.option(
     "--tls-client-key",
     type=click.Path(),
     help="path to the TLS client key to use",
     default="",
+    show_default=True,
 )
 @click.option(
     "--tls-server-ca-cert",
     type=click.Path(),
     help="path to the TLS server CA cert to use",
     default="",
+    show_default=True,
 )
 @click.option(
     "--output-dir",
     type=click.Path(),
-    default=config.DEFAULT_GENERATED_FILES_OUTPUT_DIR,
     help="Path to output generated files.",
+    default=config.DEFAULT_GENERATED_FILES_OUTPUT_DIR,
+    show_default=True,
 )
 @click.option(
     "--taxonomy-path",
@@ -1240,5 +1246,5 @@ def sdg_svc(
         )
         print("Generated data written to %s" % output_files)
     except Exception as e:
-        print("Failed to get data from sdg service: %s" % e)
-        raise
+        click.secho("Failed to get data from sdg service: %s" % e, fg="red")
+        raise click.exceptions.Exit(1)
