@@ -399,8 +399,8 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
 )
 @click.option(
     "--tls-secure",
-    is_flag=False,
-    help="Use TLS verification if enabled.",
+    is_flag=True,
+    help="Use TLS verification.",
 )
 @click.option(
     "--tls-client-cert",
@@ -559,8 +559,8 @@ def generate(
 )
 @click.option(
     "--tls-secure",
-    is_flag=False,
-    help="Use TLS verification if enabled.",
+    is_flag=True,
+    help="Use TLS verification.",
 )
 @click.option(
     "--tls-client-cert",

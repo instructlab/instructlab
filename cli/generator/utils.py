@@ -52,7 +52,7 @@ def openai_completion(
     max_batches=sys.maxsize,
     return_text=False,
     api_key=DEFAULT_API_KEY,
-    tls_secure=False,
+    tls_secure=True,
     **decoding_kwargs,
 ) -> Union[
     Union[StrOrOpenAIObject],

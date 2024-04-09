@@ -16,7 +16,7 @@ class ClientException(Exception):
 def list_models(
     api_base,
     api_key=DEFAULT_API_KEY,
-    tls_secure=False,
+    tls_secure=True,
     tls_client_cert: Optional[str] = None,
     tls_client_key: Optional[str] = None,
     tls_client_passwd: Optional[str] = None,

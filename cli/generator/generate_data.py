@@ -347,7 +347,7 @@ def generate_data(
     api_key: Optional[str] = None,
     chunk_word_count=None,
     server_ctx_size=None,
-    tls_secure=False,
+    tls_secure=True,
     tls_client_cert: Optional[str] = None,
     tls_client_key: Optional[str] = None,
     tls_client_passwd: Optional[str] = None,

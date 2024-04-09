@@ -447,7 +447,7 @@ def chat_cli(
     session,
     qq,
     greedy_mode,
-    tls_secure=False,
+    tls_secure=True,
     tls_client_cert: Optional[str] = None,
     tls_client_key: Optional[str] = None,
     tls_client_passwd: Optional[str] = None,
