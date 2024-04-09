@@ -1,7 +1,8 @@
 # Standard
 import json
 
-SYS_PROMPT = "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
+# Local
+from . import utils
 
 
 def format_text(obj):
@@ -29,7 +30,7 @@ def make_data(data_dir: str, is_shiv: bool = False):
             data_new = []
             for obj in data:
                 obj_new = {
-                    "system": SYS_PROMPT,
+                    "system": utils.get_sysprompt(),
                     "user": obj["user"],
                     "assistant": obj["assistant"],
                 }
@@ -61,7 +62,7 @@ def make_data(data_dir: str, is_shiv: bool = False):
         data_new = []
         for obj in data:
             obj_new = {
-                "system": SYS_PROMPT,
+                "system": utils.get_sysprompt(),
                 "user": obj["inputs"],
                 "assistant": obj["targets"],
             }

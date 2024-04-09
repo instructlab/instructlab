@@ -994,8 +994,7 @@ def test(data_dir, model_dir, adapter_file):
     with open(test_data_dir, "r", encoding="utf-8") as f:
         test_data = [json.loads(line) for line in f]
 
-    SYS_PROMPT = "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
-    print("system prompt:", SYS_PROMPT)
+    print("system prompt:", utils.get_sysprompt())
     for idx, example in enumerate(test_data):
         system = example["system"]
         user = example["user"]

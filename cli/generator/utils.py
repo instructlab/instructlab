@@ -14,10 +14,9 @@ from openai import OpenAI, OpenAIError
 
 # Local
 from ..config import DEFAULT_API_KEY
+from ..utils import get_sysprompt
 
 StrOrOpenAIObject = Union[str, object]
-
-SYSTEM_PROMPT = "You are an AI language model developed by IBM Research. You are a cautious assistant. You carefully follow instructions. You are helpful and harmless and you follow ethical guidelines and promote positive behavior."
 
 
 class GenerateException(Exception):
@@ -114,7 +113,7 @@ def openai_completion(
         client = OpenAI(base_url=api_base, api_key=api_key)
 
         messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "system", "content": get_sysprompt()},
             {"role": "user", "content": prompt_batch[batch_id]},
         ]
 
