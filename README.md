@@ -46,140 +46,173 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 - Python 3.9+
 - Approximately 60GB disk space (entire process)
 
-On Fedora Linux this means installing:
-```shell
-$ sudo dnf install gcc-c++ gcc make pip python3 python3-devel python3-GitPython
-```
 
 ## ✅ Getting started
 
 ### 🧰 Installing `ilab`
 
-To start, create a new directory called `instruct-lab` to store the files the `ilab` CLI needs when running.
+1. If you are on Fedora Linux, install C++, Python 3.9+, and other necessary tools by running the following command:
 
-```
-mkdir instruct-lab
-cd instruct-lab
-python3 -m venv venv
-source venv/bin/activate
-pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
-```
-> **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection, if g++ is not found try 'gcc-c++'
+    ```shell
+   sudo dnf install g++ gcc make pip python3 python3-devel python3-GitPython
+   ```
 
-> **Note:** The steps shown in this document use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. However, if for managing Python environments on your machine you use another tool such as [pyenv](https://github.com/pyenv/pyenv) or [Conda Miniforge](https://github.com/conda-forge/miniforge) continue to use that tool instead. Otherwise, you may have issues with packages that are installed but not found in `venv`.
+   Optional: If g++ is not found, try 'gcc-c++' by running the following command:
 
-If `ilab` is installed correctly, you can test the lab command:
+     ```shell
+     sudo dnf install gcc-c++ gcc make pip python3 python3-devel python3-GitPython
+     ```
 
-```
-(venv) $ ilab
-Usage: ilab [OPTIONS] COMMAND [ARGS]...
+2. Create a new directory called `instruct-lab` to store the files the `ilab` CLI needs when running and CD into the directory by running the following command:
 
-  CLI for interacting with InstructLab.
+   ```shell
+   mkdir instruct-lab
+   cd instruct-lab
+   ```
 
-  If this is your first time running `ilab`, it's best to start with `ilab init`
-  to create the environment
+   > **NOTE:** The following steps in this document use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. However, if you use another tool such as [pyenv](https://github.com/pyenv/pyenv) or [Conda Miniforge](https://github.com/conda-forge/miniforge) for managing Python environments on your machine continue to use that tool instead. Otherwise, you may have issues with packages that are installed but not found in `venv`.
 
-Options:
-  --config PATH  Path to a configuration file.  [default: config.yaml]
-  --help         Show this message and exit.
+3. Install and activate your `venv` environment by running the following command:
 
-Commands:
-  chat      Run a chat using the modified model
-  check     Check that taxonomy is valid
-  convert   Converts model to GGUF
-  download  Download the model(s) to train
-  generate  Generates synthetic data to enhance your example data
-  init      Initializes environment for InstructLab
-  list      Lists taxonomy files that have changed since a reference commit (default origin/main)
-  serve     Start a local server
-  test      Runs basic test to ensure model correctness
-  train     Takes synthetic data generated locally with `ilab generate`...
-```
+   ```shell
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
+   ```
+   > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection.
 
-**Every** `ilab` command needs to be run from within your Python virtual environment. To enter the Python environment, run the following command:
+4. From your `venv` environment, verify `ilab` is installed correctly, by running the `ilab` command.
 
-```
-source venv/bin/activate
-```
+   ```shell
+   ilab
+   ```
+
+   #### Example output:
+   ```
+   (venv) $ ilab
+   Usage: ilab [OPTIONS] COMMAND [ARGS]...
+
+   CLI for interacting with InstructLab.
+
+   If this is your first time running `ilab`, it's best to start with `ilab init`
+   to create the environment
+
+   Options:
+   --config PATH  Path to a configuration file.  [default: config.yaml]
+   --help         Show this message and exit.
+
+   Commands:
+   chat      Run a chat using the modified model
+   check     Check that taxonomy is valid
+   convert   Converts model to GGUF
+   download  Download the model(s) to train
+   generate  Generates synthetic data to enhance your example data
+   init      Initializes environment for InstructLab
+   list      Lists taxonomy files that have changed since a reference commit (default origin/main)
+   serve     Start a local server
+   test      Runs basic test to ensure model correctness
+   train     Takes synthetic data generated locally with `ilab generate`...
+   ```
+
+   > **IMPORTANT:** every `ilab` command needs to be run from within your Python virtual environment. To enter the Python environment, run the following command:
+
+   ```shell
+   source venv/bin/activate
+   ```
 
 ### 🏗️ Initialize `ilab`
 
-Next, you will need to initialize `ilab`:
+1. Initialize `ilab` by running the following command:
 
-```shell
-ilab init
-```
+   ```shell
+   ilab init
+   ```
 
-Initializing `ilab` will:
+   #### Example output:
 
-1. Add a new, default `config.yaml` file.
-2. Clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory. If you want to point to an existing local clone of the `taxonomy` repository then pass the path interactively or alternatively with the `--taxonomy-path` flag.
+   ```shell
+   Welcome to InstructLab CLI. This guide will help you set up your environment.
+   Please provide the following values to initiate the environment [press Enter for defaults]:
+   Path to taxonomy repo [taxonomy]: <ENTER>
+   ```
 
-You will be prompted through these steps as shown in the shell session below:
+2. When prompted by the interface, press **Enter** to add a new default `config.yaml` file.
 
-```shell
-(venv) $ ilab init
-Welcome to InstructLab CLI. This guide will help you set up your environment.
-Please provide the following values to initiate the environment [press Enter for defaults]:
-Path to taxonomy repo [taxonomy]: <ENTER>
-`taxonomy` seems to not exists or is empty. Should I clone git@github.com:instruct-lab/taxonomy.git for you? [y/N]: y
-Cloning git@github.com:instruct-lab/taxonomy.git...
-Generating `config.yaml` in the current directory...
-Initialization completed successfully, you're ready to start using `ilab`. Enjoy!
-```
+3. When prompted, clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory by typing **y**.
 
-`ilab` will use the default configuration file unless otherwise specified.
-You can override this behavior with the `--config` parameter for any `ilab` command.
+   **Optional**: If you want to point to an existing local clone of the `taxonomy` repository, you can pass the path interactively or alternatively with the `--taxonomy-path` flag.
+
+   #### Example output:
+
+   ```shell
+   (venv) $ ilab init
+   Welcome to InstructLab CLI. This guide will help you set up your environment.
+   Please provide the following values to initiate the environment [press Enter for defaults]:
+   Path to taxonomy repo [taxonomy]: <ENTER>
+   `taxonomy` seems to not exists or is empty. Should I clone git@github.com:instruct-lab/taxonomy.git for you? [y/N]: y
+   Cloning git@github.com:instruct-lab/taxonomy.git...
+   Generating `config.yaml` in the current directory...
+   Initialization completed successfully, you're ready to start using `lab`. Enjoy!
+   ```
+   `ilab` will use the default configuration file unless otherwise specified. You can override this behavior with the `--config` parameter for any `ilab` command.
 
 ### 📥 Download the model
 
-```
-ilab download
-```
+* Run the `ilab download`command.
 
-`ilab download` will download a pre-trained [model](https://huggingface.co/ibm/) (~4.4G) from HuggingFace and store it in a `models` directory:
+  ```shell
+  ilab download
+  ```
 
-```
-(venv) $ ilab download
-Downloading model from ibm/merlinite-7b-GGUF@main to models...
-(venv) $ ls models
-merlinite-7b-Q4_K_M.gguf
-```
+  `ilab download` will download a pre-trained [model](https://huggingface.co/ibm/) (~4.4G) from HuggingFace and store it in a `models` directory:
 
-> **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
+  ```shell
+  (venv) $ ilab download
+  Downloading model from ibm/merlinite-7b-GGUF@main to models...
+  (venv) $ ls models
+  merlinite-7b-Q4_K_M.gguf
+   ```
+
+  > **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
+
 
 ### 🍴 Serving the model
 
-```
-ilab serve
-```
+* Serve the model by running the following command:
 
-Once the model is served and ready, you'll see the following output:
+   ```shell
+   ilab serve
+   ```
 
-```
-(venv) $ ilab serve
-INFO 2024-03-02 02:21:11,352 lab.py:201 Using model 'models/ggml-merlinite-7b-0302-Q4_K_M.gguf' with -1 gpu-layers and 4096 max context size.
-Starting server process
-After application startup complete see http://127.0.0.1:8000/docs for API.
-Press CTRL+C to shut down the server.
-```
+   Once the model is served and ready, you'll see the following output:
+
+   ```shell
+   (venv) $ ilab serve
+   INFO 2024-03-02 02:21:11,352 lab.py:201 Using model 'models/ggml-merlinite-7b-0302-Q4_K_M.gguf' with -1 gpu-layers and 4096 max context size.
+   Starting server process
+   After application startup complete see http://127.0.0.1:8000/docs for API.
+   Press CTRL+C to shut down the server.
+   ```
 
 ### 📣 Chat with the model (Optional)
 
-Because you're serving the model in one terminal window, you likely have to create a new window and re-activate your Python virtual environment to run `ilab chat`:
-```
+Because you're serving the model in one terminal window, you will have to create a new window and re-activate your Python virtual environment to run `ilab chat` command:
+
+```shell
 source venv/bin/activate
-ilab chat
+$ilab chat
 ```
 
-Before you start adding new skills and knowledge to your model, you can check out its baseline performance (the model needs to be trained with the generated synthetic data to use the new skills or knowledge):
+Before you start adding new skills and knowledge to your model, you can check its baseline performance by asking it a question such as `what is the capital of Canada?`.
+
+> **NOTE:** the model needs to be trained with the generated synthetic data to use the new skills or knowledge
 
 ```
 (venv) $ ilab chat
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────── system ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ Welcome to Chat CLI w/ GGML-MERLINITE-7B-0302-Q4_K_M (type /h for help)                                                                                                                                                                    │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
->>> what is the capital of canada                                                                                                                                                                                                 [S][default]
+>>> what is the capital of Canada                                                                                                                                                                                                 [S][default]
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────── ggml-merlinite-7b-0302-Q4_K_M ───────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ The capital city of Canada is Ottawa. It is located in the province of Ontario, on the southern banks of the Ottawa River in the eastern portion of southern Ontario. The city serves as the political center for Canada, as it is home to │
 │ Parliament Hill, which houses the House of Commons, Senate, Supreme Court, and Cabinet of Canada. Ottawa has a rich history and cultural significance, making it an essential part of Canada's identity.                                   │
@@ -197,52 +230,56 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
 
 ### 📜 List and validate your new data
 
-```
-ilab diff
-```
+1. List your new data by running the following command:
 
-To ensure `ilab` is registering your new knowledge or skills and that they're valid, you can run `ilab diff`.
+   ```shell
+   ilab diff
+   ```
 
-The following is the expected result after adding the new compositional skill `foo-lang`:
+2. To ensure `ilab` is registering your new knowledge or skills, you can run the `ilab diff` command. The following is the expected result after adding the new compositional skill foo-lang:
 
-```
-(venv) $ ilab diff
-compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
-Taxonomy in /taxonomy/ is valid :)
-```
+   ```shell
+   (venv) $ ilab diff
+   compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
+   Taxonomy in /taxonomy/ is valid :)
+   ```
 
 ### 🚀 Generate a synthetic dataset
 
-```
-ilab generate
-```
+1. To generate a synthetic dataset based on your newly added knowledge or skill set in [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository, run the following command:
 
-The next step is to generate a synthetic dataset based on your newly added knowledge or skill set in the [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository:
+   ```shell
+   ilab generate
+   ```
+   > **NOTE:** ⏳ This can take from 15 minutes to 1+ hours to complete, depending on your computing resources.
 
-```
-(venv) $ ilab generate
-INFO 2024-02-29 19:09:48,804 lab.py:250 Generating model 'ggml-merlinite-7b-0302-Q4_K_M' using 10 CPUs,
-taxonomy: '/home/username/instruct-lab/taxonomy' and seed 'seed_tasks.json'
+   #### Example output:
 
-0%|##########| 0/100 Cannot find prompt.txt. Using default prompt.
-98%|##########| 98/100 INFO 2024-02-29 20:49:27,582 generate_data.py:428 Generation took 5978.78s
-```
+   ```shell
+   (venv) $ ilab generate
+   INFO 2024-02-29 19:09:48,804 lab.py:250 Generating model 'ggml-merlinite-7b-0302-Q4_K_M' using 10 CPUs,
+   taxonomy: '/home/username/instruct-lab/taxonomy' and seed 'seed_tasks.json'
 
-The synthetic data set will be three files in the newly created `generated` directory named `generated*.json`, `test*.jsonl`, and `train*.jsonl`:
-```
-(venv) $ ls generated/
- 'generated_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.json'   'train_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
- 'test_ggml-malachite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
-```
+   0%|##########| 0/100 Cannot find prompt.txt. Using default prompt.
+   98%|##########| 98/100 INFO 2024-02-29 20:49:27,582 generate_data.py:428 Generation took 5978.78s
+   ```
 
-> **NOTE:** ⏳ This can take from 15 minutes to 1+ hours to complete, depending on your computing resources.
+   The synthetic data set will be three files in the newly created `generated` directory named `generated*.json`, `test*.jsonl`, and `train*.jsonl`.
 
-It is also possible to run the generate step against a different model via an
-OpenAI-compatible API. For example, the one spawned by `ilab serve` or any remote or locally hosted LLM (e.g. via [ollama](https://ollama.com/), [LM Studio](https://lmstudio.ai), etc.)
+2. Verify the files have been created by running the `ls generated` command.
+   ```shell
+   (venv) $ ls generated/
+   'generated_ggml-merlinite-7b-0226-Q4_K_M_2024-02-29T19 09 48.json'   'train_ggml-merlinite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
+   'test_ggml-merlinite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
+   ```
 
-```
-ilab generate --endpoint-url http://localhost:8000/v1
-```
+   **Optional**: It is also possible to run the generate step against a different model via an
+   OpenAI-compatible API. For example, the one spawned by `ilab serve` or any remote or locally hosted LLM (e.g. via [ollama](https://ollama.com/), [LM Studio](https://lmstudio.ai), etc.). Run the following command:
+
+
+   ```shell
+   ilab generate --endpoint-url http://localhost:8000/v1
+   ```
 
 ### 👩‍🏫 Train the model
 
@@ -300,50 +337,52 @@ The model can also be downloaded and served locally.
 
 ### 📜 Test the newly trained model
 
-> **NOTE:** 🍎 This step is only implemented for macOS with M-series chips (for now)
 
-```
-ilab test
-```
+* Run the following command to test the model:
 
-To ensure the model correctness, you can run `ilab test`.
+  ```shell
+   ilab test
+  ```
+   > **NOTE:** 🍎 This step is only implemented for macOS with M-series chips (for now)
 
-The output from the command will consist of a series of outputs from the model before and after training.
+   The output from the command will consist of a series of outputs from the model before and after training.
 
 ### 🍴 Serve the newly trained model
 
-Stop the server you have running via `ctrl+c` in the terminal it is running in.
+1. Stop the server you have running by entering `ctrl+c` keys in the terminal running the server.
 
-Before serving the newly trained model you must convert it to work with
-the `ilab` cli. The `ilab convert` command converts the new model into quantized [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format which is required by the server to host the model in the `ilab serve` command.
+   > **IMPORTANT**:
+   * 🍎 This step is only implemented for macOS with M-series chips (for now).
 
-> **NOTE:** 🍎 This step is only implemented for macOS with M-series chips (for now)
+   * Before serving the newly trained model you must convert it to work with
+   the `ilab` cli. The `ilab convert` command converts the new model into quantized [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format which is required by the server to host the model in the `ilab serve` command.
 
-```
-ilab convert
-```
+2. Convert the newly trained model by running the following command:
 
-Serve the newly trained model locally via `ilab serve` with the `--model`
+   ```shell
+   ilab convert
+   ```
+
+3. Serve the newly trained model locally via `ilab serve` command with the `--model`
 argument to specify your new model:
 
-```
-ilab serve --model-path <New model name>
-```
+   ```shell
+   ilab serve --model-path <New model name>
+   ```
 
-But which model to serve? After running the `ilab convert` command, a few files
-and directories are generated. The one you will want to serve will end in `.gguf`
-and will exist in a directory with the suffix `fused-pt`. For example:
-`ibm-merlinite-7b-mlx-q-fused-pt/ggml-model-Q4_K_M.gguf`
+   Which model shouold you select to serve? After running the `ilab convert` command, a few files and directories are generated. The one you will want to serve will end in `.gguf`
+   and will exist in a directory with the suffix `fused-pt`. For example:
+   `ibm-merlinite-7b-mlx-q-fused-pt/ggml-model-Q4_K_M.gguf`
 
 ## 📣 Chat with the new model (not optional this time)
 
-Try the fine-tuned model out live using the chat interface, and see if the results are better than the untrained version of the model with chat.
+* Try the fine-tuned model out live using the chat interface, and see if the results are better than the untrained version of the model with chat by running the following command:
 
-```
-ilab chat -m <New model name>
-```
+   ```shell
+   ilab chat -m <New model name>
+   ```
 
-If you are interested in optimizing the quality of the model's responses, please see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md#model-fine-tuning-and-response-optimization)
+   If you are interested in optimizing the quality of the model's responses, please see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md#model-fine-tuning-and-response-optimization)
 
 ## 🎁 Submit your new knowledge or skills
 
@@ -351,4 +390,4 @@ Of course, the final step is, if you've improved the model, to open a pull-reque
 
 ## 📬 Contributing
 
-Check out our [contributing](CONTRIBUTING/CONTRIBUTING.md) guide to learn how to contribute to the InstructLab CLI.
+Check out our [contributing](CONTRIBUTING/CONTRIBUTING.md) guide to learn how to contribute.
