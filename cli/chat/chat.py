@@ -1,4 +1,5 @@
 # Standard
+from typing import Optional
 import datetime
 import json
 import os
@@ -447,10 +448,20 @@ def chat_cli(
     session,
     qq,
     greedy_mode,
+    tls_insecure,
+    tls_client_cert: Optional[str] = None,
+    tls_client_key: Optional[str] = None,
+    tls_client_passwd: Optional[str] = None,
 ):
     """Starts a CLI-based chat with the server"""
+    orig_cert = (tls_client_cert, tls_client_key, tls_client_passwd)
+    cert = tuple(item for item in orig_cert if item)
+    verify = not tls_insecure
     client = OpenAI(
-        base_url=api_base, api_key=api_key, timeout=DEFAULT_CONNECTION_TIMEOUT
+        base_url=api_base,
+        api_key=api_key,
+        timeout=DEFAULT_CONNECTION_TIMEOUT,
+        http_client=httpx.Client(cert=cert, verify=verify),
     )
 
     # Load context/session

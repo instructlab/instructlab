@@ -260,6 +260,10 @@ def get_instructions_from_model(
     temperature,
     top_p,
     output_file_discarded,
+    tls_insecure,
+    tls_client_cert,
+    tls_client_key,
+    tls_client_passwd,
 ):
     batch_inputs = []
     for _ in range(request_batch_size):
@@ -291,6 +295,10 @@ def get_instructions_from_model(
         api_key=api_key,
         prompts=batch_inputs,
         model_name=model_name,
+        tls_insecure=tls_insecure,
+        tls_client_cert=tls_client_cert,
+        tls_client_key=tls_client_key,
+        tls_client_passwd=tls_client_passwd,
         batch_size=request_batch_size,
         decoding_args=decoding_args,
     )
@@ -322,6 +330,7 @@ def get_instructions_from_model(
 def generate_data(
     logger,
     api_base,
+    tls_insecure,
     yaml_rules: Optional[str] = None,
     output_dir: Optional[str] = None,
     taxonomy: Optional[str] = None,
@@ -339,6 +348,9 @@ def generate_data(
     api_key: Optional[str] = None,
     chunk_word_count=None,
     server_ctx_size=None,
+    tls_client_cert: Optional[str] = None,
+    tls_client_key: Optional[str] = None,
+    tls_client_passwd: Optional[str] = None,
 ):
     seed_instruction_data = []
     generate_start = time.time()
@@ -462,6 +474,10 @@ def generate_data(
             temperature,
             top_p,
             output_file_discarded,
+            tls_insecure,
+            tls_client_cert,
+            tls_client_key,
+            tls_client_passwd,
         )
         total_discarded += discarded
         total = len(instruction_data)

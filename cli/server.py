@@ -22,13 +22,26 @@ class ServerException(Exception):
     """An exception raised when serving the API."""
 
 
-def ensure_server(logger, serve_config):
+def ensure_server(
+    logger,
+    serve_config,
+    tls_insecure,
+    tls_client_cert,
+    tls_client_key,
+    tls_client_passwd,
+):
     """Checks if server is running, if not starts one as a subprocess. Returns the server process
     and the URL where it's available."""
     try:
         api_base = serve_config.api_base()
         logger.debug(f"Trying to connect to {api_base}...")
-        list_models(api_base)
+        list_models(
+            api_base,
+            tls_insecure,
+            tls_client_cert,
+            tls_client_key,
+            tls_client_passwd,
+        )
         return (None, None)
     except ClientException:
         tried_ports = set()
