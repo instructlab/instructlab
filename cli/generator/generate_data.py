@@ -230,12 +230,6 @@ def find_word_in_string(w, s):
     return re.compile(r"\b({0})\b".format(w), flags=re.IGNORECASE).search(s)
 
 
-def get_seed_examples(contents):
-    if "seed_examples" in contents:
-        return contents["seed_examples"]
-    return contents
-
-
 def get_version(contents: Mapping) -> int:
     version = contents.get("version", 1)
     if not isinstance(version, int):
@@ -714,27 +708,15 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
                 documents = get_documents(documents)
                 logger.debug("Content from git repo fetched")
 
-            for t in get_seed_examples(contents):
-                q = t["question"]
-                a = t["answer"]
-                c = t.get("context")
-                if not q:
-                    logger.warn(
-                        f"Skipping entry in {file_path} " + "because question is empty!"
-                    )
-                    warnings += 1
-                if not a:
-                    logger.warn(
-                        f"Skipping entry in {file_path} " + "because answer is empty!"
-                    )
-                    warnings += 1
-                if not q or not a:
-                    continue
+            for seed_example in contents.get("seed_examples"):
+                question = seed_example.get("question")
+                answer = seed_example.get("answer")
+                context = seed_example.get("context", "")
                 seed_instruction_data.append(
                     {
-                        "instruction": q,
-                        "input": "" if not c else c,
-                        "output": a,
+                        "instruction": question,
+                        "input": context,
+                        "output": answer,
                         "taxonomy_path": tax_path,
                         "task_description": task_description,
                         "document": documents,
