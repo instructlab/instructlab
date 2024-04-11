@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 # Standard
 from unittest.mock import patch
 import fnmatch

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 documents = [
     """Knowledge is an awareness of facts, a familiarity with individuals and situations, 
       or a practical skill. Knowledge of facts, also called propositional knowledge, is often characterized 

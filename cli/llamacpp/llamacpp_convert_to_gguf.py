@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 # Future
 from __future__ import annotations
 
