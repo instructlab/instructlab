@@ -9,36 +9,52 @@ authors = [
 ]
 description = "CLI for interacting with InstructLab"
 readme = "README.md"
+license = {text = "Apache-2.0"}
 requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "License :: OSI Approved :: Apache Software License",
-    "Operating System :: MacOS",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX :: Linux",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
 ]
 dynamic = ["dependencies", "version"]
 
-[tool.setuptools_scm]
-version_file = "cli/_version.py"
-
 [project.urls]
-Homepage = "https://github.com/instruct-lab/cli"
-Issues = "https://github.com/instruct-lab/cli/issues"
-
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
+homepage = "https://github.com/instruct-lab/cli"
+source = "https://github.com/instruct-lab/cli"
+issues = "https://github.com/instruct-lab/cli/issues"
 
 [project.scripts]
 # defines lab executable
 ilab = "cli.lab:cli"
 
+[tool.setuptools_scm]
+version_file = "cli/_version.py"
+
+[tool.setuptools]
+# package-dir = {"" = "src"}
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+
 [tool.setuptools.packages.find]
-# defines where to look for sub-packages
-where = [""]
-include = ["cli", "cli.chat", "cli.generator", "cli.train", "cli.train.lora_mlx", "cli.train.lora_mlx.models", "cli.llamacpp", "cli.mlx_explore", "cli.schema.v1"]
+where = [""]  # src
+include = ["cli*"]
+namespaces = false
 
 [tool.setuptools.package-data]
 "*" = ["quantize"]
 "cli.schema.v1" = ["*.json"]
+
+[tool.check-wheel-contents]
+# W005 - Wheel contains common toplevel name in library
+# TODO: 'cli' is considered a common toplevel name.
+ignore = ["W005"]
