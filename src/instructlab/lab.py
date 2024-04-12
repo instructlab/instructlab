@@ -9,6 +9,7 @@ import json
 import logging
 import os
 import shutil
+import subprocess
 import sys
 import typing
 
@@ -1152,4 +1153,6 @@ def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
         gguf_model_q_dir = f"{model_dir_fused_pt}/ggml-model-Q4_K_M.gguf"
         script = os.path.join(cli_dir, "llamacpp/quantize")
         cmd = f"{script} {gguf_model_dir} {gguf_model_q_dir} Q4_K_M"
-        os.system("{}".format(cmd))
+        subprocess.check_call(
+            [sys.executable, script, gguf_model_dir, gguf_model_q_dir, "Q4_K_M"]
+        )
