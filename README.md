@@ -266,6 +266,8 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
 
    The synthetic data set will be three files in the newly created `generated` directory named `generated*.json`, `test*.jsonl`, and `train*.jsonl`.
 
+   > **NOTE:** If you want to pickup from where a failed or canceled `ilab generate` left off, you can copy the `generated*.json` file into a file named `regen.json`. `regen.json` will be picked up at the start of `lab generate` when available. You should remove it when the process is completed.
+
 2. Verify the files have been created by running the `ls generated` command.
    ```shell
    (venv) $ ls generated/
