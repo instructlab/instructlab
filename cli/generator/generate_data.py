@@ -156,7 +156,7 @@ def post_process_gpt3_response(num_prompt_instructions, response, discarded_file
         if not inst.strip():
             continue
 
-        splitted_data = re.split(r"\*\*\s+(Instruction|Input|Output)", inst)
+        splitted_data = re.split(r"\*\*\s+(Instruction|Input|Output):?", inst)
         if len(splitted_data) != 7:
             writeline2file(
                 discarded_file,
