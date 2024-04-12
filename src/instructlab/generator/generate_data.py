@@ -118,12 +118,11 @@ def encode_prompt(prompt_instructions, prompt):
         )
         instruction = re.sub(r"\s+", " ", instruction).strip().rstrip(":")
         prompt_input = "<noinput>" if prompt_input.lower() == "" else prompt_input
-        prompt += "###\n"
-        prompt += f"{idx + 1}. Instruction: {instruction}\n"
-        prompt += f"{idx + 1}. Input:\n{prompt_input}\n"
-        prompt += f"{idx + 1}. Output:\n{prompt_output}\n"
-    prompt += "###\n"
-    prompt += f"{idx + 2}. Instruction:"
+        prompt += f"* Task {idx + 1}\n"
+        prompt += f"** Instruction\n{instruction}\n"
+        prompt += f"** Input\n{prompt_input}\n"
+        prompt += f"** Output\n{prompt_output}\n"
+    prompt += f"* Task {idx + 2}\n"
     return prompt
 
 
@@ -137,26 +136,20 @@ def post_process_gpt3_response(num_prompt_instructions, response, discarded_file
     if response is None:
         return [], 0
     raw_instructions = (
-        f"{num_prompt_instructions + 1}. Instruction:" + response.message.content
+        f"* Task {num_prompt_instructions + 1}\n" + response.message.content
     )
-    raw_instructions = re.split("###", raw_instructions)
+    raw_instructions = re.split(r"\* Task \d+", raw_instructions)
     instructions = []
     discarded = 0
-    for idx, inst in enumerate(raw_instructions):
-        # if the decoding stops due to length, the last example is likely truncated so we discard it
-        # if idx == len(raw_instructions) - 1 and response["finish_reason"] == "length":
-        #     continue
-        idx += num_prompt_instructions + 1
-
+    for inst in raw_instructions:
         if not inst.strip():
             continue
 
-        splitted_data = re.split(rf"{idx}\.\s+(Instruction|Input|Output):", inst)
+        splitted_data = re.split(r"\*\*\s+(Instruction|Input|Output)", inst)
         if len(splitted_data) != 7:
             writeline2file(
                 discarded_file,
-                f"Discarded instruction(didn't match expected format, idx={idx}): "
-                + repr(inst),
+                "Discarded instruction(didn't match expected format): " + repr(inst),
             )
             discarded += 1
             continue
