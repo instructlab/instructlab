@@ -52,7 +52,7 @@ FROM pytorch AS llama
 RUN --mount=type=cache,target=/root/.cache/pip,z \
     pip cache remove llama_cpp_python && \
     umask 0000 && \
-    CMAKE_ARGS="-DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DAMDGPU_TARGETS=${AMDGPU_ARCH}" \
+    CMAKE_ARGS="-DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER=/usr/bin/clang-17 -DCMAKE_CXX_COMPILER=/usr/bin/clang++-17 -DAMDGPU_TARGETS=${AMDGPU_ARCH}" \
     FORCE_CMAKE=1 \
     ${VIRTUAL_ENV}/bin/pip install -c ${VIRTUAL_ENV}/constraints.txt llama-cpp-python && \
     $(chcon -R -l s0 /root/.cache/pip 2>/dev/null || true)
