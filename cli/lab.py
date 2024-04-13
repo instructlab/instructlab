@@ -224,7 +224,7 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
     """
     # pylint: disable=C0415
     # Local
-    from .generator.generate_data import get_taxonomy_diff, read_taxonomy
+    from .utils import get_taxonomy_diff, read_taxonomy
 
     if not taxonomy_base:
         taxonomy_base = ctx.obj.config.generate.taxonomy_base
