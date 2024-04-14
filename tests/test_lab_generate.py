@@ -100,7 +100,7 @@ class TestLabGenerate(unittest.TestCase):
             with runner.isolated_filesystem():
                 mt = MockTaxonomy(pathlib.Path("taxonomy"))
                 mt.create_untracked(
-                    "compositional_skills/tracked/qna.yaml", yaml.safe_load(qnafile)
+                    "compositional_skills/tracked/qna.yaml", yaml.full_load(qnafile)
                 )
                 result = runner.invoke(
                     lab.generate,
@@ -134,7 +134,7 @@ class TestLabGenerate(unittest.TestCase):
             with CliRunner().isolated_filesystem():
                 mt = MockTaxonomy(pathlib.Path("taxonomy"))
                 mt.create_untracked(
-                    "compositional_skills/tracked/qna.yaml", yaml.safe_load(qnafile)
+                    "compositional_skills/tracked/qna.yaml", yaml.full_load(qnafile)
                 )
                 with self.assertRaises(GenerateException) as exc:
                     generate_data(
@@ -171,7 +171,7 @@ class TestLabGenerate(unittest.TestCase):
             with CliRunner().isolated_filesystem():
                 mt = MockTaxonomy(pathlib.Path("taxonomy"))
                 mt.create_untracked(
-                    "compositional_skills/tracked/qna.yaml", yaml.safe_load(qnafile)
+                    "compositional_skills/tracked/qna.yaml", yaml.full_load(qnafile)
                 )
                 generate_data(
                     logger=logging.getLogger("test_logger"),
@@ -215,7 +215,7 @@ class TestLabGenerate(unittest.TestCase):
         ) as qnafile:
             mt = MockTaxonomy(pathlib.Path("taxonomy"))
             mt.create_untracked(
-                "knowledge/technical-manual/test/qna.yaml", yaml.safe_load(qnafile)
+                "knowledge/technical-manual/test/qna.yaml", yaml.full_load(qnafile)
             )
             generate_data(
                 logger=logging.getLogger("test_logger"),

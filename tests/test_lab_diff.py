@@ -130,7 +130,7 @@ class TestLabDiff(unittest.TestCase):
             "tests/testdata/skill_valid_answer.yaml", "r", encoding="utf-8"
         ) as qnafile:
             valid_yaml_file = "compositional_skills/qna_valid.yaml"
-            self.taxonomy.create_untracked(valid_yaml_file, yaml.safe_load(qnafile))
+            self.taxonomy.create_untracked(valid_yaml_file, yaml.full_load(qnafile))
             runner = CliRunner()
             result = runner.invoke(
                 lab.diff,
@@ -208,7 +208,7 @@ class TestLabDiff(unittest.TestCase):
             custom_rules_file = Path("custom_rules.yaml")
             custom_rules_file.write_bytes(TEST_CUSTOM_YAML_RULES)
             invalid_yaml_file = "compositional_skills/qna_invalid.yaml"
-            self.taxonomy.create_untracked(invalid_yaml_file, yaml.safe_load(qnafile))
+            self.taxonomy.create_untracked(invalid_yaml_file, yaml.full_load(qnafile))
             runner = CliRunner()
             result = runner.invoke(
                 lab.diff,
@@ -232,7 +232,7 @@ class TestLabDiff(unittest.TestCase):
             "tests/testdata/skill_incomplete.yaml", "r", encoding="utf-8"
         ) as qnafile:
             failing_yaml_file = "compositional_skills/failing/qna.yaml"
-            self.taxonomy.create_untracked(failing_yaml_file, yaml.safe_load(qnafile))
+            self.taxonomy.create_untracked(failing_yaml_file, yaml.full_load(qnafile))
             runner = CliRunner()
             result = runner.invoke(
                 lab.diff,
