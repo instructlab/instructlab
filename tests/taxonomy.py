@@ -60,7 +60,7 @@ class MockTaxonomy:
             assert taxonomy_path.parts[0] == "compositional_skills"
             file_path.write_text(TEST_VALID_COMPOSITIONAL_SKILL_YAML, encoding="utf-8")
         else:
-             with open(file_path, "w", encoding="utf-8") as yaml_file:
+            with open(file_path, "w", encoding="utf-8") as yaml_file:
                 yaml.dump(contents, yaml_file, default_flow_style=False, width=500)
 
     def add_tracked(self, rel_path: str) -> None:

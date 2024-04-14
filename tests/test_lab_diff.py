@@ -1,7 +1,7 @@
 # Standard
 from pathlib import Path
 import unittest
-import os
+
 # Third Party
 from click.testing import CliRunner
 import pytest
@@ -168,7 +168,9 @@ class TestLabDiff(unittest.TestCase):
 
     def test_diff_invalid_yaml(self):
         with open("tests/testdata/invalid_yaml.yaml", "r", encoding="utf-8") as qnafile:
-            self.taxonomy.create_untracked("compositional_skills/qna_invalid.yaml", yaml.full_load(qnafile))
+            self.taxonomy.create_untracked(
+                "compositional_skills/qna_invalid.yaml", yaml.full_load(qnafile)
+            )
             runner = CliRunner()
             result = runner.invoke(
                 lab.diff,
@@ -184,7 +186,9 @@ class TestLabDiff(unittest.TestCase):
 
     def test_diff_invalid_yaml_quiet(self):
         with open("tests/testdata/invalid_yaml.yaml", "r", encoding="utf-8") as qnafile:
-            self.taxonomy.create_untracked("compositional_skills/qna_invalid.yaml", yaml.full_load(qnafile))
+            self.taxonomy.create_untracked(
+                "compositional_skills/qna_invalid.yaml", yaml.full_load(qnafile)
+            )
             runner = CliRunner()
             result = runner.invoke(
                 lab.diff,

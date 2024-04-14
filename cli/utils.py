@@ -10,11 +10,11 @@ import logging
 import os
 import platform
 import re
-import shutil
 import subprocess
-import sys
+import tempfile
 
 # Third Party
+from git import Repo, exc
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import click
 import git
@@ -186,61 +186,70 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
 
 
 def get_documents(
-    input_pattern: Dict[str, Union[str, List[str]]], logger: Logger
+    logger,
+    source: Dict[str, Union[str, List[str]]],
+    skip_checkout: Optional[bool] = False,
 ) -> List[str]:
     """
     Retrieve the content of files from a Git repository.
 
     Args:
-        input_pattern (dict): Input dictionary containing repository URL, commit hash, and list of file patterns.
+        source (dict): Source info containing repository URL, commit hash, and list of file patterns.
 
     Returns:
          List[str]: List of document contents.
     """ ""
+    repo_url = source.get("repo")
+    commit_hash = source.get("commit")
+    file_patterns = source.get("patterns")
+    with tempfile.TemporaryDirectory() as temp_dir:
+        try:
+            skip_checkout = False
+            if skip_checkout:
+                skip_checkout = True
+            repo = git_clone_checkout(
+                repo_url=repo_url,
+                commit_hash=commit_hash,
+                temp_dir=temp_dir,
+                skip_checkout=skip_checkout,
+            )
+            file_contents = []
 
-    # Extract input parameters
+            # hack for unit tests. Unit tests use temp dirs in tests/testdata
+            # that needs to be processed instead of the temp_dir created
+            working_dir = temp_dir
+            if not skip_checkout:
+                working_dir = repo
 
-    repo_url = input_pattern.get("repo")
-    commit_hash = input_pattern.get("commit")
-    file_patterns = input_pattern.get("patterns")
-    temp_dir = os.path.join(os.getcwd(), "temp_repo")
-    if os.path.exists(temp_dir):
-        shutil.rmtree(temp_dir)
+            logger.debug("Processing files...")
+            for pattern in file_patterns:
+                for file_path in glob.glob(os.path.join(working_dir, pattern)):
+                    if os.path.isfile(file_path) and file_path.endswith(".md"):
+                        with open(file_path, "r", encoding="utf-8") as file:
+                            file_contents.append(file.read())
+            # hack for unit tests. Unit tests use temp dirs in tests/testdata
+            # and patches return string values that are paths to those directories.
+            # str object don't have close() method
+            if not isinstance(repo, str):
+                repo.close()
+            return file_contents
+        except (OSError, exc.GitCommandError, FileNotFoundError) as e:
+            raise e
+
+
+def git_clone_checkout(
+    repo_url: str, temp_dir: str, commit_hash: str, skip_checkout: bool
+) -> Repo:
     try:
-        # Create a temporary directory to clone the repository
-        os.makedirs(temp_dir, exist_ok=True)
-
-        # Clone the repository to the temporary directory
-        repo = git.Repo.clone_from(repo_url, temp_dir)
-
-        # Checkout the specified commit
-        repo.git.checkout(commit_hash)
-
-        file_contents = []
-
-        logger.debug("Processing files...")
-        for pattern in file_patterns:
-            for file_path in glob.glob(os.path.join(temp_dir, pattern)):
-                if os.path.isfile(file_path) and file_path.endswith(".md"):
-                    with open(file_path, "r", encoding="utf-8") as file:
-                        file_contents.append(file.read())
-        repo.close()
-        shutil.rmtree(temp_dir)
-        return file_contents
-
-    except (OSError, git.exc.GitCommandError, FileNotFoundError) as e:
-        logger.error("Error: {}".format(str(e)))
-        return [f"Error: {str(e)}"]
-
-    finally:
-        # Cleanup: Remove the temporary directory if it exists
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir)
+        repo = Repo.clone_from(repo_url, temp_dir)
+        if not skip_checkout:
+            repo.git.checkout(commit_hash)
+        return repo
+    except exc.GitCommandError as e:
+        raise e
 
 
-def chunk_document(
-    documents: List, server_ctx_size, chunk_word_count, logger: Logger
-) -> List[str]:
+def chunk_document(documents: List, server_ctx_size, chunk_word_count) -> List[str]:
     """
     Iterates over the documents and splits them into chunks based on the word count provided by the user.
     Args:
@@ -252,14 +261,13 @@ def chunk_document(
     """
     no_tokens_per_doc = int(chunk_word_count * 1.3)  # 1 word ~ 1.3 token
     if no_tokens_per_doc > int(server_ctx_size - 1024):
-        logger.error(
+        raise ValueError(
             "Error: {}".format(
                 str(
-                    f"Given word count per doc will exceed the server context window size {server_ctx_size}"
+                    f"Given word count ({chunk_word_count}) per doc will exceed the server context window size ({server_ctx_size})"
                 )
             )
         )
-        sys.exit()
     content = []
     text_splitter = RecursiveCharacterTextSplitter(
         separators=["\n\n", "\n"],
@@ -453,7 +461,7 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
             task_description = contents.get("task_description")
             documents = contents.get("document")
             if documents:
-                documents = get_documents(documents, logger)
+                documents = get_documents(source=documents, logger=logger)
                 logger.debug("Content from git repo fetched")
 
             for seed_example in contents.get("seed_examples"):

@@ -356,7 +356,6 @@ def generate_data(
                 documents=documents,
                 server_ctx_size=server_ctx_size,
                 chunk_word_count=chunk_word_count,
-                logger=logger,
             )
 
         if len(seed_example["input"]) > 0:

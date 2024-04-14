@@ -200,3 +200,48 @@ class TestLabGenerate(unittest.TestCase):
                     self.assertTrue(
                         any(fnmatch.fnmatch(f, pattern) for pattern in expected_files)
                     )
+
+    @patch(
+        "cli.generator.generate_data.get_instructions_from_model",
+        return_value=(testdata.generate_data_return_value, 0),
+    )
+    @patch(
+        "cli.generator.generate_data.read_taxonomy",
+        return_value=testdata.knowledge_seed_instruction,
+    )
+    def test_knowledge_docs_no_error(self, read_taxonomy, get_instructions_from_model):
+        with open(
+            "tests/testdata/knowledge_valid.yaml", "r", encoding="utf-8"
+        ) as qnafile:
+            mt = MockTaxonomy(pathlib.Path("taxonomy"))
+            mt.create_untracked(
+                "knowledge/technical-manual/test/qna.yaml", yaml.safe_load(qnafile)
+            )
+            generate_data(
+                logger=logging.getLogger("test_logger"),
+                api_base="localhost:8000",
+                api_key="",
+                model_name="my-model",
+                num_cpus=10,
+                num_instructions_to_generate=1,
+                taxonomy=mt.root,
+                taxonomy_base="main",
+                output_dir="generated",
+                prompt_file_path="prompt.txt",
+                rouge_threshold=0.9,
+                console_output=True,
+                chunk_word_count=1000,
+                server_ctx_size=4096,
+                tls_insecure=False,
+            )
+            get_instructions_from_model.assert_called_once()
+            read_taxonomy.assert_called_once()
+            expected_files = [
+                "generated_my-model*.json",
+                "train_my-model*.jsonl",
+                "test_my-model*.jsonl",
+            ]
+            for f in os.listdir("generated"):
+                self.assertTrue(
+                    any(fnmatch.fnmatch(f, pattern) for pattern in expected_files)
+                )
