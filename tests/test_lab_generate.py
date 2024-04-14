@@ -50,6 +50,7 @@ class TestLabGenerate(unittest.TestCase):
                 "Generating dataset failed with the following error: Connection Error",
                 result.output,
             )
+            mt.teardown()
 
     def test_taxonomy_not_found(self):
         runner = CliRunner()
@@ -91,6 +92,7 @@ class TestLabGenerate(unittest.TestCase):
                 "Nothing to generate. Exiting.",
                 result.output,
             )
+            mt.teardown()
 
     def test_new_data_invalid_answer(self):
         runner = CliRunner()
@@ -120,6 +122,7 @@ class TestLabGenerate(unittest.TestCase):
                     "taxonomy files with errors",
                     result.output,
                 )
+                mt.teardown()
 
     @patch(
         "cli.generator.generate_data.get_instructions_from_model",
@@ -159,6 +162,7 @@ class TestLabGenerate(unittest.TestCase):
                     f"{exc.exception}",
                 )
                 get_instructions_from_model.assert_called_once()
+                mt.teardown()
 
     @patch(
         "cli.generator.generate_data.get_instructions_from_model",
@@ -200,6 +204,7 @@ class TestLabGenerate(unittest.TestCase):
                     self.assertTrue(
                         any(fnmatch.fnmatch(f, pattern) for pattern in expected_files)
                     )
+                mt.teardown()
 
     @patch(
         "cli.generator.generate_data.get_instructions_from_model",
@@ -245,3 +250,4 @@ class TestLabGenerate(unittest.TestCase):
                 self.assertTrue(
                     any(fnmatch.fnmatch(f, pattern) for pattern in expected_files)
                 )
+            mt.teardown()

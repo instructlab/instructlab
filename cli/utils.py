@@ -151,12 +151,12 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     else:
         try:
             head_commit = repo.commit(base)
-        except gitdb.exc.BadName as exc:
+        except gitdb.exc.BadName as e:
             raise SystemExit(
                 yaml.YAMLError(
                     f'Couldn\'t find the taxonomy git ref "{base}" from the current HEAD'
                 )
-            ) from exc
+            ) from e
 
     # Move backwards from HEAD until we find the first commit that is part of base
     # then we can take our diff from there
