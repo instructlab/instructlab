@@ -168,12 +168,12 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
             break
         try:
             current_commit = current_commit.parents[0]
-        except IndexError as exc:
+        except IndexError as e:
             raise SystemExit(
                 yaml.YAMLError(
                     f'Couldn\'t find the taxonomy base branch "{base}" from the current HEAD'
                 )
-            ) from exc
+            ) from e
 
     modified_files = [
         d.b_path
@@ -240,13 +240,10 @@ def get_documents(
 def git_clone_checkout(
     repo_url: str, temp_dir: str, commit_hash: str, skip_checkout: bool
 ) -> Repo:
-    try:
-        repo = Repo.clone_from(repo_url, temp_dir)
-        if not skip_checkout:
-            repo.git.checkout(commit_hash)
-        return repo
-    except exc.GitCommandError as e:
-        raise e
+    repo = Repo.clone_from(repo_url, temp_dir)
+    if not skip_checkout:
+        repo.git.checkout(commit_hash)
+    return repo
 
 
 def chunk_document(documents: List, server_ctx_size, chunk_word_count) -> List[str]:
