@@ -1,0 +1,6 @@
+created_by: test
+version: 1
+seed_examples:
+- question: "Does this yaml pass schema validation?"
+  answer: "No, it does not! It should have 5 examples."
+task_description: 'This yaml does not conform to the schema'

@@ -1,0 +1,15 @@
+created_by: test-bot
+seed_examples:
+- question: What is this skill about?
+  answer: It's a skill that makes the tests more skillful
+- answer: "answer2"
+  question: "question2"
+- answer: "answer6"
+  question: "This is for a unit test and has a line with 124 characters! It is too long for the default rules but not too long for the customer rules!"
+- answer: "answer3"
+  question: "question3"
+- answer: "answer4"
+  question: "question4"
+- answer: "answer5"
+  question: "question5"
+task_description: For invalid yaml tests
