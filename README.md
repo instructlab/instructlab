@@ -194,6 +194,8 @@ The full process is described graphically in the [workflow diagram](./docs/workf
    Press CTRL+C to shut down the server.
    ```
 
+   > **NOTE:** If multiple `ilab` clients try to connect to the same ilab server at the same time, the 1st will connect to the server while the others will start their own temporary server. This will require additional resources on the host machine.
+
 ### 📣 Chat with the model (Optional)
 
 Because you're serving the model in one terminal window, you will have to create a new window and re-activate your Python virtual environment to run `ilab chat` command:
