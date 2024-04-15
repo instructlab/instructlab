@@ -306,7 +306,7 @@ There are three options to train the model on your synthetic data-enhanced datas
 ilab train
 ```
 
-> **NOTE:** ⏳ This step can take **several hours** to complete depending on your computing resources.
+> **NOTE:** ⏳ This step can potentially take **several hours** to complete depending on your computing resources.
 
 `ilab train` outputs a brand-new model that can be served in the `models` directory called `ggml-model-f16.gguf`.
 ```
@@ -326,7 +326,7 @@ ilab train
 ```
 
 > **Note:** ⏳ This process will take a little while to complete (time can vary based on hardware
-and output of `ilab generate` but on the order of 20 minutes to 1+ hours)
+and output of `ilab generate` but on the order of 5 to 15 minutes)
 
 `ilab train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory called `adapters.npz` (in Numpy's compressed array format). For example:
 ```
@@ -342,8 +342,8 @@ adapters-040.npz        adapters-080.npz        added_tokens.json       tokenize
 Follow the instructions in [Training](./notebooks/README.md).
 
 ⏳ Approximate amount of time taken on each platform:
-- *Google Colab*: **0.5-2.5 hours** with a T4 GPU
-- *Kaggle*: **~8 hours** with a P100 GPU.
+- *Google Colab*: **5-10 minutes** with a T4 GPU
+- *Kaggle*: **~30 minutes** with a P100 GPU.
 
 After that's done, you can play with your model directly in the Google Colab or Kaggle notebook. Model trained on the cloud will be saved on the cloud.
 The model can also be downloaded and served locally.
