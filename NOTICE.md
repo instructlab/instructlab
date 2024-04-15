@@ -996,7 +996,7 @@ Mozilla Public License 2.0 (MPL 2.0)
 Kenneth Reitz
 **Repository**: https://github.com/certifi/python-certifi
 
-This package contains a modified version of ca-bundle.crt:
+!!!This package contains a modified version of ca-bundle.crt:
 
 ```text
 ca-bundle.crt -- Bundle of CA Root Certificates
@@ -1551,6 +1551,7 @@ HuggingFace Inc.
 ---
 
 ### dill
+
 0.3.8
 BSD License
 Mike McKerns
@@ -1620,6 +1621,7 @@ specific language governing permissions and limitations under the License.
 ---
 
 ### distro
+
 1.9.0
 Apache Software License
 Nir Cohen
@@ -1836,7 +1838,7 @@ Apache License
 0.4.0
 Apache Software License
 UNKNOWN
-https://github.com/shin-/dockerpy-creds
+**Repository**: https://github.com/shin-/dockerpy-creds
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/docker_pycreds-0.4.0.dist-info/LICENSE
 
 ```text
@@ -2041,14 +2043,19 @@ https://github.com/shin-/dockerpy-creds
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+```
 
+---
 
-docstring_parser
+### docstring_parser
+
 0.16
 MIT License
 Marcin Kurczewski
-https://github.com/rr-/docstring_parser
+**Repository**: https://github.com/rr-/docstring_parser \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/docstring_parser-0.16.dist-info/LICENSE.md
+
+```text
 The MIT License (MIT)
 
 Copyright (c) 2018 Marcin Kurczewski
@@ -2070,14 +2077,19 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+```
 
+---
 
-fastapi
+### fastapi
+
 0.110.1
 MIT License
 Sebastián Ramírez <tiangolo@gmail.com>
-https://github.com/tiangolo/fastapi
+**Repository**: https://github.com/tiangolo/fastapi
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/fastapi-0.110.1.dist-info/licenses/LICENSE
+
+```text
 The MIT License (MIT)
 
 Copyright (c) 2018 Sebastián Ramírez
@@ -2099,14 +2111,19 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
+```
 
+---
 
-filelock
+### filelock
+
 3.13.4
 The Unlicense (Unlicense)
 UNKNOWN
-https://github.com/tox-dev/py-filelock
+**Repository**: https://github.com/tox-dev/py-filelock \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/filelock-3.13.4.dist-info/licenses/LICENSE
+
+```text
 This is free and unencumbered software released into the public domain.
 
 Anyone is free to copy, modify, publish, use, compile, sell, or
@@ -2131,14 +2148,18 @@ ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 OTHER DEALINGS IN THE SOFTWARE.
 
 For more information, please refer to <http://unlicense.org>
+```
 
+---
 
-frozenlist
-1.4.1
-Apache Software License
-UNKNOWN
-https://github.com/aio-libs/frozenlist
+### frozenlist
+1.4.1 \
+Apache Software License \
+UNKNOWN \
+**Repository**: https://github.com/aio-libs/frozenlist \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/frozenlist-1.4.1.dist-info/LICENSE
+
+```text
 Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
@@ -2340,14 +2361,19 @@ Apache License
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+```
 
+---
 
-fsspec
-2024.2.0
-BSD License
-UNKNOWN
-https://github.com/fsspec/filesystem_spec
+### fsspec
+
+2024.2.0 \
+BSD License \
+UNKNOWN \
+**Repository**: https://github.com/fsspec/filesystem_spec \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/fsspec-2024.2.0.dist-info/LICENSE
+
+```text
 BSD 3-Clause License
 
 Copyright (c) 2018, Martin Durant
@@ -2377,14 +2403,19 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
 
+---
 
-gguf
-0.6.0
-MIT License
-GGML
-https://ggml.ai
+### gguf
+
+0.6.0 \
+MIT License \
+GGML \
+**Repository**: https://ggml.ai \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/gguf-0.6.0.dist-info/LICENSE
+
+```text
 MIT License
 
 Copyright (c) 2023 Georgi Gerganov
@@ -2406,14 +2437,19 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+```
 
+---
 
-gitdb
-4.0.11
-BSD License
-Sebastian Thiel
-https://github.com/gitpython-developers/gitdb
+### gitdb
+
+4.0.11 \
+BSD License \
+Sebastian Thiel \
+**Repository**: https://github.com/gitpython-developers/gitdb \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/gitdb-4.0.11.dist-info/LICENSE
+
+```text
 Copyright (C) 2010, 2011 Sebastian Thiel and contributors
 All rights reserved.
 
@@ -2456,14 +2492,18 @@ see http://en.wikipedia.org/wiki/Git_%28software%29 for more information.
 
 They are not required for the actual operation, which is why they are not found
 in the distribution package.
+```
 
+---
 
-h11
+### h11
 0.14.0
 MIT License
 Nathaniel J. Smith
-https://github.com/python-hyper/h11
+**Repository**: https://github.com/python-hyper/h11
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/h11-0.14.0.dist-info/LICENSE.txt
+
+```text
 The MIT License (MIT)
 
 Copyright (c) 2016 Nathaniel J. Smith <njs@pobox.com> and other contributors
@@ -2486,14 +2526,19 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+```
 
+---
 
-httpcore
+### httpcore
+
 1.0.5
 BSD License
 Tom Christie <tom@tomchristie.com>
-https://www.encode.io/httpcore/
+**Repository**: https://www.encode.io/httpcore/
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/httpcore-1.0.5.dist-info/licenses/LICENSE.md
+
+```text
 Copyright © 2020, [Encode OSS Ltd](https://www.encode.io/).
 All rights reserved.
 
@@ -2521,14 +2566,19 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
 
+---
 
-httpx
+### httpx
+
 0.27.0
 BSD License
 Tom Christie <tom@tomchristie.com>
-https://github.com/encode/httpx
+**Repository**: https://github.com/encode/httpx
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/httpx-0.27.0.dist-info/licenses/LICENSE.md
+
+```text
 Copyright © 2019, [Encode OSS Ltd](https://www.encode.io/).
 All rights reserved.
 
@@ -2541,14 +2591,19 @@ Redistribution and use in source and binary forms, with or without modification,
 * Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
 
+---
 
-huggingface-hub
+### huggingface-hub
+
 0.22.2
 Apache Software License
 Hugging Face, Inc.
-https://github.com/huggingface/huggingface_hub
+**Repository**: https://github.com/huggingface/huggingface_hub
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/huggingface_hub-0.22.2.dist-info/LICENSE
+
+```text
                                  Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
@@ -2750,14 +2805,19 @@ https://github.com/huggingface/huggingface_hub
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+```
 
+---
 
-idna
+### idna
+
 3.7
 BSD License
 Kim Davies <kim+pypi@gumleaf.org>
-https://github.com/kjd/idna
+**Repository**: https://github.com/kjd/idna
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/idna-3.7.dist-info/LICENSE.md
+
+```text
 BSD 3-Clause License
 
 Copyright (c) 2013-2024, Kim Davies and contributors.
@@ -2789,15 +2849,19 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
 
+---
 
-importlib_metadata
+### importlib_metadata
+
 7.1.0
 Apache Software License
 Jason R. Coombs
-https://github.com/python/importlib_metadata
+**Repository**: https://github.com/python/importlib_metadata
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/importlib_metadata-7.1.0.dist-info/LICENSE
 
+```text
                                  Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
@@ -2999,14 +3063,19 @@ https://github.com/python/importlib_metadata
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+```
 
+---
 
-joblib
+### joblib
+
 1.4.0
 BSD License
 Gael Varoquaux <gael.varoquaux@normalesup.org>
-https://joblib.readthedocs.io
+**Repository**: https://joblib.readthedocs.io
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/joblib-1.4.0.dist-info/LICENSE.txt
+
+```text
 BSD 3-Clause License
 
 Copyright (c) 2008-2021, The joblib developers.
@@ -3036,13 +3105,16 @@ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
 CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
 
+--
 
-jsonpatch
+### jsonpatch
+
 1.33
 BSD License
 Stefan Kögl
-https://github.com/stefankoegl/python-json-patch
+**Repository**: https://github.com/stefankoegl/python-json-patch
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/jsonpatch-1.33.dist-info/LICENSE
 Copyright (c) 2011 Stefan Kögl <stefan@skoegl.net>
 
@@ -3055,9 +3127,9 @@ Redistribution and use in source and binary forms, with or without modification,
 3. Neither the name of the copyright holder nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+```
 
-
-jsonpointer
+### sonpointer
 2.4
 BSD License
 Stefan Kögl
@@ -3393,7 +3465,7 @@ networkx
 3.3
 BSD License
 Aric Hagberg <hagberg@lanl.gov>
-https://networkx.org/
+**Repository**: https://networkx.org/
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/networkx-3.3.dist-info/LICENSE.txt
 NetworkX is distributed with the 3-clause BSD license.
 
@@ -3434,12 +3506,14 @@ NetworkX is distributed with the 3-clause BSD license.
    OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
-nltk
+---
+
+### nltk
+
 3.8.1
 Apache Software License
 NLTK Team
-https://www.nltk.org/
-
+**Repository**: https://www.nltk.org/
 
 ```text
                                  Apache License
@@ -3643,14 +3717,19 @@ https://www.nltk.org/
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+```
 
+---
 
-numpy
+### numpy
+
 1.26.4
 BSD License
 Travis E. Oliphant et al.
 https://numpy.org
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/numpy-1.26.4.dist-info/LICENSE.txt
+
+```text
 Copyright (c) 2005-2023, NumPy Developers.
 All rights reserved.
 
