@@ -487,8 +487,8 @@ def generate_data(
                     instruction_data_entry['input'] = instruction_data_entry['input'].encode('latin-1', 'ignore').decode('latin-1')
                 if 'output' in instruction_data_entry:
                     instruction_data_entry['output'] = instruction_data_entry['output'].encode('latin-1', 'ignore').decode('latin-1')
-            except:
-                print('Tried to fix entry encoding. May lead to `"latin-1" codec can\'t encode character "\u0107"`.')
+            except Exception as e:
+                print(f'Tried to fix entry encoding. May lead to `"latin-1" codec can\'t encode character "\u0107"`. \nException: {str(e)}')
 
             # computing similarity with the pre-tokenized instructions
             new_instruction_tokens = scorer._tokenizer.tokenize(
