@@ -478,6 +478,18 @@ def generate_data(
         keep = 0
         assess_start = time.time()
         for instruction_data_entry in instruction_data:
+
+            # fix encoding... is this the right place? LB
+            try:
+                instruction_data_entry["instruction"] = instruction_data_entry["instruction"].encode('latin-1', 'ignore').decode('latin-1')
+
+                if 'input' in instruction_data_entry:
+                    instruction_data_entry['input'] = instruction_data_entry['input'].encode('latin-1', 'ignore').decode('latin-1')
+                if 'output' in instruction_data_entry:
+                    instruction_data_entry['output'] = instruction_data_entry['output'].encode('latin-1', 'ignore').decode('latin-1')
+            except:
+                print('Tried to fix entry encoding. May lead to `"latin-1" codec can\'t encode character "\u0107"`.')
+
             # computing similarity with the pre-tokenized instructions
             new_instruction_tokens = scorer._tokenizer.tokenize(
                 instruction_data_entry["instruction"]
