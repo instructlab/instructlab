@@ -252,7 +252,7 @@ def get_instructions_from_model(
         # Requests will be automatically adjusted.
         max_tokens=3072,
         top_p=top_p,
-        stop=["\n5", "5.", "5."],
+        stop=["* Task 5"],
     )
     request_start = time.time()
     results = utils.openai_completion(
