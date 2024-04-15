@@ -44,10 +44,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### Jinja2
 
-3.1.3
-BSD License
-UNKNOWN
-https://palletsprojects.com/p/jinja/
+**Version**: 3.1.3 \
+**License**: BSD License \
+**Author**: UNKNOWN
+**Repository**: https://palletsprojects.com/p/jinja/
 
 ```text
 Copyright 2007 Pallets
@@ -84,10 +84,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### MarkupSafe
 
-2.1.5
+**Version**: 2.1.5
 BSD License
 UNKNOWN
-https://palletsprojects.com/p/markupsafe/
+**Repository**: https://palletsprojects.com/p/markupsafe/
 
 ```text
 Copyright 2010 Pallets
@@ -124,10 +124,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### PyYAML
 
-6.0.1
+**Version**: 6.0.1
 MIT License
 Kirill Simonov
-https://pyyaml.org/
+**Repository**: https://pyyaml.org/
 
 ```text
 Copyright (c) 2017-2021 Ingy döt Net
@@ -156,10 +156,10 @@ SOFTWARE.
 
 ### Pygments
 
-2.17.2
+**Version**: 2.17.2
 BSD License
 Georg Brandl <georg@python.org>
-https://pygments.org
+**Repository**: https://pygments.org
 
 ```text
 Copyright (c) 2006-2022 by the respective authors (see AUTHORS file).
@@ -196,7 +196,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 2.1.0
 Apache Software License
 The Abseil Authors
-https://github.com/abseil/abseil-py
+**Repository**: https://github.com/abseil/abseil-py
 
 ```text
                                  Apache License
@@ -409,7 +409,7 @@ https://github.com/abseil/abseil-py
 0.29.2
 Apache Software License
 The HuggingFace team
-https://github.com/huggingface/accelerate
+**Repository**: https://github.com/huggingface/accelerate
 
 ```text
                                  Apache License
@@ -613,6 +613,7 @@ https://github.com/huggingface/accelerate
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+```
 
 ---
 
@@ -621,7 +622,7 @@ https://github.com/huggingface/accelerate
 3.9.4
 Apache Software License
 UNKNOWN
-https://github.com/aio-libs/aiohttp
+**Repository**: https://github.com/aio-libs/aiohttp
 
 ```text
    Copyright aio-libs contributors.
@@ -637,6 +638,7 @@ https://github.com/aio-libs/aiohttp
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+```
 
 ---
 
@@ -645,7 +647,7 @@ https://github.com/aio-libs/aiohttp
 1.3.1
 Apache Software License
 UNKNOWN
-https://github.com/aio-libs/aiosignal
+**Repository**: https://github.com/aio-libs/aiosignal
 
 ```text
 Apache License
@@ -891,7 +893,7 @@ SOFTWARE.
 4.3.0
 MIT License
 Alex Grönholm <alex.gronholm@nextday.fi>
-https://anyio.readthedocs.io/en/stable/versionhistory.html
+**Repository**: https://anyio.readthedocs.io/en/stable/versionhistory.html
 
 ```text
 The MIT License (MIT)
@@ -924,11 +926,12 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 MIT License
 Trent Mick
 
-http://github.com/ActiveState/appdirs
-
-# This is the MIT license
+**Repository**: https://github.com/ActiveState/appdirs \
+**License URL**; https://github.com/ActiveState/appdirs/blob/master/LICENSE.txt
 
 ```text
+The MIT License (MIT)
+
 Copyright (c) 2010 ActiveState Software Inc.
 
 Permission is hereby granted, free of charge, to any person obtaining a
@@ -958,7 +961,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 23.2.0
 MIT License
 Hynek Schlawack <hs@ox.cx>
-https://www.attrs.org/en/stable/changelog.html
+**Repository**: https://www.attrs.org/en/stable/changelog.html
 
 ```text
 The MIT License (MIT)
@@ -991,7 +994,7 @@ SOFTWARE.
 2024.2.2
 Mozilla Public License 2.0 (MPL 2.0)
 Kenneth Reitz
-https://github.com/certifi/python-certifi
+**Repository**: https://github.com/certifi/python-certifi
 
 This package contains a modified version of ca-bundle.crt:
 
@@ -1023,7 +1026,7 @@ one at http://mozilla.org/MPL/2.0/.
 3.3.2
 MIT License
 Ahmed TAHRI
-https://github.com/Ousret/charset_normalizer
+**Repository**: https://github.com/Ousret/charset_normalizer
 
 ```text
 MIT License
@@ -1055,7 +1058,7 @@ SOFTWARE.
 0.1.dev560+g1d18d7e
 Apache Software License
 TBD <jon@example.com>
-https://github.com/instruct-lab/cli
+**Repository**: https://github.com/instruct-lab/cli
 
 ```text
                                  Apache License
@@ -1268,7 +1271,7 @@ https://github.com/instruct-lab/cli
 8.1.7
 BSD License
 UNKNOWN
-https://palletsprojects.com/p/click/
+**Repository**: https://palletsprojects.com/p/click/
 
 ```
 Copyright 2014 Pallets
@@ -1299,7 +1302,7 @@ PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
 LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
 NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+```
 
 ---
 
@@ -1308,7 +1311,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 0.3.1
 MIT License
 Timo Furrer
-https://github.com/click-contrib/click-didyoumean
+**Repository**: https://github.com/click-contrib/click-didyoumean
 
 ```text
 Copyright (c) 2016 Timo Furrer
@@ -1339,7 +1342,7 @@ THE SOFTWARE.
 2.18.0
 Apache Software License
 HuggingFace Inc.
-https://github.com/huggingface/datasets
+**Repository**: https://github.com/huggingface/datasets
 
 ```text
                                  Apache License
@@ -1551,7 +1554,7 @@ https://github.com/huggingface/datasets
 0.3.8
 BSD License
 Mike McKerns
-https://github.com/uqfoundation/dill
+**Repository**: https://github.com/uqfoundation/dill
 
 ```text
 Copyright (c) 2004-2016 California Institute of Technology.
@@ -1620,8 +1623,10 @@ specific language governing permissions and limitations under the License.
 1.9.0
 Apache Software License
 Nir Cohen
-https://github.com/python-distro/distro
+**Repository**: https://github.com/python-distro/distro
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/distro-1.9.0.dist-info/LICENSE
+
+```text
 Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
@@ -1823,16 +1828,18 @@ Apache License
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+```
 
+---
 
-
-docker-pycreds
+### docker-pycreds
 0.4.0
 Apache Software License
 UNKNOWN
 https://github.com/shin-/dockerpy-creds
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/docker_pycreds-0.4.0.dist-info/LICENSE
 
+```text
                                  Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/
