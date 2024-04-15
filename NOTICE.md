@@ -1,4 +1,6 @@
-# Third Party Copyright Notices
+# Notices
+
+## Third Party Copyright Notices
 
 ### GitPython
 
@@ -46,7 +48,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **Version**: 3.1.3 \
 **License**: BSD License \
-**Author**: UNKNOWN
+**Author**: UNKNOWN \
 **Repository**: https://palletsprojects.com/p/jinja/
 
 ```text
@@ -84,9 +86,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### MarkupSafe
 
-**Version**: 2.1.5
+**Version**: 2.1.5 \
 **License**: BSD License \
-UNKNOWN
+UNKNOWN \
 **Repository**: https://palletsprojects.com/p/markupsafe/
 
 ```text
@@ -124,9 +126,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### PyYAML
 
-**Version**: 6.0.1
+**Version**: 6.0.1 \
 **License**: MIT License \
-Kirill Simonov
+Kirill Simonov \
 **Repository**: https://pyyaml.org/
 
 ```text
@@ -156,9 +158,9 @@ SOFTWARE.
 
 ### Pygments
 
-**Version**: 2.17.2
+**Version**: 2.17.2 \
 **License**: BSD License \
-Georg Brandl <georg@python.org>
+Georg Brandl <georg@python.org> \
 **Repository**: https://pygments.org
 
 ```text
@@ -193,9 +195,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### absl-py
 
-2.1.0
+**Version**: 2.1.0 \
 **License**: Apache Software License \
-The Abseil Authors
+The Abseil Authors \
 **Repository**: https://github.com/abseil/abseil-py
 
 ```text
@@ -406,9 +408,9 @@ The Abseil Authors
 
 ### accelerate
 
-0.29.2
+**Version**: 0.29.2 \
 **License**: Apache Software License \
-The HuggingFace team
+The HuggingFace team \
 **Repository**: https://github.com/huggingface/accelerate
 
 ```text
@@ -619,9 +621,9 @@ The HuggingFace team
 
 ### aiohttp
 
-3.9.4
+**Version**: 3.9.4 \
 **License**: Apache Software License \
-UNKNOWN
+UNKNOWN \
 **Repository**: https://github.com/aio-libs/aiohttp
 
 ```text
@@ -644,9 +646,9 @@ UNKNOWN
 
 ### aiosignal
 
-1.3.1
+**Version**: 1.3.1 \
 **License**: Apache Software License \
-UNKNOWN
+UNKNOWN \
 **Repository**: https://github.com/aio-libs/aiosignal
 
 ```text
@@ -857,10 +859,10 @@ Apache License
 
 ### annotated-types
 
-0.6.0
+**Version**: 0.6.0 \
 **License**: MIT License \
-Samuel Colvin <s@muelcolvin.com>, Adrian Garcia Badaracco <1755071+adriangb@users.noreply.github.com>, Zac Hatfield-Dodds <zac@zhd.dev>
-UNKNOWN
+Samuel Colvin <s@muelcolvin.com>, Adrian Garcia Badaracco <1755071+adriangb@users.noreply.github.com>, Zac Hatfield-Dodds <zac@zhd.dev> \
+**Repository**: UNKNOWN
 
 ```text
 The MIT License (MIT)
@@ -890,9 +892,9 @@ SOFTWARE.
 
 ### anyio
 
-4.3.0
+**Version**: 4.3.0 \
 **License**: MIT License \
-Alex Grönholm <alex.gronholm@nextday.fi>
+Alex Grönholm <alex.gronholm@nextday.fi> \
 **Repository**: https://anyio.readthedocs.io/en/stable/versionhistory.html
 
 ```text
@@ -922,10 +924,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ### appdirs
 
-1.4.4
+**Version**: 1.4.4 \
 **License**: MIT License \
-Trent Mick
-
+Trent Mick \
 **Repository**: https://github.com/ActiveState/appdirs \
 **License URL**; https://github.com/ActiveState/appdirs/blob/master/LICENSE.txt
 
@@ -958,9 +959,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ### attrs
 
-23.2.0
+**Version**: 23.2.0 \
 **License**: MIT License \
-Hynek Schlawack <hs@ox.cx>
+Hynek Schlawack <hs@ox.cx> \
 **Repository**: https://www.attrs.org/en/stable/changelog.html
 
 ```text
@@ -991,12 +992,12 @@ SOFTWARE.
 
 ### certifi
 
-2024.2.2
-Mozilla Public License 2.0 (MPL 2.0)
-Kenneth Reitz
+**Version**: 2024.2.2 \
+**License**: Mozilla Public License 2.0 (MPL 2.0) \
+Kenneth Reitz \
 **Repository**: https://github.com/certifi/python-certifi
 
-!!!This package contains a modified version of ca-bundle.crt:
+!!! This package contains a modified version of ca-bundle.crt:
 
 ```text
 ca-bundle.crt -- Bundle of CA Root Certificates
@@ -1025,7 +1026,7 @@ one at http://mozilla.org/MPL/2.0/.
 
 3.3.2
 **License**: MIT License \
-Ahmed TAHRI
+Ahmed TAHRI \
 **Repository**: https://github.com/Ousret/charset_normalizer
 
 ```text
@@ -1056,9 +1057,9 @@ SOFTWARE.
 
 ### click
 
-8.1.7
+**Version**: 8.1.7 \
 **License**: BSD License \
-UNKNOWN
+UNKNOWN \
 **Repository**: https://palletsprojects.com/p/click/
 
 ```text
