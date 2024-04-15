@@ -3586,7 +3586,7 @@ NLTK Team
 1.26.4
 BSD License
 Travis E. Oliphant et al.
-https://numpy.org
+**Repository**: https://numpy.org
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/numpy-1.26.4.dist-info/LICENSE.txt
 
 ```text
@@ -5509,7 +5509,7 @@ License: LGPL-2.1-or-later
 1.17.0
 Apache Software License
 OpenAI <support@openai.com>
-https://github.com/openai/openai-python
+**Repository**: https://github.com/openai/openai-python
 
 ```text
                                  Apache License
@@ -5722,7 +5722,7 @@ https://github.com/openai/openai-python
 3.10.0
 Apache Software License; MIT License
 ijl <ijl@mailbox.org>
-https://github.com/ijl/orjson
+**Repository**: https://github.com/ijl/orjson
 
 ```text
                               Apache License
@@ -5935,7 +5935,7 @@ limitations under the License.
 23.2
 Apache Software License; BSD License
 Donald Stufft <donald@stufft.io>
-https://github.com/pypa/packaging
+**Repository**: https://github.com/pypa/packaging
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/packaging-23.2.dist-info/LICENSE
 
 ```text
@@ -5951,7 +5951,7 @@ under the terms of *both* these licenses.
 2.2.2
 BSD License
 The Pandas Development Team <pandas-dev@python.org>
-https://pandas.pydata.org
+**Repository**: https://pandas.pydata.org
 
 ```text
 BSD 3-Clause License
@@ -6379,7 +6379,7 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 0.9.0
 Apache Software License
 The HuggingFace team
-https://github.com/huggingface/peft
+**Repository**: https://github.com/huggingface/peft
 
 ```text
                                  Apache License
@@ -6592,7 +6592,7 @@ https://github.com/huggingface/peft
 3.0.43
 BSD License
 Jonathan Slenders
-https://github.com/prompt-toolkit/python-prompt-toolkit
+**Repository**: https://github.com/prompt-toolkit/python-prompt-toolkit
 
 ```text
 Copyright (c) 2014, Jonathan Slenders
@@ -6631,7 +6631,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 4.25.3
 3-Clause BSD License
 protobuf@googlegroups.com
-https://developers.google.com/protocol-buffers/
+**Repository**: https://developers.google.com/protocol-buffers/
 
 ```text
 Copyright 2008 Google Inc.  All rights reserved.
@@ -6675,7 +6675,7 @@ support library is itself covered by the above license.
 5.9.8
 BSD License
 Giampaolo Rodola
-https://github.com/giampaolo/psutil
+**Repository**: https://github.com/giampaolo/psutil
 
 ```text
 BSD 3-Clause License
@@ -6716,7 +6716,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 15.0.2
 Apache Software License
 UNKNOWN
-https://arrow.apache.org/
+**Repository**: https://arrow.apache.org/
 
 ```text
                                  Apache License
@@ -8981,7 +8981,7 @@ SOFTWARE.
 0.6
 Apache License, Version 2.0
 Antoine Pitrou <antoine@python.org>
-https://github.com/pitrou/pyarrow-hotfix
+**Repository**: https://github.com/pitrou/pyarrow-hotfix
 
 ```text
 
@@ -9186,14 +9186,19 @@ https://github.com/pitrou/pyarrow-hotfix
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
    See the License for the specific language governing permissions and
    limitations under the License.
+```
 
+---
 
-pydantic
-2.7.0
+### pydantic
+
+2.7.0 \
 MIT License
-Samuel Colvin <s@muelcolvin.com>, Eric Jolibois <em.jolibois@gmail.com>, Hasan Ramezani <hasan.r67@gmail.com>, Adrian Garcia Badaracco <1755071+adriangb@users.noreply.github.com>, Terrence Dorsey <terry@pydantic.dev>, David Montague <david@pydantic.dev>, Serge Matveenko <lig@countzero.co>, Marcelo Trylesinski <marcelotryle@gmail.com>, Sydney Runkle <sydneymarierunkle@gmail.com>, David Hewitt <mail@davidhewitt.io>, Alex Hall <alex.mojaki@gmail.com>
-https://github.com/pydantic/pydantic
+Samuel Colvin <s@muelcolvin.com>, Eric Jolibois <em.jolibois@gmail.com>, Hasan Ramezani <hasan.r67@gmail.com>, Adrian Garcia Badaracco <1755071+adriangb@users.noreply.github.com>, Terrence Dorsey <terry@pydantic.dev>, David Montague <david@pydantic.dev>, Serge Matveenko <lig@countzero.co>, Marcelo Trylesinski <marcelotryle@gmail.com>, Sydney Runkle <sydneymarierunkle@gmail.com>, David Hewitt <mail@davidhewitt.io>, Alex Hall <alex.mojaki@gmail.com> \
+**Repository**: https://github.com/pydantic/pydantic \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/pydantic-2.7.0.dist-info/licenses/LICENSE
+
+```text
 The MIT License (MIT)
 
 Copyright (c) 2017 to present Pydantic Services Inc. and individual contributors.
@@ -9224,7 +9229,7 @@ SOFTWARE.
 2.2.1
 MIT License
 Samuel Colvin <s@muelcolvin.com>, Eric Jolibois <em.jolibois@gmail.com>, Hasan Ramezani <hasan.r67@gmail.com>
-https://github.com/pydantic/pydantic-settings
+**Repository**: https://github.com/pydantic/pydantic-settings
 
 ```text
 The MIT License (MIT)
@@ -9257,7 +9262,7 @@ SOFTWARE.
 2.18.1
 MIT License
 Samuel Colvin <s@muelcolvin.com>
-https://github.com/pydantic/pydantic-core
+**Repository**: https://github.com/pydantic/pydantic-core
 
 ```text
 The MIT License (MIT)
@@ -9326,7 +9331,7 @@ SOFTWARE.
 2.9.0.post0
 Apache Software License; BSD License
 Gustavo Niemeyer
-https://github.com/dateutil/dateutil
+**Repository**: https://github.com/dateutil/dateutil
 
 ```text
 Copyright 2017- Paul Ganssle <paul@ganssle.io>
@@ -9392,7 +9397,7 @@ The above BSD License Applies to all code, even that also covered by Apache 2.0.
 1.0.1
 BSD License
 Saurabh Kumar
-https://github.com/theskumar/python-dotenv
+**Repository**: https://github.com/theskumar/python-dotenv
 
 ```text
 Copyright (c) 2014, Saurabh Kumar (python-dotenv), 2013, Ted Tieken (django-dotenv-rw), 2013, Jacob Kaplan-Moss (django-dotenv)
@@ -9462,7 +9467,7 @@ DEALINGS IN THE SOFTWARE.
 0.34.0
 MIT License
 Julian Berman <Julian+referencing@GrayVines.com>
-https://github.com/python-jsonschema/referencing
+**Repository**: https://github.com/python-jsonschema/referencing
 
 ```text
 Copyright (c) 2022 Julian Berman
@@ -9493,7 +9498,7 @@ THE SOFTWARE.
 2023.12.25
 Apache Software License
 Matthew Barnett
-https://github.com/mrabarnett/mrab-regex
+**Repository**: https://github.com/mrabarnett/mrab-regex
 
 ```text
 This work was derived from the 're' module of CPython 2.6 and CPython 3.1,
@@ -9713,7 +9718,7 @@ All additions and alterations are licensed under the Apache 2.0 License.
 2.31.0
 Apache Software License
 Kenneth Reitz
-https://requests.readthedocs.io
+**Repository**: https://requests.readthedocs.io
 
 ```text
                                  Apache License
@@ -9899,7 +9904,7 @@ https://requests.readthedocs.io
 13.7.1
 MIT License
 Will McGugan
-https://github.com/Textualize/rich
+**Repository**: https://github.com/Textualize/rich
 
 ```text
 Copyright (c) 2020 Will McGugan
@@ -9930,10 +9935,10 @@ SOFTWARE.
 0.1.2
 Apache Software License
 Google LLC
-https://github.com/google-research/google-research/tree/master/rouge
+**Repository**: https://github.com/google-research/google-research/tree/master/rouge
 UNKNOWN
 
-```
+```text
 UNKNOWN
 ```
 
@@ -9944,7 +9949,7 @@ UNKNOWN
 0.18.0
 MIT License
 Julian Berman
-https://github.com/crate-py/rpds
+**Repository**: https://github.com/crate-py/rpds
 
 ```text
 Copyright (c) 2023 Julian Berman
@@ -9975,7 +9980,7 @@ THE SOFTWARE.
 0.18.6
 MIT License
 Anthon van der Neut
-https://sourceforge.net/p/ruamel-yaml/code/ci/default/tree/
+**Repository**: https://sourceforge.net/p/ruamel-yaml/code/ci/default/tree/
 
 ```text
  The MIT License (MIT)
@@ -10008,7 +10013,7 @@ https://sourceforge.net/p/ruamel-yaml/code/ci/default/tree/
 0.2.8
 MIT License
 Anthon van der Neut
-https://sourceforge.net/p/ruamel-yaml-clib/code/ci/default/tree
+**Repository**: https://sourceforge.net/p/ruamel-yaml-clib/code/ci/default/tree
 
 ```text
  The MIT License (MIT)
@@ -10041,23 +10046,24 @@ https://sourceforge.net/p/ruamel-yaml-clib/code/ci/default/tree
 0.4.2
 Apache Software License
 Nicolas Patry <patry.nicolas@protonmail.com>
-https://github.com/huggingface/safetensors
+**Repository**: https://github.com/huggingface/safetensors
 UNKNOWN
 
-```
+```text
 UNKNOWN
 ```
 
 ---
 
 ### sentencepiece
+
 0.2.0
 Apache Software License
 Taku Kudo
-https://github.com/google/sentencepiece
+**Repository**: https://github.com/google/sentencepiece
 UNKNOWN
 
-```
+```text
 UNKNOWN
 ```
 
@@ -10068,7 +10074,7 @@ UNKNOWN
 1.45.0
 BSD License
 Sentry Team and Contributors
-https://github.com/getsentry/sentry-python
+**Repository**: https://github.com/getsentry/sentry-python
 
 ```text
 MIT License
@@ -10101,10 +10107,10 @@ SOFTWARE.
 1.3.3
 BSD License
 Daniele Varrazzo
-https://github.com/dvarrazzo/py-setproctitle
+**Repository**: https://github.com/dvarrazzo/py-setproctitle
 UNKNOWN
 
-```
+```text
 UNKNOWN
 ```
 
@@ -10115,7 +10121,7 @@ UNKNOWN
 65.5.0
 MIT License
 Python Packaging Authority
-https://github.com/pypa/setuptools
+**Repository**: https://github.com/pypa/setuptools
 
 ```text
 Copyright Jason R. Coombs
@@ -10146,7 +10152,7 @@ IN THE SOFTWARE.
 1.7.1
 Apache Software License
 Casper da Costa-Luis <casper.dcl@physics.org>
-https://github.com/iterative/shtab
+**Repository**: https://github.com/iterative/shtab
 
 ```text
 Copyright 2020-2023 Casper da Costa-Luis
@@ -10171,7 +10177,7 @@ limitations under the Licence.
 1.16.0
 MIT License
 Benjamin Peterson
-https://github.com/benjaminp/six
+**Repository**: https://github.com/benjaminp/six
 
 ```text
 Copyright (c) 2010-2020 Benjamin Peterson
@@ -10201,7 +10207,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 5.0.1
 BSD License
 Sebastian Thiel
-https://github.com/gitpython-developers/smmap
+**Repository**: https://github.com/gitpython-developers/smmap
 
 ```text
 Copyright (C) 2010, 2011 Sebastian Thiel and contributors
@@ -10242,7 +10248,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 1.3.1
 Apache Software License; MIT License
 "Nathaniel J. Smith" <njs@pobox.com>
-https://github.com/python-trio/sniffio
+**Repository**: https://github.com/python-trio/sniffio
 
 ```text
 This software is made available under the terms of *either* of the
@@ -10257,7 +10263,7 @@ made under the terms of *both* these licenses.
 2.1.0
 BSD License
 sysid <sysid@gmx.de>
-https://github.com/sysid/sse-starlette
+**Repository**: https://github.com/sysid/sse-starlette
 
 ```text
 Copyright © 2020, [sysid](https://sysid.github.io/).
@@ -10296,7 +10302,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 0.37.2
 BSD License
 Tom Christie <tom@tomchristie.com>
-https://github.com/encode/starlette
+**Repository**: https://github.com/encode/starlette
 
 ```text
 Copyright © 2018, [Encode OSS Ltd](https://www.encode.io/).
@@ -10335,7 +10341,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 0.3.6
 MIT License
 Tom Wojcik
-https://github.com/tomwojcik/starlette-context
+**Repository**: https://github.com/tomwojcik/starlette-context
 
 ```text
 MIT License
@@ -10365,10 +10371,10 @@ SOFTWARE.
 
 ### sympy
 
-1.12
+1.12 \
 BSD License
 SymPy development team
-https://sympy.org
+**Repository**: https://sympy.org
 
 ```text
 Copyright (c) 2006-2023 SymPy Development Team
@@ -10533,7 +10539,7 @@ SOFTWARE.
 8.2.3
 Apache Software License
 Julien Danjou
-https://github.com/jd/tenacity
+**Repository**: https://github.com/jd/tenacity
 
 ```text
                                  Apache License
@@ -10746,10 +10752,10 @@ https://github.com/jd/tenacity
 0.15.2
 Apache Software License
 Anthony MOI <m.anthony.moi@gmail.com>
-https://github.com/huggingface/tokenizers
+**Repository**: https://github.com/huggingface/tokenizers
 UNKNOWN
 
-```
+```text
 UNKNOWN
 ```
 
@@ -10799,7 +10805,7 @@ THE SOFTWARE.
 2.2.2
 BSD License
 PyTorch Team
-https://pytorch.org/
+**Repository**: https://pytorch.org/
 
 ```text
 From PyTorch:
@@ -17489,10 +17495,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### tqdm
 
-4.66.2
-MIT License; Mozilla Public License 2.0 (MPL 2.0)
-UNKNOWN
-https://tqdm.github.io
+4.66.2 \
+MIT License; Mozilla Public License 2.0 (MPL 2.0) \
+UNKNOWN \
+**Repository**: https://tqdm.github.io
 
 ```text
 `tqdm` is a product of collaborative work.
@@ -17550,10 +17556,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ### transformers
 
-4.38.2
-Apache Software License
-The Hugging Face team (past and future) with the help of all our contributors (https://github.com/huggingface/transformers/graphs/contributors)
-https://github.com/huggingface/transformers
+4.38.2 \
+Apache Software License \
+The Hugging Face team (past and future) with the help of all our contributors (https://github.com/huggingface/transformers/graphs/contributors) \
+**Repository**: https://github.com/huggingface/transformers
 
 ```text
 Copyright 2018- The Hugging Face team. All rights reserved.
@@ -17768,7 +17774,7 @@ Copyright 2018- The Hugging Face team. All rights reserved.
 0.7.11
 Apache Software License
 Leandro von Werra
-https://github.com/huggingface/trl
+**Repository**: https://github.com/huggingface/trl
 
 ```text
                                  Apache License
@@ -17981,7 +17987,7 @@ https://github.com/huggingface/trl
 4.11.0
 Python Software Foundation License
 "Guido van Rossum, Jukka Lehtosalo, Łukasz Langa, Michael Lee" <levkivskyi@gmail.com>
-https://github.com/python/typing_extensions
+**Repository**: https://github.com/python/typing_extensions
 
 ```text
 A. HISTORY OF THE SOFTWARE
@@ -18305,7 +18311,7 @@ SOFTWARE.
 2024.1
 Apache Software License
 Python Software Foundation
-https://github.com/python/tzdata
+**Repository**: https://github.com/python/tzdata
 
 ```text
 Apache Software License 2.0
@@ -18332,7 +18338,7 @@ limitations under the License.
 2.2.1
 MIT License
 Andrey Petrov <andrey.petrov@shazow.net>
-https://github.com/urllib3/urllib3/blob/main/CHANGES.rst
+**Repository**: https://github.com/urllib3/urllib3/blob/main/CHANGES.rst
 
 ```text
 MIT License
@@ -18365,7 +18371,7 @@ SOFTWARE.
 0.29.0
 BSD License
 Tom Christie <tom@tomchristie.com>
-https://www.uvicorn.org/
+**Repository**: https://www.uvicorn.org/
 
 ```text
 Copyright © 2017-present, [Encode OSS Ltd](https://www.encode.io/).
@@ -18404,7 +18410,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 0.16.6
 MIT License
 Weights & Biases <support@wandb.com>
-https://github.com/wandb/wandb
+**Repository**: https://github.com/wandb/wandb
 
 ```text
 MIT License
@@ -18437,7 +18443,7 @@ SOFTWARE.
 0.2.13
 MIT License
 Jeff Quast
-https://github.com/jquast/wcwidth
+**Repository**: https://github.com/jquast/wcwidth
 
 ```text
 The MIT License (MIT)
@@ -18476,7 +18482,7 @@ disclaims all warranties with regard to this software.
 3.4.1
 BSD License
 Yue Du
-https://github.com/ifduyue/python-xxhash
+**Repository**: https://github.com/ifduyue/python-xxhash
 
 ```text
 Copyright (c) 2014-2020, Yue Du
@@ -18507,11 +18513,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### yamllint
 
-1.35.1
-GNU General Public License v3 (GPLv3)
-Adrien Vergé
-https://github.com/adrienverge/yamllint
-
+1.35.1 \
+GNU General Public License v3 (GPLv3) \
+Adrien Vergé \
+**Repository**: https://github.com/adrienverge/yamllint \
 **license URL**: https://github.com/adrienverge/yamllint/blob/master/LICENSE
 
 ```text
@@ -19198,7 +19203,7 @@ Public License instead of this License.  But first, please read
 1.9.4
 Apache Software License
 Andrew Svetlov
-https://github.com/aio-libs/yarl
+**Repository**: https://github.com/aio-libs/yarl
 url: yarl-1.9.4.dist-info/LICENSE
 
 ```text
@@ -19412,7 +19417,7 @@ url: yarl-1.9.4.dist-info/LICENSE
 3.18.1
 MIT License
 Jason R. Coombs
-https://github.com/jaraco/zipp
+**Repository**: https://github.com/jaraco/zipp
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/zipp-3.18.1.dist-info/LICENSE
 
 ```text
