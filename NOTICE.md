@@ -85,7 +85,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ### MarkupSafe
 
 **Version**: 2.1.5
-BSD License
+**License**: BSD License \
 UNKNOWN
 **Repository**: https://palletsprojects.com/p/markupsafe/
 
@@ -125,7 +125,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ### PyYAML
 
 **Version**: 6.0.1
-MIT License
+**License**: MIT License \
 Kirill Simonov
 **Repository**: https://pyyaml.org/
 
@@ -157,7 +157,7 @@ SOFTWARE.
 ### Pygments
 
 **Version**: 2.17.2
-BSD License
+**License**: BSD License \
 Georg Brandl <georg@python.org>
 **Repository**: https://pygments.org
 
@@ -194,7 +194,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ### absl-py
 
 2.1.0
-Apache Software License
+**License**: Apache Software License \
 The Abseil Authors
 **Repository**: https://github.com/abseil/abseil-py
 
@@ -407,7 +407,7 @@ The Abseil Authors
 ### accelerate
 
 0.29.2
-Apache Software License
+**License**: Apache Software License \
 The HuggingFace team
 **Repository**: https://github.com/huggingface/accelerate
 
@@ -620,7 +620,7 @@ The HuggingFace team
 ### aiohttp
 
 3.9.4
-Apache Software License
+**License**: Apache Software License \
 UNKNOWN
 **Repository**: https://github.com/aio-libs/aiohttp
 
@@ -645,7 +645,7 @@ UNKNOWN
 ### aiosignal
 
 1.3.1
-Apache Software License
+**License**: Apache Software License \
 UNKNOWN
 **Repository**: https://github.com/aio-libs/aiosignal
 
@@ -858,7 +858,7 @@ Apache License
 ### annotated-types
 
 0.6.0
-MIT License
+**License**: MIT License \
 Samuel Colvin <s@muelcolvin.com>, Adrian Garcia Badaracco <1755071+adriangb@users.noreply.github.com>, Zac Hatfield-Dodds <zac@zhd.dev>
 UNKNOWN
 
@@ -891,7 +891,7 @@ SOFTWARE.
 ### anyio
 
 4.3.0
-MIT License
+**License**: MIT License \
 Alex Grönholm <alex.gronholm@nextday.fi>
 **Repository**: https://anyio.readthedocs.io/en/stable/versionhistory.html
 
@@ -923,7 +923,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ### appdirs
 
 1.4.4
-MIT License
+**License**: MIT License \
 Trent Mick
 
 **Repository**: https://github.com/ActiveState/appdirs \
@@ -959,7 +959,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ### attrs
 
 23.2.0
-MIT License
+**License**: MIT License \
 Hynek Schlawack <hs@ox.cx>
 **Repository**: https://www.attrs.org/en/stable/changelog.html
 
@@ -1024,7 +1024,7 @@ one at http://mozilla.org/MPL/2.0/.
 ### charset-normalizer
 
 3.3.2
-MIT License
+**License**: MIT License \
 Ahmed TAHRI
 **Repository**: https://github.com/Ousret/charset_normalizer
 
@@ -1057,7 +1057,7 @@ SOFTWARE.
 ### click
 
 8.1.7
-BSD License
+**License**: BSD License \
 UNKNOWN
 **Repository**: https://palletsprojects.com/p/click/
 
@@ -1097,7 +1097,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ### click-didyoumean
 
 0.3.1
-MIT License
+**License**: MIT License \
 Timo Furrer
 **Repository**: https://github.com/click-contrib/click-didyoumean
 
@@ -1128,7 +1128,7 @@ THE SOFTWARE.
 ### datasets
 
 2.18.0
-Apache Software License
+**License**: Apache Software License \
 HuggingFace Inc.
 **Repository**: https://github.com/huggingface/datasets
 
@@ -1341,7 +1341,7 @@ HuggingFace Inc.
 ### dill
 
 0.3.8
-BSD License
+**License**: BSD License \
 Mike McKerns
 **Repository**: https://github.com/uqfoundation/dill
 
@@ -1387,7 +1387,7 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ### diskcache
 
 5.6.3
-Apache Software License
+**License**: Apache Software License \
 Grant Jenks
 http://www.grantjenks.com/docs/diskcache/
 
@@ -1411,7 +1411,7 @@ specific language governing permissions and limitations under the License.
 ### distro
 
 1.9.0
-Apache Software License
+**License**: Apache Software License \
 Nir Cohen
 **Repository**: https://github.com/python-distro/distro
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/distro-1.9.0.dist-info/LICENSE
@@ -1625,7 +1625,7 @@ Apache License
 ### docker-pycreds
 
 0.4.0
-Apache Software License
+**License**: Apache Software License \
 UNKNOWN
 **Repository**: https://github.com/shin-/dockerpy-creds
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/docker_pycreds-0.4.0.dist-info/LICENSE
@@ -1839,7 +1839,7 @@ UNKNOWN
 ### docstring_parser
 
 0.16
-MIT License
+**License**: MIT License \
 Marcin Kurczewski
 **Repository**: https://github.com/rr-/docstring_parser \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/docstring_parser-0.16.dist-info/LICENSE.md
@@ -1873,7 +1873,7 @@ SOFTWARE.
 ### fastapi
 
 0.110.1
-MIT License
+**License**: MIT License \
 Sebastián Ramírez <tiangolo@gmail.com>
 **Repository**: https://github.com/tiangolo/fastapi
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/fastapi-0.110.1.dist-info/licenses/LICENSE
@@ -1942,8 +1942,9 @@ For more information, please refer to <http://unlicense.org>
 ---
 
 ### frozenlist
+
 1.4.1 \
-Apache Software License \
+**License**: Apache Software License \
 UNKNOWN \
 **Repository**: https://github.com/aio-libs/frozenlist \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/frozenlist-1.4.1.dist-info/LICENSE
@@ -2156,8 +2157,8 @@ Apache License
 
 ### fsspec
 
-2024.2.0 \
-BSD License \
+**Version**: 2024.2.0 \
+**License**: BSD License \
 UNKNOWN \
 **Repository**: https://github.com/fsspec/filesystem_spec \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/fsspec-2024.2.0.dist-info/LICENSE
@@ -2199,7 +2200,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ### gguf
 
 0.6.0 \
-MIT License \
+**License**: MIT License \
 GGML \
 **Repository**: https://ggml.ai \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/gguf-0.6.0.dist-info/LICENSE
@@ -2233,7 +2234,7 @@ SOFTWARE.
 ### gitdb
 
 4.0.11 \
-BSD License \
+**License**: BSD License \
 Sebastian Thiel \
 **Repository**: https://github.com/gitpython-developers/gitdb \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/gitdb-4.0.11.dist-info/LICENSE
@@ -2286,8 +2287,9 @@ in the distribution package.
 ---
 
 ### h11
+
 0.14.0
-MIT License
+**License**: MIT License \
 Nathaniel J. Smith
 **Repository**: https://github.com/python-hyper/h11
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/h11-0.14.0.dist-info/LICENSE.txt
@@ -2322,7 +2324,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ### httpcore
 
 1.0.5
-BSD License
+**License**: BSD License \
 Tom Christie <tom@tomchristie.com>
 **Repository**: https://www.encode.io/httpcore/
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/httpcore-1.0.5.dist-info/licenses/LICENSE.md
@@ -2362,7 +2364,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ### httpx
 
 0.27.0
-BSD License
+**License**: BSD License \
 Tom Christie <tom@tomchristie.com>
 **Repository**: https://github.com/encode/httpx
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/httpx-0.27.0.dist-info/licenses/LICENSE.md
@@ -2387,7 +2389,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 ### huggingface-hub
 
 0.22.2
-Apache Software License
+**License**: Apache Software License \
 Hugging Face, Inc.
 **Repository**: https://github.com/huggingface/huggingface_hub
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/huggingface_hub-0.22.2.dist-info/LICENSE
@@ -2601,7 +2603,7 @@ Hugging Face, Inc.
 ### idna
 
 3.7
-BSD License
+**License**: BSD License \
 Kim Davies <kim+pypi@gumleaf.org>
 **Repository**: https://github.com/kjd/idna
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/idna-3.7.dist-info/LICENSE.md
@@ -2645,7 +2647,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ### importlib_metadata
 
 7.1.0
-Apache Software License
+**License**: Apache Software License \
 Jason R. Coombs
 **Repository**: https://github.com/python/importlib_metadata
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/importlib_metadata-7.1.0.dist-info/LICENSE
@@ -2859,7 +2861,7 @@ Jason R. Coombs
 ### joblib
 
 1.4.0
-BSD License
+**License**: BSD License \
 Gael Varoquaux <gael.varoquaux@normalesup.org>
 **Repository**: https://joblib.readthedocs.io
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/joblib-1.4.0.dist-info/LICENSE.txt
@@ -2901,7 +2903,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ### jsonpatch
 
 1.33
-BSD License
+**License**: BSD License \
 Stefan Kögl
 **Repository**: https://github.com/stefankoegl/python-json-patch
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/jsonpatch-1.33.dist-info/LICENSE
@@ -2923,7 +2925,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 ### jsonpointer
 
 2.4
-BSD License
+**License**: BSD License \
 Stefan Kögl
 **Repository**: https://github.com/stefankoegl/python-json-pointer
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/jsonpointer-2.4.dist-info/LICENSE.txt
@@ -2961,7 +2963,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ### jsonschema
 
 4.21.1
-MIT License
+**License**: MIT License \
 Julian Berman
 **Repository**: https://github.com/python-jsonschema/jsonschema
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/jsonschema-4.21.1.dist-info/licenses/COPYING
@@ -2993,7 +2995,7 @@ THE SOFTWARE.
 ### jsonschema-specifications
 
 2023.12.1
-MIT License
+**License**: MIT License \
 Julian Berman
 **Repository**: https://github.com/python-jsonschema/jsonschema-specifications
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/jsonschema_specifications-2023.12.1.dist-info/licenses/COPYING
@@ -3025,7 +3027,7 @@ THE SOFTWARE.
 ### langchain-core
 
 0.1.42
-MIT License
+**License**: MIT License \
 UNKNOWN
 **Repository**: https://github.com/langchain-ai/langchain
 UNKNOWN
@@ -3039,7 +3041,7 @@ UNKNOWN
 ### langchain-text-splitters
 
 0.0.1
-MIT License
+**License**: MIT License \
 UNKNOWN
 **Repository**: https://github.com/langchain-ai/langchain
 UNKNOWN
@@ -3053,7 +3055,7 @@ UNKNOWN
 ### langsmith
 
 0.1.45
-MIT License
+**License**: MIT License \
 LangChain
 **Repository**: https://smith.langchain.com/
 UNKNOWN
@@ -3067,7 +3069,7 @@ UNKNOWN
 ### llama_cpp_python
 
 0.2.55
-MIT
+**License**: MIT  // TODO - verify
 Andrei Betlen <abetlen@gmail.com>
 **Repository**: https://github.com/abetlen/llama-cpp-python
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/llama_cpp_python-0.2.55.dist-info/licenses/LICENSE.md
@@ -3089,7 +3091,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 ### markdown-it-py
 
 3.0.0
-MIT License
+**License**: MIT License \
 Chris Sewell <chrisj_sewell@hotmail.com>
 **Repository**: https://github.com/executablebooks/markdown-it-py
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/markdown_it_py-3.0.0.dist-info/LICENSE
@@ -3122,7 +3124,7 @@ SOFTWARE.
 
 ### mdurl
 0.1.2
-MIT License
+**License**: MIT License \
 Taneli Hukkinen <hukkin@users.noreply.github.com>
 **Repository**: https://github.com/executablebooks/mdurl
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/mdurl-0.1.2.dist-info/LICENSE
@@ -3214,7 +3216,7 @@ SOFTWARE.
 
 ### mpmath
 1.3.0
-BSD License
+**License**: BSD License \
 Fredrik Johansson
 http://mpmath.org/
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/mpmath-1.3.0.dist-info/LICENSE
@@ -3254,7 +3256,7 @@ DAMAGE.
 ### multidict
 
 6.0.5
-Apache Software License
+**License**: Apache Software License \
 Andrew Svetlov
 **Repository**: https://github.com/aio-libs/multidict
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/multidict-6.0.5.dist-info/LICENSE
@@ -3280,7 +3282,7 @@ Andrew Svetlov
 ### multiprocess
 
 0.70.16
-BSD License
+**License**: BSD License \
 Mike McKerns
 **Repository**: https://github.com/uqfoundation/multiprocess
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/multiprocess-0.70.16.dist-info/COPYING
@@ -3321,7 +3323,7 @@ SUCH DAMAGE.
 ### networkx
 
 3.3
-BSD License
+**License**: BSD License \
 Aric Hagberg <hagberg@lanl.gov>
 **Repository**: https://networkx.org/
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/networkx-3.3.dist-info/LICENSE.txt
@@ -3371,7 +3373,7 @@ NetworkX is distributed with the 3-clause BSD license.
 ### nltk
 
 3.8.1
-Apache Software License
+**License**: Apache Software License \
 NLTK Team
 **Repository**: https://www.nltk.org/
 
@@ -5507,7 +5509,7 @@ License: LGPL-2.1-or-later
 ### openai
 
 1.17.0
-Apache Software License
+**License**: Apache Software License \
 OpenAI <support@openai.com>
 **Repository**: https://github.com/openai/openai-python
 
@@ -5720,7 +5722,7 @@ OpenAI <support@openai.com>
 ### orjson
 
 3.10.0
-Apache Software License; MIT License
+**License**: Apache Software License; MIT License
 ijl <ijl@mailbox.org>
 **Repository**: https://github.com/ijl/orjson
 
@@ -5933,7 +5935,7 @@ limitations under the License.
 ### packaging
 
 23.2
-Apache Software License; BSD License
+**License**: Apache Software License; BSD License
 Donald Stufft <donald@stufft.io>
 **Repository**: https://github.com/pypa/packaging
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/packaging-23.2.dist-info/LICENSE
@@ -6377,7 +6379,7 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 ### peft
 
 0.9.0
-Apache Software License
+**License**: Apache Software License \
 The HuggingFace team
 **Repository**: https://github.com/huggingface/peft
 
@@ -6714,7 +6716,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ### pyarrow
 
 15.0.2
-Apache Software License
+**License**: Apache Software License \
 UNKNOWN
 **Repository**: https://arrow.apache.org/
 
@@ -9193,7 +9195,7 @@ Antoine Pitrou <antoine@python.org>
 ### pydantic
 
 2.7.0 \
-MIT License
+**License**: MIT License \
 Samuel Colvin <s@muelcolvin.com>, Eric Jolibois <em.jolibois@gmail.com>, Hasan Ramezani <hasan.r67@gmail.com>, Adrian Garcia Badaracco <1755071+adriangb@users.noreply.github.com>, Terrence Dorsey <terry@pydantic.dev>, David Montague <david@pydantic.dev>, Serge Matveenko <lig@countzero.co>, Marcelo Trylesinski <marcelotryle@gmail.com>, Sydney Runkle <sydneymarierunkle@gmail.com>, David Hewitt <mail@davidhewitt.io>, Alex Hall <alex.mojaki@gmail.com> \
 **Repository**: https://github.com/pydantic/pydantic \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/pydantic-2.7.0.dist-info/licenses/LICENSE
@@ -9227,7 +9229,7 @@ SOFTWARE.
 ### pydantic-settings
 
 2.2.1
-MIT License
+**License**: MIT License \
 Samuel Colvin <s@muelcolvin.com>, Eric Jolibois <em.jolibois@gmail.com>, Hasan Ramezani <hasan.r67@gmail.com>
 **Repository**: https://github.com/pydantic/pydantic-settings
 
@@ -9260,7 +9262,7 @@ SOFTWARE.
 ### pydantic_core
 
 2.18.1
-MIT License
+**License**: MIT License \
 Samuel Colvin <s@muelcolvin.com>
 **Repository**: https://github.com/pydantic/pydantic-core
 
@@ -9295,7 +9297,7 @@ SOFTWARE.
 ### pydantic_yaml
 
 1.3.0
-MIT License
+**License**: MIT License \
 NowanIlfideme <git@nowan.dev>
 UNKNOWN
 
@@ -9329,7 +9331,7 @@ SOFTWARE.
 ### python-dateutil
 
 2.9.0.post0
-Apache Software License; BSD License
+**License**: Apache Software License; BSD License
 Gustavo Niemeyer
 **Repository**: https://github.com/dateutil/dateutil
 
@@ -9434,7 +9436,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ### pytz
 
 2024.1
-MIT License
+**License**: MIT License \
 Stuart Bishop
 http://pythonhosted.org/pytz
 
@@ -9465,7 +9467,7 @@ DEALINGS IN THE SOFTWARE.
 ### referencing
 
 0.34.0
-MIT License
+**License**: MIT License \
 Julian Berman <Julian+referencing@GrayVines.com>
 **Repository**: https://github.com/python-jsonschema/referencing
 
@@ -9496,7 +9498,7 @@ THE SOFTWARE.
 ### regex
 
 2023.12.25
-Apache Software License
+**License**: Apache Software License \
 Matthew Barnett
 **Repository**: https://github.com/mrabarnett/mrab-regex
 
@@ -9716,7 +9718,7 @@ All additions and alterations are licensed under the Apache 2.0 License.
 ### requests
 
 2.31.0
-Apache Software License
+**License**: Apache Software License \
 Kenneth Reitz
 **Repository**: https://requests.readthedocs.io
 
@@ -9902,7 +9904,7 @@ Kenneth Reitz
 ### rich
 
 13.7.1
-MIT License
+**License**: MIT License \
 Will McGugan
 **Repository**: https://github.com/Textualize/rich
 
@@ -9933,7 +9935,7 @@ SOFTWARE.
 ### rouge_score
 
 0.1.2
-Apache Software License
+**License**: Apache Software License \
 Google LLC
 **Repository**: https://github.com/google-research/google-research/tree/master/rouge
 UNKNOWN
@@ -9947,7 +9949,7 @@ UNKNOWN
 ### rpds-py
 
 0.18.0
-MIT License
+**License**: MIT License \
 Julian Berman
 **Repository**: https://github.com/crate-py/rpds
 
@@ -9978,7 +9980,7 @@ THE SOFTWARE.
 ### ruamel.yaml
 
 0.18.6
-MIT License
+**License**: MIT License \
 Anthon van der Neut
 **Repository**: https://sourceforge.net/p/ruamel-yaml/code/ci/default/tree/
 
@@ -10011,7 +10013,7 @@ Anthon van der Neut
 ### ruamel.yaml.clib
 
 0.2.8
-MIT License
+**License**: MIT License \
 Anthon van der Neut
 **Repository**: https://sourceforge.net/p/ruamel-yaml-clib/code/ci/default/tree
 
@@ -10044,7 +10046,7 @@ Anthon van der Neut
 ### safetensors
 
 0.4.2
-Apache Software License
+**License**: Apache Software License \
 Nicolas Patry <patry.nicolas@protonmail.com>
 **Repository**: https://github.com/huggingface/safetensors
 UNKNOWN
@@ -10058,7 +10060,7 @@ UNKNOWN
 ### sentencepiece
 
 0.2.0
-Apache Software License
+**License**: Apache Software License \
 Taku Kudo
 **Repository**: https://github.com/google/sentencepiece
 UNKNOWN
@@ -10119,7 +10121,7 @@ UNKNOWN
 ### setuptools
 
 65.5.0
-MIT License
+**License**: MIT License \
 Python Packaging Authority
 **Repository**: https://github.com/pypa/setuptools
 
@@ -10150,7 +10152,7 @@ IN THE SOFTWARE.
 ### shtab
 
 1.7.1
-Apache Software License
+**License**: Apache Software License \
 Casper da Costa-Luis <casper.dcl@physics.org>
 **Repository**: https://github.com/iterative/shtab
 
@@ -10175,7 +10177,7 @@ limitations under the Licence.
 ### six
 
 1.16.0
-MIT License
+**License**: MIT License \
 Benjamin Peterson
 **Repository**: https://github.com/benjaminp/six
 
@@ -10246,7 +10248,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ### sniffio
 
 1.3.1
-Apache Software License; MIT License
+**License**: Apache Software License; MIT License
 "Nathaniel J. Smith" <njs@pobox.com>
 **Repository**: https://github.com/python-trio/sniffio
 
@@ -10339,7 +10341,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ### starlette-context
 
 0.3.6
-MIT License
+**License**: MIT License \
 Tom Wojcik
 **Repository**: https://github.com/tomwojcik/starlette-context
 
@@ -10537,7 +10539,7 @@ SOFTWARE.
 ### tenacity
 
 8.2.3
-Apache Software License
+**License**: Apache Software License \
 Julien Danjou
 **Repository**: https://github.com/jd/tenacity
 
@@ -10750,7 +10752,7 @@ Julien Danjou
 ### tokenizers
 
 0.15.2
-Apache Software License
+**License**: Apache Software License \
 Anthony MOI <m.anthony.moi@gmail.com>
 **Repository**: https://github.com/huggingface/tokenizers
 UNKNOWN
@@ -10764,9 +10766,9 @@ UNKNOWN
 ### toml
 
 0.10.2
-MIT License
+**License**: MIT License \
 William Pearson
-https://github.com/uiri/toml
+**Repository**: https://github.com/uiri/toml
 
 ```text
 The MIT License
@@ -17496,7 +17498,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ### tqdm
 
 4.66.2 \
-MIT License; Mozilla Public License 2.0 (MPL 2.0) \
+**License**: MIT License; Mozilla Public License 2.0 (MPL 2.0) \
 UNKNOWN \
 **Repository**: https://tqdm.github.io
 
@@ -17557,7 +17559,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 ### transformers
 
 4.38.2 \
-Apache Software License \
+**License**: Apache Software License \
 The Hugging Face team (past and future) with the help of all our contributors (https://github.com/huggingface/transformers/graphs/contributors) \
 **Repository**: https://github.com/huggingface/transformers
 
@@ -17772,7 +17774,7 @@ Copyright 2018- The Hugging Face team. All rights reserved.
 ### trl
 
 0.7.11
-Apache Software License
+**License**: Apache Software License \
 Leandro von Werra
 **Repository**: https://github.com/huggingface/trl
 
@@ -18276,7 +18278,7 @@ PERFORMANCE OF THIS SOFTWARE.
 ### tyro
 
 0.8.3
-MIT License
+**License**: MIT License \
 brentyi <brentyi@berkeley.edu>
 UNKNOWN
 
@@ -18309,7 +18311,7 @@ SOFTWARE.
 ### tzdata
 
 2024.1
-Apache Software License
+**License**: Apache Software License \
 Python Software Foundation
 **Repository**: https://github.com/python/tzdata
 
@@ -18336,7 +18338,7 @@ limitations under the License.
 ### urllib3
 
 2.2.1
-MIT License
+**License**: MIT License \
 Andrey Petrov <andrey.petrov@shazow.net>
 **Repository**: https://github.com/urllib3/urllib3/blob/main/CHANGES.rst
 
@@ -18408,7 +18410,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ### wandb
 
 0.16.6
-MIT License
+**License**: MIT License \
 Weights & Biases <support@wandb.com>
 **Repository**: https://github.com/wandb/wandb
 
@@ -18441,7 +18443,7 @@ SOFTWARE.
 ### wcwidth
 
 0.2.13
-MIT License
+**License**: MIT License \
 Jeff Quast
 **Repository**: https://github.com/jquast/wcwidth
 
@@ -19201,7 +19203,7 @@ Public License instead of this License.  But first, please read
 ### yarl
 
 1.9.4
-Apache Software License
+**License**: Apache Software License \
 Andrew Svetlov
 **Repository**: https://github.com/aio-libs/yarl
 url: yarl-1.9.4.dist-info/LICENSE
@@ -19415,7 +19417,7 @@ url: yarl-1.9.4.dist-info/LICENSE
 ### zipp
 
 3.18.1
-MIT License
+**License**: MIT License \
 Jason R. Coombs
 **Repository**: https://github.com/jaraco/zipp
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/zipp-3.18.1.dist-info/LICENSE
