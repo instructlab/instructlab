@@ -868,7 +868,7 @@ Apache License
 **Version**: 0.6.0 \
 **License**: MIT License \
 **Author**: Samuel Colvin <s@muelcolvin.com>, Adrian Garcia Badaracco <1755071+adriangb@users.noreply.github.com>, Zac Hatfield-Dodds <zac@zhd.dev> \
-**Repository**: UNKNOWN
+**Repository**: https://github.com/annotated-types/annotated-types \
 
 ```text
 The MIT License (MIT)
