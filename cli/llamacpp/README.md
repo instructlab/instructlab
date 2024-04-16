@@ -1,3 +1,10 @@
+# Notice
+
+The code in this folder is modified from the llama.cpp repository on GitHub.
+For the original code, see [llama.cpp](https://github.com/ggerganov/llama.cpp)
+with the following license.
+
+```license
 MIT License
 
 Copyright (c) 2023-2024 The ggml authors
@@ -19,3 +26,4 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+```
