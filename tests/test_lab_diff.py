@@ -140,13 +140,13 @@ class TestLabDiff(unittest.TestCase):
                     self.taxonomy.root,
                 ],
             )
-            self.assertIsNone(result.exception)
+            self.assertIsNotNone(result.exception)
             self.assertIn(
                 f'Couldn\'t find the taxonomy git ref "{taxonomy_base}" '
                 "from the current HEAD",
                 result.output,
             )
-            self.assertEqual(result.exit_code, 0)
+            self.assertNotEqual(result.exit_code, 0)
 
     def test_diff_invalid_path(self):
         taxonomy_path = "/path/to/taxonomy"
@@ -161,9 +161,9 @@ class TestLabDiff(unittest.TestCase):
                     taxonomy_path,
                 ],
             )
-            self.assertIsNone(result.exception)
+            self.assertIsNotNone(result.exception)
             self.assertIn(f"{taxonomy_path}", result.output)
-            self.assertEqual(result.exit_code, 0)
+            self.assertNotEqual(result.exit_code, 0)
 
     def test_diff_valid_yaml(self):
         valid_yaml_file = "compositional_skills/qna_valid.yaml"
