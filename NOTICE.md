@@ -1395,10 +1395,12 @@ ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### diskcache
 
-5.6.3
+**Version**: 5.6.3 \
 **License**: Apache Software License \
-Grant Jenks
-http://www.grantjenks.com/docs/diskcache/
+**Author**: Grant Jenks \
+**Repository**: https://github.com/grantjenks/python-diskcache \
+**License URL**: https://github.com/grantjenks/python-diskcache/blob/master/LICENSE \
+**Homepage**: http://www.grantjenks.com/docs/diskcache/
 
 ```text
 Copyright 2016-2022 Grant Jenks
@@ -1423,7 +1425,7 @@ specific language governing permissions and limitations under the License.
 **License**: Apache Software License \
 **Author**: Nir Cohen \
 **Repository**: https://github.com/python-distro/distro \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/distro-1.9.0.dist-info/LICENSE
+**License URL**: https://github.com/python-distro/distro/blob/master/LICENSE
 
 ```text
 Apache License
@@ -1637,7 +1639,7 @@ Apache License
 **License**: Apache Software License \
 **Author**: UNKNOWN \
 **Repository**: https://github.com/shin-/dockerpy-creds \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/docker_pycreds-0.4.0.dist-info/LICENSE
+**License URL**: https://github.com/shin-/dockerpy-creds/blob/master/LICENSE
 
 ```text
                                  Apache License
@@ -1851,7 +1853,7 @@ Apache License
 **License**: MIT License \
 **Author**: Marcin Kurczewski \
 **Repository**: https://github.com/rr-/docstring_parser \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/docstring_parser-0.16.dist-info/LICENSE.md
+**License URL**: https://github.com/rr-/docstring_parser/blob/master/LICENSE.md
 
 ```text
 The MIT License (MIT)
@@ -1885,7 +1887,7 @@ SOFTWARE.
 **License**: MIT License \
 **Author**: Sebastián Ramírez <tiangolo@gmail.com> \
 **Repository**: https://github.com/tiangolo/fastapi \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/fastapi-0.110.1.dist-info/licenses/LICENSE
+**License URL**: https://github.com/tiangolo/fastapi/blob/master/LICENSE
 
 ```text
 The MIT License (MIT)
@@ -1916,10 +1918,10 @@ THE SOFTWARE.
 ### filelock
 
 **Version**: 3.13.4 \
-**License**: <span style="color: red;">The Unlicense (Unlicense)</span> \
+**License**: The Unlicense (Unlicense) \
 **Author**: UNKNOWN \
 **Repository**: https://github.com/tox-dev/py-filelock \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/filelock-3.13.4.dist-info/licenses/LICENSE
+**License URL**: https://github.com/tox-dev/filelock/blob/main/LICENSE
 
 ```text
 This is free and unencumbered software released into the public domain.
@@ -1956,7 +1958,7 @@ For more information, please refer to <http://unlicense.org>
 **License**: Apache Software License \
 **Author**: UNKNOWN \
 **Repository**: https://github.com/aio-libs/frozenlist \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/frozenlist-1.4.1.dist-info/LICENSE
+**License URL**: https://github.com/aio-libs/frozenlist/blob/master/LICENSE
 
 ```text
 Apache License
@@ -2170,7 +2172,7 @@ Apache License
 **License**: BSD License \
 **Author**: UNKNOWN \
 **Repository**: https://github.com/fsspec/filesystem_spec \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/fsspec-2024.2.0.dist-info/LICENSE
+**License URL**: https://github.com/fsspec/filesystem_spec/blob/master/LICENSE
 
 ```text
 BSD 3-Clause License
@@ -2210,9 +2212,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **Version**: 0.6.0 \
 **License**: MIT License \
-**Author**: GGML \
-**Repository**: https://ggml.ai \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/gguf-0.6.0.dist-info/LICENSE
+**Author**: GGML (https://github.com/ggerganov/ggml/blob/master/AUTHORS)\
+**Repository**: https://github.com/ggerganov/ggml \
+**Homepage**: https://ggml.ai \
+**License URL**: https://github.com/ggerganov/ggml/blob/master/LICENSE
 
 ```text
 MIT License
@@ -2244,9 +2247,9 @@ SOFTWARE.
 
 **Version**: 4.0.11 \
 **License**: BSD License \
-**Author**: Sebastian Thiel \
+**Author**: Sebastian Thiel (https://github.com/gitpython-developers/gitdb/blob/master/AUTHORS)\
 **Repository**: https://github.com/gitpython-developers/gitdb \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/gitdb-4.0.11.dist-info/LICENSE
+**License URL**: https://github.com/gitpython-developers/gitdb/blob/master/LICENSE
 
 ```text
 Copyright (C) 2010, 2011 Sebastian Thiel and contributors
@@ -2335,8 +2338,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 **Version**: 1.0.5 \
 **License**: BSD License \
 **Author**: Tom Christie <tom@tomchristie.com> \
-**Repository**: https://www.encode.io/httpcore/ \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/httpcore-1.0.5.dist-info/licenses/LICENSE.md
+**Repository**: https://github.com/encode/httpcore/ \
+**Homepage**: https://www.encode.io/httpcore/ \
+**License URL**: https://github.com/encode/httpcore/blob/master/LICENSE.md
 
 ```text
 Copyright © 2020, [Encode OSS Ltd](https://www.encode.io/).
@@ -2376,7 +2380,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **License**: BSD License \
 **Author**: Tom Christie <tom@tomchristie.com> \
 **Repository**: https://github.com/encode/httpx \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/httpx-0.27.0.dist-info/licenses/LICENSE.md
+**License URL**: https://github.com/encode/httpx/blob/master/LICENSE.md
 
 ```text
 Copyright © 2019, [Encode OSS Ltd](https://www.encode.io/).
@@ -2401,7 +2405,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 **License**: Apache Software License \
 **Author**: Hugging Face, Inc. \
 **Repository**: https://github.com/huggingface/huggingface_hub \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/huggingface_hub-0.22.2.dist-info/LICENSE
+**License URL**: https://github.com/huggingface/huggingface_hub/blob/main/LICENSE
 
 ```text
                                  Apache License
@@ -2615,7 +2619,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 **License**: BSD License \
 **Author**: Kim Davies <kim+pypi@gumleaf.org> \
 **Repository**: https://github.com/kjd/idna \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/idna-3.7.dist-info/LICENSE.md
+**License URL**: https://github.com/kjd/idna/blob/master/LICENSE.md
 
 ```text
 BSD 3-Clause License
@@ -2659,7 +2663,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **License**: Apache Software License \
 **Author**: Jason R. Coombs \
 **Repository**: https://github.com/python/importlib_metadata \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/importlib_metadata-7.1.0.dist-info/LICENSE
+**License URL**: https://github.com/python/importlib_metadata/blob/main/LICENSE
 
 ```text
                                  Apache License
@@ -2872,8 +2876,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **Version**: 1.4.0 \
 **License**: BSD License \
 **Author**: Gael Varoquaux <gael.varoquaux@normalesup.org> \
-**Repository**: https://joblib.readthedocs.io \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/joblib-1.4.0.dist-info/LICENSE.txt
+**Repository**: https://github.com/joblib/joblib \
+**Homepage**: https://joblib.readthedocs.io \
+**License URL**: https://github.com/joblib/joblib/blob/main/LICENSE.txt
 
 ```text
 BSD 3-Clause License
