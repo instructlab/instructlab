@@ -54,13 +54,13 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 1. If you are on Fedora Linux, install C++, Python 3.9+, and other necessary tools by running the following command:
 
     ```shell
-   sudo dnf install g++ gcc make pip python3 python3-devel python3-GitPython
+   sudo dnf install g++ gcc make pip python3 python3-devel python3-GitPython yamllint
    ```
 
    Optional: If g++ is not found, try 'gcc-c++' by running the following command:
 
      ```shell
-     sudo dnf install gcc-c++ gcc make pip python3 python3-devel python3-GitPython
+     sudo dnf install gcc-c++ gcc make pip python3 python3-devel python3-GitPython yamllint
      ```
 
 2. Create a new directory called `instruct-lab` to store the files the `ilab` CLI needs when running and CD into the directory by running the following command:

@@ -208,8 +208,9 @@ def init(
 @click.option(
     "--yaml-rules",
     type=click.Path(),
-    default=None,
-    help="Custom rules file for YAML linting.",
+    default=config.DEFAULT_YAML_RULES,
+    show_default=True,
+    help="Rules file for YAML linting",
 )
 @click.option(
     "--quiet",

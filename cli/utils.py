@@ -24,14 +24,6 @@ import yaml
 # Local
 from . import common
 
-DEFAULT_YAML_RULES = """\
-extends: relaxed
-
-rules:
-  line-length:
-    max: 120
-"""
-
 logging.basicConfig(
     level=logging.INFO,
     format="%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s",
@@ -398,12 +390,9 @@ def get_version(contents: Mapping) -> int:
 
 
 # pylint: disable=broad-exception-caught
-def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
-    # pylint: disable=C0415
-    # Third Party
-    from yamllint import linter
-    from yamllint.config import YamlLintConfig
-
+def read_taxonomy_file(
+    logger: Logger, file_path: str, yaml_rules: Optional[str] = None
+):
     seed_instruction_data = []
     warnings = 0
     errors = 0
@@ -421,26 +410,38 @@ def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
         taxonomy_path = file_path
     # read file if extension is correct
     try:
-        with open(file_path, "r", encoding="utf-8") as file:
-            # do general YAML linting if specified
-            if yaml_rules is not None:
-                try:
-                    yaml_config = YamlLintConfig(file=yaml_rules)
-                except FileNotFoundError:
-                    logger.debug(f"Cannot find {yaml_rules}. Using default rules.")
-                    yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
+        # do general YAML linting if specified
+        if yaml_rules is not None:
+            is_file = os.path.isfile(yaml_rules)
+            if is_file:
+                logger.debug(f"Using YAML rules from {yaml_rules}")
+                yamllint_cmd = [
+                    "yamllint",
+                    "-f",
+                    "parsable",
+                    "-c",
+                    yaml_rules,
+                    file_path,
+                ]
             else:
-                yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
-            linter_problems = list(linter.run(file, yaml_config))
-            if linter_problems:
-                lint_messages = [f"Problems found in file {file.name}"]
-                for p in linter_problems:
-                    errors += 1
-                    loc = f"{p.line}:{p.column}"
-                    desc = f"{p.desc} ({p.rule})" if p.rule else p.desc
-                    lint_messages.append(f"  {loc:<9} {p.level:<9} {desc}")
-                logger.error("\n".join(lint_messages))
-                return None, warnings, errors
+                logger.debug(
+                    f"Cannot find {yaml_rules}. Using default rules from .yamllint"
+                )
+                yamllint_cmd = ["yamllint", "-f", "parsable", file_path]
+        else:
+            yamllint_cmd = ["yamllint", "-f", "parsable", file_path]
+        try:
+            subprocess.check_output(yamllint_cmd, text=True)
+        except subprocess.SubprocessError as e:
+            lint_messages = [f"Problems found in file {file_path}"]
+            parsed_output = e.output.splitlines()
+            for p in parsed_output:
+                errors += 1
+                delim = str(file_path) + ":"
+                parsed_p = p.split(delim)[1]
+                lint_messages.append(parsed_p)
+            logger.error("\n".join(lint_messages))
+            return None, warnings, errors
         # do more explict checking of file contents
         with open(file_path, "r", encoding="utf-8") as file:
             contents = yaml.safe_load(file)
