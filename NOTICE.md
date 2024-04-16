@@ -2944,8 +2944,6 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 **Repository**: https://github.com/stefankoegl/python-json-pointer \
 **License URL**: https://github.com/stefankoegl/python-json-pointer/blob/master/LICENSE.txt
 
-!!! The project's BSD License text includes "All rights reserved." which is a non-standard inclusion.
-
 ```text
 Copyright (c) 2011 Stefan Kögl <stefan@skoegl.net>
 All rights reserved.
@@ -3171,7 +3169,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ### llama.cpp
 
-**Version**: <span>N/A</span> \
+**Version**: <span style="color: red;">N/A</span> \
 **License**: MIT License \
 **Author**: https://github.com/ggerganov/llama.cpp/blob/master/AUTHORS \
 **Repository**: https://github.com/ggerganov/llama.cpp \
@@ -3212,7 +3210,7 @@ SOFTWARE.
 **License**: MIT License \
 **Author**: Chris Sewell <chrisj_sewell@hotmail.com> \
 **Repository**: https://github.com/executablebooks/markdown-it-py \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/markdown_it_py-3.0.0.dist-info/LICENSE
+**License URL**: https://github.com/executablebooks/markdown-it-py/blob/master/LICENSE
 
 ```text
 MIT License
@@ -3246,7 +3244,7 @@ SOFTWARE.
 **License**: MIT License \
 **Author**: Taneli Hukkinen <hukkin@users.noreply.github.com> \
 **Repository**: https://github.com/executablebooks/mdurl \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/mdurl-0.1.2.dist-info/LICENSE
+**License URL**: https://github.com/executablebooks/mdurl/blob/master/LICENSE
 
 ```text
 Copyright (c) 2015 Vitaly Puzrin, Alex Kocharin.
@@ -3302,10 +3300,10 @@ IN THE SOFTWARE.
 ### mlx
 
 **Version**: 0.5.1 \
-**License**: <span style="color: red;">UNKNOWN</span> \
+**License**: MIT License \
 **Author**: MLX Contributors \
 **Repository**: https://github.com/ml-explore/mlx \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/mlx-0.5.1.dist-info/LICENSE
+**License URL**: https://github.com/ml-explore/mlx/blob/main/LICENSE
 
 ```text
 MIT License
@@ -3337,9 +3335,10 @@ SOFTWARE.
 
 **Version**: 1.3.0 \
 **License**: BSD License \
-Fredrik Johansson \
-http://mpmath.org/ // TODO \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/mpmath-1.3.0.dist-info/LICENSE
+**Author**: Fredrik Johansson \
+**Repository**: https://github.com/mpmath/mpmath \
+**Homepage**: http://mpmath.org/ \
+**License URL**: https://github.com/mpmath/mpmath/blob/master/LICENSE
 
 ```text
 Copyright (c) 2005-2021 Fredrik Johansson and mpmath contributors
@@ -3379,7 +3378,9 @@ DAMAGE.
 **License**: Apache Software License \
 **Author**: Andrew Svetlov \
 **Repository**: https://github.com/aio-libs/multidict \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/multidict-6.0.5.dist-info/LICENSE
+**License URL**: https://github.com/aio-libs/multidict/blob/master/LICENSE
+
+> **Note** The license file containst an abbreviated, file-header-styled Apache 2 license.
 
 ```text
    Copyright 2016 Andrew Svetlov and aio-libs contributors
@@ -3405,7 +3406,7 @@ DAMAGE.
 **License**: BSD License \
 **Author**: Mike McKerns \
 **Repository**: https://github.com/uqfoundation/multiprocess \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/multiprocess-0.70.16.dist-info/COPYING
+**License URL**: https://github.com/uqfoundation/multiprocess/blob/master/LICENSE
 
 ```text
 Copyright (c) 2006-2008, R Oudkerk
@@ -3445,8 +3446,9 @@ SUCH DAMAGE.
 **Version**: 3.3 \
 **License**: BSD License \
 **Author**: Aric Hagberg <hagberg@lanl.gov> \
-**Repository**: https://networkx.org/ \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/networkx-3.3.dist-info/LICENSE.txt
+**Repository**: https://github.com/networkx/networkx \
+**Homepage**: https://networkx.org/ \
+**License URL**: https://github.com/networkx/networkx/blob/main/LICENSE.txt
 
 ```text
 NetworkX is distributed with the 3-clause BSD license.
@@ -3494,8 +3496,10 @@ NetworkX is distributed with the 3-clause BSD license.
 
 **Version**: 3.8.1 \
 **License**: Apache Software License \
-**Author**: NLTK Team \
-**Repository**: https://www.nltk.org/ \
+**Author**: NLTK Team (https://github.com/nltk/nltk/blob/develop/AUTHORS.md) \
+**Repository**: https://github.com/nltk/nltk \
+**Homepage**: https://www.nltk.org/ \
+**License URL**: https://github.com/nltk/nltk/blob/develop/LICENSE.txt \
 
 ```text
                                  Apache License
@@ -3708,8 +3712,11 @@ NetworkX is distributed with the 3-clause BSD license.
 **Version**: 1.26.4 \
 **License**: BSD License \
 **Author**: Travis E. Oliphant et al. \
-**Repository**: https://numpy.org \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/numpy-1.26.4.dist-info/LICENSE.txt
+**Repository**: https://github.com/numpy/numpy \
+**Homepage**: https://numpy.org \
+**License URL**: https://github.com/numpy/numpy/blob/main/LICENSE.txt
+
+> **Note** This repository includes additional "bundled" licenses found here: https://github.com/numpy/numpy/blob/main/LICENSES_bundled.txt as well as in other subdirectories.  All text from such files are copied below.
 
 ```text
 Copyright (c) 2005-2023, NumPy Developers.
@@ -5631,7 +5638,8 @@ License: LGPL-2.1-or-later
 **Version**: 1.17.0 \
 **License**: Apache Software License \
 **Author**: OpenAI <support@openai.com> \
-**Repository**: https://github.com/openai/openai-python
+**Repository**: https://github.com/openai/openai-python \
+**License URL**: https://github.com/openai/openai-python/blob/main/LICENSE
 
 ```text
                                  Apache License
@@ -5844,7 +5852,8 @@ License: LGPL-2.1-or-later
 **Version**: 3.10.0 \
 **License**: Apache Software License; MIT License \
 **Author**: ijl <ijl@mailbox.org> \
-**Repository**: https://github.com/ijl/orjson
+**Repository**: https://github.com/ijl/orjson \
+**License URL**: https://github.com/ijl/orjson/blob/master/LICENSE-APACHE; https://github.com/ijl/orjson/blob/master/LICENSE-MIT
 
 ```text
                               Apache License
@@ -6058,7 +6067,11 @@ limitations under the License.
 **License**: Apache Software License; BSD License \
 **Author**: Donald Stufft <donald@stufft.io> \
 **Repository**: https://github.com/pypa/packaging \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/packaging-23.2.dist-info/LICENSE
+**License URL**: https://github.com/pypa/packaging/blob/main/LICENSE; https://github.com/pypa/packaging/blob/main/LICENSE.APACHE; https://github.com/pypa/packaging/blob/main/LICENSE.BSD
+
+> **Note** The referenced Apache and BSD license URLs are:
+> - https://github.com/pypa/packaging/blob/main/LICENSE.APACHE
+> - https://github.com/pypa/packaging/blob/main/LICENSE.BSD
 
 ```text
 This software is made available under the terms of *either* of the licenses
@@ -6073,7 +6086,9 @@ under the terms of *both* these licenses.
 **Version**: 2.2.2 \
 **License**: BSD License \
 **Author**: The Pandas Development Team <pandas-dev@python.org> \
-**Repository**: https://pandas.pydata.org
+**Repository**: https://github.com/pandas-dev/pandas/ \
+**Homepage**: https://pandas.pydata.org \
+**License URL**: https://github.com/pandas-dev/pandas/blob/main/LICENSE
 
 ```text
 BSD 3-Clause License
@@ -6115,8 +6130,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **Version**: 0.12.1 \
 **License**: Mozilla Public License 2.0 (MPL 2.0) \
-"Caleb P. Burns" <cpburnz@gmail.com>
-UNKNOWN
+**Author**: "Caleb P. Burns" <cpburnz@gmail.com> \
+**Repository**: https://github.com/cpburnz/python-pathspec \
+**License URL**: https://github.com/cpburnz/python-pathspec/blob/master/LICENSE
 
 ```text
 Mozilla Public License Version 2.0
@@ -6501,7 +6517,8 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 **Version**: 0.9.0 \
 **License**: Apache Software License \
 **Author**: The HuggingFace team \
-**Repository**: https://github.com/huggingface/peft
+**Repository**: https://github.com/huggingface/peft \
+**License URL**: https://github.com/huggingface/peft/blob/main/LICENSE
 
 ```text
                                  Apache License
@@ -6713,8 +6730,9 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 
 **Version**: 3.0.43 \
 **License**: BSD License \
-**Author**: Jonathan Slenders \
-**Repository**: https://github.com/prompt-toolkit/python-prompt-toolkit
+**Author**: Jonathan Slenders (https://github.com/prompt-toolkit/python-prompt-toolkit/blob/master/AUTHORS.rst) \
+**Repository**: https://github.com/prompt-toolkit/python-prompt-toolkit \
+**License URL**: https://github.com/prompt-toolkit/python-prompt-toolkit/blob/master/LICENSE
 
 ```text
 Copyright (c) 2014, Jonathan Slenders
@@ -6753,7 +6771,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **Version**: 4.25.3 \
 **License**: 3-Clause BSD License \
 **Author**: protobuf@googlegroups.com \
-**Repository**: https://developers.google.com/protocol-buffers/
+**Repository**: https://github.com/protocolbuffers/protobuf \
+**Homepage**: https://developers.google.com/protocol-buffers/ \
+**License URL**: https://github.com/protocolbuffers/protobuf/blob/main/LICENSE
 
 ```text
 Copyright 2008 Google Inc.  All rights reserved.
@@ -6797,7 +6817,8 @@ support library is itself covered by the above license.
 **Version**: 5.9.8 \
 **License**: BSD License \
 **Author**: Giampaolo Rodola \
-**Repository**: https://github.com/giampaolo/psutil
+**Repository**: https://github.com/giampaolo/psutil \
+**License URL**: https://github.com/giampaolo/psutil/blob/master/LICENSE
 
 ```text
 BSD 3-Clause License
@@ -6837,8 +6858,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **Version**: 15.0.2 \
 **License**: Apache Software License \
-**Author**: UNKNOWN \
-**Repository**: https://arrow.apache.org/
+**Author**: Apache Software Foundation \
+**Repository**: https://github.com/apache/arrow \
+**Homepage**: https://arrow.apache.org/
+**License URL**: https://github.com/apache/arrow/blob/main/LICENSE.txt
 
 ```text
                                  Apache License
