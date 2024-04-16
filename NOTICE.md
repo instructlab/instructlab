@@ -89,8 +89,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **Version**: 2.1.5 \
 **License**: BSD License \
-**Author**: UNKNOWN \
-**Repository**: https://palletsprojects.com/p/markupsafe/
+**Author**: The Pallets Projects (https://palletsprojects.com/)\ \
+**Repository**: https://github.com/pallets/markupsafe \
+**Homepage**: https://palletsprojects.com/p/markupsafe/
 
 ```text
 Copyright 2010 Pallets
@@ -624,8 +625,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **Version**: 3.9.4 \
 **License**: Apache Software License \
-**Author**: UNKNOWN \
-**Repository**: https://github.com/aio-libs/aiohttp
+**Author**: aiohttp team (team@aiohttp.org)\
+**Repository**: https://github.com/aio-libs/aiohttp \
+**Homepage**: https://docs.aiohttp.org/
 
 ```text
    Copyright aio-libs contributors.
