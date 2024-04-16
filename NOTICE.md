@@ -10343,9 +10343,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### starlette-context
 
-0.3.6
+**Version**: 0.3.6 \
 **License**: MIT License \
-Tom Wojcik
+Tom Wojcik \
 **Repository**: https://github.com/tomwojcik/starlette-context
 
 ```text
@@ -10376,9 +10376,9 @@ SOFTWARE.
 
 ### sympy
 
-1.12 \
-BSD License
-SymPy development team
+**Version**: 1.12 \
+**License**: BSD License \
+SymPy development team \
 **Repository**: https://sympy.org
 
 ```text
@@ -10541,9 +10541,9 @@ SOFTWARE.
 
 ### tenacity
 
-8.2.3
+**Version**: 8.2.3 \
 **License**: Apache Software License \
-Julien Danjou
+Julien Danjou \
 **Repository**: https://github.com/jd/tenacity
 
 ```text
@@ -10754,10 +10754,10 @@ Julien Danjou
 
 ### tokenizers
 
-0.15.2
+**Version**: 0.15.2 \
 **License**: Apache Software License \
-Anthony MOI <m.anthony.moi@gmail.com>
-**Repository**: https://github.com/huggingface/tokenizers
+Anthony MOI <m.anthony.moi@gmail.com> \
+**Repository**: https://github.com/huggingface/tokenizers \
 UNKNOWN
 
 ```text
@@ -10768,9 +10768,9 @@ UNKNOWN
 
 ### toml
 
-0.10.2
+**Version**: 0.10.2 \
 **License**: MIT License \
-William Pearson
+William Pearson \
 **Repository**: https://github.com/uiri/toml
 
 ```text
@@ -17500,9 +17500,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### tqdm
 
-4.66.2 \
+**Version**: 4.66.2 \
 **License**: MIT License; Mozilla Public License 2.0 (MPL 2.0) \
-UNKNOWN \
+<span style="color: #e03e2d;">UNKNOWN</span> \
 **Repository**: https://tqdm.github.io
 
 ```text
@@ -17561,7 +17561,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ### transformers
 
-4.38.2 \
+**Version**: 4.38.2 \
 **License**: Apache Software License \
 The Hugging Face team (past and future) with the help of all our contributors (https://github.com/huggingface/transformers/graphs/contributors) \
 **Repository**: https://github.com/huggingface/transformers
@@ -17776,9 +17776,9 @@ Copyright 2018- The Hugging Face team. All rights reserved.
 
 ### trl
 
-0.7.11
+**Version**: 0.7.11 \
 **License**: Apache Software License \
-Leandro von Werra
+Leandro von Werra \
 **Repository**: https://github.com/huggingface/trl
 
 ```text
@@ -18280,10 +18280,10 @@ PERFORMANCE OF THIS SOFTWARE.
 
 ### tyro
 
-0.8.3
+**Version**: 0.8.3 \
 **License**: MIT License \
-brentyi <brentyi@berkeley.edu>
-UNKNOWN
+brentyi <brentyi@berkeley.edu> \
+<span style="color: #e03e2d;">UNKNOWN</span>
 
 ```text
 MIT License
@@ -18313,9 +18313,9 @@ SOFTWARE.
 
 ### tzdata
 
-2024.1
+**Version**: 2024.1 \
 **License**: Apache Software License \
-Python Software Foundation
+Python Software Foundation \
 **Repository**: https://github.com/python/tzdata
 
 ```text
@@ -18340,9 +18340,9 @@ limitations under the License.
 
 ### urllib3
 
-2.2.1
+**Version**: 2.2.1 \
 **License**: MIT License \
-Andrey Petrov <andrey.petrov@shazow.net>
+Andrey Petrov <andrey.petrov@shazow.net> \
 **Repository**: https://github.com/urllib3/urllib3/blob/main/CHANGES.rst
 
 ```text
@@ -18373,9 +18373,9 @@ SOFTWARE.
 
 ### uvicorn
 
-0.29.0
-BSD License
-Tom Christie <tom@tomchristie.com>
+**Version**: 0.29.0 \
+**License**: BSD License \
+Tom Christie <tom@tomchristie.com> \
 **Repository**: https://www.uvicorn.org/
 
 ```text
@@ -18412,9 +18412,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### wandb
 
-0.16.6
+**Version**: 0.16.6 \
 **License**: MIT License \
-Weights & Biases <support@wandb.com>
+Weights & Biases <support@wandb.com> \
 **Repository**: https://github.com/wandb/wandb
 
 ```text
@@ -18445,9 +18445,9 @@ SOFTWARE.
 
 ### wcwidth
 
-0.2.13
+**Version**: 0.2.13 \
 **License**: MIT License \
-Jeff Quast
+Jeff Quast \
 **Repository**: https://github.com/jquast/wcwidth
 
 ```text
@@ -18484,9 +18484,9 @@ disclaims all warranties with regard to this software.
 
 ### xxhash
 
-3.4.1
-BSD License
-Yue Du
+**Version**: 3.4.1 \
+**License**: BSD License \
+Yue Du \
 **Repository**: https://github.com/ifduyue/python-xxhash
 
 ```text
@@ -18518,8 +18518,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### yamllint
 
-1.35.1 \
-GNU General Public License v3 (GPLv3) \
+**Version**: 1.35.1 \
+**license**: <span style="color: #e03e2d;">GNU General Public License v3 (GPLv3)</span> \
 Adrien Vergé \
 **Repository**: https://github.com/adrienverge/yamllint \
 **license URL**: https://github.com/adrienverge/yamllint/blob/master/LICENSE
