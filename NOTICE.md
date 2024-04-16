@@ -48,7 +48,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **Version**: 3.1.3 \
 **License**: BSD License \
-**Author**: The Pallets Projects (https://palletsprojects.com/)\
+**Author**: The Pallets Projects (https://palletsprojects.com/) \
 **Repository**: https://github.com/pallets/jinja/ \
 **Homepage**: https://palletsprojects.com/p/jinja/
 
@@ -1066,8 +1066,9 @@ SOFTWARE.
 
 **Version**: 8.1.7 \
 **License**: BSD License \
-**Author**: UNKNOWN \
-**Repository**: https://palletsprojects.com/p/click/
+**Author**: The Pallets Projects (https://palletsprojects.com/) \
+**Repository**: https://github.com/pallets/click \
+**Homepage**: https://palletsprojects.com/p/click/
 
 ```text
 Copyright 2014 Pallets
