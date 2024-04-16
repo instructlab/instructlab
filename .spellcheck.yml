@@ -6,7 +6,7 @@ matrix:
     camel-case: true
     mode: markdown
   sources:
-  - "**/*.md|!REVIEWERS.md"
+  - "**/*.md|!REVIEWERS.md|!NOTICE.md"
   dictionary:
     wordlists:
     - .spellcheck-en-custom.txt
