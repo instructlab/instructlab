@@ -627,7 +627,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **License**: Apache Software License \
 **Author**: aiohttp team (team@aiohttp.org)\
 **Repository**: https://github.com/aio-libs/aiohttp \
-**Homepage**: https://docs.aiohttp.org/
+**Homepage**: https://docs.aiohttp.org/ \
+**License URL**: https://github.com/aio-libs/aiohttp/blob/master/LICENSE.txt
 
 ```text
    Copyright aio-libs contributors.
@@ -651,8 +652,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **Version**: 1.3.1 \
 **License**: Apache Software License \
-**Author**: UNKNOWN \
-**Repository**: https://github.com/aio-libs/aiosignal
+**Author**:  Nikolay Kim and Andrew Svetlov. Maintained by Martijn Pieters \
+**Repository**: https://github.com/aio-libs/aiosignal \
+**License URL**: https://github.com/aio-libs/aiosignal/blob/master/LICENSE \
+**Homepage**: https://aiosignal.aio-libs.org/
 
 ```text
 Apache License
