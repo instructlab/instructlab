@@ -245,6 +245,19 @@ test_temp_server(){
     '
 }
 
+test_no_chat_logs(){
+    expect -c '
+        set timeout 30
+        spawn ilab chat
+        expect "Starting a temporary server at"
+        send "hello!\r"
+        sleep 1
+        expect {
+            "_base_client.py" { exit 1 }
+        }
+    '
+}
+
 ########
 # MAIN #
 ########
@@ -259,5 +272,7 @@ test_generate
 test_server_shutdown_while_chatting
 cleanup
 test_temp_server
+cleanup
+test_no_chat_logs
 
 exit 0
