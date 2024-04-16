@@ -901,7 +901,8 @@ SOFTWARE.
 **Version**: 4.3.0 \
 **License**: MIT License \
 **Author**: Alex Grönholm <alex.gronholm@nextday.fi> \
-**Repository**: https://anyio.readthedocs.io/en/stable/versionhistory.html
+**Repository**: https://github.com/agronholm/anyio \
+**Homepage**: https://anyio.readthedocs.io/en/stable/versionhistory.html
 
 ```text
 The MIT License (MIT)
