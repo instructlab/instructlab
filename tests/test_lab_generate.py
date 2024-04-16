@@ -8,7 +8,6 @@ import unittest
 
 # Third Party
 from click.testing import CliRunner
-import yaml
 
 # First Party
 from cli import lab
@@ -96,13 +95,11 @@ class TestLabGenerate(unittest.TestCase):
 
     def test_new_data_invalid_answer(self):
         runner = CliRunner()
-        with open(
-            "tests/testdata/skill_invalid_answer.yaml", "r", encoding="utf-8"
-        ) as qnafile:
+        with open("tests/testdata/skill_invalid_answer.yaml", "rb") as qnafile:
             with runner.isolated_filesystem():
                 mt = MockTaxonomy(pathlib.Path("taxonomy"))
                 mt.create_untracked(
-                    "compositional_skills/tracked/qna.yaml", yaml.full_load(qnafile)
+                    "compositional_skills/tracked/qna.yaml", qnafile.read()
                 )
                 result = runner.invoke(
                     lab.generate,
@@ -131,13 +128,11 @@ class TestLabGenerate(unittest.TestCase):
         ),
     )
     def test_OpenAI_server_error(self, get_instructions_from_model):
-        with open(
-            "tests/testdata/skill_valid_answer.yaml", "r", encoding="utf-8"
-        ) as qnafile:
+        with open("tests/testdata/skill_valid_answer.yaml", "rb") as qnafile:
             with CliRunner().isolated_filesystem():
                 mt = MockTaxonomy(pathlib.Path("taxonomy"))
                 mt.create_untracked(
-                    "compositional_skills/tracked/qna.yaml", yaml.full_load(qnafile)
+                    "compositional_skills/tracked/qna.yaml", qnafile.read()
                 )
                 with self.assertRaises(GenerateException) as exc:
                     generate_data(
@@ -169,13 +164,11 @@ class TestLabGenerate(unittest.TestCase):
         return_value=(testdata.generate_data_return_value, 0),
     )
     def test_generate_no_error(self, get_instructions_from_model):
-        with open(
-            "tests/testdata/skill_valid_answer.yaml", "r", encoding="utf-8"
-        ) as qnafile:
+        with open("tests/testdata/skill_valid_answer.yaml", "rb") as qnafile:
             with CliRunner().isolated_filesystem():
                 mt = MockTaxonomy(pathlib.Path("taxonomy"))
                 mt.create_untracked(
-                    "compositional_skills/tracked/qna.yaml", yaml.full_load(qnafile)
+                    "compositional_skills/tracked/qna.yaml", qnafile.read()
                 )
                 generate_data(
                     logger=logging.getLogger("test_logger"),
@@ -215,12 +208,10 @@ class TestLabGenerate(unittest.TestCase):
         return_value=testdata.knowledge_seed_instruction,
     )
     def test_knowledge_docs_no_error(self, read_taxonomy, get_instructions_from_model):
-        with open(
-            "tests/testdata/knowledge_valid.yaml", "r", encoding="utf-8"
-        ) as qnafile:
+        with open("tests/testdata/knowledge_valid.yaml", "rb") as qnafile:
             mt = MockTaxonomy(pathlib.Path("taxonomy"))
             mt.create_untracked(
-                "knowledge/technical-manual/test/qna.yaml", yaml.full_load(qnafile)
+                "knowledge/technical-manual/test/qna.yaml", qnafile.read()
             )
             generate_data(
                 logger=logging.getLogger("test_logger"),

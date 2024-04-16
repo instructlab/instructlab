@@ -5,7 +5,6 @@ import shutil
 
 # Third Party
 import git
-import yaml
 
 TEST_VALID_COMPOSITIONAL_SKILL_YAML = """created_by: rafael-vasquez
 version: 1
@@ -45,7 +44,7 @@ class MockTaxonomy:
         """List untracked files in the repository"""
         return self._repo.untracked_files
 
-    def create_untracked(self, rel_path: str, contents: Optional[dict] = None) -> None:
+    def create_untracked(self, rel_path: str, contents: Optional[bytes] = None) -> None:
         """Create a new untracked file in the repository.
 
         Args:
@@ -60,8 +59,7 @@ class MockTaxonomy:
             assert taxonomy_path.parts[0] == "compositional_skills"
             file_path.write_text(TEST_VALID_COMPOSITIONAL_SKILL_YAML, encoding="utf-8")
         else:
-            with open(file_path, "w", encoding="utf-8") as yaml_file:
-                yaml.dump(contents, yaml_file, default_flow_style=False, width=500)
+            file_path.write_bytes(contents)
 
     def add_tracked(self, rel_path: str) -> None:
         """Add a new tracked file to the repository (and commits it).

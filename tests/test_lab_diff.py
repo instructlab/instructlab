@@ -5,7 +5,6 @@ import unittest
 # Third Party
 from click.testing import CliRunner
 import pytest
-import yaml
 
 # First Party
 from cli import lab
@@ -126,11 +125,9 @@ class TestLabDiff(unittest.TestCase):
             self.assertEqual(result.exit_code, 0)
 
     def test_diff_valid_yaml(self):
-        with open(
-            "tests/testdata/skill_valid_answer.yaml", "r", encoding="utf-8"
-        ) as qnafile:
+        with open("tests/testdata/skill_valid_answer.yaml", "rb") as qnafile:
             valid_yaml_file = "compositional_skills/qna_valid.yaml"
-            self.taxonomy.create_untracked(valid_yaml_file, yaml.full_load(qnafile))
+            self.taxonomy.create_untracked(valid_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
                 lab.diff,
@@ -147,11 +144,9 @@ class TestLabDiff(unittest.TestCase):
             self.assertEqual(result.exit_code, 0)
 
     def test_diff_valid_yaml_quiet(self):
-        with open(
-            "tests/testdata/skill_valid_answer.yaml", "r", encoding="utf-8"
-        ) as qnafile:
+        with open("tests/testdata/skill_valid_answer.yaml", "rb") as qnafile:
             valid_yaml_file = "compositional_skills/qna_valid.yaml"
-            self.taxonomy.create_untracked(valid_yaml_file, yaml.full_load(qnafile))
+            self.taxonomy.create_untracked(valid_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
                 lab.diff,
@@ -167,9 +162,9 @@ class TestLabDiff(unittest.TestCase):
             self.assertEqual(result.exit_code, 0)
 
     def test_diff_invalid_yaml(self):
-        with open("tests/testdata/invalid_yaml.yaml", "r", encoding="utf-8") as qnafile:
+        with open("tests/testdata/invalid_yaml.yaml", "rb") as qnafile:
             self.taxonomy.create_untracked(
-                "compositional_skills/qna_invalid.yaml", yaml.full_load(qnafile)
+                "compositional_skills/qna_invalid.yaml", qnafile.read()
             )
             runner = CliRunner()
             result = runner.invoke(
@@ -185,9 +180,9 @@ class TestLabDiff(unittest.TestCase):
             self.assertEqual(result.exit_code, 1)
 
     def test_diff_invalid_yaml_quiet(self):
-        with open("tests/testdata/invalid_yaml.yaml", "r", encoding="utf-8") as qnafile:
+        with open("tests/testdata/invalid_yaml.yaml", "rb") as qnafile:
             self.taxonomy.create_untracked(
-                "compositional_skills/qna_invalid.yaml", yaml.full_load(qnafile)
+                "compositional_skills/qna_invalid.yaml", qnafile.read()
             )
             runner = CliRunner()
             result = runner.invoke(
@@ -204,11 +199,11 @@ class TestLabDiff(unittest.TestCase):
             self.assertEqual(result.exit_code, 1)
 
     def test_diff_custom_yaml(self):
-        with open("tests/testdata/invalid_yaml.yaml", "r", encoding="utf-8") as qnafile:
+        with open("tests/testdata/invalid_yaml.yaml", "rb") as qnafile:
             custom_rules_file = Path("custom_rules.yaml")
             custom_rules_file.write_bytes(TEST_CUSTOM_YAML_RULES)
             invalid_yaml_file = "compositional_skills/qna_invalid.yaml"
-            self.taxonomy.create_untracked(invalid_yaml_file, yaml.full_load(qnafile))
+            self.taxonomy.create_untracked(invalid_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
                 lab.diff,
@@ -228,11 +223,9 @@ class TestLabDiff(unittest.TestCase):
             Path.unlink(custom_rules_file)
 
     def test_diff_failing_schema_yaml(self):
-        with open(
-            "tests/testdata/skill_incomplete.yaml", "r", encoding="utf-8"
-        ) as qnafile:
+        with open("tests/testdata/skill_incomplete.yaml", "rb") as qnafile:
             failing_yaml_file = "compositional_skills/failing/qna.yaml"
-            self.taxonomy.create_untracked(failing_yaml_file, yaml.full_load(qnafile))
+            self.taxonomy.create_untracked(failing_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
                 lab.diff,
