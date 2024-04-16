@@ -9126,7 +9126,8 @@ SOFTWARE.
 **Version**: 0.6 \
 **License**: Apache License, Version 2.0 \
 **Author**: Antoine Pitrou <antoine@python.org> \
-**Repository**: https://github.com/pitrou/pyarrow-hotfix
+**Repository**: https://github.com/pitrou/pyarrow-hotfix \
+**License URL**: https://github.com/pitrou/pyarrow-hotfix/blob/main/LICENSE.txt
 
 ```text
 
@@ -9341,7 +9342,7 @@ SOFTWARE.
 **License**: MIT License \
 **Author**: Samuel Colvin <s@muelcolvin.com>, Eric Jolibois <em.jolibois@gmail.com>, Hasan Ramezani <hasan.r67@gmail.com>, Adrian Garcia Badaracco <1755071+adriangb@users.noreply.github.com>, Terrence Dorsey <terry@pydantic.dev>, David Montague <david@pydantic.dev>, Serge Matveenko <lig@countzero.co>, Marcelo Trylesinski <marcelotryle@gmail.com>, Sydney Runkle <sydneymarierunkle@gmail.com>, David Hewitt <mail@davidhewitt.io>, Alex Hall <alex.mojaki@gmail.com> \
 **Repository**: https://github.com/pydantic/pydantic \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/pydantic-2.7.0.dist-info/licenses/LICENSE
+**License URL**: https://github.com/pydantic/pydantic/blob/main/LICENSE
 
 ```text
 The MIT License (MIT)
@@ -9374,7 +9375,8 @@ SOFTWARE.
 **Version**: 2.2.1 \
 **License**: MIT License \
 **Author**: Samuel Colvin <s@muelcolvin.com>, Eric Jolibois <em.jolibois@gmail.com>, Hasan Ramezani <hasan.r67@gmail.com> \
-**Repository**: https://github.com/pydantic/pydantic-settings
+**Repository**: https://github.com/pydantic/pydantic-settings \
+**License URL**: https://github.com/pydantic/pydantic-settings/blob/main/LICENSE
 
 ```text
 The MIT License (MIT)
@@ -9407,7 +9409,8 @@ SOFTWARE.
 **Version**: 2.18.1 \
 **License**: MIT License \
 **Author**: Samuel Colvin <s@muelcolvin.com> \
-**Repository**: https://github.com/pydantic/pydantic-core
+**Repository**: https://github.com/pydantic/pydantic-core \
+**License URL**: https://github.com/pydantic/pydantic-core/blob/main/LICENSE
 
 ```text
 The MIT License (MIT)
@@ -9442,7 +9445,8 @@ SOFTWARE.
 **Version**: 1.3.0 \
 **License**: MIT License \
 **Author**: NowanIlfideme <git@nowan.dev> \
-**Repository**: <span style="color: #e03e2d;">UNKNOWN</span>
+**Repository**: https://github.com/NowanIlfideme/pydantic-yaml/tree/main \
+**License URL**: https://github.com/NowanIlfideme/pydantic-yaml/blob/main/LICENSE
 
 ```text
 MIT License
@@ -9475,8 +9479,11 @@ SOFTWARE.
 
 **Version**: 2.9.0.post0 \
 **License**: Apache Software License; BSD License \
-**Author**: Gustavo Niemeyer \
-**Repository**: https://github.com/dateutil/dateutil
+**Author**: Gustavo Niemeyer (https://github.com/dateutil/dateutil/blob/master/AUTHORS.md) \
+**Repository**: https://github.com/dateutil/dateutil \
+**License URL**: https://github.com/dateutil/dateutil/blob/master/LICENSE
+
+> **Note** The license file containst both an abbreviated Apache 2 license text followed by BSD License text.
 
 ```text
 Copyright 2017- Paul Ganssle <paul@ganssle.io>
@@ -9542,7 +9549,8 @@ The above BSD License Applies to all code, even that also covered by Apache 2.0.
 **Version**: 1.0.1 \
 **License**: BSD License \
 **Author**: Saurabh Kumar \
-**Repository**: https://github.com/theskumar/python-dotenv
+**Repository**: https://github.com/theskumar/python-dotenv \
+**License URL**: https://github.com/theskumar/python-dotenv/blob/main/LICENSE
 
 ```text
 Copyright (c) 2014, Saurabh Kumar (python-dotenv), 2013, Ted Tieken (django-dotenv-rw), 2013, Jacob Kaplan-Moss (django-dotenv)
@@ -9581,7 +9589,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **Version**: 2024.1 \
 **License**: MIT License \
 **Author**: Stuart Bishop \
-**Repository**: http://pythonhosted.org/pytz
+**Repository**:  https://git.launchpad.net/pytz; https://github.com/stub42/pytz (mirror)\
+**Homepage**: http://pythonhosted.org/pytz \
+**License URL**: https://github.com/stub42/pytz/blob/master/LICENSE.txt
+
+> **Note**: The github repository is a mirror
 
 ```text
 Copyright (c) 2003-2019 Stuart Bishop <stuart@stuartbishop.net>
@@ -9612,7 +9624,8 @@ DEALINGS IN THE SOFTWARE.
 **Version**: 0.34.0 \
 **License**: MIT License \
 **Author**: Julian Berman <Julian+referencing@GrayVines.com> \
-**Repository**: https://github.com/python-jsonschema/referencing
+**Repository**: https://github.com/python-jsonschema/referencing \
+**License URL**: https://github.com/python-jsonschema/referencing/blob/main/COPYING
 
 ```text
 Copyright (c) 2022 Julian Berman
@@ -9643,7 +9656,8 @@ THE SOFTWARE.
 **Version**: 2023.12.25 \
 **License**: Apache Software License \
 **Author**: Matthew Barnett \
-**Repository**: https://github.com/mrabarnett/mrab-regex
+**Repository**: https://github.com/mrabarnett/mrab-regex \
+**License URL**: https://github.com/mrabarnett/mrab-regex/blob/hg/LICENSE.txt
 
 ```text
 This work was derived from the 're' module of CPython 2.6 and CPython 3.1,
@@ -9862,8 +9876,10 @@ All additions and alterations are licensed under the Apache 2.0 License.
 
 **Version**: 2.31.0 \
 **License**: Apache Software License \
-**Author**: Kenneth Reitz \
-**Repository**: https://requests.readthedocs.io
+**Author**: Kenneth Reitz (https://github.com/psf/requests/blob/main/AUTHORS.rst) \
+**Repository**: https://github.com/psf/requests \
+**Homepage**: https://requests.readthedocs.io \
+**License URL**: https://github.com/psf/requests/blob/main/LICENSE
 
 ```text
                                  Apache License
@@ -10049,7 +10065,8 @@ All additions and alterations are licensed under the Apache 2.0 License.
 **Version**: 13.7.1 \
 **License**: MIT License \
 **Author**: Will McGugan \
-**Repository**: https://github.com/Textualize/rich
+**Repository**: https://github.com/Textualize/rich \
+**License URL**: https://github.com/Textualize/rich/blob/master/LICENSE
 
 ```text
 Copyright (c) 2020 Will McGugan
@@ -10079,12 +10096,216 @@ SOFTWARE.
 
 **Version**: 0.1.2 \
 **License**: Apache Software License \
-**Author**: Google LLC \
+**Author**: Google LLC (The Google Research Authors) \
 **Repository**: https://github.com/google-research/google-research/tree/master/rouge \
-**License URL**: <span style="color: red;">UNKNOWN</span>
+**License URL**: https://github.com/google-research/google-research/blob/master/LICENSE
+
+> **Note** The "google-research" repo. consists of dozens of subprojects each located within their own top-level folder.  The "rouge" sub-project does not have an explicit LICENSE file (as is the case for some the other peer subprojects).  Instead, the top-level LICENSE file is referenced here.
 
 ```text
-UNKNOWN
+
+                                 Apache License
+                           Version 2.0, January 2004
+                        http://www.apache.org/licenses/
+
+   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION
+
+   1. Definitions.
+
+      "License" shall mean the terms and conditions for use, reproduction,
+      and distribution as defined by Sections 1 through 9 of this document.
+
+      "Licensor" shall mean the copyright owner or entity authorized by
+      the copyright owner that is granting the License.
+
+      "Legal Entity" shall mean the union of the acting entity and all
+      other entities that control, are controlled by, or are under common
+      control with that entity. For the purposes of this definition,
+      "control" means (i) the power, direct or indirect, to cause the
+      direction or management of such entity, whether by contract or
+      otherwise, or (ii) ownership of fifty percent (50%) or more of the
+      outstanding shares, or (iii) beneficial ownership of such entity.
+
+      "You" (or "Your") shall mean an individual or Legal Entity
+      exercising permissions granted by this License.
+
+      "Source" form shall mean the preferred form for making modifications,
+      including but not limited to software source code, documentation
+      source, and configuration files.
+
+      "Object" form shall mean any form resulting from mechanical
+      transformation or translation of a Source form, including but
+      not limited to compiled object code, generated documentation,
+      and conversions to other media types.
+
+      "Work" shall mean the work of authorship, whether in Source or
+      Object form, made available under the License, as indicated by a
+      copyright notice that is included in or attached to the work
+      (an example is provided in the Appendix below).
+
+      "Derivative Works" shall mean any work, whether in Source or Object
+      form, that is based on (or derived from) the Work and for which the
+      editorial revisions, annotations, elaborations, or other modifications
+      represent, as a whole, an original work of authorship. For the purposes
+      of this License, Derivative Works shall not include works that remain
+      separable from, or merely link (or bind by name) to the interfaces of,
+      the Work and Derivative Works thereof.
+
+      "Contribution" shall mean any work of authorship, including
+      the original version of the Work and any modifications or additions
+      to that Work or Derivative Works thereof, that is intentionally
+      submitted to Licensor for inclusion in the Work by the copyright owner
+      or by an individual or Legal Entity authorized to submit on behalf of
+      the copyright owner. For the purposes of this definition, "submitted"
+      means any form of electronic, verbal, or written communication sent
+      to the Licensor or its representatives, including but not limited to
+      communication on electronic mailing lists, source code control systems,
+      and issue tracking systems that are managed by, or on behalf of, the
+      Licensor for the purpose of discussing and improving the Work, but
+      excluding communication that is conspicuously marked or otherwise
+      designated in writing by the copyright owner as "Not a Contribution."
+
+      "Contributor" shall mean Licensor and any individual or Legal Entity
+      on behalf of whom a Contribution has been received by Licensor and
+      subsequently incorporated within the Work.
+
+   2. Grant of Copyright License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      copyright license to reproduce, prepare Derivative Works of,
+      publicly display, publicly perform, sublicense, and distribute the
+      Work and such Derivative Works in Source or Object form.
+
+   3. Grant of Patent License. Subject to the terms and conditions of
+      this License, each Contributor hereby grants to You a perpetual,
+      worldwide, non-exclusive, no-charge, royalty-free, irrevocable
+      (except as stated in this section) patent license to make, have made,
+      use, offer to sell, sell, import, and otherwise transfer the Work,
+      where such license applies only to those patent claims licensable
+      by such Contributor that are necessarily infringed by their
+      Contribution(s) alone or by combination of their Contribution(s)
+      with the Work to which such Contribution(s) was submitted. If You
+      institute patent litigation against any entity (including a
+      cross-claim or counterclaim in a lawsuit) alleging that the Work
+      or a Contribution incorporated within the Work constitutes direct
+      or contributory patent infringement, then any patent licenses
+      granted to You under this License for that Work shall terminate
+      as of the date such litigation is filed.
+
+   4. Redistribution. You may reproduce and distribute copies of the
+      Work or Derivative Works thereof in any medium, with or without
+      modifications, and in Source or Object form, provided that You
+      meet the following conditions:
+
+      (a) You must give any other recipients of the Work or
+          Derivative Works a copy of this License; and
+
+      (b) You must cause any modified files to carry prominent notices
+          stating that You changed the files; and
+
+      (c) You must retain, in the Source form of any Derivative Works
+          that You distribute, all copyright, patent, trademark, and
+          attribution notices from the Source form of the Work,
+          excluding those notices that do not pertain to any part of
+          the Derivative Works; and
+
+      (d) If the Work includes a "NOTICE" text file as part of its
+          distribution, then any Derivative Works that You distribute must
+          include a readable copy of the attribution notices contained
+          within such NOTICE file, excluding those notices that do not
+          pertain to any part of the Derivative Works, in at least one
+          of the following places: within a NOTICE text file distributed
+          as part of the Derivative Works; within the Source form or
+          documentation, if provided along with the Derivative Works; or,
+          within a display generated by the Derivative Works, if and
+          wherever such third-party notices normally appear. The contents
+          of the NOTICE file are for informational purposes only and
+          do not modify the License. You may add Your own attribution
+          notices within Derivative Works that You distribute, alongside
+          or as an addendum to the NOTICE text from the Work, provided
+          that such additional attribution notices cannot be construed
+          as modifying the License.
+
+      You may add Your own copyright statement to Your modifications and
+      may provide additional or different license terms and conditions
+      for use, reproduction, or distribution of Your modifications, or
+      for any such Derivative Works as a whole, provided Your use,
+      reproduction, and distribution of the Work otherwise complies with
+      the conditions stated in this License.
+
+   5. Submission of Contributions. Unless You explicitly state otherwise,
+      any Contribution intentionally submitted for inclusion in the Work
+      by You to the Licensor shall be under the terms and conditions of
+      this License, without any additional terms or conditions.
+      Notwithstanding the above, nothing herein shall supersede or modify
+      the terms of any separate license agreement you may have executed
+      with Licensor regarding such Contributions.
+
+   6. Trademarks. This License does not grant permission to use the trade
+      names, trademarks, service marks, or product names of the Licensor,
+      except as required for reasonable and customary use in describing the
+      origin of the Work and reproducing the content of the NOTICE file.
+
+   7. Disclaimer of Warranty. Unless required by applicable law or
+      agreed to in writing, Licensor provides the Work (and each
+      Contributor provides its Contributions) on an "AS IS" BASIS,
+      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+      implied, including, without limitation, any warranties or conditions
+      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A
+      PARTICULAR PURPOSE. You are solely responsible for determining the
+      appropriateness of using or redistributing the Work and assume any
+      risks associated with Your exercise of permissions under this License.
+
+   8. Limitation of Liability. In no event and under no legal theory,
+      whether in tort (including negligence), contract, or otherwise,
+      unless required by applicable law (such as deliberate and grossly
+      negligent acts) or agreed to in writing, shall any Contributor be
+      liable to You for damages, including any direct, indirect, special,
+      incidental, or consequential damages of any character arising as a
+      result of this License or out of the use or inability to use the
+      Work (including but not limited to damages for loss of goodwill,
+      work stoppage, computer failure or malfunction, or any and all
+      other commercial damages or losses), even if such Contributor
+      has been advised of the possibility of such damages.
+
+   9. Accepting Warranty or Additional Liability. While redistributing
+      the Work or Derivative Works thereof, You may choose to offer,
+      and charge a fee for, acceptance of support, warranty, indemnity,
+      or other liability obligations and/or rights consistent with this
+      License. However, in accepting such obligations, You may act only
+      on Your own behalf and on Your sole responsibility, not on behalf
+      of any other Contributor, and only if You agree to indemnify,
+      defend, and hold each Contributor harmless for any liability
+      incurred by, or claims asserted against, such Contributor by reason
+      of your accepting any such warranty or additional liability.
+
+   END OF TERMS AND CONDITIONS
+
+   APPENDIX: How to apply the Apache License to your work.
+
+      To apply the Apache License to your work, attach the following
+      boilerplate notice, with the fields enclosed by brackets "[]"
+      replaced with your own identifying information. (Don't include
+      the brackets!)  The text should be enclosed in the appropriate
+      comment syntax for the file format. We also recommend that a
+      file or class name and description of purpose be included on the
+      same "printed page" as the copyright notice for easier
+      identification within third-party archives.
+
+   Copyright [yyyy] [name of copyright owner]
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
+
 ```
 
 ---
