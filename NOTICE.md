@@ -2918,9 +2918,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **Version**: 1.33 \
 **License**: BSD License \
-**Author**: Stefan Kögl \
+**Author**: Stefan Kögl (https://github.com/stefankoegl/python-json-patch/blob/master/AUTHORS) \
 **Repository**: https://github.com/stefankoegl/python-json-patch \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/jsonpatch-1.33.dist-info/LICENSE
+**License URL**: https://github.com/stefankoegl/python-json-patch/blob/master/LICENSE
 
 ```text
 Copyright (c) 2011 Stefan Kögl <stefan@skoegl.net>
@@ -2940,9 +2940,11 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 **Version**: 2.4
 **License**: BSD License \
-**Author**: Stefan Kögl \
+**Author**: Stefan Kögl (https://github.com/stefankoegl/python-json-pointer/blob/master/AUTHORS) \
 **Repository**: https://github.com/stefankoegl/python-json-pointer \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/jsonpointer-2.4.dist-info/LICENSE.txt
+**License URL**: https://github.com/stefankoegl/python-json-pointer/blob/master/LICENSE.txt
+
+!!! The project's BSD License text includes "All rights reserved." which is a non-standard inclusion.
 
 ```text
 Copyright (c) 2011 Stefan Kögl <stefan@skoegl.net>
@@ -2980,7 +2982,7 @@ THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 **License**: MIT License \
 **Author**: Julian Berman \
 **Repository**: https://github.com/python-jsonschema/jsonschema \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/jsonschema-4.21.1.dist-info/licenses/COPYING
+**License URL**: https://github.com/python-jsonschema/jsonschema/blob/main/json/LICENSE
 
 ```text
 Copyright (c) 2013 Julian Berman
@@ -3012,7 +3014,9 @@ THE SOFTWARE.
 **License**: MIT License \
 **Author**: Julian Berman \
 **Repository**: https://github.com/python-jsonschema/jsonschema-specifications \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/jsonschema_specifications-2023.12.1.dist-info/licenses/COPYING
+**License URL**: https://github.com/python-jsonschema/jsonschema-specifications/blob/main/COPYING
+
+> **Note** The MIT license is actually in a non-standard file named `COPYING`
 
 ```text
 Copyright (c) 2022 Julian Berman
@@ -3042,12 +3046,32 @@ THE SOFTWARE.
 
 **Version**: 0.1.42 \
 **License**: MIT License \
-**Author**: <span style="color: red;">UNKNOWN</span> \
+**Author**: LangChain, Inc. \
 **Repository**: https://github.com/langchain-ai/langchain \
-<span style="color: red;">UNKNOWN</span>
+**License URL**: https://github.com/langchain-ai/langchain/blob/master/LICENSE
 
 ```text
-UNKNOWN
+MIT License
+
+Copyright (c) LangChain, Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
 
 ---
@@ -3056,12 +3080,32 @@ UNKNOWN
 
 **Version**: 0.0.1 \
 **License**: MIT License \
-**Author**: <span style="color: red;">UNKNOWN</span> \
+**Author**: LangChain, Inc. \
 **Repository**: https://github.com/langchain-ai/langchain \
-<span style="color: red;">UNKNOWN</span>
+**License URL**: https://github.com/langchain-ai/langchain/blob/master/LICENSE
 
 ```text
-UNKNOWN
+MIT License
+
+Copyright (c) LangChain, Inc.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
 
 ---
@@ -3072,10 +3116,31 @@ UNKNOWN
 **License**: MIT License \
 **Author**: LangChain \
 **Repository**: https://smith.langchain.com/ \
-<span style="color: red;">UNKNOWN</span>
+**Homepage**: https://github.com/langchain-ai/langsmith-sdk \
+**License URL**: https://github.com/langchain-ai/langsmith-sdk/blob/main/LICENSE
 
 ```text
-UNKNOWN
+MIT License
+
+Copyright (c) 2023 LangChain
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
 ```
 
 ---
@@ -3086,7 +3151,9 @@ UNKNOWN
 **License**: MIT License \
 **Author**: Andrei Betlen <abetlen@gmail.com> \
 **Repository**: https://github.com/abetlen/llama-cpp-python \
-/Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/llama_cpp_python-0.2.55.dist-info/licenses/LICENSE.md
+**License URL**: https://github.com/abetlen/llama-cpp-python/blob/main/LICENSE.md
+
+> **Note** This reference is for the actual `llama_cpp_python[server]` code which is different from the `llama.cpp` forked files (https://github.com/ggerganov/llama.cpp) in support of `ggml` source code referenced elsewhere.
 
 ```text
 MIT License
@@ -3098,6 +3165,43 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+```
+
+---
+
+### llama.cpp
+
+**Version**: <span>N/A</span> \
+**License**: MIT License \
+**Author**: https://github.com/ggerganov/llama.cpp/blob/master/AUTHORS \
+**Repository**: https://github.com/ggerganov/llama.cpp \
+**License URL**: https://github.com/ggerganov/llama.cpp/blob/master/LICENSE
+
+> **Note** Portions of the source code from this repository have been included in this project.
+
+```text
+MIT License
+
+Copyright (c) 2023-2024 The ggml authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 ```
 
 ---
