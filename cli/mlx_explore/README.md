@@ -1,7 +1,7 @@
 # Notice
 
-The code in this folder is modified from the TO DO repository on GitHub.
-For the original code, see [TO DO]()
+The code in this folder is modified from the mlx-examples repository on GitHub.
+For the original code, see [mlx-examples/llms]( https://github.com/ml-explore/mlx-examples/tree/main/llms/gguf_llm)
 with the following license.
 
 ```license

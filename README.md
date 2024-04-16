@@ -393,9 +393,3 @@ Of course, the final step is, if you've improved the model, to open a pull-reque
 ## 📬 Contributing
 
 Check out our [contributing](CONTRIBUTING/CONTRIBUTING.md) guide to learn how to contribute.
-
-## License
-
-This project is licensed under the terms of the Apache-2.0 license.
-
-The code in https://github.com/instruct-lab/cli/tree/main/cli/llamacpp, https://github.com/instruct-lab/cli/blob/main/cli/mlx_explore/ and https://github.com/instruct-lab/cli/tree/main/cli/train/lora_mlx are licensed under the terms of the MIT license.
