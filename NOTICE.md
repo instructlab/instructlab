@@ -19419,10 +19419,10 @@ url: yarl-1.9.4.dist-info/LICENSE
 
 ### zipp
 
-3.18.1
+**Version**: 3.18.1 \
 **License**: MIT License \
-Jason R. Coombs
-**Repository**: https://github.com/jaraco/zipp
+Jason R. Coombs \
+**Repository**: https://github.com/jaraco/zipp \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/zipp-3.18.1.dist-info/LICENSE
 
 ```text
