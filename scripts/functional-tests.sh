@@ -245,6 +245,24 @@ test_temp_server(){
     '
 }
 
+test_temp_server_sigint(){
+    expect -c '
+        set timeout 30
+        spawn ilab chat
+        expect "Starting a temporary server at"
+        send "hello!\r"
+        sleep 5
+        send "\003"
+        expect "Disconnected from client (via refresh/close)"
+        send "\003"
+        send "hello again\r"
+        sleep 1
+        expect {
+            "Connection error, try again" { exit 1 }
+        }
+    '
+}
+
 ########
 # MAIN #
 ########
@@ -259,5 +277,7 @@ test_generate
 test_server_shutdown_while_chatting
 cleanup
 test_temp_server
+cleanup
+test_temp_server_sigint
 
 exit 0
