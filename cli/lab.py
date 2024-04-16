@@ -387,9 +387,8 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
 @click.option(
     "--yaml-rules",
     type=click.Path(),
-    default=config.DEFAULT_YAML_RULES,
-    show_default=True,
-    help="Rules file for YAML linting",
+    default=None,
+    help="Custom rules file for YAML linting.",
 )
 @click.option(
     "--server-ctx-size",
