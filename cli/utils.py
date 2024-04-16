@@ -1,18 +1,20 @@
 # Standard
+from functools import cache, wraps
+from logging import Logger
 from pathlib import Path
-from typing import Dict, List, Union
+from typing import Any, Dict, List, Mapping, Optional, Union
 import copy
-import functools
 import glob
+import json
 import logging
 import os
 import platform
 import re
-import shutil
 import subprocess
-import sys
+import tempfile
 
 # Third Party
+from git import Repo, exc
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import click
 import git
@@ -22,12 +24,22 @@ import yaml
 # Local
 from . import common
 
+DEFAULT_YAML_RULES = """\
+extends: relaxed
+
+rules:
+  line-length:
+    max: 120
+"""
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s",
 )
 
-logger = logging.getLogger(__name__)
+
+class TaxonomyReadingException(Exception):
+    """An exception raised during reading of the taxonomy."""
 
 
 def macos_requirement(echo_func, exit_exception):
@@ -38,7 +50,7 @@ def macos_requirement(echo_func, exit_exception):
     """
 
     def decorator(func):
-        @functools.wraps(func)
+        @wraps(func)
         def wrapper(*args, **kwargs):
             if not is_macos_with_m_chip():
                 echo_func(
@@ -139,12 +151,12 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     else:
         try:
             head_commit = repo.commit(base)
-        except gitdb.exc.BadName as exc:
+        except gitdb.exc.BadName as e:
             raise SystemExit(
                 yaml.YAMLError(
                     f'Couldn\'t find the taxonomy git ref "{base}" from the current HEAD'
                 )
-            ) from exc
+            ) from e
 
     # Move backwards from HEAD until we find the first commit that is part of base
     # then we can take our diff from there
@@ -156,12 +168,12 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
             break
         try:
             current_commit = current_commit.parents[0]
-        except IndexError as exc:
+        except IndexError as e:
             raise SystemExit(
                 yaml.YAMLError(
                     f'Couldn\'t find the taxonomy base branch "{base}" from the current HEAD'
                 )
-            ) from exc
+            ) from e
 
     modified_files = [
         d.b_path
@@ -173,55 +185,65 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     return updated_taxonomy_files
 
 
-def get_documents(input_pattern: Dict[str, Union[str, List[str]]]) -> List[str]:
+def get_documents(
+    logger,
+    source: Dict[str, Union[str, List[str]]],
+    skip_checkout: Optional[bool] = False,
+) -> List[str]:
     """
     Retrieve the content of files from a Git repository.
 
     Args:
-        input_pattern (dict): Input dictionary containing repository URL, commit hash, and list of file patterns.
+        source (dict): Source info containing repository URL, commit hash, and list of file patterns.
 
     Returns:
          List[str]: List of document contents.
     """ ""
+    repo_url = source.get("repo")
+    commit_hash = source.get("commit")
+    file_patterns = source.get("patterns")
+    with tempfile.TemporaryDirectory() as temp_dir:
+        try:
+            skip_checkout = False
+            if skip_checkout:
+                skip_checkout = True
+            repo = git_clone_checkout(
+                repo_url=repo_url,
+                commit_hash=commit_hash,
+                temp_dir=temp_dir,
+                skip_checkout=skip_checkout,
+            )
+            file_contents = []
 
-    # Extract input parameters
+            # hack for unit tests. Unit tests use temp dirs in tests/testdata
+            # that needs to be processed instead of the temp_dir created
+            working_dir = temp_dir
+            if not skip_checkout:
+                working_dir = repo
 
-    repo_url = input_pattern.get("repo")
-    commit_hash = input_pattern.get("commit")
-    file_patterns = input_pattern.get("patterns")
-    temp_dir = os.path.join(os.getcwd(), "temp_repo")
-    if os.path.exists(temp_dir):
-        shutil.rmtree(temp_dir)
-    try:
-        # Create a temporary directory to clone the repository
-        os.makedirs(temp_dir, exist_ok=True)
+            logger.debug("Processing files...")
+            for pattern in file_patterns:
+                for file_path in glob.glob(os.path.join(working_dir, pattern)):
+                    if os.path.isfile(file_path) and file_path.endswith(".md"):
+                        with open(file_path, "r", encoding="utf-8") as file:
+                            file_contents.append(file.read())
+            # hack for unit tests. Unit tests use temp dirs in tests/testdata
+            # and patches return string values that are paths to those directories.
+            # str object don't have close() method
+            if not isinstance(repo, str):
+                repo.close()
+            return file_contents
+        except (OSError, exc.GitCommandError, FileNotFoundError) as e:
+            raise e
 
-        # Clone the repository to the temporary directory
-        repo = git.Repo.clone_from(repo_url, temp_dir)
 
-        # Checkout the specified commit
+def git_clone_checkout(
+    repo_url: str, temp_dir: str, commit_hash: str, skip_checkout: bool
+) -> Repo:
+    repo = Repo.clone_from(repo_url, temp_dir)
+    if not skip_checkout:
         repo.git.checkout(commit_hash)
-
-        file_contents = []
-
-        logger.debug("Processing files...")
-        for pattern in file_patterns:
-            for file_path in glob.glob(os.path.join(temp_dir, pattern)):
-                if os.path.isfile(file_path) and file_path.endswith(".md"):
-                    with open(file_path, "r", encoding="utf-8") as file:
-                        file_contents.append(file.read())
-        repo.close()
-        shutil.rmtree(temp_dir)
-        return file_contents
-
-    except (OSError, git.exc.GitCommandError, FileNotFoundError) as e:
-        logger.error("Error: {}".format(str(e)))
-        return [f"Error: {str(e)}"]
-
-    finally:
-        # Cleanup: Remove the temporary directory if it exists
-        if os.path.exists(temp_dir):
-            shutil.rmtree(temp_dir)
+    return repo
 
 
 def chunk_document(documents: List, server_ctx_size, chunk_word_count) -> List[str]:
@@ -236,14 +258,13 @@ def chunk_document(documents: List, server_ctx_size, chunk_word_count) -> List[s
     """
     no_tokens_per_doc = int(chunk_word_count * 1.3)  # 1 word ~ 1.3 token
     if no_tokens_per_doc > int(server_ctx_size - 1024):
-        logger.error(
+        raise ValueError(
             "Error: {}".format(
                 str(
-                    f"Given word count per doc will exceed the server context window size {server_ctx_size}"
+                    f"Given word count ({chunk_word_count}) per doc will exceed the server context window size ({server_ctx_size})"
                 )
             )
         )
-        sys.exit()
     content = []
     text_splitter = RecursiveCharacterTextSplitter(
         separators=["\n\n", "\n"],
@@ -268,3 +289,234 @@ def get_sysprompt(model=None):
         str: The system prompt for the model being used
     """
     return common.SYS_PROMPT
+
+
+@cache
+def _load_schema(path: "importlib.resources.abc.Traversable") -> "referencing.Resource":
+    """Load the schema from the path into a Resource object.
+
+    Args:
+        path (Traversable): Path to the schema to be loaded.
+
+    Raises:
+        NoSuchResource: If the resource cannot be loaded.
+
+    Returns:
+        Resource: A Resource containing the requested schema.
+    """
+    # pylint: disable=C0415
+    # Third Party
+    from referencing import Resource
+    from referencing.exceptions import NoSuchResource
+    from referencing.jsonschema import DRAFT202012
+
+    try:
+        contents = json.loads(path.read_text(encoding="utf-8"))
+        resource = Resource.from_contents(
+            contents=contents, default_specification=DRAFT202012
+        )
+    except Exception as e:
+        raise NoSuchResource(ref=str(path)) from e
+    return resource
+
+
+def validate_yaml(
+    logger: Logger, contents: Mapping[str, Any], taxonomy_path: Path
+) -> int:
+    """Validate the parsed yaml document using the taxonomy path to
+    determine the proper schema.
+
+    Args:
+        logger (Logger): The logger for errors/warnings.
+        contents (Mapping): The parsed yaml document to validate against the schema.
+        taxonomy_path (Path): Relative path of the taxonomy yaml document where the
+        first element is the schema to use.
+
+    Returns:
+        int: The number of errors found during validation.
+        Messages for each error have been logged.
+    """
+    # pylint: disable=C0415
+    # Standard
+    from importlib import resources
+
+    # Third Party
+    from jsonschema.protocols import Validator
+    from jsonschema.validators import validator_for
+    from referencing import Registry, Resource
+    from referencing.exceptions import NoSuchResource
+    from referencing.typing import URI
+
+    errors = 0
+    version = get_version(contents)
+    schemas_path = resources.files("cli").joinpath(f"schema/v{version}")
+
+    def retrieve(uri: URI) -> Resource:
+        path = schemas_path.joinpath(uri)
+        return _load_schema(path)
+
+    schema_name = taxonomy_path.parts[0]
+    if schema_name not in TAXONOMY_FOLDERS:
+        schema_name = "knowledge" if "document" in contents else "compositional_skills"
+        logger.info(
+            f"Cannot determine schema name from path {taxonomy_path}. Using {schema_name} schema."
+        )
+
+    try:
+        schema_resource = retrieve(f"{schema_name}.json")
+        schema = schema_resource.contents
+        validator_cls = validator_for(schema)
+        validator: Validator = validator_cls(
+            schema, registry=Registry(retrieve=retrieve)
+        )
+
+        for error in validator.iter_errors(contents):
+            errors += 1
+            error_path = error.json_path[1:]
+            if not error_path:
+                error_path = "."
+            logger.error(
+                f"Validation error in {taxonomy_path} on {error_path}: {error.message}"
+            )
+    except NoSuchResource as e:
+        cause = e.__cause__ if e.__cause__ is not None else e
+        errors += 1
+        logger.error(f"Cannot load schema file {e.ref}. {cause}")
+
+    return errors
+
+
+def get_version(contents: Mapping) -> int:
+    version = contents.get("version", 1)
+    if not isinstance(version, int):
+        # schema validation will complain about the type
+        try:
+            version = int(version)
+        except ValueError:
+            version = 1  # fallback to version 1
+    return version
+
+
+# pylint: disable=broad-exception-caught
+def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
+    # pylint: disable=C0415
+    # Third Party
+    from yamllint import linter
+    from yamllint.config import YamlLintConfig
+
+    seed_instruction_data = []
+    warnings = 0
+    errors = 0
+    file_path = Path(file_path).resolve()
+    # file should end with ".yaml" explicitly
+    if file_path.suffix != ".yaml":
+        logger.warn(f"Skipping {file_path}! Use lowercase '.yaml' extension instead.")
+        warnings += 1
+        return None, warnings, errors
+    for i in range(len(file_path.parts) - 1, -1, -1):
+        if file_path.parts[i] in TAXONOMY_FOLDERS:
+            taxonomy_path = Path(*file_path.parts[i:])
+            break
+    else:
+        taxonomy_path = file_path
+    # read file if extension is correct
+    try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            # do general YAML linting if specified
+            if yaml_rules is not None:
+                try:
+                    yaml_config = YamlLintConfig(file=yaml_rules)
+                except FileNotFoundError:
+                    logger.debug(f"Cannot find {yaml_rules}. Using default rules.")
+                    yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
+            else:
+                yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
+            linter_problems = list(linter.run(file, yaml_config))
+            if linter_problems:
+                lint_messages = [f"Problems found in file {file.name}"]
+                for p in linter_problems:
+                    errors += 1
+                    loc = f"{p.line}:{p.column}"
+                    desc = f"{p.desc} ({p.rule})" if p.rule else p.desc
+                    lint_messages.append(f"  {loc:<9} {p.level:<9} {desc}")
+                logger.error("\n".join(lint_messages))
+                return None, warnings, errors
+        # do more explict checking of file contents
+        with open(file_path, "r", encoding="utf-8") as file:
+            contents = yaml.safe_load(file)
+            if not contents:
+                logger.warn(f"Skipping {file_path} because it is empty!")
+                warnings += 1
+                return None, warnings, errors
+            validation_errors = validate_yaml(logger, contents, taxonomy_path)
+            if validation_errors:
+                errors += validation_errors
+                return None, warnings, errors
+
+            # get seed instruction data
+            tax_path = "->".join(taxonomy_path.parent.parts)
+            task_description = contents.get("task_description")
+            documents = contents.get("document")
+            if documents:
+                documents = get_documents(source=documents, logger=logger)
+                logger.debug("Content from git repo fetched")
+
+            for seed_example in contents.get("seed_examples"):
+                question = seed_example.get("question")
+                answer = seed_example.get("answer")
+                context = seed_example.get("context", "")
+                seed_instruction_data.append(
+                    {
+                        "instruction": question,
+                        "input": context,
+                        "output": answer,
+                        "taxonomy_path": tax_path,
+                        "task_description": task_description,
+                        "document": documents,
+                    }
+                )
+    except Exception as e:
+        errors += 1
+        raise TaxonomyReadingException(f"Exception {e} raised in {file_path}") from e
+
+    return seed_instruction_data, warnings, errors
+
+
+def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
+    seed_instruction_data = []
+    is_file = os.path.isfile(taxonomy)
+    if is_file:  # taxonomy is file
+        seed_instruction_data, warnings, errors = read_taxonomy_file(
+            logger, taxonomy, yaml_rules
+        )
+        if warnings:
+            logger.warn(
+                f"{warnings} warnings (see above) due to taxonomy file not (fully) usable."
+            )
+        if errors:
+            raise SystemExit(yaml.YAMLError("Taxonomy file with errors! Exiting."))
+    else:  # taxonomy is dir
+        # Gather the new or changed YAMLs using git diff
+        updated_taxonomy_files = get_taxonomy_diff(taxonomy, taxonomy_base)
+        total_errors = 0
+        total_warnings = 0
+        if updated_taxonomy_files:
+            logger.debug("Found new taxonomy files:")
+            for e in updated_taxonomy_files:
+                logger.debug(f"* {e}")
+        for f in updated_taxonomy_files:
+            file_path = os.path.join(taxonomy, f)
+            data, warnings, errors = read_taxonomy_file(logger, file_path, yaml_rules)
+            total_warnings += warnings
+            total_errors += errors
+            if data:
+                seed_instruction_data.extend(data)
+        if total_warnings:
+            logger.warn(
+                f"{total_warnings} warnings (see above) due to taxonomy files that were not (fully) usable."
+            )
+        if total_errors:
+            raise SystemExit(
+                yaml.YAMLError(f"{total_errors} taxonomy files with errors! Exiting.")
+            )
+    return seed_instruction_data

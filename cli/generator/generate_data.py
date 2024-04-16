@@ -1,10 +1,9 @@
 # Standard
 from datetime import datetime
-from functools import cache, partial
-from logging import Logger
+from functools import partial
 from multiprocessing import Pool
 from pathlib import Path
-from typing import Any, Mapping, Optional
+from typing import Optional
 import json
 import os
 import random
@@ -17,11 +16,11 @@ from jinja2 import Template
 from rouge_score import rouge_scorer
 import click
 import tqdm
-import yaml
 
 # Local
-from ..utils import TAXONOMY_FOLDERS, chunk_document, get_documents, get_taxonomy_diff
+from ..utils import chunk_document, read_taxonomy
 from . import utils
+from .utils import GenerateException
 
 DEFAULT_PROMPT_TEMPLATE = """\
 You are asked to come up with a set of 5 diverse task instructions under {{taxonomy}}{{" for the task \\"%s\\""|format(task_description)  if task_description}}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
@@ -57,14 +56,6 @@ Here are some examples to help you understand the type of questions that are ask
 {% endif -%}
 """
 
-DEFAULT_YAML_RULES = """\
-extends: relaxed
-
-rules:
-  line-length:
-    max: 120
-"""
-
 _WORD_DENYLIST = [
     "image",
     "images",
@@ -85,10 +76,6 @@ _WORD_DENYLIST = [
     "flowchart",
     "diagram",
 ]
-
-
-class GenerateException(Exception):
-    """An exception raised during generate step."""
 
 
 def check_prompt_file(prompt_file_path):
@@ -228,17 +215,6 @@ def post_process_gpt3_response(num_prompt_instructions, response, discarded_file
 
 def find_word_in_string(w, s):
     return re.compile(r"\b({0})\b".format(w), flags=re.IGNORECASE).search(s)
-
-
-def get_version(contents: Mapping) -> int:
-    version = contents.get("version", 1)
-    if not isinstance(version, int):
-        # schema validation will complain about the type
-        try:
-            version = int(version)
-        except ValueError:
-            version = 1  # fallback to version 1
-    return version
 
 
 def get_instructions_from_model(
@@ -547,226 +523,3 @@ def generate_data(
         )
     generate_duration = time.time() - generate_start
     logger.info(f"Generation took {generate_duration:.2f}s")
-
-
-@cache
-def _load_schema(path: "importlib.resources.abc.Traversable") -> "referencing.Resource":
-    """Load the schema from the path into a Resource object.
-
-    Args:
-        path (Traversable): Path to the schema to be loaded.
-
-    Raises:
-        NoSuchResource: If the resource cannot be loaded.
-
-    Returns:
-        Resource: A Resource containing the requested schema.
-    """
-    # pylint: disable=C0415
-    # Third Party
-    from referencing import Resource
-    from referencing.exceptions import NoSuchResource
-    from referencing.jsonschema import DRAFT202012
-
-    try:
-        contents = json.loads(path.read_text(encoding="utf-8"))
-        resource = Resource.from_contents(
-            contents=contents, default_specification=DRAFT202012
-        )
-    except Exception as e:
-        raise NoSuchResource(ref=str(path)) from e
-    return resource
-
-
-def validate_yaml(
-    logger: Logger, contents: Mapping[str, Any], taxonomy_path: Path
-) -> int:
-    """Validate the parsed yaml document using the taxonomy path to
-    determine the proper schema.
-
-    Args:
-        logger (Logger): The logger for errors/warnings.
-        contents (Mapping): The parsed yaml document to validate against the schema.
-        taxonomy_path (Path): Relative path of the taxonomy yaml document where the
-        first element is the schema to use.
-
-    Returns:
-        int: The number of errors found during validation.
-        Messages for each error have been logged.
-    """
-    # pylint: disable=C0415
-    # Standard
-    from importlib import resources
-
-    # Third Party
-    from jsonschema.protocols import Validator
-    from jsonschema.validators import validator_for
-    from referencing import Registry, Resource
-    from referencing.exceptions import NoSuchResource
-    from referencing.typing import URI
-
-    errors = 0
-    version = get_version(contents)
-    schemas_path = resources.files("cli").joinpath(f"schema/v{version}")
-
-    def retrieve(uri: URI) -> Resource:
-        path = schemas_path.joinpath(uri)
-        return _load_schema(path)
-
-    schema_name = taxonomy_path.parts[0]
-    if schema_name not in TAXONOMY_FOLDERS:
-        schema_name = "knowledge" if "document" in contents else "compositional_skills"
-        logger.info(
-            f"Cannot determine schema name from path {taxonomy_path}. Using {schema_name} schema."
-        )
-
-    try:
-        schema_resource = retrieve(f"{schema_name}.json")
-        schema = schema_resource.contents
-        validator_cls = validator_for(schema)
-        validator: Validator = validator_cls(
-            schema, registry=Registry(retrieve=retrieve)
-        )
-
-        for error in validator.iter_errors(contents):
-            errors += 1
-            error_path = error.json_path[1:]
-            if not error_path:
-                error_path = "."
-            logger.error(
-                f"Validation error in {taxonomy_path} on {error_path}: {error.message}"
-            )
-    except NoSuchResource as e:
-        cause = e.__cause__ if e.__cause__ is not None else e
-        errors += 1
-        logger.error(f"Cannot load schema file {e.ref}. {cause}")
-
-    return errors
-
-
-# pylint: disable=broad-exception-caught
-def read_taxonomy_file(logger, file_path, yaml_rules: Optional[str] = None):
-    # pylint: disable=C0415
-    # Third Party
-    from yamllint import linter
-    from yamllint.config import YamlLintConfig
-
-    seed_instruction_data = []
-    warnings = 0
-    errors = 0
-    file_path = Path(file_path).resolve()
-    # file should end with ".yaml" explicitly
-    if file_path.suffix != ".yaml":
-        logger.warn(f"Skipping {file_path}! Use lowercase '.yaml' extension instead.")
-        warnings += 1
-        return None, warnings, errors
-    for i in range(len(file_path.parts) - 1, -1, -1):
-        if file_path.parts[i] in TAXONOMY_FOLDERS:
-            taxonomy_path = Path(*file_path.parts[i:])
-            break
-    else:
-        taxonomy_path = file_path
-    # read file if extension is correct
-    try:
-        with open(file_path, "r", encoding="utf-8") as file:
-            # do general YAML linting if specified
-            if yaml_rules is not None:
-                try:
-                    yaml_config = YamlLintConfig(file=yaml_rules)
-                except FileNotFoundError:
-                    logger.debug(f"Cannot find {yaml_rules}. Using default rules.")
-                    yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
-            else:
-                yaml_config = YamlLintConfig(DEFAULT_YAML_RULES)
-            linter_problems = list(linter.run(file, yaml_config))
-            if linter_problems:
-                lint_messages = [f"Problems found in file {file.name}"]
-                for p in linter_problems:
-                    errors += 1
-                    loc = f"{p.line}:{p.column}"
-                    desc = f"{p.desc} ({p.rule})" if p.rule else p.desc
-                    lint_messages.append(f"  {loc:<9} {p.level:<9} {desc}")
-                logger.error("\n".join(lint_messages))
-                return None, warnings, errors
-        # do more explict checking of file contents
-        with open(file_path, "r", encoding="utf-8") as file:
-            contents = yaml.safe_load(file)
-            if not contents:
-                logger.warn(f"Skipping {file_path} because it is empty!")
-                warnings += 1
-                return None, warnings, errors
-            validation_errors = validate_yaml(logger, contents, taxonomy_path)
-            if validation_errors:
-                errors += validation_errors
-                return None, warnings, errors
-
-            # get seed instruction data
-            tax_path = "->".join(taxonomy_path.parent.parts)
-            task_description = contents.get("task_description")
-            documents = contents.get("document")
-            if documents:
-                documents = get_documents(documents)
-                logger.debug("Content from git repo fetched")
-
-            for seed_example in contents.get("seed_examples"):
-                question = seed_example.get("question")
-                answer = seed_example.get("answer")
-                context = seed_example.get("context", "")
-                seed_instruction_data.append(
-                    {
-                        "instruction": question,
-                        "input": context,
-                        "output": answer,
-                        "taxonomy_path": tax_path,
-                        "task_description": task_description,
-                        "document": documents,
-                    }
-                )
-    except Exception as e:
-        errors += 1
-        raise GenerateException(f"Exception {e} raised in {file_path}") from e
-
-    return seed_instruction_data, warnings, errors
-
-
-def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
-    seed_instruction_data = []
-    is_file = os.path.isfile(taxonomy)
-    if is_file:  # taxonomy is file
-        seed_instruction_data, warnings, errors = read_taxonomy_file(
-            logger, taxonomy, yaml_rules
-        )
-        if warnings:
-            logger.warn(
-                f"{warnings} warnings (see above) due to taxonomy file not (fully) usable."
-            )
-        if errors:
-            raise SystemExit(yaml.YAMLError("Taxonomy file with errors! Exiting."))
-    else:  # taxonomy is dir
-        # Gather the new or changed YAMLs using git diff
-        try:
-            updated_taxonomy_files = get_taxonomy_diff(taxonomy, taxonomy_base)
-        except NameError as exc:
-            raise utils.GenerateException("`git` binary not found") from exc
-        total_errors = 0
-        total_warnings = 0
-        if updated_taxonomy_files:
-            logger.debug("Found new taxonomy files:")
-            for e in updated_taxonomy_files:
-                logger.debug(f"* {e}")
-        for f in updated_taxonomy_files:
-            file_path = os.path.join(taxonomy, f)
-            data, warnings, errors = read_taxonomy_file(logger, file_path, yaml_rules)
-            total_warnings += warnings
-            total_errors += errors
-            if data:
-                seed_instruction_data.extend(data)
-        if total_warnings:
-            logger.warn(
-                f"{total_warnings} warnings (see above) due to taxonomy files that were not (fully) usable."
-            )
-        if total_errors:
-            raise SystemExit(
-                yaml.YAMLError(f"{total_errors} taxonomy files with errors! Exiting.")
-            )
-    return seed_instruction_data

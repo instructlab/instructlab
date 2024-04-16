@@ -1,0 +1,7 @@
+<!-- source: https://en.wikipedia.org/wiki/Skill -->
+
+# Skill
+
+A skill is the learned ability to act with determined results with good execution often within a given amount of time, energy, or both. Skills can often be divided into domain-general and domain-specific skills. For example, in the domain of work, some general skills would include time management, teamwork and leadership, self-motivation and others, whereas domain-specific skills would be used only for a certain job. Skill usually requires certain environmental stimuli and situations to assess the level of skill being shown and used.[citation needed]
+A skill may be called an art when it represents a body of knowledge or branch of learning, as in the art of medicine or the art of war.[1] Although the arts are also skills, there are many skills that form an art but have no connection to the fine arts.
+People need a broad range of skills to contribute to the modern economy. A U.S. Department of Labor study showed that through technology, the workplace is changing, and identified 16 basic skills that employees must have to be able to change with it.[2] Three broad categories of skills are suggested and these are technical, human, and conceptual.[3] The first two can be substituted with hard and soft skills, respectively.[4]
