@@ -24,6 +24,14 @@ import yaml
 # Local
 from . import common
 
+DEFAULT_YAML_RULES = """\
+extends: relaxed
+
+rules:
+  line-length:
+    max: 120
+"""
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s",
@@ -427,9 +435,23 @@ def read_taxonomy_file(
                 logger.debug(
                     f"Cannot find {yaml_rules}. Using default rules from .yamllint"
                 )
-                yamllint_cmd = ["yamllint", "-f", "parsable", file_path]
+                yamllint_cmd = [
+                    "yamllint",
+                    "-f",
+                    "parsable",
+                    "-d",
+                    DEFAULT_YAML_RULES,
+                    file_path,
+                ]
         else:
-            yamllint_cmd = ["yamllint", "-f", "parsable", file_path]
+            yamllint_cmd = [
+                "yamllint",
+                "-f",
+                "parsable",
+                "-d",
+                DEFAULT_YAML_RULES,
+                file_path,
+            ]
         try:
             subprocess.check_output(yamllint_cmd, text=True)
         except subprocess.SubprocessError as e:
