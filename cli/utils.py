@@ -430,11 +430,10 @@ def read_taxonomy_file(
                     "-c",
                     yaml_rules,
                     file_path,
+                    "-s",
                 ]
             else:
-                logger.debug(
-                    f"Cannot find {yaml_rules}. Using default rules from .yamllint"
-                )
+                logger.debug(f"Cannot find {yaml_rules}. Using default rules.")
                 yamllint_cmd = [
                     "yamllint",
                     "-f",
@@ -442,6 +441,7 @@ def read_taxonomy_file(
                     "-d",
                     DEFAULT_YAML_RULES,
                     file_path,
+                    "-s",
                 ]
         else:
             yamllint_cmd = [
@@ -451,6 +451,7 @@ def read_taxonomy_file(
                 "-d",
                 DEFAULT_YAML_RULES,
                 file_path,
+                "-s",
             ]
         try:
             subprocess.check_output(yamllint_cmd, text=True)
