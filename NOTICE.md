@@ -6381,9 +6381,9 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 
 ### peft
 
-0.9.0
+**Version**: 0.9.0 \
 **License**: Apache Software License \
-The HuggingFace team
+The HuggingFace team \
 **Repository**: https://github.com/huggingface/peft
 
 ```text
@@ -6594,9 +6594,9 @@ The HuggingFace team
 
 ### prompt-toolkit
 
-3.0.43
-BSD License
-Jonathan Slenders
+**Version**: 3.0.43 \
+**License**: BSD License \
+Jonathan Slenders \
 **Repository**: https://github.com/prompt-toolkit/python-prompt-toolkit
 
 ```text
@@ -6633,9 +6633,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### protobuf
 
-4.25.3
-3-Clause BSD License
-protobuf@googlegroups.com
+**Version**: 4.25.3 \
+**License**: 3-Clause BSD License \
+protobuf@googlegroups.com \
 **Repository**: https://developers.google.com/protocol-buffers/
 
 ```text
@@ -6677,9 +6677,9 @@ support library is itself covered by the above license.
 
 ### psutil
 
-5.9.8
-BSD License
-Giampaolo Rodola
+**Version**: 5.9.8 \
+**License**: BSD License \
+Giampaolo Rodola \
 **Repository**: https://github.com/giampaolo/psutil
 
 ```text
@@ -6718,9 +6718,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### pyarrow
 
-15.0.2
+**Version**: 15.0.2
 **License**: Apache Software License \
-UNKNOWN
+UNKNOWN \
 **Repository**: https://arrow.apache.org/
 
 ```text
@@ -8983,9 +8983,9 @@ SOFTWARE.
 
 ### pyarrow-hotfix
 
-0.6
-Apache License, Version 2.0
-Antoine Pitrou <antoine@python.org>
+**Version**: 0.6
+**License**: Apache License, Version 2.0 \
+Antoine Pitrou <antoine@python.org> \
 **Repository**: https://github.com/pitrou/pyarrow-hotfix
 
 ```text
@@ -9231,9 +9231,9 @@ SOFTWARE.
 
 ### pydantic-settings
 
-2.2.1
+**Version**: 2.2.1 \
 **License**: MIT License \
-Samuel Colvin <s@muelcolvin.com>, Eric Jolibois <em.jolibois@gmail.com>, Hasan Ramezani <hasan.r67@gmail.com>
+Samuel Colvin <s@muelcolvin.com>, Eric Jolibois <em.jolibois@gmail.com>, Hasan Ramezani <hasan.r67@gmail.com> \
 **Repository**: https://github.com/pydantic/pydantic-settings
 
 ```text
@@ -9264,9 +9264,9 @@ SOFTWARE.
 
 ### pydantic_core
 
-2.18.1
+**Version**: 2.18.1 \
 **License**: MIT License \
-Samuel Colvin <s@muelcolvin.com>
+Samuel Colvin <s@muelcolvin.com> \
 **Repository**: https://github.com/pydantic/pydantic-core
 
 ```text
@@ -9299,10 +9299,10 @@ SOFTWARE.
 
 ### pydantic_yaml
 
-1.3.0
+**Version**: 1.3.0 \
 **License**: MIT License \
-NowanIlfideme <git@nowan.dev>
-UNKNOWN
+NowanIlfideme <git@nowan.dev> \
+**Repository**: <span style="color: #e03e2d;">UNKNOWN</span>
 
 ```text
 MIT License
@@ -9333,9 +9333,9 @@ SOFTWARE.
 
 ### python-dateutil
 
-2.9.0.post0
-**License**: Apache Software License; BSD License
-Gustavo Niemeyer
+**Version**: 2.9.0.post0 \
+**License**: Apache Software License; BSD License \
+Gustavo Niemeyer \
 **Repository**: https://github.com/dateutil/dateutil
 
 ```text
@@ -9399,8 +9399,8 @@ The above BSD License Applies to all code, even that also covered by Apache 2.0.
 
 ### python-dotenv
 
-1.0.1
-BSD License
+**Version**: 1.0.1
+**License**: BSD License
 Saurabh Kumar
 **Repository**: https://github.com/theskumar/python-dotenv
 
@@ -9438,10 +9438,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### pytz
 
-2024.1
+**Version**: 2024.1 \
 **License**: MIT License \
-Stuart Bishop
-http://pythonhosted.org/pytz
+Stuart Bishop \
+**Repository**: http://pythonhosted.org/pytz
 
 ```text
 Copyright (c) 2003-2019 Stuart Bishop <stuart@stuartbishop.net>
@@ -9469,9 +9469,9 @@ DEALINGS IN THE SOFTWARE.
 
 ### referencing
 
-0.34.0
+**Version**: 0.34.0 \
 **License**: MIT License \
-Julian Berman <Julian+referencing@GrayVines.com>
+Julian Berman <Julian+referencing@GrayVines.com> \
 **Repository**: https://github.com/python-jsonschema/referencing
 
 ```text
@@ -9500,9 +9500,9 @@ THE SOFTWARE.
 
 ### regex
 
-2023.12.25
+**Version**: 2023.12.25 \
 **License**: Apache Software License \
-Matthew Barnett
+Matthew Barnett \
 **Repository**: https://github.com/mrabarnett/mrab-regex
 
 ```text
@@ -9720,9 +9720,9 @@ All additions and alterations are licensed under the Apache 2.0 License.
 
 ### requests
 
-2.31.0
+**Version**: 2.31.0 \
 **License**: Apache Software License \
-Kenneth Reitz
+Kenneth Reitz \
 **Repository**: https://requests.readthedocs.io
 
 ```text
@@ -9906,9 +9906,9 @@ Kenneth Reitz
 
 ### rich
 
-13.7.1
+**Version**: 13.7.1 \
 **License**: MIT License \
-Will McGugan
+Will McGugan \
 **Repository**: https://github.com/Textualize/rich
 
 ```text
@@ -9937,10 +9937,10 @@ SOFTWARE.
 
 ### rouge_score
 
-0.1.2
+**Version**: 0.1.2 \
 **License**: Apache Software License \
-Google LLC
-**Repository**: https://github.com/google-research/google-research/tree/master/rouge
+Google LLC \
+**Repository**: https://github.com/google-research/google-research/tree/master/rouge \
 UNKNOWN
 
 ```text
@@ -9951,9 +9951,9 @@ UNKNOWN
 
 ### rpds-py
 
-0.18.0
+**Version**: 0.18.0 \
 **License**: MIT License \
-Julian Berman
+Julian Berman \
 **Repository**: https://github.com/crate-py/rpds
 
 ```text
@@ -9982,9 +9982,9 @@ THE SOFTWARE.
 
 ### ruamel.yaml
 
-0.18.6
+**Version**: 0.18.6 \
 **License**: MIT License \
-Anthon van der Neut
+Anthon van der Neut \
 **Repository**: https://sourceforge.net/p/ruamel-yaml/code/ci/default/tree/
 
 ```text
@@ -10015,9 +10015,9 @@ Anthon van der Neut
 
 ### ruamel.yaml.clib
 
-0.2.8
+**Version**: 0.2.8
 **License**: MIT License \
-Anthon van der Neut
+Anthon van der Neut \
 **Repository**: https://sourceforge.net/p/ruamel-yaml-clib/code/ci/default/tree
 
 ```text
@@ -10048,10 +10048,10 @@ Anthon van der Neut
 
 ### safetensors
 
-0.4.2
+**Version**: 0.4.2 \
 **License**: Apache Software License \
-Nicolas Patry <patry.nicolas@protonmail.com>
-**Repository**: https://github.com/huggingface/safetensors
+Nicolas Patry <patry.nicolas@protonmail.com> \
+**Repository**: https://github.com/huggingface/safetensors \
 UNKNOWN
 
 ```text
@@ -10062,10 +10062,10 @@ UNKNOWN
 
 ### sentencepiece
 
-0.2.0
+**Version**: 0.2.0 \
 **License**: Apache Software License \
-Taku Kudo
-**Repository**: https://github.com/google/sentencepiece
+Taku Kudo \
+**Repository**: https://github.com/google/sentencepiece \
 UNKNOWN
 
 ```text
@@ -10076,9 +10076,9 @@ UNKNOWN
 
 ### sentry-sdk
 
-1.45.0
-BSD License
-Sentry Team and Contributors
+**Version**: 1.45.0 \
+**License**: BSD License \
+Sentry Team and Contributors \
 **Repository**: https://github.com/getsentry/sentry-python
 
 ```text
@@ -10109,10 +10109,10 @@ SOFTWARE.
 
 ### setproctitle
 
-1.3.3
-BSD License
-Daniele Varrazzo
-**Repository**: https://github.com/dvarrazzo/py-setproctitle
+**Version**: 1.3.3 \
+**License**: BSD License \
+Daniele Varrazzo \
+**Repository**: https://github.com/dvarrazzo/py-setproctitle \
 UNKNOWN
 
 ```text
@@ -10123,7 +10123,7 @@ UNKNOWN
 
 ### setuptools
 
-65.5.0
+**Version**: 65.5.0 \
 **License**: MIT License \
 Python Packaging Authority
 **Repository**: https://github.com/pypa/setuptools
@@ -10154,9 +10154,9 @@ IN THE SOFTWARE.
 
 ### shtab
 
-1.7.1
+**Version**: 1.7.1 \
 **License**: Apache Software License \
-Casper da Costa-Luis <casper.dcl@physics.org>
+Casper da Costa-Luis <casper.dcl@physics.org> \
 **Repository**: https://github.com/iterative/shtab
 
 ```text
