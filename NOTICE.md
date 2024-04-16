@@ -10179,9 +10179,9 @@ limitations under the Licence.
 
 ### six
 
-1.16.0
+**Version**: 1.16.0 \
 **License**: MIT License \
-Benjamin Peterson
+Benjamin Peterson \
 **Repository**: https://github.com/benjaminp/six
 
 ```text
@@ -10209,9 +10209,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ### smmap
 
-5.0.1
-BSD License
-Sebastian Thiel
+**Version**: 5.0.1 \
+**License**: BSD License \
+Sebastian Thiel \
 **Repository**: https://github.com/gitpython-developers/smmap
 
 ```text
@@ -10250,9 +10250,9 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### sniffio
 
-1.3.1
-**License**: Apache Software License; MIT License
-"Nathaniel J. Smith" <njs@pobox.com>
+**Version**: 1.3.1 \
+**License**: Apache Software License; MIT License \
+"Nathaniel J. Smith" <njs@pobox.com> \
 **Repository**: https://github.com/python-trio/sniffio
 
 ```text
@@ -10265,9 +10265,9 @@ made under the terms of *both* these licenses.
 
 ### sse-starlette
 
-2.1.0
-BSD License
-sysid <sysid@gmx.de>
+**Version**: 2.1.0 \
+**License**: BSD License \
+sysid <sysid@gmx.de> \
 **Repository**: https://github.com/sysid/sse-starlette
 
 ```text
@@ -10304,9 +10304,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### starlette
 
-0.37.2
-BSD License
-Tom Christie <tom@tomchristie.com>
+**Version**: 0.37.2 \
+**License**: BSD License \
+Tom Christie <tom@tomchristie.com> \
 **Repository**: https://github.com/encode/starlette
 
 ```text
