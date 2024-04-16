@@ -2200,9 +2200,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### gguf
 
-0.6.0 \
+**Version**: 0.6.0 \
 **License**: MIT License \
-GGML \
+**Author**: GGML \
 **Repository**: https://ggml.ai \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/gguf-0.6.0.dist-info/LICENSE
 
@@ -2234,7 +2234,7 @@ SOFTWARE.
 
 ### gitdb
 
-4.0.11 \
+**Version**: 4.0.11 \
 **License**: BSD License \
 Sebastian Thiel \
 **Repository**: https://github.com/gitpython-developers/gitdb \
@@ -2289,9 +2289,9 @@ in the distribution package.
 
 ### h11
 
-0.14.0
+**Version**: 0.14.0 \
 **License**: MIT License \
-Nathaniel J. Smith
+Nathaniel J. Smith \
 **Repository**: https://github.com/python-hyper/h11
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/h11-0.14.0.dist-info/LICENSE.txt
 
@@ -2324,10 +2324,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 ### httpcore
 
-1.0.5
+**Version**: 1.0.5 \
 **License**: BSD License \
-Tom Christie <tom@tomchristie.com>
-**Repository**: https://www.encode.io/httpcore/
+Tom Christie <tom@tomchristie.com> \
+**Repository**: https://www.encode.io/httpcore/ \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/httpcore-1.0.5.dist-info/licenses/LICENSE.md
 
 ```text
@@ -2364,10 +2364,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### httpx
 
-0.27.0
+**Version**: 0.27.0 \
 **License**: BSD License \
-Tom Christie <tom@tomchristie.com>
-**Repository**: https://github.com/encode/httpx
+Tom Christie <tom@tomchristie.com> \
+**Repository**: https://github.com/encode/httpx \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/httpx-0.27.0.dist-info/licenses/LICENSE.md
 
 ```text
@@ -2389,10 +2389,10 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 ### huggingface-hub
 
-0.22.2
+**Version**: 0.22.2 \
 **License**: Apache Software License \
-Hugging Face, Inc.
-**Repository**: https://github.com/huggingface/huggingface_hub
+Hugging Face, Inc. \
+**Repository**: https://github.com/huggingface/huggingface_hub \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/huggingface_hub-0.22.2.dist-info/LICENSE
 
 ```text
@@ -2861,10 +2861,10 @@ Jason R. Coombs
 
 ### joblib
 
-1.4.0
+**Version**: 1.4.0 \
 **License**: BSD License \
-Gael Varoquaux <gael.varoquaux@normalesup.org>
-**Repository**: https://joblib.readthedocs.io
+Gael Varoquaux <gael.varoquaux@normalesup.org> \
+**Repository**: https://joblib.readthedocs.io \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/joblib-1.4.0.dist-info/LICENSE.txt
 
 ```text
@@ -2903,10 +2903,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### jsonpatch
 
-1.33
+**Version**: 1.33 \
 **License**: BSD License \
-Stefan Kögl
-**Repository**: https://github.com/stefankoegl/python-json-patch
+Stefan Kögl \
+**Repository**: https://github.com/stefankoegl/python-json-patch \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/jsonpatch-1.33.dist-info/LICENSE
 
 ```text
@@ -2995,10 +2995,10 @@ THE SOFTWARE.
 
 ### jsonschema-specifications
 
-2023.12.1
+**Version**: 2023.12.1 \
 **License**: MIT License \
-Julian Berman
-**Repository**: https://github.com/python-jsonschema/jsonschema-specifications
+Julian Berman \
+**Repository**: https://github.com/python-jsonschema/jsonschema-specifications \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/jsonschema_specifications-2023.12.1.dist-info/licenses/COPYING
 
 ```text
@@ -3027,10 +3027,10 @@ THE SOFTWARE.
 
 ### langchain-core
 
-0.1.42
+**Version**: 0.1.42 \
 **License**: MIT License \
-UNKNOWN
-**Repository**: https://github.com/langchain-ai/langchain
+UNKNOWN \
+**Repository**: https://github.com/langchain-ai/langchain \
 UNKNOWN
 
 ```text
@@ -3041,10 +3041,10 @@ UNKNOWN
 
 ### langchain-text-splitters
 
-0.0.1
+**Version**: 0.0.1 \
 **License**: MIT License \
-UNKNOWN
-**Repository**: https://github.com/langchain-ai/langchain
+UNKNOWN \
+**Repository**: https://github.com/langchain-ai/langchain \
 UNKNOWN
 
 ```text
@@ -3055,10 +3055,10 @@ UNKNOWN
 
 ### langsmith
 
-0.1.45
+**Version**: 0.1.45 \
 **License**: MIT License \
-LangChain
-**Repository**: https://smith.langchain.com/
+LangChain \
+**Repository**: https://smith.langchain.com/ \
 UNKNOWN
 
 ```text
@@ -3069,10 +3069,10 @@ UNKNOWN
 
 ### llama_cpp_python
 
-0.2.55
-**License**: MIT  // TODO - verify
-Andrei Betlen <abetlen@gmail.com>
-**Repository**: https://github.com/abetlen/llama-cpp-python
+**Version**: 0.2.55 \
+**License**: MIT License \
+Andrei Betlen <abetlen@gmail.com> \
+**Repository**: https://github.com/abetlen/llama-cpp-python \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/llama_cpp_python-0.2.55.dist-info/licenses/LICENSE.md
 
 ```text
@@ -3091,10 +3091,10 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 ### markdown-it-py
 
-3.0.0
+**Version**: 3.0.0 \
 **License**: MIT License \
-Chris Sewell <chrisj_sewell@hotmail.com>
-**Repository**: https://github.com/executablebooks/markdown-it-py
+Chris Sewell <chrisj_sewell@hotmail.com> \
+**Repository**: https://github.com/executablebooks/markdown-it-py \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/markdown_it_py-3.0.0.dist-info/LICENSE
 
 ```text
@@ -3124,10 +3124,11 @@ SOFTWARE.
 ---
 
 ### mdurl
-0.1.2
+
+**Version**: 0.1.2 \
 **License**: MIT License \
-Taneli Hukkinen <hukkin@users.noreply.github.com>
-**Repository**: https://github.com/executablebooks/mdurl
+Taneli Hukkinen <hukkin@users.noreply.github.com> \
+**Repository**: https://github.com/executablebooks/mdurl \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/mdurl-0.1.2.dist-info/LICENSE
 
 ```text
@@ -3183,10 +3184,10 @@ IN THE SOFTWARE.
 
 ### mlx
 
-0.5.1
-UNKNOWN
-MLX Contributors
-**Repository**: https://github.com/ml-explore/mlx
+**Version**: 0.5.1 \
+**License**: <span style="color: red;">UNKNOWN</span> \
+MLX Contributors \
+**Repository**: https://github.com/ml-explore/mlx \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/mlx-0.5.1.dist-info/LICENSE
 
 ```text
@@ -3216,10 +3217,11 @@ SOFTWARE.
 ---
 
 ### mpmath
-1.3.0
+
+**Version**: 1.3.0 \
 **License**: BSD License \
-Fredrik Johansson
-http://mpmath.org/
+Fredrik Johansson \
+http://mpmath.org/ // TODO \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/mpmath-1.3.0.dist-info/LICENSE
 
 ```text
@@ -3256,10 +3258,10 @@ DAMAGE.
 
 ### multidict
 
-6.0.5
+**Version**: 6.0.5 \
 **License**: Apache Software License \
-Andrew Svetlov
-**Repository**: https://github.com/aio-libs/multidict
+Andrew Svetlov \
+**Repository**: https://github.com/aio-libs/multidict \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/multidict-6.0.5.dist-info/LICENSE
 
 ```text
@@ -3282,10 +3284,10 @@ Andrew Svetlov
 
 ### multiprocess
 
-0.70.16
+**Version**: 0.70.16 \
 **License**: BSD License \
-Mike McKerns
-**Repository**: https://github.com/uqfoundation/multiprocess
+Mike McKerns \
+**Repository**: https://github.com/uqfoundation/multiprocess \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/multiprocess-0.70.16.dist-info/COPYING
 
 ```text
@@ -3323,10 +3325,10 @@ SUCH DAMAGE.
 
 ### networkx
 
-3.3
+**Version**: 3.3 \
 **License**: BSD License \
-Aric Hagberg <hagberg@lanl.gov>
-**Repository**: https://networkx.org/
+Aric Hagberg <hagberg@lanl.gov> \
+**Repository**: https://networkx.org/ \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/networkx-3.3.dist-info/LICENSE.txt
 
 ```text
@@ -3373,10 +3375,10 @@ NetworkX is distributed with the 3-clause BSD license.
 
 ### nltk
 
-3.8.1
+**Version**: 3.8.1 \
 **License**: Apache Software License \
-NLTK Team
-**Repository**: https://www.nltk.org/
+NLTK Team \
+**Repository**: https://www.nltk.org/ \
 
 ```text
                                  Apache License
@@ -5509,9 +5511,9 @@ License: LGPL-2.1-or-later
 
 ### openai
 
-1.17.0
+**Version**: 1.17.0 \
 **License**: Apache Software License \
-OpenAI <support@openai.com>
+OpenAI <support@openai.com> \
 **Repository**: https://github.com/openai/openai-python
 
 ```text
@@ -5935,10 +5937,10 @@ limitations under the License.
 
 ### packaging
 
-23.2
-**License**: Apache Software License; BSD License
-Donald Stufft <donald@stufft.io>
-**Repository**: https://github.com/pypa/packaging
+**Version**: 23.2 \
+**License**: Apache Software License; BSD License \
+Donald Stufft <donald@stufft.io> \
+**Repository**: https://github.com/pypa/packaging \
 /Users/Matt_1/Projects/instruct-lab/cli/venv/lib/python3.11/site-packages/packaging-23.2.dist-info/LICENSE
 
 ```text
@@ -5951,9 +5953,9 @@ under the terms of *both* these licenses.
 
 ### pandas
 
-2.2.2
-BSD License
-The Pandas Development Team <pandas-dev@python.org>
+**Version**: 2.2.2 \
+**License**: BSD License \
+The Pandas Development Team <pandas-dev@python.org> \
 **Repository**: https://pandas.pydata.org
 
 ```text
@@ -5994,8 +5996,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ### pathspec
 
-0.12.1
-Mozilla Public License 2.0 (MPL 2.0)
+**Version**: 0.12.1 \
+**License**: Mozilla Public License 2.0 (MPL 2.0) \
 "Caleb P. Burns" <cpburnz@gmail.com>
 UNKNOWN
 
