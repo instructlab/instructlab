@@ -18517,7 +18517,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 **Version**: 4.66.2 \
 **License**: MIT License; Mozilla Public License 2.0 (MPL 2.0) \
-**Author**: <span style="color: #e03e2d;">UNKNOWN</span> \
+**Author**: Casper da Costa-Luis <casper.dcl@physics.org> \
 **Repository**: https://github.com/tqdm/tqdm \
 **Homepage**: https://tqdm.github.io \
 **License URL**: https://github.com/tqdm/tqdm/blob/master/LICENCE
