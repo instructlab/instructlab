@@ -1,6 +1,6 @@
 # InstructLab 🐶 (`ilab`)
 
-![Tests](https://github.com/instruct-lab/cli/actions/workflows/test.yml/badge.svg)
+![Tests](https://github.com/instructlab/instructlab/actions/workflows/test.yml/badge.svg)
 
 ## 📖 Contents
 - [❓What is `ilab`](#-what-is-ilab)
@@ -38,7 +38,7 @@ Large Language Models (LLMs.) The "**lab**" in Instruct**Lab** 🐶 stands for
 1. Download a pre-trained Large Language Model (LLM).
 2. Chat with the LLM.
 
-To add new knowledge and skills to the pre-trained LLM you have to add new information to the companion [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository.
+To add new knowledge and skills to the pre-trained LLM you have to add new information to the companion [taxonomy](https://github.com/instructlab/taxonomy.git) repository.
 After that is done, you can:
 
 1. Use `ilab` to generate new synthetic training data based on the changes in your local `taxonomy` repository.
@@ -85,7 +85,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
    ```shell
    python3 -m venv venv
    source venv/bin/activate
-   pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
+   pip install git+ssh://git@github.com/instructlab/instructlab.git@stable
    ```
    > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection.
 
@@ -234,9 +234,9 @@ Before you start adding new skills and knowledge to your model, you can check it
 
 ### 🎁 Contribute knowledge or compositional skills
 
-Contribute new knowledge or compositional skills to your local [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository.
+Contribute new knowledge or compositional skills to your local [taxonomy](https://github.com/instructlab/taxonomy.git) repository.
 
-Detailed contribution instructions can be found in the [taxonomy repository](https://github.com/instruct-lab/taxonomy/blob/main/README.md).
+Detailed contribution instructions can be found in the [taxonomy repository](https://github.com/instructlab/taxonomy/blob/main/README.md).
 
 ### 📜 List and validate your new data
 
@@ -256,7 +256,7 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
 
 ### 🚀 Generate a synthetic dataset
 
-1. To generate a synthetic dataset based on your newly added knowledge or skill set in [taxonomy](https://github.com/instruct-lab/taxonomy.git) repository, run the following command:
+1. To generate a synthetic dataset based on your newly added knowledge or skill set in [taxonomy](https://github.com/instructlab/taxonomy.git) repository, run the following command:
 
    ```shell
    ilab generate
@@ -396,7 +396,7 @@ argument to specify your new model:
 
 ## 🎁 Submit your new knowledge or skills
 
-Of course, the final step is, if you've improved the model, to open a pull-request in the [taxonomy repository](https://github.com/instruct-lab/taxonomy) that includes the files (e.g. `qna.yaml`) with your improved data.
+Of course, the final step is, if you've improved the model, to open a pull-request in the [taxonomy repository](https://github.com/instructlab/taxonomy) that includes the files (e.g. `qna.yaml`) with your improved data.
 
 ## 📬 Contributing
 

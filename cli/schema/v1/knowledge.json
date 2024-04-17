@@ -68,7 +68,7 @@
                     "type": "string",
                     "minLength": 1,
                     "examples": [
-                        "https://github.com/instruct-lab/cli"
+                        "https://github.com/instructlab/instructlab"
                     ]
                 },
                 "commit": {

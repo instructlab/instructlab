@@ -25,7 +25,7 @@ $ git show v0.x.y
 ```
 
 1. Verify that this is the tag/commit you want for stable.
-2. Double check with the short SHAHs on tags at https://github.com/instruct-lab/cli/tags 
+2. Double check with the short SHAHs on tags at https://github.com/instructlab/instructlab/tags 
 3. Copy the SHAH
 
 I usually test first w/o --force and expect an error if I have everything right.
@@ -52,7 +52,7 @@ I usually test first w/o --force and expect an error if I have everything right.
 ```ShellSession
 $ git push origin stable
 ! [rejected]        stable -> stable (already exists)
-error: failed to push some refs to 'https://github.com/instruct-lab/cli.git'
+error: failed to push some refs to 'https://github.com/instructlab/instructlab.git'
 hint: Updates were rejected because the tag already exists in the remote.
 
 ```

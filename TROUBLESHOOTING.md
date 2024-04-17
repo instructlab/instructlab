@@ -86,6 +86,6 @@ The training step is run with the `ilab train` command. This step trains the mod
 
 ## Additional resources
 
-- InstructLab Community [FAQ](https://github.com/instruct-lab/community/blob/main/FAQ.md)
-- InstructLab Taxonomy [FAQ](https://github.com/instruct-lab/taxonomy/discussions/538)
-- Discussion [board](https://github.com/instruct-lab/cli/discussions)
+- InstructLab Community [FAQ](https://github.com/instructlab/community/blob/main/FAQ.md)
+- InstructLab Taxonomy [FAQ](https://github.com/instructlab/taxonomy/discussions/538)
+- Discussion [board](https://github.com/instructlab/instructlab/discussions)

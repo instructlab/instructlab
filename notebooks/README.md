@@ -40,7 +40,7 @@ Once you have finished training and the output looks good, we encourage you go t
 
 ### Kaggle (Unsupported and deprecated)
 
-Using a [Kaggle Notebook](https://github.com/instruct-lab/cli/blob/main/notebooks/Training_a_LoRA_With_Instruct_Lab.ipynb)
+Using a [Kaggle Notebook](https://github.com/instructlab/instructlab/blob/main/notebooks/Training_a_LoRA_With_Instruct_Lab.ipynb)
 and the NVIDIA P100 provided in the free tier, we will fine tune a LoRA.
 
 #### Pre-requisites

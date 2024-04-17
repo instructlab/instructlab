@@ -26,7 +26,7 @@ RUN export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cu
     && export XLA_TARGET=cuda120 \
     && export XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda
 RUN --mount=type=ssh,id=default CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3.11 -m pip install --force-reinstall --no-cache-dir llama-cpp-python 
-RUN --mount=type=ssh,id=default python3.11 -m pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
+RUN --mount=type=ssh,id=default python3.11 -m pip install git+ssh://git@github.com/instructlab/instructlab.git@stable
 CMD ["/bin/bash"]
 ```
 
