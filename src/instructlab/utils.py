@@ -221,7 +221,9 @@ def get_documents(
                         with open(file_path, "r", encoding="utf-8") as file:
                             file_contents.append(file.read())
 
-            return file_contents
+            if file_contents:
+                return file_contents
+            raise SystemExit("Couldn't find knowledge documents")
         except (OSError, exc.GitCommandError, FileNotFoundError) as e:
             raise e
 
