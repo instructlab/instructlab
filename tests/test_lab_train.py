@@ -30,8 +30,8 @@ ENCODING = "UTF-8"
 def setup_input_dir():
     os.mkdir(INPUT_DIR)
     for f_path in ["/train_1.jsonl", "/test_1.jsonl"]:
-        with open(INPUT_DIR + f_path, "w", encoding=ENCODING) as f:
-            f.write("{}")
+        with open(INPUT_DIR + f_path, "w", encoding=ENCODING):
+            pass
 
 
 def setup_linux_dir():
