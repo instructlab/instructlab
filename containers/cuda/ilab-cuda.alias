@@ -1,0 +1,20 @@
+instructlab() {
+    mkdir -p ${HOME}/.ilab
+    podman unshare chown 1001:1001 -R ${HOME}/.ilab
+
+    if [ ! -f "${HOME}/.ilab/config.yaml" ] && [ "$1" != "init" ]; then 
+        echo "Error: \`config.yaml\` does not exists, please run \`ilab init\` or point to a valid configuration file using \`--config=<path>\`."
+        return 1
+    fi
+
+    ILAB_GPU_COMMANDS="chat generate serve train"
+    if [[ ${ILAB_GPU_COMMANDS} =~ (^|[[:space:]])$1($|[[:space:]]) ]]; then
+        podman run --rm -it --device nvidia.com/gpu=0 --volume ${HOME}/.ilab:/home/ilab:Z ${VOLUMES} quay.io/redhat_emp1/magma/ilab-cuda:cli ilab $1
+    else
+        podman run --rm -it --volume ${HOME}/.ilab:/home/ilab:Z quay.io/redhat_emp1/magma/ilab-cuda:cli $1
+    fi
+}
+
+ilab() {
+    instructlab $@
+}

@@ -6,61 +6,103 @@ using dedicated GPUs. This guide shows you how to put the `ilab` CLI, all of its
 dependencies, and your GPU into a container for an isolated and easily reproducible
 experience.
 
-## Steps to build an image then run a container
+## Build the `ilab` container image
 
-**Containerfile:**
+We encourage you to read the [Containerfile](../containers/cuda/Containerfile).
+understand the following explanation.
 
-```dockerfile
-FROM nvcr.io/nvidia/cuda:12.3.2-devel-ubi9
-RUN dnf install -y python3.11 && dnf install -y openssh && dnf install -y git && dnf install -y python3-pip && dnf install -y make automake gcc gcc-c++
-RUN ssh-keyscan github.com > ~/.ssh/known_hosts
-WORKDIR /instructlab
-RUN python3.11 -m ensurepip
-RUN dnf install -y gcc
-RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
-RUN dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo && dnf repolist && dnf config-manager --set-enabled cuda-rhel9-x86_64 && dnf config-manager --set-enabled cuda && dnf config-manager --set-enabled epel && dnf update -y
-RUN --mount=type=ssh,id=default python3.11 -m pip install --force-reinstall nvidia-cuda-nvcc-cu12 
-RUN export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64" \
-    && export CUDA_HOME=/usr/local/cuda \
-    && export PATH="/usr/local/cuda/bin:$PATH" \
-    && export XLA_TARGET=cuda120 \
-    && export XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda
-RUN --mount=type=ssh,id=default CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3.11 -m pip install --force-reinstall --no-cache-dir llama-cpp-python 
-RUN --mount=type=ssh,id=default python3.11 -m pip install git+ssh://git@github.com/instructlab/instructlab.git@stable
-CMD ["/bin/bash"]
-```
+To reduce the size of the final image, we do a multi-stage build with the _devel_
+CUDA image for the build stage and a pip wheel cache folder on our build system. The
+base image for the final stage is the CUDA _runtime_ image, with no build tools and
+we install the Python packages from the wheel cache, to avoid having a layer containing
+the `whl` files that are also deployed. However, doing so, we don't have an implicit
+dependency between the build and final stages, so we need to tell `podman build` to
+not skip the build stage with `--skip-unused-stages=false`.
 
-Or image: TBD (am I allowed to have a public image with references to lab in it?)
-
-This containerfile is based on Nvidia's CUDA image, which lucky for us plugs
-directly into Podman via their `nvidia-container-toolkit`! The ubi9 base image
-does not have most packages installed. The bulk of the `containerfile` is spent
-configuring your system so `ilab` can be installed and run properly. ubi9 as compared
-to ubuntu cannot install the entire nvidia-12-4 toolkit. This did not impact
-performance during testing.
+You will also notice that the entrypoint of the container image is `/usr/local/bin/ilab`.
+This allows to call the `ilab` command with opening a new shell. See below how it
+is beneficial when combined with an alias.
 
 ```shell
-1. podman build –ssh=default -f <Containerfile_Path>
-2. curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo |   sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
-3. sudo yum-config-manager --enable nvidia-container-toolkit-experimental
-4. sudo dnf install -y nvidia-container-toolkit
-5. sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
-6. nvidia-ctk cdi list
-    Example output: 
-    INFO[0000] Found 2 CDI devices
-    nvidia.com/gpu=0
-    nvidia.com/gpu=all
-7. podman run --device nvidia.com/gpu=0  --security-opt=label=disable -it <IMAGE_ID>
+mkdir ${HOME}/wheels
+podman build \
+    --volume ${HOME}/wheels:/wheels:Z \
+    --volume ${PWD}:/instruct-lab/instructlab:Z \
+    --skip-unused-stages=false \
+    -f containers/cuda/Containerfile \
+    -t <IMAGE>
 ```
 
-Voila! You now have a container with CUDA and GPUs enabled!
+## Configure Podman with NVIDIA container runtime
 
-### Sources
+To configure your machine running RHEL 9.4+, you can follow NVIDIA's documentation to
+[install NVIDIA container toolkit](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html#installing-with-yum-or-dnf)
+and to [configure Container Device Interface (CDI)](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/cdi-support.html)
+to expose the GPUs to Podman.
 
-[Nvidia Container Toolkit Install Guide](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/install-guide.html)
+Here is a quick procedure if you haven't.
 
-[Podman Support for Container Device Interface](https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/cdi-support.html)
+```shell
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
+sudo dnf config-manager --enable nvidia-container-toolkit-experimental
+sudo dnf install -y nvidia-container-toolkit
+```
 
-### Notes
+Then, you can verify that NVIDIA container toolkit can see your GPUs.
 
-Thanks to Taj Salawu for figuring out how to pass the git ssh keys properly!
+```shell
+nvidia-ctk cdi list
+```
+
+Example output:
+
+```shell
+INFO[0000] Found 2 CDI devices
+nvidia.com/gpu=0
+nvidia.com/gpu=all
+```
+
+Finally, you can generate the CDI configuration for the NVIDIA devices:
+
+```shell
+sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+```
+
+## Run the GPU-accelerated `ilab` container
+
+When running our model, we want to create some paths that will be mounted in
+the container to provide data persistence. As an unprivileged user, you will
+run a rootless container, so you need to let the internal user (UID 1001)
+access the files in the host. For that, we use `podman unshare chown`.
+
+```shell
+mkdir -p ${HOME}/.ilab
+podman unshare chown 1001:1001 -R ${HOME}/.ilab
+```
+
+Then, we can run the container, mounting the above folder and using the first
+NVIDIA GPU.
+
+```shell
+podman run --rm -it --user 1001 --device nvidia.com/gpu=0 --volume ${HOME}/.ilab:/home/ilab:Z <IMAGE>
+```
+
+The above command will print the help, as we didn't pass any argument.
+
+Let's initialize our configuration, download the model and start the chatbot.
+
+```
+podman run --rm -it --user 1001 --device nvidia.com/gpu=0 --volume ${HOME}/.ilab:/home/ilab:Z <IMAGE> init
+podman run --rm -it --user 1001 --device nvidia.com/gpu=0 --volume ${HOME}/.ilab:/home/ilab:Z <IMAGE> download
+podman run --rm -it --user 1001 --device nvidia.com/gpu=0 --volume ${HOME}/.ilab:/home/ilab:Z <IMAGE> chat
+```
+
+## Creating an alias
+
+Now that you know how to run the container, you probably find it cumbersome
+to type the long `podman run` command, so we provide an alias definition in
+the [containers/cuda/instructlab-cuda.alias](../containers/cuda/instructlab-cuda.alias)
+file.
+
+You simply need to put it in your `${HOME}/.bashrc.d` folder and restart your
+bash shell to be able to call only `instructlab` or `ilab`.
