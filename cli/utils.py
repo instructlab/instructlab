@@ -206,22 +206,23 @@ def get_documents(
     file_patterns = source.get("patterns")
     with tempfile.TemporaryDirectory() as temp_dir:
         try:
-            skip_checkout = False
+            sc = False
             if skip_checkout:
-                skip_checkout = True
+                sc = True
             repo = git_clone_checkout(
                 repo_url=repo_url,
                 commit_hash=commit_hash,
                 temp_dir=temp_dir,
-                skip_checkout=skip_checkout,
+                skip_checkout=sc,
             )
             file_contents = []
 
             # hack for unit tests. Unit tests use temp dirs in tests/testdata
-            # that needs to be processed instead of the temp_dir created
-            working_dir = temp_dir
+            # that needs to be processed instead of the cloned project inside
+            # temp_dir
+            working_dir = repo
             if not skip_checkout:
-                working_dir = repo
+                working_dir = repo.working_dir
 
             logger.debug("Processing files...")
             for pattern in file_patterns:
