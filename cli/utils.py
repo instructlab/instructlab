@@ -190,7 +190,7 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
 def get_documents(
     logger,
     source: Dict[str, Union[str, List[str]]],
-    skip_checkout: Optional[bool] = False,
+    skip_checkout: bool = False,
 ) -> List[str]:
     """
     Retrieve the content of files from a Git repository.
@@ -206,9 +206,6 @@ def get_documents(
     file_patterns = source.get("patterns")
     with tempfile.TemporaryDirectory() as temp_dir:
         try:
-            skip_checkout = False
-            if skip_checkout:
-                skip_checkout = True
             repo = git_clone_checkout(
                 repo_url=repo_url,
                 commit_hash=commit_hash,
@@ -217,23 +214,13 @@ def get_documents(
             )
             file_contents = []
 
-            # hack for unit tests. Unit tests use temp dirs in tests/testdata
-            # that needs to be processed instead of the temp_dir created
-            working_dir = temp_dir
-            if not skip_checkout:
-                working_dir = repo
-
             logger.debug("Processing files...")
             for pattern in file_patterns:
-                for file_path in glob.glob(os.path.join(working_dir, pattern)):
+                for file_path in glob.glob(os.path.join(repo.working_dir, pattern)):
                     if os.path.isfile(file_path) and file_path.endswith(".md"):
                         with open(file_path, "r", encoding="utf-8") as file:
                             file_contents.append(file.read())
-            # hack for unit tests. Unit tests use temp dirs in tests/testdata
-            # and patches return string values that are paths to those directories.
-            # str object don't have close() method
-            if not isinstance(repo, str):
-                repo.close()
+
             return file_contents
         except (OSError, exc.GitCommandError, FileNotFoundError) as e:
             raise e
