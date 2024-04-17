@@ -161,7 +161,7 @@ git checkout -b demo
 git push --set-upstream xukai92 demo
 ```
 <!-- pause -->
-*Now, you can go creating a pull request on the taxonomy repo!*
+*Now, you can go creating a pull request on the taxonomy repository!*
 
 --> https://github.com/instruct-lab/taxonomy
 <!-- pause -->

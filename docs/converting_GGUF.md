@@ -45,7 +45,7 @@ def write(self):
 
 ## Convert a model to GGUF
 
-The following command converts a Hugging Face model (safetensors) to [GGUF](https://github.com/ggerganov/ggml/blob/master/docs/gguf.md)
+The following command converts a Hugging Face model (`safetensors`) to [GGUF](https://github.com/ggerganov/ggml/blob/master/docs/gguf.md)
 format and saves it in your model directory with a `.gguf` extension.
 
 ```shell
@@ -76,7 +76,7 @@ make
 
 For example, the following command converts the f16 GGUF model to a Q4_K_M
 quantized model and saves it in your model directory with a `<type>.gguf`
-suffix (e.g. ggml-model-Q4_K_M.gguf).
+suffix (e.g. `ggml-model-Q4_K_M.gguf`).
 
 ```shell
 ./quantize $MODEL_DIR/ggml-model-f16.gguf Q4_K_M

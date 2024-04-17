@@ -49,7 +49,7 @@ With Python 3.11 installed, it's time to replace some packages!
 
 Ensure you have the latest proprietary Nvidia drivers installed.  You can
 easily validate whether you are using `nouveau` or `nvidia` kernel drivers with
-the following command.  If your output shows "Kernel driver in use: nouveau",
+the following command.  If your output shows `Kernel driver in use: nouveau`,
 you are **not running** with the proprietary Nvidia drivers.
 
 ```shell
@@ -76,7 +76,7 @@ sudo reboot
 lspci -n -n -k | grep -A 2 -e VGA -e 3D
 ```
 
-You should now see "Kernel driver in use: nvidia". The next step is to ensure
+You should now see `Kernel driver in use: nvidia`. The next step is to ensure
 CUDA 12.4 is installed.
 
 ```shell
@@ -87,7 +87,7 @@ sudo dnf clean all
 sudo dnf -y install cuda-toolkit-12-4 nvtop
 ```
 
-Go to the project's Github to see the
+Go to the project's GitHub to see the
 [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends).
 Find the `cuBLAS (CUDA)` backend. You'll see a `pip3 install` command.
 You'll want to add a few options to ensure it gets installed over the
@@ -108,7 +108,7 @@ pip3 install instructlab/.
 ```
 
 Proceed to the `Initialize` section of
-the [CLI Readme](https://github.com/instructlab/instructlab?tab=readme-ov-file#%EF%B8%8F-initialize-lab),
+the [CLI README](https://github.com/instructlab/instructlab?tab=readme-ov-file#%EF%B8%8F-initialize-lab),
 and use the `nvtop` utility to validate GPU utilization when interacting
 with `ilab chat` or `ilab generate`
 
@@ -125,13 +125,13 @@ sudo usermod -a -G render,video $LOGNAME
 
 #### ROCm container
 
-The most convient approach is the [ROCm toolbox container](../containers/rocm/README.md). The container comes with PyTorch, llama-cpp, and other dependencies pre-installed and ready-to-use.
+The most convenient approach is the [ROCm toolbox container](../containers/rocm/README.md). The container comes with PyTorch, llama-cpp, and other dependencies pre-installed and ready-to-use.
 
 #### Manual installation
 
 `torch` does not yet ship with AMD ROCm support, so you'll need to install a version compiled with support.
 
-Visit [Pytorch's "Get Started Locally" page](https://pytorch.org/get-started/locally/)
+Visit [PyTorch "Get Started Locally" page](https://pytorch.org/get-started/locally/)
 and use the matrix installer tool to find the ROCm package. `Stable, Linux, Pip,
 Python, ROCm 5.7` in the matrix installer spits out the following command:
 
@@ -151,7 +151,7 @@ pip3 install torch --force-reinstall --no-cache-dir --index-url https://download
 
 With that done, it's time to move on to `llama-cpp-python`.
 
-Go to the project's Github to see
+Go to the project's GitHub to see
 the [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends).
 There are several possible backends that may work on AMD; `CLBlast (OpenCL)`
 and `hipBLAS (ROCm)` have been tested to work. It may be worth installing others
@@ -212,11 +212,11 @@ Once that package is installed, recompile `ilab` with `pip3 install .`.  You als
 need to tell `HIP` which GPU to use - you can find this out via `rocminfo`
 although it is typically GPU 0.  To set which device is visible to HIP, we'll
 set `export HIP_VISIBLE_DEVICES=0` for GPU 0.   You may also have to set
-`HSA_OVERRIDE_GFX_VERSION` to override ROCm's GFX version detection, for example
+`HSA_OVERRIDE_GFX_VERSION` to override ROCm GFX version detection, for example
 `export HSA_OVERRIDE_GFX_VERSION=10.3.0` to force an unsupported `gfx1032` card
 to use use supported `gfx1030` version.  The environment variable
 `AMD_LOG_LEVEL` enables debug logging of ROCm libraries, for example
-`AMD_LOG_LEVEL=3` to print API calls to stderr.
+`AMD_LOG_LEVEL=3` to print API calls to `stderr`.
 
 Now you can skip to the `Testing` section.
 
@@ -237,7 +237,7 @@ The `ilab` default installation should have Metal support by default. If that
 isn't the case, these steps might help to enable it.
 
 `torch` should already ship with Metal support, so you only have to
-replace `llama-cpp-python`. Go to the project's Github to see the
+replace `llama-cpp-python`. Go to the project's GitHub to see the
 [supported backends](https://github.com/abetlen/llama-cpp-python?tab=readme-ov-file#supported-backends).
 Find the `Metal` backend. You'll see a `pip3 install` command. You'll want to
 add a few options to ensure it gets installed over the existing package:
@@ -260,7 +260,7 @@ step will take significantly less time.  You can use tools like `nvtop` and
 
 Use the scripts `containers/bin/debug-pytorch` and `containers/bin/debug-llama` to verify that PyTorch and llama-cpp are able to use your GPU.
 
-The `torch` and `llama_cpp` packages provide functions to debug GPU support.  Here is an example from an AMD ROCm system with a single GPU, ROCm build of PyTorch and llama-cpp with HIPBLAS.  Don't be confused by the fact that PyTorch uses `torch.cuda` API for ROCm or llama-cpp reports HIPBLAS as CUBLAS.  The packages treat ROCm like a variant of CUDA.
+The `torch` and `llama_cpp` packages provide functions to debug GPU support.  Here is an example from an AMD ROCm system with a single GPU, ROCm build of PyTorch and llama-cpp with HIPBLAS.  Don't be confused by the fact that PyTorch uses `torch.cuda` API for ROCm or llama-cpp reports hipBLAS as cuBLAS.  The packages treat ROCm like a variant of CUDA.
 
 ```python
 >>> import torch

@@ -36,8 +36,8 @@ This step is optional if you want to quantize (for QLoRA) or change the default
 data type of a pre-existing model.
 
 You convert models using the `convert.py` script. This script takes a Hugging
-Face repo as input and outputs a model directory (which you can optionally also
-upload to Hugging Face).
+Face repository as input and outputs a model directory (which you can
+optionally also upload to Hugging Face).
 
 To make a 4-bit quantized model, run:
 
@@ -71,7 +71,7 @@ python lora.py --help
 ```
 
 Note, in the following the `--model` argument can be any compatible Hugging
-Face repo or a local path to a converted model.
+Face repository or a local path to a converted model.
 
 ### Fine-tune
 
@@ -155,7 +155,7 @@ python fuse.py --help
 ```
 
 To upload a fused model, supply the `--upload-name` and `--hf-path` arguments
-to `fuse.py`. The latter is the repo name of the original model, which is
+to `fuse.py`. The latter is the repository name of the original model, which is
 useful for the sake of attribution and model versioning.
 
 For example, to fuse and upload a model derived from Mistral-7B-v0.1, run:
@@ -217,7 +217,7 @@ The above command on an M1 Max with 32 GB runs at about 250 tokens-per-second.
 
 [^lora]: Refer to the [arXiv paper](https://arxiv.org/abs/2106.09685) for more details on LoRA.
 [^qlora]: Refer to the paper [QLoRA: Efficient Finetuning of Quantized LLMs](https://arxiv.org/abs/2305.14314)
-[^wikisql]: Refer to the [GitHub repo](https://github.com/salesforce/WikiSQL/tree/master) for more information about WikiSQL.
+[^wikisql]: Refer to the [GitHub repository](https://github.com/salesforce/WikiSQL/tree/master) for more information about WikiSQL.
 
 ## Notice
 
