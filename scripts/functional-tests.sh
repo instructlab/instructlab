@@ -274,6 +274,22 @@ test_no_chat_logs(){
         expect {
             "_base_client.py" { exit 1 }
         }
+        '
+}
+
+test_temp_server_ignore_internal_messages(){
+    expect -c '
+        set timeout 20
+        spawn ilab chat
+        expect "Starting a temporary server at"
+        send "hello!\r"
+        sleep 5
+        send "\003"
+        expect {
+            "Disconnected from client (via refresh/close)" { exit 1 }
+        }
+        send "exit\r"
+        expect eof
     '
 }
 
@@ -295,5 +311,7 @@ cleanup
 test_temp_server_sigint
 cleanup
 test_no_chat_logs
+cleanup
+test_temp_server_ignore_internal_messages
 
 exit 0

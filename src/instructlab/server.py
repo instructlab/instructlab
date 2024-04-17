@@ -1,9 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+from contextlib import redirect_stderr, redirect_stdout
 from time import sleep
 import logging
 import multiprocessing
+import os
 import random
 import signal
 import socket
@@ -30,12 +32,7 @@ class Server(uvicorn.Server):
 
     def handle_exit(self, sig, frame):
         # type: (int, Optional[FrameType]) -> None
-        if (
-            # if this is the main process (`ilab serve`) we keep uvicorn's default behavior
-            not is_temp_server_running()
-            # if this is the child process (the temp server) we want to ignore the SIGINT signal
-            or sig != signal.SIGINT
-        ):
+        if not is_temp_server_running() or sig != signal.SIGINT:
             super().handle_exit(sig=sig, frame=frame)
 
 
@@ -185,7 +182,21 @@ def server(
         timeout_keep_alive=0,  # prevent clients holding connections open (we only have 1)
     )
     s = Server(config)
-    s.run()
+
+    # If this is not the main process, this is the temp server process that ran in the background
+    # after `ilab chat` was executed.
+    # In this case, we want to redirect stdout to null to avoid cluttering the chat with messages
+    # returned by the server.
+    if is_temp_server_running():
+        # Redirect stdout and stderr to null
+        with (
+            open(os.devnull, "w", encoding="utf-8") as f,
+            redirect_stdout(f),
+            redirect_stderr(f),
+        ):
+            s.run()
+    else:
+        s.run()
 
 
 def can_bind_to_port(host, port):
