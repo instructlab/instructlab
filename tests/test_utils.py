@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 import logging
 import unittest
 
 # Third Party
-# Third party
+import git
 import yaml
 
 # First Party
@@ -43,8 +43,11 @@ class TestUtils(unittest.TestCase):
             f"{exc.exception}",
         )
 
-    @patch("cli.utils.git_clone_checkout", return_value="tests/testdata/temp_repo")
-    def test_get_document(self, git_actions):
+    @patch(
+        "cli.utils.git_clone_checkout",
+        return_value=Mock(spec=git.Repo, working_dir="tests/testdata/temp_repo"),
+    )
+    def test_get_document(self, git_clone_checkout):
         with open(
             "tests/testdata/knowledge_valid.yaml", "r", encoding="utf-8"
         ) as qnafile:
@@ -53,5 +56,5 @@ class TestUtils(unittest.TestCase):
                 skip_checkout=True,
                 logger=logging.getLogger("_test_"),
             )
-            git_actions.assert_called_once()
+            git_clone_checkout.assert_called_once()
             self.assertEqual(len(documents), 2)
