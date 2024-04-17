@@ -20,6 +20,26 @@ from huggingface_hub import logging as hf_logging
 import click
 import yaml
 
+# First Party
+from cli.llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
+from cli.train.linux_train import linux_train
+
+try:
+    # First Party
+    from cli.mlx_explore.gguf_convert_to_mlx import load
+    from cli.mlx_explore.utils import fetch_tokenizer_from_hub
+    from cli.train.lora_mlx.convert import convert_between_mlx_and_pytorch
+    from cli.train.lora_mlx.fuse import fine_tune
+    from cli.train.lora_mlx.lora import load_and_train
+    from cli.train.lora_mlx.make_data import make_data
+except ImportError:
+    make_data = None
+    convert_between_mlx_and_pytorch = None
+    load_and_train = None
+    load = None
+    fetch_tokenizer_from_hub = None
+    fine_tune = None
+
 # Local
 # NOTE: Subcommands are using local imports to speed up startup time.
 from . import config, utils
@@ -890,9 +910,6 @@ def train(
 
     if not utils.is_macos_with_m_chip():
         # Local
-        from .llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
-        from .train.linux_train import linux_train
-
         linux_train(
             train_file=train_files[0],
             test_file=test_files[0],
@@ -958,11 +975,6 @@ def train(
         # shutil.rmtree(checkpoint_dirs[0])
     else:
         # Local
-        from .mlx_explore.gguf_convert_to_mlx import load
-        from .mlx_explore.utils import fetch_tokenizer_from_hub
-        from .train.lora_mlx.convert import convert_between_mlx_and_pytorch
-        from .train.lora_mlx.lora import load_and_train
-        from .train.lora_mlx.make_data import make_data
 
         if not skip_preprocessing:
             try:
@@ -1052,9 +1064,6 @@ def train(
 def test(data_dir, model_dir, adapter_file):
     """Runs basic test to ensure model correctness"""
     # pylint: disable=C0415
-    # Local
-    from .train.lora_mlx.lora import load_and_train
-
     if adapter_file == "auto":
         adapter_file = os.path.join(model_dir, "adapters.npz")
     elif adapter_file.lower() == "none":
@@ -1116,12 +1125,6 @@ def test(data_dir, model_dir, adapter_file):
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
     """Converts model to GGUF"""
-    # pylint: disable=C0415
-    # Local
-    from .llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
-    from .train.lora_mlx.convert import convert_between_mlx_and_pytorch
-    from .train.lora_mlx.fuse import fine_tune
-
     if adapter_file is None:
         adapter_file = os.path.join(model_dir, "adapters.npz")
     cli_dir = os.path.dirname(os.path.abspath(__file__))

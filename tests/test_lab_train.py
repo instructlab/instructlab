@@ -12,7 +12,6 @@ from click.testing import CliRunner
 
 # First Party
 from cli import lab
-from cli.train import linux_train
 
 INPUT_DIR = "test_generated"
 TRAINING_RESULTS_DIR = "training_results"
@@ -79,10 +78,10 @@ class TestLabTrain(unittest.TestCase):
 
     @mock_mlx
     @patch("cli.lab.utils.is_macos_with_m_chip", return_value=True)
-    @patch("cli.mlx_explore.gguf_convert_to_mlx.load")
-    @patch("cli.train.lora_mlx.make_data.make_data")
-    @patch("cli.train.lora_mlx.convert.convert_between_mlx_and_pytorch")
-    @patch("cli.train.lora_mlx.lora.load_and_train")
+    @patch("cli.lab.load")
+    @patch("cli.lab.make_data")
+    @patch("cli.lab.convert_between_mlx_and_pytorch")
+    @patch("cli.lab.load_and_train")
     def test_train_mac(
         self,
         load_and_train_mock,
@@ -127,10 +126,10 @@ class TestLabTrain(unittest.TestCase):
 
     @mock_mlx
     @patch("cli.lab.utils.is_macos_with_m_chip", return_value=True)
-    @patch("cli.mlx_explore.gguf_convert_to_mlx.load")
-    @patch("cli.train.lora_mlx.make_data.make_data")
-    @patch("cli.train.lora_mlx.convert.convert_between_mlx_and_pytorch")
-    @patch("cli.train.lora_mlx.lora.load_and_train")
+    @patch("cli.lab.load")
+    @patch("cli.lab.make_data")
+    @patch("cli.lab.convert_between_mlx_and_pytorch")
+    @patch("cli.lab.load_and_train")
     @mock_mlx
     def test_skip_quantize(
         self,
@@ -194,7 +193,7 @@ class TestLabTrain(unittest.TestCase):
 
     @mock_mlx
     @patch("cli.lab.utils.is_macos_with_m_chip", return_value=True)
-    @patch("cli.train.lora_mlx.make_data.make_data", side_effect=FileNotFoundError())
+    @patch("cli.lab.make_data", side_effect=FileNotFoundError())
     def test_invalid_data_dir_synthetic(
         self, make_data_mock, is_macos_with_m_chip_mock
     ):
@@ -215,10 +214,10 @@ class TestLabTrain(unittest.TestCase):
 
     @mock_mlx
     @patch("cli.lab.utils.is_macos_with_m_chip", return_value=True)
-    @patch("cli.mlx_explore.gguf_convert_to_mlx.load")
-    @patch("cli.train.lora_mlx.make_data.make_data")
-    @patch("cli.train.lora_mlx.convert.convert_between_mlx_and_pytorch")
-    @patch("cli.train.lora_mlx.lora.load_and_train")
+    @patch("cli.lab.load")
+    @patch("cli.lab.make_data")
+    @patch("cli.lab.convert_between_mlx_and_pytorch")
+    @patch("cli.lab.load_and_train")
     def test_skip_preprocessing(
         self,
         load_and_train_mock,
@@ -242,11 +241,11 @@ class TestLabTrain(unittest.TestCase):
 
     @mock_mlx
     @patch("cli.lab.utils.is_macos_with_m_chip", return_value=True)
-    @patch("cli.mlx_explore.utils.fetch_tokenizer_from_hub")
-    @patch("cli.mlx_explore.gguf_convert_to_mlx.load")
-    @patch("cli.train.lora_mlx.make_data.make_data")
-    @patch("cli.train.lora_mlx.convert.convert_between_mlx_and_pytorch")
-    @patch("cli.train.lora_mlx.lora.load_and_train")
+    @patch("cli.lab.fetch_tokenizer_from_hub")
+    @patch("cli.lab.load")
+    @patch("cli.lab.make_data")
+    @patch("cli.lab.convert_between_mlx_and_pytorch")
+    @patch("cli.lab.load_and_train")
     def test_load(
         self,
         load_and_train_mock,
@@ -286,11 +285,11 @@ class TestLabTrain(unittest.TestCase):
 
     @mock_mlx
     @patch("cli.lab.utils.is_macos_with_m_chip", return_value=True)
-    @patch("cli.mlx_explore.utils.fetch_tokenizer_from_hub")
-    @patch("cli.mlx_explore.gguf_convert_to_mlx.load")
-    @patch("cli.train.lora_mlx.make_data.make_data")
-    @patch("cli.train.lora_mlx.convert.convert_between_mlx_and_pytorch")
-    @patch("cli.train.lora_mlx.lora.load_and_train")
+    @patch("cli.lab.fetch_tokenizer_from_hub")
+    @patch("cli.lab.load")
+    @patch("cli.lab.make_data")
+    @patch("cli.lab.convert_between_mlx_and_pytorch")
+    @patch("cli.lab.load_and_train")
     def test_load_local(
         self,
         load_and_train_mock,
@@ -327,8 +326,8 @@ class TestLabTrain(unittest.TestCase):
             is_macos_with_m_chip_mock.assert_called_once()
 
     @patch("cli.lab.utils.is_macos_with_m_chip", return_value=False)
-    @patch.object(linux_train, "linux_train")
-    @patch("cli.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf")
+    @patch("cli.lab.linux_train")
+    @patch("cli.lab.convert_llama_to_gguf")
     def test_train_linux(
         self,
         convert_llama_to_gguf_mock,
@@ -367,8 +366,8 @@ class TestLabTrain(unittest.TestCase):
 
     @mock_mlx
     @patch("cli.lab.utils.is_macos_with_m_chip", return_value=False)
-    @patch("cli.train.linux_train.linux_train")
-    @patch("cli.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf")
+    @patch("cli.lab.linux_train")
+    @patch("cli.lab.convert_llama_to_gguf")
     def test_num_epochs(
         self, convert_llama_to_gguf_mock, linux_train_mock, is_macos_with_m_chip_mock
     ):
