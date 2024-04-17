@@ -442,6 +442,7 @@ def chat_cli(
     api_base,
     api_key,
     config,
+    serverconfig,
     question,
     model,
     context,
@@ -494,9 +495,14 @@ def chat_cli(
         os.makedirs(config.logs_dir, exist_ok=True)
         log_file = f"{config.logs_dir}/chat_{date_suffix}.log"
 
+    if not os.path.exists(serverconfig.model_path):
+            raise ChatException(
+                f"Model file {serverconfig.model_path} does not exist."
+            )
+
     # Initialize chat bot
     ccb = ConsoleChatBot(
-        config.model if model is None else model,
+        serverconfig.model_path if model is None else model,
         client=client,
         vi_mode=config.vi_mode,
         log_file=log_file,

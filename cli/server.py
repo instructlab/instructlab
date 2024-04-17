@@ -5,6 +5,7 @@ import logging
 import multiprocessing
 import random
 import socket
+from cli import config
 
 # Third Party
 from llama_cpp import llama_chat_format
@@ -129,6 +130,11 @@ def server(
         n_gpu_layers=gpu_layers,
         verbose=logger.level == logging.DEBUG,
     )
+    current = config.read_config()
+    if current.serve.model_path != model_path:
+        # update cfg to have the newly set model_path
+        current.serve.model_path = model_path
+        config.write_config(current)
     if threads is not None:
         settings.n_threads = threads
     try:

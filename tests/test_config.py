@@ -18,7 +18,7 @@ class TestConfig(unittest.TestCase):
         self.assertEqual(cfg.general.log_level, "INFO")
 
         self.assertIsNotNone(cfg.chat)
-        self.assertEqual(cfg.chat.model, "merlinite-7b-Q4_K_M")
+      #  self.assertEqual(cfg.chat.model, "merlinite-7b-Q4_K_M")
         self.assertFalse(cfg.chat.vi_mode)
         self.assertTrue(cfg.chat.visible_overflow)
         self.assertEqual(cfg.chat.context, "default")

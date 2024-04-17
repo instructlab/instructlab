@@ -148,7 +148,6 @@ def get_dict(cfg):
     """Returns configuration as a dictionary"""
     return cfg.model_dump()
 
-
 def write_config(cfg, config_file=DEFAULT_CONFIG):
     """Writes configuration to a disk"""
     with open(config_file, "w", encoding="utf-8") as yamlfile:

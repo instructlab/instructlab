@@ -183,7 +183,6 @@ def init(
     click.echo(f"Generating `{config.DEFAULT_CONFIG}` in the current directory...")
     cfg = config.get_default_config()
     model = splitext(basename(model_path))[0]
-    cfg.chat.model = model
     cfg.generate.model = model
     cfg.serve.model_path = model_path
     cfg.generate.taxonomy_path = taxonomy_path
@@ -630,6 +629,7 @@ def chat(
             api_base=api_base,
             api_key=api_key,
             config=ctx.obj.config.chat,
+            serverconfig=ctx.obj.config.server,
             question=question,
             model=model,
             context=context,
