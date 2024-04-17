@@ -61,11 +61,11 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
 1. If you are on Fedora Linux, install C++, Python 3.9+, and other necessary tools by running the following command:
 
-    ```shell
+   ```shell
    sudo dnf install g++ gcc make pip python3 python3-devel python3-GitPython
    ```
 
-   Optional: If g++ is not found, try 'gcc-c++' by running the following command:
+   Optional: If `g++` is not found, try `gcc-c++` by running the following command:
 
      ```shell
      sudo dnf install gcc-c++ gcc make pip python3 python3-devel python3-GitPython
@@ -96,7 +96,8 @@ The full process is described graphically in the [workflow diagram](./docs/workf
    ```
 
    #### Example output:
-   ```
+
+   ```shell
    (venv) $ ilab
    Usage: ilab [OPTIONS] COMMAND [ARGS]...
 
@@ -162,6 +163,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
    Generating `config.yaml` in the current directory...
    Initialization completed successfully, you're ready to start using `lab`. Enjoy!
    ```
+
    `ilab` will use the default configuration file unless otherwise specified. You can override this behavior with the `--config` parameter for any `ilab` command.
 
 ### 📥 Download the model
@@ -179,7 +181,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
   Downloading model from ibm/merlinite-7b-GGUF@main to models...
   (venv) $ ls models
   merlinite-7b-Q4_K_M.gguf
-   ```
+  ```
 
   > **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
 
@@ -217,7 +219,7 @@ Before you start adding new skills and knowledge to your model, you can check it
 
 > **NOTE:** the model needs to be trained with the generated synthetic data to use the new skills or knowledge
 
-```
+```shell
 (venv) $ ilab chat
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────── system ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ Welcome to Chat CLI w/ GGML-MERLINITE-7B-0302-Q4_K_M (type /h for help)                                                                                                                                                                    │
@@ -246,7 +248,7 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
    ilab diff
    ```
 
-2. To ensure `ilab` is registering your new knowledge or skills, you can run the `ilab diff` command. The following is the expected result after adding the new compositional skill foo-lang:
+2. To ensure `ilab` is registering your new knowledge or skills, you can run the `ilab diff` command. The following is the expected result after adding the new compositional skill `foo-lang`:
 
    ```shell
    (venv) $ ilab diff
@@ -284,7 +286,7 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
    ```
 
    **Optional**: It is also possible to run the generate step against a different model via an
-   OpenAI-compatible API. For example, the one spawned by `ilab serve` or any remote or locally hosted LLM (e.g. via [ollama](https://ollama.com/), [LM Studio](https://lmstudio.ai), etc.). Run the following command:
+   OpenAI-compatible API. For example, the one spawned by `ilab serve` or any remote or locally hosted LLM (e.g. via [`ollama`](https://ollama.com/), [`LM Studio`](https://lmstudio.ai), etc.). Run the following command:
 
 
    ```shell
@@ -299,14 +301,15 @@ There are three options to train the model on your synthetic data-enhanced datas
 
 #### Train the model locally on Linux
 
-```
+```shell
 ilab train
 ```
 
 > **NOTE:** ⏳ This step can take **several hours** to complete depending on your computing resources.
 
 `ilab train` outputs a brand-new model that can be served in the `models` directory called `ggml-model-f16.gguf`.
-```
+
+```shell
  (venv) $ ls models
  ggml-merlinite-7b-0302-Q4_K_M.gguf  ggml-model-f16.gguf
 ```
@@ -318,15 +321,17 @@ details.
 #### Train the model locally on an M-series Mac:
 
 To train the model locally on your M-Series Mac is as easy as running:
-```
+
+```shell
 ilab train
 ```
 
 > **Note:** ⏳ This process will take a little while to complete (time can vary based on hardware
 and output of `ilab generate` but on the order of 20 minutes to 1+ hours)
 
-`ilab train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory called `adapters.npz` (in Numpy's compressed array format). For example:
-```
+`ilab train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory called `adapters.npz` (in `NumPy` compressed array format). For example:
+
+```shell
 (venv) $ ls ibm-merlinite-7b-mlx-q
 adapters-010.npz        adapters-050.npz        adapters-090.npz        config.json             tokenizer.model
 adapters-020.npz        adapters-060.npz        adapters-100.npz        model.safetensors       tokenizer_config.json
@@ -350,9 +355,10 @@ The model can also be downloaded and served locally.
 
 * Run the following command to test the model:
 
-  ```shell
+   ```shell
    ilab test
-  ```
+   ```
+
    > **NOTE:** 🍎 This step is only implemented for macOS with M-series chips (for now)
 
    The output from the command will consist of a series of outputs from the model before and after training.
@@ -380,7 +386,7 @@ argument to specify your new model:
    ilab serve --model-path <New model name>
    ```
 
-   Which model shouold you select to serve? After running the `ilab convert` command, a few files and directories are generated. The one you will want to serve will end in `.gguf`
+   Which model should you select to serve? After running the `ilab convert` command, a few files and directories are generated. The one you will want to serve will end in `.gguf`
    and will exist in a directory with the suffix `fused-pt`. For example:
    `ibm-merlinite-7b-mlx-q-fused-pt/ggml-model-Q4_K_M.gguf`
 
@@ -392,7 +398,7 @@ argument to specify your new model:
    ilab chat -m <New model name>
    ```
 
-   If you are interested in optimizing the quality of the model's responses, please see [TROUBLESHOOTING.md](./TROUBLESHOOTING.md#model-fine-tuning-and-response-optimization)
+   If you are interested in optimizing the quality of the model's responses, please see [`TROUBLESHOOTING.md`](./TROUBLESHOOTING.md#model-fine-tuning-and-response-optimization)
 
 ## 🎁 Submit your new knowledge or skills
 
