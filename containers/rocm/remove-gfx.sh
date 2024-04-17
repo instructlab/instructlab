@@ -1,4 +1,5 @@
 #!/bin/sh
+# SPDX-License-Identifier: Apache-2.0
 set -e
 # Remove GPU support files that are not necessary for current GPU arch
 

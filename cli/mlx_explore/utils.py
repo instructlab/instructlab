@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 # Standard
 from pathlib import Path
 from typing import Generator
