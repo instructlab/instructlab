@@ -210,7 +210,7 @@ Because you're serving the model in one terminal window, you will have to create
 
 ```shell
 source venv/bin/activate
-$ilab chat
+ilab chat
 ```
 
 Before you start adding new skills and knowledge to your model, you can check its baseline performance by asking it a question such as `what is the capital of Canada?`.
