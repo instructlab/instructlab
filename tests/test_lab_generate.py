@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 # Standard
 from unittest.mock import patch
 import fnmatch
@@ -16,57 +18,7 @@ from cli.generator.utils import GenerateException
 
 # Local
 from .taxonomy import MockTaxonomy
-
-test_skill_valid_answer = b"""created_by: test-bot
-version: 1
-seed_examples:
-- answer: Yes, it is.
-  question: Is this for a test?
-- answer: Yes I am very sure.
-  question: Are you sure it's for a test?
-- answer: "answer3"
-  question: "question3"
-- answer: "answer4"
-  question: "question4"
-- answer: "answer5"
-  question: "question5"
-task_description: for testing
-"""
-
-
-test_skill_invalid_answer = b"""created_by: test-bot
-seed_examples:
-- answer: Yes
-  question: Is this for a test?
-- answer: "answer2"
-  question: "question2"
-- answer: "answer3"
-  question: "question3"
-- answer: "answer4"
-  question: "question4"
-- answer: "answer5"
-  question: "question5"
-task_description: for testing
-"""
-
-generate_data_return_value = [
-    {
-        "instruction": "3. Tell me a pun about water.",
-        "input": "",
-        "output": "Why did the scarecrow win an award?\nBecause he was outstanding in his field!",
-        "taxonomy_path": "compositional_skills->writing->freeform->jokes->puns-copy->general",
-        "task_description": "to teach a large language model to come up with puns",
-        "document": None,
-    },
-    {
-        "instruction": "4. Give me a pun about books.",
-        "input": "",
-        "output": "Why don't books ever get lost on the shelf?\nBecause they are always on the cover!",
-        "taxonomy_path": "compositional_skills->writing->freeform->jokes->puns-copy->general",
-        "task_description": "to teach a large language model to come up with puns",
-        "document": None,
-    },
-]
+from .testdata import testdata
 
 
 class TestLabGenerate(unittest.TestCase):
@@ -99,6 +51,7 @@ class TestLabGenerate(unittest.TestCase):
                 "Generating dataset failed with the following error: Connection Error",
                 result.output,
             )
+            mt.teardown()
 
     def test_taxonomy_not_found(self):
         runner = CliRunner()
@@ -140,32 +93,35 @@ class TestLabGenerate(unittest.TestCase):
                 "Nothing to generate. Exiting.",
                 result.output,
             )
+            mt.teardown()
 
     def test_new_data_invalid_answer(self):
         runner = CliRunner()
-        with runner.isolated_filesystem():
-            mt = MockTaxonomy(pathlib.Path("taxonomy"))
-            mt.create_untracked(
-                "compositional_skills/tracked/qna.yaml", test_skill_invalid_answer
-            )
-            result = runner.invoke(
-                lab.generate,
-                [
-                    "--taxonomy-base",
-                    "main",
-                    "--taxonomy-path",
-                    mt.root,
-                    "--endpoint-url",
-                    "localhost:8000",
-                ],
-            )
-            self.assertEqual(
-                result.exit_code, 1, "command finished with an unexpected exit code"
-            )
-            self.assertIn(
-                "taxonomy files with errors",
-                result.output,
-            )
+        with open("tests/testdata/skill_invalid_answer.yaml", "rb") as qnafile:
+            with runner.isolated_filesystem():
+                mt = MockTaxonomy(pathlib.Path("taxonomy"))
+                mt.create_untracked(
+                    "compositional_skills/tracked/qna.yaml", qnafile.read()
+                )
+                result = runner.invoke(
+                    lab.generate,
+                    [
+                        "--taxonomy-base",
+                        "main",
+                        "--taxonomy-path",
+                        mt.root,
+                        "--endpoint-url",
+                        "localhost:8000",
+                    ],
+                )
+                self.assertEqual(
+                    result.exit_code, 1, "command finished with an unexpected exit code"
+                )
+                self.assertIn(
+                    "taxonomy files with errors",
+                    result.output,
+                )
+                mt.teardown()
 
     @patch(
         "cli.generator.generate_data.get_instructions_from_model",
@@ -174,19 +130,55 @@ class TestLabGenerate(unittest.TestCase):
         ),
     )
     def test_OpenAI_server_error(self, get_instructions_from_model):
-        with CliRunner().isolated_filesystem():
-            mt = MockTaxonomy(pathlib.Path("taxonomy"))
-            mt.create_untracked(
-                "compositional_skills/tracked/qna.yaml", test_skill_valid_answer
-            )
-            with self.assertRaises(GenerateException) as exc:
+        with open("tests/testdata/skill_valid_answer.yaml", "rb") as qnafile:
+            with CliRunner().isolated_filesystem():
+                mt = MockTaxonomy(pathlib.Path("taxonomy"))
+                mt.create_untracked(
+                    "compositional_skills/tracked/qna.yaml", qnafile.read()
+                )
+                with self.assertRaises(GenerateException) as exc:
+                    generate_data(
+                        logger=logging.getLogger("test_logger"),
+                        api_base="localhost:8000",
+                        api_key="",
+                        model_name="test-model",
+                        num_cpus=10,
+                        num_instructions_to_generate=100,
+                        taxonomy=mt.root,
+                        taxonomy_base="main",
+                        output_dir="generated",
+                        prompt_file_path="prompt.txt",
+                        rouge_threshold=0.9,
+                        console_output=True,
+                        chunk_word_count=1000,
+                        server_ctx_size=4096,
+                        tls_insecure=False,
+                    )
+                self.assertIn(
+                    "There was a problem connecting to the OpenAI server",
+                    f"{exc.exception}",
+                )
+                get_instructions_from_model.assert_called_once()
+                mt.teardown()
+
+    @patch(
+        "cli.generator.generate_data.get_instructions_from_model",
+        return_value=(testdata.generate_data_return_value, 0),
+    )
+    def test_generate_no_error(self, get_instructions_from_model):
+        with open("tests/testdata/skill_valid_answer.yaml", "rb") as qnafile:
+            with CliRunner().isolated_filesystem():
+                mt = MockTaxonomy(pathlib.Path("taxonomy"))
+                mt.create_untracked(
+                    "compositional_skills/tracked/qna.yaml", qnafile.read()
+                )
                 generate_data(
                     logger=logging.getLogger("test_logger"),
                     api_base="localhost:8000",
                     api_key="",
-                    model_name="test-model",
+                    model_name="my-model",
                     num_cpus=10,
-                    num_instructions_to_generate=100,
+                    num_instructions_to_generate=1,
                     taxonomy=mt.root,
                     taxonomy_base="main",
                     output_dir="generated",
@@ -197,21 +189,31 @@ class TestLabGenerate(unittest.TestCase):
                     server_ctx_size=4096,
                     tls_insecure=False,
                 )
-            self.assertIn(
-                "There was a problem connecting to the OpenAI server",
-                f"{exc.exception}",
-            )
-            get_instructions_from_model.assert_called_once()
+                get_instructions_from_model.assert_called_once()
+                expected_files = [
+                    "generated_my-model*.json",
+                    "train_my-model*.jsonl",
+                    "test_my-model*.jsonl",
+                ]
+                for f in os.listdir("generated"):
+                    self.assertTrue(
+                        any(fnmatch.fnmatch(f, pattern) for pattern in expected_files)
+                    )
+                mt.teardown()
 
     @patch(
         "cli.generator.generate_data.get_instructions_from_model",
-        return_value=(generate_data_return_value, 0),
+        return_value=(testdata.generate_data_return_value, 0),
     )
-    def test_no_error(self, get_instructions_from_model):
-        with CliRunner().isolated_filesystem():
+    @patch(
+        "cli.generator.generate_data.read_taxonomy",
+        return_value=testdata.knowledge_seed_instruction,
+    )
+    def test_knowledge_docs_no_error(self, read_taxonomy, get_instructions_from_model):
+        with open("tests/testdata/knowledge_valid.yaml", "rb") as qnafile:
             mt = MockTaxonomy(pathlib.Path("taxonomy"))
             mt.create_untracked(
-                "compositional_skills/tracked/qna.yaml", test_skill_valid_answer
+                "knowledge/technical-manual/test/qna.yaml", qnafile.read()
             )
             generate_data(
                 logger=logging.getLogger("test_logger"),
@@ -231,6 +233,7 @@ class TestLabGenerate(unittest.TestCase):
                 tls_insecure=False,
             )
             get_instructions_from_model.assert_called_once()
+            read_taxonomy.assert_called_once()
             expected_files = [
                 "generated_my-model*.json",
                 "train_my-model*.jsonl",
@@ -240,3 +243,4 @@ class TestLabGenerate(unittest.TestCase):
                 self.assertTrue(
                     any(fnmatch.fnmatch(f, pattern) for pattern in expected_files)
                 )
+            mt.teardown()

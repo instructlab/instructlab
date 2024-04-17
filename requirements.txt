@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 click>=8.1.7,<9.0.0
 click-didyoumean>=0.3.0,<0.4.0
 datasets>=2.18.0,<3.0.0
@@ -29,5 +31,7 @@ tqdm>=4.66.2,<5.0.0
 transformers>=4.30.0,<=4.38.2
 trl>=0.7.11,<0.8.0
 wandb>=0.16.4,<0.17.0
-yamllint
 langchain-text-splitters
+# the below library should NOT be imported into any python files
+# it is for CLI usage ONLY
+yamllint>=1.35.1,<1.36.0

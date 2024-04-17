@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 # pylint: disable=too-many-lines
 
 # Standard
@@ -224,7 +226,7 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
     """
     # pylint: disable=C0415
     # Local
-    from .generator.generate_data import get_taxonomy_diff, read_taxonomy
+    from .utils import get_taxonomy_diff, read_taxonomy
 
     if not taxonomy_base:
         taxonomy_base = ctx.obj.config.generate.taxonomy_base
@@ -387,9 +389,8 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
 @click.option(
     "--yaml-rules",
     type=click.Path(),
-    default=config.DEFAULT_YAML_RULES,
-    show_default=True,
-    help="Rules file for YAML linting",
+    default=None,
+    help="Custom rules file for YAML linting.",
 )
 @click.option(
     "--server-ctx-size",
