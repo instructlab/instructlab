@@ -179,6 +179,16 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
    `ilab` will use the default configuration file unless otherwise specified. You can override this behavior with the `--config` parameter for any `ilab` command.
 
+   The taxonomy repository uses [submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules) to incorporate the [taxonomy schema](https://github.com/instructlab/schema.git).
+   When the `ilab init` command clones the taxonomy repository, it automatically handles the submodules.
+   If you clone the taxonomy repository yourself, be sure to use the [`--recurse-submodules`](https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---recurse-submodulesltpathspecgt) option on the `git clone` command and the `git pull` command when pulling updates from the remote repository.
+   For example:
+
+   ```shell
+   git clone --recurse-submodules https://github.com/instructlab/taxonomy.git
+   git pull --recurse-submodules
+   ```
+
 ### 📥 Download the model
 
 - Run the `ilab download`command.
