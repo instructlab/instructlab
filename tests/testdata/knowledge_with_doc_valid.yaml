@@ -1,0 +1,19 @@
+# SPDX-License-Identifier: Apache-2.0
+
+created_by: test-bot
+domain: test-domain
+seed_examples:
+  - question: What is this knowledge about?
+    answer: It's a document about testing
+  - answer: "answer2"
+    question: "question2"
+  - answer: "answer3"
+    question: "question3"
+  - answer: "answer4"
+    question: "question4"
+  - answer: "answer5"
+    question: "question5"
+task_description: For knowledge tests
+document:
+  content: |
+    This knowledge document is about testing self-contained knowledge text.
