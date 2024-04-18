@@ -28,16 +28,23 @@ def main(argv=None):
     # -1: offload all layers to GPU
     n_gpu_layers = -1 if args.device == "gpu" else 0
     print(f"n_gpu_layers: {n_gpu_layers} ({args.device})")
+    # prints detected devices to stderr
+    llama_cpp.llama_backend_init()
 
     if args.model is None:
         # First Party
         from instructlab.config import read_config
 
-        cfg = read_config()
+        try:
+            cfg = read_config()
+        except Exception as e:
+            print(f"ERROR: Unable to test model: {e}")
+            sys.exit(2)
+
         args.model = cfg.serve.model_path
 
     if not os.path.isfile(args.model):
-        print(f"Model file '{args.model}' is missing.")
+        print(f"ERROR: Model file '{args.model}' is missing.")
         print("Run 'lab init' and 'lab download'.")
         sys.exit(2)
 

@@ -1,4 +1,4 @@
-/.git
+# setuptools-scm needs .git in container
 /.github
 
 /CONTRIBUTING

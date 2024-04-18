@@ -23,8 +23,8 @@ issues. (MacOS ships Python 3.9, so this step shouldn't be necessary.) Here's
 how to do that on Fedora with `dnf`:
 
   ```shell
-  # Install python3.11
-  sudo dnf install python3.11
+  # Install Python 3.11
+  sudo dnf install python3.11 python3.11-devel
 
   # Remove old venv from instructlab/ directory (if it exists) 
   rm -r venv
@@ -123,8 +123,13 @@ your current user session.
 sudo usermod -a -G render,video $LOGNAME
 ```
 
-`torch` does not yet ship with AMD ROCm support, so you'll need to install a
-version compiled with support.
+#### ROCm container
+
+The most convient approach is the [ROCm toolbox container](../containers/rocm/README.md). The container comes with PyTorch, llama-cpp, and other dependencies pre-installed and ready-to-use.
+
+#### Manual installation
+
+`torch` does not yet ship with AMD ROCm support, so you'll need to install a version compiled with support.
 
 Visit [Pytorch's "Get Started Locally" page](https://pytorch.org/get-started/locally/)
 and use the matrix installer tool to find the ROCm package. `Stable, Linux, Pip,
@@ -253,11 +258,9 @@ You've enabled GPU acceleration. You should also notice that the `ilab generate`
 step will take significantly less time.  You can use tools like `nvtop` and
 `radeontop` to monitor GPU usage.
 
-The `torch` and `llama_cpp` packages provide functions to debug GPU support.
-Here is an example from an AMD ROCm system with a single GPU, ROCm build of
-PyTorch and llama-cpp with HIPBLAS.  Don't be confused by the fact that PyTorch
-uses `torch.cuda` API for ROCm or llama-cpp reports HIPBLAS as CUBLAS. The
-packages treat ROCm like a variant of CUDA.
+Use the scripts `containers/bin/debug-pytorch` and `containers/bin/debug-llama` to verify that PyTorch and llama-cpp are able to use your GPU.
+
+The `torch` and `llama_cpp` packages provide functions to debug GPU support.  Here is an example from an AMD ROCm system with a single GPU, ROCm build of PyTorch and llama-cpp with HIPBLAS.  Don't be confused by the fact that PyTorch uses `torch.cuda` API for ROCm or llama-cpp reports HIPBLAS as CUBLAS.  The packages treat ROCm like a variant of CUDA.
 
 ```python
 >>> import torch

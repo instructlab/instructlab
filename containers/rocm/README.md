@@ -4,7 +4,7 @@ The ROCm container file is designed for AMD GPUs with RDNA3 architecture (`gfx11
 
 The container file creates a [toolbox](https://github.com/containers/toolbox) container for [`toolbox(1)`](https://www.mankier.com/1/toolbox) command line tool. A toolbox containers has seamless access to the entire system including user's home directory, networking, hardware, SSH agent, and more.
 
-The container has all Python dependencies installed in a virtual env. The virtual env is already activated when you enter the container. However the InstructLab CLI `ilab` is **not** installed. 
+The container has all Python dependencies installed in a virtual env. The virtual env is already activated when you enter the container.
 
 ## Quick start
 
@@ -12,11 +12,12 @@ The container has all Python dependencies installed in a virtual env. The virtua
    home directory (e.g. `~/path/to/instructlab`)
 2. add your account to `render` and `video` group: `sudo usermod -a -G render,video $LOGNAME`
 3. install build dependency for this container: `sudo dnf install toolbox podman make rocminfo`
-4. build the container: `make rocm`
+4. build the container: `make rocm` or `make rocm-gfx1100`
 5. create a toolbox `make rocm-toolbox`
 6. enter toolbox `toolbox enter instructlab`. The container has your
    home directory mounted.
-7. install ilab cli with `pip install -e ~/path/to/instructlab/instructlab/`
+
+To update InstructLab CLI to latest version: `pip install -e ~/path/to/instructlab/instructlab`
 
 `ilab generate` and `ilab chat` use the GPU automatically. `ilab train` needs
 more powerful and recent GPU and therefore does not use GPU by default. To
@@ -63,9 +64,9 @@ If your card is not listed or unsupported, try the closest smaller value, e.g. f
 Build the container with additional build arguments:
 
 ```shell
-podman build \
-    --build-arg AMDGPU_ARCH="gfx1030" \
-    --build-arg HSA_OVERRIDE_GFX_VERSION="10.3.0" \
-    -f container/rocm/Containerfile \
-    -t localhost/instructlab:rocm-gf1030
+make rocm-gfx1100 BUILD_ARGS=
 ```
+
+## Known issues
+
+AMD Instinct MI210 with ISA `amdgcn-amd-amdhsa--gfx90a:sramecc+:xnack-` is not supported by Fedora build `rocblas-6.0.2-3`. As of late April 2024, Fedora has `gfx90a:xnack+` and `gfx90a:xnack-` but lacks `gfx90a:sramecc+:xnack-`.
