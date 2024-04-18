@@ -204,6 +204,11 @@ def get_documents(
     repo_url = source.get("repo")
     commit_hash = source.get("commit")
     file_patterns = source.get("patterns")
+
+    # Raise an error if non-markdown files are found.
+    if not all(file.endswith(".md") for file in file_patterns):
+        raise ValueError("Error: Only markdown (.md) files are allowed in patterns.")
+
     with tempfile.TemporaryDirectory() as temp_dir:
         try:
             repo = git_clone_checkout(
