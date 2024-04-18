@@ -815,7 +815,7 @@ TORCH_DEVICE = TorchDeviceParam()
     show_default=True,
     default=False,
     # TODO: hidden option until llamacpp_convert_to_gguf.py supports
-    # quantized models, https://github.com/instruct-lab/cli/issues/579
+    # quantized models, https://github.com/instructlab/instructlab/issues/579
     hidden=True,
     help=(
         "Use BitsAndBytes for 4-bit quantization "

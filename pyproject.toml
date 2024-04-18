@@ -26,8 +26,8 @@ dynamic = ["dependencies", "version"]
 version_file = "cli/_version.py"
 
 [project.urls]
-Homepage = "https://github.com/instruct-lab/cli"
-Issues = "https://github.com/instruct-lab/cli/issues"
+Homepage = "https://github.com/instructlab/instructlab"
+Issues = "https://github.com/instructlab/instructlab/issues"
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}

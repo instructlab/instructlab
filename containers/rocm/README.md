@@ -16,7 +16,7 @@ The container has all Python dependencies installed in a virtual env. The virtua
 5. create a toolbox `make rocm-toolbox`
 6. enter toolbox `toolbox enter instructlab`. The container has your
    home directory mounted.
-7. install ilab cli with `pip install -e ~/path/to/instruct-lab/cli/`
+7. install ilab cli with `pip install -e ~/path/to/instructlab/instructlab/`
 
 `ilab generate` and `ilab chat` use the GPU automatically. `ilab train` needs
 more powerful and recent GPU and therefore does not use GPU by default. To

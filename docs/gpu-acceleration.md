@@ -35,8 +35,8 @@ how to do that on Fedora with `dnf`:
 
   # Install lab (assumes a locally-cloned repo)
   # You can clone the repo if you haven't already done so (either one)
-  # gh repo clone instruct-lab/cli
-  # git clone git@github.com:instruct-lab/cli.git
+  # gh repo clone instructlab/instructlab
+  # git clone git@github.com:instructlab/instructlab.git
   pip3 install cli/.
   ```
 
@@ -108,7 +108,7 @@ pip3 install cli/.
 ```
 
 Proceed to the `Initialize` section of
-the [CLI Readme](https://github.com/instruct-lab/cli?tab=readme-ov-file#%EF%B8%8F-initialize-lab),
+the [CLI Readme](https://github.com/instructlab/instructlab?tab=readme-ov-file#%EF%B8%8F-initialize-lab),
 and use the `nvtop` utility to validate GPU utilization when interacting
 with `ilab chat` or `ilab generate`
 
