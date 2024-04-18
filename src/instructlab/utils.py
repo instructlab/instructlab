@@ -196,11 +196,16 @@ def get_documents(
     Retrieve the content of files from a Git repository.
 
     Args:
-        source (dict): Source info containing repository URL, commit hash, and list of file patterns.
+        source (dict): Source info containing document content or 
+        repository URL, commit hash, and list of file patterns.
 
     Returns:
          List[str]: List of document contents.
     """ ""
+    content = source.get('content')
+    if content and isinstance(content, str):
+        return [content]
+    
     repo_url = source.get("repo")
     commit_hash = source.get("commit")
     file_patterns = source.get("patterns")

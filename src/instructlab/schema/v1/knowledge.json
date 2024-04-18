@@ -56,13 +56,30 @@
         "document": {
             "description": "The knowledge documents.",
             "type": "object",
-            "required": [
-                "repo",
-                "commit",
-                "patterns"
+            "oneOf": [
+                {
+                    "required": [
+                        "content"
+                    ]
+                },
+                {
+                    "required": [
+                        "repo",
+                        "commit",
+                        "patterns"
+                    ]
+                }
             ],
             "unevaluatedProperties": false,
             "properties": {
+                "content": {
+                    "description": "Document content.",
+                    "type": "string",
+                    "minLength": 1,
+                    "examples": [
+                        "This is a text content."
+                    ]
+                },
                 "repo": {
                     "description": "The URL to a Git repository holding the knowledge documents.",
                     "type": "string",

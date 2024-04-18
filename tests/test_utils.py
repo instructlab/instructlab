@@ -59,3 +59,19 @@ class TestUtils(unittest.TestCase):
             )
             git_clone_checkout.assert_called_once()
             self.assertEqual(len(documents), 2)
+        
+    @patch(
+        "instructlab.utils.git_clone_checkout",
+        return_value=Mock(spec=git.Repo, working_dir="tests/testdata/temp_repo"),
+    )
+    def test_get_document_with_doc(self, git_clone_checkout):
+        with open(
+            "tests/testdata/knowledge_with_doc_valid.yaml", "r", encoding="utf-8"
+        ) as qnafile:
+            documents = utils.get_documents(
+                source=yaml.safe_load(qnafile).get("document"),
+                skip_checkout=True,
+                logger=logging.getLogger("_test_"),
+            )
+            git_clone_checkout.assert_not_called()
+            self.assertEqual(len(documents), 1)
