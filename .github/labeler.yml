@@ -2,15 +2,15 @@
 
 documentation:
   - changed-files:
-    - any-glob-to-any-file:
-      - CODE_OF_CONDUCT.md
-      - README.md
-      - TROUBLESHOOTING.md
-      - CONTRIBUTING/**/*
-      - docs/**/*
+      - any-glob-to-any-file:
+          - CODE_OF_CONDUCT.md
+          - README.md
+          - TROUBLESHOOTING.md
+          - CONTRIBUTING/**/*
+          - docs/**/*
 
 testing:
   - changed-files:
-    - any-glob-to-any-file:
-      - tests/**/*
-      - scripts/functional-tests.sh
+      - any-glob-to-any-file:
+          - tests/**/*
+          - scripts/functional-tests.sh
