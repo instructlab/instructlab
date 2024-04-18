@@ -1,12 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
 
-name: labeler
+name: "Pull Request Labeler"
 
 on:
 - pull_request_target
 
 jobs:
-  label:
+  labeler:
+    permissions:
+      contents: read
+      pull-requests: write
     runs-on: ubuntu-latest
     steps:
     - uses: actions/labeler@v5
