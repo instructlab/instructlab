@@ -18,5 +18,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
       - name: Spellcheck
         uses: rojopolis/spellcheck-github-actions@0.35.0
