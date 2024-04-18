@@ -72,11 +72,11 @@ The full process is described graphically in the [workflow diagram](./docs/workf
      sudo dnf install gcc-c++ gcc make pip python3 python3-devel python3-GitPython
      ```
 
-2. Create a new directory called `instruct-lab` to store the files the `ilab` CLI needs when running and `cd` into the directory by running the following command:
+2. Create a new directory called `instructlab` to store the files the `ilab` CLI needs when running and `cd` into the directory by running the following command:
 
    ```shell
-   mkdir instruct-lab
-   cd instruct-lab
+   mkdir instructlab
+   cd instructlab
    ```
 
    > **NOTE:** The following steps in this document use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. However, if you use another tool such as [pyenv](https://github.com/pyenv/pyenv) or [Conda Miniforge](https://github.com/conda-forge/miniforge) for managing Python environments on your machine continue to use that tool instead. Otherwise, you may have issues with packages that are installed but not found in `venv`.
@@ -147,7 +147,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
 2. When prompted by the interface, press **Enter** to add a new default `config.yaml` file.
 
-3. When prompted, clone the `git@github.com:instruct-lab/taxonomy.git` repository into the current directory by typing **y**.
+3. When prompted, clone the `git@github.com:instructlab/taxonomy.git` repository into the current directory by typing **y**.
 
    **Optional**: If you want to point to an existing local clone of the `taxonomy` repository, you can pass the path interactively or alternatively with the `--taxonomy-path` flag.
 
@@ -158,8 +158,8 @@ The full process is described graphically in the [workflow diagram](./docs/workf
    Welcome to InstructLab CLI. This guide will help you set up your environment.
    Please provide the following values to initiate the environment [press Enter for defaults]:
    Path to taxonomy repo [taxonomy]: <ENTER>
-   `taxonomy` seems to not exists or is empty. Should I clone git@github.com:instruct-lab/taxonomy.git for you? [y/N]: y
-   Cloning git@github.com:instruct-lab/taxonomy.git...
+   `taxonomy` seems to not exists or is empty. Should I clone git@github.com:instructlab/taxonomy.git for you? [y/N]: y
+   Cloning git@github.com:instructlab/taxonomy.git...
    Generating `config.yaml` in the current directory...
    Initialization completed successfully, you're ready to start using `lab`. Enjoy!
    ```
@@ -203,7 +203,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
    Press CTRL+C to shut down the server.
    ```
 
-   > **NOTE:** If multiple `ilab` clients try to connect to the same ilab server at the same time, the 1st will connect to the server while the others will start their own temporary server. This will require additional resources on the host machine.
+   > **NOTE:** If multiple `ilab` clients try to connect to the same InstructLab server at the same time, the 1st will connect to the server while the others will start their own temporary server. This will require additional resources on the host machine.
 
 ### 📣 Chat with the model (Optional)
 
@@ -269,7 +269,7 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
    ```shell
    (venv) $ ilab generate
    INFO 2024-02-29 19:09:48,804 lab.py:250 Generating model 'ggml-merlinite-7b-0302-Q4_K_M' using 10 CPUs,
-   taxonomy: '/home/username/instruct-lab/taxonomy' and seed 'seed_tasks.json'
+   taxonomy: '/home/username/instructlab/taxonomy' and seed 'seed_tasks.json'
 
    0%|##########| 0/100 Cannot find prompt.txt. Using default prompt.
    98%|##########| 98/100 INFO 2024-02-29 20:49:27,582 generate_data.py:428 Generation took 5978.78s

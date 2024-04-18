@@ -9,8 +9,8 @@ import click
 import pytest
 
 # First Party
-from cli import lab
-from cli.utils import is_macos_with_m_chip
+from instructlab import lab
+from instructlab.utils import is_macos_with_m_chip
 
 
 class TestConfig(unittest.TestCase):

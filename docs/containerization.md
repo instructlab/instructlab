@@ -1,8 +1,8 @@
-# Putting ilab` in a Container AND making it go fast
+# Putting `ilab` in a Container AND making it go fast
 
 Containerization of `ilab` allows for portability and ease of setup. With this,
 users can now run lab on OpenShift to test the speed of `ilab train` and `generate`
-using dedicated GPUs. This guide shows you how to put the `ilab`CLI, all of its
+using dedicated GPUs. This guide shows you how to put the `ilab` CLI, all of its
 dependencies, and your GPU into a container for an isolated and easily reproducible
 experience.
 
@@ -14,7 +14,7 @@ experience.
 FROM nvcr.io/nvidia/cuda:12.3.2-devel-ubi9
 RUN dnf install -y python3.11 && dnf install -y openssh && dnf install -y git && dnf install -y python3-pip && dnf install -y make automake gcc gcc-c++
 RUN ssh-keyscan github.com > ~/.ssh/known_hosts
-WORKDIR /instruct-lab
+WORKDIR /instructlab
 RUN python3.11 -m ensurepip
 RUN dnf install -y gcc
 RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm

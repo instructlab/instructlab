@@ -10,14 +10,14 @@ import git
 import yaml
 
 # First Party
-from cli import utils
+from instructlab import utils
 
 # Local
 from .testdata import testdata
 
 
 class TestUtils(unittest.TestCase):
-    """Test collection in cli.utils."""
+    """Test collection in instructlab.utils."""
 
     def test_chunk_docs_wc_exeeds_ctx_window(self):
         with self.assertRaises(ValueError) as exc:
@@ -33,6 +33,7 @@ class TestUtils(unittest.TestCase):
 
     def test_chunk_docs_chunk_overlap_error(self):
         with self.assertRaises(ValueError) as exc:
+
             utils.chunk_document(
                 documents=testdata.documents,
                 chunk_word_count=5,
@@ -44,7 +45,7 @@ class TestUtils(unittest.TestCase):
         )
 
     @patch(
-        "cli.utils.git_clone_checkout",
+        "instructlab.utils.git_clone_checkout",
         return_value=Mock(spec=git.Repo, working_dir="tests/testdata/temp_repo"),
     )
     def test_get_document(self, git_clone_checkout):

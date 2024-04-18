@@ -31,7 +31,7 @@ def main(argv=None):
 
     if args.model is None:
         # First Party
-        from cli.config import read_config
+        from instructlab.config import read_config
 
         cfg = read_config()
         args.model = cfg.serve.model_path

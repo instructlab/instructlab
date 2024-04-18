@@ -7,7 +7,7 @@ import unittest
 import pytest
 
 # First Party
-from cli import config
+from instructlab import config
 
 
 class TestConfig(unittest.TestCase):

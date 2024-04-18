@@ -19,7 +19,7 @@ from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 import torch
 
 # First Party
-from cli.chat.chat import CONTEXTS
+from instructlab.chat.chat import CONTEXTS
 
 # TODO CPU: Look into using these extensions
 # import intel_extension_for_pytorch as ipex
@@ -92,7 +92,7 @@ def report_cuda_device(args_device, min_vram=0):
             "host memory, or move some layers to CPU."
         )
         print(
-            "  Training does not use the local ilab serve. Consider "
+            "  Training does not use the local InstructLab serve. Consider "
             "stopping the server to free up about 5 GiB of GPU memory."
         )
 

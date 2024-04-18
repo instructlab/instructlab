@@ -12,7 +12,7 @@ DEFAULT_API_KEY = "no_api_key"
 DEFAULT_CONFIG = "config.yaml"
 DEFAULT_MODEL = "merlinite-7b-Q4_K_M"
 DEFAULT_MODEL_PATH = f"models/{DEFAULT_MODEL}.gguf"
-DEFAULT_TAXONOMY_REPO = "git@github.com:instruct-lab/taxonomy.git"
+DEFAULT_TAXONOMY_REPO = "git@github.com:instructlab/taxonomy.git"
 DEFAULT_TAXONOMY_PATH = "taxonomy"
 DEFAULT_TAXONOMY_BASE = "origin/main"
 DEFAULT_YAML_RULES = "yaml_rules.yaml"
@@ -98,7 +98,7 @@ class _serve(BaseModel):
 
 
 class Config(BaseModel):
-    """Configuration for the ilab command."""
+    """Configuration for the InstructLab CLI."""
 
     # required fields
     chat: _chat

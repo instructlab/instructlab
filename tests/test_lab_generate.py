@@ -12,9 +12,9 @@ import unittest
 from click.testing import CliRunner
 
 # First Party
-from cli import lab
-from cli.generator.generate_data import generate_data
-from cli.generator.utils import GenerateException
+from instructlab import lab
+from instructlab.generator.generate_data import generate_data
+from instructlab.generator.utils import GenerateException
 
 # Local
 from .taxonomy import MockTaxonomy
@@ -25,7 +25,7 @@ class TestLabGenerate(unittest.TestCase):
     """Test collection for `ilab generate` command."""
 
     @patch(
-        "cli.generator.generate_data.generate_data",
+        "instructlab.generator.generate_data.generate_data",
         side_effect=GenerateException("Connection Error"),
     )
     def test_generate_exception_error(self, generate_data_mock):
@@ -124,7 +124,7 @@ class TestLabGenerate(unittest.TestCase):
                 mt.teardown()
 
     @patch(
-        "cli.generator.generate_data.get_instructions_from_model",
+        "instructlab.generator.generate_data.get_instructions_from_model",
         side_effect=GenerateException(
             "There was a problem connecting to the OpenAI server."
         ),
@@ -162,7 +162,7 @@ class TestLabGenerate(unittest.TestCase):
                 mt.teardown()
 
     @patch(
-        "cli.generator.generate_data.get_instructions_from_model",
+        "instructlab.generator.generate_data.get_instructions_from_model",
         return_value=(testdata.generate_data_return_value, 0),
     )
     def test_generate_no_error(self, get_instructions_from_model):
@@ -202,11 +202,11 @@ class TestLabGenerate(unittest.TestCase):
                 mt.teardown()
 
     @patch(
-        "cli.generator.generate_data.get_instructions_from_model",
+        "instructlab.generator.generate_data.get_instructions_from_model",
         return_value=(testdata.generate_data_return_value, 0),
     )
     @patch(
-        "cli.generator.generate_data.read_taxonomy",
+        "instructlab.generator.generate_data.read_taxonomy",
         return_value=testdata.knowledge_seed_instruction,
     )
     def test_knowledge_docs_no_error(self, read_taxonomy, get_instructions_from_model):

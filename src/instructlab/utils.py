@@ -338,7 +338,7 @@ def validate_yaml(
 
     errors = 0
     version = get_version(contents)
-    schemas_path = resources.files("cli").joinpath(f"schema/v{version}")
+    schemas_path = resources.files("instructlab").joinpath(f"schema/v{version}")
 
     def retrieve(uri: URI) -> Resource:
         path = schemas_path.joinpath(uri)

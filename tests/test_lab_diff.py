@@ -9,7 +9,7 @@ from click.testing import CliRunner
 import pytest
 
 # First Party
-from cli import lab
+from instructlab import lab
 
 TAXONOMY_BASE = "main"
 
