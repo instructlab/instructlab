@@ -149,7 +149,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
 2. When prompted by the interface, press **Enter** to add a new default `config.yaml` file.
 
-3. When prompted, clone the `git@github.com:instructlab/taxonomy.git` repository into the current directory by typing **y**.
+3. When prompted, clone the `https://github.com/instructlab/taxonomy.git` repository into the current directory by typing **y**.
 
    **Optional**: If you want to point to an existing local clone of the `taxonomy` repository, you can pass the path interactively or alternatively with the `--taxonomy-path` flag.
 
@@ -160,8 +160,8 @@ The full process is described graphically in the [workflow diagram](./docs/workf
    Welcome to InstructLab CLI. This guide will help you set up your environment.
    Please provide the following values to initiate the environment [press Enter for defaults]:
    Path to taxonomy repo [taxonomy]: <ENTER>
-   `taxonomy` seems to not exists or is empty. Should I clone git@github.com:instructlab/taxonomy.git for you? [y/N]: y
-   Cloning git@github.com:instructlab/taxonomy.git...
+   `taxonomy` seems to not exists or is empty. Should I clone https://github.com/instructlab/taxonomy.git for you? [y/N]: y
+   Cloning https://github.com/instructlab/taxonomy.git...
    Generating `config.yaml` in the current directory...
    Initialization completed successfully, you're ready to start using `lab`. Enjoy!
    ```
