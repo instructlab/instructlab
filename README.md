@@ -71,7 +71,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
      sudo dnf install gcc-c++ gcc make pip python3 python3-devel python3-GitPython
      ```
 
-2. Create a new directory called `instruct-lab` to store the files the `ilab` CLI needs when running and CD into the directory by running the following command:
+2. Create a new directory called `instruct-lab` to store the files the `ilab` CLI needs when running and `cd` into the directory by running the following command:
 
    ```shell
    mkdir instruct-lab
@@ -210,7 +210,7 @@ Because you're serving the model in one terminal window, you will have to create
 
 ```shell
 source venv/bin/activate
-$ilab chat
+ilab chat
 ```
 
 Before you start adding new skills and knowledge to your model, you can check its baseline performance by asking it a question such as `what is the capital of Canada?`.
