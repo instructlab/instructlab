@@ -1,15 +1,15 @@
-# instruct-lab toolbox container for AMD ROCm GPUs
+# InstructLab toolbox container for AMD ROCm GPUs
 
 The ROCm container file is designed for AMD GPUs with RDNA3 architecture (`gfx1100`). The container can be build for RDNA2 (`gfx1030`) and older GPUs, too. Please refer to [AMD's system requirements](https://rocm.docs.amd.com/projects/install-on-linux/en/develop/reference/system-requirements.html) for a list of officially supported cards. ROCm is known to work on more consumer GPUs.
 
 The container file creates a [toolbox](https://github.com/containers/toolbox) container for [`toolbox(1)`](https://www.mankier.com/1/toolbox) command line tool. A toolbox containers has seamless access to the entire system including user's home directory, networking, hardware, SSH agent, and more.
 
-The container has all Python dependencies installed in a virtual env. The virtual env is already activated when you enter the container. However the ilab `cli` is **not** installed. 
+The container has all Python dependencies installed in a virtual env. The virtual env is already activated when you enter the container. However the InstructLab CLI `ilab` is **not** installed. 
 
 ## Quick start
 
-1. git clone the `cli` and `taxonomy` project into a common folder in your
-   home directory (e.g. `~/path/to/instruct-lab`)
+1. git clone the `instructlab` and `taxonomy` project into a common folder in your
+   home directory (e.g. `~/path/to/instructlab`)
 2. add your account to `render` and `video` group: `sudo usermod -a -G render,video $LOGNAME`
 3. install build dependency for this container: `sudo dnf install toolbox podman make rocminfo`
 4. build the container: `make rocm`

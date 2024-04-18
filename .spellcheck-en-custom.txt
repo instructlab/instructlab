@@ -33,6 +33,7 @@ env
 gpu
 ilab
 llms
+instructlab
 lora
 mlx
 orchestrator

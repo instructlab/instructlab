@@ -80,7 +80,7 @@ Install project requirements with:
 pip install -r requirements.txt
 ```
 
-If you want to test the `cli` binary, you can install `cli` and all dependencies with:
+If you want to test the `ilab` binary, you can install `ilab` and all dependencies with:
 
 ```shell
 pip install .

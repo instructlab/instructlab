@@ -26,7 +26,7 @@ how to do that on Fedora with `dnf`:
   # Install python3.11
   sudo dnf install python3.11
 
-  # Remove old venv from instruct-lab/ directory (if it exists) 
+  # Remove old venv from instructlab/ directory (if it exists) 
   rm -r venv
 
   # Create and activate new Python 3.11 venv
@@ -37,7 +37,7 @@ how to do that on Fedora with `dnf`:
   # You can clone the repo if you haven't already done so (either one)
   # gh repo clone instructlab/instructlab
   # git clone git@github.com:instructlab/instructlab.git
-  pip3 install cli/.
+  pip3 install ./instructlab/
   ```
 
 With Python 3.11 installed, it's time to replace some packages!
@@ -103,8 +103,8 @@ export PATH=$PATH:$CUDA_HOME/bin
 # Recompile llama-cpp-python using CUDA
 CMAKE_ARGS="-DLLAMA_CUBLAS=on" pip3 install --force-reinstall --no-cache-dir llama-cpp-python
 
-# Recompile ilab 
-pip3 install cli/.
+# Re-install InstructLab
+pip3 install instructlab/.
 ```
 
 Proceed to the `Initialize` section of
@@ -324,8 +324,7 @@ Incompatible devices:
 ilab train --device cuda
 ```
 
-```shell
-python3 cli/train/linux_train.py --train-file generated/train_merlinite-7b-Q4_K_M_2024-03-11T16_40_55.jsonl --test-file generated/test_merlinite-7b-Q4_K_M_2024-03-11T16_40_55.jsonl --num-epochs 1 --device cuda
+```
 LINUX_TRAIN.PY: PyTorch device is 'cuda:0'
   NVidia CUDA version: n/a
   AMD ROCm HIP version: 5.7.31921-d1770ee1b

@@ -68,7 +68,6 @@ jobs:
         run: |
           tox \
             -x testenv:fmt.system_site_packages=True \
-            -x testenv:fmt.skip_install=True \
             -e fmt
 
       - name: Run linting
@@ -77,5 +76,4 @@ jobs:
           echo "::add-matcher::.github/workflows/matchers/pylint.json"
           tox \
             -x testenv:lint.system_site_packages=True \
-            -x testenv:lint.skip_install=True \
             -e lint

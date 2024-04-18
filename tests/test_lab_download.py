@@ -9,7 +9,7 @@ from click.testing import CliRunner
 from huggingface_hub.utils import HfHubHTTPError
 
 # First Party
-from cli import lab
+from instructlab import lab
 
 
 class TestLabDownload(unittest.TestCase):
@@ -17,7 +17,7 @@ class TestLabDownload(unittest.TestCase):
     # of your module, so you should use `my_module.Y`` to patch.
     # When using `import X`, you should use `X.Y` to patch.
     # https://docs.python.org/3/library/unittest.mock.html#where-to-patch?
-    @patch("cli.lab.hf_hub_download")
+    @patch("instructlab.lab.hf_hub_download")
     def test_download(self, mock_hf_hub_download):
         runner = CliRunner()
         with runner.isolated_filesystem():
@@ -28,7 +28,7 @@ class TestLabDownload(unittest.TestCase):
             mock_hf_hub_download.assert_called_once()
 
     @patch(
-        "cli.lab.hf_hub_download",
+        "instructlab.lab.hf_hub_download",
         MagicMock(side_effect=HfHubHTTPError("Could not reach hugging face server")),
     )
     def test_download_error(self):

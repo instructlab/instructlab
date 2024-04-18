@@ -93,8 +93,8 @@ FROM runtime as final
 COPY --from=pip-install /opt/rocm-venv/lib/python3.12/site-packages /opt/rocm-venv/lib/python3.12/site-packages
 COPY --from=pip-install /opt/rocm-venv/bin /opt/rocm-venv/bin
 LABEL com.github.containers.toolbox="true" \
-      com.github.instruct-lab.cli.gpu="rocm-${AMDGPU_ARCH}" \
+      com.github.instructlab.instructlab.gpu="rocm-${AMDGPU_ARCH}" \
       name="instructlab-rocm-base-gfx${GFX_VERSION}" \
       usage="This image is meant to be used with the toolbox(1) command" \
-      summary="PyTorch, llama.cpp, and instruct-lab dependencies for AMD ROCm GPU ${AMDGPU_ARCH}" \
+      summary="PyTorch, llama.cpp, and instructlab dependencies for AMD ROCm GPU ${AMDGPU_ARCH}" \
       maintainer="Christian Heimes <cheimes@redhat.com>"

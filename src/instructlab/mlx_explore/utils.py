@@ -28,7 +28,7 @@ import mlx.nn as nn
 import transformers
 
 # First Party
-from cli.utils import macos_requirement
+from instructlab.utils import macos_requirement
 
 
 def fetch_tokenizer_from_hub(hf_path: str, local_dir: str):

@@ -1,14 +1,14 @@
 # Training
 
 You're now at the training phase. So far, you have handcrafted some prompts and
-responses, and used `ilab generate` to synthesize those prompt/response pairs 
+responses, and used `ilab generate` to synthesize those prompt/response pairs
 into a new data set.
 
-If you have a Mac Silicon (M1 or newer), we _strongly_ recommend using `ilab 
-train` locally, and only proceed here if you hit issues. 
+If you have a Mac Silicon (M1 or newer), we _strongly_ recommend using
+`ilab train` locally, and only proceed here if you hit issues.
 
 Also, there is active work being done to support Linux, so if you have 
-access to a Linux machine with GPUs, that might also be a better option. 
+access to a Linux machine with GPUs, that might also be a better option.
 
 Next, you'll get to fine-tune a LoRA (Low-Rank Adaptation of Large Language 
 Models) using a Jupyter notebook and (preferably) Google Colab platform or if

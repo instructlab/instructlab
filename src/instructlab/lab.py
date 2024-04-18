@@ -72,13 +72,13 @@ def configure(ctx, param, filename):
     is_eager=True,
     help="Path to a configuration file.",
 )
-@click.version_option(package_name="cli")
+@click.version_option(package_name="instructlab")
 @click.pass_context
 # pylint: disable=redefined-outer-name
 def cli(ctx, config):
     """CLI for interacting with InstructLab.
 
-    If this is your first time running ilab, it's best to start with `ilab init` to create the environment.
+    If this is your first time running InstructLab, it's best to start with `ilab init` to create the environment.
     """
 
 

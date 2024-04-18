@@ -5,42 +5,59 @@ requires = ["setuptools>=64", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cli"
+name = "instructlab"
 authors = [
     { name="TBD", email="jon@example.com" },
 ]
 description = "CLI for interacting with InstructLab"
 readme = "README.md"
+license = {text = "Apache-2.0 AND MIT"}
 requires-python = ">=3.9"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
     "License :: OSI Approved :: Apache Software License",
-    "Operating System :: MacOS",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: MacOS :: MacOS X",
+    "Operating System :: POSIX :: Linux",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
     "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: Implementation :: CPython",
 ]
 dynamic = ["dependencies", "version"]
 
-[tool.setuptools_scm]
-version_file = "cli/_version.py"
+[project.scripts]
+# defines ilab executable
+ilab = "instructlab.lab:cli"
 
 [project.urls]
-Homepage = "https://github.com/instructlab/instructlab"
-Issues = "https://github.com/instructlab/instructlab/issues"
+homepage = "https://instructlab.io"
+source = "https://github.com/instructlab/instructlab"
+issues = "https://github.com/instructlab/instructlab/issues"
+
+[tool.setuptools_scm]
+version_file = "src/instructlab/_version.py"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
 
-[project.scripts]
-# defines lab executable
-ilab = "cli.lab:cli"
-
 [tool.setuptools.packages.find]
-# defines where to look for sub-packages
-where = [""]
-include = ["cli", "cli.chat", "cli.generator", "cli.train", "cli.train.lora_mlx", "cli.train.lora_mlx.models", "cli.llamacpp", "cli.mlx_explore", "cli.schema.v1"]
+where = ["src"]
+include = ["instructlab", "instructlab.chat", "instructlab.generator", "instructlab.train", "instructlab.train.lora_mlx", "instructlab.train.lora_mlx.models", "instructlab.llamacpp", "instructlab.mlx_explore", "instructlab.schema.v1"]
 
 [tool.setuptools.package-data]
-"*" = ["quantize"]
-"cli.schema.v1" = ["*.json"]
+"instructlab.llamacpp" = ["quantize"]
+"instructlab.schema.v1" = ["*.json"]
+
+[tool.check-wheel-contents]
+# W002 - Wheel contains duplicate files:
+#  instructlab/mlx_explore/LICENSE
+#  instructlab/train/lora_mlx/LICENSE
+ignore = ["W002"]

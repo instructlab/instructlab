@@ -505,9 +505,9 @@ def chat_cli(
         prompt=not qq,
         vertical_overflow=("visible" if config.visible_overflow else "ellipsis"),
         loaded=loaded,
-        greedy_mode=greedy_mode
-        if greedy_mode
-        else config.greedy_mode,  # The CLI flag can only be used to enable
+        greedy_mode=(
+            greedy_mode if greedy_mode else config.greedy_mode
+        ),  # The CLI flag can only be used to enable
     )
 
     if not qq and session is None:
