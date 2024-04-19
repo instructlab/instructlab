@@ -62,6 +62,8 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
 ### 🧰 Installing `ilab`
 
+#### Fedora Linux
+
 1. If you are on Fedora Linux, install C++, Python 3.9+, and other necessary tools by running the following command:
 
     ```shell
@@ -92,13 +94,47 @@ The full process is described graphically in the [workflow diagram](./docs/workf
    ```
    > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection.
 
-4. From your `venv` environment, verify `ilab` is installed correctly, by running the `ilab` command.
+#### Red Hat Enterprise Linux 9
+
+1. If you are on Red Hat Enterprise Linux 9, enable the Code Ready subscription channel
+
+   ```shell
+   sudo subscription-manager repos --enable "codeready-builder-for-rhel-9-$(arch)-rpms"
+   ```
+
+2. install C++, Python 3.9+, and other necessary tools by running the following command:
+
+   ```shell
+   sudo dnf install gcc-toolset-13-gcc gcc-toolset-13-gcc-c++ make pip python3 python3-devel python3-GitPython
+   ```
+
+3. Create a new directory called `instruct-lab` to store the files the `ilab` CLI needs when running and CD into the directory by running the following command:
+
+   ```shell
+   mkdir instruct-lab
+   cd instruct-lab
+   ```
+
+   > **NOTE:** The following steps in this document use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. However, if you use another tool such as [pyenv](https://github.com/pyenv/pyenv) or [Conda Miniforge](https://github.com/conda-forge/miniforge) for managing Python environments on your machine continue to use that tool instead. Otherwise, you may have issues with packages that are installed but not found in `venv`.
+
+4. Install and activate your `venv` environment by running the following command:
+
+   ```shell
+   python3 -m venv venv
+   source venv/bin/activate
+   CC="/opt/rh/gcc-toolset-13/root/usr/bin/gcc" CXX="/opt/rh/gcc-toolset-13/root/usr/bin/g++" pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
+   ```
+   > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection.
+
+#### Verify Installation
+
+1. From your `venv` environment, verify `ilab` is installed correctly, by running the `ilab` command.
 
    ```shell
    ilab
    ```
 
-   #### Example output:
+   ##### Example output:
    ```
    (venv) $ ilab
    Usage: ilab [OPTIONS] COMMAND [ARGS]...
