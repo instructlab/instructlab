@@ -46,7 +46,7 @@ def openai_completion(
     tls_client_passwd,
     prompts: Union[str, Sequence[str], Sequence[dict[str, str]], dict[str, str]],
     decoding_args: OpenAIDecodingArguments,
-    model_name="ggml-merlinite-7b-0302-Q4_K_M",
+    model_name="ggml-merlinite-7b-lab-Q4_K_M",
     batch_size=1,
     max_instances=sys.maxsize,
     max_batches=sys.maxsize,

@@ -8,7 +8,7 @@ import yaml
 
 DEFAULT_API_KEY = "no_api_key"
 DEFAULT_CONFIG = "config.yaml"
-DEFAULT_MODEL = "merlinite-7b-Q4_K_M"
+DEFAULT_MODEL = "merlinite-7b-lab-Q4_K_M"
 DEFAULT_MODEL_PATH = f"models/{DEFAULT_MODEL}.gguf"
 DEFAULT_TAXONOMY_REPO = "git@github.com:instruct-lab/taxonomy.git"
 DEFAULT_TAXONOMY_PATH = "taxonomy"
