@@ -11,6 +11,7 @@ COMMON_DEPS = \
 	$(NULL)
 
 CUDA_CONTAINERFILE = $(CURDIR)/containers/cuda/Containerfile
+CUDA_VERSION ?= 12.4.1
 CUDA_DEPS = \
 	$(CUDA_CONTAINERFILE) \
 	$(COMMON_DEPS) \
@@ -57,6 +58,7 @@ images: ## Get the current controller, set the path, and build the Containerfile
 .PHONY: cuda
 cuda: $(CUDA_DEPS)  ## Build container for NVidia CUDA
 	$(CENGINE) build $(BUILD_ARGS) \
+		--build-arg CUDA_VERSION="${CUDA_VERSION}" \
 		-t $(CONTAINER_PREFIX):$@ \
 		-f $(CUDA_CONTAINERFILE) \
 		.

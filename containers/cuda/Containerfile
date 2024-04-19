@@ -1,22 +1,80 @@
 # SPDX-License-Identifier: Apache-2.0
 
-FROM nvcr.io/nvidia/cuda:12.3.2-devel-ubi9
-RUN dnf install -y python3.11 git python3-pip make automake gcc gcc-c++
-WORKDIR /instructlab
-RUN python3.11 -m ensurepip
-RUN dnf install -y gcc
-RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
-RUN dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo && dnf repolist && dnf config-manager --set-enabled cuda-rhel9-x86_64 && dnf config-manager --set-enabled cuda && dnf config-manager --set-enabled epel && dnf update -y
-RUN dnf install -y libcudnn8 nvidia-driver-NVML nvidia-driver-cuda-libs
-RUN python3.11 -m pip install --force-reinstall nvidia-cuda-nvcc-cu12
+ARG CUDA_VERSION="12.4.1"
+
+FROM nvcr.io/nvidia/cuda:${CUDA_VERSION}-devel-ubi9 as builder
+
+ARG PYTHON=python3.11
+ENV PYTHON="${PYTHON}"
+
+ENV VIRTUAL_ENV="/opt/app-root"
+ENV PS1="(venv) ${PS1}"
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
+
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PIP_CACHE_DIR="${XDG_CACHE_HOME}/pip"
+ENV PIP_NO_COMPILE=1
+ENV NO_CACHE_DIR=
+
+ENV XDG_CACHE_HOME="${VIRTUAL_ENV}/.cache"
+
+WORKDIR /opt/app-root
+
+RUN dnf update -y && \
+    dnf install -y python3.11 python3.11-devel python3.11-pip make gcc gcc-c++ git-core && \
+    dnf clean all && \
+    python3.11 -m venv ${VIRTUAL_ENV}
+
+COPY --chown=0:0 . /tmp/instructlab
+
 RUN export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64" \
-    && export CUDA_HOME=/usr/local/cuda \
-    && export PATH="/usr/local/cuda/bin:$PATH" \
-    && export XLA_TARGET=cuda120 \
-    && export XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda
+           CUDA_HOME=/usr/local/cuda \
+           XLA_TARGET=cuda120 \
+           XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda && \
+    cp /tmp/instructlab/requirements.txt ${VIRTUAL_ENV}/requirements.txt && \
+    sed 's/\[.*\]//' ${VIRTUAL_ENV}/requirements.txt > ${VIRTUAL_ENV}/constraints.txt && \
+    CMAKE_ARGS="-DLLAMA_CUBLAS=on" FORCE_CMAKE=1 ${VIRTUAL_ENV}/bin/pip install -c ${VIRTUAL_ENV}/constraints.txt llama-cpp-python && \
+    ${VIRTUAL_ENV}/bin/pip install wheel setuptools-scm && \
+    ${VIRTUAL_ENV}/bin/pip install -r ${VIRTUAL_ENV}/requirements.txt && \
+    ${VIRTUAL_ENV}/bin/pip install --no-deps /tmp/instructlab && \
+    find ${VIRTUAL_ENV} -name __pycache__ | xargs rm -rf
 
-ARG GIT_TAG=stable
-RUN CMAKE_ARGS="-DLLAMA_CUBLAS=on" CFLAGS="-mno-avx" python3.11 -m pip install -r https://raw.githubusercontent.com/instructlab/instructlab/${GIT_TAG}/requirements.txt --force-reinstall --no-cache-dir llama-cpp-python
-RUN python3.11 -m pip install git+https://github.com/instructlab/instructlab.git@${GIT_TAG}
+FROM nvcr.io/nvidia/cuda:${CUDA_VERSION}-runtime-ubi9
 
-CMD ["/bin/bash"]
+ARG PYTHON=python3.11
+ENV PYTHON="${PYTHON}"
+
+ENV VIRTUAL_ENV="/opt/app-root"
+ENV PS1="(venv) ${PS1}"
+ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
+
+ENV PIP_DISABLE_PIP_VERSION_CHECK=1
+ENV PIP_CACHE_DIR="${XDG_CACHE_HOME}/pip"
+ENV NO_CACHE_DIR=off
+
+ENV XDG_CACHE_HOME="${VIRTUAL_ENV}/.cache"
+
+RUN export CUDA_DASHED_VERSION=$(echo ${CUDA_VERSION} | awk -F '.' '{ print $1"-"$2; }') && \
+    dnf upgrade -y && \
+    dnf install -y \
+        python3.11 python3.11-devel python3.11-pip \
+        git-core gcc \
+        cuda-cupti-${CUDA_DASHED_VERSION} && \
+    dnf clean all
+
+RUN mkdir -p -m 0777 ${PIP_CACHE_DIR} ${XDG_CACHE_HOME}/huggingface
+
+RUN python3.11 -m venv ${VIRTUAL_ENV}
+
+COPY --chown=1001:0 containers/sitecustomize.py ${VIRTUAL_ENV}/lib/${PYTHON}/site-packages
+COPY --from=builder ${VIRTUAL_ENV}/lib/${PYTHON}/site-packages ${VIRTUAL_ENV}/lib/${PYTHON}/site-packages
+COPY --from=builder ${VIRTUAL_ENV}/bin ${VIRTUAL_ENV}/bin
+
+ENV CUDA_HOME="/usr/local/cuda"
+ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/compat:/usr/local/cuda/extras/CUPTI/lib64"
+ENV PATH="$PATH:$CUDA_HOME/bin"
+
+USER 1001
+WORKDIR /opt/app-root/ilab
+VOLUME ["/opt/app-root/.cache/huggingface"]
+ENTRYPOINT ["/opt/app-root/bin/ilab"]
