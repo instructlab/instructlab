@@ -39,6 +39,8 @@ cleanup() {
     # revert port change from test_bind_port()
     sed -i.bak 's/9999/8000/g' config.yaml
     rm -f config.yaml.bak
+    # revert model name change from test_model_print()
+    sed -i "s/baz/merlinite-7b-lab-Q4_K_M/g" config.yaml
     set -e
 }
 
@@ -312,6 +314,42 @@ wait_for_server(){
     fi
 }
 
+test_model_print(){
+    ilab serve &
+    PID_SERVE=$!
+    mv models/merlinite-7b-lab-Q4_K_M.gguf models/foo.gguf
+
+    # validate that we print the model from the CLI
+    expect -c '
+        set timeout 30
+        spawn ilab chat -m bar
+        expect {
+            "Welcome to Chat CLI w/ BAR" { exit 0 }
+            timeout { exit 1 }
+        }
+    '
+
+    # validate that we print the model from the config
+    expect -c '
+        sed -i "s/merlinite-7b-lab-Q4_K_M/baz/g" config.yaml
+        spawn ilab chat
+        expect {
+            "Welcome to Chat CLI w/ BAZ" { exit 0 }
+            timeout { exit 1 }
+        }
+        sed -i "s/baz/merlinite-7b-lab-Q4_K_M/g" config.yaml
+    '
+
+    # validate that we print the model from the server since it is different from the config
+    expect -c '
+        spawn ilab chat
+        expect {
+            "Welcome to Chat CLI w/ MODELS/FOO.GGUF" { exit 0 }
+            timeout { exit 1 }
+        }
+    '
+}
+
 ########
 # MAIN #
 ########
@@ -334,5 +372,7 @@ cleanup
 test_temp_server_ignore_internal_messages
 cleanup
 test_server_welcome_message
+cleanup
+test_model_print
 
 exit 0
