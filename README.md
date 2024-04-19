@@ -175,13 +175,13 @@ The full process is described graphically in the [workflow diagram](./docs/workf
   ilab download
   ```
 
-  `ilab download` will download a pre-trained [model](https://huggingface.co/ibm/) (~4.4G) from HuggingFace and store it in a `models` directory:
+  `ilab download` will download a pre-trained [model](https://huggingface.co/instructlab/) (~4.4G) from HuggingFace and store it in a `models` directory:
 
   ```shell
   (venv) $ ilab download
-  Downloading model from ibm/merlinite-7b-GGUF@main to models...
+  Downloading model from instructlab/merlinite-7b-lab-GGUF@main to models...
   (venv) $ ls models
-  merlinite-7b-Q4_K_M.gguf
+  merlinite-7b-lab-Q4_K_M.gguf
    ```
 
   > **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
@@ -199,7 +199,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
    ```shell
    (venv) $ ilab serve
-   INFO 2024-03-02 02:21:11,352 lab.py:201 Using model 'models/ggml-merlinite-7b-0302-Q4_K_M.gguf' with -1 gpu-layers and 4096 max context size.
+   INFO 2024-03-02 02:21:11,352 lab.py:201 Using model 'models/ggml-merlinite-7b-lab-Q4_K_M.gguf' with -1 gpu-layers and 4096 max context size.
    Starting server process
    After application startup complete see http://127.0.0.1:8000/docs for API.
    Press CTRL+C to shut down the server.
@@ -223,10 +223,10 @@ Before you start adding new skills and knowledge to your model, you can check it
 ```
 (venv) $ ilab chat
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────── system ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ Welcome to Chat CLI w/ GGML-MERLINITE-7B-0302-Q4_K_M (type /h for help)                                                                                                                                                                    │
+│ Welcome to Chat CLI w/ GGML-MERLINITE-7B-lab-Q4_K_M (type /h for help)                                                                                                                                                                    │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
->>> what is the capital of Canada                                                                                                                                                                                                 [S][default]
-╭────────────────────────────────────────────────────────────────────────────────────────────────────── ggml-merlinite-7b-0302-Q4_K_M ───────────────────────────────────────────────────────────────────────────────────────────────────────╮
+>>b> what is the capital of Canada                                                                                                                                                                                                 [S][default]
+╭────────────────────────────────────────────────────────────────────────────────────────────────────── ggml-merlinite-7b-lab-Q4_K_M ───────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ The capital city of Canada is Ottawa. It is located in the province of Ontario, on the southern banks of the Ottawa River in the eastern portion of southern Ontario. The city serves as the political center for Canada, as it is home to │
 │ Parliament Hill, which houses the House of Commons, Senate, Supreme Court, and Cabinet of Canada. Ottawa has a rich history and cultural significance, making it an essential part of Canada's identity.                                   │
 ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── elapsed 12.008 seconds ─╯
@@ -270,7 +270,7 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
 
    ```shell
    (venv) $ ilab generate
-   INFO 2024-02-29 19:09:48,804 lab.py:250 Generating model 'ggml-merlinite-7b-0302-Q4_K_M' using 10 CPUs,
+   INFO 2024-02-29 19:09:48,804 lab.py:250 Generating model 'ggml-merlinite-7b-lab-Q4_K_M' using 10 CPUs,
    taxonomy: '/home/username/instructlab/taxonomy' and seed 'seed_tasks.json'
 
    0%|##########| 0/100 Cannot find prompt.txt. Using default prompt.
@@ -282,8 +282,8 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
 2. Verify the files have been created by running the `ls generated` command.
    ```shell
    (venv) $ ls generated/
-   'generated_ggml-merlinite-7b-0226-Q4_K_M_2024-02-29T19 09 48.json'   'train_ggml-merlinite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
-   'test_ggml-merlinite-7b-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
+   'generated_ggml-merlinite-7b-lab-0226-Q4_K_M_2024-02-29T19 09 48.json'   'train_ggml-merlinite-7b-lab-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
+   'test_ggml-merlinite-7b-lab-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
    ```
 
    **Optional**: It is also possible to run the generate step against a different model via an
@@ -311,7 +311,7 @@ ilab train
 `ilab train` outputs a brand-new model that can be served in the `models` directory called `ggml-model-f16.gguf`.
 ```
  (venv) $ ls models
- ggml-merlinite-7b-0302-Q4_K_M.gguf  ggml-model-f16.gguf
+ ggml-merlinite-7b-lab-Q4_K_M.gguf  ggml-model-f16.gguf
 ```
 
 > **NOTE:** `ilab train` ships with experimental support for GPU acceleration with Nvidia CUDA
@@ -330,7 +330,7 @@ and output of `ilab generate` but on the order of 20 minutes to 1+ hours)
 
 `ilab train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory called `adapters.npz` (in Numpy's compressed array format). For example:
 ```
-(venv) $ ls ibm-merlinite-7b-mlx-q
+(venv) $ ls instructlab-merlinite-7b-lab-mlx-q
 adapters-010.npz        adapters-050.npz        adapters-090.npz        config.json             tokenizer.model
 adapters-020.npz        adapters-060.npz        adapters-100.npz        model.safetensors       tokenizer_config.json
 adapters-030.npz        adapters-070.npz        adapters.npz            special_tokens_map.json
@@ -385,7 +385,7 @@ argument to specify your new model:
 
    Which model shouold you select to serve? After running the `ilab convert` command, a few files and directories are generated. The one you will want to serve will end in `.gguf`
    and will exist in a directory with the suffix `fused-pt`. For example:
-   `ibm-merlinite-7b-mlx-q-fused-pt/ggml-model-Q4_K_M.gguf`
+   `instructlab-merlinite-7b-lab-mlx-q-fused-pt/ggml-model-Q4_K_M.gguf`
 
 ## 📣 Chat with the new model (not optional this time)
 

@@ -653,7 +653,7 @@ def chat(
 @cli.command()
 @click.option(
     "--repository",
-    default="ibm/merlinite-7b-GGUF",  # TODO: add to config.yaml
+    default="instructlab/merlinite-7b-lab-GGUF",  # TODO: add to config.yaml
     show_default=True,
     help="Hugging Face repository of the model to download.",
 )
@@ -776,7 +776,7 @@ TORCH_DEVICE = TorchDeviceParam()
 @click.option(
     "--model-dir",
     help="Base directory where model is stored.",
-    default="ibm/merlinite-7b",
+    default="instructlab/merlinite-7b-lab",
     show_default=True,
 )
 @click.option("--iters", help="Number of iterations to train LoRA.", default=100)
@@ -1038,7 +1038,7 @@ def train(
 @click.option(
     "--model-dir",
     help="Base directory where model is stored.",
-    default="ibm-merlinite-7b-mlx-q",
+    default="instructlab-merlinite-7b-lab-mlx-q",
     show_default=True,
 )
 @click.option(
@@ -1097,7 +1097,7 @@ def test(data_dir, model_dir, adapter_file):
 @click.option(
     "--model-dir",
     help="Base directory where model is stored.",
-    default="ibm-merlinite-7b-mlx-q",
+    default="instructlab-merlinite-7b-lab-mlx-q",
     show_default=True,
 )
 @click.option("--adapter-file", help="LoRA adapter to fuse.", default=None)
