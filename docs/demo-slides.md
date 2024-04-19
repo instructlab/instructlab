@@ -114,7 +114,7 @@ ilab train --iters 100
 Check output
 ```fish
 ls
-ls ibm-merlinite-7b-mlx-q
+ls instructlab-merlinite-7b-lab-mlx-q
 ```
 
 ---
@@ -132,12 +132,12 @@ ilab test
 
 Convert updated model to GGUF
 ```fish
-ilab convert --model-dir ibm-merlinite-7b-mlx-q
+ilab convert --model-dir instructlab-merlinite-7b-lab-mlx-q
 ```
 <!-- pause -->
 Serve updated model and chat
 ```fish
-ilab serve --model-path ibm-merlinite-7b-mlx-q-fused-pt/*-Q4_K_M.gguf &
+ilab serve --model-path instructlab-merlinite-7b-lab-mlx-q-fused-pt/*-Q4_K_M.gguf &
 ilab chat
 ```
 <!-- pause -->
