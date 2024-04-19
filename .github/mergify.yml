@@ -1,0 +1,42 @@
+pull_request_rules:
+- name: auto-merge
+  description: automatic merge for main with > 1 approved reviews, all requested reviews have given feedback, not held, and CI is successful
+  conditions:
+    - "#approved-reviews-by>=1"
+    - "#review-requested=0"
+    - "#changes-requested-reviews-by=0"
+    - base=main
+    - label!=hold
+    - check-success=DCO
+
+    # If files are changed in .github/, the actionlint check must pass
+    - or:
+      - and:
+        # regex should match the one in .github/workflows/actionlint.yml
+        - files~=.github/.*$
+        - check-success=actionlint
+      - -files~=.github/.*$
+
+    # lint and test must pass if files change that would trigger this job
+    - or:
+      - and:
+        - check-success=lint
+        - check-success=test
+        - or:
+          # see .github/workflows/lint.yml and test.yml
+          - files~=.*\.py$
+          - files~=pyproject.toml$
+          - files~=requirements.*\.txt$
+          - files~=tox.ini$
+          - files~=scripts/.*\.sh$
+      - and:
+        - -files~=.github/.*$
+        - -files~=.*\.py$
+        - -files~=pyproject.toml$
+        - -files~=requirements.*\.txt$
+        - -files~=tox.ini$
+        - -files~=scripts/.*\.sh$
+
+  actions:
+    merge:
+      method: merge
