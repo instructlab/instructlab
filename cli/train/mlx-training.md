@@ -5,7 +5,7 @@ mkdir workspace-mlx
 cd workspace-mlx
 python3 -m venv venv
 source venv/bin/activate
-pip install "git+ssh://git@github.com/instruct-lab/cli.git@mlx"
+pip install "git+ssh://git@github.com/instructlab/cli.git@mlx"
 ilab init
 
 # downloads initial model 
@@ -32,7 +32,7 @@ ilab convert
 # CTRL-C to kill the previous ilab serve
 
 # serves up the newly trained, quantized model
-ilab serve --model-path ibm-merlinite-7b-mlx-q-fused-pt/ggml-model-Q4_K_M.gguf
+ilab serve --model-path merlinite-7b-lab-mlx-q-fused-pt/ggml-model-Q4_K_M.gguf
 
 # session 2
 ilab chat
