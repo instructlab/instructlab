@@ -50,6 +50,14 @@ pull_request_rules:
         - -files~='.*\.md'
         - -files='.markdownlint-cli2.yaml'
 
+    - or:
+      - and:
+        - or:
+          - files~='.*\.sh$'
+        - check-success=shellcheck-lint
+      - and:
+        - -files~='.*\.sh$'
+
   actions:
     merge:
       method: merge
