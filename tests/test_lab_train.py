@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 import os
 import platform
 import sys
@@ -9,6 +9,7 @@ import unittest
 
 # Third Party
 from click.testing import CliRunner
+import pytest
 
 # First Party
 from instructlab import lab
@@ -62,22 +63,13 @@ def is_arm_mac():
     return sys.platform == "darwin" and platform.machine() == "arm64"
 
 
-def mock_mlx(f):
-    """mlx is not available on Linux"""
-    mlx_modules = {
-        name: MagicMock()
-        for name in ["mlx", "mlx.core", "mlx.nn", "mlx.optimizers", "mlx.utils"]
-    }
-    return patch.dict(sys.modules, mlx_modules)(f)
-
-
+@pytest.mark.usefixtures("mock_mlx_package")
 class TestLabTrain(unittest.TestCase):
     """Test collection for `ilab train` command."""
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    @mock_mlx
     @patch("instructlab.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch("instructlab.mlx_explore.gguf_convert_to_mlx.load")
     @patch("instructlab.train.lora_mlx.make_data.make_data")
@@ -125,13 +117,11 @@ class TestLabTrain(unittest.TestCase):
             self.assertEqual(len(make_data_mock.call_args[1]), 1)
             is_macos_with_m_chip_mock.assert_called_once()
 
-    @mock_mlx
     @patch("instructlab.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch("instructlab.mlx_explore.gguf_convert_to_mlx.load")
     @patch("instructlab.train.lora_mlx.make_data.make_data")
     @patch("instructlab.train.lora_mlx.convert.convert_between_mlx_and_pytorch")
     @patch("instructlab.train.lora_mlx.lora.load_and_train")
-    @mock_mlx
     def test_skip_quantize(
         self,
         load_and_train_mock,
@@ -192,7 +182,6 @@ class TestLabTrain(unittest.TestCase):
                 )
                 self.assertEqual(result.exit_code, 1)
 
-    @mock_mlx
     @patch("instructlab.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch(
         "instructlab.train.lora_mlx.make_data.make_data",
@@ -216,7 +205,6 @@ class TestLabTrain(unittest.TestCase):
             self.assertEqual(result.exit_code, 1)
             is_macos_with_m_chip_mock.assert_called_once()
 
-    @mock_mlx
     @patch("instructlab.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch("instructlab.mlx_explore.gguf_convert_to_mlx.load")
     @patch("instructlab.train.lora_mlx.make_data.make_data")
@@ -243,7 +231,6 @@ class TestLabTrain(unittest.TestCase):
             make_data_mock.assert_not_called()
             is_macos_with_m_chip_mock.assert_called_once()
 
-    @mock_mlx
     @patch("instructlab.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch("instructlab.mlx_explore.utils.fetch_tokenizer_from_hub")
     @patch("instructlab.mlx_explore.gguf_convert_to_mlx.load")
@@ -287,7 +274,6 @@ class TestLabTrain(unittest.TestCase):
             self.assertEqual(len(fetch_tokenizer_from_hub_mock.call_args[0]), 2)
             is_macos_with_m_chip_mock.assert_called_once()
 
-    @mock_mlx
     @patch("instructlab.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch("instructlab.mlx_explore.utils.fetch_tokenizer_from_hub")
     @patch("instructlab.mlx_explore.gguf_convert_to_mlx.load")
@@ -368,7 +354,6 @@ class TestLabTrain(unittest.TestCase):
             is_macos_with_m_chip_mock.assert_called_once()
             self.assertFalse(os.path.isfile(LINUX_GGUF_FILE))
 
-    @mock_mlx
     @patch("instructlab.lab.utils.is_macos_with_m_chip", return_value=False)
     @patch("instructlab.train.linux_train.linux_train")
     @patch("instructlab.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf")
