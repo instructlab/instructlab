@@ -21,6 +21,8 @@ done
 PID_SERVE=
 PID_CHAT=
 
+chat_shot="ilab chat -qq"
+
 cleanup() {
     set +e
     if [ "${1:-0}" -ne 0 ]; then
@@ -99,14 +101,12 @@ test_ctx_size(){
     sleep 5
 
     # Should succeed
-    ilab chat -qq "Hello"
+    ${chat_shot} "Hello"
 
     # the error is expected so let's ignore it to not fall into the trap
     set +e
     # now chat with the server and exceed the context size
-    ilab chat &> "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" <<EOF &
-hello, I am a ci message that should not finish because I am too long for the context window, tell me about your day please, I love to hear all about it, tell me about the time you could only take 55 tokens
-EOF
+    ${chat_shot} "hello, I am a ci message that should not finish because I am too long for the context window, tell me about your day please, I love to hear all about it, tell me about the time you could only take 55 tokens" > "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" &
     PID_CHAT=$!
     wait_for_pid_to_disappear $PID_CHAT
     # reset the PID_CHAT variable so that the cleanup function doesn't try to kill it
