@@ -375,7 +375,7 @@ class TestLabTrain:
             assert linux_train_mock.call_args[1]["num_epochs"] == 1
             assert linux_train_mock.call_args[1]["device"] is not None
             assert not linux_train_mock.call_args[1]["four_bit_quant"]
-            assert len(linux_train_mock.call_args[1]) == 7
+            assert len(linux_train_mock.call_args[1]) == 8
             is_macos_with_m_chip_mock.assert_called_once()
             assert not os.path.isfile(LINUX_GGUF_FILE)
 
