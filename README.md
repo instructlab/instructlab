@@ -122,7 +122,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
    ```shell
    python3 -m venv venv
    source venv/bin/activate
-   CC="/opt/rh/gcc-toolset-13/root/usr/bin/gcc" CXX="/opt/rh/gcc-toolset-13/root/usr/bin/g++" pip install git+ssh://git@github.com/instruct-lab/cli.git@stable
+   CC="/opt/rh/gcc-toolset-13/root/usr/bin/gcc" CXX="/opt/rh/gcc-toolset-13/root/usr/bin/g++" pip install git+ssh://git@github.com/instructlab/instructlab.git@stable
    ```
    > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection.
 
