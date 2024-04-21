@@ -114,6 +114,10 @@ def linux_train(
     if device.type == "cuda":
         # estimated by watching nvtop / radeontop during training
         min_vram = 11 if four_bit_quant else 17
+
+        # convert from gibibytes to bytes, torch.cuda.mem_get_info() returns bytes
+        min_vram = min_vram * 1024**3
+
         report_cuda_device(device, min_vram)
 
     print("LINUX_TRAIN.PY: LOADING DATASETS")
