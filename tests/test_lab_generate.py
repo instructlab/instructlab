@@ -211,36 +211,37 @@ class TestLabGenerate(unittest.TestCase):
     )
     def test_knowledge_docs_no_error(self, read_taxonomy, get_instructions_from_model):
         with open("tests/testdata/knowledge_valid.yaml", "rb") as qnafile:
-            mt = MockTaxonomy(pathlib.Path("taxonomy"))
-            mt.create_untracked(
-                "knowledge/technical-manual/test/qna.yaml", qnafile.read()
-            )
-            generate_data(
-                logger=logging.getLogger("test_logger"),
-                api_base="localhost:8000",
-                api_key="",
-                model_name="my-model",
-                num_cpus=10,
-                num_instructions_to_generate=1,
-                taxonomy=mt.root,
-                taxonomy_base="main",
-                output_dir="generated",
-                prompt_file_path="prompt.txt",
-                rouge_threshold=0.9,
-                console_output=True,
-                chunk_word_count=1000,
-                server_ctx_size=4096,
-                tls_insecure=False,
-            )
-            get_instructions_from_model.assert_called_once()
-            read_taxonomy.assert_called_once()
-            expected_files = [
-                "generated_my-model*.json",
-                "train_my-model*.jsonl",
-                "test_my-model*.jsonl",
-            ]
-            for f in os.listdir("generated"):
-                self.assertTrue(
-                    any(fnmatch.fnmatch(f, pattern) for pattern in expected_files)
+            with CliRunner().isolated_filesystem():
+                mt = MockTaxonomy(pathlib.Path("taxonomy"))
+                mt.create_untracked(
+                    "knowledge/technical-manual/test/qna.yaml", qnafile.read()
                 )
-            mt.teardown()
+                generate_data(
+                    logger=logging.getLogger("test_logger"),
+                    api_base="localhost:8000",
+                    api_key="",
+                    model_name="my-model",
+                    num_cpus=10,
+                    num_instructions_to_generate=1,
+                    taxonomy=mt.root,
+                    taxonomy_base="main",
+                    output_dir="generated",
+                    prompt_file_path="prompt.txt",
+                    rouge_threshold=0.9,
+                    console_output=True,
+                    chunk_word_count=1000,
+                    server_ctx_size=4096,
+                    tls_insecure=False,
+                )
+                get_instructions_from_model.assert_called_once()
+                read_taxonomy.assert_called_once()
+                expected_files = [
+                    "generated_my-model*.json",
+                    "train_my-model*.jsonl",
+                    "test_my-model*.jsonl",
+                ]
+                for f in os.listdir("generated"):
+                    self.assertTrue(
+                        any(fnmatch.fnmatch(f, pattern) for pattern in expected_files)
+                    )
+                mt.teardown()
