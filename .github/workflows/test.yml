@@ -74,7 +74,7 @@ jobs:
         run: |
           tox \
             -x testenv:unitcov.system_site_packages=True \
-            -e unitcov
+            -e py3-unitcov
 
       - name: Install the expect package
         run: |
@@ -84,4 +84,4 @@ jobs:
         run: |
           tox \
             -x testenv:functional.system_site_packages=True \
-            -e functional
+            -e py3-functional

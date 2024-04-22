@@ -118,7 +118,7 @@ toolbox-rm:  ## Stop and remove toolbox container
 
 .PHONY: tests
 tests: ## Run tox -e unit against code
-	tox -e unit
+	tox -e py3-unit
 
 .PHONY: verify
 verify: ## Run tox -e fmt,lint,spellcheck against code
