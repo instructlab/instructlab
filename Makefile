@@ -121,5 +121,9 @@ tests: ## Run tox -e unit against code
 	tox -e unit
 
 .PHONY: verify
-verify: ## Run tox -e fmt, lint against code
-	tox p -e fmt,lint
+verify: ## Run tox -e fmt,lint,spellcheck against code
+	tox p -e fmt,lint,spellcheck
+
+.PHONY: spellcheck-sort
+spellcheck-sort: .spellcheck-en-custom.txt
+	sort -d -f -o $< $<
