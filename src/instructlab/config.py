@@ -24,6 +24,8 @@ DEFAULT_NUM_INSTRUCTIONS = 100
 DEFAULT_PROMPT_FILE = "prompt.txt"
 DEFAULT_GENERATED_FILES_OUTPUT_DIR = "generated"
 DEFAULT_CONNECTION_TIMEOUT = httpx.Timeout(timeout=30.0)
+# use spawn start method, fork is not thread-safe
+DEFAULT_MULTIPROCESSING_START_METHOD = "spawn"
 
 
 class ConfigException(Exception):
