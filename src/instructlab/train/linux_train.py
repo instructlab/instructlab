@@ -196,9 +196,6 @@ def linux_train(
         )
         return tokenizer.batch_decode([o[:-1] for o in outputs])[0]
 
-    model_generate(
-        "In excruciating detail, explain to me the nuances of who runs Barter Town."
-    )
     assistant_old_lst = [
         model_generate(d["user"]).split(response_template.strip())[-1].strip()
         for d in test_dataset
