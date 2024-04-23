@@ -7,6 +7,7 @@ pull_request_rules:
     - "#changes-requested-reviews-by=0"
     - base=main
     - label!=hold
+    - label!=do-not-merge
     - check-success=DCO
 
     # If files are changed in .github/, the actionlint check must pass
