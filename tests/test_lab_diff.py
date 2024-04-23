@@ -24,9 +24,6 @@ rules:
 class TestLabDiff(unittest.TestCase):
     """Test collection for `ilab diff` command."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     @pytest.fixture(autouse=True)
     def _init_taxonomy(self, taxonomy_dir):
         self.taxonomy = taxonomy_dir

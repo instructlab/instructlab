@@ -67,9 +67,6 @@ def is_arm_mac():
 class TestLabTrain(unittest.TestCase):
     """Test collection for `ilab train` command."""
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     @patch("instructlab.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch("instructlab.mlx_explore.gguf_convert_to_mlx.load")
     @patch("instructlab.train.lora_mlx.make_data.make_data")
