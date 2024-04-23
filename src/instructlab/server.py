@@ -18,7 +18,7 @@ import uvicorn
 
 # Local
 from .client import ClientException, list_models
-from .config import DEFAULT_MULTIPROCESSING_START_METHOD, get_api_base
+from .config import get_api_base
 
 
 class ServerException(Exception):
@@ -62,8 +62,8 @@ def ensure_server(
         return (None, None)
     except ClientException:
         tried_ports = set()
-        # use spawn start method, fork is not thread-safe
-        mpctx = multiprocessing.get_context(DEFAULT_MULTIPROCESSING_START_METHOD)
+        # TODO: use default server, "spawn" doesn't work?
+        mpctx = multiprocessing.get_context(None)
         # use a queue to communicate between the main process and the server process
         queue = mpctx.Queue()
         port = random.randint(1024, 65535)

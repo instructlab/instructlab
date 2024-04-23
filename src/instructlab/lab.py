@@ -510,6 +510,7 @@ def generate(
     finally:
         if server_process:
             server_process.terminate()
+            server_process.join(timeout=30)
 
 
 @cli.command()
@@ -648,6 +649,7 @@ def chat(
     finally:
         if server_process:
             server_process.terminate()
+            server_process.join(timeout=30)
 
 
 @cli.command()
