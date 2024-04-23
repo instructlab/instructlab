@@ -50,12 +50,12 @@ class TestUtils(unittest.TestCase):
             chunk_word_count=chunk_words,
             server_ctx_size=4096,
         )
-        # convert words to characters as done in chunk_document
-        max_chunk_length = chunk_words * 1.3 * 4
-        max_chunk_length += 100  # add in the chunk overlap
-        max_chunk_length += 50  # and a bit extra for some really long words
+        max_tokens = utils.num_tokens_from_words(chunk_words)
+        max_chars = utils.num_chars_from_tokens(max_tokens)
+        max_chars += utils.DEFAULT_CHUNK_OVERLAP  # add in the chunk overlap
+        max_chars += 50  # and a bit extra for some really long words
         for chunk in chunks:
-            assert len(chunk) <= max_chunk_length
+            assert len(chunk) <= max_chars
 
     @patch(
         "instructlab.utils.git_clone_checkout",
