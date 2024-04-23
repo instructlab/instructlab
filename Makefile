@@ -16,6 +16,13 @@ CUDA_DEPS = \
 	$(COMMON_DEPS) \
 	$(NULL)
 
+HPU_CONTAINERFILE = $(CURDIR)/containers/hpu/Containerfile
+HPU_DEPS = \
+	$(HPU_CONTAINERFILE) \
+	$(CURDIR)/requirements-hpu.txt \
+	$(COMMON_DEPS) \
+	$(NULL)
+
 ROCM_CONTAINERFILE = containers/rocm/Containerfile
 ROCM_DEPS = \
 	$(ROCM_CONTAINERFILE) \
@@ -52,6 +59,15 @@ cuda: $(CUDA_DEPS)  ## Build container for NVidia CUDA
 	$(CENGINE) build $(BUILD_ARGS) \
 		-t $(CONTAINER_PREFIX):$@ \
 		-f $(CUDA_CONTAINERFILE) \
+		.
+
+# The base container uses uids beyond 65535. Rootless builds may not work
+# unless the user account has extended subordinate ids up to 2**24 - 1.
+.PHONY: hpu
+hpu: $(HPU_DEPS)  ## Build container for Intel Gaudi HPU
+	$(CENGINE) build $(BUILD_ARGS) \
+		-t $(CONTAINER_PREFIX):$@ \
+		-f $< \
 		.
 
 define build-rocm =
@@ -126,7 +142,7 @@ verify: ## Run tox -e fmt,lint,spellcheck against code
 
 .PHONY: spellcheck-sort
 spellcheck-sort: .spellcheck-en-custom.txt
-	sort -d -f -o $< $<
+	sort -d -o $< $<
 
 ##@ Linting
 
