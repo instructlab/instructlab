@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from multiprocessing import Queue
 from time import sleep
 import logging
 import multiprocessing
@@ -17,7 +16,7 @@ import uvicorn
 
 # Local
 from .client import ClientException, list_models
-from .config import get_api_base
+from .config import DEFAULT_MULTIPROCESSING_START_METHOD, get_api_base
 
 
 class ServerException(Exception):
@@ -47,8 +46,10 @@ def ensure_server(
         return (None, None)
     except ClientException:
         tried_ports = set()
+        # use spawn start method, fork is not thread-safe
+        mpctx = multiprocessing.get_context(DEFAULT_MULTIPROCESSING_START_METHOD)
         # use a queue to communicate between the main process and the server process
-        queue = Queue()
+        queue = mpctx.Queue()
         port = random.randint(1024, 65535)
         host = serve_config.host_port.rsplit(":", 1)[0]
         logger.debug(f"Trying port {port}...")
@@ -81,7 +82,7 @@ def ensure_server(
         # create a temporary, throw-away logger
         logger = logging.getLogger(host_port)
         logger.setLevel(logging.FATAL)
-        server_process = multiprocessing.Process(
+        server_process = mpctx.Process(
             target=server,
             kwargs={
                 "logger": logger,

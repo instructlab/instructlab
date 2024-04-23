@@ -3,10 +3,10 @@
 # Standard
 from datetime import datetime
 from functools import partial
-from multiprocessing import Pool
 from pathlib import Path
 from typing import Optional
 import json
+import multiprocessing
 import os
 import random
 import re
@@ -20,6 +20,7 @@ import click
 import tqdm
 
 # Local
+from ..config import DEFAULT_MULTIPROCESSING_START_METHOD
 from ..utils import chunk_document, read_taxonomy
 from . import utils
 from .utils import GenerateException
@@ -411,6 +412,8 @@ def generate_data(
             "Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help."
         )
 
+    mpctx = multiprocessing.get_context(DEFAULT_MULTIPROCESSING_START_METHOD)
+
     all_taxonomy_paths = list(set(e["taxonomy_path"] for e in seed_instruction_data))
     total_discarded = 0
     total_rouged = 0
@@ -453,7 +456,7 @@ def generate_data(
             new_instruction_tokens = scorer._tokenizer.tokenize(
                 instruction_data_entry["instruction"]
             )
-            with Pool(num_cpus) as p:
+            with mpctx.Pool(num_cpus) as p:
                 rouge_scores = p.map(
                     partial(rouge_scorer._score_lcs, new_instruction_tokens),
                     all_instruction_tokens,
