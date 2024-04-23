@@ -5,12 +5,14 @@ from time import sleep
 import logging
 import multiprocessing
 import random
+import signal
 import socket
 
 # Third Party
 from llama_cpp import llama_chat_format
 from llama_cpp.server.app import create_app
 from llama_cpp.server.settings import Settings
+from uvicorn import Config
 import llama_cpp.server.app as llama_app
 import uvicorn
 
@@ -21,6 +23,20 @@ from .config import DEFAULT_MULTIPROCESSING_START_METHOD, get_api_base
 
 class ServerException(Exception):
     """An exception raised when serving the API."""
+
+
+class Server(uvicorn.Server):
+    """Override uvicorn.Server to handle SIGINT."""
+
+    def handle_exit(self, sig, frame):
+        # type: (int, Optional[FrameType]) -> None
+        if (
+            # if this is the main process (`ilab serve`) we keep uvicorn's default behavior
+            not is_temp_server_running()
+            # if this is the child process (the temp server) we want to ignore the SIGINT signal
+            or sig != signal.SIGINT
+        ):
+            super().handle_exit(sig=sig, frame=frame)
 
 
 def ensure_server(
@@ -159,7 +175,8 @@ def server(
     logger.info(
         f"After application startup complete see http://{host}:{port}/docs for API."
     )
-    uvicorn.run(
+
+    config = Config(
         app,
         host=host,
         port=port,
@@ -167,6 +184,8 @@ def server(
         limit_concurrency=2,  # Make sure we only serve a single client at a time
         timeout_keep_alive=0,  # prevent clients holding connections open (we only have 1)
     )
+    s = Server(config)
+    s.run()
 
 
 def can_bind_to_port(host, port):
@@ -176,3 +195,8 @@ def can_bind_to_port(host, port):
             return True
         except socket.error:
             return False
+
+
+def is_temp_server_running():
+    """Check if the temp server is running."""
+    return multiprocessing.current_process().name != "MainProcess"
