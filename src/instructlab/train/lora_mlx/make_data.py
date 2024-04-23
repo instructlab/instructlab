@@ -23,7 +23,6 @@ def make_data(data_dir: str, is_shiv: bool = False):
         # This branch uses data from `lab generate`
         # train_gen.jsonl and test_gen.jsonl are the two files produced by `lab generate`
         for fn in [f"{data_dir}/train_gen.jsonl", f"{data_dir}/test_gen.jsonl"]:
-
             # Load the JSON Lines file
             with open(fn, "r") as f:
                 data = [json.loads(line) for line in f]

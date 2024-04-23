@@ -111,7 +111,12 @@ def encode_prompt(prompt_instructions, prompt):
 
     # pylint: disable=unused-variable
     for idx, task_dict in enumerate(prompt_instructions):
-        (instruction, prompt_input, prompt_output, taxonomy_path,) = (
+        (
+            instruction,
+            prompt_input,
+            prompt_output,
+            taxonomy_path,
+        ) = (
             task_dict["instruction"],
             task_dict["input"],
             task_dict["output"],
