@@ -359,13 +359,20 @@ def validate_yaml(
             schema, registry=Registry(retrieve=retrieve)
         )
 
-        for error in validator.iter_errors(contents):
+        for validation_error in validator.iter_errors(contents):
             errors += 1
-            error_path = error.json_path[1:]
-            if not error_path:
-                error_path = "."
+            yaml_path = validation_error.json_path[1:]
+            if not yaml_path:
+                yaml_path = "."
+            if validation_error.validator == "minItems":
+                # Special handling for minItems which can have a long message for seed_examples
+                message = (
+                    f"Value must have at least {validation_error.validator_value} items"
+                )
+            else:
+                message = validation_error.message[-200:]
             logger.error(
-                f"Validation error in {taxonomy_path} on {error_path}: {error.message}"
+                f"Validation error in {taxonomy_path}: [{yaml_path}] {message}"
             )
     except NoSuchResource as e:
         cause = e.__cause__ if e.__cause__ is not None else e
