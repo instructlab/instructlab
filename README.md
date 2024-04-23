@@ -249,6 +249,8 @@ Contribute new knowledge or compositional skills to your local [taxonomy](https:
 
 Detailed contribution instructions can be found in the [taxonomy repository](https://github.com/instructlab/taxonomy/blob/main/README.md).
 
+> [!IMPORTANT]
+> There is a limit to how much content can exist in the question/answer pairs for the model to process. Due to this, only add a maximum of around 2300 words to your question and answer seed example pairs in the `qna.yaml` file.
 ### 📜 List and validate your new data
 
 1. List your new data by running the following command:
