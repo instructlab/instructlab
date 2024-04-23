@@ -25,8 +25,8 @@ $ git show v0.x.y
 ```
 
 1. Verify that this is the tag/commit you want for stable.
-2. Double check with the short SHAHs on tags at https://github.com/instructlab/instructlab/tags 
-3. Copy the SHAH
+2. Double check with the short SHA hashes on tags at https://github.com/instructlab/instructlab/tags 
+3. Copy the SHA hash
 
 I usually test first w/o --force and expect an error if I have everything right.
 
@@ -41,7 +41,7 @@ Next, add the `-f` (force) flag to force the change locally.
 $ git tag -f stable v0.x.y
 ```
 
-Verify the tag SHAHs look correct:
+Verify the tag SHA hashes look correct:
 ```ShellSession
 $ git show-ref --tags
 ```

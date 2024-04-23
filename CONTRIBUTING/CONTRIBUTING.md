@@ -63,12 +63,12 @@ Improvements to existing functionality are tracked as [GitHub issues using the U
 
 The following tools are required:
 
-- [git](https://git-scm.com)
-- [python](https://www.python.org) (v3.9+)
-- [pip](https://pypi.org/project/pip/) (v23.0+)
-- [expect](https://core.tcl-lang.org/expect/index) (for functional tests)
+- [`git`](https://git-scm.com)
+- [`python`](https://www.python.org) (v3.9+)
+- [`pip`](https://pypi.org/project/pip/) (v23.0+)
+- [`expect`](https://core.tcl-lang.org/expect/index) (for functional tests)
 
-You can setup your dev environment using [tox](https://tox.wiki/en/latest/), an environment orchestrator which allows for setting up environments for and invoking builds, unit tests, formatting, linting, etc. Install tox with:
+You can setup your dev environment using [`tox`](https://tox.wiki/en/latest/), an environment orchestrator which allows for setting up environments for and invoking builds, unit tests, formatting, linting, etc. Install tox with:
 
 ```shell
 pip install -r requirements-dev.txt
@@ -97,7 +97,7 @@ tox
 
 #### Unit tests
 
-Unit tests are enforced by the CI system using [pytest](https://docs.pytest.org/). When making changes, run these tests before pushing the changes to avoid CI issues.
+Unit tests are enforced by the CI system using [`pytest`](https://docs.pytest.org/). When making changes, run these tests before pushing the changes to avoid CI issues.
 
 Running unit tests can be done with:
 
@@ -123,9 +123,9 @@ tox -e py3-functional
 
 #### Coding style
 
-Cli follows the python [pep8](https://peps.python.org/pep-0008/) coding style. The coding style is enforced by the CI system, and your PR will fail until the style has been applied correctly.
+Cli follows the python [`pep8`](https://peps.python.org/pep-0008/) coding style. The coding style is enforced by the CI system, and your PR will fail until the style has been applied correctly.
 
-We use [pre-commit](https://pre-commit.com/) to enforce coding style using [black](https://github.com/psf/black), and [isort](https://pycqa.github.io/isort/).
+We use [pre-commit](https://pre-commit.com/) to enforce coding style using [`black`](https://github.com/psf/black), and [`isort`](https://pycqa.github.io/isort/).
 
 You can invoke formatting with:
 
@@ -133,7 +133,7 @@ You can invoke formatting with:
 tox -e fmt
 ```
 
-In addition, we use [pylint](https://www.pylint.org) to perform static code analysis of the code.
+In addition, we use [`pylint`](https://www.pylint.org) to perform static code analysis of the code.
 
 You can invoke the linting with the following command
 

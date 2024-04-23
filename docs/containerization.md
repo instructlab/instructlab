@@ -32,12 +32,12 @@ CMD ["/bin/bash"]
 
 Or image: TBD (am I allowed to have a public image with references to lab in it?)
 
-This containerfile is based on Nvidia's CUDA image, which lucky for us plugs
-directly into Podman via their `nvidia-container-toolkit`! The ubi9 base image
-does not have most packages installed. The bulk of the `containerfile` is spent
-configuring your system so `ilab` can be installed and run properly. ubi9 as compared
-to ubuntu cannot install the entire nvidia-12-4 toolkit. This did not impact
-performance during testing.
+This `Containerfile` is based on Nvidia CUDA image, which lucky for us plugs
+directly into Podman via their `nvidia-container-toolkit`! The `ubi9` base
+image does not have most packages installed. The bulk of the `Containerfile` is
+spent configuring your system so `ilab` can be installed and run properly.
+`ubi9` as compared to `ubuntu` cannot install the entire `nvidia-12-4` toolkit.
+This did not impact performance during testing.
 
 ```shell
 1. podman build –ssh=default -f <Containerfile_Path>
