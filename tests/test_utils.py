@@ -43,6 +43,20 @@ class TestUtils(unittest.TestCase):
             f"{exc.exception}",
         )
 
+    def test_chunk_docs_long_lines(self):
+        chunk_words = 50
+        chunks = utils.chunk_document(
+            documents=testdata.long_line_documents,
+            chunk_word_count=chunk_words,
+            server_ctx_size=4096,
+        )
+        # convert words to characters as done in chunk_document
+        max_chunk_length = chunk_words * 1.3 * 4
+        max_chunk_length += 100  # add in the chunk overlap
+        max_chunk_length += 50  # and a bit extra for some really long words
+        for chunk in chunks:
+            assert len(chunk) <= max_chunk_length
+
     @patch(
         "instructlab.utils.git_clone_checkout",
         return_value=Mock(spec=git.Repo, working_dir="tests/testdata/temp_repo"),

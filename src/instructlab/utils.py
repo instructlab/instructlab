@@ -258,7 +258,7 @@ def chunk_document(documents: List, server_ctx_size, chunk_word_count) -> List[s
         )
     content = []
     text_splitter = RecursiveCharacterTextSplitter(
-        separators=["\n\n", "\n"],
+        separators=["\n\n", "\n", " "],
         chunk_size=int(no_tokens_per_doc * 4),  # 1 token ~ 4 English character
         chunk_overlap=100,
     )
