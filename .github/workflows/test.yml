@@ -25,12 +25,24 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    name: "${{ matrix.python }} on ${{ matrix.platform }}"
+    runs-on: "${{ matrix.platform }}"
     strategy:
       matrix:
         python:
+          - "3.9"
+          - "3.10"
           - "3.11"
-
+          - "3.12"
+        platform:
+          - "ubuntu-latest"
+        exclude:
+          # GHA runner has no ARM64 3.9
+          - python: "3.9"
+            platform: "macos-latest"
+        include:
+          - python: "3.11"
+            platform: "macos-latest"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,50 +50,37 @@ jobs:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
 
+      - name: Install the expect package
+        if: startsWith(matrix.platform, 'ubuntu')
+        run: |
+          sudo apt-get install -y expect
+
       - name: Setup Python ${{ matrix.python }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: |
+            **/pyproject.toml
+            **/requirements*.txt
 
-      # tox creates (and reuses) a separate Python (virtual) environment for each context (fmt, lint, unit)
-      # tox requires (and will install, if not exists) all the packages listed in requirements.txt
-      # so we want to cache the entire Python environment, not just the pip cache as tox will not reuse that
-      # but caching tox environments is fickle and can cause weird errors
-      # tox does provide a legacy option to reuse the Python system wide site packages
-      # since GH action runners are one-and-done we can install all requirements into the system packages
-      # and cache and reuse all of the installed Python system packages
-      # tox can then reuse the system site packages with setting `-x testenv:unit.system_site_packages=True`
-      - name: Cache dependencies
+      - name: Cache huggingface
         uses: actions/cache@v4
-        id: cache
         with:
-          path: ${{ env.pythonLocation }}
-          # v2: previous restore key did not depend on requirements.txt and contained 'mlx'
-          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-v2-${{ hashFiles('requirements-dev.txt') }}
-          restore-keys:
-            ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-v2-
+          path: ~/.cache/huggingface
+          # config contains DEFAULT_MODEL
+          key: huggingface-${{ hashFiles('src/instructlab/config.py') }}
 
       - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-          python -m pip install -r requirements-dev.txt
+          python -m pip install tox tox-gh>=1.2
 
-      # tox installs the package in its venv, dependencies are picked up
-      # from cached global site packages.
-      - name: Run unit tests with code coverage
-        run: |
-          tox \
-            -x testenv:unitcov.system_site_packages=True \
-            -e py3-unitcov
+      - name: Run unit and functional tests with tox
+        if: startsWith(matrix.platform, 'ubuntu')
+        run: tox
 
-      - name: Install the expect package
-        run: |
-          sudo apt-get install -y expect
-
-      - name: Run functional tests
-        run: |
-          tox \
-            -x testenv:functional.system_site_packages=True \
-            -e py3-functional
+      # The functional test shell script does not work on macOS.
+      - name: Run unit tests with tox (macOS)
+        if: startsWith(matrix.platform, 'macos')
+        run: tox -e py-unit
