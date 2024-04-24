@@ -49,9 +49,6 @@ def setup_linux_dir():
     for f_path in ["/config.json", "/generation_config.json", "/1.safetensors"]:
         with open(MERGED_MODEL_DIR + f_path, "w", encoding=ENCODING) as f:
             f.write("{}")
-    os.makedirs(FINAL_RESULTS_DIR)
-    with open(LINUX_GGUF_FILE, "w", encoding=ENCODING) as f:
-        f.write("{}")
 
 
 def setup_load():
@@ -60,6 +57,11 @@ def setup_load():
 
 def is_arm_mac():
     return sys.platform == "darwin" and platform.machine() == "arm64"
+
+
+def mock_convert_llama_to_gguf(model, pad_vocab):
+    with open(LINUX_GGUF_FILE, "w", encoding="utf-8") as fp:
+        fp.write(str(model) + str(pad_vocab))
 
 
 @pytest.mark.usefixtures("mock_mlx_package")
@@ -340,7 +342,10 @@ class TestLabTrain:
 
     @patch("instructlab.lab.utils.is_macos_with_m_chip", return_value=False)
     @patch.object(linux_train, "linux_train")
-    @patch("instructlab.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf")
+    @patch(
+        "instructlab.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf",
+        side_effect=mock_convert_llama_to_gguf,
+    )
     def test_train_linux(
         self,
         convert_llama_to_gguf_mock,
@@ -381,7 +386,10 @@ class TestLabTrain:
 
     @patch("instructlab.lab.utils.is_macos_with_m_chip", return_value=False)
     @patch("instructlab.train.linux_train.linux_train")
-    @patch("instructlab.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf")
+    @patch(
+        "instructlab.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf",
+        side_effect=mock_convert_llama_to_gguf,
+    )
     def test_num_epochs(
         self, convert_llama_to_gguf_mock, linux_train_mock, is_macos_with_m_chip_mock
     ):
