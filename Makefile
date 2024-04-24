@@ -16,11 +16,18 @@ CUDA_DEPS = \
 	$(COMMON_DEPS) \
 	$(NULL)
 
-ROCM_CONTAINERFILE = containers/rocm/Containerfile
-ROCM_DEPS = \
-	$(ROCM_CONTAINERFILE) \
+ROCM_F40_CONTAINERFILE = containers/rocm/Containerfile.f40
+ROCM_F40_DEPS = \
+	$(ROCM_F40_CONTAINERFILE) \
 	$(COMMON_DEPS) \
 	containers/rocm/remove-gfx.sh \
+	$(NULL)
+
+ROCM_UBI9_CONTAINERFILE = containers/rocm/Containerfile.ubi9
+ROCM_UBI9_DEPS = \
+	$(ROCM_UBI9_UBICONTAINERFILE) \
+	$(COMMON_DEPS) \
+	containers/rocm/rocm60.repo \
 	$(NULL)
 
 # so users can do "make rocm-gfx1100 rocm-toolbox"
@@ -61,7 +68,7 @@ define build-rocm =
 		--build-arg HSA_OVERRIDE_GFX_VERSION=$(2) \
 		-t $(CONTAINER_PREFIX):rocm-$(1) \
 		-t $(CONTAINER_PREFIX):rocm \
-		-f $(ROCM_CONTAINERFILE) \
+		-f $(ROCM_F40_CONTAINERFILE) \
 		.
 endef
 
@@ -78,33 +85,40 @@ rocm:   ## Build container for AMD ROCm (auto-detect the ROCm GPU arch)
 .PHONY: rocm-gfx1100 rocm-rdna3 rocm-gfx1101 rocm-gfx1102
 rocm-rdna3 rocm-gfx1101 rocm-gfx1102: rocm-gfx1100
 
-rocm-gfx1100: $(ROCM_DEPS)  ## Build container for AMD ROCm RDNA3 (Radeon RX 7000 series)
+rocm-gfx1100: $(ROCM_F40_DEPS)  ## Build container for AMD ROCm RDNA3 (Radeon RX 7000 series)
 	$(call build-rocm,gfx1100,11.0.0)
 
 # RDNA2 / Radeon RX 6000 series
 .PHONY: rocm-gfx1030 rocm-rdna2 rocm-gfx1031
 rocm-rdna2 rocm-gfx1031: rocm-gfx1030
 
-rocm-gfx1030: $(ROCM_DEPS)  ## Build container for AMD ROCm RDNA2 (Radeon RX 6000 series)
+rocm-gfx1030: $(ROCM_F40_DEPS)  ## Build container for AMD ROCm RDNA2 (Radeon RX 6000 series)
 	$(call build-rocm,gfx1030,10.3.0)
 
 # untested older cards
 # Fedora
 .PHONY: rocm-gfx90a
-rocm-gfx90a: $(ROCM_DEPS)  ## Build container for AMD ROCm gfx90a (untested)
+rocm-gfx90a: $(ROCM_F40_DEPS)  ## Build container for AMD ROCm gfx90a (untested)
 	$(call build-rocm,gfx90a,9.0.10)
 
 .PHONY: rocm-gfx908
-rocm-gfx908: $(ROCM_DEPS)  ## Build container for AMD ROCm gfx908 (untested)
+rocm-gfx908: $(ROCM_F40_DEPS)  ## Build container for AMD ROCm gfx908 (untested)
 	$(call build-rocm,gfx908,9.0.8)
 
 .PHONY: rocm-gfx906
-rocm-gfx906: $(ROCM_DEPS)  ## Build container for AMD ROCm gfx906 (untested)
+rocm-gfx906: $(ROCM_F40_DEPS)  ## Build container for AMD ROCm gfx906 (untested)
 	$(call build-rocm,gfx906,9.0.6)
 
 .PHONY: rocm-gfx900
-rocm-gfx900: $(ROCM_DEPS)  ## Build container for AMD ROCm gfx900 (untested)
+rocm-gfx900: $(ROCM_F40_DEPS)  ## Build container for AMD ROCm gfx900 (untested)
 	$(call build-rocm,gfx900,9.0.0)
+
+.PHONY: ubi9-rocm
+ubi9-rocm: $(ROCM_F40_DEPS)  ## Build container for AMD ROCm on UBI9 (requires subscription)
+	$(CENGINE) build $(BUILD_ARGS) \
+		-t $(CONTAINER_PREFIX):$@ \
+		-f $(ROCM_UBI9_CONTAINERFILE) \
+		.
 
 .PHONY: rocm-toolbox
 toolbox-rocm:  ## Create AMD ROCm toolbox from container

@@ -45,7 +45,7 @@ Map the name to a LLVM GPU target and an override GFX version. PyTorch 2.2.1+roc
 | `gfx90a`  | `xnack+`  | `9.0.10` | ✅      | ✅     |
 | `gfx940`  |           |          | ❌      | ✅     |
 | `gfx941`  |           |          | ❌      | ✅     |
-| `gfx942`  |           |          | ❌      | ✅     |
+| `gfx942`  |           |          | ⚠️ (6.0)| ✅     |
 | `gfx1010` |           |          | ❌      | ✅     |
 | `gfx1012` |           |          | ❌      | ✅     |
 | `gfx1030` |           | `10.3.0` | ✅      | ✅     |
@@ -70,3 +70,29 @@ make rocm-gfx1100 BUILD_ARGS=
 ## Known issues
 
 AMD Instinct MI210 with ISA `amdgcn-amd-amdhsa--gfx90a:sramecc+:xnack-` is not supported by Fedora build `rocblas-6.0.2-3`. As of late April 2024, Fedora has `gfx90a:xnack+` and `gfx90a:xnack-` but lacks `gfx90a:sramecc+:xnack-`.
+
+## UBI 9 image
+
+The ROCm UBI9 image is based on `ubi9-python311` and uses AMD's ROCm repository. The container file requires a Red Hat subscription to build. A [No-cost RHEL Individual Developer Subscription](https://developers.redhat.com/articles/faqs-no-cost-red-hat-enterprise-linux) is sufficient. On Fedora, `subscription-manager` and `subscription-manager-plugin-container` must be installed and the host system must be registered.
+
+The resulting container image is rather large, because it contains Kernels for all supported AMD GPU ISAs and comes with ROCm's LLVM / clang stack. Currently the image is about 26 GB on disk.
+
+Register host:
+```shell
+sudo dnf install subscription-manager subscription-manager-plugin-container
+sudo subscription-manager register ...
+```
+
+Build image:
+```shell
+make ubi9-rocm BUILD_ARGS=
+```
+
+Run image:
+```shell
+mkdir -p src
+podman run -v./data:/opt/app-root/src:z --device /dev/dri --device /dev/kfd -ti --rm localhost/instructlab:ubi9-rocm
+(app-root) ilab init
+(app-root) ilab download
+(app-root) ilab chat
+```

@@ -5,39 +5,26 @@ set -e
 
 TORCH="${VIRTUAL_ENV:-/opt/rocm-venv}/lib/${PYTHON:-python3.1?}/site-packages/torch"
 
+rmgfx() {
+	for GFX in "$@"; do
+		echo "Removing ${GFX} files"
+		rm -rfv "/usr/lib*/rocm/${GFX}"
+		rm -fv "/usr/lib*/rocblas/library/*${GFX}*"
+		rm -fv "/opt/rocm/lib/rocblas/library/*${GFX}*"
+		rm -fv "${TORCH}/lib/rocblas/library/*${GFX}*"
+		rm -fv "${TORCH}/lib/hipblaslt/library/*${GFX}*"
+	done
+}
+
 case "$AMDGPU_ARCH" in
 	gfx9*)
-		rm -rf /usr/lib*/rocm/gfx8
-		rm -rf /usr/lib*/rocm/gfx10
-		rm -rf /usr/lib*/rocm/gfx11
-		rm -f /usr/lib*/rocblas/library/*gfx8*
-		rm -f /usr/lib*/rocblas/library/*gfx10*
-		rm -f /usr/lib*/rocblas/library/*gfx11*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx8*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx10*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx11*
+		rmgfx gfx8 gfx10 gfx11
 		;;
 	gfx10*)
-		rm -rf /usr/lib*/rocm/gfx8
-		rm -rf /usr/lib*/rocm/gfx9
-		rm -rf /usr/lib*/rocm/gfx11
-		rm -f /usr/lib*/rocblas/library/*gfx8*
-		rm -f /usr/lib*/rocblas/library/*gfx9*
-		rm -f /usr/lib*/rocblas/library/*gfx11*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx8*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx9*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx11*
+		rmgfx gfx8 gfx9 gfx11
 		;;
 	gfx11*)
-		rm -rf /usr/lib*/rocm/gfx8
-		rm -rf /usr/lib*/rocm/gfx9
-		rm -rf /usr/lib*/rocm/gfx10
-		rm -f /usr/lib*/rocblas/library/*gfx8*
-		rm -f /usr/lib*/rocblas/library/*gfx9*
-		rm -f /usr/lib*/rocblas/library/*gfx10*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx8*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx9*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx10*
+		rmgfx gfx8 gfx9 gfx10
 		;;
 	*)
 		echo "ERROR: $0 unknown AMDGPU_ARCH=$AMDGPU_ARCH"

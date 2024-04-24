@@ -1,0 +1,102 @@
+FROM registry.access.redhat.com/ubi9/python-311 as runtime
+# same targets and ROCm version as upstream PyTorch
+ARG LLAMA_AMDGPU_TARGETS=gfx900;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx942;gfx1030;gfx1100
+ARG PYTORCH_ROCM_VERSION=6.0
+# PyTorch 2.2.1 does not support torch_compile with 3.12
+ARG PYTHON=python3.11
+ENV LLAMA_AMDGPU_TARGETS="${LLAMA_AMDGPU_TARGETS}" \
+    PYTORCH_ROCM_VERSION="${PYTORCH_ROCM_VERSION}" \
+    PYTHON="${PYTHON}" \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    VIRTUAL_ENV="/opt/app-root"
+ENV PIP_CACHE_DIR="${VIRTUAL_ENV}/.cache/pip"
+RUN mkdir -p -m777 ${PIP_CACHE_DIR}
+COPY --chown=0:0 containers/sitecustomize.py ${VIRTUAL_ENV}/lib/${PYTHON}/site-packages
+COPY --chown=0:0 containers/bin/debug-* ${VIRTUAL_ENV}/bin
+USER 0
+COPY --chown=0:0 containers/rocm/rocm60.repo /etc/yum.repos.d/
+RUN --mount=type=cache,target=/var/cache/dnf,z \
+    dnf install -y --nodocs --setopt=install_weak_deps=False --setopt=keepcache=True \
+        'dnf-command(config-manager)' \
+        https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
+    dnf config-manager --enable codeready-builder-for-rhel-9-x86_64-rpms
+RUN --mount=type=cache,target=/var/cache/dnf,z \
+    dnf install -y --nodocs --setopt=install_weak_deps=False --setopt=keepcache=True \
+        rocm-runtime rocm-smi hipblas hiprand hipsparse lld-libs nvtop make git
+
+# build env contains compilers and build dependencies
+FROM runtime AS buildenv
+RUN --mount=type=cache,sharing=locked,target=/var/cache/dnf,z \
+    dnf install -y --nodocs --setopt=keepcache=True \
+        llvm clang compiler-rt clang-tools-extra \
+        lld cmake ninja-build gcc \
+        rocblas-devel hip-devel hipblas-devel rocprim-devel rocthrust-devel hipsparse-devel hipcub-devel hiprand-devel \
+        rocm-device-libs hsa-rocr-devel
+
+FROM buildenv AS pytorch
+# build as root, so caching works
+USER 0
+# cache downloads in cache mount and don't byte compile Python files
+ENV PIP_NO_CACHE_DIR= \
+    PIP_NO_COMPILE=1
+COPY --chown=0:0 requirements.txt ${VIRTUAL_ENV}/
+# pip constraint does not support optional dependencies.
+RUN sed 's/\[.*\]//' ${VIRTUAL_ENV}/requirements.txt > ${VIRTUAL_ENV}/constraints.txt
+RUN --mount=type=cache,sharing=locked,id=pipcache,target=${PIP_CACHE_DIR},mode=777,z \
+    umask 0000 && \
+    ${VIRTUAL_ENV}/bin/pip install torch -c ${VIRTUAL_ENV}/constraints.txt --index-url https://download.pytorch.org/whl/rocm${PYTORCH_ROCM_VERSION}
+
+
+FROM pytorch AS llama
+# remove cached wheel to force rebuild
+# Force AVX off, https://github.com/ggerganov/llama.cpp/issues/5316
+# same AMDGPU targets as PyTorch
+RUN --mount=type=cache,sharing=locked,id=pipcache,target=${PIP_CACHE_DIR},mode=777 \
+    umask 0000 && \
+    pip cache remove llama_cpp_python && \
+    CFLAGS="-mno-avx" \
+    CMAKE_ARGS="-DAMDGPU_TARGETS=${LLAMA_AMDGPU_TARGETS} -DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++" \
+        FORCE_CMAKE=1 \
+        ${VIRTUAL_ENV}/bin/pip install -c ${VIRTUAL_ENV}/constraints.txt llama-cpp-python
+
+
+#FROM llama as flash_attention
+#RUN \
+#    umask 0000 && \
+#    pip cache remove flash_attention && \
+#    export GPU_ARCHS="gfx90a;gfx942" && \
+#    git clone --recurse-submodules -b 2554f490 https://github.com/ROCm/flash-attention.git /tmp/flash-attention && \
+#    pip install /tmp/flash-attention
+
+
+# install from requirements.txt last. pip does not override installed
+# packages unless there is a version conflict.
+FROM llama AS pip-install
+RUN --mount=type=cache,sharing=locked,id=pipcache,target=${PIP_CACHE_DIR},mode=777 \
+    umask 0000 && \
+    ${VIRTUAL_ENV}/bin/pip install wheel setuptools-scm && \
+    ${VIRTUAL_ENV}/bin/pip install -r ${VIRTUAL_ENV}/requirements.txt
+
+# install instructlab last
+FROM pip-install AS instructlab
+COPY --chown=0:0 . /tmp/instructlab/
+RUN --mount=type=cache,sharing=locked,id=pipcache,target=${PIP_CACHE_DIR},mode=777 \
+    umask 0000 && \
+    ${VIRTUAL_ENV}/bin/pip install --no-deps /tmp/instructlab
+RUN find ${VIRTUAL_ENV} -name __pycache__ | xargs rm -rf
+
+
+# create final image from base runtime, copy virtual env into final stage
+FROM runtime as final
+COPY --from=instructlab ${VIRTUAL_ENV}/lib/${PYTHON}/site-packages ${VIRTUAL_ENV}/lib/${PYTHON}/site-packages
+COPY --from=instructlab ${VIRTUAL_ENV}/bin ${VIRTUAL_ENV}/bin
+# contains ilab config.yaml, .cache/huggingface, and training data
+VOLUME ["/opt/app-root/src"]
+CMD ["/bin/bash"]
+USER 1001
+LABEL com.github.instructlab.instructlab.target="rocm" \
+      com.github.instructlab.instructlab.amdgpu-targets="${LLAMA_AMDGPU_TARGETS}" \
+      name="instructlab-ubi9-rocm" \
+      usage="podman run -v./data:/opt/app-root/src:z --device /dev/dri --device /dev/kfd ..." \
+      summary="PyTorch, llama.cpp, and InstructLab dependencies for AMD ROCm GPUs on UBI9 (${LLAMA_AMDGPU_TARGETS})" \
+      maintainer="Christian Heimes <cheimes@redhat.com>"

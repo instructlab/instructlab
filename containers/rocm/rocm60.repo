@@ -1,0 +1,7 @@
+[ROCm-6.0]
+name=ROCm6.0
+baseurl=https://repo.radeon.com/rocm/rhel$releasever/6.0/main
+enabled=1
+priority=50
+gpgcheck=1
+gpgkey=https://repo.radeon.com/rocm/rocm.gpg.key
