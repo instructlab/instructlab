@@ -55,6 +55,11 @@ jobs:
           fetch-depth: 0
           submodules: true
 
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
+
       - name: Install the expect package
         if: startsWith(matrix.platform, 'ubuntu')
         run: |

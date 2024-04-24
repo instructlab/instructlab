@@ -20,7 +20,7 @@ import uvicorn
 
 # Local
 from .client import ClientException, list_models
-from .config import get_api_base
+from .config import DEFAULT_MULTIPROCESSING_START_METHOD, get_api_base
 
 templates = [
     {
@@ -72,7 +72,7 @@ def ensure_server(
     except ClientException:
         tried_ports = set()
         # TODO: use default server, "spawn" doesn't work?
-        mpctx = multiprocessing.get_context(None)
+        mpctx = multiprocessing.get_context(DEFAULT_MULTIPROCESSING_START_METHOD)
         # use a queue to communicate between the main process and the server process
         queue = mpctx.Queue()
         port = random.randint(1024, 65535)

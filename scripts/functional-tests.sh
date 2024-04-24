@@ -223,8 +223,7 @@ EOF
 
     sed -i -e 's/num_instructions:.*/num_instructions: 1/g' config.yaml
 
-    # This should be finished in a minut or so but time it out incase it goes wrong
-    timeout 10m ilab generate --taxonomy-path test_taxonomy/compositional_skills/simple_math.yaml
+    run_ilab "timeout 10m ilab generate --taxonomy-path test_taxonomy/compositional_skills/simple_math.yaml"
 
     # Test if generated was created and contains files
     ls -l generated/*
@@ -291,6 +290,26 @@ test_temp_server_ignore_internal_messages(){
         send "exit\r"
         expect eof
     '
+}
+
+run_ilab() {
+    # The counter mitigates an error from the temp server when using the multiprocessing "spawn"
+    # start method. The error is "FileNotFoundError: [Errno 2] No such file or directory" coming
+    # from a missing semaphore file. The error is intermittent and hard to reproduce.
+    IFS=' ' read -r -a cli_to_run <<< "$1"
+    counter=0
+    max_retries=10
+    until [ $counter -ge $max_retries ]; do
+        if "${cli_to_run[@]}"; then
+            return 0
+        fi
+        counter=$((counter+1))
+        sleep 120
+        echo "retrying \"${cli_to_run[*]}\" $counter time(s)/$max_retries"
+    done
+
+    echo "\"${cli_to_run[*]}\" failed $max_retries times"
+    exit 1
 }
 
 ########
