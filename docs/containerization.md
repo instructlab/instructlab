@@ -1,4 +1,4 @@
-# Putting InstructLab in a Container AND making it go fast on
+# Putting InstructLab in a Container AND making it go fast
 
 Containerization of `ilab` allows for portability and ease of setup. With this,
 users can now run lab on OpenShift to test the speed of `ilab train` and `generate`
