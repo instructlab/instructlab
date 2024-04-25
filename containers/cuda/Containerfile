@@ -1,4 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
+#
+# This container file requires a RHEL subscription to build and
+# subscription-manager-plugin-container to pass subscription information
+# into the build process. A no-cost developer subscription is sufficient.
+# Fedora machines can be registered with subscription-manager, too.
 
 ARG CUDA_VERSION="12.4.1"
 
@@ -7,53 +12,62 @@ FROM nvcr.io/nvidia/cuda:${CUDA_VERSION}-devel-ubi9 as builder
 ARG PYTHON=python3.11
 ENV PYTHON="${PYTHON}"
 
-ENV VIRTUAL_ENV="/opt/app-root"
-ENV PS1="(venv) ${PS1}"
-ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
-
-ENV PIP_DISABLE_PIP_VERSION_CHECK=1
-ENV PIP_CACHE_DIR="${XDG_CACHE_HOME}/pip"
-ENV PIP_NO_COMPILE=1
-ENV NO_CACHE_DIR=
-
-ENV XDG_CACHE_HOME="${VIRTUAL_ENV}/.cache"
-
-WORKDIR /opt/app-root
+ENV CUDA_HOME="/usr/local/cuda"
+ENV APP_ROOT="/opt/app-root"
+ENV VIRTUAL_ENV="${APP_ROOT}"
+ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${CUDA_HOME}/lib64:${CUDA_HOME}/compat" \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_COMPILE=1 \
+    PS1="(app-root) \w\$ " \
+    PATH="${VIRTUAL_ENV}/bin:${CUDA_HOME}/bin:${PATH}"
+ENV XLA_TARGET="cuda120" \
+    XLA_FLAGS="--xla_gpu_cuda_data_dir=${CUDA_HOME}"
 
 RUN dnf update -y && \
     dnf install -y python3.11 python3.11-devel python3.11-pip make gcc gcc-c++ git-core && \
     dnf clean all && \
     python3.11 -m venv ${VIRTUAL_ENV}
+COPY --chown=1001:0 containers/sitecustomize.py ${VIRTUAL_ENV}/lib/${PYTHON}/site-packages
 
-COPY --chown=0:0 . /tmp/instructlab
+# -mno-avx: work around a build problem with llama-cpp-python and gcc.
+COPY --chown=0:0 requirements.txt /tmp/
+RUN --mount=type=cache,sharing=locked,id=pipcache,target=/root/.cache/pip,mode=777,z \
+    sed 's/\[.*\]//' /tmp/requirements.txt >/tmp/constraints.txt && \
+    ${VIRTUAL_ENV}/bin/pip install wheel && \
+    ${VIRTUAL_ENV}/bin/pip cache remove llama_cpp_python && \
+    CMAKE_ARGS="-DLLAMA_CUBLAS=on -DCMAKE_CUDA_ARCHITECTURES=all-major" \
+        CFLAGS="-mno-avx" \
+        FORCE_CMAKE=1 \
+        ${VIRTUAL_ENV}/bin/pip install -c /tmp/constraints.txt llama-cpp-python && \
+    ${VIRTUAL_ENV}/bin/pip install -r /tmp/requirements.txt && \
+    ${VIRTUAL_ENV}/bin/pip cache remove flash_attn && \
+    ${VIRTUAL_ENV}/bin/pip install -c /tmp/constraints.txt flash-attn && \
+    ${VIRTUAL_ENV}/bin/pip cache remove bitsandbytes && \
+    ${VIRTUAL_ENV}/bin/pip install -c /tmp/constraints.txt bitsandbytes && \
+    find ${VIRTUAL_ENV} -name __pycache__ | xargs rm -rf && \
+    chown -R 1001:0 ${VIRTUAL_ENV}
 
-RUN export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64" \
-           CUDA_HOME=/usr/local/cuda \
-           XLA_TARGET=cuda120 \
-           XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda && \
-    cp /tmp/instructlab/requirements.txt ${VIRTUAL_ENV}/requirements.txt && \
-    sed 's/\[.*\]//' ${VIRTUAL_ENV}/requirements.txt > ${VIRTUAL_ENV}/constraints.txt && \
-    CMAKE_ARGS="-DLLAMA_CUBLAS=on" FORCE_CMAKE=1 ${VIRTUAL_ENV}/bin/pip install -c ${VIRTUAL_ENV}/constraints.txt llama-cpp-python && \
-    ${VIRTUAL_ENV}/bin/pip install wheel setuptools-scm && \
-    ${VIRTUAL_ENV}/bin/pip install -r ${VIRTUAL_ENV}/requirements.txt && \
-    ${VIRTUAL_ENV}/bin/pip install --no-deps /tmp/instructlab && \
-    find ${VIRTUAL_ENV} -name __pycache__ | xargs rm -rf
+COPY --chown=0:0 . /tmp/instructlab/
+RUN ${VIRTUAL_ENV}/bin/pip install --no-deps /tmp/instructlab && \
+    find ${VIRTUAL_ENV} -name __pycache__ | xargs rm -rf && \
+    chown -R 1001:0 ${VIRTUAL_ENV}
+
 
 FROM nvcr.io/nvidia/cuda:${CUDA_VERSION}-runtime-ubi9
 
 ARG PYTHON=python3.11
 ENV PYTHON="${PYTHON}"
 
-ENV VIRTUAL_ENV="/opt/app-root"
-ENV PS1="(venv) ${PS1}"
-ENV PATH="${VIRTUAL_ENV}/bin:${PATH}"
+# mimick ubi9/python-311 container
+ENV CUDA_HOME="/usr/local/cuda"
+ENV APP_ROOT="/opt/app-root"
+ENV VIRTUAL_ENV="${APP_ROOT}"
+ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:${CUDA_HOME}/lib64:${CUDA_HOME}/compat" \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    PIP_NO_COMPILE=1 \
+    PATH="${VIRTUAL_ENV}/bin:${CUDA_HOME}/bin:${PATH}"
 
-ENV PIP_DISABLE_PIP_VERSION_CHECK=1
-ENV PIP_CACHE_DIR="${XDG_CACHE_HOME}/pip"
-ENV NO_CACHE_DIR=off
-
-ENV XDG_CACHE_HOME="${VIRTUAL_ENV}/.cache"
-
+# include compiler and python devel for torch compile
 RUN export CUDA_DASHED_VERSION=$(echo ${CUDA_VERSION} | awk -F '.' '{ print $1"-"$2; }') && \
     dnf upgrade -y && \
     dnf install -y \
@@ -62,19 +76,16 @@ RUN export CUDA_DASHED_VERSION=$(echo ${CUDA_VERSION} | awk -F '.' '{ print $1"-
         cuda-cupti-${CUDA_DASHED_VERSION} && \
     dnf clean all
 
-RUN mkdir -p -m 0777 ${PIP_CACHE_DIR} ${XDG_CACHE_HOME}/huggingface
-
-RUN python3.11 -m venv ${VIRTUAL_ENV}
-
-COPY --chown=1001:0 containers/sitecustomize.py ${VIRTUAL_ENV}/lib/${PYTHON}/site-packages
-COPY --from=builder ${VIRTUAL_ENV}/lib/${PYTHON}/site-packages ${VIRTUAL_ENV}/lib/${PYTHON}/site-packages
-COPY --from=builder ${VIRTUAL_ENV}/bin ${VIRTUAL_ENV}/bin
-
-ENV CUDA_HOME="/usr/local/cuda"
-ENV LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/compat:/usr/local/cuda/extras/CUPTI/lib64"
-ENV PATH="$PATH:$CUDA_HOME/bin"
+COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+RUN mkdir -m755 "${VIRTUAL_ENV}/src" && \
+    chown 1001:0 "${VIRTUAL_ENV}" && \
+    chown -R 1001:0 "${VIRTUAL_ENV}/src" && \
+    useradd -u 1001 -g 0 -c "Default Application User" -d /opt/app-root/src -s /sbin/nologin default
 
 USER 1001
-WORKDIR /opt/app-root/ilab
-VOLUME ["/opt/app-root/.cache/huggingface"]
-ENTRYPOINT ["/opt/app-root/bin/ilab"]
+ENV HOME="${VIRTUAL_ENV}/src" \
+    PS1="(app-root) \w\$ "
+WORKDIR "${HOME}"
+VOLUME ["/opt/app-root/src"]
+ENTRYPOINT []
+CMD ["/opt/app-root/bin/ilab"]

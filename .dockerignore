@@ -16,3 +16,6 @@
 *.dist-info
 __pycache__/
 *.pyc
+
+# container files, so modifications don't require a full rebuild
+containers/*/Containerfile*
