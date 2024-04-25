@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 created_by: test-bot
+version: 2
 domain: test-domain
 seed_examples:
 - question: What is this knowledge about?

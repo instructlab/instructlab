@@ -205,6 +205,7 @@ test_generate(){
     mkdir -p test_taxonomy/compositional_skills
     cat - <<EOF >  test_taxonomy/compositional_skills/simple_math.yaml
 created_by: ci
+version: 2
 seed_examples:
   - question: what is 1+1
     answer: it is 2
