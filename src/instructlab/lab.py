@@ -15,7 +15,7 @@ import typing
 # Third Party
 from click_didyoumean import DYMGroup
 from git import GitError, Repo
-from huggingface_hub import hf_hub_download
+from huggingface_hub import hf_hub_download, list_repo_files
 from huggingface_hub import logging as hf_logging
 import click
 import yaml
@@ -712,15 +712,36 @@ def chat(
 def download(ctx, repository, release, filename, model_dir):
     """Download the model(s) to train"""
     click.echo(f"Downloading model from {repository}@{release} to {model_dir}...")
+    if (
+        "HF_TOKEN" not in os.environ
+        and repository != "instructlab/merlinite-7b-lab-GGUF"
+    ):
+        raise ValueError(
+            "HF_TOKEN var needs to be set in your environment to download HF Model. The HF Token is used to authenticate your identity to the Hugginface Hub."
+        )
     try:
         if ctx.obj is not None:
             hf_logging.set_verbosity(ctx.obj.config.general.log_level.upper())
-        hf_hub_download(
-            repo_id=repository,
-            revision=release,
-            filename=filename,
-            local_dir=model_dir,
-        )
+        files = list_repo_files(repo_id=repository, token=os.getenv("HF_TOKEN"))
+        if any(".safetensors" in string for string in files):
+            if not os.path.exists(os.path.join(model_dir, repository)):
+                os.makedirs(name=os.path.join(model_dir, repository), exist_ok=True)
+            for f in files:
+                hf_hub_download(
+                    token=os.getenv("HF_TOKEN"),
+                    repo_id=repository,
+                    revision=release,
+                    filename=f,
+                    local_dir=os.path.join(model_dir, repository),
+                )
+        else:
+            hf_hub_download(
+                token=os.getenv("HF_TOKEN"),
+                repo_id=repository,
+                revision=release,
+                filename=filename,
+                local_dir=model_dir,
+            )
     except Exception as exc:
         click.secho(
             f"Downloading model failed with the following Hugging Face Hub error: {exc}",
