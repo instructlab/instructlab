@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+import psutil # to determine system memory
 from typing import Optional
 import logging
 import os
@@ -21,6 +22,7 @@ from transformers import (
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 import click
 import torch
+from tqdm import tqdm
 
 # Local
 from ..chat.chat import CONTEXTS
@@ -125,6 +127,17 @@ def report_cuda_device(args_device: torch.device, min_vram: int = 0) -> None:
             "stopping the server to free up about 5 GiB of GPU memory."
         )
 
+def determine_batch_size(device):
+    if device.type == "cpu":
+        # Gets the total system memory, excluding swap
+        mem_bytes = psutil.virtual_memory().total
+        mem_gb = mem_bytes / 1024 / 1024 / 1024
+        return 2 if mem_gb < 60 else 4
+    else:
+        # Defaulting for now... should check and return
+        # more for very large GPUs
+        return 1
+
 
 def report_hpu_device(args_device: torch.device) -> None:
     print(f"Device count: {hpu.device_count()}")
@@ -212,9 +225,14 @@ def linux_train(
         model_name, torchscript=True, trust_remote_code=True
     )
 
+    model_torch_dtype = "auto"
+    if device.type == "cpu":
+        # Setting to None to improve inference performance on cpu
+        model_torch_dtype = None
+
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        torch_dtype="auto",
+        torch_dtype=model_torch_dtype,
         quantization_config=bnb_config,
         config=config,
         trust_remote_code=True,
@@ -290,7 +308,7 @@ def linux_train(
 
     tokenizer.padding_side = "right"
     output_dir = "./training_results"
-    per_device_train_batch_size = 1
+    per_device_train_batch_size = determine_batch_size(device)
     max_seq_length = 300
 
     if device.type == "hpu":
@@ -335,12 +353,17 @@ def linux_train(
             "generation_config": GaudiGenerationConfig(),
         }
     else:
+        use_bf16 = not use_fp16
+        if device.type == 'cpu':
+            # CPU performance is very bad with fp16 or bf16, so disable both
+            use_fp16 = use_bf16 = False
+
         training_arguments = TrainingArguments(
             output_dir=output_dir,
             num_train_epochs=num_epochs,
             per_device_train_batch_size=per_device_train_batch_size,
             fp16=use_fp16,
-            bf16=not use_fp16,
+            bf16=use_bf16,
             # use_ipex=True, # TODO CPU test this possible optimization
             use_cpu=model.device.type == "cpu",
             save_strategy="epoch",
@@ -381,7 +404,7 @@ def linux_train(
         assistant_new = output.split(response_template.strip())[-1].strip()
         assistant_expected = d["assistant"]
 
-        print(f"\n===\ntest {i}\n===\n")
+        print(f"\n===\ntest {i+1}\n===\n")
         print("\n===\nuser\n===\n")
         print(d["user"])
         print("\n===\nassistant_old\n===\n")
