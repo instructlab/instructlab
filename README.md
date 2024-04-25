@@ -1,7 +1,9 @@
 # InstructLab 🐶 (`ilab`)
-
-![Tests](https://github.com/instructlab/instructlab/actions/workflows/test.yml/badge.svg)
+![Lint](https://github.com/instructlab/instructlab/actions/workflows/lint.yml/badge.svg?branch=main)
+![Tests](https://github.com/instructlab/instructlab/actions/workflows/test.yml/badge.svg?branch=main)
+![Build](https://github.com/instructlab/instructlab/actions/workflows/pypi.yaml/badge.svg?branch=main)
 [![Demo](https://img.shields.io/badge/Demo-v0.13.0-blue)](https://asciinema.org/a/PmRU7IrReep04FY6qpzo2Zclc)
+![License](https://img.shields.io/github/license/instructlab/instructlab)
 
 ## 📖 Contents
 - [❓What is `ilab`](#-what-is-ilab)
@@ -112,21 +114,22 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
    CLI for interacting with InstructLab.
 
-   If this is your first time running `ilab`, it's best to start with `ilab init`
-   to create the environment
+   If this is your first time running InstructLab, it's best to start with `ilab init` to create the environment.
 
    Options:
    --config PATH  Path to a configuration file.  [default: config.yaml]
+   --version      Show the version and exit.
    --help         Show this message and exit.
 
    Commands:
    chat      Run a chat using the modified model
-   check     Check that taxonomy is valid
+   check     (Deprecated) Check that taxonomy is valid
    convert   Converts model to GGUF
+   diff      Lists taxonomy files that have changed since <taxonomy-base>...
    download  Download the model(s) to train
    generate  Generates synthetic data to enhance your example data
    init      Initializes environment for InstructLab
-   list      Lists taxonomy files that have changed since a reference commit (default origin/main)
+   list      (Deprecated) Lists taxonomy files that have changed since <taxonomy-base>.
    serve     Start a local server
    test      Runs basic test to ensure model correctness
    train     Takes synthetic data generated locally with `ilab generate`...
