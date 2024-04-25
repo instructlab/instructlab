@@ -135,15 +135,15 @@ def init(
     min_taxonomy,
 ):
     """Initializes environment for InstructLab"""
-    if exists(config.DEFAULT_CONFIG):
-        overwrite = click.confirm(
-            f"Found {config.DEFAULT_CONFIG} in the current directory, do you still want to continue?"
-        )
-        if not overwrite:
-            return
 
     clone_taxonomy_repo = True
     if interactive:
+        if exists(config.DEFAULT_CONFIG):
+            overwrite = click.confirm(
+                f"Found {config.DEFAULT_CONFIG} in the current directory, do you still want to continue?"
+            )
+            if not overwrite:
+                return
         click.echo(
             "Welcome to InstructLab CLI. This guide will help you to setup your environment."
         )
