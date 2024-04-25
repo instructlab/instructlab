@@ -72,29 +72,26 @@ sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
 
 When running our model, we want to create some paths that will be mounted in
 the container to provide data persistence. As an unprivileged user, you will
-run a rootless container, so you need to let the internal user (UID 1001)
-access the files in the host. For that, we use `podman unshare chown`. The
-directory will contain InstructLab's configuration, models, taxonomy,
+run a rootless container and map your UID to UID `1001` inside the container.
+The volume mount will contain InstructLab's configuration, models, taxonomy,
 and Hugging Face download cache.
 
 ```shell
 mkdir -p $HOME/.config/instructlab
-podman unshare chown 1001:1001 -R $HOME/.config/instructlab
 ```
 
 Then, we can run the container, mounting the above folder and using the first
 NVIDIA GPU.
 
 ```shell
-podman run --rm -it --user 1001 --device nvidia.com/gpu=0 --volume $HOME/.config/instructlab:/opt/app-root/src:z localhost/instructlab:cuda
+podman run --rm -it --userns keep-id:uid=1001 --device nvidia.com/gpu=0 --volume $HOME/.config/instructlab:/opt/app-root/src:z localhost/instructlab:cuda
 ```
 
-The above command will print the help, as we didn't pass any argument.
-
+The above command will give you an interactive shell inside the container.
 Let's initialize our configuration, download the model and start the chatbot.
 
 ```shell
-podman run --rm -it --device nvidia.com/gpu=0 --volume $HOME/.config/instructlab:/opt/app-root/src:z localhost/instructlab:cuda init
-podman run --rm -it --device nvidia.com/gpu=0 --volume $HOME/.config/instructlab:/opt/app-root/src:z localhost/instructlab:cuda download
-podman run --rm -it --device nvidia.com/gpu=0 --volume $HOME/.config/instructlab:/opt/app-root/src:z localhost/instructlab:cuda chat
+(app-root) lab init
+(app-root) lab download
+(app-root) lab chat
 ```

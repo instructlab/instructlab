@@ -1,9 +1,4 @@
 # SPDX-License-Identifier: Apache-2.0
-#
-# This container file requires a RHEL subscription to build and
-# subscription-manager-plugin-container to pass subscription information
-# into the build process. A no-cost developer subscription is sufficient.
-# Fedora machines can be registered with subscription-manager, too.
 
 ARG CUDA_VERSION="12.4.1"
 
@@ -87,5 +82,5 @@ ENV HOME="${VIRTUAL_ENV}/src" \
     PS1="(app-root) \w\$ "
 WORKDIR "${HOME}"
 VOLUME ["/opt/app-root/src"]
+# reset NVIDIA's entry point
 ENTRYPOINT []
-CMD ["/opt/app-root/bin/ilab"]
