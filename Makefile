@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-BUILD_ARGS = --ssh=default
+BUILD_ARGS =
 CENGINE ?= podman
 CONTAINER_PREFIX ?= localhost/instructlab
 TOOLBOX ?= instructlab

@@ -36,7 +36,7 @@ how to do that on Fedora with `dnf`:
   # Install lab (assumes a locally-cloned repo)
   # You can clone the repo if you haven't already done so (either one)
   # gh repo clone instructlab/instructlab
-  # git clone git@github.com:instructlab/instructlab.git
+  # git clone https://github.com/instructlab/instructlab.git
   pip3 install ./instructlab/
   ```
 

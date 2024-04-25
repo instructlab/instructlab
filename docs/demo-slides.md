@@ -31,7 +31,7 @@ source venv/bin/activate.fish
 <!-- pause -->
 Install CLI
 ```fish
-pip install git+ssh://git@github.com/instruct-lab/cli.git@v0.13.0
+pip install git+https://github.com/instruct-lab/cli.git@v0.13.0
 ```
 <!-- pause -->
 Initialize workspace
@@ -154,7 +154,7 @@ Commit change and push to fork
 ```fish
 cd taxonomy
 git status
-git remote add xukai92 git@github.com:instruct-lab/taxonomy.git
+git remote add xukai92 https://github.com/instruct-lab/taxonomy.git
 git add knowledge/instruct-lab/cli
 git commit -sm "feat(knowledge): InstructLab CLI usage"
 git checkout -b demo
