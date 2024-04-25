@@ -22,6 +22,17 @@ import uvicorn
 from .client import ClientException, list_models
 from .config import get_api_base
 
+templates = [
+    {
+        "model": "merlinite",
+        "template": "{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}",
+    },
+    {
+        "model": "mixtral",
+        "template": "{{ bos_token }}\n{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '[INST] ' + message['content'] + ' [/INST]' }}\n{% elif message['role'] == 'assistant' %}\n{{ message['content'] + eos_token}}\n{% endif %}\n{% endfor %}",
+    },
+]
+
 
 class ServerException(Exception):
     """An exception raised when serving the API."""
@@ -43,6 +54,7 @@ def ensure_server(
     tls_client_cert,
     tls_client_key,
     tls_client_passwd,
+    model_family,
 ):
     """Checks if server is running, if not starts one as a subprocess. Returns the server process
     and the URL where it's available."""
@@ -102,6 +114,7 @@ def ensure_server(
                 "model_path": serve_config.model_path,
                 "gpu_layers": serve_config.gpu_layers,
                 "max_ctx_size": serve_config.max_ctx_size,
+                "model_family": model_family,
                 "port": port,
                 "host": host,
                 "queue": queue,
@@ -131,6 +144,7 @@ def server(
     model_path,
     gpu_layers,
     max_ctx_size,
+    model_family,
     threads=None,
     host="localhost",
     port=8000,
@@ -155,12 +169,23 @@ def server(
             return
         raise ServerException(f"failed creating the server application: {exc}") from exc
 
+    template = ""
+    eos_token = "<|endoftext|>"
+    bos_token = ""
+    for template_dict in templates:
+        if template_dict["model"] == model_family:
+            template = template_dict["template"]
+            if template_dict["model"] == "mixtral":
+                eos_token = "</s>"
+                bos_token = "<s>"
     try:
-        llama_app._llama_proxy._current_model.chat_handler = llama_chat_format.Jinja2ChatFormatter(
-            template="{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}",
-            eos_token="<|endoftext|>",
-            bos_token="",
-        ).to_chat_handler()
+        llama_app._llama_proxy._current_model.chat_handler = (
+            llama_chat_format.Jinja2ChatFormatter(
+                template=template,
+                eos_token=eos_token,
+                bos_token=bos_token,
+            ).to_chat_handler()
+        )
     # pylint: disable=broad-exception-caught
     except Exception as exc:
         if queue:

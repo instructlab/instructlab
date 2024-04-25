@@ -104,6 +104,7 @@ def report_cuda_device(args_device, min_vram=0):
 def linux_train(
     train_file: str,
     test_file: str,
+    model_name: str,
     num_epochs: Optional[int] = None,
     device: torch.device = torch.device("cpu"),
     four_bit_quant: bool = False,
@@ -126,7 +127,6 @@ def linux_train(
     test_dataset = load_dataset("json", data_files=test_file, split="train")
     train_dataset.to_pandas().head()
 
-    model_name = "instructlab/merlinite-7b-lab"
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     tokenizer.pad_token = tokenizer.eos_token
 
