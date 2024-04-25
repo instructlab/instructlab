@@ -24,6 +24,10 @@ import yaml
 # NOTE: Subcommands are using local imports to speed up startup time.
 from . import config, utils
 
+# Set logging level of OpenAI client and httpx library to ERROR to suppress INFO messages
+logging.getLogger("openai").setLevel(logging.ERROR)
+logging.getLogger("httpx").setLevel(logging.ERROR)
+
 if typing.TYPE_CHECKING:
     # Third Party
     import torch
