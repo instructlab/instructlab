@@ -114,7 +114,10 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             f" ({session_name})" if new else ""
         )
         self._sys_print(
-            Markdown(f"Welcome to Chat CLI w/ **{self.model.upper()}**" + side_info_str)
+            Markdown(
+                f"Welcome to InstructLab Chat w/ **{self.model.upper()}**"
+                + side_info_str
+            )
         )
 
     @property
