@@ -94,6 +94,7 @@ def report_cuda_device(args_device: torch.device, min_vram: int = 0) -> None:
     """Report CUDA/ROCm device properties"""
     print(f"  NVidia CUDA version: {torch.version.cuda or 'n/a'}")
     print(f"  AMD ROCm HIP version: {torch.version.hip or 'n/a'}")
+    print(f"  Supports bf16: {torch.cuda.is_bf16_supported()}")
 
     def _gib(size: int) -> str:
         return "{:.1f} GiB".format(size / 1024**3)
@@ -173,6 +174,36 @@ def linux_train(
         hpu.init()
         report_hpu_device(device)
 
+    # device register a module, e.g. torch.cpu or torch.cuda
+    device_module = getattr(torch, device.type, None)
+    # bfloat16 is not supported on older CUDA versions and devices
+    # with CUDA support level < 8.0.
+    if hasattr(device_module, "is_bf16_supported"):
+        use_bf16 = device_module.is_bf16_supported()
+        use_fp16 = not use_bf16
+    elif device.type == "cpu":
+        # TODO: check if Torch and CPU support AVX2, F16C, AVX512
+        use_bf16 = False
+        use_fp16 = False
+    else:
+        # assume bf16 supported unless device says otherwise
+        use_bf16 = True
+        use_fp16 = False
+
+    torch_dtype = "auto" if device.type == "cuda" else None
+
+    # torch compile fails to build, see PyTorch #124707
+    # scaled_dot_product_attention(): argument 'is_causal' must be bool, not SymBool
+    use_torch_compile = False
+    # if device.type == "cuda" and torch.version.cuda is not None:
+    #     # check for NVIDIA V100, A100, or H100
+    #     cap = torch.cuda.get_device_capability(device)
+    #     use_torch_compile = cap in {(7, 0), (8, 0), (9, 0)}
+
+    print(
+        f"LINUX_TRAIN.PY: {use_bf16=}, {use_fp16=}, {torch_dtype=}, {use_torch_compile=}"
+    )
+
     print("LINUX_TRAIN.PY: LOADING DATASETS")
     # Get the file name
     train_dataset = load_dataset("json", data_files=train_file, split="train")
@@ -194,6 +225,7 @@ def linux_train(
 
     if four_bit_quant:
         print("LINUX_TRAIN.PY: USING 4-bit quantization with BitsAndBytes")
+        use_bf16 = False
         use_fp16 = True
         bnb_config = BitsAndBytesConfig(
             load_in_4bit=True,
@@ -203,7 +235,6 @@ def linux_train(
         )
     else:
         print("LINUX_TRAIN.PY: NOT USING 4-bit quantization")
-        use_fp16 = False
         bnb_config = None
 
     # Loading the model
@@ -214,7 +245,7 @@ def linux_train(
 
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        torch_dtype="auto",
+        torch_dtype=torch_dtype,
         quantization_config=bnb_config,
         config=config,
         trust_remote_code=True,
@@ -340,7 +371,7 @@ def linux_train(
             num_train_epochs=num_epochs,
             per_device_train_batch_size=per_device_train_batch_size,
             fp16=use_fp16,
-            bf16=not use_fp16,
+            bf16=use_bf16,
             # use_ipex=True, # TODO CPU test this possible optimization
             use_cpu=model.device.type == "cpu",
             save_strategy="epoch",

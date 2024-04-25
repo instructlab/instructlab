@@ -1627,7 +1627,7 @@ def convert_llama_to_gguf(
     big_endian: bool = False,
     pad_vocab: bool = False,
     skip_unknown: bool = False,
-):
+) -> str:
     """Convert a LLaMA model to a GGML compatible file"""
     # TODO validate vocab_type as was done in click.option declaration:
     # type=click.Choice(

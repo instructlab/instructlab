@@ -872,6 +872,8 @@ class TorchDeviceParam(click.ParamType):
                 device = torch.device(value)
             except RuntimeError as e:
                 self.fail(str(e), param, ctx)
+        else:
+            device = value
 
         if device.type not in self.supported_devices:
             supported = ", ".join(repr(s) for s in sorted(self.supported_devices))
