@@ -1743,3 +1743,4 @@ def convert_llama_to_gguf(
         pad_vocab=pad_vocab,
     )
     print(f"Wrote {outfile}")
+    return outfile
