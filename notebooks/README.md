@@ -49,7 +49,8 @@ and the NVIDIA P100 provided in the free tier, we will fine tune a LoRA.
 1. You'll need a Kaggle account, which you can create by visiting [Kaggle's Sign-up Page](https://www.kaggle.com/account/login?phase=startRegisterTab&returnUrl=%2F).
 1. To use Kaggle's accelerators, you'll have to verify your account with a phone number. Visit the [account settings page](https://www.kaggle.com/settings) and select "Phone Verification".
 
-**NOTE: At present, you'll need to download the notebook and upload it to Kaggle. The following steps will walk you through uploading the notebook. Once this repository is open sourced, we will make an 'Open in Colab' button**
+[!NOTE]
+At present, you'll need to download the notebook and upload it to Kaggle. The following steps will walk you through uploading the notebook. Once this repository is open sourced, we will make an 'Open in Colab' button**
 
 #### Uploading the notebook
 

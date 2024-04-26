@@ -18,7 +18,7 @@
   - [📣 Chat with the model (Optional)](#-chat-with-the-model-optional)
 - [💻 Creating new knowledge or skills and training the model](#-creating-new-knowledge-or-skills-and-training-the-model)
   - [🎁 Contribute knowledge or compositional skills](#-contribute-knowledge-or-compositional-skills)
-  - [📜 📜 List and validate your new data](#-list-and-validate-your-new-data)
+  - [📜 List and validate your new data](#-list-and-validate-your-new-data)
   - [🚀 Generate a synthetic dataset](#-generate-a-synthetic-dataset)
   - [👩‍🏫 Train the model](#-train-the-model)
   - [Test the newly trained model](#-test-the-newly-trained-model)
