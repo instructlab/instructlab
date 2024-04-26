@@ -1,0 +1,15 @@
+config:
+  line-length: false
+  no-emphasis-as-header: false
+  first-line-heading: false
+  code-block-style: false
+  no-duplicate-header: false
+  single-trailing-newline: false
+globs:
+  - "**/*.md"
+ignores:
+  - "pkg"
+  - "**/node_modules/*"
+  - "**/node_modules/**"
+  - ".tox/**"
+  - "venv/**"

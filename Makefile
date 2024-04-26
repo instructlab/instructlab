@@ -127,3 +127,24 @@ verify: ## Run tox -e fmt,lint,spellcheck against code
 .PHONY: spellcheck-sort
 spellcheck-sort: .spellcheck-en-custom.txt
 	sort -d -f -o $< $<
+
+##@ Linting
+
+#
+# If you want to see the full commands, run:
+#   NOISY_BUILD=y make
+#
+ifeq ($(NOISY_BUILD),)
+    ECHO_PREFIX=@
+    CMD_PREFIX=@
+    PIPE_DEV_NULL=> /dev/null 2> /dev/null
+else
+    ECHO_PREFIX=@\#
+    CMD_PREFIX=
+    PIPE_DEV_NULL=
+endif
+
+.PHONY: md-lint
+md-lint: ## Lint markdown files
+	$(ECHO_PREFIX) printf "  %-12s ./...\n" "[MD LINT]"
+	$(CMD_PREFIX) podman run --rm -v $(CURDIR):/workdir --security-opt label=disable docker.io/davidanson/markdownlint-cli2:v0.6.0 > /dev/null
