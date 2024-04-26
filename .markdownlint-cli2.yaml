@@ -5,11 +5,14 @@ config:
   code-block-style: false
   no-duplicate-header: false
   single-trailing-newline: false
+  commands-show-output: false
+  ol-prefix: false
+  heading-start-left: false
 globs:
   - "**/*.md"
 ignores:
-  - "pkg"
-  - "**/node_modules/*"
-  - "**/node_modules/**"
   - ".tox/**"
   - "venv/**"
+  - ".venv/**"
+  - "build/**"
+  - "tests/**"
