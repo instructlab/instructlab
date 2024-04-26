@@ -4,6 +4,7 @@ CI/CD:
   - changed-file:
       - any-glob-to-any-file:
           - .github/labeler.yml
+          - .github/mergify.yml
           - .github/workflows/**/*
           - scripts/ruff.sh
           - .pre-commit-config.yaml

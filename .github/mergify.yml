@@ -31,7 +31,6 @@ pull_request_rules:
           - files~=tox.ini$
           - files~=scripts/.*\.sh$
       - and:
-        - -files~=.github/.*$
         - -files~=.*\.py$
         - -files~=pyproject.toml$
         - -files~=requirements.*\.txt$
