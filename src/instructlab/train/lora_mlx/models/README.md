@@ -1,6 +1,8 @@
 # Notice
-The code in this folder is modified from https://github.com/ml-explore/mlx-examples/tree/main/lora/models with the following license.
-```
+
+The code in this folder is modified from [here](https://github.com/ml-explore/mlx-examples/tree/main/lora/models) with the following license.
+
+```license
 MIT License
 
 Copyright © 2023 Apple Inc.

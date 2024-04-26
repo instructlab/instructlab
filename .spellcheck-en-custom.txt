@@ -72,6 +72,7 @@ Quantizing
 Radeon
 RDNA
 README
+repo
 ROCm
 RTX
 RX

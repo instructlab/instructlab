@@ -1,7 +1,8 @@
 ### Notice
-This folder uses code from the `stanford_alpaca` project developed by Tatsu Lab, available at https://github.com/tatsu-lab/stanford_alpaca. The original code is licensed under the Apache License:
 
-```
+This folder uses code from the `stanford_alpaca` project developed by Tatsu Lab, available [here](https://github.com/tatsu-lab/stanford_alpaca). The original code is licensed under the Apache License:
+
+```license
                                 Apache License
                            Version 2.0, January 2004
                         http://www.apache.org/licenses/

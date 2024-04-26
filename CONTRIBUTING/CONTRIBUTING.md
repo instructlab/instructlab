@@ -28,7 +28,7 @@ When your contribution is ready, you can create a pull request. Pull requests ar
 
 Before sending pull requests, make sure your changes pass formatting, linting and unit tests.
 
-#### Code Review
+### Code Review
 
 Once you've [created a pull request](#how-can-i-contribute), maintainers will review your code and may make suggestions to fix before merging. It will be easier for your pull request to receive reviews if you consider the criteria the reviewers follow while working. Remember to:
 

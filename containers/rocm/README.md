@@ -23,7 +23,6 @@ To update InstructLab CLI to latest version: `pip install -e ~/path/to/instructl
 more powerful and recent GPU and therefore does not use GPU by default. To
 train on a GPU, run `ilab train --device cuda`.
 
-
 ## Building for other GPU architectures
 
 Use the `amdgpu-arch` or `rocminfo` tool to get the short name

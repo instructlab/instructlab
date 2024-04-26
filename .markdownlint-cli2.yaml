@@ -1,0 +1,19 @@
+config:
+  line-length: false
+  no-emphasis-as-header: false
+  first-line-heading: false
+  code-block-style: false
+  no-duplicate-header: false
+  single-trailing-newline: false
+  commands-show-output: false
+  ol-prefix: false
+  heading-start-left: false
+  no-duplicate-heading: false
+globs:
+  - "**/*.md"
+ignores:
+  - ".tox/**"
+  - "venv/**"
+  - ".venv/**"
+  - "build/**"
+  - "tests/**"
