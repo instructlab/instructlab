@@ -327,7 +327,7 @@ Incompatible devices:
 ilab train --device cuda
 ```
 
-```
+```shell
 LINUX_TRAIN.PY: PyTorch device is 'cuda:0'
   NVidia CUDA version: n/a
   AMD ROCm HIP version: 5.7.31921-d1770ee1b

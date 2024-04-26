@@ -1,4 +1,5 @@
 # InstructLab 🐶 (`ilab`)
+
 ![Lint](https://github.com/instructlab/instructlab/actions/workflows/lint.yml/badge.svg?branch=main)
 ![Tests](https://github.com/instructlab/instructlab/actions/workflows/test.yml/badge.svg?branch=main)
 ![Build](https://github.com/instructlab/instructlab/actions/workflows/pypi.yaml/badge.svg?branch=main)
@@ -6,6 +7,7 @@
 ![License](https://img.shields.io/github/license/instructlab/instructlab)
 
 ## 📖 Contents
+
 - [❓What is `ilab`](#-what-is-ilab)
 - [📋 Requirements](#-requirements)
 - [✅ Getting started](#-getting-started)
@@ -16,8 +18,7 @@
   - [📣 Chat with the model (Optional)](#-chat-with-the-model-optional)
 - [💻 Creating new knowledge or skills and training the model](#-creating-new-knowledge-or-skills-and-training-the-model)
   - [🎁 Contribute knowledge or compositional skills](#-contribute-knowledge-or-compositional-skills)
-  - [📜 List your new data](#-list-your-new-data)
-  - [📜 Check your new data](#-check-your-new-data)
+  - [📜 📜 List and validate your new data](#-list-and-validate-your-new-data)
   - [🚀 Generate a synthetic dataset](#-generate-a-synthetic-dataset)
   - [👩‍🏫 Train the model](#-train-the-model)
   - [Test the newly trained model](#-test-the-newly-trained-model)
@@ -39,19 +40,19 @@ Large Language Models (LLMs.) The "**lab**" in Instruct**Lab** 🐶 stands for
 `ilab` is a Command-Line Interface (CLI) tool that allows you to:
 
 1. Download a pre-trained Large Language Model (LLM).
-2. Chat with the LLM.
+1. Chat with the LLM.
 
 To add new knowledge and skills to the pre-trained LLM you have to add new information to the companion [taxonomy](https://github.com/instructlab/taxonomy.git) repository.
 After that is done, you can:
 
 1. Use `ilab` to generate new synthetic training data based on the changes in your local `taxonomy` repository.
-2. Re-train the LLM with the new training data.
-3. Chat with the re-trained LLM to see the results.
+1. Re-train the LLM with the new training data.
+1. Chat with the re-trained LLM to see the results.
 
 The full process is described graphically in the [workflow diagram](./docs/workflow.png).
 
 > [!IMPORTANT]
-> It is important to understand that running InstructLab on a laptop will give you a low-fidelity approximation of both synthetic data generation (using the `ilab generate` command) 
+> It is important to understand that running InstructLab on a laptop will give you a low-fidelity approximation of both synthetic data generation (using the `ilab generate` command)
 > and model instruction tuning (using the `ilab train` command, which uses QLoRA.) The quality of the results you get using these tools on a laptop will not be as high-fidelity as they might be using
 > a larger teacher model and a different training method. We have optimized InstructLab to enable community members with modest hardware to be able to use the technique. If you have more sophisticated
 > hardware, you can configure InstructLab to use a larger teacher model [such as Mixtral](https://huggingface.co/docs/transformers/model_doc/mixtral) in order to achieve higher-fidelity results.
@@ -62,7 +63,6 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 - C++ compiler
 - Python 3.9+ (<3.12 for PyTorch JIT)
 - Approximately 60GB disk space (entire process)
-
 
 > **NOTE:** PyTorch 2.2.1 does not support `torch.compile` with Python 3.12. On Fedora 39+, install `python3.11-devel` and create the virtual env with `python3.11` if you wish to use PyTorch's JIT compiler.
 
@@ -98,6 +98,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
    source venv/bin/activate
    pip install git+https://github.com/instructlab/instructlab.git@stable
    ```
+
    > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection.
 
 4. From your `venv` environment, verify `ilab` is installed correctly, by running the `ilab` command.
@@ -106,7 +107,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
    ilab
    ```
 
-   #### Example output:
+   #### Example output
 
    ```shell
    (venv) $ ilab
@@ -149,7 +150,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
    ilab init
    ```
 
-   #### Example output:
+   #### Example output
 
    ```shell
    Welcome to InstructLab CLI. This guide will help you set up your environment.
@@ -163,7 +164,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
    **Optional**: If you want to point to an existing local clone of the `taxonomy` repository, you can pass the path interactively or alternatively with the `--taxonomy-path` flag.
 
-   #### Example output:
+   #### Example output
 
    ```shell
    (venv) $ ilab init
@@ -180,7 +181,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
 ### 📥 Download the model
 
-* Run the `ilab download`command.
+- Run the `ilab download`command.
 
   ```shell
   ilab download
@@ -197,10 +198,9 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
   > **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
 
-
 ### 🍴 Serving the model
 
-* Serve the model by running the following command:
+- Serve the model by running the following command:
 
    ```shell
    ilab serve
@@ -254,6 +254,7 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
 
 > [!IMPORTANT]
 > There is a limit to how much content can exist in the question/answer pairs for the model to process. Due to this, only add a maximum of around 2300 words to your question and answer seed example pairs in the `qna.yaml` file.
+
 ### 📜 List and validate your new data
 
 1. List your new data by running the following command:
@@ -277,9 +278,10 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
    ```shell
    ilab generate
    ```
+
    > **NOTE:** ⏳ This can take from 15 minutes to 1+ hours to complete, depending on your computing resources.
 
-   #### Example output:
+   #### Example output
 
    ```shell
    (venv) $ ilab generate
@@ -298,6 +300,7 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
 > generate` when available. You should remove it when the process is completed.
 
 2. Verify the files have been created by running the `ls generated` command.
+
    ```shell
    (venv) $ ls generated/
    'generated_ggml-merlinite-7b-lab-0226-Q4_K_M_2024-02-29T19 09 48.json'   'train_ggml-merlinite-7b-lab-0226-Q4_K_M_2024-02-29T19 09 48.jsonl'
@@ -306,7 +309,6 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
 
    **Optional**: It is also possible to run the generate step against a different model via an
    OpenAI-compatible API. For example, the one spawned by `ilab serve` or any remote or locally hosted LLM (e.g. via [`ollama`](https://ollama.com/), [`LM Studio`](https://lmstudio.ai), etc.). Run the following command:
-
 
    ```shell
    ilab generate --endpoint-url http://localhost:8000/v1
@@ -337,7 +339,7 @@ ilab train
 or AMD ROCm. See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for more
 details.
 
-#### Train the model locally on an M-series Mac:
+#### Train the model locally on an M-series Mac
 
 To train the model locally on your M-Series Mac is as easy as running:
 
@@ -349,6 +351,7 @@ ilab train
 and output of `ilab generate` but on the order of 5 to 15 minutes)
 
 `ilab train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory called `adapters.npz` (in `Numpy` compressed array format). For example:
+
 ```shell
 (venv) $ ls instructlab-merlinite-7b-lab-mlx-q
 adapters-010.npz        adapters-050.npz        adapters-090.npz        config.json             tokenizer.model
@@ -362,6 +365,7 @@ adapters-040.npz        adapters-080.npz        added_tokens.json       tokenize
 Follow the instructions in [Training](./notebooks/README.md).
 
 ⏳ Approximate amount of time taken on each platform:
+
 - *Google Colab*: **5-10 minutes** with a T4 GPU
 - *Kaggle*: **~30 minutes** with a P100 GPU.
 
@@ -370,8 +374,7 @@ The model can also be downloaded and served locally.
 
 ### 📜 Test the newly trained model
 
-
-* Run the following command to test the model:
+- Run the following command to test the model:
 
    ```shell
    ilab test
@@ -386,9 +389,9 @@ The model can also be downloaded and served locally.
 1. Stop the server you have running by entering `ctrl+c` keys in the terminal running the server.
 
    > **IMPORTANT**:
-   * 🍎 This step is only implemented for macOS with M-series chips (for now).
+   - 🍎 This step is only implemented for macOS with M-series chips (for now).
 
-   * Before serving the newly trained model you must convert it to work with
+   - Before serving the newly trained model you must convert it to work with
    the `ilab` cli. The `ilab convert` command converts the new model into quantized [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format which is required by the server to host the model in the `ilab serve` command.
 
 2. Convert the newly trained model by running the following command:
@@ -410,7 +413,7 @@ argument to specify your new model:
 
 ## 📣 Chat with the new model (not optional this time)
 
-* Try the fine-tuned model out live using the chat interface, and see if the results are better than the untrained version of the model with chat by running the following command:
+- Try the fine-tuned model out live using the chat interface, and see if the results are better than the untrained version of the model with chat by running the following command:
 
    ```shell
    ilab chat -m <New model name>

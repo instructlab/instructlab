@@ -2,15 +2,15 @@
 
 The InstructLab team and community take security bugs seriously. We appreciate your efforts to responsibly disclose your findings, and will make every effort to acknowledge your contributions.
 
-# Reporting a Vulnerability
+## Reporting a Vulnerability
 
-If you think you've identified a security issue in an InstructLab project repository, please DO NOT report the issue publicly via the GitHub issue tracker, Slack Workspace, etc. 
+If you think you've identified a security issue in an InstructLab project repository, please DO NOT report the issue publicly via the GitHub issue tracker, Slack Workspace, etc.
 
 Instead, send an email with as many details as possible to [instructlab-sec@osci.io](mailto:instructlab-sec@osci.io). This is a private mailing list for the core maintainers.
 
 Please do not create a public issue.
 
-# Security Vulnerability Response
+## Security Vulnerability Response
 
 Each report is acknowledged and analyzed by the core maintainers within 3 working days.
 

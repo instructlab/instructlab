@@ -1,10 +1,10 @@
-# Welcome to InstructLab 🥼!
+# Welcome to InstructLab 🥼
 
 This guide should teach you how to set up your development environment to start contributing to the `ilab` CLI tool.
 
 **tl;dr** We're going to install `ilab` in a Python virtual environment like we did in the `README.md`. Instead of installing from GitHub, however, we'll clone the [`instructlab/instructlab`](https://github.com/instructlab/instructlab) repository from GitHub and install `ilab` from the cloned Python source code.
 
-# Installing `ilab` from source
+## Installing `ilab` from source
 
 Here we install from the upstream repository, but you may want to fork the repository and replace the git clone URL below with the URL for your fork:
 
@@ -28,13 +28,13 @@ Success! 🌟 Now, when you run `ilab` commands, it's using the source code on y
 
 ⚠️  **If `ilab` stops working:** Make sure to run `source venv/bin/activate` and are inside the venv (your terminal prompt should be prefixed with a `(venv)` to indicate this.
 
-# Reinstalling `ilab` to see your changes
+## Reinstalling `ilab` to see your changes
 
 Changes to the `ilab` code in `instructlab/instructlab` **won't** automatically show up when you call `ilab` unless you reinstall the package from source.
 
 Simply execute:
 
-```
+```shell
 pip3 install .
 ```
 
