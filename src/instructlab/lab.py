@@ -1286,6 +1286,9 @@ def test(data_dir, model_dir, adapter_file):
 def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model_name):
     """Converts model to GGUF"""
     # pylint: disable=C0415
+    # Third Party
+    from instructlab_quantize import run_quantize  # pylint: disable=import-error
+
     # Local
     from .llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
     from .train.lora_mlx.convert import convert_between_mlx_and_pytorch
@@ -1299,8 +1302,6 @@ def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model
 
     if adapter_file is None:
         adapter_file = os.path.join(model_dir, "adapters.npz")
-    cli_dir = os.path.dirname(os.path.abspath(__file__))
-
     source_model_dir = model_dir
     model_dir_fused = f"{source_model_dir}-fused"
 
@@ -1339,9 +1340,7 @@ def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model
     if not skip_quantize:
         gguf_model_dir = f"{model_dir_fused_pt}/{model_name}.gguf"
         gguf_model_q_dir = f"{model_dir_fused_pt}/{model_name}-Q4_K_M.gguf"
-        script = os.path.join(cli_dir, "llamacpp/quantize")
-        cmd = f"{script} {gguf_model_dir} {gguf_model_q_dir} Q4_K_M"
-        os.system("{}".format(cmd))
+        run_quantize(gguf_model_dir, gguf_model_q_dir, "Q4_K_M")
 
     ctx.obj.logger.info(f"deleting {model_dir_fused_pt}/{model_name}.gguf...")
     os.remove(os.path.join(model_dir_fused_pt, f"{model_name}.gguf"))
