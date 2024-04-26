@@ -1,10 +1,12 @@
 FROM registry.access.redhat.com/ubi9/python-311 as runtime
 # same targets and ROCm version as upstream PyTorch
 ARG LLAMA_AMDGPU_TARGETS=gfx900;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx942;gfx1030;gfx1100
+ARG FLASH_ATTN_AMDGPU_TARGETS=""
 ARG PYTORCH_ROCM_VERSION=6.0
 # PyTorch 2.2.1 does not support torch_compile with 3.12
 ARG PYTHON=python3.11
 ENV LLAMA_AMDGPU_TARGETS="${LLAMA_AMDGPU_TARGETS}" \
+    FLASH_ATTN_AMDGPU_TARGETS="${FLASH_ATTN_AMDGPU_TARGETS}"
     PYTORCH_ROCM_VERSION="${PYTORCH_ROCM_VERSION}" \
     PYTHON="${PYTHON}" \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
@@ -13,20 +15,21 @@ ENV PIP_CACHE_DIR="${VIRTUAL_ENV}/.cache/pip"
 RUN mkdir -p -m777 ${PIP_CACHE_DIR}
 COPY --chown=0:0 containers/sitecustomize.py ${VIRTUAL_ENV}/lib/${PYTHON}/site-packages
 COPY --chown=0:0 containers/bin/debug-* ${VIRTUAL_ENV}/bin
+RUN ${VIRTUAL_ENV}/bin/pip install wheel packaging
 USER 0
 COPY --chown=0:0 containers/rocm/rocm60.repo /etc/yum.repos.d/
-RUN --mount=type=cache,target=/var/cache/dnf,z \
+RUN --mount=type=cache,sharing=locked,id=dnf-ubi9,target=/var/cache/dnf,z \
     dnf install -y --nodocs --setopt=install_weak_deps=False --setopt=keepcache=True \
         'dnf-command(config-manager)' \
         https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm && \
     dnf config-manager --enable codeready-builder-for-rhel-9-x86_64-rpms
-RUN --mount=type=cache,target=/var/cache/dnf,z \
+RUN --mount=type=cache,sharing=locked,id=dnf-ubi9,target=/var/cache/dnf,z \
     dnf install -y --nodocs --setopt=install_weak_deps=False --setopt=keepcache=True \
         rocm-runtime rocm-smi hipblas hiprand hipsparse lld-libs nvtop make git
 
 # build env contains compilers and build dependencies
 FROM runtime AS buildenv
-RUN --mount=type=cache,sharing=locked,target=/var/cache/dnf,z \
+RUN --mount=type=cache,sharing=locked,id=dnf-ubi9,target=/var/cache/dnf,z \
     dnf install -y --nodocs --setopt=keepcache=True \
         llvm clang compiler-rt clang-tools-extra \
         lld cmake ninja-build gcc \
@@ -60,22 +63,29 @@ RUN --mount=type=cache,sharing=locked,id=pipcache,target=${PIP_CACHE_DIR},mode=7
         ${VIRTUAL_ENV}/bin/pip install -c ${VIRTUAL_ENV}/constraints.txt llama-cpp-python
 
 
-#FROM llama as flash_attention
-#RUN \
-#    umask 0000 && \
-#    pip cache remove flash_attention && \
-#    export GPU_ARCHS="gfx90a;gfx942" && \
-#    git clone --recurse-submodules -b 2554f490 https://github.com/ROCm/flash-attention.git /tmp/flash-attention && \
-#    pip install /tmp/flash-attention
+# flash-attention supports only MI200/300 cards
+# build is untested and may not work
+FROM llama as flash_attn
+RUN --mount=type=cache,sharing=locked,id=pipcache,target=${PIP_CACHE_DIR},mode=777 \
+    if test -n "${FLASH_ATTN_AMDGPU_TARGETS}"; then \
+        umask 0000 && \
+        pip cache remove flash_attn && \
+        git clone --recurse-submodules https://github.com/ROCm/flash-attention.git /tmp/flash_attn && \
+        git -C /tmp/flash_attn checkout --recurse-submodules 2554f490101742ccdc56620a938f847f61754be6 && \
+        GPU_ARCHS="${FLASH_ATTN_AMDGPU_TARGETS}" \
+            MAX_JOBS="$(( $(nproc) < 8 ? 4 : 8 ))" \
+            ${VIRTUAL_ENV}/bin/pip install -c ${VIRTUAL_ENV}/constraints.txt /tmp/flash_attn \
+    fi
 
 
 # install from requirements.txt last. pip does not override installed
 # packages unless there is a version conflict.
-FROM llama AS pip-install
+FROM flash_attn AS pip-install
 RUN --mount=type=cache,sharing=locked,id=pipcache,target=${PIP_CACHE_DIR},mode=777 \
     umask 0000 && \
     ${VIRTUAL_ENV}/bin/pip install wheel setuptools-scm && \
     ${VIRTUAL_ENV}/bin/pip install -r ${VIRTUAL_ENV}/requirements.txt
+
 
 # install instructlab last
 FROM pip-install AS instructlab
