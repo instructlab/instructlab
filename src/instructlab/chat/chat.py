@@ -71,6 +71,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         loaded={},
         log_file=None,
         greedy_mode=False,
+        max_tokens=None,
     ):
         self.client = client
         self.model = model
@@ -79,6 +80,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self.loaded = loaded
         self.log_file = log_file
         self.greedy_mode = greedy_mode
+        self.max_tokens = max_tokens
 
         self.console = Console()
 
@@ -355,6 +357,9 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             # https://platform.openai.com/docs/api-reference/chat/create#chat-create-temperature
             create_params["temperature"] = 0
 
+        if self.max_tokens:
+            create_params["max_tokens"] = self.max_tokens
+
         # Get and parse response
         try:
             while True:
@@ -453,6 +458,7 @@ def chat_cli(
     session,
     qq,
     greedy_mode,
+    max_tokens,
     tls_insecure,
     tls_client_cert: Optional[str] = None,
     tls_client_key: Optional[str] = None,
@@ -511,6 +517,7 @@ def chat_cli(
         greedy_mode=(
             greedy_mode if greedy_mode else config.greedy_mode
         ),  # The CLI flag can only be used to enable
+        max_tokens=(max_tokens if max_tokens else config.max_tokens),
     )
 
     if not qq and session is None:

@@ -58,6 +58,7 @@ class _chat(BaseModel):
     session: Optional[str] = None
     logs_dir: Optional[str] = "data/chatlogs"
     greedy_mode: Optional[bool] = False
+    max_tokens: Optional[int] = None
 
 
 class _generate(BaseModel):

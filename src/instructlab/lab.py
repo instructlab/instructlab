@@ -554,6 +554,11 @@ def generate(
     help="Use model greedy decoding. Useful for debugging and reproducing errors.",
 )
 @click.option(
+    "--max-tokens",
+    type=click.INT,
+    help="Set a maxinum number of tokens.",
+)
+@click.option(
     "--endpoint-url",
     type=click.STRING,
     help="Custom URL endpoint for OpenAI-compatible API. Defaults to the `ilab serve` endpoint.",
@@ -598,6 +603,7 @@ def chat(
     session,
     quick_question,
     greedy_mode,
+    max_tokens,
     endpoint_url,
     api_key,
     tls_insecure,
@@ -642,6 +648,7 @@ def chat(
             session=session,
             qq=quick_question,
             greedy_mode=greedy_mode,
+            max_tokens=max_tokens,
             tls_insecure=tls_insecure,
             tls_client_cert=tls_client_cert,
             tls_client_key=tls_client_key,
