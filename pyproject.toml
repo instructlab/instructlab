@@ -150,7 +150,7 @@ module = [
   "datasets",
   "fire",
   "gitdb",
-  "habana_frameworks.torch",
+  "habana_frameworks.*",
   "huggingface_hub.*",
   "instructlab.eval.*",
   "instructlab_quantize",

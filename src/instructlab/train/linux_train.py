@@ -35,6 +35,7 @@ import torch
 
 # Local
 from ..model.chat import CONTEXTS
+from .torch_device import lookup_device
 
 # TODO CPU: Look into using these extensions
 # import intel_extension_for_pytorch as ipex
@@ -44,11 +45,10 @@ from ..model.chat import CONTEXTS
 try:
     # pylint: disable=import-error
     # Third Party
-    from habana_frameworks.torch import core as htcore
-    from habana_frameworks.torch import hpu
 
     # Habana implementations of SFT Trainer
     # https://huggingface.co/docs/optimum/habana/index
+    # Third Party
     from optimum.habana import GaudiConfig, GaudiTrainingArguments
     from optimum.habana.transformers.generation.configuration_utils import (
         GaudiGenerationConfig,
@@ -102,31 +102,15 @@ def formatting_prompts_func(example):
     return output_texts
 
 
-def report_cuda_device(args_device: torch.device, min_vram: int = 0) -> None:
-    """Report CUDA/ROCm device properties"""
-    print(f"  NVidia CUDA version: {torch.version.cuda or 'n/a'}")
-    print(f"  AMD ROCm HIP version: {torch.version.hip or 'n/a'}")
-
-    def _gib(size: int) -> str:
-        return "{:.1f} GiB".format(size / 1024**3)
-
-    for idx in range(torch.cuda.device_count()):
-        device = torch.device("cuda", idx)
-        name = torch.cuda.get_device_name(device)
-        free, total = torch.cuda.mem_get_info(device)
-        capmin, capmax = torch.cuda.get_device_capability(device)
-        print(
-            f"  {device} is '{name}' ({_gib(free)} of {_gib(total)} free, "
-            f"capability: {capmin}.{capmax})"
-        )
-
+def report_cuda_device(args_device, min_vram=0):
+    """Report CUDA/ROCm memory issues"""
     if args_device.index is None:
         index = torch.cuda.current_device()
     else:
         index = args_device.index
 
     free = torch.cuda.mem_get_info(index)[0]
-    if free < min_vram:
+    if free < min_vram * 1024**3:
         print(
             f"  WARNING: You have less than {min_vram} GiB of free GPU "
             "memory on '{index}'. Training may fail, use slow shared "
@@ -136,22 +120,6 @@ def report_cuda_device(args_device: torch.device, min_vram: int = 0) -> None:
             "  Training does not use the local InstructLab serve. Consider "
             "stopping the server to free up about 5 GiB of GPU memory."
         )
-
-
-def report_hpu_device(args_device: torch.device) -> None:
-    print(f"Device count: {hpu.device_count()}")
-    for idx in range(hpu.device_count()):
-        device = torch.device(args_device.type, idx)
-        name: str = hpu.get_device_name(device)
-        cap: str = hpu.get_device_capability(device)
-        # property string is surrounded by '()'
-        prop: str = hpu.get_device_properties(device)
-        print(f"  {device} is '{name}', cap: {cap} {prop}")
-    # https://docs.habana.ai/en/latest/PyTorch/Reference/Runtime_Flags.html
-    print("PT and Habana Environment variables")
-    for key, value in sorted(os.environ.items()):
-        if key.startswith(("PT_", "HABANA", "LOG_LEVEL_", "ENABLE_CONSOLE")):
-            print(f'  {key}="{value}"')
 
 
 def linux_train(
@@ -193,27 +161,24 @@ def linux_train(
     if four_bit_quant and device.type != "cuda":
         ctx.fail("'--4-bit-quant' option requires '--device=cuda'")
 
+    tdev = lookup_device(device)
+    tdev.init_device()
+    del device
+
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", num_epochs)
     print("LINUX_TRAIN.PY: TRAIN FILE IS: ", train_file)
     print("LINUX_TRAIN.PY: TEST FILE IS: ", test_file)
 
-    print(f"LINUX_TRAIN.PY: Using device '{device}'")
+    print(f"LINUX_TRAIN.PY: Using device '{tdev.device}'")
     output_dir = Path(output_dir)
-    if device.type == "cuda":
+    if tdev.device.type == "cuda":
         # estimated by watching nvtop / radeontop during training
         min_vram = 11 if four_bit_quant else 17
 
         # convert from gibibytes to bytes, torch.cuda.mem_get_info() returns bytes
         min_vram = min_vram * 1024**3
 
-        report_cuda_device(device, min_vram)
-    elif device.type == "hpu":
-        if htcore is None:
-            ctx.fail("habana_framework package is not installed.")
-        if not hpu.is_available():
-            ctx.fail("habana_framework is unable to detect HPUs.")
-        hpu.init()
-        report_hpu_device(device)
+        report_cuda_device(tdev.device, min_vram)
 
     print("LINUX_TRAIN.PY: LOADING DATASETS")
     # Get the file name
@@ -237,9 +202,10 @@ def linux_train(
         response_template_ids, tokenizer=tokenizer
     )
 
+    training_kwargs = tdev.training_kwargs
     if four_bit_quant:
         print("LINUX_TRAIN.PY: USING 4-bit quantization with BitsAndBytes")
-        use_fp16 = True
+        training_kwargs.update(bf16=False, fp16=True)
         bnb_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
@@ -248,7 +214,6 @@ def linux_train(
         )
     else:
         print("LINUX_TRAIN.PY: NOT USING 4-bit quantization")
-        use_fp16 = False
         bnb_config = None
 
     # Loading the model
@@ -260,14 +225,13 @@ def linux_train(
     # https://huggingface.co/docs/transformers/en/model_doc/auto#transformers.AutoModelForCausalLM.from_pretrained
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        torch_dtype="auto",
+        torch_dtype=tdev.torch_dtype,
         quantization_config=bnb_config,
         config=config,
         trust_remote_code=True,
         low_cpu_mem_usage=True,
     )
-    if model.device != device:
-        model = model.to(device)
+    model = tdev.model_to_device(model)
     print(f"LINUX_TRAIN.PY: Model device {model.device}")
     if model.device.type == "cuda":
         print(torch.cuda.memory_summary())
@@ -335,21 +299,17 @@ def linux_train(
     )
 
     tokenizer.padding_side = "right"
-    per_device_train_batch_size = 1
     max_seq_length = 300
 
-    if device.type == "hpu":
+    if tdev.type == "hpu":
         # Intel Gaudi trainer
         # https://docs.habana.ai/en/latest/PyTorch/Getting_Started_with_PyTorch_and_Gaudi/Getting_Started_with_PyTorch.html
         # https://huggingface.co/docs/optimum/habana/quickstart
         # https://huggingface.co/docs/optimum/habana/package_reference/gaudi_config
-        if per_device_train_batch_size == 1:
-            per_device_train_batch_size = 8
-
         training_arguments = GaudiTrainingArguments(
             output_dir=output_dir,
             num_train_epochs=num_epochs,
-            per_device_train_batch_size=per_device_train_batch_size,
+            per_device_train_batch_size=tdev.per_device_train_batch_size,
             bf16=True,
             save_strategy="epoch",
             report_to="none",
@@ -380,25 +340,23 @@ def linux_train(
             "generation_config": GaudiGenerationConfig(),
         }
     else:
-        training_arguments = TrainingArguments(
-            output_dir=output_dir,
-            num_train_epochs=num_epochs,
-            per_device_train_batch_size=per_device_train_batch_size,
-            fp16=use_fp16,
-            bf16=not use_fp16,
-            # use_ipex=True, # TODO CPU test this possible optimization
-            use_cpu=model.device.type == "cpu",
+        training_kwargs.update(
             save_strategy="epoch",
             report_to="none",
             # options to reduce GPU memory usage and improve performance
             # https://huggingface.co/docs/transformers/perf_train_gpu_one
             # https://stackoverflow.com/a/75793317
             # torch_compile=True,
-            # fp16=False,  # fp16 increases memory consumption 1.5x
             # gradient_accumulation_steps=8,
             # gradient_checkpointing=True,
             # eval_accumulation_steps=1,
             # per_device_eval_batch_size=1,
+        )
+        training_arguments = TrainingArguments(
+            output_dir=output_dir,
+            num_train_epochs=num_epochs,
+            report_to="none",
+            **training_kwargs,
         )
 
         # https://huggingface.co/docs/trl/main/en/sft_trainer#trl.SFTTrainer
