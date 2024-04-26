@@ -1,0 +1,77 @@
+created_by: jjasghar
+domain: sports
+seed_examples:
+- answer: |
+    1st base, 2nd base, 3rd base, and Home
+  question: |
+    What are the 4 bases in softball?
+- answer: |
+    Kitten ball was the first version of modern day softball.
+  question: |
+    What was the first iteration of softball in 1895 invented by Lewis Rober?
+- answer: |
+    12 inches or 30 cms
+  question: |
+    What was the size of the ball in the version of kitten ball created by Lewis Rober?
+- answer: |
+    Thanksgiving Day, 1887 in Chicago, Illinois.
+  question: |
+    When was the first, or earliest known game of softball played?
+- answer: |
+    Softball was originally envisioned for a way for baseball players to maintain their skills during the winter.
+  question: |
+    What was the original envisioning of softball for baseball players?
+- answer: |
+    indoor baseball, kitten ball, diamond ball, mush ball, pumpkinball
+  question: |
+    What was softball also known or named as?
+- answer: |
+    1953
+  question: |
+    When was the first British women's softball leauge established?
+- answer: |
+    7 innings, with a possibilty of 1 or 2 more, with a sudden death round
+  question: |
+    What is the typicial number of innings in a full league softball game?
+- answer: |
+    Home plate.
+  question: |
+    Where does the batter hit from on the field in softball?
+- answer: |
+    43 feet (13.11 m)
+  question: |
+    What is the fastball softball pitching distance for adult (over 16 years) female distance?
+- answer: |
+    43 feet (13.11 m)
+  question: |
+    What is the fastball softball pitching distance for under 16 years but older then 13 female distance?
+- answer: |
+    35 feet (10.67 m)
+  question: |
+    What is the fastball softball pitching distance for under 10 years but older then 8 female distance?
+- answer: |
+    wood, aluminum, or composite materials such as carbon fiber
+  question: |
+    What are the officially approved materials a softball bat can be made out of?
+- answer: |
+    Helmets must be worn by batters and runners.
+  question: |
+    Who on the field must wear a helmet in softball?
+- answer: |
+    Most of the time, the game starts with the umpire saying "play ball"
+  question: |
+    How do you know the softball game has started?
+- answer: |
+    When a throw goes out of the designated play area.
+  question: |
+    What is an overthrow or a "wild throw" in softball?
+- answer: |
+    A player that hits in place of one of the position players but does not play defense.
+  question: |
+    What is the "Designated player" in softball?
+task_description: 'Overview of the sport of softball'
+document:
+  repo: https://github.com/asgharlabs/softball_knowledge
+  commit: aff70ecee013899250f7e28bcbff3fdd6c788a6e
+  patterns:
+  - softball.md
