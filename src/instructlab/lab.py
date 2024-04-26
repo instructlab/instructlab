@@ -126,6 +126,10 @@ def cli(ctx, config):
     "Please do not use this option if you are planning to contribute back "
     "using the same taxonomy repository. ",
 )
+@click.option(
+    "--workspace",
+    help="Path to the workspace directory. Creates it if it doesn't exist.",
+)
 def init(
     interactive,
     model_path,
@@ -133,8 +137,14 @@ def init(
     taxonomy_base,
     repository,
     min_taxonomy,
+    workspace,
 ):
     """Initializes environment for InstructLab"""
+
+    if workspace:
+        if not exists(workspace):
+            os.mkdir(workspace)
+        os.chdir(workspace)
 
     clone_taxonomy_repo = True
     if interactive:
