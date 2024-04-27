@@ -17,24 +17,23 @@ Z-stream releases are meant for critical bug and documentation fixes. Backward c
 ## Schedule
 
 The project currently operates on a time-based release schedule.
-Before releasing version 1.0, the goal is to release a new Y-stream every 2-3 weeks though the time span remains flexible based on the discretion of the maintainers team.
+The goal is to release a new Y-stream every 2-3 weeks though the time span remains flexible based on the discretion of the maintainers team.
 
 The cadence for major releases starting from 1.0 and onward will be determined as the project matures.
 
-A schedule will be updated in a markdown file on the <https://github.com/instructlab/instructlab> Github repository.
+A schedule will be updated in a markdown file on the <https://github.com/instructlab/instructlab> GitHub repository.
 
 ## Release Tracking
 
-Release planning is tracked via milestones in Github. Milestones on Github will exist for the next two releases.
+Release planning is tracked via milestones in GitHub. Milestones on GitHub will exist for the next two releases.
 
-Issues and PRs for milestones are set, monitored, and changed at weekly grooming sessions.
-Only PRs and issues associated with the next two milestones will be prioritized and merged into the main branch of instructlab
+PRs and issues associated with the next two milestones will be prioritized for review and merging into the main branch of instructlab.
 
 ## Git Branches and Tags
 
 Every `X.Y` release stream gets a new branch.
 
-Each release, `X.Y.Z`, exists as a tag on the `X.Y` branch.
+Each release, `X.Y.Z`, exists as a tag named `vX.Y.Z` on the `release-vX.Y` branch.
 
 ## Release Branch Maintenance
 
@@ -43,27 +42,27 @@ Occasionally, critical bug fixes may be backported to the most recent
 `X.Y` branch for a Z-stream bug-fix release. Bug fixes in general are not
 actively backported to release branches.
 
-We will not have a X-stream release unless a total re-architecture of instructlab is occurring.
-
 ## Release Mechanics
 
 The following are the steps for how a release gets cut.
 
 1. Maintainers determine a commit on the main branch that will serve as the basis for the next release.
     - For a Z-stream release skip this step.
-2. For a y-Stream release: create a new branch in the format release-X.YY.0.
-    - For a Z-Stream release skip this step
-3. Create a commit for the release
-4. Open up a PR
-5. Maintainers Merge PR
+2. For a Y-Stream release: create a new branch in the format `release-vX.Y`.
+    - For a Z-Stream release skip this step.
+3. Create a commit for the release.
+    - The subject of the commit will be `vX.Y.Z release` and there will be no body in the commit.
+4. Open up a PR with the commit for the release.
+5. Maintainers Merge PR.
     - The PR will require 2 maintainer approvals.
-7. Create a new release on Github. The following is automated
-    - Publishing to PyPI
-    - Tagging the branch on Github
-    - Creating a change log on Github
-8. Announce release on the following channels
+6. Create a new release on GitHub. The following is automated:
+    - Tagging the branch on GitHub
+    - Creating a change log on GitHub
+    - Version number of the Python package is derived from the tag name
+7. Validate the tag release (manual testing).
+8. Publish the release on GitHub. The following is automated:
+    - Publishing to PyPI. Once published, a release cannot be overridden. Bad releases can be yank by a PyPI maintainer.
+9. Announce release on the following channels:
     - Community Slack
-    - The Instructlab community mailing list
-    - Update the releases page on the Instructlab website
-9. Create a milestone on Github for the next release without a milestone
-    - The date for this milestone is set to 2-3 weeks after the next milestone. This date can be tweaked at the next refinement session
+10. Create a milestone on GitHub for the next release without a milestone.
+    - The date for this milestone is set to 2-3 weeks after the next milestone. This date can be tweaked at the next refinement session.

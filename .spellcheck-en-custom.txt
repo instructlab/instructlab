@@ -29,7 +29,7 @@ Finetuning
 GFX
 GGUF
 GiB
-Github
+GitHub
 Gmail
 gpu
 hipBLAS
