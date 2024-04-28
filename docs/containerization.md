@@ -71,10 +71,8 @@ sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
 ### Run the CUDA-accelerated InstructLab container
 
 When running our model, we want to create some paths that will be mounted in
-the container to provide data persistence. As an unprivileged user, you will
-run a rootless container and map your UID to UID `1001` inside the container
-with `--userns keep-id:uid=1001`. The volume mount will contain InstructLab's
-configuration, models, taxonomy, and Hugging Face download cache.
+the container to provide data persistence. The volume mount will contain
+InstructLab's configuration, models, taxonomy, and Hugging Face download cache.
 
 ```shell
 mkdir -p $HOME/.config/instructlab
@@ -84,7 +82,7 @@ Then, we can run the container, mounting the above folder and using the first
 NVIDIA GPU.
 
 ```shell
-podman run --rm -it --userns keep-id:uid=1001 --device nvidia.com/gpu=0 --volume $HOME/.config/instructlab:/opt/app-root/src:z localhost/instructlab:cuda
+podman run --rm -it --device nvidia.com/gpu=0 --volume $HOME/.config/instructlab:/opt/app-root/src:z localhost/instructlab:cuda
 ```
 
 The above command will give you an interactive shell inside the container.
@@ -96,18 +94,23 @@ Let's initialize our configuration, download the model and start the chatbot.
 (app-root) ilab chat
 ```
 
-
 ## Containerfile design
 
-The container files use a multi-stage builder approach to keep the final image small. There are typically several stages:
+The container files use a multi-stage builder approach to keep the final
+image small. There are typically several stages:
 
-- The `runtime` stage contains packages and Python virtual environment needed to run InstructLab.
-- The `builder` stage has build tools and development files to build and compile additional packages.
-- One or several stages fill the virtual environment with PyTorch stack.
-- The `final` stage assembles `runtime` and the virtual environment.
+- The `runtime` stage contains system packages needed to run InstructLab.
+- The `builder` stage has build tools and development files to build and
+  compile additional packages.
+- The `final` stage assembles `runtime` and InstructLab's virtual environment.
 
-`pip install` and `dnf install` use a cache mount to cache downloads. This speeds up rebuilds and shares common packages between builds of multiple containers.
+The container mimics the layout of the `ubi9/python-311` container with a
+virtual environment in `/opt/app-root`. The working directory and user's home
+is `/opt/app-root/src`.
 
-Python byte code `__pycache__` is removed and not created by pip (`PIP_NO_COMPILE`) to reduce the size of the image.
+`pip install` and `dnf install` use a cache mount to cache downloads. This
+speeds up rebuilds and shares common packages between builds of multiple
+containers.
 
-The virtual env is owned by the default user (uid `1001`).
+Pip is configured to not compile Python code to byte code (`PIP_NO_COMPILE`)
+to reduce the size of the image.
