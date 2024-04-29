@@ -87,3 +87,10 @@ jobs:
       - name: Run unit tests with tox (macOS)
         if: startsWith(matrix.platform, 'macos')
         run: tox -e py-unit
+
+  test-workflow-complete:
+    needs: ["test"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Workflow Complete
+        run: echo "Test Workflow Complete"
