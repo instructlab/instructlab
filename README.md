@@ -67,6 +67,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 > **NOTE:** PyTorch 2.2.1 does not support `torch.compile` with Python 3.12. On Fedora 39+, install `python3.11-devel` and create the virtual env with `python3.11` if you wish to use PyTorch's JIT compiler.
 
 ## ✅ Getting started
+
 ### 🧰 Installing `ilab`
 
 1. When installing on Fedora Linux, install C++, Python 3.9+, and other necessary tools by running the following command:
@@ -80,6 +81,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
    ```shell
    sudo dnf install gcc-c++ gcc make pip python3 python3-devel python3-GitPython
    ```
+
    If you are running on macOS, this installation is not necessary and you can begin your process with the following step.  
 
 2. Create a new directory called `instructlab` to store the files the `ilab` CLI needs when running and `cd` into the directory by running the following command:
