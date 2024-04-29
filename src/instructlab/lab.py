@@ -296,8 +296,14 @@ utils.make_lab_diff_aliases(cli, diff)
     type=click.INT,
     help="The context size is the maximum number of tokens considered by the model, for both the prompt and response. Defaults to 4096.",
 )
+@click.option(
+    "--model-family",
+    type=str,
+    default="merlinite",
+    help="Model family is used to specify which chat template to serve with",
+)
 @click.pass_context
-def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
+def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size, model_family):
     """Start a local server"""
     # pylint: disable=C0415
     # Local
@@ -315,6 +321,7 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
             model_path,
             gpu_layers,
             max_ctx_size,
+            model_family,
             num_threads,
             host,
             port,
@@ -432,6 +439,11 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
     default="",
     help="TLS client certificate password.",
 )
+@click.option(
+    "--model-family",
+    default="merlinite",
+    help="model family to use when picking a generation template",
+)
 @click.pass_context
 def generate(
     ctx,
@@ -452,6 +464,7 @@ def generate(
     tls_client_cert,
     tls_client_key,
     tls_client_passwd,
+    model_family,
 ):
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=C0415
@@ -478,6 +491,7 @@ def generate(
                 tls_client_cert,
                 tls_client_key,
                 tls_client_passwd,
+                model_family,
             )
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
@@ -492,6 +506,7 @@ def generate(
             logger=logger,
             api_base=api_base,
             api_key=api_key,
+            model_family=model_family,
             model_name=model,
             num_cpus=num_cpus,
             num_instructions_to_generate=num_instructions,
@@ -530,7 +545,7 @@ def generate(
 @click.option(
     "-m",
     "--model",
-    help="Model to use",
+    help="Model name to print in chat process",
 )
 @click.option(
     "-c",
@@ -593,6 +608,12 @@ def generate(
     default="",
     help="TLS client certificate password.",
 )
+@click.option(
+    "--model-family",
+    default="merlinite",
+    show_default=True,
+    help="model family to use when picking a chat template",
+)
 @click.pass_context
 def chat(
     ctx,
@@ -608,6 +629,7 @@ def chat(
     tls_client_cert,
     tls_client_key,
     tls_client_passwd,
+    model_family,
 ):
     """Run a chat using the modified model"""
     # pylint: disable=C0415
@@ -627,6 +649,7 @@ def chat(
                 tls_client_cert,
                 tls_client_key,
                 tls_client_passwd,
+                model_family,
             )
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
@@ -692,7 +715,6 @@ def download(ctx, repository, release, filename, model_dir):
     try:
         if ctx.obj is not None:
             hf_logging.set_verbosity(ctx.obj.config.general.log_level.upper())
-
         hf_hub_download(
             repo_id=repository,
             revision=release,
@@ -832,6 +854,12 @@ TORCH_DEVICE = TorchDeviceParam()
         "(reduces GPU VRAM usage and may slow down training)"
     ),
 )
+@click.option(
+    "--model-name",
+    default="instructlab/merlinite-7b-lab",
+    show_default=True,
+    help="model name to use in training",
+)
 @click.pass_context
 def train(
     ctx,
@@ -847,6 +875,7 @@ def train(
     num_epochs,
     device: "torch.device",
     four_bit_quant: bool,
+    model_name: str,
 ):
     """
     Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
@@ -906,6 +935,7 @@ def train(
         linux_train(
             train_file=train_files[0],
             test_file=test_files[0],
+            model_name=model_name,
             num_epochs=num_epochs,
             device=device,
             four_bit_quant=four_bit_quant,
