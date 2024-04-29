@@ -1,4 +1,26 @@
 pull_request_rules:
+- name: ping author on conflicts and add 'needs-rebase' label
+  conditions:
+      - conflict
+      - -closed
+  actions:
+    label:
+      add:
+        - needs-rebase
+    comment:
+      message: |
+       This pull request has merge conflicts that must be resolved before it can be
+       merged. @{{author}} please rebase it. https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork
+
+- name: remove 'needs-rebase' label when conflict is resolved
+  conditions:
+      - -conflict
+      - -closed
+  actions:
+    label:
+      remove:
+        - needs-rebase
+
 - name: auto-merge
   description: automatic merge for main with > 1 approved reviews, all requested reviews have given feedback, not held, and CI is successful
   conditions:
@@ -8,6 +30,7 @@ pull_request_rules:
     - base=main
     - label!=hold
     - label!=do-not-merge
+    - label!=needs-rebase
     - check-success=DCO
 
     # If files are changed in .github/, the actionlint check must pass
