@@ -234,8 +234,6 @@ EOF
 }
 
 test_temp_server(){
-    nc -l 8000 --keep-open &
-    PID_SERVE=$!
     sed -i 's/INFO/DEBUG/g' config.yaml
     expect -c '
         set timeout 120
