@@ -127,7 +127,10 @@ def cli(ctx, config):
     "using the same taxonomy repository. ",
 )
 @click.option(
-    "--workspace",
+    "workspace_path",
+    "--workspace-path",
+    type=click.Path(),
+    envvar="ILAB_WORKSPACE_PATH",
     help="Path to the workspace directory. Creates it if it doesn't exist.",
 )
 def init(
@@ -137,14 +140,14 @@ def init(
     taxonomy_base,
     repository,
     min_taxonomy,
-    workspace,
+    workspace_path,
 ):
     """Initializes environment for InstructLab"""
 
-    if workspace:
-        if not exists(workspace):
-            os.mkdir(workspace)
-        os.chdir(workspace)
+    if workspace_path:
+        if not exists(workspace_path):
+            os.mkdir(workspace_path)
+        os.chdir(workspace_path)
 
     clone_taxonomy_repo = True
     if interactive:
