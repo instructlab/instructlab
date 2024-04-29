@@ -60,6 +60,16 @@ pull_request_rules:
         - -files~=tox.ini$
         - -files~=scripts/.*\.sh$
 
+    - or:
+      - and:
+        - or:
+          - files~='.*\.md'
+          - files='.markdownlint-cli2.yaml'
+        - check-success=markdown-lint
+      - and:
+        - -files~='.*\.md'
+        - -files='.markdownlint-cli2.yaml'
+
   actions:
     merge:
       method: merge
