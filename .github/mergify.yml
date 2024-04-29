@@ -68,3 +68,63 @@ pull_request_rules:
     merge:
       method: merge
     delete_head_branch:
+
+- name: label-cicd
+  description: Automatically apply CI/CD label
+  conditions:
+    - or:
+      - files=.github/mergify.yml
+      - files=.github/workflows/**/*
+      - files=scripts/ruff.sh
+      - files=.pre-commit-config.yaml
+      - files=.pylintrc
+      - files=.spellcheck-en-custom.txt
+      - files=.spellcheck.yml
+      - files=tox.ini
+      - files=.markdownlint-cli2.yaml
+  actions:
+    label:
+      add:
+        - CI/CD
+
+- name: label-container
+  description: Automatically apply container label
+  conditions:
+    - or:
+      - files~=containers/.*
+      - files=.dockerignore
+  actions:
+    label:
+      add:
+        - container
+
+- name: label-documentation
+  description: Automatically apply documentation label
+  conditions:
+    - or:
+      - files=CODE_OF_CONDUCT.md
+      - files=CONTRIBUTOR_RULES.md
+      - files=governance.md
+      - files=MAINTAINERS.md
+      - files=README.md
+      - files=SECURITY.md
+      - files=TROUBLESHOOTING.md
+      - files~=CONTRIBUTING/.*
+      - files~=docs/.*
+      - files~=MAINTAINERS/.*
+  actions:
+    label:
+      add:
+        - documentation
+
+- name: label-testing
+  description: Automatically apply testing label
+  conditions:
+    - or:
+      - files~=tests/.*
+      - files=scripts/functional-tests.sh
+      - files=tox.ini
+  actions:
+    label:
+      add:
+        - testing
