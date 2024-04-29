@@ -45,7 +45,11 @@ pull_request_rules:
     - or:
       - and:
         - check-success=lint
-        - check-success=test
+        - check-success=3.9 on ubuntu-latest
+        - check-success=3.10 on ubuntu-latest
+        - check-success=3.11 on ubuntu-latest
+        - check-success=3.12 on ubuntu-latest
+        - check-success=3.11 on macos-latest
         - or:
           # see .github/workflows/lint.yml and test.yml
           - files~=.*\.py$
