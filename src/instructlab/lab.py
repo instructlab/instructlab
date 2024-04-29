@@ -17,6 +17,7 @@ from click_didyoumean import DYMGroup
 from git import GitError, Repo
 from huggingface_hub import hf_hub_download, list_repo_files
 from huggingface_hub import logging as hf_logging
+from huggingface_hub import snapshot_download
 import click
 import yaml
 
@@ -708,14 +709,12 @@ def chat(
     show_default=True,
     help="The local directory to download the model files into.",
 )
+@click.option("--hf-token", envvar="HF_TOKEN")
 @click.pass_context
-def download(ctx, repository, release, filename, model_dir):
+def download(ctx, repository, release, filename, model_dir, hf_token):
     """Download the model(s) to train"""
     click.echo(f"Downloading model from {repository}@{release} to {model_dir}...")
-    if (
-        "HF_TOKEN" not in os.environ
-        and repository != "instructlab/merlinite-7b-lab-GGUF"
-    ):
+    if hf_token == "" and "instructlab" not in repository:
         raise ValueError(
             "HF_TOKEN var needs to be set in your environment to download HF Model. The HF Token is used to authenticate your identity to the Hugginface Hub."
         )
@@ -726,14 +725,12 @@ def download(ctx, repository, release, filename, model_dir):
         if any(".safetensors" in string for string in files):
             if not os.path.exists(os.path.join(model_dir, repository)):
                 os.makedirs(name=os.path.join(model_dir, repository), exist_ok=True)
-            for f in files:
-                hf_hub_download(
-                    token=os.getenv("HF_TOKEN"),
-                    repo_id=repository,
-                    revision=release,
-                    filename=f,
-                    local_dir=os.path.join(model_dir, repository),
-                )
+            snapshot_download(
+                token=os.getenv("HF_TOKEN"),
+                repo_id=repository,
+                revision=release,
+                local_dir=os.path.join(model_dir, repository),
+            )
         else:
             hf_hub_download(
                 token=os.getenv("HF_TOKEN"),
