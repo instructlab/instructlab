@@ -29,6 +29,7 @@ jobs:
               with:
                   # for setuptools-scm
                   fetch-depth: 0
+                  submodules: true
 
             - uses: hynek/build-and-inspect-python-package@v2
 

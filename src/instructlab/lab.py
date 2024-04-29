@@ -170,11 +170,15 @@ def init(
     # clone taxonomy repo if it needs to be cloned
     if clone_taxonomy_repo:
         click.echo(f"Cloning {repository}...")
+        clone_depth = False if not min_taxonomy else 1
         try:
-            if not min_taxonomy:
-                Repo.clone_from(repository, taxonomy_path, branch="main")
-            else:
-                Repo.clone_from(repository, taxonomy_path, branch="main", depth=1)
+            Repo.clone_from(
+                repository,
+                taxonomy_path,
+                branch="main",
+                recurse_submodules=True,
+                depth=clone_depth,
+            )
         except GitError as exc:
             click.secho(f"Failed to clone taxonomy repo: {exc}", fg="red")
             click.secho(f"Please make sure to manually run `git clone {repository}`")

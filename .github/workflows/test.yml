@@ -49,6 +49,7 @@ jobs:
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
+          submodules: true
 
       - name: Install the expect package
         if: startsWith(matrix.platform, 'ubuntu')

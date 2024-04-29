@@ -4,7 +4,7 @@ name: Lint and Format
 
 on:
   push:
-    branches: 
+    branches:
       - "main"
     paths:
       - '**.py'
@@ -13,7 +13,7 @@ on:
       - 'tox.ini'
       - 'scripts/*.sh'
   pull_request:
-    branches: 
+    branches:
       - "main"
     paths:
       - '**.py'
@@ -34,6 +34,7 @@ jobs:
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
+          submodules: true
 
       - name: Set up Python
         uses: actions/setup-python@v5
