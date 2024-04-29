@@ -7,6 +7,7 @@ on:
     branches: [main]
     paths:
       - '**.md'
+      - .github/**
 
 permissions:
   contents: read
@@ -21,5 +22,14 @@ jobs:
         with:
           fetch-depth: 0
           submodules: true
-      - name: Spellcheck
-        uses: rojopolis/spellcheck-github-actions@0.35.0
+
+      - name: Install aspell
+        run: |
+          sudo sudo apt-get update
+          sudo apt-get install -y aspell aspell-en
+
+      - name: Install tox dependencies
+        run: python -m pip install --upgrade tox
+
+      - name: Run spellchecker
+        run: python -m tox -e spellcheck
