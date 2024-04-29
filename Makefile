@@ -128,6 +128,13 @@ verify: ## Run tox -e fmt,lint,spellcheck against code
 spellcheck-sort: .spellcheck-en-custom.txt
 	sort -d -f -o $< $<
 
+.PHONY: man
+man:
+	tox -e docs
+
+.PHONY: docs
+docs: man ## Run tox -e docs against code
+
 ##@ Linting
 
 #
