@@ -1,26 +1,4 @@
 pull_request_rules:
-- name: ping author on conflicts and add 'needs-rebase' label
-  conditions:
-      - conflict
-      - -closed
-  actions:
-    label:
-      add:
-        - needs-rebase
-    comment:
-      message: |
-       This pull request has merge conflicts that must be resolved before it can be
-       merged. @{{author}} please rebase it. https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork
-
-- name: remove 'needs-rebase' label when conflict is resolved
-  conditions:
-      - -conflict
-      - -closed
-  actions:
-    label:
-      remove:
-        - needs-rebase
-
 - name: auto-merge
   description: automatic merge for main with > 1 approved reviews, all requested reviews have given feedback, not held, and CI is successful
   conditions:
@@ -136,3 +114,34 @@ pull_request_rules:
     label:
       add:
         - testing
+
+- name: ping author on conflicts and add 'needs-rebase' label
+  conditions:
+      - conflict
+      - -closed
+  actions:
+    label:
+      add:
+        - needs-rebase
+    comment:
+      message: |
+       This pull request has merge conflicts that must be resolved before it can be
+       merged. @{{author}} please rebase it. https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork
+
+- name: remove 'needs-rebase' label when conflict is resolved
+  conditions:
+      - -conflict
+      - -closed
+  actions:
+    label:
+      remove:
+        - needs-rebase
+
+- name: backport-label
+  description: Automatically apply the backport label to release branch PRs
+  conditions:
+    - base~=release-.*
+  actions:
+    label:
+      add:
+        - backport
