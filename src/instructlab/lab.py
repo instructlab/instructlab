@@ -721,19 +721,19 @@ def download(ctx, repository, release, filename, model_dir, hf_token):
     try:
         if ctx.obj is not None:
             hf_logging.set_verbosity(ctx.obj.config.general.log_level.upper())
-        files = list_repo_files(repo_id=repository, token=os.getenv("HF_TOKEN"))
+        files = list_repo_files(repo_id=repository, token=hf_token)
         if any(".safetensors" in string for string in files):
             if not os.path.exists(os.path.join(model_dir, repository)):
                 os.makedirs(name=os.path.join(model_dir, repository), exist_ok=True)
             snapshot_download(
-                token=os.getenv("HF_TOKEN"),
+                token=hf_token,
                 repo_id=repository,
                 revision=release,
                 local_dir=os.path.join(model_dir, repository),
             )
         else:
             hf_hub_download(
-                token=os.getenv("HF_TOKEN"),
+                token=hf_token,
                 repo_id=repository,
                 revision=release,
                 filename=filename,
