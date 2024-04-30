@@ -1,18 +1,18 @@
 Moving the stable tag
 =====================
 
-Because we do not have a PyPI package where folks can just install latest, our `README.md` instructions describe installing from the GitHub using a "stable" tag.
+Because we do not have a PyPI package where folks can just install latest, our `README.md` instructions describe installing from the GitHub using a `stable` tag.
 
 To support this, we move the stable tag to the latest release, as needed.
 
-This can be done by:
+This can be done via the following steps:
 
 Get current:
 
 ```ShellSession
 $ git switch main
-$ git fetch
-$ git pull
+$ git fetch upstream
+$ git pull upstream
 # Just making sure you are up-to-date locally
 $ git tag --list
 $ git show-ref --tags
@@ -58,10 +58,10 @@ error: failed to push some refs to 'https://github.com/instructlab/instructlab.g
 hint: Updates were rejected because the tag already exists in the remote.
 ```
 
-If you are sure. Push with force.
+If you are sure, push with force to upstream and prepare to live with the consequences of your actions
 
 ```ShellSession
-git push -f origin stable
+git push -f upstream stable
 ```
 
-Check the Tags on GitHub web.
+Check the tags on GitHub web UI.
