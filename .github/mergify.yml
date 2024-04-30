@@ -27,7 +27,9 @@ pull_request_rules:
     - "#approved-reviews-by>=1"
     - "#review-requested=0"
     - "#changes-requested-reviews-by=0"
-    - base=main
+    - or:
+      - base=main
+      - base~=release-.*
     - label!=hold
     - label!=do-not-merge
     - label!=needs-rebase
