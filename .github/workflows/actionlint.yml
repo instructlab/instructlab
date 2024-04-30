@@ -5,11 +5,13 @@ on:
   push:
     branches:
       - "main"
+      - "release-**"
     paths:
       - '.github/**'
   pull_request:
     branches:
       - "main"
+      - '.github/**'
     paths:
       - '.github/**'
 

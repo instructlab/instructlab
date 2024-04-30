@@ -2,12 +2,16 @@ name: docs
 
 on:
   push:
-    branches: ["main"]
+    branches:
+      - "main"
+      - "release-**"
     paths:
       - '**/*.md'
       - '.markdownlint-cli2.yaml'
   pull_request:
-    branches: ["main"]
+    branches:
+      - "main"
+      - "release-**"
     paths:
       - '**/*.md'
       - '.markdownlint-cli2.yaml'
