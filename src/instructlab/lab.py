@@ -709,7 +709,16 @@ def chat(
     show_default=True,
     help="The local directory to download the model files into.",
 )
+<<<<<<< HEAD
 @click.option("--hf-token", envvar="HF_TOKEN")
+=======
+@click.option(
+    "--hf-token",
+    default="",
+    envvar="HF_TOKEN",
+    help="User access token for connecting to the Hugging Face Hub.",
+)
+>>>>>>> 6bf5a62 (Add hf-token default to fix checking error)
 @click.pass_context
 def download(ctx, repository, release, filename, model_dir, hf_token):
     """Download the model(s) to train"""
