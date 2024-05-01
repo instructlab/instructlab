@@ -47,13 +47,19 @@ jobs:
         if: steps.check_pr.outputs.is_pr == 'false'
         run: git checkout ${{ github.event.inputs.pr_or_branch }}
 
-      - name: Install and run e2e test
+      - name: Install ilab
         run: |
           export PATH="/home/runner/.local/bin:/usr/local/cuda-12.4/bin:$PATH"
           python3 -m venv venv
           . venv/bin/activate
-          CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3 -m pip install -r requirements.txt --force-reinstall --no-cache-dir llama-cpp-python
+          sed 's/\[.*\]//' requirements.txt > constraints.txt
+          python3 -m pip cache remove llama_cpp_python
+          CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3 -m pip install --no-binary llama_cpp_python -c constraints.txt llama_cpp_python
           # needed for --4-bit-quant option to ilab train
           python3 -m pip install bitsandbytes
           python3 -m pip install .
+
+      - name: Run e2e test
+        run: |
+          . venv/bin/activate
           ./scripts/basic-workflow-tests.sh -cm
