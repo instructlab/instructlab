@@ -21,7 +21,7 @@ import uvicorn
 
 # Local
 from .client import ClientException, list_models
-from .config import get_api_base, DEFAULT_MULTIPROCESSING_START_METHOD
+from .config import get_api_base
 
 templates = [
     {
