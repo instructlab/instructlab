@@ -20,21 +20,9 @@ import torch
 
 # Local
 from ..chat.chat import CONTEXTS
-from ..config import DEFAULT_MULTIPROCESSING_START_METHOD
 
 # TODO CPU: Look into using these extensions
 # import intel_extension_for_pytorch as ipex
-
-# 'fork' incompatible with some hardware accelerators
-try:
-    torch.multiprocessing.set_start_method(DEFAULT_MULTIPROCESSING_START_METHOD)
-except RuntimeError as e:
-    start_method = torch.multiprocessing.get_start_method()
-    if start_method != DEFAULT_MULTIPROCESSING_START_METHOD:
-        raise ValueError(
-            f"multiprocessing start method already set to {start_method}."
-        ) from e
-    del start_method
 
 
 class StoppingCriteriaSub(StoppingCriteria):

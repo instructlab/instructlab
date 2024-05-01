@@ -7,6 +7,7 @@ from glob import glob
 from os.path import basename, dirname, exists, splitext
 import json
 import logging
+import multiprocessing
 import os
 import shutil
 import sys
@@ -24,6 +25,14 @@ import yaml
 # Local
 # NOTE: Subcommands are using local imports to speed up startup time.
 from . import config, utils
+
+# 'fork' incompatible with some hardware accelerators
+try:
+    multiprocessing.set_start_method(config.DEFAULT_MULTIPROCESSING_START_METHOD)
+except RuntimeError as e:
+    if multiprocessing.get_start_method() == "fork":
+        raise ValueError(f"multiprocessing start method already set to 'fork'.") from e
+
 
 # Set logging level of OpenAI client and httpx library to ERROR to suppress INFO messages
 logging.getLogger("openai").setLevel(logging.ERROR)
