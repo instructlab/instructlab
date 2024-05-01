@@ -7,7 +7,7 @@ To support this, we move the stable tag to the latest release, as needed.
 
 This can be done via the following steps:
 
-Assume that the upstream repository is using the `upstream` Git remote and the forked repository is using the `origin` Git remote.
+Assume that the upstream repository (`instructlab/instructlab`) is using the `upstream` Git remote
 
 Get current tags from the upstream:
 
@@ -49,12 +49,10 @@ Verify the tag SHA hashes look correct:
 $ git show-ref --tags
 ```
 
-Push the new tag to your fork (origin) with `-f` (force) flag.
-
-I usually test first w/o --force and expect an error if I have everything right.
+You can then push the new tag upstream with `-f` (force) flag - I usually test first without `--force` and expect an error if I have everything right.
 
 ```ShellSession
-$ git push origin stable
+$ git push upstream stable
 ! [rejected]        stable -> stable (already exists)
 error: failed to push some refs to 'https://github.com/instructlab/instructlab.git'
 hint: Updates were rejected because the tag already exists in the remote.
@@ -66,4 +64,4 @@ If you are sure, push with force to upstream and prepare to live with the conseq
 git push -f upstream stable
 ```
 
-Finally, check the tags on GitHub web UI to ensure everything looks correct.
+Finally, check the tags on the GitHub web UI to ensure everything looks correct.
