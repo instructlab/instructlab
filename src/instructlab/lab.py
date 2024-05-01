@@ -709,14 +709,20 @@ def chat(
     show_default=True,
     help="The local directory to download the model files into.",
 )
-@click.option("--hf-token", envvar="HF_TOKEN")
+@click.option(
+    "--hf-token",
+    envvar="HF_TOKEN",
+    help="User access token for connecting to the Hugging Face Hub.",
+)
 @click.pass_context
 def download(ctx, repository, release, filename, model_dir, hf_token):
     """Download the model(s) to train"""
     click.echo(f"Downloading model from {repository}@{release} to {model_dir}...")
     if hf_token == "" and "instructlab" not in repository:
         raise ValueError(
-            "HF_TOKEN var needs to be set in your environment to download HF Model. The HF Token is used to authenticate your identity to the Hugginface Hub."
+            """HF_TOKEN var needs to be set in your environment to download HF Model. 
+            Alternatively, the token can be passed with --hf-token flag. 
+            The HF Token is used to authenticate your identity to the Hugging Face Hub."""
         )
     try:
         if ctx.obj is not None:
