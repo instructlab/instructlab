@@ -161,6 +161,34 @@ class TestLabGenerate:
                 get_instructions_from_model.assert_called_once()
                 mt.teardown()
 
+    def test_new_data_too_long(self):
+        runner = CliRunner()
+        with open("tests/testdata/skill_too_long_answer.yaml", "rb") as qnafile:
+            with runner.isolated_filesystem():
+                mt = MockTaxonomy(pathlib.Path("taxonomy"))
+                mt.create_untracked(
+                    "compositional_skills/tracked/qna.yaml", qnafile.read()
+                )
+                result = runner.invoke(
+                    lab.generate,
+                    [
+                        "--taxonomy-base",
+                        "main",
+                        "--taxonomy-path",
+                        mt.root,
+                        "--endpoint-url",
+                        "localhost:8000",
+                    ],
+                )
+                self.assertEqual(
+                    result.exit_code, 1, "command finished with an unexpected exit code"
+                )
+                self.assertIn(
+                    "too long for the server context size",
+                    result.output,
+                )
+                mt.teardown()
+
     @patch(
         "instructlab.generator.generate_data.get_instructions_from_model",
         return_value=(testdata.generate_data_return_value, 0),

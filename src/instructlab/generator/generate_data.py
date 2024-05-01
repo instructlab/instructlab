@@ -21,7 +21,12 @@ import tqdm
 
 # Local
 from ..config import DEFAULT_MULTIPROCESSING_START_METHOD, get_model_family
-from ..utils import chunk_document, read_taxonomy
+from ..utils import (
+    chunk_document,
+    max_seed_example_tokens,
+    num_chars_from_tokens,
+    read_taxonomy,
+)
 from . import utils
 from .utils import GenerateException
 
@@ -362,6 +367,7 @@ def generate_data(
     tls_client_passwd: Optional[str] = None,
 ):
     seed_instruction_data = []
+    machine_seed_instruction_data = []
     generate_start = time.time()
 
     if not os.path.exists(output_dir):
@@ -376,6 +382,22 @@ def generate_data(
         )
     else:
         raise SystemExit(f"Error: taxonomy ({taxonomy}) does not exist.")
+
+    prompt_template = check_prompt_file(
+        prompt_file_path, get_model_family(model_family, model_name)
+    )
+    max_seed_tokens = max_seed_example_tokens(server_ctx_size, len(prompt_template))
+    max_seed_chars = num_chars_from_tokens(max_seed_tokens)
+    for seed_example in seed_instruction_data:
+        if (
+            len(seed_example["instruction"])
+            + len(seed_example["input"])
+            + len(seed_example["output"])
+            >= max_seed_chars
+        ):
+            raise SystemExit(
+                f"Error: An example in the taxonomy path {seed_example['taxonomy_path']} is too long for the server context size of {server_ctx_size}. Ensure the total number of characters across the combined question, answer, and context is less than {max_seed_chars} for each example or use a server with a larger context size."
+            )
 
     seeds = len(seed_instruction_data)
     logger.debug(f"Loaded {seeds} human-written seed instructions from {taxonomy}")
@@ -449,9 +471,6 @@ def generate_data(
         scorer._tokenizer.tokenize(inst) for inst in all_instructions
     ]
 
-    prompt_template = check_prompt_file(
-        prompt_file_path, get_model_family(model_family, model_name)
-    )
     if console_output:
         print(
             "Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help."
@@ -471,7 +490,7 @@ def generate_data(
         # Filter the pool
         instruction_data_pool = [
             e
-            for e in seed_instruction_data + machine_instruction_data
+            for e in seed_instruction_data + machine_seed_instruction_data
             if e["taxonomy_path"] == selected_taxonomy
         ]
         instruction_data, discarded = get_instructions_from_model(
@@ -520,6 +539,11 @@ def generate_data(
             # Comment out extra info not currently being used:
             # instruction_data_entry["most_similar_instructions"] = most_similar_instructions
             # instruction_data_entry["avg_similarity_score"] = float(np.mean(rouge_scores))
+
+            # Only add sufficiently small instructions to our machine seeds
+            if len(new_instruction_tokens) <= max_seed_tokens:
+                machine_seed_instruction_data.append(instruction_data_entry)
+
             machine_instruction_data.append(instruction_data_entry)
             all_instructions.append(instruction_data_entry["instruction"])
             all_instruction_tokens.append(new_instruction_tokens)

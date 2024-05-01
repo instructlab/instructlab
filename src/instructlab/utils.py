@@ -241,6 +241,20 @@ def num_chars_from_tokens(num_tokens) -> int:
     return int(num_tokens * 4)  # 1 token ~ 4 English character
 
 
+def num_tokens_from_chars(num_chars) -> int:
+    return int(num_chars / 4)  # 1 token ~ 4 English character
+
+
+def max_seed_example_tokens(server_ctx_size, prompt_num_chars) -> int:
+    # Ensure we have at least 1024 tokens available for a response.
+    max_seed_tokens = server_ctx_size - 1024
+    # Subtract the number of tokens in our prompt template
+    max_seed_tokens = max_seed_tokens - num_tokens_from_chars(prompt_num_chars)
+    # Divide number of characters by 2, since we insert 2 examples
+    max_seed_tokens = int(max_seed_tokens / 2)
+    return max_seed_tokens
+
+
 def chunk_document(documents: List, server_ctx_size, chunk_word_count) -> List[str]:
     """
     Iterates over the documents and splits them into chunks based on the word count provided by the user.
