@@ -303,18 +303,35 @@ def get_instructions_from_model(
         stop=["* Task 5"],
     )
     request_start = time.time()
-    results = utils.openai_completion(
-        api_base=api_base,
-        api_key=api_key,
-        prompts=batch_inputs,
-        model_name=model_name,
-        tls_insecure=tls_insecure,
-        tls_client_cert=tls_client_cert,
-        tls_client_key=tls_client_key,
-        tls_client_passwd=tls_client_passwd,
-        batch_size=request_batch_size,
-        decoding_args=decoding_args,
-    )
+    try:
+        results = utils.openai_completion(
+            api_base=api_base,
+            api_key=api_key,
+            prompts=batch_inputs,
+            model_name=model_name,
+            tls_insecure=tls_insecure,
+            tls_client_cert=tls_client_cert,
+            tls_client_key=tls_client_key,
+            tls_client_passwd=tls_client_passwd,
+            batch_size=request_batch_size,
+            decoding_args=decoding_args,
+        )
+    except GenerateException as exc:
+        # Attempt to log and gracefully recover from exceeding the server's
+        # maximum context length. This won't work for all servers.
+        #
+        # Both llama_cpp_python and vllm use this exact string in their error
+        # responses when exceeding the model's max content length. Other
+        # OpenAI-compatible servers may as well, but no guarantees.
+        if "model's maximum context length" in str(exc):
+            logger.warn(
+                "Generated prompt exceeded the server's maximum context length. "
+                "If you see this warning many times during generation, lower "
+                "the length of your example question and answers or raise the "
+                "server's maximum context size using `max_ctx_size`."
+            )
+            return [], 0
+        raise exc
     request_duration = time.time() - request_start
 
     post_process_start = time.time()
