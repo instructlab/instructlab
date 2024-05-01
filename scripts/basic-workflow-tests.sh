@@ -160,6 +160,12 @@ test_exec() {
     test_chat
     test_taxonomy
     test_generate
+
+    # Kill the serve process
+    task Stopping the ilab serve
+    step Kill ilab serve $PID
+    kill $PID
+
     test_train
 
     if [ "$CI" -eq 1 ]; then
@@ -172,11 +178,6 @@ test_exec() {
     # When you run this --
     #   `ilab convert` is only implemented for macOS with M-series chips for now
     #test_convert
-
-    # Kill the serve process
-    task Stopping the ilab serve
-    step Kill ilab serve $PID
-    kill $PID
 
     # TODO: chat with the new model
     test_serve /tmp/somemodelthatispretrained.gguf
