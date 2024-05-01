@@ -711,6 +711,7 @@ def chat(
 )
 @click.option(
     "--hf-token",
+    default="",
     envvar="HF_TOKEN",
     help="User access token for connecting to the Hugging Face Hub.",
 )
