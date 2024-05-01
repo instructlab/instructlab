@@ -28,7 +28,8 @@ cleanup() {
     fi
     for pid in $PID_SERVE $PID_CHAT; do
         if [ -n "$pid" ]; then
-            kill $pid
+            kill "$pid"
+            wait "$pid"
         fi
     done
     rm -f "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" \
@@ -234,8 +235,6 @@ EOF
 }
 
 test_temp_server(){
-    nc -l 8000 --keep-open &
-    PID_SERVE=$!
     sed -i 's/INFO/DEBUG/g' config.yaml
     expect -c '
         set timeout 120
