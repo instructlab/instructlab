@@ -26,15 +26,11 @@ import yaml
 # NOTE: Subcommands are using local imports to speed up startup time.
 from . import config, utils
 
-# 'fork' incompatible with some hardware accelerators
-try:
-    multiprocessing.set_start_method(config.DEFAULT_MULTIPROCESSING_START_METHOD)
-except RuntimeError as _mp_set_e:
-    if multiprocessing.get_start_method() == "fork":
-        raise ValueError(
-            "multiprocessing start method already set to 'fork'."
-        ) from _mp_set_e
-
+# 'fork' is unsafe and incompatible with some hardware accelerators.
+# Python 3.14 will switch to 'spawn' on all platforms.
+multiprocessing.set_start_method(
+    config.DEFAULT_MULTIPROCESSING_START_METHOD, force=True
+)
 
 # Set logging level of OpenAI client and httpx library to ERROR to suppress INFO messages
 logging.getLogger("openai").setLevel(logging.ERROR)
