@@ -29,9 +29,11 @@ from . import config, utils
 # 'fork' incompatible with some hardware accelerators
 try:
     multiprocessing.set_start_method(config.DEFAULT_MULTIPROCESSING_START_METHOD)
-except RuntimeError as e:
+except RuntimeError as _mp_set_e:
     if multiprocessing.get_start_method() == "fork":
-        raise ValueError(f"multiprocessing start method already set to 'fork'.") from e
+        raise ValueError(
+            "multiprocessing start method already set to 'fork'."
+        ) from _mp_set_e
 
 
 # Set logging level of OpenAI client and httpx library to ERROR to suppress INFO messages
