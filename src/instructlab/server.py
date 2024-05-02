@@ -9,7 +9,6 @@ import os
 import random
 import signal
 import socket
-import sys
 
 # Third Party
 from llama_cpp import llama_chat_format
@@ -72,8 +71,7 @@ def ensure_server(
         return (None, None, None)
     except ClientException:
         tried_ports = set()
-        # TODO: use fork, "spawn" fails with semaphore FileNotFound on Linux.
-        mpctx = multiprocessing.get_context("fork" if sys.platform == "linux" else None)
+        mpctx = multiprocessing.get_context(None)
         # use a queue to communicate between the main process and the server process
         queue = mpctx.Queue()
         port = random.randint(1024, 65535)
