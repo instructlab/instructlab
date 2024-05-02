@@ -1,9 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Optional dependencies for Intel Gaudi / Habana Labs HPU devices
+-c constraints.txt
 
 # upstream version "optimum[habana]>=1.19.0,<2.0.0" does not work
 # use Habana Lab's fork of optimum-habana
-optimum-habana@ git+https://github.com/HabanaAI/optimum-habana-fork.git@5a47add068cb693986eb101becb58aa666f59600
+optimum-habana
 # Habana Labs frameworks
-habana-torch-plugin>=1.15.1
+habana-torch-plugin

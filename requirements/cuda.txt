@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# PyTorch and llama-cpp-python with CUDA bindings
+# PyTorch on PyPI comes with CUDA bindings by default
+-c constraints.txt
+
+llama_cpp_python[server] \
+    -C cmake.args="-DLLAMA_CUDA=on;-DLLAMA_NATIVE=off"
+
+# base requirements last
+-r base.txt

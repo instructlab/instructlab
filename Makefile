@@ -151,6 +151,9 @@ man:
 .PHONY: docs
 docs: man ## Run tox -e docs against code
 
+requirements.txt requirements-hpu.txt: requirements/mkrequirements.py requirements/*.txt $(MAKEFILE_LIST)
+	requirements/mkrequirements.py
+
 ##@ Linting
 
 #

@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# lllama-cpp-python with MPS / Metal bindings on Apple Silicon
+-c constraints.txt
+
+llama_cpp_python[server] \
+    -C cmake.args="-DLLAMA_METAL=on;-DLLAMA_NATIVE=off;-DCMAKE_OSX_ARCHITECTURES=arm64;-DCMAKE_APPLE_SILICON_PROCESSOR=arm64" \
+
+# base requirements last
+-r base.txt

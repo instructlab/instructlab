@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# PyTorch llama-cpp-python with AMD ROCm bindings (Fedora downstream)
+
+-c constraints.txt
+--extra-index-url https://download.pytorch.org/whl/rocm6.0
+
+# defaults to same AMD ISAs as PyTorch 2.3.0
+llama_cpp_python[server] \
+    -C cmake.args="-DLLAMA_HIPBLAS=on;-DLLAMA_NATIVE=off;-DCMAKE_C_COMPILER=clang-17;-DCMAKE_CXX_COMPILER=clang++-17" \
+    -C cmake.args="-DAMDGPU_TARGETS=gfx900;gfx906:xnack-;gfx908:xnack-;gfx90a:xnack-;gfx90a:xnack+;gfx942;gfx1030;gfx1100" \
+
+# base requirements last
+-r base.txt

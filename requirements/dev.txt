@@ -1,0 +1,13 @@
+# SPDX-License-Identifier: Apache-2.0
+
+-c constraints.txt
+
+packaging
+pre-commit
+pydeps
+pylint
+pytest
+pytest-asyncio
+pytest-cov
+pytest-html
+tox
