@@ -492,7 +492,7 @@ def generate(
         api_base = endpoint_url
     else:
         try:
-            server_process, api_base = ensure_server(
+            server_process, api_base, server_queue = ensure_server(
                 ctx.obj.logger,
                 ctx.obj.config.serve,
                 tls_insecure,
@@ -542,6 +542,8 @@ def generate(
         if server_process:
             server_process.terminate()
             server_process.join(timeout=30)
+            server_queue.close()
+            server_queue.join_thread()
 
 
 @cli.command()
@@ -650,7 +652,7 @@ def chat(
         server_process = None
     else:
         try:
-            server_process, api_base = ensure_server(
+            server_process, api_base, server_queue = ensure_server(
                 ctx.obj.logger,
                 ctx.obj.config.serve,
                 tls_insecure,
@@ -689,6 +691,8 @@ def chat(
         if server_process:
             server_process.terminate()
             server_process.join(timeout=30)
+            server_queue.close()
+            server_queue.join_thread()
 
 
 @cli.command()
