@@ -559,6 +559,8 @@ def generate_data(
                 json.dump(entry, outfile, ensure_ascii=False)
                 outfile.write("\n")
 
+    progress_bar.close()
+
     if total_discarded or total_rouged:
         logger.info(
             f"{len(machine_instruction_data)} instructions generated, {total_discarded} discarded due to format (see {output_file_discarded}), {total_rouged} discarded due to rouge score"
