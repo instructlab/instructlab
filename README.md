@@ -25,7 +25,7 @@
   - [🍴 Serve the newly trained model](#-serve-the-newly-trained-model)
   - [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
 - [🎁 Submit your new knowledge or skills](#-submit-your-new-knowledge-or-skills)
-- [📬 Contributing to Instruct-Lab CLI](#-contributing)
+- [📬 Contributing to InstructLab CLI](#-contributing)
 
 ## Welcome to the InstructLab CLI
 
