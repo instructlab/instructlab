@@ -142,7 +142,7 @@ def report_hpu_device(args_device: torch.device) -> None:
             print(f'  {key}="{value}"')
 
 
-def linux_train(
+def pytorch_train(
     ctx: click.Context,
     train_file: str,
     test_file: str,
@@ -150,13 +150,19 @@ def linux_train(
     num_epochs: Optional[int] = None,
     device: torch.device = torch.device("cpu"),
     four_bit_quant: bool = False,
+    dtype: str = "auto",
+    train_style: str = "quick",
 ):
-    """Lab Train for Linux!"""
-    print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", num_epochs)
-    print("LINUX_TRAIN.PY: TRAIN FILE IS: ", train_file)
-    print("LINUX_TRAIN.PY: TEST FILE IS: ", test_file)
+    """Lab Train for Linux and MacOS"""
+    print("PYTORCH_TRAIN.PY: NUM EPOCHS IS: ", num_epochs)
+    print("PYTORCH_TRAIN.PY: TRAIN FILE IS: ", train_file)
+    print("PYTORCH_TRAIN.PY: TEST FILE IS: ", test_file)
 
-    print(f"LINUX_TRAIN.PY: Using device '{device}'")
+    print(f"PYTORCH_TRAIN.PY: Using device '{device}'")
+    torch.set_autocast_enabled(False)
+    if device.type == "mps":
+        print(f"MPS AVAILABLE: {torch.backends.mps.is_available()}")
+        print(f"MPS BUILT: {torch.backends.mps.is_built()}")
     if device.type == "cuda":
         # estimated by watching nvtop / radeontop during training
         min_vram = 11 if four_bit_quant else 17
@@ -173,7 +179,7 @@ def linux_train(
         hpu.init()
         report_hpu_device(device)
 
-    print("LINUX_TRAIN.PY: LOADING DATASETS")
+    print("PYTORCH_TRAIN.PY: LOADING DATASETS")
     # Get the file name
     train_dataset = load_dataset("json", data_files=train_file, split="train")
 
@@ -193,8 +199,7 @@ def linux_train(
     )
 
     if four_bit_quant:
-        print("LINUX_TRAIN.PY: USING 4-bit quantization with BitsAndBytes")
-        use_fp16 = True
+        print("PYTORCH_TRAIN.PY: USING 4-bit quantization with BitsAndBytes")
         bnb_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
@@ -202,31 +207,45 @@ def linux_train(
             bnb_4bit_compute_dtype=torch.float16,  # if not set will throw a warning about slow speeds when training
         )
     else:
-        print("LINUX_TRAIN.PY: NOT USING 4-bit quantization")
-        use_fp16 = False
+        print("PYTORCH_TRAIN.PY: NOT USING 4-bit quantization")
         bnb_config = None
 
     # Loading the model
-    print("LINUX_TRAIN.PY: LOADING THE BASE MODEL")
+    print("PYTORCH_TRAIN.PY: LOADING THE BASE MODEL")
     config = AutoConfig.from_pretrained(
         model_name, torchscript=True, trust_remote_code=True
     )
 
+    torchDtype = None
+    if dtype == "fp16":
+        torchDtype = torch.float16
+    if dtype == "bf16":
+        torchDtype = torch.bfloat16
+    if dtype == "fp32":
+        torchDtype = torch.float32
+    else:
+        torchDtype = "auto"
+
+    print(f"PYTORCH_TRAIN.PY: DOWNLOADING {model_name} TO RUN TRAINING.")
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        torch_dtype="auto",
+        torch_dtype=torchDtype,
         quantization_config=bnb_config,
         config=config,
         trust_remote_code=True,
         low_cpu_mem_usage=True,
     )
+    print(f"PYTORCH_TRAIN.PY: DATATYPE IN USE: {model.dtype}")
     if model.device != device:
+        print(
+            f"PYTORCH_TRAIN.PY: MODEL DID NOT HAVE SAME DEVICE AS SPECIFIED. SWITCHING TO: {device}"
+        )
         model = model.to(device)
-    print(f"LINUX_TRAIN.PY: Model device {model.device}")
+    print(f"PYTORCH_TRAIN.PY: Model device {model.device}")
     if model.device.type == "cuda":
         print(torch.cuda.memory_summary())
 
-    print("LINUX_TRAIN.PY: SANITY CHECKING THE BASE MODEL")
+    print("PYTORCH_TRAIN.PY: SANITY CHECKING THE BASE MODEL")
     stop_words = ["<|endoftext|>", "<|assistant|>"]
     stop_words_ids = [
         tokenizer(stop_word, return_tensors="pt", add_special_tokens=False)[
@@ -254,15 +273,28 @@ def linux_train(
         )
         return tokenizer.batch_decode([o[:-1] for o in outputs])[0]
 
-    assistant_old_lst = [
-        model_generate(d["user"]).split(response_template.strip())[-1].strip()
-        for d in tqdm(test_dataset)
-    ]
+    # TODO: INFERENCING IS BROKEN ON MACOS, CANNOT INF ON CPU AND TRAIN ON GPU
+    # MPS seems to be slow on this part. But, if the user is doing CPU or CUDA, this should still happen.
+    assistant_old_lst = []
+    if device.type != "mps":
+        assistant_old_lst = [
+            model_generate(d["user"]).split(response_template.strip())[-1].strip()
+            for d in test_dataset
+        ]
     attention_layers = [
         module for module in model.modules() if "attention" in str(type(module)).lower()
     ]
 
-    print("LINUX_TRAIN.PY: GETTING THE ATTENTION LAYERS")
+    # TODO: investigate if we can use CPU for the sanity check and GPU for train.
+    # original_device = model.device
+    # if model.device != device:
+    #     print(f"here {device}")
+    #     model = model.to(device)
+    # print(f"PYTORCH_TRAIN.PY: Model device {model.device}")
+    # if model.device.type == "cuda":
+    #     print(torch.cuda.memory_summary())
+
+    print("PYTORCH_TRAIN.PY: GETTING THE ATTENTION LAYERS")
     # Print information about the attention modules
     for i, layer in enumerate(attention_layers):
         for par in list(layer.named_parameters()):
@@ -271,7 +303,7 @@ def linux_train(
                 mod.split(".")[0]
         break
 
-    print("LINUX_TRAIN.PY: CONFIGURING LoRA")
+    print("PYTORCH_TRAIN.PY: CONFIGURING LoRA")
 
     lora_alpha = 32
     lora_dropout = 0.1
@@ -291,8 +323,32 @@ def linux_train(
     tokenizer.padding_side = "right"
     output_dir = "./training_results"
     per_device_train_batch_size = 1
+
+    # torch compile only for MPS
+    # you need to rebuild the backend to get MPS enablement properly set up.
+    if device.type == "mps":
+        torch_compile = True
+        torch_backend = "aot_eager"
+    else:
+        torch_compile = False
+        torch_backend = None
+
+    # change some options based off of train type
+    if train_style == "quick":
+        do_eval = False
+        evaluation_strategy = "no"
+        load_best_model_at_end = False
+    elif train_style == "full":
+        do_eval = True
+        evaluation_strategy = "epoch"
+        load_best_model_at_end = True
+    else:
+        raise ValueError(train_style)
+    fp16 = dtype == "fp16"
+    bf16 = not fp16 and device.type != "mps"
     max_seq_length = 300
 
+    # TODO: This to @cdoern seems like it needs to be a different function, file, etc. Too different from the rest of train. Or at least, add flags for a bunch of this.
     if device.type == "hpu":
         # Intel Gaudi trainer
         # https://docs.habana.ai/en/latest/PyTorch/Getting_Started_with_PyTorch_and_Gaudi/Getting_Started_with_PyTorch.html
@@ -339,21 +395,29 @@ def linux_train(
             output_dir=output_dir,
             num_train_epochs=num_epochs,
             per_device_train_batch_size=per_device_train_batch_size,
-            fp16=use_fp16,
-            bf16=not use_fp16,
-            # use_ipex=True, # TODO CPU test this possible optimization
+            fp16=fp16,
+            save_total_limit=2,
+            load_best_model_at_end=load_best_model_at_end,
+            optim="adamw_torch",
+            evaluation_strategy=evaluation_strategy,
+            do_eval=do_eval,
+            bf16=bf16,
             use_cpu=model.device.type == "cpu",
             save_strategy="epoch",
             report_to="none",
+            torch_compile_backend=torch_backend,
+            torch_compile=torch_compile,
+            # half_precision_backend = "cpu_amp",
+            # use_ipex=True,
+            # TODO CPU test this possible optimization
+            #  gradient_accumulation_steps=4,
+            #  gradient_checkpointing=True,
+            # eval_accumulation_steps=1,
+            # per_device_eval_batch_size=1,
+            # bf16_full_eval=True,
             # options to reduce GPU memory usage and improve performance
             # https://huggingface.co/docs/transformers/perf_train_gpu_one
             # https://stackoverflow.com/a/75793317
-            # torch_compile=True,
-            # fp16=False,  # fp16 increases memory consumption 1.5x
-            # gradient_accumulation_steps=8,
-            # gradient_checkpointing=True,
-            # eval_accumulation_steps=1,
-            # per_device_eval_batch_size=1,
         )
 
         trainer = SFTTrainer(
@@ -369,12 +433,11 @@ def linux_train(
         )
         generate_kwargs = {}
 
-    print("LINUX_TRAIN.PY: TRAINING")
+    print("PYTORCH_TRAIN.PY: TRAINING")
     trainer.train()
 
     model.config.use_cache = True
-
-    print("LINUX_TRAIN.PY: RUNNING INFERENCE ON THE OUTPUT MODEL")
+    print("PYTORCH_TRAIN.PY: RUNNING INFERENCE ON THE OUTPUT MODEL")
 
     for i, (d, assistant_old) in enumerate(zip(test_dataset, assistant_old_lst)):
         output = model_generate(d["user"], **generate_kwargs)
@@ -391,8 +454,9 @@ def linux_train(
         print("\n===\nassistant_expected\n===\n")
         print(assistant_expected)
 
-    print("LINUX_TRAIN.PY: MERGING ADAPTERS")
+    print("PYTORCH_TRAIN.PY: MERGING ADAPTERS")
+    print(f"BEST CHECKPOINT TO BE USED: {trainer.state.best_model_checkpoint}")
     model = trainer.model.merge_and_unload()
     model.save_pretrained("./training_results/merged_model")
-
-    print("LINUX_TRAIN.PY: FINISHED")
+    print("PYTORCH_TRAIN.PY: FINISHED")
+    return trainer.state.best_model_checkpoint

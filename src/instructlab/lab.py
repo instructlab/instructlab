@@ -80,18 +80,18 @@ def cli(ctx, config_file):
         if config_file == "DEFAULT":
             config_obj = config.get_default_config()
         elif not os.path.isfile(config_file):
-            config_obj = None
             ctx.fail(
                 f"`{config_file}` does not exists, please run `ilab init` "
                 "or point to a valid configuration file using `--config=<path>`."
             )
+            assert False, "unreachable"
         else:
             try:
                 config_obj = config.read_config(config_file)
             except config.ConfigException as ex:
                 raise click.ClickException(str(ex))
-
-        ctx.obj = Lab(config_obj)
+        if config_obj is not None:
+            ctx.obj = Lab(config_obj)
         # default_map holds a dictionary with default values for each command parameters
         ctx.default_map = config.get_dict(ctx.obj.config)
 
@@ -847,7 +847,7 @@ class TorchDeviceParam(click.ParamType):
     """
 
     name = "deviceinfo"
-    supported_devices = {"cuda", "cpu", "hpu"}
+    supported_devices = {"cuda", "cpu", "hpu", "mps"}
 
     def convert(self, value, param, ctx) -> "torch.device":
         # pylint: disable=C0415
@@ -860,7 +860,6 @@ class TorchDeviceParam(click.ParamType):
                 device = torch.device(value)
             except RuntimeError as e:
                 self.fail(str(e), param, ctx)
-
         if device.type not in self.supported_devices:
             supported = ", ".join(repr(s) for s in sorted(self.supported_devices))
             self.fail(
@@ -901,39 +900,22 @@ TORCH_DEVICE = TorchDeviceParam()
 @cli.command()
 @click.option("--data-dir", help="Base directory where data is stored.", default=None)
 @click.option(
-    "--input-dir",
-    type=click.Path(),
-    show_default=True,  # TODO: set to None and change help message
-    help="Path to generated files to use as input.",
-)
-@click.option(
     "--skip-preprocessing",
     is_flag=True,
 )
 @click.option(
-    "--tokenizer-dir",
-    help="Base directory where tokenizer is stored.",
-    default=None,
-    show_default=True,
+    "--input-dir",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+    show_default=True,  # TODO: set to None and change help message
+    help="Path to generated files to use as input.",
 )
 @click.option(
-    "--gguf-model-path",
-    help="Local directory where gguf model is stored.",
-    default=None,
-    show_default=True,
-)
-@click.option(
-    "--model-dir",
-    help="Base directory where model is stored.",
+    "--model-repo",
+    help="Base repository where model is stored.",
     default="instructlab/merlinite-7b-lab",
     show_default=True,
 )
 @click.option("--iters", help="Number of iterations to train LoRA.", default=100)
-@click.option(
-    "--local",
-    is_flag=True,
-    help="Whether or not `model_dir` is remote from HuggingFace.",
-)
 @click.option(
     "-sq",
     "--skip-quantize",
@@ -955,6 +937,7 @@ TORCH_DEVICE = TorchDeviceParam()
     help=(
         "PyTorch device for Linux training (default: 'cpu'). Use 'cuda' "
         "for NVidia CUDA / AMD ROCm GPU, 'cuda:0' for first GPU."
+        "Use 'mps' for Apple Silicon hardware."
     ),
 )
 @click.option(
@@ -972,33 +955,43 @@ TORCH_DEVICE = TorchDeviceParam()
     ),
 )
 @click.option(
-    "--model-name",
-    default="instructlab/merlinite-7b-lab",
+    "--dtype",
+    type=click.Choice(["bf16", "fp16", "fp32", "auto"]),
     show_default=True,
-    help="model name to use in training",
+    default="auto",
+    help=("Full half precision training. BF16 is more precise than FP16."),
+)
+@click.option(
+    "--backend",
+    type=click.Choice(["pytorch", "mlx"]),
+    hidden=True,
+    show_default=True,
+    default="pytorch",
+    help=("Backend to use for training. Options are 'mlx' or 'pytorch'."),
 )
 @click.pass_context
 def train(
     ctx,
     data_dir,
-    input_dir,
     skip_preprocessing,
-    tokenizer_dir,
-    gguf_model_path,
-    model_dir,
+    input_dir,
+    model_repo,
     iters,
-    local,
     skip_quantize,
     num_epochs,
     device: "torch.device",
     four_bit_quant: bool,
-    model_name: str,
+    dtype: str,
+    backend,
 ):
     """
     Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
     # pylint: disable=C0415
+    # Third Party
+    from instructlab_quantize import run_quantize  # pylint: disable=import-error
+
     if not input_dir:
         # By default, generate output-dir is used as train input-dir
         input_dir = ctx.obj.config.generate.output_dir
@@ -1045,19 +1038,31 @@ def train(
             )
             raise click.exceptions.Exit(1)
 
-    if not utils.is_macos_with_m_chip():
+    if backend == "pytorch":
         # Local
         from .llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
-        from .train.linux_train import linux_train
+        from .train.pytorch_train import pytorch_train
 
-        linux_train(
-            ctx=ctx,
+        if device.type == "mps":
+            if (
+                all("PYTORCH_MPS_HIGH_WATERMARK_RATIO", "PYTORCH_ENABLE_MPS_FALLBACK")
+                not in os.environ
+            ):
+                click.secho(
+                    "To use MPS, PYTORCH_MPS_HIGH_WATERMARK_RATIO must be set to 0.0 and PYTORCH_ENABLE_MPS_FALLBACK must be set to 1",
+                    fg="red",
+                )
+                raise click.exceptions.Exit(1)
+        best_checkpoint = pytorch_train(
+            ctx,
             train_file=train_files[0],
             test_file=test_files[0],
-            model_name=model_name,
+            model_name=model_repo,
             num_epochs=num_epochs,
             device=device,
             four_bit_quant=four_bit_quant,
+            dtype=dtype,
+            train_style="full",
         )
 
         training_results_dir = "./training_results"
@@ -1073,42 +1078,58 @@ def train(
         if os.path.isfile(gguf_models_file):
             os.remove(gguf_models_file)
 
+        if best_checkpoint is None:
+            all_checkpoints = glob(training_results_dir + "/checkpoint-*")
+            best_checkpoint = all_checkpoints[0]
+            print(
+                f"Did not get best checkpoint, choosing most recent which is {best_checkpoint}"
+            )
         # TODO: Figure out what to do when there are multiple checkpoint dirs.
         # Right now it's just copying files from the first one numerically not necessarily the best one
-        added_tokens_file = glob(
-            training_results_dir + "/checkpoint-*/added_tokens.json"
-        )
-        special_tokens_map = glob(
-            training_results_dir + "/checkpoint-*/special_tokens_map.json"
-        )
-        tokenizer_json = glob(training_results_dir + "/checkpoint-*/tokenizer.json")
-        tokenizer_model = glob(training_results_dir + "/checkpoint-*/tokenizer.model")
-        tokenizer_config_json = glob(
-            training_results_dir + "/checkpoint-*/tokenizer_config.json"
-        )
+        added_tokens_file = os.path.join(best_checkpoint, "added_tokens.json")
+        special_tokens_map = os.path.join(best_checkpoint, "special_tokens_map.json")
+        tokenizer_json = os.path.join(best_checkpoint, "tokenizer.json")
+        tokenizer_model = os.path.join(best_checkpoint, "tokenizer.model")
+        tokenizer_config_json = os.path.join(best_checkpoint, "tokenizer_config.json")
         config_json = glob(training_results_dir + "/merged_model/config.json")
         generation_config_json = glob(
             training_results_dir + "/merged_model/generation_config.json"
         )
         safe_tensors = glob(training_results_dir + "/merged_model/*.safetensors")
 
-        shutil.copy(added_tokens_file[0], final_results_dir)
-        print("Copied ", added_tokens_file[0], "to ", final_results_dir)
-        shutil.copy(special_tokens_map[0], final_results_dir)
-        print("Copied ", special_tokens_map[0], "to ", final_results_dir)
-        shutil.copy(tokenizer_json[0], final_results_dir)
-        print("Copied ", tokenizer_json[0], "to ", final_results_dir)
-        shutil.copy(tokenizer_model[0], final_results_dir)
-        print("Copied ", tokenizer_model[0], "to ", final_results_dir)
-        shutil.copy(tokenizer_config_json[0], final_results_dir)
-        print("Copied ", tokenizer_config_json[0], "to ", final_results_dir)
-        shutil.copy(config_json[0], final_results_dir)
-        print("Copied ", config_json[0], "to ", final_results_dir)
-        shutil.copy(generation_config_json[0], final_results_dir)
-        print("Copied ", generation_config_json[0], "to ", final_results_dir)
+        try:
+            shutil.copy(added_tokens_file, final_results_dir)
+            print("Copied ", added_tokens_file, "to ", final_results_dir)
+            shutil.copy(special_tokens_map, final_results_dir)
+            print("Copied ", special_tokens_map, "to ", final_results_dir)
+            shutil.copy(tokenizer_json, final_results_dir)
+            print("Copied ", tokenizer_json, "to ", final_results_dir)
+            shutil.copy(tokenizer_model, final_results_dir)
+            print("Copied ", tokenizer_model[0], "to ", final_results_dir)
+            shutil.copy(tokenizer_config_json, final_results_dir)
+            print("Copied ", tokenizer_config_json, "to ", final_results_dir)
+            shutil.copy(config_json[0], final_results_dir)
+            print("Copied ", config_json[0], "to ", final_results_dir)
+            shutil.copy(generation_config_json[0], final_results_dir)
+            print("Copied ", generation_config_json[0], "to ", final_results_dir)
+        # pylint: disable=W0718
+        except Exception as exc:
+            click.secho(
+                f"Could not copy train files: {exc}",
+                fg="red",
+            )
+            return
         for file in safe_tensors:
-            shutil.move(file, final_results_dir)
-            print("Moved ", file, "to ", final_results_dir)
+            try:
+                shutil.copy(file, final_results_dir)
+                print("Copied ", file, "to ", final_results_dir)
+            # pylint: disable=W0718
+            except Exception as exc:
+                click.secho(
+                    f"Could not copy train files: {exc}",
+                    fg="red",
+                )
+                return
 
         if four_bit_quant:
             print(
@@ -1124,16 +1145,24 @@ def train(
         for file in glob(final_results_dir + "/*.safetensors"):
             os.remove(file)
 
-        shutil.move(gguf_file_path, gguf_models_file)
-
+        gguf_models_dir = "./models"
+        if not os.path.isdir(gguf_models_dir):
+            os.mkdir(gguf_models_dir)
+        gguf_model = os.path.join(final_results_dir, "ggml-model-f16.gguf")
+        gguf_model_q = "./models/ggml-model-Q4_K_M.gguf"
+        if not skip_quantize:
+            run_quantize(gguf_model, gguf_model_q, "Q4_K_M")
+        else:
+            shutil.move(gguf_file_path, gguf_models_file)
+        # cleanup original copy of model
+        if os.path.exists(final_results_dir + "/ggml-model-f16.gguf"):
+            os.remove(final_results_dir + "/ggml-model-f16.gguf")
         # cleanup checkpoint dir since it's name is unpredictable
         # TODO: figure out how checkpoint dirs should be cleaned up
-        # checkpoint_dirs = glob(training_results_dir + "/checkpoint*")
-        # shutil.rmtree(checkpoint_dirs[0])
+        checkpoint_dirs = glob(training_results_dir + "/checkpoint*")
+        shutil.rmtree(checkpoint_dirs[0])
     else:
         # Local
-        from .mlx_explore.gguf_convert_to_mlx import load
-        from .mlx_explore.utils import fetch_tokenizer_from_hub
         from .train.lora_mlx.convert import convert_between_mlx_and_pytorch
         from .train.lora_mlx.lora import load_and_train
         from .train.lora_mlx.make_data import make_data
@@ -1150,7 +1179,7 @@ def train(
 
         # NOTE we can skip this if we have a way ship MLX
         # PyTorch safetensors to MLX safetensors
-        model_dir_local = model_dir.replace("/", "-")
+        model_dir_local = model_repo.replace("/", "-")
         model_dir_mlx = f"{model_dir_local}-mlx"
         model_dir_mlx_quantized = f"{model_dir_local}-mlx-q"
 
@@ -1161,29 +1190,12 @@ def train(
             dest_model_dir = model_dir_mlx_quantized
             quantize_arg = True
 
-        if tokenizer_dir is not None and gguf_model_path is not None:
-            if not local:
-                tokenizer_dir_local = tokenizer_dir.replace("/", "-")
-                fetch_tokenizer_from_hub(tokenizer_dir, tokenizer_dir_local)
-
-            # no need to pass quantize_arg for now, script automatically detects if quantization is necessary based on whether gguf model is quantized or not
-            load(gguf=gguf_model_path, repo=tokenizer_dir, mlx_path=dest_model_dir)
-
-            for filename in os.listdir(model_dir_local):
-                shutil.copy(
-                    os.path.join(model_dir_local, filename),
-                    os.path.join(dest_model_dir, filename),
-                )
-            shutil.rmtree(model_dir_local, ignore_errors=True)
-
-        else:
-            # Downloading PyTorch SafeTensor and Converting to MLX SafeTensor
-            convert_between_mlx_and_pytorch(
-                hf_path=model_dir,
-                mlx_path=dest_model_dir,
-                quantize=quantize_arg,
-                local=local,
-            )
+        # Downloading PyTorch SafeTensor and Converting to MLX SafeTensor
+        convert_between_mlx_and_pytorch(
+            hf_path=model_repo,
+            mlx_path=dest_model_dir,
+            quantize=quantize_arg,
+        )
 
         adapter_file_path = f"{dest_model_dir}/adapters.npz"
         # train the model with LoRA
@@ -1197,9 +1209,6 @@ def train(
             save_every=10,
             steps_per_eval=10,
         )
-
-        # TODO copy some downloaded files from the PyTorch model folder
-        # Seems to be not a problem if working with a remote download with convert.py
 
 
 @cli.command()
@@ -1293,9 +1302,11 @@ def test(data_dir, model_dir, adapter_file):
     default=None,
     show_default=True,
 )
-@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 @click.pass_context
-def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model_name):
+@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
+def convert(
+    ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize
+):
     """Converts model to GGUF"""
     # pylint: disable=C0415
     # Third Party
@@ -1340,7 +1351,6 @@ def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model
     convert_llama_to_gguf(
         model=model_dir_fused_pt,
         pad_vocab=True,
-        skip_unknown=True,
         outfile=f"{model_dir_fused_pt}/{model_name}.gguf",
     )
 
