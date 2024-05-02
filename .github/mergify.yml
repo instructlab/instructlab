@@ -145,3 +145,11 @@ pull_request_rules:
     label:
       add:
         - backport
+
+- name: backport release-v0.14
+  actions:
+    backport:
+      branches:
+        - release-v0.14
+  conditions:
+    - label=backport-release-v0.14
