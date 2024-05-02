@@ -130,8 +130,9 @@ def cli(ctx, config):
     "workspace_path",
     "--workspace-path",
     type=click.Path(),
+    default=config.DEFAULT_WORKSPACE_PATH,
     envvar="ILAB_WORKSPACE_PATH",
-    help="Path to the workspace directory. Creates it if it doesn't exist.",
+    help="Path to a workspace directory. It's created if it doesn't exist.",
 )
 def init(
     interactive,
@@ -144,16 +145,11 @@ def init(
 ):
     """Initializes environment for InstructLab"""
 
-    if workspace_path:
-        if not exists(workspace_path):
-            os.mkdir(workspace_path)
-        os.chdir(workspace_path)
-
     clone_taxonomy_repo = True
     if interactive:
-        if exists(config.DEFAULT_CONFIG):
+        if exists(os.path.join(workspace_path, config.DEFAULT_CONFIG)):
             overwrite = click.confirm(
-                f"Found {config.DEFAULT_CONFIG} in the current directory, do you still want to continue?"
+                f"Found {config.DEFAULT_CONFIG} in the workspace directory, do you still want to continue?"
             )
             if not overwrite:
                 return
@@ -164,11 +160,14 @@ def init(
             "Please provide the following values to initiate the "
             "environment [press Enter for defaults]:"
         )
-
+        workspace_path = utils.expand_path(
+            click.prompt("Path to workspace directory", default=workspace_path)
+        )
         taxonomy_path = utils.expand_path(
             click.prompt("Path to taxonomy repo", default=taxonomy_path)
         )
-
+    if not exists(workspace_path):
+        os.mkdir(workspace_path)
     try:
         taxonomy_contents = os.listdir(taxonomy_path)
     except FileNotFoundError:
@@ -177,7 +176,7 @@ def init(
         clone_taxonomy_repo = False
     elif interactive:
         clone_taxonomy_repo = click.confirm(
-            f"`{taxonomy_path}` seems to not exist or is empty. Should I clone {repository} for you?"
+            f"`{taxonomy_path}` doesn't seem to exist or is empty. Should I clone {repository} for you?"
         )
 
     # clone taxonomy repo if it needs to be cloned
@@ -199,7 +198,7 @@ def init(
         model_path = utils.expand_path(
             click.prompt("Path to your model", default=model_path)
         )
-    click.echo(f"Generating `{config.DEFAULT_CONFIG}` in the current directory...")
+    click.echo(f"Generating `{config.DEFAULT_CONFIG}` in the workspace directory...")
     cfg = config.get_default_config()
     model = splitext(basename(model_path))[0]
     cfg.chat.model = model
@@ -207,7 +206,7 @@ def init(
     cfg.serve.model_path = model_path
     cfg.generate.taxonomy_path = taxonomy_path
     cfg.generate.taxonomy_base = taxonomy_base
-    config.write_config(cfg)
+    config.write_config(cfg, os.path.join(workspace_path, config.DEFAULT_CONFIG))
 
     click.echo(
         "Initialization completed successfully, you're ready to start using `ilab`. Enjoy!"
