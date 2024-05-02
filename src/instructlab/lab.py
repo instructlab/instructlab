@@ -1009,6 +1009,13 @@ def train(
             shutil.copy(file, final_results_dir)
             print("Copied ", file, "to ", final_results_dir)
 
+        if four_bit_quant:
+            print(
+                "SKIPPING CONVERSION to gguf. This is unsupported with --4-bit-quant. "
+                + "See https://github.com/instructlab/instructlab/issues/579."
+            )
+            return
+
         convert_llama_to_gguf(model=final_results_dir, pad_vocab=True)
 
         gguf_models_dir = "./models"
