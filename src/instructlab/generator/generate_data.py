@@ -499,11 +499,12 @@ def generate_data(
             new_instruction_tokens = scorer._tokenizer.tokenize(
                 instruction_data_entry["instruction"]
             )
-            with mpctx.Pool(num_cpus) as p:
-                rouge_scores = p.map(
+            with mpctx.Pool(num_cpus) as pool:
+                rouge_scores = pool.map(
                     partial(rouge_scorer._score_lcs, new_instruction_tokens),
                     all_instruction_tokens,
                 )
+            pool.join()
             instruction_data_entry["taxonomy_path"] = selected_taxonomy
             rouge_scores = [score.fmeasure for score in rouge_scores]
             # Comment out extra info not currently being used:
