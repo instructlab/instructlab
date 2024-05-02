@@ -1000,6 +1000,15 @@ TORCH_DEVICE = TorchDeviceParam()
     show_default=True,
     help="model name to use in training",
 )
+@click.option(
+    "--batch-size",
+    "batch_size",
+    default=1,
+    help=(
+        "Batch size for training (only supported on Linux). Increase this if "
+        "the GPU is underused."
+    )
+)
 @click.pass_context
 def train(
     ctx,
@@ -1016,6 +1025,7 @@ def train(
     device: "torch.device",
     four_bit_quant: bool,
     model_name: str,
+    batch_size: int,
 ):
     """
     Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
@@ -1087,6 +1097,7 @@ def train(
             num_epochs=num_epochs,
             device=device,
             four_bit_quant=four_bit_quant,
+            batch_size=batch_size,
         )
 
         training_results_dir = Path("./training_results")

@@ -150,6 +150,7 @@ def linux_train(
     num_epochs: Optional[int] = None,
     device: torch.device = torch.device("cpu"),
     four_bit_quant: bool = False,
+    batch_size: int = 1,
 ):
     """Lab Train for Linux!"""
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", num_epochs)
@@ -277,6 +278,8 @@ def linux_train(
     lora_dropout = 0.1
     lora_r = 4
 
+    per_device_train_batch_size = batch_size
+
     target_modules = ["q_proj", "k_proj", "v_proj", "o_proj"]
 
     peft_config = LoraConfig(
@@ -290,7 +293,6 @@ def linux_train(
 
     tokenizer.padding_side = "right"
     output_dir = "./training_results"
-    per_device_train_batch_size = 1
     max_seq_length = 300
 
     if device.type == "hpu":
