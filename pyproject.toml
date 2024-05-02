@@ -83,11 +83,16 @@ select = [
     # "I",  # isort
     # "UP",  # pyupgrade
     # "SIM",  # flake8-simplify
+    "TID",  # flake8-tidy-imports
 ]
 ignore = [
     # some embedded strings are longer than 88 characters
     "E501",  # line too long
+    "TID252",  # Prefer absolute imports over relative imports from parent modules
 ]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api]
+"yamllint".msg = "yamllint is for CLI usage only."
 
 [tool.ruff.lint.isort]
 # same as .isort.cfg
