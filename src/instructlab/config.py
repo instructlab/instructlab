@@ -8,12 +8,13 @@ from pydantic import BaseModel, ConfigDict, PositiveInt, StrictStr, ValidationEr
 import httpx
 import yaml
 
+DEFAULT_WORKSPACE_PATH = "workspace"
 DEFAULT_API_KEY = "no_api_key"
 DEFAULT_CONFIG = "config.yaml"
 DEFAULT_MODEL = "merlinite-7b-lab-Q4_K_M"
 DEFAULT_MODEL_PATH = f"models/{DEFAULT_MODEL}.gguf"
 DEFAULT_TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
-DEFAULT_TAXONOMY_PATH = "taxonomy"
+DEFAULT_TAXONOMY_PATH = f"{DEFAULT_WORKSPACE_PATH}/taxonomy"
 DEFAULT_TAXONOMY_BASE = "origin/main"
 DEFAULT_YAML_RULES = "yaml_rules.yaml"
 MAX_CONTEXT_SIZE = 4096
