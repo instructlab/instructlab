@@ -1,0 +1,109 @@
+name: Test build cuda container image
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'containers/cuda/Containerfile'
+      - '.github/workflows/image-cuda.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'containers/cuda/Containerfile'
+      - '.github/workflows/image-cuda.yml'
+
+# Note that the current containerfile builds against a git ref.
+# It is not built against the current source tree. So, we test
+# build the image against `stable` and `main` if the file changes.
+jobs:
+  build_cuda_image_stable:
+    name: Build CUDA image for stable
+    runs-on: ubuntu-latest
+    steps:
+      - name: Free disk space
+        run: |
+          df -h
+          sudo docker rmi "$(docker image ls -aq)" >/dev/null 2>&1 || true
+          sudo rm -rf \
+            /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /usr/local/share/powershell /usr/share/swift /usr/local/.ghcup \
+            /usr/lib/jvm || true
+          sudo apt install aptitude -y >/dev/null 2>&1
+          sudo aptitude purge '~n ^mysql' -f -y >/dev/null 2>&1
+          sudo aptitude purge '~n ^dotnet' -f -y >/dev/null 2>&1
+          sudo apt-get autoremove -y >/dev/null 2>&1
+          sudo apt-get autoclean -y >/dev/null 2>&1
+          df -h
+
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Extract metadata (tags, labels) for gotbot image
+        id: gobot_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}/instructlab-cuda
+
+      - name: Build and push gobot image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64
+          build-args: |
+            GIT_TAG=stable
+          push: false
+          tags: ${{ steps.gobot_meta.outputs.tags }}
+          labels: ${{ steps.gobot_meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          file: containers/cuda/Containerfile
+
+  build_cuda_image_main:
+    name: Build CUDA image for main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Free disk space
+        run: |
+          df -h
+          sudo docker rmi "$(docker image ls -aq)" >/dev/null 2>&1 || true
+          sudo rm -rf \
+            /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /usr/local/share/powershell /usr/share/swift /usr/local/.ghcup \
+            /usr/lib/jvm || true
+          sudo apt install aptitude -y >/dev/null 2>&1
+          sudo aptitude purge '~n ^mysql' -f -y >/dev/null 2>&1
+          sudo aptitude purge '~n ^dotnet' -f -y >/dev/null 2>&1
+          sudo apt-get autoremove -y >/dev/null 2>&1
+          sudo apt-get autoclean -y >/dev/null 2>&1
+          df -h
+
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Extract metadata (tags, labels) for gotbot image
+        id: gobot_meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository }}/instructlab-cuda
+
+      - name: Build and push gobot image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          platforms: linux/amd64
+          build-args: |
+            GIT_TAG=main
+          push: false
+          tags: ${{ steps.gobot_meta.outputs.tags }}
+          labels: ${{ steps.gobot_meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          file: containers/cuda/Containerfile
