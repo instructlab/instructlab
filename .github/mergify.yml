@@ -137,14 +137,14 @@ pull_request_rules:
       remove:
         - needs-rebase
 
-- name: backport-label
-  description: Automatically apply the backport label to release branch PRs
+- name: release-branch-label
+  description: Automatically apply the release-branch label to release branch PRs
   conditions:
     - base~=release-.*
   actions:
     label:
       add:
-        - backport
+        - release-branch
 
 - name: backport release-v0.14
   actions:
