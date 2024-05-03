@@ -3,7 +3,7 @@
 ![Lint](https://github.com/instructlab/instructlab/actions/workflows/lint.yml/badge.svg?branch=main)
 ![Tests](https://github.com/instructlab/instructlab/actions/workflows/test.yml/badge.svg?branch=main)
 ![Build](https://github.com/instructlab/instructlab/actions/workflows/pypi.yaml/badge.svg?branch=main)
-[![Demo](https://img.shields.io/badge/Demo-v0.13.0-blue)](https://asciinema.org/a/PmRU7IrReep04FY6qpzo2Zclc)
+![Release](https://img.shields.io/github/v/release/instructlab/instructlab)
 ![License](https://img.shields.io/github/license/instructlab/instructlab)
 
 ## 📖 Contents
