@@ -4,14 +4,14 @@
 set -ex
 
 # build a prompt string that includes the time, source file, line number, and function name
-export PS4='+$(printf "%(%Y-%m-%d %T)T") ${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+export PS4='+$(date +"%Y-%m-%d %T") ${BASH_VERSION}:${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
 pip install .
 
 export TEST_CTX_SIZE_LAB_SERVE_LOG_FILE=test_ctx_size_lab_serve.log
 export TEST_CTX_SIZE_LAB_CHAT_LOG_FILE=test_ctx_size_lab_chat.log
 
-for cmd in ilab expect; do
+for cmd in ilab expect timeout; do
     if ! type -p $cmd; then
         echo "Error: $cmd is not installed"
         exit 1
@@ -36,10 +36,9 @@ cleanup() {
         "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" \
         test_session_history
     rm -rf test_taxonomy
-    # revert log level change from test_temp_server()
-    sed -i 's/DEBUG/INFO/g' config.yaml
     # revert port change from test_bind_port()
-    sed -i 's/9999/8000/g' config.yaml
+    sed -i.bak 's/9999/8000/g' config.yaml
+    rm -f config.yaml.bak
     set -e
 }
 
@@ -54,7 +53,22 @@ ilab --version
 echo -e "\n\n\n" | ilab init
 
 # Enable Debug in func tests
-sed -i -e 's/log_level:.*/log_level: DEBUG/g;' config.yaml
+sed -i.bak -e 's/log_level:.*/log_level: DEBUG/g;' config.yaml
+
+# It looks like GitHub action MacOS runner does not have graphics
+# so we need to disable the GPU layers if we are running in GitHub actions
+if [[ "$(uname)" == "Darwin" ]]; then
+    if command -v system_profiler; then
+        if system_profiler SPDisplaysDataType|grep "Metal Support"; then
+            echo "Metal GPU detected"
+        else
+            echo "No Metal GPU detected"
+            sed -i.bak -e 's/gpu_layers: -1/gpu_layers: 0/g;' config.yaml
+        fi
+    else
+        echo "system_profiler not found, cannot determine GPU"
+    fi
+fi
 
 # download the latest version of the ilab
 ilab download
@@ -78,7 +92,7 @@ test_bind_port(){
     }
 
     # configure a different port
-    exec sed -i 's/8000/9999/g' config.yaml
+    exec sed -i.bak 's/8000/9999/g' config.yaml
 
     # check that ilab serve is working on the new port
     # catch ERROR strings in the output
@@ -97,40 +111,48 @@ test_ctx_size(){
 
     # Make sure the server has time to open the port
     # if "ilab chat" tests it before its open then it will run its own server without --max-ctx-size 1
-    sleep 5
+    if ! timeout 30 bash -c '
+        until curl 127.0.0.1:8000|grep "{\"detail\":\"Not Found\"}"; do
+            echo "waiting for server to start"
+            sleep 1
+        done
+    '; then
+        echo "server did not start"
+        exit 1
+    fi
 
     # Should succeed
     ilab chat -qq "Hello"
 
-    # the error is expected so let's ignore it to not fall into the trap
-    set +e
     # now chat with the server and exceed the context size
     ilab chat &> "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" <<EOF &
 hello, I am a ci message that should not finish because I am too long for the context window, tell me about your day please, I love to hear all about it, tell me about the time you could only take 55 tokens
 EOF
     PID_CHAT=$!
-    wait_for_pid_to_disappear $PID_CHAT
-    # reset the PID_CHAT variable so that the cleanup function doesn't try to kill it
-    PID_CHAT=
-
-    # re-activate the error trap
-    set -e
 
     # look for the context size error in the server logs
-    timeout 10 bash -c '
+    if ! timeout 10 bash -c '
         until grep -q "exceed context window of" "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE"; do
         echo "waiting for context size error"
         sleep 1
     done
-'
+'; then
+        echo "context size error not found in server logs"
+        echo "$(<$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE)"
+        exit 1
+    fi
 
     # look for the context size error in the chat logs
-    timeout 10 bash -c '
+    if ! timeout 10 bash -c '
         until grep -q "Message too large for context size." "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE"; do
         echo "waiting for chat error"
         sleep 1
     done
-'
+'; then
+        echo "context size error not found in chat logs"
+        echo "$(<$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE)"
+        exit 1
+    fi
 }
 
 test_server_shutdown_while_chatting(){
@@ -151,20 +173,6 @@ test_server_shutdown_while_chatting(){
             timeout { exit 1 }
         }
     '
-}
-
-wait_for_pid_to_disappear(){
-    for i in $(seq 1 20); do
-        if ! test -d /proc/$1; then
-            break
-        fi
-        # error if the process is still running
-        if [ $i -eq 20 ]; then
-            echo "chat process is still running"
-            exit 1
-        fi
-        sleep 1
-    done
 }
 
 test_loading_session_history(){
@@ -221,7 +229,7 @@ seed_examples:
 task_description: "simple maths"
 EOF
 
-    sed -i -e 's/num_instructions:.*/num_instructions: 1/g' config.yaml
+    sed -i.bak -e 's/num_instructions:.*/num_instructions: 1/g' config.yaml
 
     # This should be finished in a minut or so but time it out incase it goes wrong
     timeout 10m ilab generate --taxonomy-path test_taxonomy/compositional_skills/simple_math.yaml
@@ -235,7 +243,6 @@ EOF
 }
 
 test_temp_server(){
-    sed -i 's/INFO/DEBUG/g' config.yaml
     expect -c '
         set timeout 120
         spawn ilab chat
