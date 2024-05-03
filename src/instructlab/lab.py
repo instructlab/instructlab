@@ -18,6 +18,7 @@ from click_didyoumean import DYMGroup
 from git import GitError, Repo
 from huggingface_hub import hf_hub_download, list_repo_files
 from huggingface_hub import logging as hf_logging
+from huggingface_hub import snapshot_download
 import click
 import yaml
 
