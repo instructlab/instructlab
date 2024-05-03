@@ -412,7 +412,7 @@ The model can also be downloaded and served locally.
    ilab convert
    ```
 
-3. Serve the newly trained model locally via `ilab serve` command with the `--model`
+3. Serve the newly trained model locally via `ilab serve` command with the `--model-path`
 argument to specify your new model:
 
    ```shell
