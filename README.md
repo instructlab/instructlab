@@ -89,7 +89,9 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 - Python 3.9+ (<3.12 for PyTorch JIT)
 - Approximately 60GB disk space (entire process)
 
-> **NOTE:** PyTorch 2.2.1 does not support `torch.compile` with Python 3.12. On Fedora 39 and above, install `python3.11-devel` and create a virtual env with `python3.11` to use PyTorch's JIT compiler.
+> **NOTE:** PyTorch 2.2.1 does not support `torch.compile` with Python 3.12. On Fedora 39+, install `python3.11-devel` and create the virtual env with `python3.11` if you wish to use PyTorch's JIT compiler.
+<!-- -->
+> **NOTE:** When installing the `ilab` CLI on macOS, you may have to run the `xcode select --install` command to install the required packages previously listed.
 
 ## ✅ Getting started
 
