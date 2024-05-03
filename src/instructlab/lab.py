@@ -11,6 +11,7 @@ import os
 import shutil
 import sys
 import typing
+from pathlib import Path
 
 # Third Party
 from click_didyoumean import DYMGroup
@@ -309,6 +310,12 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size, model_family):
     # pylint: disable=C0415
     # Local
     from .server import ServerException, server
+
+    served_model = model_path.split('/')[-1]
+    configPath = os.path.join(Path(__file__).resolve().parent.parent.parent.parent, "config.yaml")
+    configFile = config.read_config(config_file=configPath)
+    configFile.chat.model = served_model
+    config.write_config(cfg=configFile, config_file=configPath)
 
     ctx.obj.logger.info(
         f"Using model '{model_path}' with {gpu_layers} gpu-layers and {max_ctx_size} max context size."
@@ -637,6 +644,10 @@ def chat(
     # Local
     from .chat.chat import ChatException, chat_cli
     from .server import ensure_server
+
+    configPath = os.path.join(Path(__file__).resolve().parent.parent.parent.parent, "config.yaml")
+    configFile = config.read_config(config_file=configPath)
+    ctx.obj.config.chat.model = configFile.chat.model
 
     if endpoint_url:
         api_base = endpoint_url

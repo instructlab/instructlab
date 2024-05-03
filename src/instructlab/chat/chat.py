@@ -181,7 +181,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             raise KeyboardInterrupt
         context = cs[1]
         if context not in CONTEXTS:
-            available_contexts = ", ".join(CONTEXTS.keys())
+            available_contexts = ", ".ƒdeoin(CONTEXTS.keys())
             self._sys_print(
                 Markdown(
                     f"**WARNING**: Context `{context}` not found. "
@@ -501,7 +501,7 @@ def chat_cli(
 
     # Initialize chat bot
     ccb = ConsoleChatBot(
-        config.model if model is None else model,
+        model if config.model is None else config.model,
         client=client,
         vi_mode=config.vi_mode,
         log_file=log_file,
