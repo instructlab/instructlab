@@ -43,7 +43,7 @@ to expose the GPUs to Podman.
 Here is a quick procedure if you haven't.
 
 ```shell
-curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo | sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
+sudo dnf config-manager --add-repo https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo
 sudo dnf config-manager --enable nvidia-container-toolkit-experimental
 sudo dnf install -y nvidia-container-toolkit
 ```
@@ -62,10 +62,16 @@ nvidia.com/gpu=0
 nvidia.com/gpu=all
 ```
 
-Finally, you can generate the CDI configuration for the NVIDIA devices:
+Generate the CDI configuration for the NVIDIA devices:
 
 ```shell
 sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
+```
+
+Finally, allow non-privileged containers to access the NVIDIA devices:
+
+```shell
+sudo setsebool -P container_use_devices on
 ```
 
 ### Run the CUDA-accelerated InstructLab container
