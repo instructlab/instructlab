@@ -7,6 +7,8 @@ arge
 arXiv
 backend
 backends
+backport
+backported
 Bhandwaldar
 CLI
 cli
@@ -29,6 +31,7 @@ Finetuning
 GFX
 GGUF
 GiB
+GitHub
 Gmail
 gpu
 hipBLAS
