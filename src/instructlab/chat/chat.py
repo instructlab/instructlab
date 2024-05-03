@@ -181,7 +181,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             raise KeyboardInterrupt
         context = cs[1]
         if context not in CONTEXTS:
-            available_contexts = ", ".ƒdeoin(CONTEXTS.keys())
+            available_contexts = ", ".join(CONTEXTS.keys())
             self._sys_print(
                 Markdown(
                     f"**WARNING**: Context `{context}` not found. "
