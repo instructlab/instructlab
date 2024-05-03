@@ -37,7 +37,7 @@ Pre-requisites:
 1. Setting up and training a LoRA. A LoRA uses Parameter Efficient Fine-tuning (PEFT) methods to fine-tune a model on a small subset of the overall parameters, allowing you to conduct fine-tuning in a fraction of the time, on a fraction of the hardware required. The resultant model should be updated and better handle your queries than the base model.
 1. Inspecting the output model to make sure the LoRA training had the desired effect (i.e. the output has improved).
 
-Once you have finished training and the output looks good, we encourage you go to stage, [Testing the fine-tuned model](../README.md#👩🏽‍🔬-3-testing-the-fine-tuned-model)
+Once you have finished training and the output looks good, we encourage you go to stage, [Testing the fine-tuned model](../README.md#-test-the-newly-trained-model)
 
 ### Kaggle (Unsupported and deprecated)
 
