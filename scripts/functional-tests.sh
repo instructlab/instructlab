@@ -324,7 +324,7 @@ test_model_print(){
         set timeout 30
         spawn ilab chat -m bar
         expect {
-            "Welcome to Chat CLI w/ BAR" { exit 0 }
+            "Welcome to InstructLab Chat w/ BAR" { exit 0 }
             timeout { exit 1 }
         }
     '
@@ -334,7 +334,7 @@ test_model_print(){
         sed -i "s/merlinite-7b-lab-Q4_K_M/baz/g" config.yaml
         spawn ilab chat
         expect {
-            "Welcome to Chat CLI w/ BAZ" { exit 0 }
+            "Welcome to InstructLab Chat w/ BAZ" { exit 0 }
             timeout { exit 1 }
         }
         sed -i "s/baz/merlinite-7b-lab-Q4_K_M/g" config.yaml
@@ -344,7 +344,7 @@ test_model_print(){
     expect -c '
         spawn ilab chat
         expect {
-            "Welcome to Chat CLI w/ MODELS/FOO.GGUF" { exit 0 }
+            "Welcome to InstructLab Chat w/ MODELS/FOO.GGUF" { exit 0 }
             timeout { exit 1 }
         }
     '
