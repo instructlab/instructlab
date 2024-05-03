@@ -1204,7 +1204,8 @@ def test(data_dir, model_dir, adapter_file):
     show_default=True,
 )
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
-def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize, model_name):
+@click.pass_context
+def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model_name):
     """Converts model to GGUF"""
     # pylint: disable=C0415
     # Local
@@ -1234,7 +1235,7 @@ def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize, model_name
         de_quantize=not skip_de_quantize,
     )
 
-    print(f"deleting {source_model_dir}...")
+    ctx.obj.logger.info(f"deleting {source_model_dir}...")
     shutil.rmtree(source_model_dir)
 
     model_dir_fused_pt = f"{model_name}-trained"
@@ -1243,12 +1244,12 @@ def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize, model_name
         hf_path=model_dir_fused, mlx_path=model_dir_fused_pt, local=True, to_pt=True
     )
 
-    print(f"deleting {model_dir_fused}...")
+    ctx.obj.logger.info(f"deleting {model_dir_fused}...")
     shutil.rmtree(model_dir_fused)
 
     convert_llama_to_gguf(model=model_dir_fused_pt, pad_vocab=True, skip_unknown=True, outfile=f"{model_dir_fused_pt}/{model_name}.gguf")
 
-    print(f"deleting safetensors files from {model_dir_fused_pt}...")
+    ctx.obj.logger.info(f"deleting safetensors files from {model_dir_fused_pt}...")
     for file in glob(os.path.join(model_dir_fused_pt, "*.safetensors")):
         os.remove(file)
     
@@ -1260,5 +1261,5 @@ def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize, model_name
         cmd = f"{script} {gguf_model_dir} {gguf_model_q_dir} Q4_K_M"
         os.system("{}".format(cmd))
 
-    print(f"deleting {model_dir_fused_pt}/{model_name}.gguf...")
+    ctx.obj.logger.info(f"deleting {model_dir_fused_pt}/{model_name}.gguf...")
     os.remove(os.path.join(model_dir_fused_pt, f"{model_name}.gguf"))
