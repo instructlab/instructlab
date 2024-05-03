@@ -17,7 +17,7 @@ class TestConfig:
         assert cfg.general.log_level == "INFO"
 
         assert cfg.chat is not None
-        assert cfg.chat.model == "merlinite-7b-lab-Q4_K_M"
+        assert cfg.chat.model == "models/merlinite-7b-lab-Q4_K_M.gguf"
         assert not cfg.chat.vi_mode
         assert cfg.chat.visible_overflow
         assert cfg.chat.context == "default"
@@ -26,7 +26,7 @@ class TestConfig:
         assert not cfg.chat.greedy_mode
 
         assert cfg.generate is not None
-        assert cfg.generate.model == "merlinite-7b-lab-Q4_K_M"
+        assert cfg.generate.model == "models/merlinite-7b-lab-Q4_K_M.gguf"
         assert cfg.generate.taxonomy_path == "taxonomy"
         assert cfg.generate.taxonomy_base == "origin/main"
         assert cfg.generate.num_cpus == 10
@@ -52,9 +52,9 @@ class TestConfig:
         with open(config_path, "w", encoding="utf-8") as config_file:
             config_file.write(
                 """chat:
-  model: merlinite-7b-lab-Q4_K_M
+  model: models/merlinite-7b-lab-Q4_K_M.gguf
 generate:
-  model: merlinite-7b-lab-Q4_K_M
+  model: models/merlinite-7b-lab-Q4_K_M.gguf
   taxonomy_base: origin/main
   taxonomy_path: taxonomy
 serve:
@@ -75,12 +75,12 @@ chat:
   context: default
   greedy_mode: false
   logs_dir: data/chatlogs
-  model: merlinite-7b-lab-Q4_K_M
+  model: models/merlinite-7b-lab-Q4_K_M.gguf
   session: null
   vi_mode: false
   visible_overflow: true
 generate:
-  model: merlinite-7b-lab-Q4_K_M
+  model: models/merlinite-7b-lab-Q4_K_M.gguf
   num_cpus: 10
   num_instructions: 100
   output_dir: generated
@@ -106,9 +106,9 @@ serve:
         with open(config_path, "w", encoding="utf-8") as config_file:
             config_file.write(
                 """chat:
-  model: merlinite-7b-lab-Q4_K_M
+  model: models/merlinite-7b-lab-Q4_K_M.gguf
 generate:
-  model: merlinite-7b-lab-Q4_K_M
+  model: models/merlinite-7b-lab-Q4_K_M.gguf
   taxonomy_base: origin/main
   taxonomy_path: taxonomy
 serve:
@@ -145,7 +145,7 @@ unexpected:
                 """general:
   log_level: INFO
 generate:
-  model: merlinite-7b-lab-Q4_K_M
+  model: models/merlinite-7b-lab-Q4_K_M.gguf
 """
             )
         with pytest.raises(

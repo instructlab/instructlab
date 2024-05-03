@@ -19,8 +19,10 @@ import yaml
 
 DEFAULT_API_KEY = "no_api_key"
 DEFAULT_CONFIG = "config.yaml"
-DEFAULT_MODEL = "merlinite-7b-lab-Q4_K_M"
-DEFAULT_MODEL_PATH = f"models/{DEFAULT_MODEL}.gguf"
+# TODO: Consolidate --model and --model-path into one --model-path flag since we always need a path now
+DEFAULT_MODEL_OLD = "merlinite-7b-lab-Q4_K_M"
+DEFAULT_MODEL = "models/merlinite-7b-lab-Q4_K_M.gguf"
+DEFAULT_MODEL_PATH = "models/merlinite-7b-lab-Q4_K_M.gguf"
 DEFAULT_TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
 DEFAULT_TAXONOMY_PATH = "taxonomy"
 DEFAULT_TAXONOMY_BASE = "origin/main"

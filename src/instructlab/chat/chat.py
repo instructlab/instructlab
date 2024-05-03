@@ -22,7 +22,7 @@ import httpx
 import openai
 
 # Local
-from ..config import DEFAULT_CONNECTION_TIMEOUT
+from ..config import DEFAULT_CONNECTION_TIMEOUT, DEFAULT_MODEL_OLD
 from ..utils import get_sysprompt
 
 HELP_MD = """
@@ -482,6 +482,19 @@ def chat_cli(
         timeout=DEFAULT_CONNECTION_TIMEOUT,
         http_client=httpx.Client(cert=cert, verify=verify),
     )
+    # ensure the model specified exists on the server. with backends like vllm, this is crucial.
+    model_list = client.models.list().data
+    model_ids = []
+    for m in model_list:
+        model_ids.append(m.id)
+    if not any(model == m for m in model_ids):
+        if model == DEFAULT_MODEL_OLD:
+            logger.info(
+                f"Model {model} is not a full path. Try running ilab init or edit your config to have the full model path for serving, chatting, and generation."
+            )
+        raise ChatException(
+            f"Model {model} is not served by the server. These are the served models: {model_ids}"
+        )
 
     # Load context/session
     loaded = {}
