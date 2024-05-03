@@ -49,6 +49,15 @@ After that is done, you can:
 1. Re-train the LLM with the new training data.
 1. Chat with the re-trained LLM to see the results.
 
+```mermaid
+graph TD;
+  download-->chat
+  chat[Chat with the LLM]-->add
+  add[Add new knowledge\nor skill to taxonomy]-->generate[generate new\nsynthetic training data]
+  generate-->train
+  train[Re-train]-->|Chat with\nthe re-trained LLM\nto see the results|chat
+```
+
 The full process is described graphically in the [workflow diagram](./docs/workflow.png).
 
 > [!IMPORTANT]
