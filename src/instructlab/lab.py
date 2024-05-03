@@ -12,7 +12,6 @@ import os
 import shutil
 import sys
 import typing
-import re
 
 # Third Party
 from click_didyoumean import DYMGroup
@@ -1215,9 +1214,9 @@ def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model
 
     # compute model name from model-dir if not supplied
     if model_name is None:
-        regexp = "-mlx-q"
+        mlx_q_suffix = "-mlx-q"
         model_name = model_dir.split("/")[-1]
-        model_name = model_name.replace(regexp, "")
+        model_name = model_name.replace(mlx_q_suffix, "")
 
 
     if adapter_file is None:
