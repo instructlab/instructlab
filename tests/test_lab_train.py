@@ -158,7 +158,7 @@ class TestLabTrain(unittest.TestCase):
             result = runner.invoke(lab.train, ["--input-dir", INPUT_DIR])
             self.assertIsNotNone(result.exception)
             self.assertIn(
-                "Could not copy into data directory: list index out of range",
+                f"{INPUT_DIR} does not contain training or test files, did you run `ilab generate`?",
                 result.output,
             )
             self.assertEqual(result.exit_code, 1)
