@@ -1220,19 +1220,31 @@ def convert(model_dir, adapter_file, skip_de_quantize, skip_quantize):
         de_quantize=not skip_de_quantize,
     )
 
-    model_dir_fused_pt = f"{model_dir_fused}-pt"
+    print(f"deleting {source_model_dir}...")
+    shutil.rmtree(source_model_dir)
 
+    model_dir_fused_pt = f"{model_dir_fused}-pt"
     # this converts MLX to PyTorch
     convert_between_mlx_and_pytorch(
         hf_path=model_dir_fused, mlx_path=model_dir_fused_pt, local=True, to_pt=True
     )
 
-    convert_llama_to_gguf(model=model_dir_fused_pt, pad_vocab=True)
+    print(f"deleting {model_dir_fused}...")
+    shutil.rmtree(model_dir_fused)
 
-    # quantize 4-bi GGUF (optional)
+    convert_llama_to_gguf(model=model_dir_fused_pt, pad_vocab=True, skip_unknown=True)
+
+    print(f"deleting safetensors files from {model_dir_fused_pt}...")
+    for file in glob(os.path.join(model_dir_fused_pt, "*.safetensors")):
+        os.remove(file)
+    
+    # quantize to 4-bit GGUF (optional)
     if not skip_quantize:
         gguf_model_dir = f"{model_dir_fused_pt}/ggml-model-f16.gguf"
         gguf_model_q_dir = f"{model_dir_fused_pt}/ggml-model-Q4_K_M.gguf"
         script = os.path.join(cli_dir, "llamacpp/quantize")
         cmd = f"{script} {gguf_model_dir} {gguf_model_q_dir} Q4_K_M"
         os.system("{}".format(cmd))
+
+    print(f"deleting {model_dir_fused_pt}/ggml-model-f16.gguf...")
+    os.remove(os.path.join(model_dir_fused_pt, "ggml-model-f16.gguf"))
