@@ -1,0 +1,81 @@
+# SPDX-License-Identifier: Apache-2.0
+
+name: E2E test
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_or_branch:
+        description: 'pull request number or branch name'
+        required: true
+        default: 'main'
+
+jobs:
+  e2e:
+    runs-on: ubuntu-gpu
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # https://github.com/actions/checkout/issues/249
+          fetch-depth: 0
+          submodules: 'true'
+
+      - name: Determine if pr_or_branch is a PR number
+        id: check_pr
+        run: |
+          if [[ "${{ github.event.inputs.pr_or_branch }}" =~ ^[0-9]+$ ]]; then
+            echo "is_pr=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_pr=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fetch and checkout PR
+        if: steps.check_pr.outputs.is_pr == 'true'
+        run: |
+          git fetch origin pull/${{ github.event.inputs.pr_or_branch }}/head:pr-${{ github.event.inputs.pr_or_branch }}
+          git checkout pr-${{ github.event.inputs.pr_or_branch }}
+
+      - name: Checkout branch
+        if: steps.check_pr.outputs.is_pr == 'false'
+        run: git checkout ${{ github.event.inputs.pr_or_branch }}
+
+      - name: Install Packages
+        run: |
+          sudo apt-get install -y cuda-toolkit git cmake build-essential virtualenv
+          nvidia-smi
+          ls -l /dev/nvidia*
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: |
+            **/pyproject.toml
+            **/requirements*.txt
+
+      - name: Cache huggingface
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          # config contains DEFAULT_MODEL
+          key: huggingface-${{ hashFiles('src/instructlab/config.py') }}
+
+      - name: Install ilab
+        run: |
+          export PATH="/home/runner/.local/bin:/usr/local/cuda-12.4/bin:$PATH"
+          python3 -m venv venv
+          . venv/bin/activate
+          sed 's/\[.*\]//' requirements.txt > constraints.txt
+          python3 -m pip cache remove llama_cpp_python
+          CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3 -m pip install --no-binary llama_cpp_python -c constraints.txt llama_cpp_python
+          # needed for --4-bit-quant option to ilab train
+          python3 -m pip install bitsandbytes
+          python3 -m pip install .
+
+      - name: Run e2e test
+        run: |
+          . venv/bin/activate
+          ./scripts/basic-workflow-tests.sh -cm
