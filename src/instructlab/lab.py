@@ -1234,7 +1234,9 @@ def test(data_dir, model_dir, adapter_file):
     with open(test_data_dir, "r", encoding="utf-8") as f:
         test_data = [json.loads(line) for line in f]
 
-    print("system prompt:", utils.get_sysprompt())
+    sysprompt = utils.get_sysprompt()
+    first_line = sysprompt.split("\n", maxsplit=1)[0]
+    print("system prompt:", first_line, "(truncated)")
     for idx, example in enumerate(test_data):
         system = example["system"]
         user = example["user"]
