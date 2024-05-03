@@ -1027,14 +1027,14 @@ def train(
             )
             return
 
-        convert_llama_to_gguf(model=final_results_dir, pad_vocab=True)
+        gguf_file_path = convert_llama_to_gguf(model=final_results_dir, pad_vocab=True)
 
         gguf_models_dir = "./models"
         if not os.path.isdir(gguf_models_dir):
             os.mkdir(gguf_models_dir)
-        shutil.copy(final_results_dir + "/ggml-model-f16.gguf", gguf_models_dir)
+        shutil.copy(gguf_file_path, gguf_models_dir)
         # cleanup original copy of model
-        os.remove(final_results_dir + "/ggml-model-f16.gguf")
+        os.remove(gguf_file_path)
         # cleanup checkpoint dir since it's name is unpredictable
         # TODO: figure out how checkpoint dirs should be cleaned up
         # checkpoint_dirs = glob(training_results_dir + "/checkpoint*")
