@@ -163,6 +163,12 @@ def server(
         settings.n_threads = threads
     try:
         app = create_app(settings=settings)
+
+        @app.get("/")
+        def read_root():
+            return {
+                "message": "Hello from InstructLab! Visit us at https://instructlab.ai"
+            }
     except ValueError as exc:
         if queue:
             queue.put(exc)

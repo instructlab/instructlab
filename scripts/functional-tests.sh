@@ -293,6 +293,22 @@ test_temp_server_ignore_internal_messages(){
     '
 }
 
+test_server_welcome_message(){
+    # test that the server welcome message is displayed
+    ilab serve &
+    PID_SERVE=$!
+
+    if ! timeout 30 bash -c '
+        until curl 127.0.0.1:8000|grep "{\"message\":\"Hello from InstructLab! Visit us at https://instructlab.ai\"}"; do
+            echo "waiting for server to start"
+            sleep 1
+        done
+    '; then
+        echo "server did not start"
+        exit 1
+    fi
+}
+
 ########
 # MAIN #
 ########
@@ -313,5 +329,7 @@ cleanup
 test_no_chat_logs
 cleanup
 test_temp_server_ignore_internal_messages
+cleanup
+test_server_welcome_message
 
 exit 0
