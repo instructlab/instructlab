@@ -1218,7 +1218,6 @@ def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model
         model_name = model_dir.split("/")[-1]
         model_name = model_name.replace(mlx_q_suffix, "")
 
-
     if adapter_file is None:
         adapter_file = os.path.join(model_dir, "adapters.npz")
     cli_dir = os.path.dirname(os.path.abspath(__file__))
@@ -1246,12 +1245,17 @@ def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model
     ctx.obj.logger.info(f"deleting {model_dir_fused}...")
     shutil.rmtree(model_dir_fused)
 
-    convert_llama_to_gguf(model=model_dir_fused_pt, pad_vocab=True, skip_unknown=True, outfile=f"{model_dir_fused_pt}/{model_name}.gguf")
+    convert_llama_to_gguf(
+        model=model_dir_fused_pt,
+        pad_vocab=True,
+        skip_unknown=True,
+        outfile=f"{model_dir_fused_pt}/{model_name}.gguf",
+    )
 
     ctx.obj.logger.info(f"deleting safetensors files from {model_dir_fused_pt}...")
     for file in glob(os.path.join(model_dir_fused_pt, "*.safetensors")):
         os.remove(file)
-    
+
     # quantize to 4-bit GGUF (optional)
     if not skip_quantize:
         gguf_model_dir = f"{model_dir_fused_pt}/{model_name}.gguf"
