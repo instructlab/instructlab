@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-import psutil # to determine system memory
 from typing import Optional
 import logging
 import os
@@ -21,8 +20,8 @@ from transformers import (
 )
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 import click
+import psutil # to determine system memory
 import torch
-from tqdm import tqdm
 
 # Local
 from ..chat.chat import CONTEXTS
