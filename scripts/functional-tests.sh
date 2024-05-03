@@ -111,15 +111,7 @@ test_ctx_size(){
 
     # Make sure the server has time to open the port
     # if "ilab chat" tests it before its open then it will run its own server without --max-ctx-size 1
-    if ! timeout 30 bash -c '
-        until curl 127.0.0.1:8000|grep "{\"detail\":\"Not Found\"}"; do
-            echo "waiting for server to start"
-            sleep 1
-        done
-    '; then
-        echo "server did not start"
-        exit 1
-    fi
+    wait_for_server
 
     # Should succeed
     ilab chat -qq "Hello"
@@ -305,6 +297,10 @@ test_server_welcome_message(){
     ilab serve &
     PID_SERVE=$!
 
+    wait_for_server
+}
+
+wait_for_server(){
     if ! timeout 30 bash -c '
         until curl 127.0.0.1:8000|grep "{\"message\":\"Hello from InstructLab! Visit us at https://instructlab.ai\"}"; do
             echo "waiting for server to start"
