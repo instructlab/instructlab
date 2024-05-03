@@ -4,9 +4,11 @@
 from typing import Optional
 import datetime
 import json
+import logging
 import os
 import sys
 import time
+import traceback
 
 # Third Party
 from openai import OpenAI
@@ -398,18 +400,26 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             self.info["messages"].pop()
             raise ChatException("Rate limit exceeded") from e
         except openai.APIConnectionError:
+            logger.debug("Connection error, try again...", exc_info=True)
             self.console.print("Connection error, try again...", style="red bold")
             self.info["messages"].pop()
             raise KeyboardInterrupt
         except KeyboardInterrupt as e:
             raise e
         except httpx.RemoteProtocolError as e:
+            logger.debug("Connection to the server was closed", exc_info=True)
             self.console.print("Connection to the server was closed", style="bold red")
             self.info["messages"].pop()
             raise ChatException("Connection to the server was closed") from e
         except:
-            self.console.print("Unknown error", style="bold red")
-            raise ChatException(f"Unknown error: {sys.exc_info()[0]}")
+            if logger.getEffectiveLevel() == logging.DEBUG:
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                raise ChatException(
+                    f"Unknown error: {''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))}"
+                )
+            else:
+                self.console.print("Unknown error", style="bold red")
+                raise ChatException(f"Unknown error: {sys.exc_info()[0]}")
 
         response_content = Text()
         panel = (
