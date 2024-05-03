@@ -672,6 +672,8 @@ def chat(
     # in server mode (`ilab serve` is running somewhere, or we are talking to another
     # OpenAI compatible endpoint).
     if not is_temp_server_running():
+        # Try to get the model name right if we know we're talking to a local `ilab serve`.
+        #
         # If the model from the CLI and the one in the config are the same, use the one from the
         # server if they are different else let's use what the user provided
         #
@@ -683,6 +685,7 @@ def chat(
         if (
             model == config.DEFAULT_MODEL
             and ctx.obj.config.chat.model == config.DEFAULT_MODEL
+            and api_base == ctx.obj.config.serve.api_base()
         ):
             try:
                 models = list_models(
