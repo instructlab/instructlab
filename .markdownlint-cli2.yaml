@@ -18,3 +18,4 @@ ignores:
   - "src/instructlab/schema/**"
   - "tests/**"
   - "venv/**"
+  - ".github/ISSUE_TEMPLATE/**"
