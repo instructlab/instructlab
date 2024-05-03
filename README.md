@@ -176,7 +176,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
    `taxonomy` seems to not exists or is empty. Should I clone https://github.com/instructlab/taxonomy.git for you? [y/N]: y
    Cloning https://github.com/instructlab/taxonomy.git...
    Generating `config.yaml` in the current directory...
-   Initialization completed successfully, you're ready to start using `lab`. Enjoy!
+   Initialization completed successfully, you're ready to start using `ilab`. Enjoy!
    ```
 
    `ilab` will use the default configuration file unless otherwise specified. You can override this behavior with the `--config` parameter for any `ilab` command.
