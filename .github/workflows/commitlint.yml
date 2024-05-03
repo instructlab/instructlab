@@ -1,0 +1,30 @@
+name: Commitlint
+on:
+  push:
+    branches:
+      - "main"
+      - "release-**"
+  pull_request:
+    branches:
+      - "main"
+      - "release-**"
+
+permissions:
+  contents: read
+
+jobs:
+  commitlint:
+    permissions:
+      contents: read  # for actions/checkout to fetch code
+      pull-requests: read  # for wagoid/commitlint-github-action to get commits in PR
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: wagoid/commitlint-github-action@v6.0.1
+        with:
+          configFile: "./.commitlintrc.json"
+          helpURL: TODO

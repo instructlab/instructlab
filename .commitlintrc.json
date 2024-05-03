@@ -1,0 +1,38 @@
+{
+    "extends": [
+        "@commitlint/config-conventional"
+    ],
+    "rules": {
+        "type-enum": [
+            2,
+            "always",
+            [
+                "bot",
+                "build",
+                "ci",
+                "chat",
+                "containers",
+                "core",
+                "docs",
+                "doc",
+                "generate",
+                "server",
+                "test",
+                "tests",
+                "train"
+            ]
+        ],
+        "body-leading-blank": [
+            2,
+            "always"
+        ],
+        "footer-leading-blank": [
+            2,
+            "always"
+        ],
+        "body-max-line-length": [
+            0,
+            "always"
+        ]
+    }
+}

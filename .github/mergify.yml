@@ -12,6 +12,7 @@ pull_request_rules:
     - label!=do-not-merge
     - label!=needs-rebase
     - check-success=DCO
+    - check-success=commitlint
 
     # If files are changed in .github/, the actionlint check must pass
     - or:
@@ -19,6 +20,7 @@ pull_request_rules:
         # regex should match the one in .github/workflows/actionlint.yml
         - files~=.github/.*$
         - check-success=actionlint
+        - check-success=commitlint
       - -files~=.github/.*$
 
     # lint and test must pass if files change that would trigger this job
@@ -26,6 +28,7 @@ pull_request_rules:
       - and:
         - check-success=lint
         - check-success=test-workflow-complete
+        - check-success=commitlint
         - or:
           # see .github/workflows/lint.yml and test.yml
           - files~=.*\.py$
@@ -46,6 +49,7 @@ pull_request_rules:
           - files~='.*\.md'
           - files='.markdownlint-cli2.yaml'
         - check-success=markdown-lint
+        - check-success=commitlint
       - and:
         - -files~='.*\.md'
         - -files='.markdownlint-cli2.yaml'
