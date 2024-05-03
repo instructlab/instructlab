@@ -20,13 +20,9 @@ import torch
 
 # Local
 from ..chat.chat import CONTEXTS
-from ..config import DEFAULT_MULTIPROCESSING_START_METHOD
 
 # TODO CPU: Look into using these extensions
 # import intel_extension_for_pytorch as ipex
-
-# 'fork' incompatible with some hardware accelerators
-torch.multiprocessing.set_start_method(DEFAULT_MULTIPROCESSING_START_METHOD)
 
 
 class StoppingCriteriaSub(StoppingCriteria):

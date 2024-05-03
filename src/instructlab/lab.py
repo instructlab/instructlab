@@ -7,6 +7,7 @@ from glob import glob
 from os.path import basename, dirname, exists, splitext
 import json
 import logging
+import multiprocessing
 import os
 import shutil
 import sys
@@ -24,6 +25,12 @@ import yaml
 # Local
 # NOTE: Subcommands are using local imports to speed up startup time.
 from . import config, utils
+
+# 'fork' is unsafe and incompatible with some hardware accelerators.
+# Python 3.14 will switch to 'spawn' on all platforms.
+multiprocessing.set_start_method(
+    config.DEFAULT_MULTIPROCESSING_START_METHOD, force=True
+)
 
 # Set logging level of OpenAI client and httpx library to ERROR to suppress INFO messages
 logging.getLogger("openai").setLevel(logging.ERROR)
@@ -485,7 +492,7 @@ def generate(
         api_base = endpoint_url
     else:
         try:
-            server_process, api_base = ensure_server(
+            server_process, api_base, server_queue = ensure_server(
                 ctx.obj.logger,
                 ctx.obj.config.serve,
                 tls_insecure,
@@ -535,6 +542,8 @@ def generate(
         if server_process:
             server_process.terminate()
             server_process.join(timeout=30)
+            server_queue.close()
+            server_queue.join_thread()
 
 
 @cli.command()
@@ -643,7 +652,7 @@ def chat(
         server_process = None
     else:
         try:
-            server_process, api_base = ensure_server(
+            server_process, api_base, server_queue = ensure_server(
                 ctx.obj.logger,
                 ctx.obj.config.serve,
                 tls_insecure,
@@ -682,6 +691,8 @@ def chat(
         if server_process:
             server_process.terminate()
             server_process.join(timeout=30)
+            server_queue.close()
+            server_queue.join_thread()
 
 
 @cli.command()

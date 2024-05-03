@@ -68,10 +68,9 @@ def ensure_server(
             tls_client_key=tls_client_key,
             tls_client_passwd=tls_client_passwd,
         )
-        return (None, None)
+        return (None, None, None)
     except ClientException:
         tried_ports = set()
-        # TODO: use default server, "spawn" doesn't work?
         mpctx = multiprocessing.get_context(None)
         # use a queue to communicate between the main process and the server process
         queue = mpctx.Queue()
@@ -119,7 +118,6 @@ def ensure_server(
                 "host": host,
                 "queue": queue,
             },
-            daemon=True,
         )
         server_process.start()
 
@@ -136,7 +134,7 @@ def ensure_server(
             # pylint: disable=raise-missing-from
             raise queue.get()
 
-        return (server_process, temp_api_base)
+        return (server_process, temp_api_base, queue)
 
 
 def server(
@@ -172,6 +170,8 @@ def server(
     except ValueError as exc:
         if queue:
             queue.put(exc)
+            queue.close()
+            queue.join_thread()
             return
         raise ServerException(f"failed creating the server application: {exc}") from exc
 
@@ -196,6 +196,8 @@ def server(
     except Exception as exc:
         if queue:
             queue.put(exc)
+            queue.close()
+            queue.join_thread()
             return
         raise ServerException(f"failed creating the server application: {exc}") from exc
 
@@ -228,6 +230,10 @@ def server(
             s.run()
     else:
         s.run()
+
+    if queue:
+        queue.close()
+        queue.join_thread()
 
 
 def can_bind_to_port(host, port):
