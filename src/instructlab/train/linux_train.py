@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-import psutil # to determine system memory
 from typing import Optional
 
 # Third Party
 from datasets import load_dataset
 from peft import LoraConfig
+from tqdm import tqdm
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
@@ -17,8 +17,8 @@ from transformers import (
     TrainingArguments,
 )
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
+import psutil # to determine system memory
 import torch
-from tqdm import tqdm
 
 # Local
 from ..chat.chat import CONTEXTS
