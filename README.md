@@ -11,7 +11,7 @@
 - [❓What is `ilab`](#-what-is-ilab)
 - [📋 Requirements](#-requirements)
 - [✅ Getting started](#-getting-started)
-  - [🧰 Installing`ilab`](#-installing-ilab)
+  - [🧰 Installing `ilab`](#-installing-ilab)
   - [🏗️ Initialize `ilab`](#%EF%B8%8F-initialize-ilab)
   - [📥 Download the model](#-download-the-model)
   - [🍴 Serving the model](#-serving-the-model)
