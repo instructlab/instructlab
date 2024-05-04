@@ -15,13 +15,27 @@ set -euf
 MINIMAL=0
 NUM_INSTRUCTIONS=5
 GENERATE_ARGS=
-TRAIN_ARGS=
 CI=0
 GRANITE=0
 
 export GREP_COLORS='mt=1;33'
 BOLD='\033[1m'
 NC='\033[0m' # No Color
+
+if [ -z "${TRAIN_ARGS:-}" ]; then
+    case "$(uname -s)" in
+        Linux)
+            TRAIN_ARGS="--device=cuda --4-bit-quant"
+            ;;
+        Darwin)
+            TRAIN_ARGS=""
+            ;;
+        *)
+            echo "Unsupported OS: $(uname -a)" >&2
+            exit 2
+            ;;
+    esac
+fi
 
 SCRIPTDIR=$(dirname "$0")
 
@@ -41,7 +55,7 @@ set_defaults() {
 
     NUM_INSTRUCTIONS=1
     GENERATE_ARGS="--num-cpus $(nproc)"
-    TRAIN_ARGS="--num-epochs 1"
+    TRAIN_ARGS="${TRAIN_ARGS} --num-epochs 1"
 }
 
 test_smoke() {
@@ -133,8 +147,6 @@ test_generate() {
 test_train() {
     task Train the model
 
-    # TODO Only cuda for now
-    TRAIN_ARGS="--device=cuda --4-bit-quant"
     if [ "$GRANITE" -eq 1 ]; then
         TRAIN_ARGS="--gguf-model-path models/granite-7b-lab-Q4_K_M.gguf ${TRAIN_ARGS}"
     fi

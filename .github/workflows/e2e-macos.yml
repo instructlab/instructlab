@@ -1,0 +1,86 @@
+# SPDX-License-Identifier: Apache-2.0
+
+name: E2E test on macOS ARM64
+
+on:
+    workflow_dispatch:
+    push:
+        branches:
+            - "main"
+            - "release-**"
+        paths:
+            - "**.py"
+            - "pyproject.toml"
+            - "requirements*.txt"
+            - "tox.ini"
+            - "scripts/*.sh"
+            - ".github/**"
+    pull_request:
+        branches:
+            - "main"
+            - "release-**"
+        paths:
+            - "**.py"
+            - "pyproject.toml"
+            - "requirements*.txt"
+            - "tox.ini"
+            - "scripts/*.sh"
+            - ".github/**"
+
+jobs:
+    e2e:
+        name: "E2E test on ${{ matrix.platform }} (Python ${{ matrix.python }})"
+        runs-on: "${{ matrix.platform }}"
+        strategy:
+            matrix:
+                python:
+                    - "3.11"
+                platform:
+                    - "macos-latest"
+        steps:
+            - name: Checkout
+              uses: actions/checkout@v4
+              with:
+                  # https://github.com/actions/checkout/issues/249
+                  fetch-depth: 0
+                  submodules: "true"
+
+            - name: Install Packages
+              run: |
+                  brew install expect coreutils bash
+
+            - name: Setup Python ${{ matrix.python }}
+              uses: actions/setup-python@v5
+              with:
+                  python-version: ${{ matrix.python }}
+                  cache: pip
+                  cache-dependency-path: |
+                      **/pyproject.toml
+                      **/requirements*.txt
+
+            - name: Cache huggingface
+              uses: actions/cache@v4
+              with:
+                  path: ~/.cache/huggingface
+                  # config contains DEFAULT_MODEL
+                  key: huggingface-${{ hashFiles('src/instructlab/config.py') }}
+
+            - name: System info
+              run: |
+                uname -a
+                sysctl -a
+
+            # MPS are not available in virtualized environment
+            - name: Install ilab
+              run: |
+                  python3 -m venv venv
+                  . venv/bin/activate
+                  sed 's/\[.*\]//' requirements.txt > constraints.txt
+                  python3 -m pip cache remove llama_cpp_python
+                  python3 -m pip install --no-binary llama_cpp_python -c constraints.txt llama_cpp_python -C cmake.args="-DLLAMA_METAL=off"
+                  python3 -m pip install .
+
+            - name: Run e2e test
+              run: |
+                  . venv/bin/activate
+                  ./scripts/basic-workflow-tests.sh -cm

@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-name: E2E test
+name: E2E test on Linux with NVidia CUDA
 
 on:
   workflow_dispatch:
