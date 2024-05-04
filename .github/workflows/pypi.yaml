@@ -17,10 +17,7 @@ on:
             - published
 
 permissions:
-    # allow gh release upload
-    contents: write
-    # see https://docs.pypi.org/trusted-publishers/
-    id-token: write
+    contents: read
 
 jobs:
     # Create and verify release artifacts
@@ -47,6 +44,10 @@ jobs:
         # environment: publish-test-pypi
         if: |
             github.repository_owner == 'instructlab' && github.event.action == 'published'
+        permissions:
+            contents: read
+            # see https://docs.pypi.org/trusted-publishers/
+            id-token: write
         runs-on: ubuntu-latest
         needs: build-package
 
@@ -69,6 +70,12 @@ jobs:
         # environment: publish-pypi
         if: |
             github.repository_owner == 'instructlab' && github.event.action == 'published'
+        permissions:
+            # see https://docs.pypi.org/trusted-publishers/
+            id-token: write
+            # allow gh release upload
+            contents: write
+
         runs-on: ubuntu-latest
         needs: build-package
 
