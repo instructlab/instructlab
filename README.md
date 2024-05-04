@@ -103,7 +103,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
    > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection.
 
-   See [the GPU acceleration documentation](./docs/gpu-acceleration.md) how to
+   See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for how to
    to enable hardware acceleration for inference and training on AMD ROCm,
    NVidia CUDA, and Apple Metal Performance Shaders (MPS).
 

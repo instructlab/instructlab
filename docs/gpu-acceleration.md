@@ -35,8 +35,8 @@ how to do that on Fedora with `dnf`:
 
   # Install lab (assumes a locally-cloned repo)
   # You can clone the repo if you haven't already done so (either one)
-  # gh repo clone instructlab/instructlab
-  # git clone https://github.com/instructlab/instructlab.git
+  # gh repo clone instructlab/instructlab -- --recurse-submodules
+  # git clone --recurse-submodules https://github.com/instructlab/instructlab.git
   pip install ./instructlab/
   ```
 
