@@ -57,6 +57,7 @@ Miniforge
 Mixtral
 MLX
 mlx
+MPS
 NVidia
 Nvidia
 orchestrator
@@ -84,6 +85,7 @@ Salawu
 SDG
 sexualized
 SHA
+Shaders
 Shivchander
 Srivastava
 subdirectory

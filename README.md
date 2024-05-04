@@ -103,6 +103,26 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
    > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection.
 
+   See [the GPU acceleration documentation](./docs/gpu-acceleration.md) how to
+   to enable hardware acceleration for inference and training on AMD ROCm,
+   NVidia CUDA, and Apple Metal Performance Shaders (MPS).
+
+   ```shell
+   rm -rf venv
+   python3 -m venv venv
+   source venv/bin/activate
+   (venv) $ pip cache remove llama_cpp_python
+   (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable -C cmake.args="-DLLAMA_CUBLAS=on"
+   ```
+
+   ```shell
+   rm -rf venv
+   python3 -m venv venv
+   source venv/bin/activate
+   (venv) $ pip cache remove llama_cpp_python
+   (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable -C cmake.args="-DLLAMA_METAL=on"
+   ```
+
 4. From your `venv` environment, verify `ilab` is installed correctly, by running the `ilab` command.
 
    ```shell
