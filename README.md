@@ -358,7 +358,7 @@ There are three options to train the model on your synthetic data-enhanced datas
 ilab train
 ```
 
-> **NOTE:** ⏳ This step can potentially take **several hours** to complete depending on your computing resources.
+> **NOTE:** ⏳ This step can potentially take **several hours** to complete depending on your computing resources. Please stop `ilab chat` and `ilab serve` first to free resources.
 
 `ilab train` outputs a brand-new model that can be served in the `models` directory called `ggml-model-f16.gguf`.
 
@@ -366,10 +366,6 @@ ilab train
  (venv) $ ls models
  ggml-merlinite-7b-lab-Q4_K_M.gguf  ggml-model-f16.gguf
 ```
-
-> **NOTE:** `ilab train` ships with experimental support for GPU acceleration with Nvidia CUDA
-or AMD ROCm. See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for more
-details.
 
 #### Train the model locally on an M-series Mac
 
@@ -390,6 +386,14 @@ adapters-010.npz        adapters-050.npz        adapters-090.npz        config.j
 adapters-020.npz        adapters-060.npz        adapters-100.npz        model.safetensors       tokenizer_config.json
 adapters-030.npz        adapters-070.npz        adapters.npz            special_tokens_map.json
 adapters-040.npz        adapters-080.npz        added_tokens.json       tokenizer.jso
+```
+
+#### Training the model locally with GPU acceleration
+
+Training has experimental support for GPU acceleration with Nvidia CUDA or AMD ROCm. Please see [the GPU acceleration documentation](./docs/gpu-acceleration.md) for more details. At present, hardware acceleration requires a data center GPU or high-end consumer GPU with at least 18 GB free memory.
+
+```shell
+ilab train --device=cuda
 ```
 
 #### Training the model in the cloud
