@@ -95,13 +95,55 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
 3. Install and activate your `venv` environment by running the following command:
 
+   > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection. In case installation fails with error ``unsupported instruction `vpdpbusd'``, append `-C cmake.args="-DLLAMA_NATIVE=off"` to `pip install` command.
+
+   See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for how to
+   to enable hardware acceleration for inference and training on AMD ROCm,
+   Apple Metal Performance Shaders (MPS), and Nvidia CUDA.
+
+   #### To install with no GPU acceleration and PyTorch without CUDA bindings
+
    ```shell
-   python3 -m venv venv
+   python3 -m venv --upgrade-deps venv
    source venv/bin/activate
-   pip install git+https://github.com/instructlab/instructlab.git@stable
+   (venv) $ pip cache remove llama_cpp_python
+   (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable --extra-index-url=https://download.pytorch.org/whl/cpu
    ```
 
-   > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection.
+   #### To install with AMD ROCm
+
+   ```shell
+   python3 -m venv --upgrade-deps venv
+   source venv/bin/activate
+   (venv) $ pip cache remove llama_cpp_python
+   (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable \
+       --extra-index-url https://download.pytorch.org/whl/rocm6.0 \
+       -C cmake.args="-DLLAMA_HIPBLAS=on" \
+       -C cmake.args="-DAMDGPU_TARGETS=all" \
+       -C cmake.args="-DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang" \
+       -C cmake.args="-DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++" \
+       -C cmake.args="-DCMAKE_PREFIX_PATH=/opt/rocm"
+   ```
+
+   On Fedora 40+, use `-DCMAKE_C_COMPILER=clang-17` and `-DCMAKE_CXX_COMPILER=clang++-17`.
+
+   #### To install with Apple Metal on M1/M2/M3 Mac
+
+   ```shell
+   python3 -m venv --upgrade-deps venv
+   source venv/bin/activate
+   (venv) $ pip cache remove llama_cpp_python
+   (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable -C cmake.args="-DLLAMA_METAL=on"
+   ```
+
+   #### To install with Nvidia CUDA
+
+   ```shell
+   python3 -m venv --upgrade-deps venv
+   source venv/bin/activate
+   (venv) $ pip cache remove llama_cpp_python
+   (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable -C cmake.args="-DLLAMA_CUBLAS=on"
+   ```
 
 4. From your `venv` environment, verify `ilab` is installed correctly, by running the `ilab` command.
 
@@ -338,7 +380,7 @@ There are three options to train the model on your synthetic data-enhanced datas
 ilab train
 ```
 
-> **NOTE:** ⏳ This step can potentially take **several hours** to complete depending on your computing resources.
+> **NOTE:** ⏳ This step can potentially take **several hours** to complete depending on your computing resources. Please stop `ilab chat` and `ilab serve` first to free resources.
 
 `ilab train` outputs a brand-new model that can be served in the `models` directory called `ggml-model-f16.gguf`.
 
@@ -346,10 +388,6 @@ ilab train
  (venv) $ ls models
  ggml-merlinite-7b-lab-Q4_K_M.gguf  ggml-model-f16.gguf
 ```
-
-> **NOTE:** `ilab train` ships with experimental support for GPU acceleration with Nvidia CUDA
-or AMD ROCm. See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for more
-details.
 
 #### Train the model locally on an M-series Mac
 
@@ -370,6 +408,14 @@ adapters-010.npz        adapters-050.npz        adapters-090.npz        config.j
 adapters-020.npz        adapters-060.npz        adapters-100.npz        model.safetensors       tokenizer_config.json
 adapters-030.npz        adapters-070.npz        adapters.npz            special_tokens_map.json
 adapters-040.npz        adapters-080.npz        added_tokens.json       tokenizer.jso
+```
+
+#### Training the model locally with GPU acceleration
+
+Training has experimental support for GPU acceleration with Nvidia CUDA or AMD ROCm. Please see [the GPU acceleration documentation](./docs/gpu-acceleration.md) for more details. At present, hardware acceleration requires a data center GPU or high-end consumer GPU with at least 18 GB free memory.
+
+```shell
+ilab train --device=cuda
 ```
 
 #### Training the model in the cloud

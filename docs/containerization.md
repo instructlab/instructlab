@@ -8,30 +8,8 @@ experience.
 
 ## Steps to build an image then run a container
 
-**Containerfile:**
-
-```dockerfile
-FROM nvcr.io/nvidia/cuda:12.3.2-devel-ubi9
-RUN dnf install -y python3.11 git python3-pip make automake gcc gcc-c++
-WORKDIR /instructlab
-RUN python3.11 -m ensurepip
-RUN dnf install -y gcc
-RUN rpm -ivh https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
-RUN dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo && dnf repolist && dnf config-manager --set-enabled cuda-rhel9-x86_64 && dnf config-manager --set-enabled cuda && dnf config-manager --set-enabled epel && dnf update -y
-RUN python3.11 -m pip install --force-reinstall nvidia-cuda-nvcc-cu12
-RUN export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64" \
-    && export CUDA_HOME=/usr/local/cuda \
-    && export PATH="/usr/local/cuda/bin:$PATH" \
-    && export XLA_TARGET=cuda120 \
-    && export XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda
-RUN CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3.11 -m pip install --force-reinstall --no-cache-dir llama-cpp-python
-RUN python3.11 -m pip install git+https://github.com/instructlab/instructlab.git@stable
-CMD ["/bin/bash"]
-```
-
-Or image: TBD (am I allowed to have a public image with references to lab in it?)
-
-This `Containerfile` is based on Nvidia CUDA image, which lucky for us plugs
+The [`Containerfile`](../containers/cuda/Containerfile)
+is based on Nvidia CUDA image, which lucky for us plugs
 directly into Podman via their `nvidia-container-toolkit`! The `ubi9` base
 image does not have most packages installed. The bulk of the `Containerfile` is
 spent configuring your system so `ilab` can be installed and run properly.
