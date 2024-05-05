@@ -935,6 +935,13 @@ def train(
             # generated input files reverse sorted by name (contains timestamp)
             train_files = sorted(glob(input_dir + "/train_*"), reverse=True)
             test_files = sorted(glob(input_dir + "/test_*"), reverse=True)
+
+            if not train_files or not test_files:
+                click.secho(
+                    f"{input_dir} does not contain training or test files, did you run `ilab generate`?",
+                    fg="red",
+                )
+                raise click.exceptions.Exit(1)
             if len(train_files) > 1 or len(test_files) > 1:
                 # pylint: disable=f-string-without-interpolation
                 click.secho(
@@ -953,12 +960,6 @@ def train(
         except OSError as exc:
             click.secho(
                 f"Could not create data dir: {exc}",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
-        except IndexError as exc:
-            click.secho(
-                f"Could not copy into data directory: {exc}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
