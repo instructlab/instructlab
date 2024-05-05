@@ -95,32 +95,54 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
 3. Install and activate your `venv` environment by running the following command:
 
-   ```shell
-   python3 -m venv venv
-   source venv/bin/activate
-   pip install git+https://github.com/instructlab/instructlab.git@stable
-   ```
-
-   > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection.
+   > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection. In case installation fails with error ``unsupported instruction `vpdpbusd'``, append `-C cmake.args="-DLLAMA_NATIVE=off"` to `pip install` command.
 
    See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for how to
    to enable hardware acceleration for inference and training on AMD ROCm,
-   Apple Metal Performance Shaders (MPS), and NVidia CUDA. You have to start
-   with a fresh virtual environment. The `--clear` option deletes the contents
-   of the environment directory.
+   Apple Metal Performance Shaders (MPS), and Nvidia CUDA.
+
+   #### To install with no GPU acceleration and PyTorch without CUDA bindings
 
    ```shell
-   python3 -m venv --clear venv
+   python3 -m venv --upgrade-deps venv
    source venv/bin/activate
    (venv) $ pip cache remove llama_cpp_python
-   (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable -C cmake.args="-DLLAMA_CUBLAS=on"
+   (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable --extra-index-url=https://download.pytorch.org/whl/cpu
    ```
 
+   #### To install with AMD ROCm
+
    ```shell
-   python3 -m venv --clear venv
+   python3 -m venv --upgrade-deps venv
+   source venv/bin/activate
+   (venv) $ pip cache remove llama_cpp_python
+   (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable \
+       --extra-index-url https://download.pytorch.org/whl/rocm6.0 \
+       -C cmake.args="-DLLAMA_HIPBLAS=on" \
+       -C cmake.args="-DAMDGPU_TARGETS=all" \
+       -C cmake.args="-DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang" \
+       -C cmake.args="-DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++" \
+       -C cmake.args="-DCMAKE_PREFIX_PATH=/opt/rocm"
+   ```
+
+   On Fedora 40+, use `-DCMAKE_C_COMPILER=clang-17` and `-DCMAKE_CXX_COMPILER=clang++-17`.
+
+   #### To install with Apple Metal on M1/M2/M3 Mac
+
+   ```shell
+   python3 -m venv --upgrade-deps venv
    source venv/bin/activate
    (venv) $ pip cache remove llama_cpp_python
    (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable -C cmake.args="-DLLAMA_METAL=on"
+   ```
+
+   #### To install with Nvidia CUDA
+
+   ```shell
+   python3 -m venv --upgrade-deps venv
+   source venv/bin/activate
+   (venv) $ pip cache remove llama_cpp_python
+   (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable -C cmake.args="-DLLAMA_CUBLAS=on"
    ```
 
 4. From your `venv` environment, verify `ilab` is installed correctly, by running the `ilab` command.
