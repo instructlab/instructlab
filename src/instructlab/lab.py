@@ -645,7 +645,8 @@ def chat(
     # pylint: disable=C0415
     # Local
     from .chat.chat import ChatException, chat_cli
-    from .server import ensure_server
+    from .client import ClientException, list_models
+    from .server import ensure_server, is_temp_server_running
 
     if endpoint_url:
         api_base = endpoint_url
@@ -666,6 +667,53 @@ def chat(
             raise click.exceptions.Exit(1)
         if not api_base:
             api_base = ctx.obj.config.serve.api_base()
+
+    # if only the chat is running (`ilab chat`) and the temp server is not, the chat interacts
+    # in server mode (`ilab serve` is running somewhere, or we are talking to another
+    # OpenAI compatible endpoint).
+    if not is_temp_server_running():
+        # Try to get the model name right if we know we're talking to a local `ilab serve`.
+        #
+        # If the model from the CLI and the one in the config are the same, use the one from the
+        # server if they are different else let's use what the user provided
+        #
+        # 'model' will always get a value and never be None so it's hard to distinguish whether
+        # the value came from the user input or the default value.
+        # We can only assume that if the value is the same as the default value and the value
+        # from the config is the same as the default value, then the user didn't provide a value
+        # we then compare it with the value from the server to see if it's different
+        if (
+            model == config.DEFAULT_MODEL
+            and ctx.obj.config.chat.model == config.DEFAULT_MODEL
+            and api_base == ctx.obj.config.serve.api_base()
+        ):
+            try:
+                models = list_models(
+                    api_base=api_base,
+                    tls_insecure=tls_insecure,
+                    tls_client_cert=tls_client_cert,
+                    tls_client_key=tls_client_key,
+                    tls_client_passwd=tls_client_passwd,
+                )
+
+                # Currently, we only present a single model so we can safely assume that the first model
+                server_model = models.data[0].id if models is not None else None
+
+                # override 'model' with the first returned model if not provided so that the chat print
+                # the model used by the server
+                model = (
+                    server_model
+                    if server_model is not None
+                    and server_model != ctx.obj.config.chat.model
+                    else model
+                )
+
+            except ClientException as exc:
+                click.secho(
+                    f"Failed to list models from {api_base}. Please check the API key and endpoint.",
+                    fg="red",
+                )
+                raise click.exceptions.Exit(1) from exc
 
     try:
         chat_cli(

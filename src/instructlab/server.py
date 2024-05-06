@@ -61,6 +61,7 @@ def ensure_server(
     try:
         api_base = serve_config.api_base()
         logger.debug(f"Trying to connect to {api_base}...")
+        # pylint: disable=duplicate-code
         list_models(
             api_base=api_base,
             tls_insecure=tls_insecure,
@@ -69,6 +70,7 @@ def ensure_server(
             tls_client_passwd=tls_client_passwd,
         )
         return (None, None, None)
+        # pylint: enable=duplicate-code
     except ClientException:
         tried_ports = set()
         mpctx = multiprocessing.get_context(None)
