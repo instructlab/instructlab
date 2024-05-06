@@ -5,7 +5,7 @@
 ARG CUDA_VERSION="12.4.1"
 
 FROM nvcr.io/nvidia/cuda:${CUDA_VERSION}-devel-ubi9 AS builder
-
+ARG PKG_CACHE=on
 ARG PYTHON=python3.11
 
 ENV PYTHON="${PYTHON}" \
@@ -13,6 +13,7 @@ ENV PYTHON="${PYTHON}" \
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_COMPILE=1 \
     PS1="(app-root) \w\$ " \
+    PKG_CACHE=${PKG_CACHE} \
     VIRTUAL_ENV="${APP_ROOT}" \
     PATH="${APP_ROOT}/bin:${PATH}" \
     XLA_TARGET="cuda120" \
@@ -20,7 +21,8 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 
 RUN --mount=type=cache,sharing=locked,id=dnf-ubi9,target=/var/cache/dnf \
     dnf install -y --nodocs --setopt=keepcache=True \
-        ${PYTHON} ${PYTHON}-devel ${PYTHON}-pip make gcc gcc-c++ git-core
+        ${PYTHON} ${PYTHON}-devel ${PYTHON}-pip make gcc gcc-c++ git-core && \
+        if [ "${PKG_CACHE}" == "off" ]; then dnf clean all; fi
 
 RUN ${PYTHON} -m venv --upgrade-deps ${VIRTUAL_ENV} && \
     find ${VIRTUAL_ENV} -name __pycache__ | xargs rm -rf && \
@@ -28,16 +30,23 @@ RUN ${PYTHON} -m venv --upgrade-deps ${VIRTUAL_ENV} && \
 COPY --chown=1001:0 containers/sitecustomize.py ${VIRTUAL_ENV}/lib/${PYTHON}/site-packages/
 COPY --chown=1001:0 containers/bin/debug-* ${VIRTUAL_ENV}/bin/
 
-# -mno-avx: work around a build problem with llama-cpp-python and gcc.
+# -DLLAMA_NATIVE=off: work around a build problem with llama-cpp-python and gcc 11.
 # flash-attn is compiled from source, bitsandbytes has a manylinux wheel
 COPY requirements.txt /tmp
 RUN --mount=type=cache,sharing=locked,id=pipcache,target=/root/.cache/pip,mode=775 \
     sed 's/\[.*\]//' /tmp/requirements.txt >/tmp/constraints.txt && \
-    export PIP_NO_CACHE_DIR= && \
-    export PIP_CACHE_DIR=/root/.cache/pip && \
+    if [ "${PKG_CACHE}" == "off" ]; then \
+        echo "pip cache off"; \
+        export PIP_NO_CACHE_DIR=off; \
+    else \
+        echo "pip cache on"; \
+        export PIP_NO_CACHE_DIR=; \
+        export PIP_CACHE_DIR=/root/.cache/pip; \
+        pip cache remove llama_cpp_python; \
+        pip cache remove flash_attn; \
+    fi && \
     ${VIRTUAL_ENV}/bin/pip install wheel && \
-    CMAKE_ARGS="-DLLAMA_CUBLAS=on -DCMAKE_CUDA_ARCHITECTURES=all-major" \
-        CFLAGS="-mno-avx" \
+    CMAKE_ARGS="-DLLAMA_CUBLAS=on -DCMAKE_CUDA_ARCHITECTURES=all-major -DLLAMA_NATIVE=off" \
         FORCE_CMAKE=1 \
         ${VIRTUAL_ENV}/bin/pip install --no-binary llama_cpp_python -c /tmp/constraints.txt llama_cpp_python && \
     ${VIRTUAL_ENV}/bin/pip install -r /tmp/requirements.txt && \
@@ -71,7 +80,8 @@ RUN --mount=type=cache,sharing=locked,id=dnf-ubi9,target=/var/cache/dnf \
     dnf upgrade -y --nodocs --setopt=keepcache=True && \
     dnf install -y --nodocs --setopt=keepcache=True \
         ${PYTHON} ${PYTHON}-devel ${PYTHON}-pip git-core gcc \
-        cuda-cupti-${CUDA_DASHED_VERSION} nvidia-driver-cuda-libs
+        cuda-cupti-${CUDA_DASHED_VERSION} nvidia-driver-cuda-libs && \
+    if [ "${PKG_CACHE}" == "off" ]; then dnf clean all; fi
 
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
 
