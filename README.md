@@ -327,6 +327,8 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
 
 ### 🚀 Generate a synthetic dataset
 
+Before following these instructions, ensure the existing model you are adding skills or knowledge to is still running.
+
 1. To generate a synthetic dataset based on your newly added knowledge or skill set in [taxonomy](https://github.com/instructlab/taxonomy.git) repository, run the following command:
 
    ```shell
