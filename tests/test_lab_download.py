@@ -19,23 +19,19 @@ class TestLabDownload(unittest.TestCase):
     # https://docs.python.org/3/library/unittest.mock.html#where-to-patch?
     @patch("instructlab.lab.hf_hub_download")
     def test_download(self, mock_hf_hub_download):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(lab.download)
-            self.assertEqual(
-                result.exit_code, 0, "command finished with an unexpected exit code"
-            )
-            mock_hf_hub_download.assert_called_once()
+        result = CliRunner().invoke(lab.download)
+        self.assertEqual(
+            result.exit_code, 0, "command finished with an unexpected exit code"
+        )
+        mock_hf_hub_download.assert_called_once()
 
     @patch(
         "instructlab.lab.hf_hub_download",
         MagicMock(side_effect=HfHubHTTPError("Could not reach hugging face server")),
     )
     def test_download_error(self):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(lab.download)
-            self.assertEqual(
-                result.exit_code, 1, "command finished with an unexpected exit code"
-            )
-            self.assertIn("Could not reach hugging face server", result.output)
+        result = CliRunner().invoke(lab.download)
+        self.assertEqual(
+            result.exit_code, 1, "command finished with an unexpected exit code"
+        )
+        self.assertIn("Could not reach hugging face server", result.output)

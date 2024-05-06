@@ -33,102 +33,91 @@ class TestLabDiff(unittest.TestCase):
         tracked_file = "compositional_skills/tracked/qna.yaml"
         self.taxonomy.create_untracked(untracked_file)
         self.taxonomy.add_tracked(tracked_file)
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(
-                lab.diff,
-                [
-                    "--taxonomy-base",
-                    TAXONOMY_BASE,
-                    "--taxonomy-path",
-                    self.taxonomy.root,
-                ],
-            )
-            self.assertIn(untracked_file, result.output)
-            self.assertNotIn(tracked_file, result.output)
-            self.assertEqual(result.exit_code, 0)
+        result = CliRunner().invoke(
+            lab.diff,
+            [
+                "--taxonomy-base",
+                TAXONOMY_BASE,
+                "--taxonomy-path",
+                self.taxonomy.root,
+            ],
+        )
+        self.assertIn(untracked_file, result.output)
+        self.assertNotIn(tracked_file, result.output)
+        self.assertEqual(result.exit_code, 0)
 
     def test_diff_rm_tracked(self):
         tracked_file = "compositional_skills/tracked/qna.yaml"
         self.taxonomy.add_tracked(tracked_file)
         self.taxonomy.remove_file(tracked_file)
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(
-                lab.diff,
-                [
-                    "--taxonomy-base",
-                    TAXONOMY_BASE,
-                    "--taxonomy-path",
-                    self.taxonomy.root,
-                ],
-            )
-            self.assertNotIn(tracked_file, result.output)
-            self.assertEqual(result.exit_code, 0)
+        result = CliRunner().invoke(
+            lab.diff,
+            [
+                "--taxonomy-base",
+                TAXONOMY_BASE,
+                "--taxonomy-path",
+                self.taxonomy.root,
+            ],
+        )
+        self.assertNotIn(tracked_file, result.output)
+        self.assertEqual(result.exit_code, 0)
 
     def test_diff_invalid_ext(self):
         untracked_file = "compositional_skills/writing/new/qna.YAML"
         self.taxonomy.create_untracked(untracked_file)
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(
-                lab.diff,
-                [
-                    "--taxonomy-base",
-                    TAXONOMY_BASE,
-                    "--taxonomy-path",
-                    self.taxonomy.root,
-                ],
-            )
-            self.assertListEqual(self.taxonomy.untracked_files, [untracked_file])
-            # Invalid extension is silently filtered out
-            self.assertNotIn(untracked_file, result.output)
-            self.assertEqual(result.exit_code, 0)
+        result = CliRunner().invoke(
+            lab.diff,
+            [
+                "--taxonomy-base",
+                TAXONOMY_BASE,
+                "--taxonomy-path",
+                self.taxonomy.root,
+            ],
+        )
+        self.assertListEqual(self.taxonomy.untracked_files, [untracked_file])
+        # Invalid extension is silently filtered out
+        self.assertNotIn(untracked_file, result.output)
+        self.assertEqual(result.exit_code, 0)
 
     def test_diff_invalid_base(self):
         taxonomy_base = "invalid"
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(
-                lab.diff,
-                [
-                    "--taxonomy-base",
-                    taxonomy_base,
-                    "--taxonomy-path",
-                    self.taxonomy.root,
-                ],
-            )
-            self.assertIsNone(result.exception)
-            self.assertIn(
-                f'Couldn\'t find the taxonomy git ref "{taxonomy_base}" '
-                "from the current HEAD",
-                result.output,
-            )
-            self.assertEqual(result.exit_code, 0)
+        result = CliRunner().invoke(
+            lab.diff,
+            [
+                "--taxonomy-base",
+                taxonomy_base,
+                "--taxonomy-path",
+                self.taxonomy.root,
+            ],
+        )
+        self.assertIsNone(result.exception)
+        self.assertIn(
+            f'Couldn\'t find the taxonomy git ref "{taxonomy_base}" '
+            "from the current HEAD",
+            result.output,
+        )
+        self.assertEqual(result.exit_code, 0)
 
     def test_diff_invalid_path(self):
         taxonomy_path = "/path/to/taxonomy"
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(
-                lab.diff,
-                [
-                    "--taxonomy-base",
-                    TAXONOMY_BASE,
-                    "--taxonomy-path",
-                    taxonomy_path,
-                ],
-            )
-            self.assertIsNone(result.exception)
-            self.assertIn(f"{taxonomy_path}", result.output)
-            self.assertEqual(result.exit_code, 0)
+        result = CliRunner().invoke(
+            lab.diff,
+            [
+                "--taxonomy-base",
+                TAXONOMY_BASE,
+                "--taxonomy-path",
+                taxonomy_path,
+            ],
+        )
+        self.assertIsNone(result.exception)
+        self.assertIn(f"{taxonomy_path}", result.output)
+        self.assertEqual(result.exit_code, 0)
 
     def test_diff_valid_yaml(self):
         with open("tests/testdata/skill_valid_answer.yaml", "rb") as qnafile:
             valid_yaml_file = "compositional_skills/qna_valid.yaml"
             self.taxonomy.create_untracked(valid_yaml_file, qnafile.read())
-            runner = CliRunner()
-            result = runner.invoke(
+            result = CliRunner().invoke(
                 lab.diff,
                 [
                     "--taxonomy-base",
@@ -146,8 +135,7 @@ class TestLabDiff(unittest.TestCase):
         with open("tests/testdata/skill_valid_answer.yaml", "rb") as qnafile:
             valid_yaml_file = "compositional_skills/qna_valid.yaml"
             self.taxonomy.create_untracked(valid_yaml_file, qnafile.read())
-            runner = CliRunner()
-            result = runner.invoke(
+            result = CliRunner().invoke(
                 lab.diff,
                 [
                     "--taxonomy-base",
@@ -165,8 +153,7 @@ class TestLabDiff(unittest.TestCase):
             self.taxonomy.create_untracked(
                 "compositional_skills/qna_invalid.yaml", qnafile.read()
             )
-            runner = CliRunner()
-            result = runner.invoke(
+            result = CliRunner().invoke(
                 lab.diff,
                 [
                     "--taxonomy-base",
@@ -183,8 +170,7 @@ class TestLabDiff(unittest.TestCase):
             self.taxonomy.create_untracked(
                 "compositional_skills/qna_invalid.yaml", qnafile.read()
             )
-            runner = CliRunner()
-            result = runner.invoke(
+            result = CliRunner().invoke(
                 lab.diff,
                 [
                     "--taxonomy-base",
@@ -203,8 +189,7 @@ class TestLabDiff(unittest.TestCase):
             custom_rules_file.write_bytes(TEST_CUSTOM_YAML_RULES)
             invalid_yaml_file = "compositional_skills/qna_invalid.yaml"
             self.taxonomy.create_untracked(invalid_yaml_file, qnafile.read())
-            runner = CliRunner()
-            result = runner.invoke(
+            result = CliRunner().invoke(
                 lab.diff,
                 [
                     "--taxonomy-base",
@@ -225,8 +210,7 @@ class TestLabDiff(unittest.TestCase):
         with open("tests/testdata/skill_incomplete.yaml", "rb") as qnafile:
             failing_yaml_file = "compositional_skills/failing/qna.yaml"
             self.taxonomy.create_untracked(failing_yaml_file, qnafile.read())
-            runner = CliRunner()
-            result = runner.invoke(
+            result = CliRunner().invoke(
                 lab.diff,
                 [
                     "--taxonomy-base",

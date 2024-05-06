@@ -80,39 +80,33 @@ class TestLabTrain(unittest.TestCase):
         load_mock,
         is_macos_with_m_chip_mock,
     ):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            setup_input_dir()
-            result = runner.invoke(lab.train, ["--input-dir", INPUT_DIR])
-            self.assertEqual(result.exit_code, 0)
-            load_mock.assert_not_called()
-            load_and_train_mock.assert_called_once()
-            self.assertIsNotNone(load_and_train_mock.call_args[1]["model"])
-            self.assertTrue(load_and_train_mock.call_args[1]["train"])
-            self.assertEqual(
-                load_and_train_mock.call_args[1]["data"], "./taxonomy_data"
-            )
-            self.assertIsNotNone(load_and_train_mock.call_args[1]["adapter_file"])
-            self.assertEqual(load_and_train_mock.call_args[1]["iters"], 100)
-            self.assertEqual(load_and_train_mock.call_args[1]["save_every"], 10)
-            self.assertEqual(load_and_train_mock.call_args[1]["steps_per_eval"], 10)
-            self.assertEqual(len(load_and_train_mock.call_args[1]), 7)
-            convert_between_mlx_and_pytorch_mock.assert_called_once()
-            self.assertIsNotNone(
-                convert_between_mlx_and_pytorch_mock.call_args[1]["hf_path"]
-            )
-            self.assertIsNotNone(
-                convert_between_mlx_and_pytorch_mock.call_args[1]["mlx_path"]
-            )
-            self.assertTrue(
-                convert_between_mlx_and_pytorch_mock.call_args[1]["quantize"]
-            )
-            self.assertFalse(convert_between_mlx_and_pytorch_mock.call_args[1]["local"])
-            self.assertEqual(len(convert_between_mlx_and_pytorch_mock.call_args[1]), 4)
-            make_data_mock.assert_called_once()
-            self.assertEqual(make_data_mock.call_args[1]["data_dir"], "./taxonomy_data")
-            self.assertEqual(len(make_data_mock.call_args[1]), 1)
-            is_macos_with_m_chip_mock.assert_called_once()
+        setup_input_dir()
+        result = CliRunner().invoke(lab.train, ["--input-dir", INPUT_DIR])
+        self.assertEqual(result.exit_code, 0)
+        load_mock.assert_not_called()
+        load_and_train_mock.assert_called_once()
+        self.assertIsNotNone(load_and_train_mock.call_args[1]["model"])
+        self.assertTrue(load_and_train_mock.call_args[1]["train"])
+        self.assertEqual(load_and_train_mock.call_args[1]["data"], "./taxonomy_data")
+        self.assertIsNotNone(load_and_train_mock.call_args[1]["adapter_file"])
+        self.assertEqual(load_and_train_mock.call_args[1]["iters"], 100)
+        self.assertEqual(load_and_train_mock.call_args[1]["save_every"], 10)
+        self.assertEqual(load_and_train_mock.call_args[1]["steps_per_eval"], 10)
+        self.assertEqual(len(load_and_train_mock.call_args[1]), 7)
+        convert_between_mlx_and_pytorch_mock.assert_called_once()
+        self.assertIsNotNone(
+            convert_between_mlx_and_pytorch_mock.call_args[1]["hf_path"]
+        )
+        self.assertIsNotNone(
+            convert_between_mlx_and_pytorch_mock.call_args[1]["mlx_path"]
+        )
+        self.assertTrue(convert_between_mlx_and_pytorch_mock.call_args[1]["quantize"])
+        self.assertFalse(convert_between_mlx_and_pytorch_mock.call_args[1]["local"])
+        self.assertEqual(len(convert_between_mlx_and_pytorch_mock.call_args[1]), 4)
+        make_data_mock.assert_called_once()
+        self.assertEqual(make_data_mock.call_args[1]["data_dir"], "./taxonomy_data")
+        self.assertEqual(len(make_data_mock.call_args[1]), 1)
+        is_macos_with_m_chip_mock.assert_called_once()
 
     @patch("instructlab.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch("instructlab.mlx_explore.gguf_convert_to_mlx.load")
@@ -127,57 +121,49 @@ class TestLabTrain(unittest.TestCase):
         load_mock,
         is_macos_with_m_chip_mock,
     ):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            setup_input_dir()
-            result = runner.invoke(
-                lab.train, ["--input-dir", INPUT_DIR, "--skip-quantize"]
-            )
-            self.assertEqual(result.exit_code, 0)
-            load_mock.assert_not_called()
-            load_and_train_mock.assert_called_once()
-            convert_between_mlx_and_pytorch_mock.assert_called_once()
-            self.assertEqual(
-                convert_between_mlx_and_pytorch_mock.call_args[1]["quantize"], False
-            )
-            make_data_mock.assert_called_once()
-            is_macos_with_m_chip_mock.assert_called_once()
+        setup_input_dir()
+        result = CliRunner().invoke(
+            lab.train, ["--input-dir", INPUT_DIR, "--skip-quantize"]
+        )
+        self.assertEqual(result.exit_code, 0)
+        load_mock.assert_not_called()
+        load_and_train_mock.assert_called_once()
+        convert_between_mlx_and_pytorch_mock.assert_called_once()
+        self.assertEqual(
+            convert_between_mlx_and_pytorch_mock.call_args[1]["quantize"], False
+        )
+        make_data_mock.assert_called_once()
+        is_macos_with_m_chip_mock.assert_called_once()
 
     def test_input_error(self):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(lab.train, ["--input-dir", "invalid"])
-            self.assertIsNotNone(result.exception)
-            self.assertIn("No such file or directory: 'invalid'", result.output)
-            self.assertEqual(result.exit_code, 1)
+        result = CliRunner().invoke(lab.train, ["--input-dir", "invalid"])
+        self.assertIsNotNone(result.exception)
+        self.assertIn("No such file or directory: 'invalid'", result.output)
+        self.assertEqual(result.exit_code, 1)
 
     def test_invalid_taxonomy(self):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            os.mkdir(INPUT_DIR)  # Leave out the test and train files
-            result = runner.invoke(lab.train, ["--input-dir", INPUT_DIR])
-            self.assertIsNotNone(result.exception)
-            self.assertIn(
-                f"{INPUT_DIR} does not contain training or test files, did you run `ilab generate`?",
-                result.output,
-            )
-            self.assertEqual(result.exit_code, 1)
+        os.mkdir(INPUT_DIR)  # Leave out the test and train files
+        result = CliRunner().invoke(lab.train, ["--input-dir", INPUT_DIR])
+        self.assertIsNotNone(result.exception)
+        self.assertIn(
+            f"{INPUT_DIR} does not contain training or test files, did you run `ilab generate`?",
+            result.output,
+        )
+        self.assertEqual(result.exit_code, 1)
 
     def test_invalid_data_dir(self):
         # The error comes from make_data itself so it's only really useful to test on a mac
         if is_arm_mac():
-            runner = CliRunner()
-            with runner.isolated_filesystem():
-                os.mkdir(INPUT_DIR)  # Leave out the test and train files
-                result = runner.invoke(
-                    lab.train, ["--data-dir", "invalid", "--input-dir", INPUT_DIR]
-                )
-                self.assertIsNotNone(result.exception)
-                self.assertIn(
-                    "Could not read from data directory",
-                    result.output,
-                )
-                self.assertEqual(result.exit_code, 1)
+            os.mkdir(INPUT_DIR)  # Leave out the test and train files
+            result = CliRunner().invoke(
+                lab.train, ["--data-dir", "invalid", "--input-dir", INPUT_DIR]
+            )
+            self.assertIsNotNone(result.exception)
+            self.assertIn(
+                "Could not read from data directory",
+                result.output,
+            )
+            self.assertEqual(result.exit_code, 1)
 
     @patch("instructlab.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch(
@@ -187,20 +173,18 @@ class TestLabTrain(unittest.TestCase):
     def test_invalid_data_dir_synthetic(
         self, make_data_mock, is_macos_with_m_chip_mock
     ):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            os.mkdir(INPUT_DIR)  # Leave out the test and train files
-            result = runner.invoke(
-                lab.train, ["--data-dir", "invalid", "--input-dir", INPUT_DIR]
-            )
-            make_data_mock.assert_called_once()
-            self.assertIsNotNone(result.exception)
-            self.assertIn(
-                "Could not read from data directory",
-                result.output,
-            )
-            self.assertEqual(result.exit_code, 1)
-            is_macos_with_m_chip_mock.assert_called_once()
+        os.mkdir(INPUT_DIR)  # Leave out the test and train files
+        result = CliRunner().invoke(
+            lab.train, ["--data-dir", "invalid", "--input-dir", INPUT_DIR]
+        )
+        make_data_mock.assert_called_once()
+        self.assertIsNotNone(result.exception)
+        self.assertIn(
+            "Could not read from data directory",
+            result.output,
+        )
+        self.assertEqual(result.exit_code, 1)
+        is_macos_with_m_chip_mock.assert_called_once()
 
     @patch("instructlab.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch("instructlab.mlx_explore.gguf_convert_to_mlx.load")
@@ -215,18 +199,16 @@ class TestLabTrain(unittest.TestCase):
         load_mock,
         is_macos_with_m_chip_mock,
     ):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            setup_input_dir()
-            result = runner.invoke(
-                lab.train, ["--input-dir", INPUT_DIR, "--skip-preprocessing"]
-            )
-            self.assertEqual(result.exit_code, 0)
-            load_mock.assert_not_called()
-            load_and_train_mock.assert_called_once()
-            convert_between_mlx_and_pytorch_mock.assert_called_once()
-            make_data_mock.assert_not_called()
-            is_macos_with_m_chip_mock.assert_called_once()
+        setup_input_dir()
+        result = CliRunner().invoke(
+            lab.train, ["--input-dir", INPUT_DIR, "--skip-preprocessing"]
+        )
+        self.assertEqual(result.exit_code, 0)
+        load_mock.assert_not_called()
+        load_and_train_mock.assert_called_once()
+        convert_between_mlx_and_pytorch_mock.assert_called_once()
+        make_data_mock.assert_not_called()
+        is_macos_with_m_chip_mock.assert_called_once()
 
     @patch("instructlab.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch("instructlab.mlx_explore.utils.fetch_tokenizer_from_hub")
@@ -243,33 +225,31 @@ class TestLabTrain(unittest.TestCase):
         fetch_tokenizer_from_hub_mock,
         is_macos_with_m_chip_mock,
     ):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            setup_input_dir()
-            setup_load()
-            result = runner.invoke(
-                lab.train,
-                [
-                    "--input-dir",
-                    INPUT_DIR,
-                    "--tokenizer-dir",
-                    "tokenizer",
-                    "--gguf-model-path",
-                    "gguf_model",
-                    "--model-dir",
-                    MODEL_DIR,
-                ],
-            )
-            self.assertEqual(result.exit_code, 0)
-            load_mock.assert_called_once()
-            load_and_train_mock.assert_called_once()
-            convert_between_mlx_and_pytorch_mock.assert_not_called()
-            make_data_mock.assert_called_once()
-            fetch_tokenizer_from_hub_mock.assert_called_once()
-            self.assertEqual(fetch_tokenizer_from_hub_mock.call_args[0][0], "tokenizer")
-            self.assertEqual(fetch_tokenizer_from_hub_mock.call_args[0][1], "tokenizer")
-            self.assertEqual(len(fetch_tokenizer_from_hub_mock.call_args[0]), 2)
-            is_macos_with_m_chip_mock.assert_called_once()
+        setup_input_dir()
+        setup_load()
+        result = CliRunner().invoke(
+            lab.train,
+            [
+                "--input-dir",
+                INPUT_DIR,
+                "--tokenizer-dir",
+                "tokenizer",
+                "--gguf-model-path",
+                "gguf_model",
+                "--model-dir",
+                MODEL_DIR,
+            ],
+        )
+        self.assertEqual(result.exit_code, 0)
+        load_mock.assert_called_once()
+        load_and_train_mock.assert_called_once()
+        convert_between_mlx_and_pytorch_mock.assert_not_called()
+        make_data_mock.assert_called_once()
+        fetch_tokenizer_from_hub_mock.assert_called_once()
+        self.assertEqual(fetch_tokenizer_from_hub_mock.call_args[0][0], "tokenizer")
+        self.assertEqual(fetch_tokenizer_from_hub_mock.call_args[0][1], "tokenizer")
+        self.assertEqual(len(fetch_tokenizer_from_hub_mock.call_args[0]), 2)
+        is_macos_with_m_chip_mock.assert_called_once()
 
     @patch("instructlab.lab.utils.is_macos_with_m_chip", return_value=True)
     @patch("instructlab.mlx_explore.utils.fetch_tokenizer_from_hub")
@@ -286,31 +266,29 @@ class TestLabTrain(unittest.TestCase):
         fetch_tokenizer_from_hub_mock,
         is_macos_with_m_chip_mock,
     ):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            setup_input_dir()
-            setup_load()
-            result = runner.invoke(
-                lab.train,
-                [
-                    "--input-dir",
-                    INPUT_DIR,
-                    "--tokenizer-dir",
-                    "tokenizer",
-                    "--gguf-model-path",
-                    "gguf_model",
-                    "--model-dir",
-                    MODEL_DIR,
-                    "--local",
-                ],
-            )
-            self.assertEqual(result.exit_code, 0)
-            load_mock.assert_called_once()
-            load_and_train_mock.assert_called_once()
-            convert_between_mlx_and_pytorch_mock.assert_not_called()
-            make_data_mock.assert_called_once()
-            fetch_tokenizer_from_hub_mock.assert_not_called()
-            is_macos_with_m_chip_mock.assert_called_once()
+        setup_input_dir()
+        setup_load()
+        result = CliRunner().invoke(
+            lab.train,
+            [
+                "--input-dir",
+                INPUT_DIR,
+                "--tokenizer-dir",
+                "tokenizer",
+                "--gguf-model-path",
+                "gguf_model",
+                "--model-dir",
+                MODEL_DIR,
+                "--local",
+            ],
+        )
+        self.assertEqual(result.exit_code, 0)
+        load_mock.assert_called_once()
+        load_and_train_mock.assert_called_once()
+        convert_between_mlx_and_pytorch_mock.assert_not_called()
+        make_data_mock.assert_called_once()
+        fetch_tokenizer_from_hub_mock.assert_not_called()
+        is_macos_with_m_chip_mock.assert_called_once()
 
     @patch("instructlab.lab.utils.is_macos_with_m_chip", return_value=False)
     @patch.object(linux_train, "linux_train")
@@ -321,35 +299,33 @@ class TestLabTrain(unittest.TestCase):
         linux_train_mock,
         is_macos_with_m_chip_mock,
     ):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            setup_input_dir()
-            setup_linux_dir()
-            result = runner.invoke(lab.train, ["--input-dir", INPUT_DIR])
-            self.assertEqual(result.exit_code, 0)
-            convert_llama_to_gguf_mock.assert_called_once()
-            self.assertEqual(
-                convert_llama_to_gguf_mock.call_args[1]["model"],
-                "./training_results/final",
-            )
-            self.assertEqual(convert_llama_to_gguf_mock.call_args[1]["pad_vocab"], True)
-            self.assertEqual(len(convert_llama_to_gguf_mock.call_args[1]), 2)
-            linux_train_mock.assert_called_once()
-            print(linux_train_mock.call_args[1])
-            self.assertEqual(
-                linux_train_mock.call_args[1]["train_file"],
-                "test_generated/train_1.jsonl",
-            )
-            self.assertEqual(
-                linux_train_mock.call_args[1]["test_file"],
-                "test_generated/test_1.jsonl",
-            )
-            self.assertEqual(linux_train_mock.call_args[1]["num_epochs"], 1)
-            self.assertIsNotNone(linux_train_mock.call_args[1]["device"])
-            self.assertFalse(linux_train_mock.call_args[1]["four_bit_quant"])
-            self.assertEqual(len(linux_train_mock.call_args[1]), 7)
-            is_macos_with_m_chip_mock.assert_called_once()
-            self.assertFalse(os.path.isfile(LINUX_GGUF_FILE))
+        setup_input_dir()
+        setup_linux_dir()
+        result = CliRunner().invoke(lab.train, ["--input-dir", INPUT_DIR])
+        self.assertEqual(result.exit_code, 0)
+        convert_llama_to_gguf_mock.assert_called_once()
+        self.assertEqual(
+            convert_llama_to_gguf_mock.call_args[1]["model"],
+            "./training_results/final",
+        )
+        self.assertEqual(convert_llama_to_gguf_mock.call_args[1]["pad_vocab"], True)
+        self.assertEqual(len(convert_llama_to_gguf_mock.call_args[1]), 2)
+        linux_train_mock.assert_called_once()
+        print(linux_train_mock.call_args[1])
+        self.assertEqual(
+            linux_train_mock.call_args[1]["train_file"],
+            "test_generated/train_1.jsonl",
+        )
+        self.assertEqual(
+            linux_train_mock.call_args[1]["test_file"],
+            "test_generated/test_1.jsonl",
+        )
+        self.assertEqual(linux_train_mock.call_args[1]["num_epochs"], 1)
+        self.assertIsNotNone(linux_train_mock.call_args[1]["device"])
+        self.assertFalse(linux_train_mock.call_args[1]["four_bit_quant"])
+        self.assertEqual(len(linux_train_mock.call_args[1]), 7)
+        is_macos_with_m_chip_mock.assert_called_once()
+        self.assertFalse(os.path.isfile(LINUX_GGUF_FILE))
 
     @patch("instructlab.lab.utils.is_macos_with_m_chip", return_value=False)
     @patch("instructlab.train.linux_train.linux_train")
@@ -358,23 +334,22 @@ class TestLabTrain(unittest.TestCase):
         self, convert_llama_to_gguf_mock, linux_train_mock, is_macos_with_m_chip_mock
     ):
         runner = CliRunner()
-        with runner.isolated_filesystem():
-            setup_input_dir()
-            setup_linux_dir()
-            result = runner.invoke(
-                lab.train, ["--input-dir", INPUT_DIR, "--num-epochs", "2"]
-            )
-            self.assertEqual(result.exit_code, 0)
-            convert_llama_to_gguf_mock.assert_called_once()
-            linux_train_mock.assert_called_once()
-            self.assertEqual(linux_train_mock.call_args[1]["num_epochs"], 2)
-            is_macos_with_m_chip_mock.assert_called_once()
-            self.assertFalse(os.path.isfile(LINUX_GGUF_FILE))
+        setup_input_dir()
+        setup_linux_dir()
+        result = runner.invoke(
+            lab.train, ["--input-dir", INPUT_DIR, "--num-epochs", "2"]
+        )
+        self.assertEqual(result.exit_code, 0)
+        convert_llama_to_gguf_mock.assert_called_once()
+        linux_train_mock.assert_called_once()
+        self.assertEqual(linux_train_mock.call_args[1]["num_epochs"], 2)
+        is_macos_with_m_chip_mock.assert_called_once()
+        self.assertFalse(os.path.isfile(LINUX_GGUF_FILE))
 
-            # Test with invalid num_epochs
-            result = runner.invoke(
-                lab.train, ["--input-dir", INPUT_DIR, "--num-epochs", "two"]
-            )
-            self.assertIsNotNone(result.exception)
-            self.assertEqual(result.exit_code, 2)
-            self.assertIn("'two' is not a valid integer", result.output)
+        # Test with invalid num_epochs
+        result = runner.invoke(
+            lab.train, ["--input-dir", INPUT_DIR, "--num-epochs", "two"]
+        )
+        self.assertIsNotNone(result.exception)
+        self.assertEqual(result.exit_code, 2)
+        self.assertIn("'two' is not a valid integer", result.output)
