@@ -302,7 +302,7 @@ Before you start adding new skills and knowledge to your model, you can check it
 
 ### 🎁 Contribute knowledge or compositional skills
 
-Contribute new knowledge or compositional skills to your local [taxonomy](https://github.com/instructlab/taxonomy.git) repository.
+1. Contribute new knowledge or compositional skills to your local [taxonomy](https://github.com/instructlab/taxonomy.git) repository.
 
 Detailed contribution instructions can be found in the [taxonomy repository](https://github.com/instructlab/taxonomy/blob/main/README.md).
 
