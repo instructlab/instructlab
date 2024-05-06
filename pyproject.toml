@@ -28,7 +28,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: Implementation :: CPython",
 ]
-dynamic = ["dependencies", "optional-dependencies", "version"]
+dynamic = ["dependencies", "version"]
 
 [project.scripts]
 # defines ilab executable
@@ -47,7 +47,6 @@ package-dir = {"" = "src"}
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
-optional-dependencies.hpu = { file = ["requirements-hpu.txt"]}
 
 [tool.setuptools.packages.find]
 where = ["src"]
