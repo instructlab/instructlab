@@ -817,12 +817,12 @@ class TorchDeviceParam(click.ParamType):
     """Parse and convert device string
 
     Returns a torch.device object:
-    - type is one of 'cpu' or 'cuda')
-    - index is None or CUDA/ROCm device index (0 for first GPU)
+    - type is one of 'cpu', 'cuda', 'hpu'
+    - index is None or device index (e.g. 0 for first GPU)
     """
 
     name = "deviceinfo"
-    supported_devices = {"cuda", "cpu"}
+    supported_devices = {"cuda", "cpu", "hpu"}
 
     def convert(self, value, param, ctx) -> "torch.device":
         # pylint: disable=C0415
@@ -836,7 +836,7 @@ class TorchDeviceParam(click.ParamType):
             except RuntimeError as e:
                 self.fail(str(e), param, ctx)
 
-        if device.type not in {"cuda", "cpu"}:
+        if device.type not in self.supported_devices:
             supported = ", ".join(repr(s) for s in sorted(self.supported_devices))
             self.fail(
                 f"Unsupported device type '{device.type}'. Only devices "
@@ -858,6 +858,14 @@ class TorchDeviceParam(click.ParamType):
             # map unqualified 'cuda' to current device
             if device.index is None:
                 device = torch.device(device.type, torch.cuda.current_device())
+
+        if device.type == "hpu":
+            click.secho(
+                "WARNING: HPU support is experimental, unstable, and not "
+                "optimized, yet.",
+                fg="red",
+                bold=True,
+            )
 
         return device
 
@@ -1018,6 +1026,7 @@ def train(
         from .train.linux_train import linux_train
 
         linux_train(
+            ctx=ctx,
             train_file=train_files[0],
             test_file=test_files[0],
             model_name=model_name,

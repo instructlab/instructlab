@@ -2,10 +2,13 @@
 
 # Standard
 from typing import Optional
+import logging
+import os
 
 # Third Party
 from datasets import load_dataset
 from peft import LoraConfig
+from tqdm import tqdm
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
@@ -16,6 +19,7 @@ from transformers import (
     TrainingArguments,
 )
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
+import click
 import torch
 
 # Local
@@ -24,18 +28,43 @@ from ..chat.chat import CONTEXTS
 # TODO CPU: Look into using these extensions
 # import intel_extension_for_pytorch as ipex
 
+# Habana Labs framework for Intel Gaudi HPUs
+# The imports register `hpu` device and `torch.hpu` package.
+try:
+    # pylint: disable=import-error
+    # Third Party
+    from habana_frameworks.torch import core as htcore
+    from habana_frameworks.torch import hpu as hpu
+
+    # Habana implementations of SFT Trainer
+    # https://huggingface.co/docs/optimum/habana/index
+    from optimum.habana import GaudiConfig, GaudiTrainingArguments
+    from optimum.habana.transformers.generation.configuration_utils import (
+        GaudiGenerationConfig,
+    )
+    from optimum.habana.trl import GaudiSFTTrainer
+
+    # silence warning: "Call mark_step function will not have any effect"
+    logging.getLogger("habana_frameworks.torch.utils.internal").setLevel(logging.ERROR)
+except ImportError:
+    htcore = None
+    hpu = None
+    hpu_backends = None
+
 
 class StoppingCriteriaSub(StoppingCriteria):
-    def __init__(self, stops=[], encounters=1):
+    def __init__(self, stops=(), encounters=1, *, device: torch.device):
         super().__init__()
-        self.stops = [stop for stop in stops]
+        self.device = device
+        self.stops = [stop.to(device) for stop in stops]
 
     def __call__(
         self, input_ids: torch.LongTensor, scores: torch.FloatTensor, **kwargs
     ) -> bool:
-        for seq in input_ids:
+        for seqs in input_ids:
+            seq = seqs[-1].to(self.device)
             for stop in self.stops:
-                if stop == seq[-1]:
+                if stop == seq:
                     return True
         return False
 
@@ -61,7 +90,7 @@ def formatting_prompts_func(example):
     return output_texts
 
 
-def report_cuda_device(args_device, min_vram=0):
+def report_cuda_device(args_device: torch.device, min_vram: int = 0) -> None:
     """Report CUDA/ROCm device properties"""
     print(f"  NVidia CUDA version: {torch.version.cuda or 'n/a'}")
     print(f"  AMD ROCm HIP version: {torch.version.hip or 'n/a'}")
@@ -97,7 +126,24 @@ def report_cuda_device(args_device, min_vram=0):
         )
 
 
+def report_hpu_device(args_device: torch.device) -> None:
+    print(f"Device count: {hpu.device_count()}")
+    for idx in range(hpu.device_count()):
+        device = torch.device(args_device.type, idx)
+        name: str = hpu.get_device_name(device)
+        cap: str = hpu.get_device_capability(device)
+        # property string is surrounded by '()'
+        prop: str = hpu.get_device_properties(device)
+        print(f"  {device} is '{name}', cap: {cap} {prop}")
+    # https://docs.habana.ai/en/latest/PyTorch/Reference/Runtime_Flags.html
+    print("PT and Habana Environment variables")
+    for key, value in sorted(os.environ.items()):
+        if key.startswith(("PT_", "HABANA", "LOG_LEVEL_", "ENABLE_CONSOLE")):
+            print(f'  {key}="{value}"')
+
+
 def linux_train(
+    ctx: click.Context,
     train_file: str,
     test_file: str,
     model_name: str,
@@ -119,6 +165,13 @@ def linux_train(
         min_vram = min_vram * 1024**3
 
         report_cuda_device(device, min_vram)
+    elif device.type == "hpu":
+        if htcore is None:
+            ctx.fail("habana_framework package is not installed.")
+        if not hpu.is_available():
+            ctx.fail("habana_framework is unable to detect HPUs.")
+        hpu.init()
+        report_hpu_device(device)
 
     print("LINUX_TRAIN.PY: LOADING DATASETS")
     # Get the file name
@@ -182,10 +235,10 @@ def linux_train(
         for stop_word in stop_words
     ]
     stopping_criteria = StoppingCriteriaList(
-        [StoppingCriteriaSub(stops=stop_words_ids)]
+        [StoppingCriteriaSub(stops=stop_words_ids, device=model.device)]
     )
 
-    def model_generate(user):
+    def model_generate(user, **kwargs):
         text = create_prompt(user=user)
 
         input_ids = tokenizer(text, return_tensors="pt").input_ids.to(model.device)
@@ -197,12 +250,13 @@ def linux_train(
             top_p=0.9,
             stopping_criteria=stopping_criteria,
             do_sample=True,
+            **kwargs,
         )
         return tokenizer.batch_decode([o[:-1] for o in outputs])[0]
 
     assistant_old_lst = [
         model_generate(d["user"]).split(response_template.strip())[-1].strip()
-        for d in test_dataset
+        for d in tqdm(test_dataset)
     ]
     attention_layers = [
         module for module in model.modules() if "attention" in str(type(module)).lower()
@@ -234,43 +288,86 @@ def linux_train(
         target_modules=target_modules,
     )
 
+    tokenizer.padding_side = "right"
     output_dir = "./training_results"
     per_device_train_batch_size = 1
-
-    training_arguments = TrainingArguments(
-        output_dir=output_dir,
-        num_train_epochs=num_epochs,
-        per_device_train_batch_size=per_device_train_batch_size,
-        fp16=use_fp16,
-        bf16=not use_fp16,
-        # use_ipex=True, # TODO CPU test this possible optimization
-        use_cpu=model.device.type == "cpu",
-        save_strategy="epoch",
-        report_to="none",
-        # options to reduce GPU memory usage and improve performance
-        # https://huggingface.co/docs/transformers/perf_train_gpu_one
-        # https://stackoverflow.com/a/75793317
-        # torch_compile=True,
-        # fp16=False,  # fp16 increases memory consumption 1.5x
-        # gradient_accumulation_steps=8,
-        # gradient_checkpointing=True,
-        # eval_accumulation_steps=1,
-        # per_device_eval_batch_size=1,
-    )
-
     max_seq_length = 300
-    tokenizer.padding_side = "right"
-    trainer = SFTTrainer(
-        model=model,
-        train_dataset=train_dataset,
-        eval_dataset=test_dataset,
-        peft_config=peft_config,
-        formatting_func=formatting_prompts_func,
-        data_collator=collator,
-        max_seq_length=max_seq_length,
-        tokenizer=tokenizer,
-        args=training_arguments,
-    )
+
+    if device.type == "hpu":
+        # Intel Gaudi trainer
+        # https://docs.habana.ai/en/latest/PyTorch/Getting_Started_with_PyTorch_and_Gaudi/Getting_Started_with_PyTorch.html
+        # https://huggingface.co/docs/optimum/habana/quickstart
+        # https://huggingface.co/docs/optimum/habana/package_reference/gaudi_config
+        if per_device_train_batch_size == 1:
+            per_device_train_batch_size = 8
+
+        training_arguments = GaudiTrainingArguments(
+            output_dir=output_dir,
+            num_train_epochs=num_epochs,
+            per_device_train_batch_size=per_device_train_batch_size,
+            bf16=True,
+            save_strategy="epoch",
+            report_to="none",
+            use_habana=True,
+            use_lazy_mode=True,
+            # create checkpoint directories
+            save_on_each_node=True,
+            # gaudi_config_name=gaudi_config_name,
+        )
+        gaudi_config = GaudiConfig(
+            use_fused_adam=True,
+            use_fused_clip_norm=True,
+            use_torch_autocast=True,
+        )
+        trainer = GaudiSFTTrainer(
+            model=model,
+            train_dataset=train_dataset,
+            eval_dataset=test_dataset,
+            peft_config=peft_config,
+            formatting_func=formatting_prompts_func,
+            max_seq_length=max_seq_length,
+            tokenizer=tokenizer,
+            args=training_arguments,
+            gaudi_config=gaudi_config,
+        )
+        generate_kwargs = {
+            # TODO: check generation config parameters?
+            "generation_config": GaudiGenerationConfig(),
+        }
+    else:
+        training_arguments = TrainingArguments(
+            output_dir=output_dir,
+            num_train_epochs=num_epochs,
+            per_device_train_batch_size=per_device_train_batch_size,
+            fp16=use_fp16,
+            bf16=not use_fp16,
+            # use_ipex=True, # TODO CPU test this possible optimization
+            use_cpu=model.device.type == "cpu",
+            save_strategy="epoch",
+            report_to="none",
+            # options to reduce GPU memory usage and improve performance
+            # https://huggingface.co/docs/transformers/perf_train_gpu_one
+            # https://stackoverflow.com/a/75793317
+            # torch_compile=True,
+            # fp16=False,  # fp16 increases memory consumption 1.5x
+            # gradient_accumulation_steps=8,
+            # gradient_checkpointing=True,
+            # eval_accumulation_steps=1,
+            # per_device_eval_batch_size=1,
+        )
+
+        trainer = SFTTrainer(
+            model=model,
+            train_dataset=train_dataset,
+            eval_dataset=test_dataset,
+            peft_config=peft_config,
+            formatting_func=formatting_prompts_func,
+            data_collator=collator,
+            max_seq_length=max_seq_length,
+            tokenizer=tokenizer,
+            args=training_arguments,
+        )
+        generate_kwargs = {}
 
     print("LINUX_TRAIN.PY: TRAINING")
     trainer.train()
@@ -280,9 +377,8 @@ def linux_train(
     print("LINUX_TRAIN.PY: RUNNING INFERENCE ON THE OUTPUT MODEL")
 
     for i, (d, assistant_old) in enumerate(zip(test_dataset, assistant_old_lst)):
-        assistant_new = (
-            model_generate(d["user"]).split(response_template.strip())[-1].strip()
-        )
+        output = model_generate(d["user"], **generate_kwargs)
+        assistant_new = output.split(response_template.strip())[-1].strip()
         assistant_expected = d["assistant"]
 
         print(f"\n===\ntest {i}\n===\n")
