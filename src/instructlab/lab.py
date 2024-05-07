@@ -666,6 +666,8 @@ def chat(
     from .client import ClientException, list_models
     from .server import ensure_server, is_temp_server_running
 
+    logger = ctx.obj.logger
+
     if endpoint_url:
         api_base = endpoint_url
         server_process = None
@@ -714,18 +716,33 @@ def chat(
                     tls_client_passwd=tls_client_passwd,
                 )
 
-                # Currently, we only present a single model so we can safely assume that the first model
-                server_model = models.data[0].id if models is not None else None
+                nb_models = len(models.data)
+                if nb_models == 0:
+                    click.secho(
+                        "The server's model list is empty.",
+                        fg="red",
+                    )
+                    raise click.exceptions.Exit(1)
 
-                # override 'model' with the first returned model if not provided so that the chat print
-                # the model used by the server
-                model = (
-                    server_model
-                    if server_model is not None
-                    and server_model != ctx.obj.config.chat.model
-                    else model
-                )
+                if nb_models == 1:
+                    # Currently, we only present a single model so this condition is the most likely
+                    server_model = models.data[0].id if models is not None else None
 
+                    # override 'model' with the first returned model if not provided so that the chat print
+                    # the model used by the server
+                    model = (
+                        server_model
+                        if server_model is not None
+                        and server_model != ctx.obj.config.chat.model
+                        else model
+                    )
+                else:
+                    # we don't know how to handle this case yet
+                    # print all available models and ask the user to specify the model to use
+                    logger.debug(
+                        "Multple models found on the server: "
+                        + ", ".join(m.id for m in models.data)
+                    )
             except ClientException as exc:
                 click.secho(
                     f"Failed to list models from {api_base}. Please check the API key and endpoint.",
@@ -735,7 +752,7 @@ def chat(
 
     try:
         chat_cli(
-            logger=ctx.obj.logger,
+            logger=logger,
             api_base=api_base,
             api_key=api_key,
             config=ctx.obj.config.chat,
@@ -799,8 +816,8 @@ def download(ctx, repository, release, filename, model_dir, hf_token):
     click.echo(f"Downloading model from {repository}@{release} to {model_dir}...")
     if hf_token == "" and "instructlab" not in repository:
         raise ValueError(
-            """HF_TOKEN var needs to be set in your environment to download HF Model. 
-            Alternatively, the token can be passed with --hf-token flag. 
+            """HF_TOKEN var needs to be set in your environment to download HF Model.
+            Alternatively, the token can be passed with --hf-token flag.
             The HF Token is used to authenticate your identity to the Hugging Face Hub."""
         )
     try:
