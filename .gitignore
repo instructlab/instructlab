@@ -157,3 +157,6 @@ config.yaml
 
 # Spelling
 dictionary.dic
+
+# Man pages
+man

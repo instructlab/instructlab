@@ -95,3 +95,27 @@ jobs:
     steps:
       - name: Test Workflow Complete
         run: echo "Test Workflow Complete"
+
+  man:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # https://github.com/actions/checkout/issues/249
+          fetch-depth: 0
+          submodules: true
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tox
+
+      - name: Run tox docs target
+        run: tox -e docs
+
+      - name: Check that man pages were generated
+        uses: andstor/file-existence-action@v3
+        with:
+          files: 'man/*.1'
+          fail: true
