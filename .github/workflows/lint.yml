@@ -40,34 +40,23 @@ jobs:
           fetch-depth: 0
           submodules: true
 
-      - name: Set up Python
+      - name: Setup Python 3.11
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: 3.11
+          cache: pip
+          cache-dependency-path: |
+            **/pyproject.toml
+            **/requirements*.txt
 
-      # tox creates (and reuses) a separate Python (virtual) environment for each context (fmt, lint)
-      # tox requires (and will install, if not exists) all the packages listed in requirements.txt
-      # so we want to cache the entire Python environment, not just the pip cache as tox will not reuse that
-      # but caching tox environments is fickle and can cause weird errors
-      # tox does provide a legacy option to reuse the Python system wide site packages
-      # since GH action runners are one-and-done we can install all requirements into the system packages
-      # and cache and reuse all of the installed Python system packages
-      # tox can then reuse the system site packages with setting `-x testenv:lint.system_site_packages=True`
-      - name: Cache dependencies
-        uses: actions/cache@v4
-        id: cache
-        with:
-          path: ${{ env.pythonLocation }}
-          key: ${{ env.pythonLocation }}-${{ hashFiles('requirements.txt') }}-${{ hashFiles('requirements-dev.txt') }}
-          restore-keys:
-            ${{ env.pythonLocation }}-
+      - name: Remove llama-cpp-python from cache
+        run: |
+          pip cache remove llama_cpp_python
 
       - name: Install dependencies
-        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt
-          python -m pip install -r requirements-dev.txt
+          python -m pip install tox
 
       - name: Run Ruff check
         run: |
@@ -77,6 +66,9 @@ jobs:
         if: success() || failure()
         run: |
           echo "::add-matcher::.github/workflows/matchers/pylint.json"
-          tox \
-            -x testenv:lint.system_site_packages=True \
-            -e lint
+          tox -e lint
+
+      - name: Remove llama-cpp-python from cache
+        if: always()
+        run: |
+          pip cache remove llama_cpp_python

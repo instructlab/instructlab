@@ -29,6 +29,14 @@ class TestConfig(unittest.TestCase):
         )
 
 
+def test_llamap_cpp_import():
+    # pylint: disable=import-outside-toplevel
+    # Third Party
+    import llama_cpp
+
+    llama_cpp.llama_backend_init()
+
+
 def test_import_mlx():
     # smoke test to verify that mlx is always available on Apple Silicon
     # but never on Linux and Intel macOS.
