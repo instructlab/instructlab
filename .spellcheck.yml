@@ -8,7 +8,7 @@ matrix:
     camel-case: true
     mode: markdown
   sources:
-  - "**/*.md|!REVIEWERS.md|!build/**|!.tox/**|!src/instructlab/schema/**"
+  - "**/*.md|!REVIEWERS.md|!build/**|!.tox/**|!src/instructlab/schema/**|!venv/**|!taxonomy/**"
   dictionary:
     wordlists:
     - .spellcheck-en-custom.txt
