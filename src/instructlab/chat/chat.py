@@ -141,7 +141,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         )
 
     def _handle_quit(self, content):
-        raise EOFError
+        sys.exit(0)
 
     def _handle_help(self, content):
         self._sys_print(Markdown(HELP_MD))
