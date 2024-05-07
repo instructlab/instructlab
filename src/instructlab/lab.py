@@ -556,7 +556,7 @@ def generate(
 @click.option(
     "--max-tokens",
     type=click.INT,
-    help="Set a maxinum number of tokens.",
+    help="Set a maximum number of tokens to request from the model endpoint.",
 )
 @click.option(
     "--endpoint-url",
