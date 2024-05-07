@@ -8,7 +8,7 @@ GitPython>=3.1.42,<4.0.0
 # Linux: 4-bit quantization with BitsAndBytes is not ready to use, yet.
 # see https://github.com/instructlab/instructlab/issues/579
 # bitsandbytes; sys_platform=='linux' and platform_machine=='x86_64'
-httpx
+httpx>=0.25.0,<1.0.0
 jsonschema>=4.21.1,<5.0.0
 # pin version, lift restriction after testing >=0.2.58
 # see https://github.com/abetlen/llama-cpp-python/issues/1286
@@ -18,9 +18,9 @@ numpy>=1.26.4,<2.0.0
 openai>=1.13.3,<2.0.0
 peft>=0.9.0,<0.10.0
 prompt-toolkit>=3.0.38,<4.0.0
-pydantic
-pydantic_yaml
-PyYAML>=6.0.1,<7.0.0
+pydantic>=2.6.0,<3.0.0
+pydantic_yaml>=1.2.0,<2.0.0
+PyYAML>=6.0.0,<7.0.0
 rich>=13.3.1,<14.0.0
 rouge-score>=0.1.2,<0.2.0
 sentencepiece>=0.2.0,<0.3.0
