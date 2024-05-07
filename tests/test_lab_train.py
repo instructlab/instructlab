@@ -347,7 +347,7 @@ class TestLabTrain(unittest.TestCase):
             self.assertEqual(linux_train_mock.call_args[1]["num_epochs"], 1)
             self.assertIsNotNone(linux_train_mock.call_args[1]["device"])
             self.assertFalse(linux_train_mock.call_args[1]["four_bit_quant"])
-            self.assertEqual(len(linux_train_mock.call_args[1]), 6)
+            self.assertEqual(len(linux_train_mock.call_args[1]), 7)
             is_macos_with_m_chip_mock.assert_called_once()
             self.assertFalse(os.path.isfile(LINUX_GGUF_FILE))
 
