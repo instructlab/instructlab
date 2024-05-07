@@ -491,6 +491,18 @@ def generate(
     if endpoint_url:
         api_base = endpoint_url
     else:
+        # Third Party
+        import llama_cpp
+
+        if not llama_cpp.llama_supports_gpu_offload():
+            # TODO: check for working offloading. The function only checks
+            # for compile time defines like `GGML_USE_CUDA`.
+            click.secho(
+                "llama_cpp_python is built without hardware acceleration. "
+                "ilab generate will be very slow.",
+                fg="red",
+            )
+
         try:
             server_process, api_base, server_queue = ensure_server(
                 ctx.obj.logger,
