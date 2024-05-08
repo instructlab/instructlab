@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=duplicate-code
 
 # Standard
 from pathlib import Path
@@ -35,8 +36,10 @@ class TestLabDiff:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.diff,
+                lab.cli,
                 [
+                    "--config=DEFAULT",
+                    "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
                     "--taxonomy-path",
@@ -54,8 +57,10 @@ class TestLabDiff:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.diff,
+                lab.cli,
                 [
+                    "--config=DEFAULT",
+                    "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
                     "--taxonomy-path",
@@ -71,8 +76,10 @@ class TestLabDiff:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.diff,
+                lab.cli,
                 [
+                    "--config=DEFAULT",
+                    "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
                     "--taxonomy-path",
@@ -89,37 +96,39 @@ class TestLabDiff:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.diff,
+                lab.cli,
                 [
+                    "--config=DEFAULT",
+                    "diff",
                     "--taxonomy-base",
                     taxonomy_base,
                     "--taxonomy-path",
                     self.taxonomy.root,
                 ],
             )
-            assert result.exception is None
             assert (
                 f'Couldn\'t find the taxonomy git ref "{taxonomy_base}" '
                 "from the current HEAD" in result.output
             )
-            assert result.exit_code == 0
+            assert result.exit_code == 1
 
     def test_diff_invalid_path(self):
         taxonomy_path = "/path/to/taxonomy"
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.diff,
+                lab.cli,
                 [
+                    "--config=DEFAULT",
+                    "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
                     "--taxonomy-path",
                     taxonomy_path,
                 ],
             )
-            assert result.exception is None
             assert f"{taxonomy_path}" in result.output
-            assert result.exit_code == 0
+            assert result.exit_code == 1
 
     def test_diff_valid_yaml(self):
         with open("tests/testdata/skill_valid_answer.yaml", "rb") as qnafile:
@@ -127,8 +136,10 @@ class TestLabDiff:
             self.taxonomy.create_untracked(valid_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
-                lab.diff,
+                lab.cli,
                 [
+                    "--config=DEFAULT",
+                    "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
                     "--taxonomy-path",
@@ -144,8 +155,10 @@ class TestLabDiff:
             self.taxonomy.create_untracked(valid_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
-                lab.diff,
+                lab.cli,
                 [
+                    "--config=DEFAULT",
+                    "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
                     "--taxonomy-path",
@@ -163,8 +176,10 @@ class TestLabDiff:
             )
             runner = CliRunner()
             result = runner.invoke(
-                lab.diff,
+                lab.cli,
                 [
+                    "--config=DEFAULT",
+                    "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
                     "--taxonomy-path",
@@ -181,8 +196,10 @@ class TestLabDiff:
             )
             runner = CliRunner()
             result = runner.invoke(
-                lab.diff,
+                lab.cli,
                 [
+                    "--config=DEFAULT",
+                    "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
                     "--taxonomy-path",
@@ -201,8 +218,10 @@ class TestLabDiff:
             self.taxonomy.create_untracked(invalid_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
-                lab.diff,
+                lab.cli,
                 [
+                    "--config=DEFAULT",
+                    "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
                     "--taxonomy-path",
@@ -223,8 +242,10 @@ class TestLabDiff:
             self.taxonomy.create_untracked(failing_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
-                lab.diff,
+                lab.cli,
                 [
+                    "--config=DEFAULT",
+                    "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
                     "--taxonomy-path",

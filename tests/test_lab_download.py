@@ -20,7 +20,13 @@ class TestLabDownload:
     def test_download(self, mock_hf_hub_download):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(lab.download)
+            result = runner.invoke(
+                lab.cli,
+                [
+                    "--config=DEFAULT",
+                    "download",
+                ],
+            )
             assert (
                 result.exit_code == 0
             ), "command finished with an unexpected exit code"
@@ -33,7 +39,13 @@ class TestLabDownload:
     def test_download_error(self):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(lab.download)
+            result = runner.invoke(
+                lab.cli,
+                [
+                    "--config=DEFAULT",
+                    "download",
+                ],
+            )
             assert (
                 result.exit_code == 1
             ), "command finished with an unexpected exit code"

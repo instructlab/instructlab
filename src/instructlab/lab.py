@@ -44,54 +44,51 @@ if typing.TYPE_CHECKING:
 class Lab:
     """Lab object holds high-level information about ilab CLI"""
 
-    def __init__(self, filename):
-        self.config_file = filename
-        self.config = config.read_config(filename)
+    def __init__(self, config_obj: config.Config):
+        self.config = config_obj
         FORMAT = "%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s"
         logging.basicConfig(format=FORMAT)
         self.logger = logging.getLogger(__name__)
         self.logger.setLevel(self.config.general.log_level.upper())
 
 
-# pylint: disable=unused-argument
-def configure(ctx, param, filename):
-    """Configure is responsible for reading the config file, initiating Lab object and CLI context."""
-    # skip configuration reading when invoked command is `init`
-    if len(sys.argv) > 0 and sys.argv[1] in ("init", "--help"):
-        return
-
-    if not exists(filename):
-        raise click.ClickException(
-            f"`{filename}` does not exists, please run `ilab init` or point to a valid configuration file using `--config=<path>`."
-        )
-
-    try:
-        ctx.obj = Lab(filename)
-    except config.ConfigException as ex:
-        raise click.ClickException(str(ex))
-
-    # default_map holds a dictionary with default values for each command parameters
-    ctx.default_map = config.get_dict(ctx.obj.config)
-
-
 @click.group(cls=DYMGroup)
 @click.option(
     "--config",
+    "config_file",
     type=click.Path(),
     default=config.DEFAULT_CONFIG,
     show_default=True,
-    callback=configure,
-    is_eager=True,
     help="Path to a configuration file.",
 )
 @click.version_option(package_name="instructlab")
 @click.pass_context
 # pylint: disable=redefined-outer-name
-def cli(ctx, config):
+def cli(ctx, config_file):
     """CLI for interacting with InstructLab.
 
     If this is your first time running InstructLab, it's best to start with `ilab init` to create the environment.
     """
+    # ilab init or "--help" have no config file
+    # CliRunner does fill ctx.invoke_subcommand in option callbacks. We have
+    # to validate config_file here.
+    if ctx.invoked_subcommand != "init" and "--help" not in sys.argv[1:]:
+        if config_file == "DEFAULT":
+            config_obj = config.get_default_config()
+        elif not os.path.isfile(config_file):
+            ctx.fail(
+                f"`{config_file}` does not exists, please run `ilab init` "
+                "or point to a valid configuration file using `--config=<path>`."
+            )
+        else:
+            try:
+                config_obj = config.read_config(config_file)
+            except config.ConfigException as ex:
+                raise click.ClickException(str(ex))
+
+        ctx.obj = Lab(config_obj)
+        # default_map holds a dictionary with default values for each command parameters
+        ctx.default_map = config.get_dict(ctx.obj.config)
 
 
 @cli.command()
@@ -265,7 +262,7 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
             f"Reading taxonomy failed with the following error: {exc}",
             fg="red",
         )
-        return
+        raise SystemExit(1) from exc
     for f in updated_taxonomy_files:
         click.echo(f)
     try:

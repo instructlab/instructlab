@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=duplicate-code
 
 # Standard
 from unittest.mock import MagicMock, patch
@@ -22,7 +23,7 @@ class TestLabInit:
     def test_init_noninteractive(self, mock_clone_from):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(lab.init, args=["--non-interactive"])
+            result = runner.invoke(lab.cli, ["init", "--non-interactive"])
             assert result.exit_code == 0
             assert "config.yaml" in os.listdir()
             mock_clone_from.assert_called_once()
@@ -30,7 +31,7 @@ class TestLabInit:
     def test_init_interactive(self):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(lab.init, input="\nn")
+            result = runner.invoke(lab.cli, ["init"], input="\nn")
             assert result.exit_code == 0
             assert "config.yaml" in os.listdir()
 
@@ -41,7 +42,7 @@ class TestLabInit:
     def test_init_interactive_git_error(self):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(lab.init, input="\ny")
+            result = runner.invoke(lab.cli, ["init"], input="\ny")
             assert (
                 result.exit_code == 1
             ), "command finished with an unexpected exit code"
@@ -54,7 +55,7 @@ class TestLabInit:
     def test_init_interactive_clone(self, mock_clone_from):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(lab.init, input="\ny")
+            result = runner.invoke(lab.cli, ["init"], input="\ny")
             assert result.exit_code == 0
             assert "config.yaml" in os.listdir()
             mock_clone_from.assert_called_once()
@@ -63,7 +64,7 @@ class TestLabInit:
         runner = CliRunner()
         with runner.isolated_filesystem():
             os.makedirs("taxonomy/contents")
-            result = runner.invoke(lab.init, input="\n")
+            result = runner.invoke(lab.cli, ["init"], input="\n")
             assert result.exit_code == 0
             assert "config.yaml" in os.listdir()
             assert "taxonomy" in os.listdir()
@@ -72,21 +73,21 @@ class TestLabInit:
         runner = CliRunner()
         with runner.isolated_filesystem():
             # first run to prime the config.yaml in current directory
-            result = runner.invoke(lab.init, input="non-default-taxonomy\nn")
+            result = runner.invoke(lab.cli, ["init"], input="non-default-taxonomy\nn")
             assert result.exit_code == 0
             assert "config.yaml" in os.listdir()
             config = read_config("config.yaml")
             assert config.generate.taxonomy_path == "non-default-taxonomy"
 
             # second invocation should ask if we want to overwrite - yes, and change taxonomy path
-            result = runner.invoke(lab.init, input="y\ndifferent-taxonomy\nn")
+            result = runner.invoke(lab.cli, ["init"], input="y\ndifferent-taxonomy\nn")
             assert result.exit_code == 0
             assert "config.yaml" in os.listdir()
             config = read_config("config.yaml")
             assert config.generate.taxonomy_path == "different-taxonomy"
 
             # third invocation should again ask, but this time don't overwrite
-            result = runner.invoke(lab.init, input="n")
+            result = runner.invoke(lab.cli, ["init"], input="n")
             assert result.exit_code == 0
             assert "config.yaml" in os.listdir()
             config = read_config("config.yaml")
