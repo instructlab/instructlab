@@ -6,10 +6,10 @@ import fnmatch
 import logging
 import os
 import pathlib
-import unittest
 
 # Third Party
 from click.testing import CliRunner
+import pytest
 
 # First Party
 from instructlab import lab
@@ -21,7 +21,7 @@ from .taxonomy import MockTaxonomy
 from .testdata import testdata
 
 
-class TestLabGenerate(unittest.TestCase):
+class TestLabGenerate:
     """Test collection for `ilab generate` command."""
 
     @patch(
@@ -43,13 +43,13 @@ class TestLabGenerate(unittest.TestCase):
                     "localhost:8000",
                 ],
             )
-            self.assertEqual(
-                result.exit_code, 1, "command finished with an unexpected exit code"
-            )
+            assert (
+                result.exit_code == 1
+            ), "command finished with an unexpected exit code"
             generate_data_mock.assert_called_once()
-            self.assertIn(
-                "Generating dataset failed with the following error: Connection Error",
-                result.output,
+            assert (
+                "Generating dataset failed with the following error: Connection Error"
+                in result.output
             )
             mt.teardown()
 
@@ -63,13 +63,10 @@ class TestLabGenerate(unittest.TestCase):
                     "localhost:8000",
                 ],
             )
-            self.assertEqual(
-                result.exit_code, 1, "command finished with an unexpected exit code"
-            )
-            self.assertIn(
-                "Error: taxonomy (taxonomy) does not exist",
-                result.output,
-            )
+            assert (
+                result.exit_code == 1
+            ), "command finished with an unexpected exit code"
+            assert "Error: taxonomy (taxonomy) does not exist" in result.output
 
     def test_no_new_data(self):
         runner = CliRunner()
@@ -86,13 +83,10 @@ class TestLabGenerate(unittest.TestCase):
                     "localhost:8000",
                 ],
             )
-            self.assertEqual(
-                result.exit_code, 1, "command finished with an unexpected exit code"
-            )
-            self.assertIn(
-                "Nothing to generate. Exiting.",
-                result.output,
-            )
+            assert (
+                result.exit_code == 1
+            ), "command finished with an unexpected exit code"
+            assert "Nothing to generate. Exiting." in result.output
             mt.teardown()
 
     def test_new_data_invalid_answer(self):
@@ -114,13 +108,10 @@ class TestLabGenerate(unittest.TestCase):
                         "localhost:8000",
                     ],
                 )
-                self.assertEqual(
-                    result.exit_code, 1, "command finished with an unexpected exit code"
-                )
-                self.assertIn(
-                    "taxonomy files with errors",
-                    result.output,
-                )
+                assert (
+                    result.exit_code == 1
+                ), "command finished with an unexpected exit code"
+                assert "taxonomy files with errors" in result.output
                 mt.teardown()
 
     @patch(
@@ -129,14 +120,14 @@ class TestLabGenerate(unittest.TestCase):
             "There was a problem connecting to the OpenAI server."
         ),
     )
-    def test_OpenAI_server_error(self, get_instructions_from_model):
+    def test_open_ai_server_error(self, get_instructions_from_model):
         with open("tests/testdata/skill_valid_answer.yaml", "rb") as qnafile:
             with CliRunner().isolated_filesystem():
                 mt = MockTaxonomy(pathlib.Path("taxonomy"))
                 mt.create_untracked(
                     "compositional_skills/tracked/qna.yaml", qnafile.read()
                 )
-                with self.assertRaises(GenerateException) as exc:
+                with pytest.raises(GenerateException) as exc:
                     generate_data(
                         logger=logging.getLogger("test_logger"),
                         api_base="localhost:8000",
@@ -155,9 +146,8 @@ class TestLabGenerate(unittest.TestCase):
                         server_ctx_size=4096,
                         tls_insecure=False,
                     )
-                self.assertIn(
-                    "There was a problem connecting to the OpenAI server",
-                    f"{exc.exception}",
+                assert "There was a problem connecting to the OpenAI server" in str(
+                    exc.value
                 )
                 get_instructions_from_model.assert_called_once()
                 mt.teardown()
@@ -198,8 +188,8 @@ class TestLabGenerate(unittest.TestCase):
                     "test_my-model*.jsonl",
                 ]
                 for f in os.listdir("generated"):
-                    self.assertTrue(
-                        any(fnmatch.fnmatch(f, pattern) for pattern in expected_files)
+                    assert any(
+                        fnmatch.fnmatch(f, pattern) for pattern in expected_files
                     )
                 mt.teardown()
 
@@ -244,7 +234,7 @@ class TestLabGenerate(unittest.TestCase):
                     "test_my-model*.jsonl",
                 ]
                 for f in os.listdir("generated"):
-                    self.assertTrue(
-                        any(fnmatch.fnmatch(f, pattern) for pattern in expected_files)
+                    assert any(
+                        fnmatch.fnmatch(f, pattern) for pattern in expected_files
                     )
                 mt.teardown()

@@ -1,8 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 
-# Standard
-import unittest
-
 # Third Party
 import pytest
 
@@ -10,44 +7,44 @@ import pytest
 from instructlab import config
 
 
-class TestConfig(unittest.TestCase):
+class TestConfig:
     @pytest.fixture(autouse=True)
     def _init_tmpdir(self, tmpdir):
         self.tmpdir = tmpdir
 
     def _assert_defaults(self, cfg):
-        self.assertIsNotNone(cfg.general)
-        self.assertEqual(cfg.general.log_level, "INFO")
+        assert cfg.general is not None
+        assert cfg.general.log_level == "INFO"
 
-        self.assertIsNotNone(cfg.chat)
-        self.assertEqual(cfg.chat.model, "merlinite-7b-lab-Q4_K_M")
-        self.assertFalse(cfg.chat.vi_mode)
-        self.assertTrue(cfg.chat.visible_overflow)
-        self.assertEqual(cfg.chat.context, "default")
-        self.assertIsNone(cfg.chat.session)
-        self.assertEqual(cfg.chat.logs_dir, "data/chatlogs")
-        self.assertFalse(cfg.chat.greedy_mode)
+        assert cfg.chat is not None
+        assert cfg.chat.model == "merlinite-7b-lab-Q4_K_M"
+        assert not cfg.chat.vi_mode
+        assert cfg.chat.visible_overflow
+        assert cfg.chat.context == "default"
+        assert cfg.chat.session is None
+        assert cfg.chat.logs_dir == "data/chatlogs"
+        assert not cfg.chat.greedy_mode
 
-        self.assertIsNotNone(cfg.generate)
-        self.assertEqual(cfg.generate.model, "merlinite-7b-lab-Q4_K_M")
-        self.assertEqual(cfg.generate.taxonomy_path, "taxonomy")
-        self.assertEqual(cfg.generate.taxonomy_base, "origin/main")
-        self.assertEqual(cfg.generate.num_cpus, 10)
-        self.assertEqual(cfg.generate.num_instructions, 100)
-        self.assertEqual(cfg.generate.chunk_word_count, 1000)
-        self.assertEqual(cfg.generate.output_dir, "generated")
-        self.assertEqual(cfg.generate.prompt_file, "prompt.txt")
-        self.assertEqual(cfg.generate.seed_file, "seed_tasks.json")
+        assert cfg.generate is not None
+        assert cfg.generate.model == "merlinite-7b-lab-Q4_K_M"
+        assert cfg.generate.taxonomy_path == "taxonomy"
+        assert cfg.generate.taxonomy_base == "origin/main"
+        assert cfg.generate.num_cpus == 10
+        assert cfg.generate.num_instructions == 100
+        assert cfg.generate.chunk_word_count == 1000
+        assert cfg.generate.output_dir == "generated"
+        assert cfg.generate.prompt_file == "prompt.txt"
+        assert cfg.generate.seed_file == "seed_tasks.json"
 
-        self.assertIsNotNone(cfg.serve)
-        self.assertEqual(cfg.serve.model_path, "models/merlinite-7b-lab-Q4_K_M.gguf")
-        self.assertEqual(cfg.serve.gpu_layers, -1)
-        self.assertEqual(cfg.serve.host_port, "127.0.0.1:8000")
-        self.assertEqual(cfg.serve.max_ctx_size, 4096)
+        assert cfg.serve is not None
+        assert cfg.serve.model_path == "models/merlinite-7b-lab-Q4_K_M.gguf"
+        assert cfg.serve.gpu_layers == -1
+        assert cfg.serve.host_port == "127.0.0.1:8000"
+        assert cfg.serve.max_ctx_size == 4096
 
     def test_default_config(self):
         cfg = config.get_default_config()
-        self.assertIsNotNone(cfg)
+        assert cfg is not None
         self._assert_defaults(cfg)
 
     def test_minimal_config(self):
@@ -65,7 +62,7 @@ serve:
 """
             )
         cfg = config.read_config(config_path)
-        self.assertIsNotNone(cfg)
+        assert cfg is not None
         self._assert_defaults(cfg)
 
     def test_full_config(self):
@@ -100,7 +97,7 @@ serve:
 """
             )
         cfg = config.read_config(config_path)
-        self.assertIsNotNone(cfg)
+        assert cfg is not None
         self._assert_defaults(cfg)
 
     def test_config_unexpected_fields(self):
