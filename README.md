@@ -78,10 +78,9 @@ graph TD;
 For an overview of the full workflow, see the [workflow diagram](./docs/workflow.png).
 
 > [!IMPORTANT]
-> Running InstructLab on a laptop will provide a low-fidelity approximation of synthetic data generation (using the `ilab generate` command) and model instruction tuning (using the `ilab train` command,
-> which uses QLoRA.) The quality of the results will not be as high in fidelity as using a larger teacher model and a different training method. We have optimized InstructLab so that community members 
-> with modest hardware can use this technique. However, if you have more sophisticated hardware, you can configure InstructLab to use a larger teacher model [such as Mixtral](https://huggingface.co/docs/transformers/model_doc/mixtral) 
-> to achieve higher-fidelity results.
+> We have optimized InstructLab so that community members with commodity hardware can perform these steps. However, running InstructLab on a laptop will provide a low-fidelity approximation of synthetic data generation 
+> (using the `ilab generate` command) and model instruction tuning (using the `ilab train` command, which uses QLoRA). To achieve higher quality, use more sophisticated hardware and configure InstructLab to use a 
+> larger teacher model [such as Mixtral](https://huggingface.co/docs/transformers/model_doc/mixtral).
 
 ## 📋 Requirements
 
