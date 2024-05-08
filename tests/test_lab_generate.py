@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=duplicate-code
 
 # Standard
 from unittest.mock import patch
@@ -33,8 +34,10 @@ class TestLabGenerate:
         with runner.isolated_filesystem():
             mt = MockTaxonomy(pathlib.Path("taxonomy"))
             result = runner.invoke(
-                lab.generate,
+                lab.cli,
                 [
+                    "--config=DEFAULT",
+                    "generate",
                     "--taxonomy-base",
                     "main",
                     "--taxonomy-path",
@@ -57,8 +60,10 @@ class TestLabGenerate:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.generate,
+                lab.cli,
                 [
+                    "--config=DEFAULT",
+                    "generate",
                     "--endpoint-url",
                     "localhost:8000",
                 ],
@@ -73,8 +78,10 @@ class TestLabGenerate:
         with runner.isolated_filesystem():
             mt = MockTaxonomy(pathlib.Path("taxonomy"))
             result = runner.invoke(
-                lab.generate,
+                lab.cli,
                 [
+                    "--config=DEFAULT",
+                    "generate",
                     "--taxonomy-base",
                     "main",
                     "--taxonomy-path",
@@ -98,8 +105,10 @@ class TestLabGenerate:
                     "compositional_skills/tracked/qna.yaml", qnafile.read()
                 )
                 result = runner.invoke(
-                    lab.generate,
+                    lab.cli,
                     [
+                        "--config=DEFAULT",
+                        "generate",
                         "--taxonomy-base",
                         "main",
                         "--taxonomy-path",

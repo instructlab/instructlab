@@ -82,7 +82,9 @@ class TestLabTrain:
         runner = CliRunner()
         with runner.isolated_filesystem():
             setup_input_dir()
-            result = runner.invoke(lab.train, ["--input-dir", INPUT_DIR])
+            result = runner.invoke(
+                lab.cli, ["--config=DEFAULT", "train", "--input-dir", INPUT_DIR]
+            )
             assert result.exit_code == 0
             load_mock.assert_not_called()
             load_and_train_mock.assert_called_once()
@@ -127,7 +129,14 @@ class TestLabTrain:
         with runner.isolated_filesystem():
             setup_input_dir()
             result = runner.invoke(
-                lab.train, ["--input-dir", INPUT_DIR, "--skip-quantize"]
+                lab.cli,
+                [
+                    "--config=DEFAULT",
+                    "train",
+                    "--input-dir",
+                    INPUT_DIR,
+                    "--skip-quantize",
+                ],
             )
             assert result.exit_code == 0
             load_mock.assert_not_called()
@@ -142,7 +151,9 @@ class TestLabTrain:
     def test_input_error(self):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(lab.train, ["--input-dir", "invalid"])
+            result = runner.invoke(
+                lab.cli, ["--config=DEFAULT", "train", "--input-dir", "invalid"]
+            )
             assert result.exception is not None
             assert "No such file or directory: 'invalid'" in result.output
             assert result.exit_code == 1
@@ -151,7 +162,9 @@ class TestLabTrain:
         runner = CliRunner()
         with runner.isolated_filesystem():
             os.mkdir(INPUT_DIR)  # Leave out the test and train files
-            result = runner.invoke(lab.train, ["--input-dir", INPUT_DIR])
+            result = runner.invoke(
+                lab.cli, ["--config=DEFAULT", "train", "--input-dir", INPUT_DIR]
+            )
             assert result.exception is not None
             assert (
                 f"{INPUT_DIR} does not contain training or test files, did you run `ilab generate`?"
@@ -166,7 +179,15 @@ class TestLabTrain:
             with runner.isolated_filesystem():
                 os.mkdir(INPUT_DIR)  # Leave out the test and train files
                 result = runner.invoke(
-                    lab.train, ["--data-dir", "invalid", "--input-dir", INPUT_DIR]
+                    lab.cli,
+                    [
+                        "--config=DEFAULT",
+                        "train",
+                        "--data-dir",
+                        "invalid",
+                        "--input-dir",
+                        INPUT_DIR,
+                    ],
                 )
                 assert result.exception is not None
                 assert "Could not read from data directory" in result.output
@@ -184,7 +205,15 @@ class TestLabTrain:
         with runner.isolated_filesystem():
             os.mkdir(INPUT_DIR)  # Leave out the test and train files
             result = runner.invoke(
-                lab.train, ["--data-dir", "invalid", "--input-dir", INPUT_DIR]
+                lab.cli,
+                [
+                    "--config=DEFAULT",
+                    "train",
+                    "--data-dir",
+                    "invalid",
+                    "--input-dir",
+                    INPUT_DIR,
+                ],
             )
             make_data_mock.assert_called_once()
             assert result.exception is not None
@@ -209,7 +238,14 @@ class TestLabTrain:
         with runner.isolated_filesystem():
             setup_input_dir()
             result = runner.invoke(
-                lab.train, ["--input-dir", INPUT_DIR, "--skip-preprocessing"]
+                lab.cli,
+                [
+                    "--config=DEFAULT",
+                    "train",
+                    "--input-dir",
+                    INPUT_DIR,
+                    "--skip-preprocessing",
+                ],
             )
             assert result.exit_code == 0
             load_mock.assert_not_called()
@@ -315,7 +351,9 @@ class TestLabTrain:
         with runner.isolated_filesystem():
             setup_input_dir()
             setup_linux_dir()
-            result = runner.invoke(lab.train, ["--input-dir", INPUT_DIR])
+            result = runner.invoke(
+                lab.cli, ["--config=DEFAULT", "train", "--input-dir", INPUT_DIR]
+            )
             assert result.exit_code == 0
             convert_llama_to_gguf_mock.assert_called_once()
             assert (
@@ -352,7 +390,15 @@ class TestLabTrain:
             setup_input_dir()
             setup_linux_dir()
             result = runner.invoke(
-                lab.train, ["--input-dir", INPUT_DIR, "--num-epochs", "2"]
+                lab.cli,
+                [
+                    "--config=DEFAULT",
+                    "train",
+                    "--input-dir",
+                    INPUT_DIR,
+                    "--num-epochs",
+                    "2",
+                ],
             )
             assert result.exit_code == 0
             convert_llama_to_gguf_mock.assert_called_once()
@@ -363,7 +409,15 @@ class TestLabTrain:
 
             # Test with invalid num_epochs
             result = runner.invoke(
-                lab.train, ["--input-dir", INPUT_DIR, "--num-epochs", "two"]
+                lab.cli,
+                [
+                    "--config=DEFAULT",
+                    "train",
+                    "--input-dir",
+                    INPUT_DIR,
+                    "--num-epochs",
+                    "two",
+                ],
             )
             assert result.exception is not None
             assert result.exit_code == 2
