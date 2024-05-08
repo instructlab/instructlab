@@ -59,6 +59,10 @@ class ChatException(Exception):
     """An exception raised during chat step."""
 
 
+class ChatQuitException(Exception):
+    """A quit command was executed during chat."""
+
+
 # TODO Autosave chat history
 class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
     def __init__(
@@ -141,7 +145,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         )
 
     def _handle_quit(self, content):
-        sys.exit(0)
+        raise ChatQuitException
 
     def _handle_help(self, content):
         self._sys_print(Markdown(HELP_MD))
@@ -533,7 +537,7 @@ def chat_cli(
             ccb.start_prompt(question, box=(not qq))
         except ChatException as exc:
             raise ChatException(f"API issue found while executing chat: {exc}")
-        except KeyboardInterrupt:
+        except (ChatQuitException, KeyboardInterrupt):
             return
 
     if qq:
@@ -553,3 +557,5 @@ def chat_cli(
             raise ChatException(f"API issue found while executing chat: {exc}")
         except httpx.RemoteProtocolError:
             raise ChatException(f"Connection to the server was closed")
+        except ChatQuitException:
+            return
