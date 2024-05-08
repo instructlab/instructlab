@@ -2,7 +2,6 @@
 
 # Standard
 from unittest.mock import MagicMock, patch
-import unittest
 
 # Third Party
 from click.testing import CliRunner
@@ -12,7 +11,7 @@ from huggingface_hub.utils import HfHubHTTPError
 from instructlab import lab
 
 
-class TestLabDownload(unittest.TestCase):
+class TestLabDownload:
     # When using `from X import Y` you need to understand that Y becomes part
     # of your module, so you should use `my_module.Y`` to patch.
     # When using `import X`, you should use `X.Y` to patch.
@@ -22,9 +21,9 @@ class TestLabDownload(unittest.TestCase):
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(lab.download)
-            self.assertEqual(
-                result.exit_code, 0, "command finished with an unexpected exit code"
-            )
+            assert (
+                result.exit_code == 0
+            ), "command finished with an unexpected exit code"
             mock_hf_hub_download.assert_called_once()
 
     @patch(
@@ -35,7 +34,7 @@ class TestLabDownload(unittest.TestCase):
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(lab.download)
-            self.assertEqual(
-                result.exit_code, 1, "command finished with an unexpected exit code"
-            )
-            self.assertIn("Could not reach hugging face server", result.output)
+            assert (
+                result.exit_code == 1
+            ), "command finished with an unexpected exit code"
+            assert "Could not reach hugging face server" in result.output

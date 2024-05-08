@@ -2,7 +2,6 @@
 
 # Standard
 import re
-import unittest
 
 # Third Party
 import click
@@ -13,7 +12,7 @@ from instructlab import lab
 from instructlab.utils import is_macos_with_m_chip
 
 
-class TestConfig(unittest.TestCase):
+class TestConfig:
     def test_cli_params_hyphenated(self):
         flag_pattern = re.compile("-{1,2}[0-9a-z-]+")
         invalid_flags = []
@@ -24,9 +23,7 @@ class TestConfig(unittest.TestCase):
                 for opt in param.opts:
                     if not flag_pattern.fullmatch(opt):
                         invalid_flags.append(f"{name} {opt}")
-        self.assertFalse(
-            invalid_flags, "<- these commands are using non-hyphenated params"
-        )
+        assert not invalid_flags, "<- these commands are using non-hyphenated params"
 
 
 def test_llamap_cpp_import():

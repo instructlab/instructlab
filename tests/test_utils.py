@@ -3,10 +3,10 @@
 # Standard
 from unittest.mock import Mock, patch
 import logging
-import unittest
 
 # Third Party
 import git
+import pytest
 import yaml
 
 # First Party
@@ -16,31 +16,31 @@ from instructlab import utils
 from .testdata import testdata
 
 
-class TestUtils(unittest.TestCase):
+class TestUtils:
     """Test collection in instructlab.utils."""
 
     def test_chunk_docs_wc_exeeds_ctx_window(self):
-        with self.assertRaises(ValueError) as exc:
+        with pytest.raises(ValueError) as exc:
             utils.chunk_document(
                 documents=testdata.documents,
                 chunk_word_count=1000,
                 server_ctx_size=1034,
             )
-        self.assertIn(
-            "Given word count (1000) per doc will exceed the server context window size (1034)",
-            f"{exc.exception}",
+        assert (
+            "Given word count (1000) per doc will exceed the server context window size (1034)"
+            in str(exc.value)
         )
 
     def test_chunk_docs_chunk_overlap_error(self):
-        with self.assertRaises(ValueError) as exc:
+        with pytest.raises(ValueError) as exc:
             utils.chunk_document(
                 documents=testdata.documents,
                 chunk_word_count=5,
                 server_ctx_size=1034,
             )
-        self.assertIn(
-            "Got a larger chunk overlap (100) than chunk size (24), should be smaller",
-            f"{exc.exception}",
+        assert (
+            "Got a larger chunk overlap (100) than chunk size (24), should be smaller"
+            in str(exc.value)
         )
 
     def test_chunk_docs_long_lines(self):
@@ -71,4 +71,4 @@ class TestUtils(unittest.TestCase):
                 logger=logging.getLogger("_test_"),
             )
             git_clone_checkout.assert_called_once()
-            self.assertEqual(len(documents), 2)
+            assert len(documents) == 2
