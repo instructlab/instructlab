@@ -16,12 +16,11 @@ import time
 # Third Party
 from jinja2 import Template
 from rouge_score import rouge_scorer
-import click
 import tqdm
 
 # Local
 from ..config import DEFAULT_MULTIPROCESSING_START_METHOD, get_model_family
-from ..utils import chunk_document, read_taxonomy
+from ..utils import chunk_document, error_exit, read_taxonomy
 from . import utils
 from .utils import GenerateException
 
@@ -408,11 +407,11 @@ def generate_data(
                 }
             )
         except TypeError as exc:
-            click.secho(
-                f"Error reading seed examples: {exc}. Please make sure your answers are verbose enough.",
-                fg="red",
+            error_exit(
+                "Error reading seed examples",
+                exc=exc,
+                hint="Please make sure your answers are verbose enough.",
             )
-            raise click.exceptions.Exit(1)
 
     name = Path(model_name).stem  # Just in case it is a file path
     date_suffix = datetime.now().replace(microsecond=0).isoformat().replace(":", "_")

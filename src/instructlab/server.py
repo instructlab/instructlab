@@ -106,12 +106,12 @@ def ensure_server(
             f"Connection to {api_base} failed. Starting a temporary server at {temp_api_base}..."
         )
         # create a temporary, throw-away logger
-        logger = logging.getLogger(host_port)
-        logger.setLevel(logging.FATAL)
+        tmplogger = logging.getLogger(host_port)
+        tmplogger.setLevel(logging.FATAL)
         server_process = mpctx.Process(
             target=server,
             kwargs={
-                "logger": logger,
+                "logger": tmplogger,
                 "model_path": serve_config.model_path,
                 "gpu_layers": serve_config.gpu_layers,
                 "max_ctx_size": serve_config.max_ctx_size,
@@ -157,7 +157,7 @@ def server(
         model=model_path,
         n_ctx=max_ctx_size,
         n_gpu_layers=gpu_layers,
-        verbose=logger.level == logging.DEBUG,
+        verbose=logger.isEnabledFor(logging.DEBUG),
     )
     if threads is not None:
         settings.n_threads = threads

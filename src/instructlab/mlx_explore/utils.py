@@ -59,7 +59,7 @@ def make_shards(weights: dict, max_file_size_gibibyte: int = 15):
     return shards
 
 
-@macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
+@macos_requirement()
 def save_model(save_dir: str, weights):
     save_dir = Path(save_dir)
     save_dir.mkdir(parents=True, exist_ok=True)

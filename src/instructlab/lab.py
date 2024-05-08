@@ -33,10 +33,6 @@ multiprocessing.set_start_method(
     config.DEFAULT_MULTIPROCESSING_START_METHOD, force=True
 )
 
-# Set logging level of OpenAI client and httpx library to ERROR to suppress INFO messages
-logging.getLogger("openai").setLevel(logging.ERROR)
-logging.getLogger("httpx").setLevel(logging.ERROR)
-
 if typing.TYPE_CHECKING:
     # Third Party
     import torch
@@ -51,20 +47,6 @@ class Lab:
         # Set up logging for the Lab class
         self.logger = logging.getLogger(__name__)
 
-        # Create a formatter
-        formatter = log.CustomFormatter(log.FORMAT)
-
-        # Create a handler and set the formatter
-        handler = logging.StreamHandler()
-        handler.setFormatter(formatter)
-
-        logging.basicConfig(
-            format=log.FORMAT,
-            handlers=[handler],
-        )
-
-        self.logger.setLevel(self.config.general.log_level.upper())
-
 
 @click.group(cls=DYMGroup)
 @click.option(
@@ -75,10 +57,16 @@ class Lab:
     show_default=True,
     help="Path to a configuration file.",
 )
+@click.option(
+    "--log-level",
+    default=None,
+    type=click.Choice(["debug", "info", "warning", "error"], case_sensitive=False),
+    help="Set logging level (override config.yaml setting)",
+)
 @click.version_option(package_name="instructlab")
 @click.pass_context
 # pylint: disable=redefined-outer-name
-def cli(ctx, config_file):
+def cli(ctx, config_file, log_level):
     """CLI for interacting with InstructLab.
 
     If this is your first time running InstructLab, it's best to start with `ilab init` to create the environment.
@@ -107,6 +95,16 @@ def cli(ctx, config_file):
         ctx.obj = Lab(config_obj)
         # default_map holds a dictionary with default values for each command parameters
         ctx.default_map = config.get_dict(ctx.obj.config)
+        if log_level is None:
+            # no --log-level argument, use value from config
+            log_level = ctx.obj.config.general.log_level
+    else:
+        if log_level is None:
+            # no --log-level argument
+            config_obj = config.get_default_config()
+            log_level = config_obj.general.log_level
+
+    config.configure_logging(log_level=log_level.upper())
 
 
 @cli.command()
@@ -149,7 +147,9 @@ def cli(ctx, config_file):
     "Please do not use this option if you are planning to contribute back "
     "using the same taxonomy repository. ",
 )
+@click.pass_context
 def init(
+    ctx,
     interactive,
     model_path,
     taxonomy_path,
@@ -203,9 +203,12 @@ def init(
                 depth=clone_depth,
             )
         except GitError as exc:
-            click.secho(f"Failed to clone taxonomy repo: {exc}", fg="red")
-            click.secho(f"Please make sure to manually run `git clone {repository}`")
-            raise click.exceptions.Exit(1)
+            utils.error_exit(
+                "Failed to clone taxonomy repo",
+                ctx=ctx,
+                exc=exc,
+                hint="Please make sure to manually run `git clone {repository}`",
+            )
 
     # check if models dir exists, and if so ask for which model to use
     models_dir = dirname(model_path)
@@ -276,22 +279,15 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
             try:
                 updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
             except (SystemExit, GitError) as exc:
-                click.secho(
-                    f"Reading taxonomy failed with the following error: {exc}",
-                    fg="red",
-                )
-                raise SystemExit(1) from exc
+                utils.error_exit("Reading taxonomy failed", ctx=ctx, exc=exc)
             for f in updated_taxonomy_files:
                 click.echo(f)
     try:
         read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
     except (SystemExit, yaml.YAMLError) as exc:
-        if not quiet:
-            click.secho(
-                f"Reading taxonomy failed with the following error: {exc}",
-                fg="red",
-            )
-        raise SystemExit(1) from exc
+        if quiet:
+            raise click.exceptions.Exit(1) from exc
+        utils.error_exit("Reading taxonomy failed", ctx=ctx, exc=exc)
     if not quiet:
         click.secho(
             f"Taxonomy in /{taxonomy_path}/ is valid :)",
@@ -354,8 +350,7 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size, model_family):
             port,
         )
     except ServerException as exc:
-        click.secho(f"Error creating server: {exc}", fg="red")
-        raise click.exceptions.Exit(1)
+        utils.error_exit("Error creating server", ctx=ctx, exc=exc)
 
 
 @cli.command()
@@ -532,9 +527,8 @@ def generate(
                 tls_client_passwd,
                 model_family,
             )
-        except Exception as exc:
-            click.secho(f"Failed to start server: {exc}", fg="red")
-            raise click.exceptions.Exit(1)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            utils.error_exit("Failed to start server", ctx=ctx, exc=exc)
         if not api_base:
             api_base = ctx.obj.config.serve.api_base()
     try:
@@ -564,11 +558,9 @@ def generate(
             tls_client_passwd=tls_client_passwd,
         )
     except GenerateException as exc:
-        click.secho(
-            f"Generating dataset failed with the following error: {exc}",
-            fg="red",
+        utils.error_exit(
+            "Generating dataset failed with the following error", ctx=ctx, exc=exc
         )
-        raise click.exceptions.Exit(1)
     finally:
         if server_process and server_queue:
             server_process.terminate()
@@ -698,9 +690,8 @@ def chat(
                 tls_client_passwd,
                 model_family,
             )
-        except Exception as exc:
-            click.secho(f"Failed to start server: {exc}", fg="red")
-            raise click.exceptions.Exit(1)
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            utils.error_exit("Failed to start server", ctx=ctx, exc=exc)
         if not api_base:
             api_base = ctx.obj.config.serve.api_base()
 
@@ -745,11 +736,11 @@ def chat(
                 )
 
             except ClientException as exc:
-                click.secho(
+                utils.error_exit(
                     f"Failed to list models from {api_base}. Please check the API key and endpoint.",
-                    fg="red",
+                    ctx=ctx,
+                    exc=exc,
                 )
-                raise click.exceptions.Exit(1) from exc
 
     try:
         chat_cli(
@@ -770,8 +761,7 @@ def chat(
             tls_client_passwd=tls_client_passwd,
         )
     except ChatException as exc:
-        click.secho(f"Executing chat failed with: {exc}", fg="red")
-        raise click.exceptions.Exit(1)
+        utils.error_exit("Executing chat failed", ctx=ctx, exc=exc)
     finally:
         if server_process and server_queue:
             server_process.terminate()
@@ -842,12 +832,12 @@ def download(ctx, repository, release, filename, model_dir, hf_token):
                 filename=filename,
                 local_dir=model_dir,
             )
-    except Exception as exc:
-        click.secho(
-            f"Downloading model failed with the following Hugging Face Hub error: {exc}",
-            fg="red",
+    except Exception as exc:  # pylint: disable=broad-exception-caught
+        utils.error_exit(
+            "Downloading model failed with the following Hugging Face Hub error",
+            ctx=ctx,
+            exc=exc,
         )
-        raise click.exceptions.Exit(1)
 
 
 class TorchDeviceParam(click.ParamType):
@@ -872,6 +862,8 @@ class TorchDeviceParam(click.ParamType):
                 device = torch.device(value)
             except RuntimeError as e:
                 self.fail(str(e), param, ctx)
+        else:
+            device = value
 
         if device.type not in self.supported_devices:
             supported = ", ".join(repr(s) for s in sorted(self.supported_devices))
@@ -1034,7 +1026,11 @@ def train(
                     f"{input_dir} does not contain training or test files, did you run `ilab generate`?",
                     fg="red",
                 )
-                raise click.exceptions.Exit(1)
+                utils.error_exit(
+                    f"{input_dir} does not contain training or test files",
+                    ctx=ctx,
+                    hint="Did you run `ilab generate`?",
+                )
             if len(train_files) > 1 or len(test_files) > 1:
                 # pylint: disable=f-string-without-interpolation
                 click.secho(
@@ -1045,17 +1041,9 @@ def train(
             shutil.copy(train_files[0], data_dir + "/train_gen.jsonl")
             shutil.copy(test_files[0], data_dir + "/test_gen.jsonl")
         except FileNotFoundError as exc:
-            click.secho(
-                f"Could not read directory: {exc}",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
+            utils.error_exit("Could not read data directory", ctx=ctx, exc=exc)
         except OSError as exc:
-            click.secho(
-                f"Could not create data dir: {exc}",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
+            utils.error_exit("Could not create data directory", ctx=ctx, exc=exc)
 
     if not utils.is_macos_with_m_chip():
         # Local
@@ -1154,11 +1142,7 @@ def train(
             try:
                 make_data(data_dir=data_dir)
             except FileNotFoundError as exc:
-                click.secho(
-                    f"Could not read from data directory: {exc}",
-                    fg="red",
-                )
-                raise click.exceptions.Exit(1)
+                utils.error_exit("Could not read from data directory", ctx=ctx, exc=exc)
 
         # NOTE we can skip this if we have a way ship MLX
         # PyTorch safetensors to MLX safetensors
@@ -1233,7 +1217,7 @@ def train(
     default="auto",
     show_default=True,
 )
-@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
+@utils.macos_requirement()
 # pylint: disable=function-redefined
 def test(data_dir, model_dir, adapter_file):
     """Runs basic test to ensure model correctness"""
@@ -1305,7 +1289,7 @@ def test(data_dir, model_dir, adapter_file):
     default=None,
     show_default=True,
 )
-@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
+@utils.macos_requirement()
 @click.pass_context
 def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model_name):
     """Converts model to GGUF"""

@@ -4,6 +4,7 @@
 from os import path
 from re import match
 from typing import Optional
+import logging
 
 # Third Party
 from pydantic import (
@@ -14,6 +15,7 @@ from pydantic import (
     ValidationError,
     field_validator,
 )
+import click
 import httpx
 import yaml
 
@@ -196,3 +198,45 @@ def get_api_base(host_port):
 
 def get_model_family(forced, model_path):
     return forced if forced else match(r"^\w*", path.basename(model_path)).group(0)
+
+
+class _ColorFormatter(logging.Formatter):
+    """Colorize log lines"""
+
+    styles = {
+        logging.CRITICAL: {"fg": "bright_red"},
+        logging.ERROR: {"fg": "red"},
+        logging.WARNING: {"fg": "yellow"},
+        logging.INFO: {},
+        logging.DEBUG: {"fg": "blue"},
+    }
+
+    def formatMessage(self, record: logging.LogRecord) -> str:
+        msg = super().formatMessage(record)
+        kwargs = self.styles.get(record.levelno)
+        if kwargs:
+            return click.style(msg, **kwargs)
+        return msg
+
+
+def configure_logging(
+    *,
+    log_level: str,
+    fmt: str = "%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s",
+) -> None:
+    """Configure logging framework"""
+    root = logging.getLogger()
+
+    # reset handlers, removes existing stream logger
+    for handler in root.handlers[:]:
+        root.removeHandler(handler)
+        handler.close()
+
+    stream = logging.StreamHandler()
+    stream.setFormatter(_ColorFormatter(fmt=fmt))
+    root.addHandler(stream)
+    root.setLevel(log_level)
+
+    # Set logging level of OpenAI client and httpx library to ERROR to suppress INFO messages
+    logging.getLogger("openai").setLevel(logging.ERROR)
+    logging.getLogger("httpx").setLevel(logging.ERROR)

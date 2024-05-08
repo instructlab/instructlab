@@ -4,7 +4,7 @@
 from functools import cache, wraps
 from logging import Logger
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import Any, Dict, List, Mapping, NoReturn, Optional, Union
 import copy
 import glob
 import json
@@ -15,10 +15,10 @@ import subprocess
 import tempfile
 
 # Third Party
-from git import Repo, exc
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 import click
 import git
+import git.exc
 import gitdb
 import yaml
 
@@ -40,7 +40,7 @@ class TaxonomyReadingException(Exception):
     """An exception raised during reading of the taxonomy."""
 
 
-def macos_requirement(echo_func, exit_exception):
+def macos_requirement():
     """Adds a check for MacOS before running a method.
 
     :param echo_func: Echo function accepting message and fg parameters to print the error.
@@ -51,11 +51,10 @@ def macos_requirement(echo_func, exit_exception):
         @wraps(func)
         def wrapper(*args, **kwargs):
             if not is_macos_with_m_chip():
-                echo_func(
-                    message=f"`ilab {func.__name__}` is only implemented for macOS with M-series chips for now",
-                    fg="red",
+                error_exit(
+                    "`ilab {func.__name__}` is only implemented for macOS with M-series chips for now",
+                    exit_code=1,
                 )
-                raise exit_exception(1)
             return func(*args, **kwargs)
 
         return wrapper
@@ -220,14 +219,14 @@ def get_documents(
             if file_contents:
                 return file_contents
             raise SystemExit("Couldn't find knowledge documents")
-        except (OSError, exc.GitCommandError, FileNotFoundError) as e:
+        except (OSError, git.exc.GitCommandError, FileNotFoundError) as e:
             raise e
 
 
 def git_clone_checkout(
     repo_url: str, temp_dir: str, commit_hash: str, skip_checkout: bool
-) -> Repo:
-    repo = Repo.clone_from(repo_url, temp_dir)
+) -> git.Repo:
+    repo = git.Repo.clone_from(repo_url, temp_dir)
     if not skip_checkout:
         repo.git.checkout(commit_hash)
     return repo
@@ -555,3 +554,27 @@ def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
                 yaml.YAMLError(f"{total_errors} taxonomy files with errors! Exiting.")
             )
     return seed_instruction_data
+
+
+def error_exit(
+    msg: str,
+    *,
+    ctx: Optional[click.Context] = None,
+    exc: Optional[Exception] = None,
+    hint: Optional[str] = None,
+    exit_code: int = 1,
+) -> NoReturn:
+    """Exit program with an error message
+
+    Print "{msg}: {exc}" in red and exit with 'exit_code'. When debug
+    logging is enabled, also log the stack trace if an exception is set.
+    """
+    if exc is not None:
+        if ctx is not None and ctx.obj is not None:
+            ctx.obj.logger.debug(msg, exc_info=True)
+        click.secho(f"{msg}: {exc}", fg="red", err=True)
+    else:
+        click.secho(msg, fg="red", err=True)
+    if hint is not None:
+        click.secho(hint, fg="yellow")
+    raise click.exceptions.Exit(exit_code) from exc
