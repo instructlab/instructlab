@@ -537,7 +537,7 @@ def chat_cli(
             ccb.start_prompt(question, box=(not qq))
         except ChatException as exc:
             raise ChatException(f"API issue found while executing chat: {exc}")
-        except (ChatQuitException, KeyboardInterrupt):
+        except (ChatQuitException, KeyboardInterrupt, EOFError):
             return
 
     if qq:
@@ -557,5 +557,5 @@ def chat_cli(
             raise ChatException(f"API issue found while executing chat: {exc}")
         except httpx.RemoteProtocolError:
             raise ChatException(f"Connection to the server was closed")
-        except ChatQuitException:
+        except (ChatQuitException, EOFError):
             return
