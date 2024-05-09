@@ -8,11 +8,22 @@
 
 ## 📖 Contents
 
-- [❓What is `ilab`](#-what-is-ilab)
+- [Welcome to the InstructLab CLI](#welcome-to-the-instructlab-cli)
+- [❓ What is `ilab`](#-what-is-ilab)
 - [📋 Requirements](#-requirements)
 - [✅ Getting started](#-getting-started)
   - [🧰 Installing `ilab`](#-installing-ilab)
-  - [🏗️ Initialize `ilab`](#%EF%B8%8F-initialize-ilab)
+    - [To install with no GPU acceleration and PyTorch without CUDA bindings](#to-install-with-no-gpu-acceleration-and-pytorch-without-cuda-bindings)
+    - [To install with AMD ROCm](#to-install-with-amd-rocm)
+    - [To install with Apple Metal on M1/M2/M3 Mac](#to-install-with-apple-metal-on-m1m2m3-mac)
+    - [To install with Nvidia CUDA](#to-install-with-nvidia-cuda)
+    - [Example output](#example-output)
+    - [Bash (version 4.4 or newer)](#bash-version-44-or-newer)
+    - [Zsh](#zsh)
+    - [Fish](#fish)
+  - [🏗️ Initialize `ilab`](#️-initialize-ilab)
+    - [Example output](#example-output-1)
+    - [Example output](#example-output-2)
   - [📥 Download the model](#-download-the-model)
   - [🍴 Serving the model](#-serving-the-model)
   - [📣 Chat with the model (Optional)](#-chat-with-the-model-optional)
@@ -20,12 +31,17 @@
   - [🎁 Contribute knowledge or compositional skills](#-contribute-knowledge-or-compositional-skills)
   - [📜 List and validate your new data](#-list-and-validate-your-new-data)
   - [🚀 Generate a synthetic dataset](#-generate-a-synthetic-dataset)
+    - [Example output](#example-output-3)
   - [👩‍🏫 Train the model](#-train-the-model)
-  - [Test the newly trained model](#-test-the-newly-trained-model)
+    - [Train the model locally on Linux](#train-the-model-locally-on-linux)
+    - [Train the model locally on an M-series Mac](#train-the-model-locally-on-an-m-series-mac)
+    - [Training the model locally with GPU acceleration](#training-the-model-locally-with-gpu-acceleration)
+    - [Training the model in the cloud](#training-the-model-in-the-cloud)
+  - [📜 Test the newly trained model](#-test-the-newly-trained-model)
   - [🍴 Serve the newly trained model](#-serve-the-newly-trained-model)
-  - [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
+- [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
 - [🎁 Submit your new knowledge or skills](#-submit-your-new-knowledge-or-skills)
-- [📬 Contributing to InstructLab CLI](#-contributing)
+- [📬 Contributing](#-contributing)
 
 ## Welcome to the InstructLab CLI
 
@@ -184,6 +200,55 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
    ```shell
    source venv/bin/activate
+   ```
+
+5. You may optionally enabled tab completion for the `ilab` command.
+
+   #### Bash (version 4.4 or newer)
+
+   Enable tab completion in `bash` with the following command:
+
+   ```sh
+   eval "$(_ILAB_COMPLETE=bash_source ilab)"
+   ```
+
+   To have this enabled automatically every time you open a new shell,
+   you can save the completion script and source it from `~/.bashrc`:
+
+   ```sh
+   _ILAB_COMPLETE=bash_source ilab > ~/.ilab-complete.bash
+   echo ". ~/.ilab-complete.bash" >> ~/.bashrc
+   ```
+
+   #### Zsh
+
+   Enable tab completion in `zsh` with the following command:
+
+   ```sh
+   eval "$(_ILAB_COMPLETE=zsh_source ilab)"
+   ```
+
+   To have this enabled automatically every time you open a new shell,
+   you can save the completion script and source it from `~/.zshrc`:
+
+   ```sh
+   _ILAB_COMPLETE=zsh_source ilab > ~/.ilab-complete.zsh
+   echo ". ~/.ilab-complete.zsh" >> ~/.zshrc
+   ```
+
+   #### Fish
+
+   Enable tab completion in `fish` with the following command:
+
+   ```sh
+   _ILAB_COMPLETE=fish_source ilab | source
+   ```
+
+   To have this enabled automatically every time you open a new shell,
+   you can save the completion script and source it from `~/.bashrc`:
+
+   ```sh
+   _ILAB_COMPLETE=fish_source ilab > ~/.config/fish/completions/ilab.fish
    ```
 
 ### 🏗️ Initialize `ilab`
