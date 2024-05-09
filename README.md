@@ -60,7 +60,7 @@ Large Language Models (LLMs.) The "**lab**" in Instruct**Lab** 🐶 stands for
 
 To add new knowledge and skills to the pre-trained LLM, add information to the companion [taxonomy](https://github.com/instructlab/taxonomy.git) repository.
 
-After you have added knowledge and skills, you can perform the following actions:
+After you have added knowledge and skills to the taxonomy, you can perform the following actions:
 
 1. Use `ilab` to generate new synthetic training data based on the changes in your local `taxonomy` repository.
 1. Re-train the LLM with the new training data.
