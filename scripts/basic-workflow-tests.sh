@@ -26,7 +26,7 @@ NC='\033[0m' # No Color
 SCRIPTDIR=$(dirname "$0")
 
 step() {
-    echo -e "$BOLD$@$NC"
+    echo -e "$BOLD$@ - $(date)$NC"
 }
 
 task() {
