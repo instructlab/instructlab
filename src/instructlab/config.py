@@ -4,7 +4,14 @@
 from typing import Optional
 
 # Third Party
-from pydantic import BaseModel, ConfigDict, PositiveInt, StrictStr, ValidationError
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    PositiveInt,
+    StrictStr,
+    ValidationError,
+    field_validator,
+)
 import httpx
 import yaml
 
@@ -40,6 +47,26 @@ class _general(BaseModel):
 
     # optional fields
     log_level: Optional[StrictStr] = "INFO"
+
+    @field_validator("log_level")
+    def validate_log_level(cls, v):
+        # TODO: remove 'valid_levels' once we switch to support Python 3.11+ and call
+        # "logging.getLevelNamesMapping()" instead
+        valid_levels = [
+            "DEBUG",
+            "INFO",
+            "WARNING",
+            "WARN",
+            "FATAL",
+            "CRITICAL",
+            "ERROR",
+            "NOTSET",
+        ]
+        if v.upper() not in valid_levels:
+            raise ValueError(
+                f"'{v}' is not a valid log level name. valid levels: {valid_levels}"
+            )
+        return v.upper()
 
 
 class _chat(BaseModel):
