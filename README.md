@@ -53,13 +53,14 @@ Large Language Models (LLMs.) The "**lab**" in Instruct**Lab** 🐶 stands for
 
 ## ❓ What is `ilab`
 
-`ilab` is a Command-Line Interface (CLI) tool that allows you to:
+`ilab` is a Command-Line Interface (CLI) tool that allows you to perform the following actions:
 
 1. Download a pre-trained Large Language Model (LLM).
 1. Chat with the LLM.
 
-To add new knowledge and skills to the pre-trained LLM you have to add new information to the companion [taxonomy](https://github.com/instructlab/taxonomy.git) repository.
-After that is done, you can:
+To add new knowledge and skills to the pre-trained LLM, add information to the companion [taxonomy](https://github.com/instructlab/taxonomy.git) repository.
+
+After you have added knowledge and skills to the taxonomy, you can perform the following actions:
 
 1. Use `ilab` to generate new synthetic training data based on the changes in your local `taxonomy` repository.
 1. Re-train the LLM with the new training data.
@@ -74,13 +75,12 @@ graph TD;
   train[Re-train]-->|Chat with\nthe re-trained LLM\nto see the results|chat
 ```
 
-The full process is described graphically in the [workflow diagram](./docs/workflow.png).
+For an overview of the full workflow, see the [workflow diagram](./docs/workflow.png).
 
 > [!IMPORTANT]
-> It is important to understand that running InstructLab on a laptop will give you a low-fidelity approximation of both synthetic data generation (using the `ilab generate` command)
-> and model instruction tuning (using the `ilab train` command, which uses QLoRA.) The quality of the results you get using these tools on a laptop will not be as high-fidelity as they might be using
-> a larger teacher model and a different training method. We have optimized InstructLab to enable community members with modest hardware to be able to use the technique. If you have more sophisticated
-> hardware, you can configure InstructLab to use a larger teacher model [such as Mixtral](https://huggingface.co/docs/transformers/model_doc/mixtral) in order to achieve higher-fidelity results.
+> We have optimized InstructLab so that community members with commodity hardware can perform these steps. However, running InstructLab on a laptop will provide a low-fidelity approximation of synthetic data generation
+> (using the `ilab generate` command) and model instruction tuning (using the `ilab train` command, which uses QLoRA). To achieve higher quality, use more sophisticated hardware and configure InstructLab to use a
+> larger teacher model [such as Mixtral](https://huggingface.co/docs/transformers/model_doc/mixtral).
 
 ## 📋 Requirements
 
@@ -89,7 +89,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 - Python 3.9+ (<3.12 for PyTorch JIT)
 - Approximately 60GB disk space (entire process)
 
-> **NOTE:** PyTorch 2.2.1 does not support `torch.compile` with Python 3.12. On Fedora 39+, install `python3.11-devel` and create the virtual env with `python3.11` if you wish to use PyTorch's JIT compiler.
+> **NOTE:** PyTorch 2.2.1 does not support `torch.compile` with Python 3.12. On Fedora 39 and above, install `python3.11-devel` and create a virtual env with `python3.11` to use PyTorch's JIT compiler.
 
 ## ✅ Getting started
 
