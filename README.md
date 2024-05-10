@@ -211,7 +211,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    source venv/bin/activate
    ```
 
-5. You may optionally enabled tab completion for the `ilab` command.
+5. You may optionally enable tab completion for the `ilab` command.
 
    #### Bash (version 4.4 or newer)
 
