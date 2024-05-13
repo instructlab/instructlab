@@ -45,7 +45,10 @@ help: ## Display this help.
 
 .PHONY: images
 images: ## Get the current controller, set the path, and build the Containerfile image. (auto-detect the compatible controller)
-	@if lspci -d '10DE:*:0300'| grep -q "NVIDIA"; then \
+	@if ! command -v lspci &> /dev/null; then \
+		echo "ERROR: Unable to detect GPU, lspci is not installed" >&2; \
+		exit 2; \
+	elif lspci -d '10DE:*:0300'| grep -q "NVIDIA"; then \
 		$(MAKE) cuda; \
 	elif lspci -d '1002:*:0300' | grep -q "AMD"; then \
 		$(MAKE) rocm; \
@@ -55,7 +58,7 @@ images: ## Get the current controller, set the path, and build the Containerfile
 	fi
 
 .PHONY: cuda
-cuda: $(CUDA_DEPS)  ## Build container for NVidia CUDA
+cuda: check-engine $(CUDA_DEPS)  ## Build container for NVidia CUDA
 	$(CENGINE) build $(BUILD_ARGS) \
 		-t $(CONTAINER_PREFIX):$@ \
 		-f $(CUDA_CONTAINERFILE) \
@@ -64,7 +67,7 @@ cuda: $(CUDA_DEPS)  ## Build container for NVidia CUDA
 # The base container uses uids beyond 65535. Rootless builds may not work
 # unless the user account has extended subordinate ids up to 2**24 - 1.
 .PHONY: hpu
-hpu: $(HPU_DEPS)  ## Build container for Intel Gaudi HPU
+hpu: $(HPU_DEPS) check-engine ## Build container for Intel Gaudi HPU
 	$(CENGINE) build $(BUILD_ARGS) \
 		-t $(CONTAINER_PREFIX):$@ \
 		-f $< \
@@ -82,7 +85,7 @@ define build-rocm =
 endef
 
 .PHONY: rocm
-rocm:   ## Build container for AMD ROCm (auto-detect the ROCm GPU arch)
+rocm: check-rocm  ## Build container for AMD ROCm (auto-detect the ROCm GPU arch)
 	@# amdgpu-arch requires clang-tools-extra and rocm-hip-devel to work
 	@# rocminfo parsing is more messy, but requires less dependencies.
 	@arch=$(shell rocminfo | grep -o -m1 'gfx[1-9][0-9a-f]*'); \
@@ -123,21 +126,21 @@ rocm-gfx900: $(ROCM_DEPS)  ## Build container for AMD ROCm gfx900 (untested)
 	$(call build-rocm,gfx900,9.0.0)
 
 .PHONY: rocm-toolbox
-toolbox-rocm:  ## Create AMD ROCm toolbox from container
+toolbox-rocm: check-toolbox ## Create AMD ROCm toolbox from container
 	toolbox create --image $(CONTAINER_PREFIX):rocm $(TOOLBOX)
 
 .PHONY: toolbox-rm
-toolbox-rm:  ## Stop and remove toolbox container
+toolbox-rm: check-toolbox ## Stop and remove toolbox container
 	toolbox rm -f $(TOOLBOX)
 
 ##@ Development
 
 .PHONY: tests
-tests: ## Run tox -e unit against code
+tests: check-tox ## Run tox -e unit against code
 	tox -e py3-unit
 
 .PHONY: verify
-verify: ## Run tox -e fmt,lint,spellcheck against code
+verify: check-tox ## Run tox -e fmt,lint,spellcheck against code
 	tox p -e ruff,fastlint,spellcheck
 
 .PHONY: spellcheck-sort
@@ -145,11 +148,28 @@ spellcheck-sort: .spellcheck-en-custom.txt
 	sort -d -o $< $<
 
 .PHONY: man
-man:
+man: check-tox
 	tox -e docs
 
 .PHONY: docs
 docs: man ## Run tox -e docs against code
+
+##@ Validation
+.PHONY: check-tox
+check-tox:
+	@command -v tox &> /dev/null || (echo "'tox' is not installed" && exit 1)
+
+.PHONY: check-toolbox
+check-toolbox:
+	@command -v toolbox &> /dev/null || (echo "'toolbox' is not installed" && exit 1)
+
+.PHONY: check-engine
+check-engine:
+	@command -v $(CENGINE) &> /dev/null || (echo "'$(CENGINE)' container engine is not installed, you can override it with the 'CENGINE' variable" && exit 1)
+
+.PHONY: check-rocm
+check-rocm:
+	@command -v rocm &> /dev/null || (echo "'rocm' is not installed" && exit 1)
 
 ##@ Linting
 
@@ -168,6 +188,6 @@ else
 endif
 
 .PHONY: md-lint
-md-lint: ## Lint markdown files
+md-lint: check-engine ## Lint markdown files
 	$(ECHO_PREFIX) printf "  %-12s ./...\n" "[MD LINT]"
 	$(CMD_PREFIX) podman run --rm -v $(CURDIR):/workdir --security-opt label=disable docker.io/davidanson/markdownlint-cli2:v0.12.1 > /dev/null
