@@ -158,3 +158,19 @@ generate:
 """,
         ):
             config.read_config(config_path)
+
+    def test_validate_log_level_invalid(self):
+        cfg = config.get_default_config()
+        with pytest.raises(ValueError):
+            cfg.general.validate_log_level("INVALID")
+
+    def test_validate_log_level_valid(self):
+        cfg = config.get_default_config()
+        assert cfg.general.validate_log_level("DEBUG") == "DEBUG"
+        assert cfg.general.validate_log_level("INFO") == "INFO"
+        assert cfg.general.validate_log_level("WARNING") == "WARNING"
+        assert cfg.general.validate_log_level("WARN") == "WARN"
+        assert cfg.general.validate_log_level("FATAL") == "FATAL"
+        assert cfg.general.validate_log_level("CRITICAL") == "CRITICAL"
+        assert cfg.general.validate_log_level("ERROR") == "ERROR"
+        assert cfg.general.validate_log_level("NOTSET") == "NOTSET"
