@@ -153,3 +153,19 @@ pull_request_rules:
         - release-v0.14
   conditions:
     - label=backport-release-v0.14
+
+- name: Apply ci-failure label if any CI checks have failed
+  conditions:
+      - "#check-failure>0"
+  actions:
+    label:
+      add:
+        - ci-failure
+
+- name: Remove ci-failure label if no failures are present
+  conditions:
+      - "#check-failure=0"
+  actions:
+    label:
+      remove:
+        - ci-failure
