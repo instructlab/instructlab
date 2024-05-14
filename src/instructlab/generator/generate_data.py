@@ -336,6 +336,7 @@ def get_instructions_from_model(
 
 
 def generate_data(
+    ctx,
     logger,
     api_base,
     tls_insecure,
@@ -372,7 +373,7 @@ def generate_data(
     # pylint: disable=broad-exception-caught,raise-missing-from
     if taxonomy and os.path.exists(taxonomy):
         seed_instruction_data = read_taxonomy(
-            logger, taxonomy, taxonomy_base, yaml_rules
+            ctx, logger, taxonomy, taxonomy_base, yaml_rules
         )
     else:
         raise SystemExit(f"Error: taxonomy ({taxonomy}) does not exist.")

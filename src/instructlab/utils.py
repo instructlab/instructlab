@@ -240,6 +240,7 @@ def git_clone_checkout(
 
 
 def get_documents(
+    ctx,
     logger,
     source: Dict[str, Union[str, List[str]]],
     skip_checkout: bool = False,
@@ -424,9 +425,7 @@ def get_version(contents: Mapping) -> int:
 
 
 # pylint: disable=broad-exception-caught
-def read_taxonomy_file(
-    logger: Logger, file_path: str, yaml_rules: Optional[str] = None
-):
+def read_taxonomy_file(ctx, logger, file_path: str, yaml_rules: Optional[str] = None):
     seed_instruction_data = []
     warnings = 0
     errors = 0
@@ -517,7 +516,7 @@ def read_taxonomy_file(
         task_description = contents.get("task_description")
         documents = contents.get("document")
         if documents:
-            documents = get_documents(source=documents, logger=logger)
+            documents = get_documents(ctx, logger, documents)
             logger.debug("Content from git repo fetched")
 
         for seed_example in contents.get("seed_examples"):
@@ -541,12 +540,12 @@ def read_taxonomy_file(
     return seed_instruction_data, warnings, errors
 
 
-def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
+def read_taxonomy(ctx, logger, taxonomy, taxonomy_base, yaml_rules):
     seed_instruction_data = []
     is_file = os.path.isfile(taxonomy)
     if is_file:  # taxonomy is file
         seed_instruction_data, warnings, errors = read_taxonomy_file(
-            logger, taxonomy, yaml_rules
+            ctx, logger, taxonomy, yaml_rules
         )
         if warnings:
             logger.warn(
@@ -565,7 +564,9 @@ def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
                 logger.debug(f"* {e}")
         for f in updated_taxonomy_files:
             file_path = os.path.join(taxonomy, f)
-            data, warnings, errors = read_taxonomy_file(logger, file_path, yaml_rules)
+            data, warnings, errors = read_taxonomy_file(
+                ctx, logger, file_path, yaml_rules
+            )
             total_warnings += warnings
             total_errors += errors
             if data:

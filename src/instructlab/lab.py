@@ -271,7 +271,7 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
             for f in updated_taxonomy_files:
                 click.echo(f)
     try:
-        read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
+        read_taxonomy(ctx, logger, taxonomy_path, taxonomy_base, yaml_rules)
     except (SystemExit, yaml.YAMLError) as exc:
         if not quiet:
             click.secho(
@@ -528,6 +528,7 @@ def generate(
             f"Generating synthetic data using '{model}' model, taxonomy:'{taxonomy_path}' against {api_base} server"
         )
         generate_data(
+            ctx=ctx,
             logger=logger,
             api_base=api_base,
             api_key=api_key,
