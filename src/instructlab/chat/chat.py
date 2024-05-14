@@ -376,6 +376,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                         **create_params,
                     )
                 except openai.BadRequestError as e:
+                    logger.debug(f"BadRequestError: {e}")
                     if e.code == "context_length_exceeded":
                         if len(self.info["messages"]) > 1:
                             # Trim the oldest entry in our message history
@@ -390,6 +391,10 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                         )
                         self.info["messages"].pop()
                         raise KeyboardInterrupt from e
+                except openai.InternalServerError as e:
+                    logger.debug(f"InternalServerError: {e}")
+                    self.info["messages"].clear()
+                    raise KeyboardInterrupt from e
                 assert (
                     next(response).choices[0].delta.role == "assistant"
                 ), 'first response should be {"role": "assistant"}'
