@@ -23,6 +23,9 @@ import git
 import gitdb
 import yaml
 
+# First Party
+from instructlab import config
+
 # Local
 from . import common
 
@@ -239,6 +242,46 @@ def git_clone_checkout(
     return repo
 
 
+def get_confluence_docs(
+    ctx,
+    source: Dict[str, Union[str, List[str]]],
+) -> List[str]:
+    """
+    Retrieve the content of Confluence documents
+
+    Args:
+        source (dict): Source info containing references
+
+    Returns:
+         List[str]: List of document contents.
+    """
+    # pylint: disable=import-outside-toplevel
+    # Third Party
+    from atlassian import Confluence
+    from markdownify import markdownify
+
+    cfg = ctx.obj.config.confluence
+    if not cfg:
+        raise config.ConfigException("Missing Confluence configuration")
+    cf = source["confluence"]
+    logger = ctx.obj.logger
+    C = Confluence(url=cf["host"], username=cfg.user, token=cfg.token)
+    docs = []
+    for s in cf["spaces"]:
+        for p in s["pages"]:
+            n = C.get_page_id(s["name"], p["title"])
+            page = C.get_page_by_id(
+                n, "body.view,version", version=p.get("version", None)
+            )
+            m = page["title"] + "\n\n" + markdownify(page["body"]["view"]["value"])
+            docs.append(m)
+            logger.debug(
+                "Fetched '%s' v. %d %dB"
+                % (page["title"], page["version"]["number"], len(m))
+            )
+    return docs
+
+
 def get_documents(
     ctx,
     logger,
@@ -254,8 +297,14 @@ def get_documents(
     Returns:
          List[str]: List of document contents.
     """
+    docs = []
+    if "confluence" in source:
+        docs.extend(get_confluence_docs(ctx, source))
+    if "repo" in source:
+        docs.extend(get_git_docs(logger, source, skip_checkout))
+    logger.debug(f"Fetched {len(docs)} documents'")
 
-    return get_git_docs(logger, source, skip_checkout)
+    return docs
 
 
 def num_tokens_from_words(num_words) -> int:

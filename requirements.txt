@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
+atlassian-python-api
 click>=8.1.7,<9.0.0
 click-didyoumean>=0.3.0,<0.4.0
 datasets>=2.18.0,<3.0.0
@@ -12,6 +13,7 @@ httpx>=0.25.0,<1.0.0
 instructlab-quantize>=0.1.0
 jsonschema>=4.21.1,<5.0.0
 llama_cpp_python[server]==0.2.75
+markdownify
 mlx>=0.5.1,<0.6.0; sys_platform == 'darwin' and platform_machine == 'arm64'
 # HabanaLabs / Intel Gaudi env comes with Python 3.10 and slightly older
 # versions of some dependencies. Use '3.10' as an indicator.
