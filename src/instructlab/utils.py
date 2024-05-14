@@ -189,7 +189,7 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     return updated_taxonomy_files
 
 
-def get_documents(
+def get_git_docs(
     logger,
     source: Dict[str, Union[str, List[str]]],
     skip_checkout: bool = False,
@@ -237,6 +237,24 @@ def git_clone_checkout(
     if not skip_checkout:
         repo.git.checkout(commit_hash)
     return repo
+
+
+def get_documents(
+    logger,
+    source: Dict[str, Union[str, List[str]]],
+    skip_checkout: bool = False,
+) -> List[str]:
+    """
+    Retrieve the content of files from external sources.
+
+    Args:
+        source (dict): Source info containing references
+
+    Returns:
+         List[str]: List of document contents.
+    """
+
+    return get_git_docs(logger, source, skip_checkout)
 
 
 def num_tokens_from_words(num_words) -> int:
