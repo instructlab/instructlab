@@ -239,6 +239,36 @@ def git_clone_checkout(
     return repo
 
 
+def get_wiki_docs(
+    logger,
+    source: Dict[str, Union[str, List[str]]],
+) -> List[str]:
+    """
+    Retrieve the content of Confluence documents
+
+    Args:
+        source (dict): Source info containing references
+
+    Returns:
+         List[str]: List of document contents.
+    """
+    # pylint: disable=import-outside-toplevel
+    # Standard
+    import urllib.request
+
+    wiki = source["wiki"]
+    docs = []
+    for p in wiki["pages"]:
+        q = urllib.parse.urlencode(
+            {"action": "raw", "title": p["title"], "oldid": p["oldid"]}
+        )
+        with urllib.request.urlopen(f"{wiki['host']}/w/index.php?{q}") as f:
+            m = p["title"] + "\n\n" + f.read().decode("utf-8")
+            docs.append(m)
+            logger.debug("Fetched '%s' v. %d %dB" % (p["title"], p["oldid"], len(m)))
+    return docs
+
+
 def get_documents(
     logger,
     source: Dict[str, Union[str, List[str]]],
@@ -253,8 +283,14 @@ def get_documents(
     Returns:
          List[str]: List of document contents.
     """
+    docs = []
+    if "wiki" in source:
+        docs.extend(get_wiki_docs(logger, source))
+    if "repo" in source:
+        docs.extend(get_git_docs(logger, source, skip_checkout))
+    logger.debug(f"Fetched {len(docs)} documents'")
 
-    return get_git_docs(logger, source, skip_checkout)
+    return docs
 
 
 def num_tokens_from_words(num_words) -> int:
