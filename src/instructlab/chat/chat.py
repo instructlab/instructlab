@@ -311,7 +311,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         message = {"role": role, "content": content}
         self.info["messages"].append(message)
 
-    def start_prompt(self, content=None, box=True, logger=None):
+    def start_prompt(self, logger, content=None, box=True):
         handlers = {
             "/q": self._handle_quit,
             "quit": self._handle_quit,
@@ -534,7 +534,7 @@ def chat_cli(
         if not qq:
             print(f"{PROMPT_PREFIX}{question}")
         try:
-            ccb.start_prompt(question, box=(not qq))
+            ccb.start_prompt(logger, content=question, box=(not qq))
         except ChatException as exc:
             raise ChatException(f"API issue found while executing chat: {exc}")
         except (ChatQuitException, KeyboardInterrupt, EOFError):
@@ -550,7 +550,7 @@ def chat_cli(
     # Start chatting
     while True:
         try:
-            ccb.start_prompt(logger=logger)
+            ccb.start_prompt(logger)
         except KeyboardInterrupt:
             continue
         except ChatException as exc:
