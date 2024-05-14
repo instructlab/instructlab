@@ -149,6 +149,25 @@ class TestLabDiff:
             assert f"Taxonomy in /{self.taxonomy.root}/ is valid :)" in result.output
             assert result.exit_code == 0
 
+    def test_diff_valid_yaml_file(self):
+        with open("tests/testdata/skill_valid_answer.yaml", "rb") as qnafile:
+            valid_yaml_file = "compositional_skills/qna_valid.yaml"
+            file_path = self.taxonomy.create_untracked(valid_yaml_file, qnafile.read())
+            runner = CliRunner()
+            result = runner.invoke(
+                lab.cli,
+                [
+                    "--config=DEFAULT",
+                    "diff",
+                    "--taxonomy-base",
+                    TAXONOMY_BASE,
+                    "--taxonomy-path",
+                    file_path,
+                ],
+            )
+            assert f"Taxonomy in /{file_path}/ is valid :)" in result.output
+            assert result.exit_code == 0
+
     def test_diff_valid_yaml_quiet(self):
         with open("tests/testdata/skill_valid_answer.yaml", "rb") as qnafile:
             valid_yaml_file = "compositional_skills/qna_valid.yaml"
@@ -163,6 +182,26 @@ class TestLabDiff:
                     TAXONOMY_BASE,
                     "--taxonomy-path",
                     self.taxonomy.root,
+                    "--quiet",
+                ],
+            )
+            assert result.output == ""
+            assert result.exit_code == 0
+
+    def test_diff_valid_yaml_quiet_file(self):
+        with open("tests/testdata/skill_valid_answer.yaml", "rb") as qnafile:
+            valid_yaml_file = "compositional_skills/qna_valid.yaml"
+            file_path = self.taxonomy.create_untracked(valid_yaml_file, qnafile.read())
+            runner = CliRunner()
+            result = runner.invoke(
+                lab.cli,
+                [
+                    "--config=DEFAULT",
+                    "diff",
+                    "--taxonomy-base",
+                    TAXONOMY_BASE,
+                    "--taxonomy-path",
+                    file_path,
                     "--quiet",
                 ],
             )

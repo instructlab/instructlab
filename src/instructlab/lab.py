@@ -249,34 +249,36 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
         logger = logging.getLogger(__name__)
     else:
         logger = ctx.obj.logger
-    if quiet:
-        try:
-            read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
-        except (SystemExit, yaml.YAMLError) as exc:
-            raise SystemExit(1) from exc
-        return
-    try:
-        updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
-    except (SystemExit, GitError) as exc:
-        click.secho(
-            f"Reading taxonomy failed with the following error: {exc}",
-            fg="red",
-        )
-        raise SystemExit(1) from exc
-    for f in updated_taxonomy_files:
-        click.echo(f)
+
+    if not quiet:
+        is_file = os.path.isfile(taxonomy_path)
+        if is_file:  # taxonomy_path is file
+            click.echo(taxonomy_path)
+        else:  # taxonomy_path is dir
+            try:
+                updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
+            except (SystemExit, GitError) as exc:
+                click.secho(
+                    f"Reading taxonomy failed with the following error: {exc}",
+                    fg="red",
+                )
+                raise SystemExit(1) from exc
+            for f in updated_taxonomy_files:
+                click.echo(f)
     try:
         read_taxonomy(logger, taxonomy_path, taxonomy_base, yaml_rules)
     except (SystemExit, yaml.YAMLError) as exc:
-        click.secho(
-            f"Reading taxonomy failed with the following error: {exc}",
-            fg="red",
-        )
+        if not quiet:
+            click.secho(
+                f"Reading taxonomy failed with the following error: {exc}",
+                fg="red",
+            )
         raise SystemExit(1) from exc
-    click.secho(
-        f"Taxonomy in /{taxonomy_path}/ is valid :)",
-        fg="green",
-    )
+    if not quiet:
+        click.secho(
+            f"Taxonomy in /{taxonomy_path}/ is valid :)",
+            fg="green",
+        )
 
 
 # ilab list => ilab diff
