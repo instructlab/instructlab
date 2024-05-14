@@ -45,8 +45,8 @@ class _general(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore")
 
-    # optional fields
-    log_level: Optional[StrictStr] = "INFO"
+    # additional fields with defaults
+    log_level: StrictStr = "INFO"
 
     @field_validator("log_level")
     def validate_log_level(cls, v):
@@ -78,13 +78,13 @@ class _chat(BaseModel):
     # required fields
     model: StrictStr
 
-    # optional fields
-    vi_mode: Optional[bool] = False
-    visible_overflow: Optional[bool] = True
-    context: Optional[str] = "default"
+    # additional fields with defaults
+    vi_mode: bool = False
+    visible_overflow: bool = True
+    context: str = "default"
     session: Optional[str] = None
-    logs_dir: Optional[str] = "data/chatlogs"
-    greedy_mode: Optional[bool] = False
+    logs_dir: str = "data/chatlogs"
+    greedy_mode: bool = False
     max_tokens: Optional[int] = None
 
 
@@ -99,13 +99,13 @@ class _generate(BaseModel):
     taxonomy_path: StrictStr
     taxonomy_base: StrictStr
 
-    # optional fields
-    num_cpus: Optional[PositiveInt] = DEFAULT_NUM_CPUS
-    chunk_word_count: Optional[PositiveInt] = DEFAULT_CHUNK_WORD_COUNT
-    num_instructions: Optional[PositiveInt] = DEFAULT_NUM_INSTRUCTIONS
-    output_dir: Optional[StrictStr] = DEFAULT_GENERATED_FILES_OUTPUT_DIR
-    prompt_file: Optional[StrictStr] = DEFAULT_PROMPT_FILE
-    seed_file: Optional[StrictStr] = "seed_tasks.json"
+    # additional fields with defaults
+    num_cpus: PositiveInt = DEFAULT_NUM_CPUS
+    chunk_word_count: PositiveInt = DEFAULT_CHUNK_WORD_COUNT
+    num_instructions: PositiveInt = DEFAULT_NUM_INSTRUCTIONS
+    output_dir: StrictStr = DEFAULT_GENERATED_FILES_OUTPUT_DIR
+    prompt_file: StrictStr = DEFAULT_PROMPT_FILE
+    seed_file: StrictStr = "seed_tasks.json"
 
 
 class _serve(BaseModel):
@@ -117,10 +117,10 @@ class _serve(BaseModel):
     # required fields
     model_path: StrictStr
 
-    # optional fields
-    host_port: Optional[StrictStr] = "127.0.0.1:8000"
-    gpu_layers: Optional[int] = -1
-    max_ctx_size: Optional[PositiveInt] = 4096
+    # additional fields with defaults
+    host_port: StrictStr = "127.0.0.1:8000"
+    gpu_layers: int = -1
+    max_ctx_size: PositiveInt = 4096
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
@@ -135,8 +135,8 @@ class Config(BaseModel):
     generate: _generate
     serve: _serve
 
-    # optional fields
-    general: Optional[_general] = _general()
+    # additional fields with defaults
+    general: _general = _general()
 
     # model configuration
     model_config = ConfigDict(extra="ignore")
