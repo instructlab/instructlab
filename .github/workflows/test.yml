@@ -128,13 +128,29 @@ jobs:
         run: |
           pip cache remove llama_cpp_python
 
+      - name: Run tox docs target (expect failure since tox is not present)
+        run: make man
+        continue-on-error: true
+
+      - name: Run tox docs target
+        id: tox-docs
+        run: make man || echo "status=failed" >> "$GITHUB_OUTPUT"
+        continue-on-error: true
+
+      - name: Check for 'make man' failure
+        run: |
+          if [[ "${{ steps.tox-docs.outputs.status }}" != "failed" ]]; then
+            echo "'make man' did not fail as expected"
+            exit 1
+          fi
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install tox
 
       - name: Run tox docs target
-        run: tox -e docs
+        run: make man
 
       - name: Check that man pages were generated
         uses: andstor/file-existence-action@v3
