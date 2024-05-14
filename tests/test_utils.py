@@ -61,11 +61,11 @@ class TestUtils:
         "instructlab.utils.git_clone_checkout",
         return_value=Mock(spec=git.Repo, working_dir="tests/testdata/temp_repo"),
     )
-    def test_get_document(self, git_clone_checkout):
+    def test_get_git_docs(self, git_clone_checkout):
         with open(
             "tests/testdata/knowledge_valid.yaml", "r", encoding="utf-8"
         ) as qnafile:
-            documents = utils.get_documents(
+            documents = utils.get_git_docs(
                 source=yaml.safe_load(qnafile).get("document"),
                 skip_checkout=True,
                 logger=logging.getLogger("_test_"),
