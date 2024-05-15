@@ -43,7 +43,10 @@ jobs:
         name: Publish packages to test.pypi.org
         # environment: publish-test-pypi
         if: |
-            github.repository_owner == 'instructlab' && github.event.action == 'published'
+            github.repository_owner == 'instructlab' && (
+                github.event.action == 'published' ||
+                (github.event_name == 'push' && github.ref == 'refs/heads/main')
+            )
         permissions:
             contents: read
             # see https://docs.pypi.org/trusted-publishers/
