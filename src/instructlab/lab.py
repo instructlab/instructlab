@@ -307,8 +307,7 @@ utils.make_lab_diff_aliases(cli, diff)
 @click.option(
     "--model-family",
     type=str,
-    default="merlinite",
-    help="Model family is used to specify which chat template to serve with",
+    help="Force model family to specify which chat template to serve with",
 )
 @click.pass_context
 def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size, model_family):
@@ -449,8 +448,7 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size, model_family):
 )
 @click.option(
     "--model-family",
-    default="merlinite",
-    help="model family to use when picking a generation template",
+    help="Force model family to use when picking a generation template",
 )
 @click.pass_context
 def generate(
@@ -638,9 +636,7 @@ def generate(
 )
 @click.option(
     "--model-family",
-    default="merlinite",
-    show_default=True,
-    help="model family to use when picking a chat template",
+    help="Force model family to use when picking a chat template",
 )
 @click.pass_context
 def chat(

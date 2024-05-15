@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+from os import path
+from re import match
 from typing import Optional
 
 # Third Party
@@ -190,3 +192,7 @@ def write_config(cfg, config_file=DEFAULT_CONFIG):
 def get_api_base(host_port):
     """Returns server API URL, based on the provided host_port"""
     return f"http://{host_port}/v1"
+
+
+def get_model_family(forced, model_path):
+    return forced if forced else match(r"^\w*", path.basename(model_path)).group(0)
