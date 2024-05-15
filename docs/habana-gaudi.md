@@ -142,11 +142,11 @@ The [`SFTTrainer`](https://huggingface.co/docs/trl/sft_trainer) from `trl` does 
 
 ## Install and run InstructLab with Intel Gaudi
 
-Install `InstructLab` from checkout with additional dependency `habana`:
+Install `InstructLab` from checkout with additional dependencies:
 
 ```shell
 . $HABANALABS_VIRTUAL_DIR/bin/activate
-pip install './instructlab[habana]'
+pip install -r instructlab/requirements-hpu.txt ./instructlab
 ```
 
 > **TIP** If `llama-cpp-python` fails to build with error ``unsupported instruction `vpdpbusd'``, then install with `CFLAGS="-mno-avx" pip install ...`.
