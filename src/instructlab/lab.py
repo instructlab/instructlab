@@ -76,6 +76,7 @@ def cli(ctx, config_file):
         if config_file == "DEFAULT":
             config_obj = config.get_default_config()
         elif not os.path.isfile(config_file):
+            config_obj = None
             ctx.fail(
                 f"`{config_file}` does not exists, please run `ilab init` "
                 "or point to a valid configuration file using `--config=<path>`."
@@ -481,6 +482,7 @@ def generate(
     from .server import ensure_server
 
     server_process = None
+    server_queue = None
     logger = logging.getLogger("TODO")
     prompt_file_path = config.DEFAULT_PROMPT_FILE
     if ctx.obj is not None:
@@ -550,7 +552,7 @@ def generate(
         )
         raise click.exceptions.Exit(1)
     finally:
-        if server_process:
+        if server_process and server_queue:
             server_process.terminate()
             server_process.join(timeout=30)
             server_queue.close()
@@ -668,6 +670,7 @@ def chat(
     if endpoint_url:
         api_base = endpoint_url
         server_process = None
+        server_queue = None
     else:
         try:
             server_process, api_base, server_queue = ensure_server(
@@ -754,7 +757,7 @@ def chat(
         click.secho(f"Executing chat failed with: {exc}", fg="red")
         raise click.exceptions.Exit(1)
     finally:
-        if server_process:
+        if server_process and server_queue:
             server_process.terminate()
             server_process.join(timeout=30)
             server_queue.close()
