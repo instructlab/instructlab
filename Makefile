@@ -144,7 +144,7 @@ verify: check-tox ## Run tox -e fmt,lint,spellcheck against code
 	tox p -e ruff,fastlint,spellcheck
 
 .PHONY: spellcheck-sort
-spellcheck-sort: .spellcheck-en-custom.txt
+spellcheck-sort: .spellcheck-en-custom.txt ## Sort spellcheck directory
 	sort -d -o $< $<
 
 .PHONY: man
@@ -153,25 +153,6 @@ man: check-tox
 
 .PHONY: docs
 docs: man ## Run tox -e docs against code
-
-##@ Validation
-.PHONY: check-tox
-check-tox:
-	@command -v tox &> /dev/null || (echo "'tox' is not installed" && exit 1)
-
-.PHONY: check-toolbox
-check-toolbox:
-	@command -v toolbox &> /dev/null || (echo "'toolbox' is not installed" && exit 1)
-
-.PHONY: check-engine
-check-engine:
-	@command -v $(CENGINE) &> /dev/null || (echo "'$(CENGINE)' container engine is not installed, you can override it with the 'CENGINE' variable" && exit 1)
-
-.PHONY: check-rocm
-check-rocm:
-	@command -v rocm &> /dev/null || (echo "'rocm' is not installed" && exit 1)
-
-##@ Linting
 
 #
 # If you want to see the full commands, run:
@@ -191,3 +172,21 @@ endif
 md-lint: check-engine ## Lint markdown files
 	$(ECHO_PREFIX) printf "  %-12s ./...\n" "[MD LINT]"
 	$(CMD_PREFIX) $(CENGINE) run --rm -v $(CURDIR):/workdir --security-opt label=disable docker.io/davidanson/markdownlint-cli2:v0.12.1 > /dev/null
+
+##@ Validation
+
+.PHONY: check-tox
+check-tox: ## ensure tox is installed
+	@command -v tox &> /dev/null || (echo "'tox' is not installed" && exit 1)
+
+.PHONY: check-toolbox
+check-toolbox: ## ensure toolbox is installed
+	@command -v toolbox &> /dev/null || (echo "'toolbox' is not installed" && exit 1)
+
+.PHONY: check-engine
+check-engine: ## ensure the container engine is installed
+	@command -v $(CENGINE) &> /dev/null || (echo "'$(CENGINE)' container engine is not installed, you can override it with the 'CENGINE' variable" && exit 1)
+
+.PHONY: check-rocm
+check-rocm: ## ensure rocm is installed
+	@command -v rocm &> /dev/null || (echo "'rocm' is not installed" && exit 1)
