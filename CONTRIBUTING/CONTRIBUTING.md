@@ -73,7 +73,7 @@ The following tools are required:
 You can setup your dev environment using [`tox`](https://tox.wiki/en/latest/), an environment orchestrator which allows for setting up environments for and invoking builds, unit tests, formatting, linting, etc. Install tox with:
 
 ```shell
-pip install -r requirements-dev.txt
+pip install -r requirements/dev.txt
 ```
 
 Install project requirements with:

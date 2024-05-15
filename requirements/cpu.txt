@@ -1,0 +1,11 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# PyTorch with CPU bindings only
+-c constraints.txt
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+llama_cpp_python[server] \
+    -C cmake.args="-DLLAMA_NATIVE=off"
+
+# base requirements last
+-r base.txt
