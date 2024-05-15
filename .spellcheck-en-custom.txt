@@ -23,6 +23,9 @@ dataset
 dev
 ditaa
 DKMS
+Doxyfile
+doxygen
+Doxygen
 dr
 Dropdown
 env
@@ -40,6 +43,7 @@ habana
 Habana
 hipBLAS
 HPU
+html
 ilab
 impactful
 Inferencing

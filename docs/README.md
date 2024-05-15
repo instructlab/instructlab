@@ -1,4 +1,4 @@
-# Workflow PlantUML
+## Workflow PlantUML
 
 Workflow figure is generated using [PlantUML](https://plantuml.com/ditaa) with
 the [ditaa](https://ditaa.sourceforge.net).
@@ -15,3 +15,14 @@ settings to make the preview work with a remote render:
 ```
 
 [ASCIIFlow](https://asciiflow.com/#/) is a helpful tool to edit the source code.
+
+## Doxygen
+
+Doxygen documentation generator is included in the package named `doxygen` across the most distributions.
+For other options please refer [Doxygen installation manual](https://www.doxygen.nl/manual/install.html)
+
+To list all available configuration options of Doxyfile with descriptions, run: `doxygen -g -`.
+
+To generate the documentation run `make` in directory `docs`.
+
+After the generation, open instructlab/docs/doxygen/index.html in a browser.
