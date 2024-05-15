@@ -1,6 +1,4 @@
-# Optional dependencies for Intel Gaudi / Habana Labs HPU devices
-#
-# install with 'pip install instructlab[hpu]'
+# Dependencies for Intel Gaudi / Habana Labs HPU devices
 #
 
 # upstream version "optimum[habana]>=1.19.0,<2.0.0" does not work
