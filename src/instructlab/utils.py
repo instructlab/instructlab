@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
+"""utils"""
+
 # Standard
 from functools import cache, wraps
 from logging import Logger
