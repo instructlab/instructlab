@@ -11,7 +11,7 @@ on:
   pull_request:
     branches:
       - "main"
-      - '.github/**'
+      - "release-**"
     paths:
       - '.github/**'
 
