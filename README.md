@@ -13,17 +13,11 @@
 - [📋 Requirements](#-requirements)
 - [✅ Getting started](#-getting-started)
   - [🧰 Installing `ilab`](#-installing-ilab)
-    - [To install with no GPU acceleration and PyTorch without CUDA bindings](#to-install-with-no-gpu-acceleration-and-pytorch-without-cuda-bindings)
-    - [To install with AMD ROCm](#to-install-with-amd-rocm)
-    - [To install with Apple Metal on M1/M2/M3 Mac](#to-install-with-apple-metal-on-m1m2m3-mac)
-    - [To install with Nvidia CUDA](#to-install-with-nvidia-cuda)
-    - [Example output](#example-output)
-    - [Bash (version 4.4 or newer)](#bash-version-44-or-newer)
-    - [Zsh](#zsh)
-    - [Fish](#fish)
+    - [Install with no GPU acceleration and PyTorch without CUDA bindings](#install-using-pytorch-without-cuda-bindings-and-no-gpu-acceleration)
+    - [Install with AMD ROCm](#install-with-amd-rocm)
+    - [Install with Apple Metal on M1/M2/M3 Macs](#install-with-apple-metal-on-m1m2m3-macs)
+    - [Install with Nvidia CUDA](#install-with-nvidia-cuda)
   - [🏗️ Initialize `ilab`](#️-initialize-ilab)
-    - [Example output](#example-output-1)
-    - [Example output](#example-output-2)
   - [📥 Download the model](#-download-the-model)
   - [🍴 Serving the model](#-serving-the-model)
   - [📣 Chat with the model (Optional)](#-chat-with-the-model-optional)
@@ -31,12 +25,11 @@
   - [🎁 Contribute knowledge or compositional skills](#-contribute-knowledge-or-compositional-skills)
   - [📜 List and validate your new data](#-list-and-validate-your-new-data)
   - [🚀 Generate a synthetic dataset](#-generate-a-synthetic-dataset)
-    - [Example output](#example-output-3)
-  - [👩‍🏫 Train the model](#-train-the-model)
+  - [👩‍🏫 Training the model](#-training-the-model)
     - [Train the model locally on Linux](#train-the-model-locally-on-linux)
-    - [Train the model locally on an M-series Mac](#train-the-model-locally-on-an-m-series-mac)
-    - [Training the model locally with GPU acceleration](#training-the-model-locally-with-gpu-acceleration)
-    - [Training the model in the cloud](#training-the-model-in-the-cloud)
+    - [Train the model locally on M-series Macs](#train-the-model-locally-on-an-m-series-mac)
+    - [Train the model locally with GPU acceleration](#train-the-model-locally-with-gpu-acceleration)
+    - [Train the model in the cloud](#train-the-model-in-the-cloud)
   - [📜 Test the newly trained model](#-test-the-newly-trained-model)
   - [🍴 Serve the newly trained model](#-serve-the-newly-trained-model)
 - [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
@@ -91,7 +84,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 > **NOTE:** PyTorch 2.2.1 does not support `torch.compile` with Python 3.12. On Fedora 39+, install `python3.11-devel` and create the virtual env with `python3.11` if you wish to use PyTorch's JIT compiler.
 <!-- -->
-> **NOTE:** When installing the `ilab` CLI on macOS, you may have to run the `xcode select --install` command to install the required packages previously listed.
+> **NOTE:** When installing the `ilab` CLI on macOS, you may have to run the `xcode select --install` command, installing the required packages previously listed.
 
 ## ✅ Getting started
 
@@ -120,56 +113,56 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
    > **NOTE:** The following steps in this document use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. However, if you use another tool such as [pyenv](https://github.com/pyenv/pyenv) or [Conda Miniforge](https://github.com/conda-forge/miniforge) for managing Python environments on your machine continue to use that tool instead. Otherwise, you may have issues with packages that are installed but not found in `venv`.
 
-3. Install and activate your `venv` environment by running the following command:
+3. There are a few ways you can locally install the `ilab` CLI. Select your preferred installation method from the following instructions. You can then install `ilab` and activate your `venv` environment.
 
    > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection. In case installation fails with error ``unsupported instruction `vpdpbusd'``, append `-C cmake.args="-DLLAMA_NATIVE=off"` to `pip install` command.
 
    See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for how to
-   to enable hardware acceleration for inference and training on AMD ROCm,
+   to enable hardware acceleration for interaction and training on AMD ROCm,
    Apple Metal Performance Shaders (MPS), and Nvidia CUDA.
 
-   #### To install with no GPU acceleration and PyTorch without CUDA bindings
+   #### Install using PyTorch without CUDA bindings and no GPU acceleration
 
-   ```shell
-   python3 -m venv --upgrade-deps venv
-   source venv/bin/activate
-   (venv) $ pip cache remove llama_cpp_python
-   (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable --extra-index-url=https://download.pytorch.org/whl/cpu
-   ```
+      ```shell
+      python3 -m venv --upgrade-deps venv
+      source venv/bin/activate
+      (venv) $ pip cache remove llama_cpp_python
+      (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable --extra-index-url=https://download.pytorch.org/whl/cpu
+      ```
 
-   #### To install with AMD ROCm
+   #### Install with AMD ROCm
 
-   ```shell
-   python3 -m venv --upgrade-deps venv
-   source venv/bin/activate
-   (venv) $ pip cache remove llama_cpp_python
-   (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable \
-       --extra-index-url https://download.pytorch.org/whl/rocm6.0 \
-       -C cmake.args="-DLLAMA_HIPBLAS=on" \
-       -C cmake.args="-DAMDGPU_TARGETS=all" \
-       -C cmake.args="-DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang" \
-       -C cmake.args="-DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++" \
-       -C cmake.args="-DCMAKE_PREFIX_PATH=/opt/rocm"
-   ```
+      ```shell
+      python3 -m venv --upgrade-deps venv
+      source venv/bin/activate
+      (venv) $ pip cache remove llama_cpp_python
+      (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable \
+         --extra-index-url https://download.pytorch.org/whl/rocm6.0 \
+         -C cmake.args="-DLLAMA_HIPBLAS=on" \
+         -C cmake.args="-DAMDGPU_TARGETS=all" \
+         -C cmake.args="-DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang" \
+         -C cmake.args="-DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++" \
+         -C cmake.args="-DCMAKE_PREFIX_PATH=/opt/rocm"
+      ```
 
-   On Fedora 40+, use `-DCMAKE_C_COMPILER=clang-17` and `-DCMAKE_CXX_COMPILER=clang++-17`.
+      On Fedora 40+, use `-DCMAKE_C_COMPILER=clang-17` and `-DCMAKE_CXX_COMPILER=clang++-17`.
 
-   #### To install with Apple Metal on M1/M2/M3 Mac
+   #### Install with Apple Metal on M1/M2/M3 Macs
 
-   ```shell
-   python3 -m venv --upgrade-deps venv
-   source venv/bin/activate
-   (venv) $ pip cache remove llama_cpp_python
-   (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable -C cmake.args="-DLLAMA_METAL=on"
-   ```
+      ```shell
+      python3 -m venv --upgrade-deps venv
+      source venv/bin/activate
+      (venv) $ pip cache remove llama_cpp_python
+      (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable -C cmake.args="-DLLAMA_METAL=on"
+      ```
 
-   #### To install with Nvidia CUDA
+   #### Install with Nvidia CUDA
 
-   ```shell
-   python3 -m venv --upgrade-deps venv
-   source venv/bin/activate
-   (venv) $ pip cache remove llama_cpp_python
-   (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable -C cmake.args="-DLLAMA_CUBLAS=on"
+      ```shell
+      python3 -m venv --upgrade-deps venv
+      source venv/bin/activate
+      (venv) $ pip cache remove llama_cpp_python
+      (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable -C cmake.args="-DLLAMA_CUBLAS=on"
    ```
 
 4. From your `venv` environment, verify `ilab` is installed correctly, by running the `ilab` command.
@@ -178,7 +171,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    ilab
    ```
 
-   #### Example output
+   *Example output of the `ilab` command*
 
    ```shell
    (venv) $ ilab
@@ -213,7 +206,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    source venv/bin/activate
    ```
 
-5. You may optionally enable tab completion for the `ilab` command.
+5. Optional: You can enable tab completion for the `ilab` command.
 
    #### Bash (version 4.4 or newer)
 
@@ -270,7 +263,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    ilab init
    ```
 
-   #### Example output
+   *Example output*
 
    ```shell
    Welcome to InstructLab CLI. This guide will help you set up your environment.
@@ -284,7 +277,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
    **Optional**: If you want to point to an existing local clone of the `taxonomy` repository, you can pass the path interactively or alternatively with the `--taxonomy-path` flag.
 
-   #### Example output
+   *Example output after initializing `ilab`*
 
    ```shell
    (venv) $ ilab init
@@ -311,13 +304,13 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 ### 📥 Download the model
 
-- Run the `ilab download`command.
+- Run the `ilab download` command.
 
   ```shell
   ilab download
   ```
 
-  `ilab download` will download a pre-trained [model](https://huggingface.co/instructlab/) (~4.4G) from HuggingFace and store it in a `models` directory:
+  `ilab download` downloads a compact pre-trained version of the [model](https://huggingface.co/instructlab/) (~4.4G) from HuggingFace and store it in a `models` directory:
 
   ```shell
   (venv) $ ilab download
@@ -413,7 +406,7 @@ Before following these instructions, ensure the existing model you are adding sk
 
    > **NOTE:** ⏳ This can take from 15 minutes to 1+ hours to complete, depending on your computing resources.
 
-   #### Example output
+   *Example output of `ilab generate`*
 
    ```shell
    (venv) $ ilab generate
@@ -446,11 +439,11 @@ Before following these instructions, ensure the existing model you are adding sk
    ilab generate --endpoint-url http://localhost:8000/v1
    ```
 
-### 👩‍🏫 Train the model
+### 👩‍🏫 Training the model
 
-There are three options to train the model on your synthetic data-enhanced dataset.
+There are many options for training the model with your synthetic data-enhanced dataset.
 
-> **Note:** **Every** `ilab` command needs to be run from within your Python virtual environment.
+> **Note:** **Every** `ilab` command needs to run from within your Python virtual environment.
 
 #### Train the model locally on Linux
 
@@ -488,7 +481,7 @@ adapters-030.npz        adapters-070.npz        adapters.npz            special_
 adapters-040.npz        adapters-080.npz        added_tokens.json       tokenizer.jso
 ```
 
-#### Training the model locally with GPU acceleration
+#### Train the model locally with GPU acceleration
 
 Training has experimental support for GPU acceleration with Nvidia CUDA or AMD ROCm. Please see [the GPU acceleration documentation](./docs/gpu-acceleration.md) for more details. At present, hardware acceleration requires a data center GPU or high-end consumer GPU with at least 18 GB free memory.
 
@@ -496,7 +489,7 @@ Training has experimental support for GPU acceleration with Nvidia CUDA or AMD R
 ilab train --device=cuda
 ```
 
-#### Training the model in the cloud
+#### Train the model in the cloud
 
 Follow the instructions in [Training](./notebooks/README.md).
 
