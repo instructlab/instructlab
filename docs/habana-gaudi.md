@@ -136,7 +136,7 @@ Validate installation:
 
 ## Habana Lab's PyTorch stack
 
-Habana Labs comes with a modified fork of PyTorch that is build with Intel's oneAPI Math Kernel Library (oneMKL). The actual HPU bindings and helpers are provided by the the `habana_framework` package. Imports of `habana_framework` sub-packages register `hpu` device support, `torch.hpu` module, and `dynamo` backends.
+Habana Labs comes with a modified fork of PyTorch that is build with Intel's oneAPI Math Kernel Library (oneMKL). The actual HPU bindings and helpers are provided by the `habana_framework` package. Imports of `habana_framework` sub-packages register `hpu` device support, `torch.hpu` module, and `dynamo` backends.
 
 The [`SFTTrainer`](https://huggingface.co/docs/trl/sft_trainer) from `trl` does not work with Habana stack. Instead the `GaudiSFTTrainer` from [optimum-habana](https://huggingface.co/docs/optimum/habana/index) is needed. The version on PyPI is currently broken, but the HabanaAI [optimum-habana-fork](https://github.com/HabanaAI/optimum-habana-fork) works.
 
