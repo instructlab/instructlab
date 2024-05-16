@@ -223,6 +223,7 @@ def server(
     # In this case, we want to redirect stdout to null to avoid cluttering the chat with messages
     # returned by the server.
     if is_temp_server_running():
+        # TODO: redirect temp server logs to a file instead of hidding the logs completely
         # Redirect stdout and stderr to null
         with (
             open(os.devnull, "w", encoding="utf-8") as f,

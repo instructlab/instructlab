@@ -24,7 +24,7 @@ import yaml
 
 # Local
 # NOTE: Subcommands are using local imports to speed up startup time.
-from . import config, utils
+from . import config, log, utils
 from .sysinfo import get_sysinfo
 
 # 'fork' is unsafe and incompatible with some hardware accelerators.
@@ -47,9 +47,22 @@ class Lab:
 
     def __init__(self, config_obj: config.Config):
         self.config = config_obj
-        FORMAT = "%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s"
-        logging.basicConfig(format=FORMAT)
+
+        # Set up logging for the Lab class
         self.logger = logging.getLogger(__name__)
+
+        # Create a formatter
+        formatter = log.CustomFormatter(log.FORMAT)
+
+        # Create a handler and set the formatter
+        handler = logging.StreamHandler()
+        handler.setFormatter(formatter)
+
+        logging.basicConfig(
+            format=log.FORMAT,
+            handlers=[handler],
+        )
+
         self.logger.setLevel(self.config.general.log_level.upper())
 
 
@@ -320,6 +333,9 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size, model_family):
     # pylint: disable=C0415
     # Local
     from .server import ServerException, server
+
+    # Redirect server stdout and stderr to the logger
+    log.stdout_stderr_to_logger(ctx.obj.logger)
 
     ctx.obj.logger.info(
         f"Using model '{model_path}' with {gpu_layers} gpu-layers and {max_ctx_size} max context size."
@@ -805,8 +821,8 @@ def download(ctx, repository, release, filename, model_dir, hf_token):
     click.echo(f"Downloading model from {repository}@{release} to {model_dir}...")
     if hf_token == "" and "instructlab" not in repository:
         raise ValueError(
-            """HF_TOKEN var needs to be set in your environment to download HF Model. 
-            Alternatively, the token can be passed with --hf-token flag. 
+            """HF_TOKEN var needs to be set in your environment to download HF Model.
+            Alternatively, the token can be passed with --hf-token flag.
             The HF Token is used to authenticate your identity to the Hugging Face Hub."""
         )
     try:
