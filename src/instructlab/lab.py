@@ -1373,6 +1373,90 @@ def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model
     os.remove(os.path.join(model_dir_fused_pt, f"{model_name}.gguf"))
 
 
+@cli.command()
+@click.option(
+    "--model-path",
+    type=click.Path(),
+    default=config.DEFAULT_MODEL_PATH,
+    show_default=True,
+    help="Path to the model to be signed.",
+)
+@click.option(
+    "--bundle-path",
+    type=click.Path(),
+    default=None,
+    show_default=True,
+    help="Path to save the Sigstore bundle file after signing.",
+)
+@click.option(
+    "--staging",
+    is_flag=True,
+    help="Use Sigstore's staging environment.",
+)
+def sign(model_path, bundle_path, staging):
+    """Signs a model with Sigstore"""
+    # pylint: disable=import-outside-toplevel
+
+    # Local
+    from .provenance.sigstore import sign_model
+
+    if bundle_path is None:
+        bundle_path = f"{model_path}.sigstore.json"
+
+    sign_model(model_path=model_path, bundle_path=bundle_path, staging=staging)
+
+
+@cli.command()
+@click.option(
+    "--model-path",
+    type=click.Path(),
+    default=config.DEFAULT_MODEL_PATH,
+    show_default=True,
+    help="Path to the model to be signed.",
+)
+@click.option(
+    "--bundle-path",
+    type=click.Path(),
+    default=None,
+    show_default=True,
+    help="Path to save the Sigstore bundle file after signing.",
+)
+@click.option(
+    "--identity",
+    help="Certificate identity to verify against.",
+)
+@click.option(
+    "--issuer",
+    help="Certificate identity's issuing authority.",
+    default="https://github.com/login/oauth",
+    show_default=True,
+)
+@click.option(
+    "--staging",
+    is_flag=True,
+    help="Use Sigstore's staging environment.",
+)
+def verify(model_path, bundle_path, identity, issuer, staging):
+    """Signs a model with Sigstore"""
+    # pylint: disable=import-outside-toplevel
+
+    # Local
+    from .provenance.sigstore import verify_model
+
+    if bundle_path is None:
+        bundle_path = f"{model_path}.sigstore.json"
+
+    result = verify_model(
+        model_path=model_path,
+        bundle_path=bundle_path,
+        identity=identity,
+        issuer=issuer,
+        staging=staging,
+    )
+
+    print(result)
+
+
 @cli.command
 def sysinfo():
     """Print system information"""
