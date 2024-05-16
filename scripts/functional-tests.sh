@@ -43,7 +43,7 @@ cleanup() {
     # revert model name change from test_model_print()
     sed -i.bak "s/baz/merlinite-7b-lab-Q4_K_M/g" config.yaml
     mv models/foo.gguf models/merlinite-7b-lab-Q4_K_M.gguf || true
-    rm -f config.yaml.bak
+    rm -f config.yaml.bak serve.log
     set -e
 }
 
@@ -309,10 +309,20 @@ test_temp_server_ignore_internal_messages(){
 
 test_server_welcome_message(){
     # test that the server welcome message is displayed
-    ilab serve &
+    ilab serve --log-file serve.log &
     PID_SERVE=$!
 
     wait_for_server
+
+    if ! timeout 10 bash -c '
+        until test -s serve.log; do
+        echo "waiting for server log file to be created"
+        sleep 1
+    done
+    '; then
+        echo "server log file was not created"
+        exit 1
+    fi
 }
 
 wait_for_server(){

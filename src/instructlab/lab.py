@@ -327,15 +327,22 @@ utils.make_lab_diff_aliases(cli, diff)
     type=str,
     help="Force model family to specify which chat template to serve with",
 )
+@click.option(
+    "--log-file",
+    type=click.Path(),
+    help="Log file path to write server logs to.",
+)
 @click.pass_context
-def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size, model_family):
+def serve(
+    ctx, model_path, gpu_layers, num_threads, max_ctx_size, model_family, log_file
+):
     """Start a local server"""
     # pylint: disable=C0415
     # Local
     from .server import ServerException, server
 
     # Redirect server stdout and stderr to the logger
-    log.stdout_stderr_to_logger(ctx.obj.logger)
+    log.stdout_stderr_to_logger(ctx.obj.logger, log_file)
 
     ctx.obj.logger.info(
         f"Using model '{model_path}' with {gpu_layers} gpu-layers and {max_ctx_size} max context size."
