@@ -173,20 +173,18 @@ md-lint: check-engine ## Lint markdown files
 	$(ECHO_PREFIX) printf "  %-12s ./...\n" "[MD LINT]"
 	$(CMD_PREFIX) $(CENGINE) run --rm -v $(CURDIR):/workdir --security-opt label=disable docker.io/davidanson/markdownlint-cli2:v0.12.1 > /dev/null
 
-##@ Validation
-
 .PHONY: check-tox
-check-tox: ## ensure tox is installed
+check-tox:
 	@command -v tox &> /dev/null || (echo "'tox' is not installed" && exit 1)
 
 .PHONY: check-toolbox
-check-toolbox: ## ensure toolbox is installed
+check-toolbox:
 	@command -v toolbox &> /dev/null || (echo "'toolbox' is not installed" && exit 1)
 
 .PHONY: check-engine
-check-engine: ## ensure the container engine is installed
+check-engine:
 	@command -v $(CENGINE) &> /dev/null || (echo "'$(CENGINE)' container engine is not installed, you can override it with the 'CENGINE' variable" && exit 1)
 
 .PHONY: check-rocm
-check-rocm: ## ensure rocm is installed
+check-rocm:
 	@command -v rocm &> /dev/null || (echo "'rocm' is not installed" && exit 1)
