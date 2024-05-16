@@ -8,6 +8,8 @@ backends
 backport
 backported
 Bhandwaldar
+CDI
+chatbot
 cli
 CLI
 Colab
@@ -18,13 +20,16 @@ coreutils
 cpp
 CRB
 cuBLAS
+cuda
 CUDA
 dataset
 dev
+devel
 ditaa
 DKMS
 dr
 Dropdown
+entrypoint
 env
 EPEL
 Eval
@@ -58,6 +63,7 @@ LLM
 llms
 LLVM
 lora
+Makefile
 Merlinite
 Miniforge
 Mixtral
@@ -110,9 +116,11 @@ th
 tl
 tox
 UI
+UID
 unquantized
 USM
 venv
+virtualenv
 wikisql
 WSL
 xcode
