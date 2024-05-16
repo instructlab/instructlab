@@ -9,8 +9,10 @@ from .chat import chat
 from .convert import convert
 from .download import download
 from .serve import serve
+from .sign import sign
 from .test import test
 from .train import train
+from .verify import verify
 
 
 @click.group(cls=DYMGroup)
@@ -31,3 +33,5 @@ model.add_command(convert)
 model.add_command(chat)
 model.add_command(test)
 model.add_command(download)
+model.add_command(sign)
+model.add_command(verify)
