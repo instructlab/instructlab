@@ -169,3 +169,19 @@ pull_request_rules:
     label:
       remove:
         - ci-failure
+
+- name: Apply 'one-approval' label if one of the maintainer approved the PR
+  conditions:
+      - "#approved-reviews-by=1"
+  actions:
+    label:
+      add:
+        - one-approval
+
+- name: Remove 'one-approval' label if the approval was reset
+  conditions:
+      - "#approved-reviews-by!=1"
+  actions:
+    label:
+      remove:
+        - one-approval
