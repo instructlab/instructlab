@@ -432,6 +432,12 @@ def read_taxonomy_file(
             logger.warn(f"Skipping {file_path} because it is empty!")
             warnings += 1
             return None, warnings, errors
+        if not isinstance(contents, Mapping):
+            logger.error(
+                f"{file_path} is not valid. The top-level element is not an object with key-value pairs."
+            )
+            errors += 1
+            return None, warnings, errors
 
         # do general YAML linting if specified
         version = get_version(contents)
