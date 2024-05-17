@@ -85,6 +85,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 > **NOTE:** PyTorch 2.2.1 does not support `torch.compile` with Python 3.12. On Fedora 39+, install `python3.11-devel` and create the virtual env with `python3.11` if you wish to use PyTorch's JIT compiler.
 <!-- -->
 > **NOTE:** When installing the `ilab` CLI on macOS, you may have to run the `xcode select --install` command, installing the required packages previously listed.
+> **NOTE:** The instructions in Fedora's guide might also apply when using [distrobox](https://distrobox.it/) to launch a Fedora container (based on testing with SteamOS). 
 
 ## ✅ Getting started
 
