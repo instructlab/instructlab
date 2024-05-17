@@ -22,7 +22,7 @@ import httpx
 import openai
 
 # Local
-from ..config import DEFAULT_API_KEY, DEFAULT_CONNECTION_TIMEOUT
+from ..config import DEFAULT_CONNECTION_TIMEOUT
 from ..utils import get_sysprompt
 
 HELP_MD = """
@@ -72,7 +72,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         vi_mode=False,
         prompt=True,
         vertical_overflow="ellipsis",
-        loaded={},
+        loaded=None,
         log_file=None,
         greedy_mode=False,
         max_tokens=None,
@@ -112,10 +112,10 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
     def log_message(self, msg):
         if self.log_file:
-            with open(self.log_file, "a") as fp:
+            with open(self.log_file, "a", encoding="utf-8") as fp:
                 fp.write(msg)
 
-    def greet(self, help=False, new=False, session_name="new session"):
+    def greet(self, help=False, new=False, session_name="new session"):  # pylint: disable=redefined-builtin
         side_info_str = (" (type `/h` for help)" if help else "") + (
             f" ({session_name})" if new else ""
         )
@@ -144,10 +144,10 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             ]
         )
 
-    def _handle_quit(self, content):
+    def _handle_quit(self):
         raise ChatQuitException
 
-    def _handle_help(self, content):
+    def _handle_help(self):
         self._sys_print(Markdown(HELP_MD))
         raise KeyboardInterrupt
 
@@ -207,7 +207,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self.greet(new=True)
         raise KeyboardInterrupt
 
-    def __handle_replay(self, content, display_wrapper=(lambda x: x)):
+    def __handle_replay(self, content, display_wrapper=lambda x: x):
         # if the history is empty, then return
         if (
             len(self.info["messages"]) == 1
@@ -219,17 +219,17 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             i = 1 if len(cs) == 1 else int(cs[1]) * 2 - 1
             if abs(i) >= len(self.info["messages"]):
                 raise IndexError
-        except (IndexError, ValueError):
+        except (IndexError, ValueError) as exc:
             self.console.print(
                 display_wrapper("Invalid index: " + content), style="bold red"
             )
-            raise KeyboardInterrupt
+            raise KeyboardInterrupt from exc
         if len(self.info["messages"]) > abs(i):
             self.console.print(display_wrapper(self.info["messages"][-i]["content"]))
         raise KeyboardInterrupt
 
     def _handle_display(self, content):
-        return self.__handle_replay(content, display_wrapper=(lambda x: Panel(x)))
+        return self.__handle_replay(content, display_wrapper=lambda x: Panel(x))  # pylint: disable=unnecessary-lambda
 
     def _load_session_history(self, content=None):
         data = self.info["messages"]
@@ -266,7 +266,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             )
             raise KeyboardInterrupt
         filepath = cs[1]
-        with open(filepath, "w") as outfile:
+        with open(filepath, "w", encoding="utf-8") as outfile:
             json.dump(self.info["messages"], outfile, indent=4)
         raise KeyboardInterrupt
 
@@ -287,7 +287,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                 )
             )
             raise KeyboardInterrupt
-        with open(filepath, "r") as session:
+        with open(filepath, "r", encoding="utf-8") as session:
             messages = json.loads(session.read())
         if content[:2] == "/L":
             self.loaded["name"] = filepath
@@ -384,13 +384,12 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                             )
                             self.info["messages"] = self.info["messages"][1:]
                             continue
-                        else:
-                            # We only have a single message and it's still to big.
-                            self.console.print(
-                                "Message too large for context size.", style="bold red"
-                            )
-                            self.info["messages"].pop()
-                            raise KeyboardInterrupt
+                        # We only have a single message and it's still to big.
+                        self.console.print(
+                            "Message too large for context size.", style="bold red"
+                        )
+                        self.info["messages"].pop()
+                        raise KeyboardInterrupt from e
                 assert (
                     next(response).choices[0].delta.role == "assistant"
                 ), 'first response should be {"role": "assistant"}'
@@ -406,19 +405,19 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             )
             self.info["messages"].pop()
             raise ChatException("Rate limit exceeded") from e
-        except openai.APIConnectionError:
+        except openai.APIConnectionError as e:
             self.console.print("Connection error, try again...", style="red bold")
             self.info["messages"].pop()
-            raise KeyboardInterrupt
+            raise KeyboardInterrupt from e
         except KeyboardInterrupt as e:
             raise e
         except httpx.RemoteProtocolError as e:
             self.console.print("Connection to the server was closed", style="bold red")
             self.info["messages"].pop()
             raise ChatException("Connection to the server was closed") from e
-        except:
+        except Exception as e:
             self.console.print("Unknown error", style="bold red")
-            raise ChatException(f"Unknown error: {sys.exc_info()[0]}")
+            raise ChatException(f"Unknown error: {sys.exc_info()[0]}") from e
 
         response_content = Text()
         panel = (
@@ -432,7 +431,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             console=self.console,
             refresh_per_second=5,
             vertical_overflow=self.vertical_overflow,
-        ) as live:
+        ):
             start_time = time.time()
             for chunk in response:
                 chunk_message = chunk.choices[0].delta
@@ -496,10 +495,10 @@ def chat_cli(
         loaded["name"] = os.path.basename(session.name).strip(".json")
         try:
             loaded["messages"] = json.loads(session.read())
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as exc:
             raise ChatException(
                 f"Session file {session.name} is not a valid JSON file."
-            )
+            ) from exc
 
     log_file = None
     if config.logs_dir:
@@ -534,9 +533,9 @@ def chat_cli(
         if not qq:
             print(f"{PROMPT_PREFIX}{question}")
         try:
-            ccb.start_prompt(logger, content=question, box=(not qq))
+            ccb.start_prompt(logger, content=question, box=not qq)
         except ChatException as exc:
-            raise ChatException(f"API issue found while executing chat: {exc}")
+            raise ChatException(f"API issue found while executing chat: {exc}") from exc
         except (ChatQuitException, KeyboardInterrupt, EOFError):
             return
 
@@ -554,8 +553,8 @@ def chat_cli(
         except KeyboardInterrupt:
             continue
         except ChatException as exc:
-            raise ChatException(f"API issue found while executing chat: {exc}")
-        except httpx.RemoteProtocolError:
-            raise ChatException(f"Connection to the server was closed")
+            raise ChatException(f"API issue found while executing chat: {exc}") from exc
+        except httpx.RemoteProtocolError as exc:
+            raise ChatException("Connection to the server was closed") from exc
         except (ChatQuitException, EOFError):
             return
