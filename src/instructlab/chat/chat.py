@@ -366,35 +366,16 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
         # Get and parse response
         try:
-            while True:
-                # Loop to catch situations where we need to retry, such as context length exceeded
-                try:
-                    response = self.client.chat.completions.create(
-                        model=self.model,
-                        messages=self.info["messages"],
-                        stream=True,
-                        **create_params,
-                    )
-                except openai.BadRequestError as e:
-                    if e.code == "context_length_exceeded":
-                        if len(self.info["messages"]) > 1:
-                            # Trim the oldest entry in our message history
-                            logger.debug(
-                                "Trimming message history to attempt to fit context length"
-                            )
-                            self.info["messages"] = self.info["messages"][1:]
-                            continue
-                        else:
-                            # We only have a single message and it's still to big.
-                            self.console.print(
-                                "Message too large for context size.", style="bold red"
-                            )
-                            self.info["messages"].pop()
-                            raise KeyboardInterrupt
-                assert (
-                    next(response).choices[0].delta.role == "assistant"
-                ), 'first response should be {"role": "assistant"}'
-                break
+            # Loop to catch situations where we need to retry, such as context length exceeded
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=self.info["messages"],
+                stream=True,
+                **create_params,
+            )
+            assert (
+                next(response).choices[0].delta.role == "assistant"
+            ), 'first response should be {"role": "assistant"}'
         except openai.AuthenticationError as e:
             self.console.print(
                 "Invalid API Key. Please set it in your config file.", style="bold red"
@@ -416,7 +397,9 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             self.console.print("Connection to the server was closed", style="bold red")
             self.info["messages"].pop()
             raise ChatException("Connection to the server was closed") from e
-        except:
+        except openai.BadRequestError as e:
+            raise e
+        except Exception as e:
             self.console.print("Unknown error", style="bold red")
             raise ChatException(f"Unknown error: {sys.exc_info()[0]}")
 
@@ -548,14 +531,48 @@ def chat_cli(
         ccb._load_session_history(loaded)
 
     # Start chatting
+    content = None
+    box = True
     while True:
         try:
-            ccb.start_prompt(logger)
-        except KeyboardInterrupt:
-            continue
+            ccb.start_prompt(logger, content=content, box=box)
+            content = None
+        except openai.BadRequestError as e:
+            if e.code == "context_length_exceeded":
+
+                # Save last one to re-send in the loop above
+                # otherwise the last query gets no response.
+                content = ccb.info["messages"][-1]["content"]
+
+                # Recent llama.cpp (e.g., 2.75) won't let us remove messages, but we can shrink them.
+                for i, m in enumerate(ccb.info["messages"]):
+                    if i != 0:
+                        ccb.info["messages"][i]["content"] = ""  # SHRINK IT by changing string to ""
+
+                # TODO: need to figure this out better
+                # We'd still be stuck in a loop as the messages accumulate and get us close to the limit
+                if len(str(ccb.info)) > 100:
+                    ccb._reset_session()
+
+                # TODO: need to figure this out better
+                # This will also loop forever on one big input query :(
+                # TODO: Actually content too long just loops in the server not here!!!!!!
+                if len(content) > 100:
+                    ccb._reset_session()
+
+            else:
+                # We only have a single message and it's still too big.
+                logger.warning(
+                    "Message too large for context size.", style="bold red"
+                )
+                raise KeyboardInterrupt
+        # except KeyboardInterrupt:
+            # continue
         except ChatException as exc:
             raise ChatException(f"API issue found while executing chat: {exc}")
         except httpx.RemoteProtocolError:
             raise ChatException(f"Connection to the server was closed")
         except (ChatQuitException, EOFError):
             return
+        except Exception as e:
+            raise ChatException(e.__repr__)
