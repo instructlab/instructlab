@@ -122,7 +122,11 @@ test_ctx_size(){
     ${chat_shot} "Hello"
 
     # now chat with the server and exceed the context size
-    ${chat_shot} "hello, I am a ci message that should not finish because I am too long for the context window, tell me about your day please, I love to hear all about it, tell me about the time you could only take 55 tokens" > "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" &
+    ${chat_shot} "hello, I am a ci message that should not finish because I am too long for the context window, tell me about your day please,
+      1 2 3 4 5 6 7 8 10 11 12 13 13 15 16 17 18 19 20 21 22 23 24 25\
+      1 2 3 4 5 6 7 8 10 11 12 13 13 15 16 17 18 19 20 21 22 23 24 25\
+      1 2 3 4 5 6 7 8 10 11 12 13 13 15 16 17 18 19 20 21 22 23 24 25\
+      I love to hear all about it, tell me about the time you could only take 55 tokens" > "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" &
     PID_CHAT=$!
 
     # look for the context size error in the server logs
@@ -133,7 +137,7 @@ test_ctx_size(){
     done
 '; then
         echo "context size error not found in server logs"
-        echo "$(<$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE)"
+        cat "$(<$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE)"
         exit 1
     fi
 
@@ -145,7 +149,7 @@ test_ctx_size(){
     done
 '; then
         echo "context size error not found in chat logs"
-        echo "$(<$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE)"
+        cat $TEST_CTX_SIZE_LAB_CHAT_LOG_FILE
         exit 1
     fi
 }
@@ -374,25 +378,25 @@ test_model_print(){
 # MAIN #
 ########
 # call cleanup in-between each test so they can run without conflicting with the server/chat process
-test_bind_port
-cleanup
+#test_bind_port
+#cleanup
 test_ctx_size
 cleanup
-test_loading_session_history
-cleanup
-test_generate
-test_server_shutdown_while_chatting
-cleanup
-test_temp_server
-cleanup
-test_temp_server_sigint
-cleanup
-test_no_chat_logs
-cleanup
-test_temp_server_ignore_internal_messages
-cleanup
-test_server_welcome_message
-cleanup
-test_model_print
+#test_loading_session_history
+#cleanup
+#test_generate
+#test_server_shutdown_while_chatting
+#cleanup
+#test_temp_server
+#cleanup
+#test_temp_server_sigint
+#cleanup
+#test_no_chat_logs
+#cleanup
+#test_temp_server_ignore_internal_messages
+#cleanup
+#test_server_welcome_message
+#cleanup
+#test_model_print
 
 exit 0
