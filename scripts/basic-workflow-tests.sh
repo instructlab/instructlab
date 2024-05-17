@@ -51,7 +51,7 @@ test_smoke() {
 
 test_init() {
     task Initializing ilab
-    [ -f config.yaml ] || printf "taxonomy\ny" | ilab init
+    [ -f config.yaml ] || ilab init --non-interactive
 
     step Checking config.yaml
     cat config.yaml | grep merlinite
