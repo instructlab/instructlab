@@ -27,6 +27,7 @@ CUDA
 cuda:0
 dataset
 dev
+distrobox
 ditaa
 DKMS
 dr

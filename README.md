@@ -93,6 +93,8 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 > **NOTE:** Python 3.12 is currently not supported, because some dependencies don't work on Python 3.12, yet.
 <!-- -->
 > **NOTE:** When installing the `ilab` CLI on macOS, you may have to run the `xcode-select --install` command, installing the required packages previously listed.
+<!-- -->
+> **NOTE:** This method is not officially supported by the project: It has been reported that the Fedora instructions also work with [distrobox](https://distrobox.it/) using `distrobox start fedora`. This has been tested by users on: SteamOS.
 
 ## ✅ Getting started
 
