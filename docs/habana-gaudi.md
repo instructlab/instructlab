@@ -182,7 +182,7 @@ ilab model train --device=hpu
 
 Output:
 
-```raw
+```shell-session
 LINUX_TRAIN.PY: Using device 'hpu'
 ============================= HABANA PT BRIDGE CONFIGURATION ===========================
  PT_HPU_LAZY_MODE = 0
