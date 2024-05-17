@@ -2,7 +2,11 @@ pull_request_rules:
 - name: auto-merge
   description: automatic merge for main with >= 2 approved reviews, all requested reviews have given feedback, not held, and CI is successful
   conditions:
-    - "#approved-reviews-by>=2"
+    - or:
+      - "#approved-reviews-by>=2"
+      - and:
+        - "#approved-reviews-by=1"
+        - label=trivial-change
     - "#review-requested=0"
     - "#changes-requested-reviews-by=0"
     - or:
