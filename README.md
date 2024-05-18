@@ -130,6 +130,14 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable --extra-index-url=https://download.pytorch.org/whl/cpu
       ```
 
+      > **NOTE**: *Additional Build Argument for Intel Macs*
+      >
+      > If you have an Mac with an Intel CPU, you must add a prefix of
+      > `CMAKE_ARGS="-DLLAMA_METAL=off"` to the `pip install` command to ensure
+      > that the build is done without Apple M-series GPU support.
+      >
+      > `(venv) $ CMAKE_ARGS="-DLLAMA_METAL=off" pip install ...`
+
    #### Install with AMD ROCm
 
       ```shell
