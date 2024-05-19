@@ -188,3 +188,19 @@ check-engine:
 .PHONY: check-rocm
 check-rocm:
 	@command -v rocm &> /dev/null || (echo "'rocm' is not installed" && exit 1)
+
+.PHONY: action-lint actionlint
+action-lint: actionlint
+actionlint: ## Lint GitHub Action workflows
+	$(ECHO_PREFIX) printf "  %-12s .github/...\n" "[ACTION LINT]"
+	$(CMD_PREFIX) if ! command -v actionlint $(PIPE_DEV_NULL) ; then \
+		echo "Please install actionlint." ; \
+		echo "go install github.com/rhysd/actionlint/cmd/actionlint@latest" ; \
+		exit 1 ; \
+	fi
+	$(CMD_PREFIX) if ! command -v shellcheck $(PIPE_DEV_NULL) ; then \
+		echo "Please install shellcheck." ; \
+		echo "https://github.com/koalaman/shellcheck#user-content-installing" ; \
+		exit 1 ; \
+	fi
+	$(CMD_PREFIX) actionlint -color
