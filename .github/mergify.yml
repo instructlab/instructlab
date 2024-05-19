@@ -193,3 +193,17 @@ pull_request_rules:
     label:
       remove:
         - one-approval
+
+- name: Trigger e2e workflow based on the 'e2e-trigger' label
+  conditions:
+    - label=e2e-trigger
+  actions:
+    github_actions:
+      workflow:
+        dispatch:
+          - workflow: e2e.yaml
+            inputs:
+              pr_or_branch: "{{ number }}"
+    label:
+      remove:
+        - e2e-trigger
