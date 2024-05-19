@@ -25,6 +25,7 @@ import yaml
 # Local
 # NOTE: Subcommands are using local imports to speed up startup time.
 from . import config, utils
+from .sysinfo import get_sysinfo
 
 # 'fork' is unsafe and incompatible with some hardware accelerators.
 # Python 3.14 will switch to 'spawn' on all platforms.
@@ -69,10 +70,13 @@ def cli(ctx, config_file):
 
     If this is your first time running InstructLab, it's best to start with `ilab init` to create the environment.
     """
-    # ilab init or "--help" have no config file
+    # ilab init or "--help" have no config file. ilab sysinfo does not need one.
     # CliRunner does fill ctx.invoke_subcommand in option callbacks. We have
     # to validate config_file here.
-    if ctx.invoked_subcommand != "init" and "--help" not in sys.argv[1:]:
+    if (
+        ctx.invoked_subcommand not in {"init", "sysinfo"}
+        and "--help" not in sys.argv[1:]
+    ):
         if config_file == "DEFAULT":
             config_obj = config.get_default_config()
         elif not os.path.isfile(config_file):
@@ -1344,3 +1348,10 @@ def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model
 
     ctx.obj.logger.info(f"deleting {model_dir_fused_pt}/{model_name}.gguf...")
     os.remove(os.path.join(model_dir_fused_pt, f"{model_name}.gguf"))
+
+
+@cli.command
+def sysinfo():
+    """Print system information"""
+    for key, value in get_sysinfo().items():
+        print(f"{key}: {value}")

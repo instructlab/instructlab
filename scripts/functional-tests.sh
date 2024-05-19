@@ -54,6 +54,9 @@ rm -f config.yaml
 # print version
 ilab --version
 
+# print system information
+ilab sysinfo
+
 # pipe 3 carriage returns to ilab init to get past the prompts
 echo -e "\n\n\n" | ilab init
 
