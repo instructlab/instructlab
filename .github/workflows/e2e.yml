@@ -31,6 +31,12 @@ jobs:
             echo "is_pr=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Add comment to PR
+        id: pr_comment
+        if: steps.check_pr.outputs.is_pr == 'true'
+        run: |
+          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "e2e workflow launched on this PR: [View run](https://github.com/${repository.owner}/${repository.repo}/actions/runs/${process.env.GITHUB_RUN_ID})"
+
       - name: Fetch and checkout PR
         if: steps.check_pr.outputs.is_pr == 'true'
         run: |
