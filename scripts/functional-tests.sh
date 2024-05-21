@@ -43,7 +43,7 @@ cleanup() {
     rm -f config.yaml.bak
     # revert model name change from test_model_print()
     sed -i.bak "s/baz/merlinite-7b-lab-Q4_K_M/g" config.yaml
-    mv models/foo.gguf models/merlinite-7b-lab-Q4_K_M.gguf
+    mv models/foo.gguf models/merlinite-7b-lab-Q4_K_M.gguf || true
     set -e
 }
 
