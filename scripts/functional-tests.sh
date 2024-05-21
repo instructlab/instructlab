@@ -294,7 +294,14 @@ test_temp_server_ignore_internal_messages(){
             "Disconnected from client (via refresh/close)" { exit 1 }
         }
         send "exit\r"
-        expect eof
+        expect {
+            "Traceback (most recent call last):" { set exp_result 1 }
+            default { set exp_result 0 }
+        }
+        if { $exp_result != 0 } {
+            puts stderr "Error: ilab chat command failed"
+            exit 1
+        }
     '
 }
 

@@ -144,7 +144,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             ]
         )
 
-    def _handle_quit(self):
+    def _handle_quit(self, _):
         raise ChatQuitException
 
     def _handle_help(self):
