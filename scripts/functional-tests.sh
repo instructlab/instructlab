@@ -40,10 +40,10 @@ cleanup() {
     rm -rf test_taxonomy
     # revert port change from test_bind_port()
     sed -i.bak 's/9999/8000/g' config.yaml
-    rm -f config.yaml.bak
     # revert model name change from test_model_print()
     sed -i.bak "s/baz/merlinite-7b-lab-Q4_K_M/g" config.yaml
-    mv models/foo.gguf models/merlinite-7b-lab-Q4_K_M.gguf
+    mv models/foo.gguf models/merlinite-7b-lab-Q4_K_M.gguf || true
+    rm -f config.yaml.bak
     set -e
 }
 
@@ -294,7 +294,14 @@ test_temp_server_ignore_internal_messages(){
             "Disconnected from client (via refresh/close)" { exit 1 }
         }
         send "exit\r"
-        expect eof
+        expect {
+            "Traceback (most recent call last):" { set exp_result 1 }
+            default { set exp_result 0 }
+        }
+        if { $exp_result != 0 } {
+            puts stderr "Error: ilab chat command failed"
+            exit 1
+        }
     '
 }
 
