@@ -1061,10 +1061,17 @@ def train(
         )
 
         training_results_dir = "./training_results"
-        os.makedirs(training_results_dir, exist_ok=True)
 
         final_results_dir = training_results_dir + "/final"
         os.makedirs(final_results_dir, exist_ok=True)
+
+        gguf_models_dir = "./models"
+        if not os.path.isdir(gguf_models_dir):
+            os.mkdir(gguf_models_dir)
+        gguf_models_file = os.path.join(gguf_models_dir, "ggml-model-f16.gguf")
+        # Remove previously trained model, its taking up space we may need in the next step
+        if os.path.isfile(gguf_models_file):
+            os.remove(gguf_models_file)
 
         # TODO: Figure out what to do when there are multiple checkpoint dirs.
         # Right now it's just copying files from the first one numerically not necessarily the best one
@@ -1100,8 +1107,8 @@ def train(
         shutil.copy(generation_config_json[0], final_results_dir)
         print("Copied ", generation_config_json[0], "to ", final_results_dir)
         for file in safe_tensors:
-            shutil.copy(file, final_results_dir)
-            print("Copied ", file, "to ", final_results_dir)
+            shutil.move(file, final_results_dir)
+            print("Moved ", file, "to ", final_results_dir)
 
         if four_bit_quant:
             print(
@@ -1112,12 +1119,13 @@ def train(
 
         convert_llama_to_gguf(model=final_results_dir, pad_vocab=True)
 
-        gguf_models_dir = "./models"
-        if not os.path.isdir(gguf_models_dir):
-            os.mkdir(gguf_models_dir)
-        shutil.copy(final_results_dir + "/ggml-model-f16.gguf", gguf_models_dir)
-        # cleanup original copy of model
-        os.remove(final_results_dir + "/ggml-model-f16.gguf")
+        # Remove safetensors files to save space, were done with them here
+        # and the huggingface lib has them cached
+        for file in glob(final_results_dir + "/*.safetensors"):
+            os.remove(file)
+
+        shutil.move(final_results_dir + "/ggml-model-f16.gguf", gguf_models_file)
+
         # cleanup checkpoint dir since it's name is unpredictable
         # TODO: figure out how checkpoint dirs should be cleaned up
         # checkpoint_dirs = glob(training_results_dir + "/checkpoint*")
