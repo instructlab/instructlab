@@ -212,7 +212,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
   #### Downloading a specific model from a Hugging Face repository
 
-- Specify repository, model, and a Hugging Face token if necessary
+- Specify repository, model, and a Hugging Face token if necessary. More information about Hugging Face tokens can be found [here](https://huggingface.co/docs/hub/en/security-tokens)
 
   ```shell
   HF_TOKEN=<YOUR HUGGINGFACE TOKEN GOES HERE> ilab download --repository=TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF --filename=mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
