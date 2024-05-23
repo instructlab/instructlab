@@ -814,9 +814,25 @@ def chat(
     envvar="HF_TOKEN",
     help="User access token for connecting to the Hugging Face Hub.",
 )
+@click.option(
+    "--identity",
+    help="Certificate identity to verify against.",
+    default="instructlab@instructlab.org",
+)
+@click.option(
+    "--issuer",
+    help="Certificate identity's issuing authority.",
+    default="https://accounts.google.com",
+    show_default=True,
+)
 @click.pass_context
-def download(ctx, repository, release, filename, model_dir, hf_token):
+def download(ctx, repository, release, filename, model_dir, hf_token, identity, issuer):
     """Download the model(s) to train"""
+    # pylint: disable=import-outside-toplevel
+
+    # Local
+    from .provenance.sigstore import verify_model
+
     click.echo(f"Downloading model from {repository}@{release} to {model_dir}...")
     if hf_token == "" and "instructlab" not in repository:
         raise ValueError(
@@ -828,14 +844,16 @@ def download(ctx, repository, release, filename, model_dir, hf_token):
         if ctx.obj is not None:
             hf_logging.set_verbosity(ctx.obj.config.general.log_level.upper())
         files = list_repo_files(repo_id=repository, token=hf_token)
+        local_dir = model_dir
         if any(".safetensors" in string for string in files):
             if not os.path.exists(os.path.join(model_dir, repository)):
                 os.makedirs(name=os.path.join(model_dir, repository), exist_ok=True)
+            local_dir = os.path.join(model_dir, repository)
             snapshot_download(
                 token=hf_token,
                 repo_id=repository,
                 revision=release,
-                local_dir=os.path.join(model_dir, repository),
+                local_dir=local_dir,
             )
         else:
             hf_hub_download(
@@ -843,8 +861,27 @@ def download(ctx, repository, release, filename, model_dir, hf_token):
                 repo_id=repository,
                 revision=release,
                 filename=filename,
-                local_dir=model_dir,
+                local_dir=local_dir,
             )
+
+        model_sigstore_bundle_path = f"{filename}.sigstore.json"
+        if model_sigstore_bundle_path in files:
+            hf_hub_download(
+                token=hf_token,
+                repo_id=repository,
+                revision=release,
+                filename=model_sigstore_bundle_path,
+                local_dir=local_dir,
+            )
+            result = verify_model(
+                model_path=f"{local_dir}/{filename}",
+                bundle_path=f"{local_dir}/{model_sigstore_bundle_path}",
+                identity=identity,
+                issuer=issuer,
+                staging=False,
+            )
+            print(result)
+
     except Exception as exc:
         click.secho(
             f"Downloading model failed with the following Hugging Face Hub error: {exc}",
