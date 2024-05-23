@@ -69,7 +69,7 @@ jobs:
 
       - name: Install ilab
         run: |
-          export PATH="/home/runner/.local/bin:/usr/local/cuda-12.4/bin:$PATH"
+          export PATH="/home/runner/.local/bin:/usr/local/cuda/bin:$PATH"
           python3 -m venv venv
           . venv/bin/activate
           sed 's/\[.*\]//' requirements.txt > constraints.txt
