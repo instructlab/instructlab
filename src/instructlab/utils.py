@@ -280,8 +280,8 @@ def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
 
     Args:
         contents (Mapping): The parsed yaml document to validate against the schema.
-        taxonomy_path (Path): Relative path of the taxonomy yaml document where the
-        first element is the schema to use.
+        taxonomy_path (pathlib.Path): Relative path of the taxonomy yaml document where the
+            first element is the schema to use.
 
     Returns:
         int: The number of errors found during validation.

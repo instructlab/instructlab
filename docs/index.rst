@@ -7,13 +7,13 @@ Welcome to InstructLab's documentation!
 
    converting_GGUF.md
    ci.md
+   cli.rst
    demo-slides.md
    gpu-acceleration.md
    amd-rocm.md
    habana-gaudi.md
    README.md
    release-strategy.md
-   STABLE.md
 
    api/index.rst
 

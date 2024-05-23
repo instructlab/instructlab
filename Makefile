@@ -164,7 +164,9 @@ man: docs
 
 .PHONY: sphinx-apidoc
 sphinx-apidoc: check-tox
-	tox -e docs exec -- sphinx-apidoc --no-toc -o docs/api src/instructlab src/instructlab/llamacpp/llamacpp_convert_to_gguf.py
+	rm -f docs/api/instructlab.*.rst
+	tox -e docs exec -- sphinx-apidoc --no-toc -o docs/api src/instructlab \
+	    src/instructlab/llamacpp/llamacpp_convert_to_gguf.py
 
 #
 # If you want to see the full commands, run:

@@ -7,6 +7,7 @@ Subpackages
 .. toctree::
    :maxdepth: 4
 
+   instructlab.chat
    instructlab.generator
    instructlab.llamacpp
    instructlab.mlx_explore
@@ -51,6 +52,14 @@ instructlab.server module
 -------------------------
 
 .. automodule:: instructlab.server
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+instructlab.sysinfo module
+--------------------------
+
+.. automodule:: instructlab.sysinfo
    :members:
    :undoc-members:
    :show-inheritance:
