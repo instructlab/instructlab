@@ -111,41 +111,43 @@ test_bind_port(){
 
 test_ctx_size(){
     # A context size of 55 will allow a small message
-    ilab serve --max-ctx-size 55 &> "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" &
+    ilab serve --max-ctx-size 25 &> "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" &
     PID_SERVE=$!
 
     # Make sure the server has time to open the port
     # if "ilab chat" tests it before its open then it will run its own server without --max-ctx-size 1
     wait_for_server
 
-    # Should succeed
+    # SHOULD SUCCEED: ilab chat will trim the SYS_PROMPT then take the second message
     ${chat_shot} "Hello"
 
-    # now chat with the server and exceed the context size
-    ${chat_shot} "hello, I am a ci message that should not finish because I am too long for the context window, tell me about your day please, I love to hear all about it, tell me about the time you could only take 55 tokens" > "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" &
+    # SHOULD FAIL: ilab chat will trim the SYS_PROMPT AND the second message, then raise an error
+    # The errors from failures will be written into the serve log and chat log files
+    ${chat_shot} "hello, I am a ci message that should not finish because I am too long for the context window, tell me about your day please?
+    How many tokens could you take today. Could you tell me about the time you could only take twenty five tokens" &> "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" &
     PID_CHAT=$!
 
     # look for the context size error in the server logs
-    if ! timeout 10 bash -c '
+    if ! timeout 20 bash -c '
         until grep -q "exceed context window of" "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE"; do
         echo "waiting for context size error"
         sleep 1
     done
 '; then
         echo "context size error not found in server logs"
-        echo "$(<$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE)"
+        cat $TEST_CTX_SIZE_LAB_SERVE_LOG_FILE
         exit 1
     fi
 
     # look for the context size error in the chat logs
-    if ! timeout 10 bash -c '
+    if ! timeout 20 bash -c '
         until grep -q "Message too large for context size." "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE"; do
         echo "waiting for chat error"
         sleep 1
     done
 '; then
         echo "context size error not found in chat logs"
-        echo "$(<$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE)"
+        cat $TEST_CTX_SIZE_LAB_CHAT_LOG_FILE
         exit 1
     fi
 }
