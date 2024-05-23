@@ -1,0 +1,43 @@
+name: Validate Notebooks
+
+on:
+  push:
+    branches:
+      - "main"
+      - "release-**"
+    paths:
+      - 'notebooks/*.ipynb'
+  pull_request:
+    branches:
+      - "main"
+      - "release-**"
+    paths:
+      - 'notebooks/*.ipynb'
+
+env:
+  PYTHON_VERSION: 3.11
+
+jobs:
+  validate-notebook:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # https://github.com/actions/checkout/issues/249
+          fetch-depth: 0
+          submodules: true
+
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+          cache: pip
+
+      - name: Install nbformat
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install nbformat
+
+      - name: Validate Jupyter Notebooks
+        run: find notebooks/ -name "*.ipynb" -exec python scripts/validate_notebook.py {} \;
