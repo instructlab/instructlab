@@ -130,7 +130,7 @@ def cli(ctx, config):
     "workspace_path",
     "--workspace-path",
     type=click.Path(),
-    default=config.DEFAULT_WORKSPACE_PATH,
+    default="",
     envvar="ILAB_WORKSPACE_PATH",
     help="Path to a workspace directory. It's created if it doesn't exist.",
 )
@@ -159,9 +159,6 @@ def init(
         click.echo(
             "Please provide the following values to initiate the "
             "environment [press Enter for defaults]:"
-        )
-        workspace_path = utils.expand_path(
-            click.prompt("Path to workspace directory", default=workspace_path)
         )
         taxonomy_path = utils.expand_path(
             click.prompt("Path to taxonomy repo", default=taxonomy_path)

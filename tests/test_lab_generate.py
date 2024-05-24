@@ -31,7 +31,7 @@ class TestLabGenerate(unittest.TestCase):
     def test_generate_exception_error(self, generate_data_mock):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            mt = MockTaxonomy(pathlib.Path("workspace/taxonomy"))
+            mt = MockTaxonomy(pathlib.Path("taxonomy"))
             result = runner.invoke(
                 lab.generate,
                 [
@@ -67,7 +67,7 @@ class TestLabGenerate(unittest.TestCase):
                 result.exit_code, 1, "command finished with an unexpected exit code"
             )
             self.assertIn(
-                "Error: taxonomy (workspace/taxonomy) does not exist",
+                "Error: taxonomy (taxonomy) does not exist",
                 result.output,
             )
 

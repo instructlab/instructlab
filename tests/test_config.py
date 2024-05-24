@@ -30,7 +30,7 @@ class TestConfig(unittest.TestCase):
 
         self.assertIsNotNone(cfg.generate)
         self.assertEqual(cfg.generate.model, "merlinite-7b-lab-Q4_K_M")
-        self.assertEqual(cfg.generate.taxonomy_path, "workspace/taxonomy")
+        self.assertEqual(cfg.generate.taxonomy_path, "taxonomy")
         self.assertEqual(cfg.generate.taxonomy_base, "origin/main")
         self.assertEqual(cfg.generate.num_cpus, 10)
         self.assertEqual(cfg.generate.num_instructions, 100)
@@ -59,7 +59,7 @@ class TestConfig(unittest.TestCase):
 generate:
   model: merlinite-7b-lab-Q4_K_M
   taxonomy_base: origin/main
-  taxonomy_path: workspace/taxonomy
+  taxonomy_path: taxonomy
 serve:
   model_path: models/merlinite-7b-lab-Q4_K_M.gguf
 """
@@ -90,7 +90,7 @@ generate:
   prompt_file: prompt.txt
   seed_file: seed_tasks.json
   taxonomy_base: origin/main
-  taxonomy_path: workspace/taxonomy
+  taxonomy_path: taxonomy
   chunk_word_count: 1000
 serve:
   gpu_layers: -1
@@ -113,7 +113,7 @@ serve:
 generate:
   model: merlinite-7b-lab-Q4_K_M
   taxonomy_base: origin/main
-  taxonomy_path: workspace/taxonomy
+  taxonomy_path: taxonomy
 serve:
   model_path: models/merlinite-7b-lab-Q4_K_M.gguf
 unexpected:
