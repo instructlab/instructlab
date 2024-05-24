@@ -1,18 +1,20 @@
 Moving the stable tag
 =====================
 
-Because we do not have a PyPI package where folks can just install latest, our `README.md` instructions describe installing from the GitHub using a "stable" tag.
+Because we do not have a PyPI package where folks can just install latest, our `README.md` instructions describe installing from the GitHub using a `stable` tag.
 
 To support this, we move the stable tag to the latest release, as needed.
 
-This can be done by:
+This can be done via the following steps:
 
-Get current:
+Assume that the upstream repository (`instructlab/instructlab`) is using the `upstream` Git remote
+
+Get current tags from the upstream:
 
 ```ShellSession
 $ git switch main
-$ git fetch
-$ git pull
+$ git fetch upstream
+$ git pull upstream
 # Just making sure you are up-to-date locally
 $ git tag --list
 $ git show-ref --tags
@@ -47,23 +49,19 @@ Verify the tag SHA hashes look correct:
 $ git show-ref --tags
 ```
 
-Push the new tag to remote (origin) with `-f` (force) flag.
-
-I usually test first w/o --force and expect an error if I have everything right.
+You can then push the new tag upstream with `-f` (force) flag - I usually test first without `--force` and expect an error if I have everything right.
 
 ```ShellSession
-$ git push origin stable
+$ git push upstream stable
 ! [rejected]        stable -> stable (already exists)
 error: failed to push some refs to 'https://github.com/instructlab/instructlab.git'
 hint: Updates were rejected because the tag already exists in the remote.
 ```
 
-If you are sure. Push with force.
+If you are sure, push with force to upstream and prepare to live with the consequences of your actions.
 
 ```ShellSession
-git push -f origin stable
+git push -f upstream stable
 ```
 
-Check the Tags on GitHub web.
-
-> PLEASE!  Whenever you move the `stable` tag, give `@Josh Boyer` a heads-up so that Red Hat is using the new tag.
+Finally, check the tags on the GitHub web UI to ensure everything looks correct.

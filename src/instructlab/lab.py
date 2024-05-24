@@ -7,6 +7,7 @@ from glob import glob
 from os.path import basename, dirname, exists, splitext
 import json
 import logging
+import multiprocessing
 import os
 import shutil
 import sys
@@ -15,14 +16,21 @@ import typing
 # Third Party
 from click_didyoumean import DYMGroup
 from git import GitError, Repo
-from huggingface_hub import hf_hub_download
+from huggingface_hub import hf_hub_download, list_repo_files
 from huggingface_hub import logging as hf_logging
+from huggingface_hub import snapshot_download
 import click
 import yaml
 
 # Local
 # NOTE: Subcommands are using local imports to speed up startup time.
 from . import config, utils
+
+# 'fork' is unsafe and incompatible with some hardware accelerators.
+# Python 3.14 will switch to 'spawn' on all platforms.
+multiprocessing.set_start_method(
+    config.DEFAULT_MULTIPROCESSING_START_METHOD, force=True
+)
 
 # Set logging level of OpenAI client and httpx library to ERROR to suppress INFO messages
 logging.getLogger("openai").setLevel(logging.ERROR)
@@ -179,11 +187,15 @@ def init(
     # clone taxonomy repo if it needs to be cloned
     if clone_taxonomy_repo:
         click.echo(f"Cloning {repository}...")
+        clone_depth = False if not min_taxonomy else 1
         try:
-            if not min_taxonomy:
-                Repo.clone_from(repository, taxonomy_path, branch="main")
-            else:
-                Repo.clone_from(repository, taxonomy_path, branch="main", depth=1)
+            Repo.clone_from(
+                repository,
+                taxonomy_path,
+                branch="main",
+                recurse_submodules=True,
+                depth=clone_depth,
+            )
         except GitError as exc:
             click.secho(f"Failed to clone taxonomy repo: {exc}", fg="red")
             click.secho(f"Please make sure to manually run `git clone {repository}`")
@@ -301,8 +313,14 @@ utils.make_lab_diff_aliases(cli, diff)
     type=click.INT,
     help="The context size is the maximum number of tokens considered by the model, for both the prompt and response. Defaults to 4096.",
 )
+@click.option(
+    "--model-family",
+    type=str,
+    default="merlinite",
+    help="Model family is used to specify which chat template to serve with",
+)
 @click.pass_context
-def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
+def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size, model_family):
     """Start a local server"""
     # pylint: disable=C0415
     # Local
@@ -320,6 +338,7 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
             model_path,
             gpu_layers,
             max_ctx_size,
+            model_family,
             num_threads,
             host,
             port,
@@ -437,6 +456,11 @@ def serve(ctx, model_path, gpu_layers, num_threads, max_ctx_size):
     default="",
     help="TLS client certificate password.",
 )
+@click.option(
+    "--model-family",
+    default="merlinite",
+    help="model family to use when picking a generation template",
+)
 @click.pass_context
 def generate(
     ctx,
@@ -457,6 +481,7 @@ def generate(
     tls_client_cert,
     tls_client_key,
     tls_client_passwd,
+    model_family,
 ):
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=C0415
@@ -476,13 +501,14 @@ def generate(
         api_base = endpoint_url
     else:
         try:
-            server_process, api_base = ensure_server(
+            server_process, api_base, server_queue = ensure_server(
                 ctx.obj.logger,
                 ctx.obj.config.serve,
                 tls_insecure,
                 tls_client_cert,
                 tls_client_key,
                 tls_client_passwd,
+                model_family,
             )
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
@@ -497,6 +523,7 @@ def generate(
             logger=logger,
             api_base=api_base,
             api_key=api_key,
+            model_family=model_family,
             model_name=model,
             num_cpus=num_cpus,
             num_instructions_to_generate=num_instructions,
@@ -524,6 +551,8 @@ def generate(
         if server_process:
             server_process.terminate()
             server_process.join(timeout=30)
+            server_queue.close()
+            server_queue.join_thread()
 
 
 @cli.command()
@@ -535,7 +564,7 @@ def generate(
 @click.option(
     "-m",
     "--model",
-    help="Model to use",
+    help="Model name to print in chat process",
 )
 @click.option(
     "-c",
@@ -598,6 +627,12 @@ def generate(
     default="",
     help="TLS client certificate password.",
 )
+@click.option(
+    "--model-family",
+    default="merlinite",
+    show_default=True,
+    help="model family to use when picking a chat template",
+)
 @click.pass_context
 def chat(
     ctx,
@@ -613,6 +648,7 @@ def chat(
     tls_client_cert,
     tls_client_key,
     tls_client_passwd,
+    model_family,
 ):
     """Run a chat using the modified model"""
     # pylint: disable=C0415
@@ -625,13 +661,14 @@ def chat(
         server_process = None
     else:
         try:
-            server_process, api_base = ensure_server(
+            server_process, api_base, server_queue = ensure_server(
                 ctx.obj.logger,
                 ctx.obj.config.serve,
                 tls_insecure,
                 tls_client_cert,
                 tls_client_key,
                 tls_client_passwd,
+                model_family,
             )
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
@@ -663,6 +700,8 @@ def chat(
         if server_process:
             server_process.terminate()
             server_process.join(timeout=30)
+            server_queue.close()
+            server_queue.join_thread()
 
 
 @cli.command()
@@ -690,20 +729,43 @@ def chat(
     show_default=True,
     help="The local directory to download the model files into.",
 )
+@click.option(
+    "--hf-token",
+    default="",
+    envvar="HF_TOKEN",
+    help="User access token for connecting to the Hugging Face Hub.",
+)
 @click.pass_context
-def download(ctx, repository, release, filename, model_dir):
+def download(ctx, repository, release, filename, model_dir, hf_token):
     """Download the model(s) to train"""
     click.echo(f"Downloading model from {repository}@{release} to {model_dir}...")
+    if hf_token == "" and "instructlab" not in repository:
+        raise ValueError(
+            """HF_TOKEN var needs to be set in your environment to download HF Model. 
+            Alternatively, the token can be passed with --hf-token flag. 
+            The HF Token is used to authenticate your identity to the Hugging Face Hub."""
+        )
     try:
         if ctx.obj is not None:
             hf_logging.set_verbosity(ctx.obj.config.general.log_level.upper())
-
-        hf_hub_download(
-            repo_id=repository,
-            revision=release,
-            filename=filename,
-            local_dir=model_dir,
-        )
+        files = list_repo_files(repo_id=repository, token=hf_token)
+        if any(".safetensors" in string for string in files):
+            if not os.path.exists(os.path.join(model_dir, repository)):
+                os.makedirs(name=os.path.join(model_dir, repository), exist_ok=True)
+            snapshot_download(
+                token=hf_token,
+                repo_id=repository,
+                revision=release,
+                local_dir=os.path.join(model_dir, repository),
+            )
+        else:
+            hf_hub_download(
+                token=hf_token,
+                repo_id=repository,
+                revision=release,
+                filename=filename,
+                local_dir=model_dir,
+            )
     except Exception as exc:
         click.secho(
             f"Downloading model failed with the following Hugging Face Hub error: {exc}",
@@ -837,6 +899,12 @@ TORCH_DEVICE = TorchDeviceParam()
         "(reduces GPU VRAM usage and may slow down training)"
     ),
 )
+@click.option(
+    "--model-name",
+    default="instructlab/merlinite-7b-lab",
+    show_default=True,
+    help="model name to use in training",
+)
 @click.pass_context
 def train(
     ctx,
@@ -852,6 +920,7 @@ def train(
     num_epochs,
     device: "torch.device",
     four_bit_quant: bool,
+    model_name: str,
 ):
     """
     Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
@@ -911,6 +980,7 @@ def train(
         linux_train(
             train_file=train_files[0],
             test_file=test_files[0],
+            model_name=model_name,
             num_epochs=num_epochs,
             device=device,
             four_bit_quant=four_bit_quant,
@@ -958,6 +1028,13 @@ def train(
         for file in safe_tensors:
             shutil.copy(file, final_results_dir)
             print("Copied ", file, "to ", final_results_dir)
+
+        if four_bit_quant:
+            print(
+                "SKIPPING CONVERSION to gguf. This is unsupported with --4-bit-quant. "
+                + "See https://github.com/instructlab/instructlab/issues/579."
+            )
+            return
 
         convert_llama_to_gguf(model=final_results_dir, pad_vocab=True)
 

@@ -4,9 +4,12 @@ name: Spellcheck
 
 on:
   pull_request:
-    branches: [main]
+    branches:
+      - main
+      - "release-**"
     paths:
       - '**.md'
+      - .github/**
 
 permissions:
   contents: read
@@ -18,5 +21,17 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      - name: Spellcheck
-        uses: rojopolis/spellcheck-github-actions@0.35.0
+        with:
+          fetch-depth: 0
+          submodules: true
+
+      - name: Install aspell
+        run: |
+          sudo sudo apt-get update
+          sudo apt-get install -y aspell aspell-en
+
+      - name: Install tox dependencies
+        run: python -m pip install --upgrade tox
+
+      - name: Run spellchecker
+        run: python -m tox -e spellcheck

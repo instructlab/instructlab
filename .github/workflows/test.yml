@@ -7,21 +7,25 @@ on:
   push:
     branches:
       - "main"
+      - "release-**"
     paths:
       - '**.py'
       - 'pyproject.toml'
       - 'requirements*.txt'
       - 'tox.ini'
       - 'scripts/*.sh'
+      - '.github/**'
   pull_request:
     branches:
       - "main"
+      - "release-**"
     paths:
       - '**.py'
       - 'pyproject.toml'
       - 'requirements*.txt'
       - 'tox.ini'
       - 'scripts/*.sh'
+      - '.github/**'
 
 jobs:
   test:
@@ -49,11 +53,17 @@ jobs:
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
+          submodules: true
 
       - name: Install the expect package
         if: startsWith(matrix.platform, 'ubuntu')
         run: |
           sudo apt-get install -y expect
+
+      - name: Install tools on MacOS
+        if: startsWith(matrix.platform, 'macos')
+        run: |
+          brew install expect coreutils bash
 
       - name: Setup Python ${{ matrix.python }}
         uses: actions/setup-python@v5
@@ -77,10 +87,11 @@ jobs:
           python -m pip install tox tox-gh>=1.2
 
       - name: Run unit and functional tests with tox
-        if: startsWith(matrix.platform, 'ubuntu')
         run: tox
 
-      # The functional test shell script does not work on macOS.
-      - name: Run unit tests with tox (macOS)
-        if: startsWith(matrix.platform, 'macos')
-        run: tox -e py-unit
+  test-workflow-complete:
+    needs: ["test"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Workflow Complete
+        run: echo "Test Workflow Complete"

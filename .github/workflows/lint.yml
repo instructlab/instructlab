@@ -4,23 +4,27 @@ name: Lint and Format
 
 on:
   push:
-    branches: 
+    branches:
       - "main"
+      - "release-**"
     paths:
       - '**.py'
       - 'pyproject.toml'
       - 'requirements*.txt'
       - 'tox.ini'
       - 'scripts/*.sh'
+      - '.github/**'
   pull_request:
-    branches: 
+    branches:
       - "main"
+      - "release-**"
     paths:
       - '**.py'
       - 'pyproject.toml'
       - 'requirements*.txt'
       - 'tox.ini'
       - 'scripts/*.sh'
+      - '.github/**'
 
 env:
   PYTHON_VERSION: 3.11
@@ -34,6 +38,7 @@ jobs:
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
+          submodules: true
 
       - name: Set up Python
         uses: actions/setup-python@v5

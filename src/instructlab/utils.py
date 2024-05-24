@@ -34,6 +34,8 @@ rules:
     max: 120
 """
 
+DEFAULT_CHUNK_OVERLAP = 100
+
 logging.basicConfig(
     level=logging.INFO,
     format="%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s",
@@ -221,7 +223,9 @@ def get_documents(
                         with open(file_path, "r", encoding="utf-8") as file:
                             file_contents.append(file.read())
 
-            return file_contents
+            if file_contents:
+                return file_contents
+            raise SystemExit("Couldn't find knowledge documents")
         except (OSError, exc.GitCommandError, FileNotFoundError) as e:
             raise e
 
@@ -235,6 +239,14 @@ def git_clone_checkout(
     return repo
 
 
+def num_tokens_from_words(num_words) -> int:
+    return int(num_words * 1.3)  # 1 word ~ 1.3 token
+
+
+def num_chars_from_tokens(num_tokens) -> int:
+    return int(num_tokens * 4)  # 1 token ~ 4 English character
+
+
 def chunk_document(documents: List, server_ctx_size, chunk_word_count) -> List[str]:
     """
     Iterates over the documents and splits them into chunks based on the word count provided by the user.
@@ -245,7 +257,7 @@ def chunk_document(documents: List, server_ctx_size, chunk_word_count) -> List[s
     Returns:
          List[str]: List of chunked documents.
     """
-    no_tokens_per_doc = int(chunk_word_count * 1.3)  # 1 word ~ 1.3 token
+    no_tokens_per_doc = num_tokens_from_words(chunk_word_count)
     if no_tokens_per_doc > int(server_ctx_size - 1024):
         raise ValueError(
             "Error: {}".format(
@@ -256,9 +268,9 @@ def chunk_document(documents: List, server_ctx_size, chunk_word_count) -> List[s
         )
     content = []
     text_splitter = RecursiveCharacterTextSplitter(
-        separators=["\n\n", "\n"],
-        chunk_size=int(no_tokens_per_doc * 4),  # 1 token ~ 4 English character
-        chunk_overlap=100,
+        separators=["\n\n", "\n", " "],
+        chunk_size=num_chars_from_tokens(no_tokens_per_doc),
+        chunk_overlap=DEFAULT_CHUNK_OVERLAP,
     )
 
     for docs in documents:
@@ -414,22 +426,41 @@ def read_taxonomy_file(
         taxonomy_path = file_path
     # read file if extension is correct
     try:
+        with open(file_path, "r", encoding="utf-8") as file:
+            contents = yaml.safe_load(file)
+        if not contents:
+            logger.warn(f"Skipping {file_path} because it is empty!")
+            warnings += 1
+            return None, warnings, errors
+
         # do general YAML linting if specified
-        if yaml_rules is not None:
-            is_file = os.path.isfile(yaml_rules)
-            if is_file:
-                logger.debug(f"Using YAML rules from {yaml_rules}")
-                yamllint_cmd = [
-                    "yamllint",
-                    "-f",
-                    "parsable",
-                    "-c",
-                    yaml_rules,
-                    file_path,
-                    "-s",
-                ]
+        version = get_version(contents)
+        if version > 1:  # no linting for version 1 yaml
+            if yaml_rules is not None:
+                is_file = os.path.isfile(yaml_rules)
+                if is_file:
+                    logger.debug(f"Using YAML rules from {yaml_rules}")
+                    yamllint_cmd = [
+                        "yamllint",
+                        "-f",
+                        "parsable",
+                        "-c",
+                        yaml_rules,
+                        file_path,
+                        "-s",
+                    ]
+                else:
+                    logger.debug(f"Cannot find {yaml_rules}. Using default rules.")
+                    yamllint_cmd = [
+                        "yamllint",
+                        "-f",
+                        "parsable",
+                        "-d",
+                        DEFAULT_YAML_RULES,
+                        file_path,
+                        "-s",
+                    ]
             else:
-                logger.debug(f"Cannot find {yaml_rules}. Using default rules.")
                 yamllint_cmd = [
                     "yamllint",
                     "-f",
@@ -439,62 +470,46 @@ def read_taxonomy_file(
                     file_path,
                     "-s",
                 ]
-        else:
-            yamllint_cmd = [
-                "yamllint",
-                "-f",
-                "parsable",
-                "-d",
-                DEFAULT_YAML_RULES,
-                file_path,
-                "-s",
-            ]
-        try:
-            subprocess.check_output(yamllint_cmd, text=True)
-        except subprocess.SubprocessError as e:
-            lint_messages = [f"Problems found in file {file_path}"]
-            parsed_output = e.output.splitlines()
-            for p in parsed_output:
-                errors += 1
-                delim = str(file_path) + ":"
-                parsed_p = p.split(delim)[1]
-                lint_messages.append(parsed_p)
-            logger.error("\n".join(lint_messages))
+            try:
+                subprocess.check_output(yamllint_cmd, text=True)
+            except subprocess.SubprocessError as e:
+                lint_messages = [f"Problems found in file {file_path}"]
+                parsed_output = e.output.splitlines()
+                for p in parsed_output:
+                    errors += 1
+                    delim = str(file_path) + ":"
+                    parsed_p = p.split(delim)[1]
+                    lint_messages.append(parsed_p)
+                logger.error("\n".join(lint_messages))
+                return None, warnings, errors
+
+        validation_errors = validate_yaml(logger, contents, taxonomy_path)
+        if validation_errors:
+            errors += validation_errors
             return None, warnings, errors
-        # do more explict checking of file contents
-        with open(file_path, "r", encoding="utf-8") as file:
-            contents = yaml.safe_load(file)
-            if not contents:
-                logger.warn(f"Skipping {file_path} because it is empty!")
-                warnings += 1
-                return None, warnings, errors
-            validation_errors = validate_yaml(logger, contents, taxonomy_path)
-            if validation_errors:
-                errors += validation_errors
-                return None, warnings, errors
 
-            # get seed instruction data
-            tax_path = "->".join(taxonomy_path.parent.parts)
-            task_description = contents.get("task_description")
-            documents = contents.get("document")
-            if documents:
-                documents = get_documents(source=documents, logger=logger)
-                logger.debug("Content from git repo fetched")
+        # get seed instruction data
+        tax_path = "->".join(taxonomy_path.parent.parts)
+        task_description = contents.get("task_description")
+        documents = contents.get("document")
+        if documents:
+            documents = get_documents(source=documents, logger=logger)
+            logger.debug("Content from git repo fetched")
 
-            for seed_example in contents.get("seed_examples"):
-                question = seed_example.get("question")
-                answer = seed_example.get("answer")
-                context = seed_example.get("context", "")
-                seed_instruction_data.append(
-                    {
-                        "instruction": question,
-                        "input": context,
-                        "output": answer,
-                        "taxonomy_path": tax_path,
-                        "task_description": task_description,
-                        "document": documents,
-                    }
-                )
+        for seed_example in contents.get("seed_examples"):
+            question = seed_example.get("question")
+            answer = seed_example.get("answer")
+            context = seed_example.get("context", "")
+            seed_instruction_data.append(
+                {
+                    "instruction": question,
+                    "input": context,
+                    "output": answer,
+                    "taxonomy_path": tax_path,
+                    "task_description": task_description,
+                    "document": documents,
+                }
+            )
     except Exception as e:
         errors += 1
         raise TaxonomyReadingException(f"Exception {e} raised in {file_path}") from e

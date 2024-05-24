@@ -25,15 +25,15 @@ class TestLabInit(unittest.TestCase):
         with runner.isolated_filesystem():
             result = runner.invoke(lab.init, args=["--non-interactive"])
             self.assertEqual(result.exit_code, 0)
-            self.assertIn("config.yaml", os.listdir())
+            self.assertIn("config.yaml", os.listdir("workspace"))
             mock_clone_from.assert_called_once()
 
     def test_init_interactive(self):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(lab.init, input="\nn")
+            result = runner.invoke(lab.init, input="\n\nn")
             self.assertEqual(result.exit_code, 0)
-            self.assertIn("config.yaml", os.listdir())
+            self.assertIn("config.yaml", os.listdir("workspace"))
 
     @patch(
         "instructlab.lab.Repo.clone_from",
@@ -42,7 +42,7 @@ class TestLabInit(unittest.TestCase):
     def test_init_interactive_git_error(self):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(lab.init, input="\ny")
+            result = runner.invoke(lab.init, input="\n\ny")
             self.assertEqual(
                 result.exit_code, 1, "command finished with an unexpected exit code"
             )
@@ -55,9 +55,9 @@ class TestLabInit(unittest.TestCase):
     def test_init_interactive_clone(self, mock_clone_from):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(lab.init, input="\ny")
+            result = runner.invoke(lab.init, input="\n\ny")
             self.assertEqual(result.exit_code, 0)
-            self.assertIn("config.yaml", os.listdir())
+            self.assertIn("config.yaml", os.listdir("workspace"))
             mock_clone_from.assert_called_once()
 
     def test_init_interactive_with_preexisting_nonempty_taxonomy(self):
@@ -66,29 +66,29 @@ class TestLabInit(unittest.TestCase):
             os.makedirs("taxonomy/contents")
             result = runner.invoke(lab.init, input="\n\n")
             self.assertEqual(result.exit_code, 0)
-            self.assertIn("config.yaml", os.listdir())
-            self.assertIn("taxonomy", os.listdir())
+            self.assertIn("config.yaml", os.listdir("workspace"))
+            self.assertIn("taxonomy", os.listdir("workspace"))
 
     def test_init_interactive_with_preexisting_config(self):
         runner = CliRunner()
         with runner.isolated_filesystem():
             # first run to prime the config.yaml in current directory
-            result = runner.invoke(lab.init, input="non-default-taxonomy\nn")
+            result = runner.invoke(lab.init, input="\nnon-default-taxonomy\nn")
             self.assertEqual(result.exit_code, 0)
-            self.assertIn("config.yaml", os.listdir())
-            config = read_config("config.yaml")
+            self.assertIn("config.yaml", os.listdir("workspace"))
+            config = read_config("workspace/config.yaml")
             self.assertEqual(config.generate.taxonomy_path, "non-default-taxonomy")
 
             # second invocation should ask if we want to overwrite - yes, and change taxonomy path
             result = runner.invoke(lab.init, input="y\n\ndifferent-taxonomy\nn")
             self.assertEqual(result.exit_code, 0)
-            self.assertIn("config.yaml", os.listdir())
-            config = read_config("config.yaml")
+            self.assertIn("config.yaml", os.listdir("workspace"))
+            config = read_config("workspace/config.yaml")
             self.assertEqual(config.generate.taxonomy_path, "different-taxonomy")
 
             # third invocation should again ask, but this time don't overwrite
-            result = runner.invoke(lab.init, input="n")
+            result = runner.invoke(lab.init, input="n\n")
             self.assertEqual(result.exit_code, 0)
-            self.assertIn("config.yaml", os.listdir())
-            config = read_config("config.yaml")
+            self.assertIn("config.yaml", os.listdir("workspace"))
+            config = read_config("workspace/config.yaml")
             self.assertEqual(config.generate.taxonomy_path, "different-taxonomy")

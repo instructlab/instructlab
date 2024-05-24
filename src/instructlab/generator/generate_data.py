@@ -25,7 +25,7 @@ from ..utils import chunk_document, read_taxonomy
 from . import utils
 from .utils import GenerateException
 
-DEFAULT_PROMPT_TEMPLATE = """\
+DEFAULT_PROMPT_TEMPLATE_MERLINITE = """\
 You are asked to come up with a set of 5 diverse task instructions under {{taxonomy}}{{" for the task \\"%s\\""|format(task_description)  if task_description}}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
 
 Here are the requirements:
@@ -59,6 +59,36 @@ Here are some examples to help you understand the type of questions that are ask
 {% endif -%}
 """
 
+DEFAULT_PROMPT_TEMPLATE_MIXTRAL = """\
+<s> [INST]You are a very knowledgeable AI Assistant that will faithfully assist the user with their task. You are asked to come up with a set of 5 diverse task instructions under {{taxonomy}}{{" for the task \\"%s\\""|format(task_description)  if task_description}}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
+Here are the requirements:
+1. Try not to repeat the verb for each instruction to maximize diversity.
+2. The language used for the instruction also should be diverse. For example, you should combine questions with imperative instructions.
+{% if not document -%}
+3. The type of instructions should not have topic diversity. The list should follow the same topic and category.
+{% else -%}
+3. The type of instructions should be similar to provided examples. The generated instruction and the output should be grounded in the provided document.
+{% endif -%}
+4. A GPT language model should be able to complete the instruction. For example, do not ask the assistant to create any visual or audio output. For another example, do not ask the assistant to wake you up at 5pm or set a reminder because it cannot perform any action.
+5. The instructions should be in English.
+6. The instructions should be 1 to 2 sentences long. Either an imperative sentence or a question is permitted.
+{% if not document -%}
+7. You should generate an appropriate input to the instruction. The input field should contain a specific example provided for the instruction. It should involve realistic data and should not contain simple placeholders. The input should provide substantial content to make the instruction challenging but should ideally not exceed 100 words.
+8. Not all instructions require input. For example, when an instruction asks about some general information, "what is the highest peak in the world", it is not necessary to provide a specific context. In this case, we simply put "<noinput>" in the input field.
+9. The output should be an appropriate response to the instruction and the input. Make sure the output is less than 100 words.
+{% else -%}
+7. The output should be an appropriate response to the input and the instruction. Long outputs are preferable.
+{% endif %}
+{% if not document -%}
+List of 5 tasks:
+{% else -%}
+Based on below document provide a list of 5 tasks:
+Document:
+{{document}}
+Here are some examples to help you understand the type of questions that are asked for this document:
+{% endif -%}[/INST]
+"""
+
 _WORD_DENYLIST = [
     "image",
     "images",
@@ -81,14 +111,21 @@ _WORD_DENYLIST = [
 ]
 
 
-def check_prompt_file(prompt_file_path):
+def check_prompt_file(prompt_file_path, model_family):
     """Check for prompt file."""
     try:
         with open(prompt_file_path, encoding="utf=8") as file:
             prompt_template = file.read()
-    except FileNotFoundError:
-        print(f"Cannot find {prompt_file_path}. Using default prompt.")
-        prompt_template = DEFAULT_PROMPT_TEMPLATE
+    except FileNotFoundError as exc:
+        print(
+            f"Cannot find {prompt_file_path}. Using default prompt depending on model-family."
+        )
+        if model_family == "merlinite":
+            prompt_template = DEFAULT_PROMPT_TEMPLATE_MERLINITE
+        elif model_family == "mixtral":
+            prompt_template = DEFAULT_PROMPT_TEMPLATE_MIXTRAL
+        else:
+            raise ValueError(f"Unsupported family '{model_family}': {exc}") from exc
     prompt_template = prompt_template.strip() + "\n"
     return prompt_template
 
@@ -302,6 +339,7 @@ def generate_data(
     logger,
     api_base,
     tls_insecure,
+    model_family: str,
     yaml_rules: Optional[str] = None,
     output_dir: Optional[str] = None,
     taxonomy: Optional[str] = None,
@@ -411,7 +449,7 @@ def generate_data(
         scorer._tokenizer.tokenize(inst) for inst in all_instructions
     ]
 
-    prompt_template = check_prompt_file(prompt_file_path)
+    prompt_template = check_prompt_file(prompt_file_path, model_family)
     if console_output:
         print(
             "Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help."
@@ -461,11 +499,12 @@ def generate_data(
             new_instruction_tokens = scorer._tokenizer.tokenize(
                 instruction_data_entry["instruction"]
             )
-            with mpctx.Pool(num_cpus) as p:
-                rouge_scores = p.map(
+            with mpctx.Pool(num_cpus) as pool:
+                rouge_scores = pool.map(
                     partial(rouge_scorer._score_lcs, new_instruction_tokens),
                     all_instruction_tokens,
                 )
+            pool.join()
             instruction_data_entry["taxonomy_path"] = selected_taxonomy
             rouge_scores = [score.fmeasure for score in rouge_scores]
             # Comment out extra info not currently being used:
@@ -519,6 +558,8 @@ def generate_data(
             for entry in test_data:
                 json.dump(entry, outfile, ensure_ascii=False)
                 outfile.write("\n")
+
+    progress_bar.close()
 
     if total_discarded or total_rouged:
         logger.info(

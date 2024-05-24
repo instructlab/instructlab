@@ -5,11 +5,13 @@ on:
   push:
     branches:
       - "main"
+      - "release-**"
     paths:
       - '.github/**'
   pull_request:
     branches:
       - "main"
+      - '.github/**'
     paths:
       - '.github/**'
 
@@ -23,6 +25,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
       - name: Download actionlint
         id: get_actionlint
         run: bash <(curl https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.6.27

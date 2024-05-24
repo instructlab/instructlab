@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, PositiveInt, StrictStr, ValidationEr
 import httpx
 import yaml
 
+DEFAULT_WORKSPACE_PATH = "workspace"
 DEFAULT_API_KEY = "no_api_key"
 DEFAULT_CONFIG = "config.yaml"
 DEFAULT_MODEL = "merlinite-7b-lab-Q4_K_M"

@@ -13,7 +13,8 @@ globs:
   - "**/*.md"
 ignores:
   - ".tox/**"
-  - "venv/**"
   - ".venv/**"
   - "build/**"
+  - "src/instructlab/schema/**"
   - "tests/**"
+  - "venv/**"

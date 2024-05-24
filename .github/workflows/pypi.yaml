@@ -5,22 +5,28 @@ on:
     push:
         branches:
             - main
+            - "release-**"
         tags:
             - "v*"
     pull_request:
         branches:
             - main
+            - "release-**"
     release:
         types:
             - published
-    workflow_dispatch:
 
 permissions:
-    contents: read
+    # allow gh release upload
+    contents: write
     # see https://docs.pypi.org/trusted-publishers/
     id-token: write
 
 jobs:
+    # Create and verify release artifacts
+    # - build source dist (tar ball) and wheel
+    # - validate artifacts with various tools
+    # - upload artifacts to GHA
     build-package:
         name: Build and check packages
         runs-on: ubuntu-latest
@@ -29,14 +35,18 @@ jobs:
               with:
                   # for setuptools-scm
                   fetch-depth: 0
+                  submodules: true
 
             - uses: hynek/build-and-inspect-python-package@v2
 
+    # push to Test PyPI on
+    # - a new GitHub release is published
+    # - a PR is merged into main branch
     publish-test-pypi:
         name: Publish packages to test.pypi.org
         # environment: publish-test-pypi
-        # if: github.repository_owner == 'instructlab' && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        if: false
+        if: |
+            github.repository_owner == 'instructlab' && github.event.action == 'published'
         runs-on: ubuntu-latest
         needs: build-package
 
@@ -52,11 +62,13 @@ jobs:
               with:
                   repository-url: https://test.pypi.org/legacy/
 
+    # push to Production PyPI on
+    # - a new GitHub release is published
     publish-pypi:
         name: Publish release to pypi.org
         # environment: publish-pypi
-        # if: github.repository_owner == 'instructlab' && github.event.action == 'published'
-        if: false
+        if: |
+            github.repository_owner == 'instructlab' && github.event.action == 'published'
         runs-on: ubuntu-latest
         needs: build-package
 
@@ -66,6 +78,23 @@ jobs:
               with:
                   name: Packages
                   path: dist
+
+            - uses: sigstore/gh-action-sigstore-python@v2.1.1
+              with:
+                  inputs: >-
+                      ./dist/*.tar.gz
+                      ./dist/*.whl
+
+            - name: Upload artifacts and signatures to GitHub release
+              env:
+                  GITHUB_TOKEN: ${{ github.token }}
+              run: >-
+                  gh release upload '${{ github.ref_name }}' dist/* --repo '${{ github.repository }}'
+
+            # PyPI does not accept .sigstore artifacts and
+            # gh-action-pypi-publish has no option to ignore them.
+            - name: Remove sigstore signatures before uploading to PyPI
+              run: rm ./dist/*.sigstore
 
             - name: Upload to PyPI
               uses: pypa/gh-action-pypi-publish@release/v1

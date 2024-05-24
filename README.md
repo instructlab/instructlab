@@ -3,7 +3,7 @@
 ![Lint](https://github.com/instructlab/instructlab/actions/workflows/lint.yml/badge.svg?branch=main)
 ![Tests](https://github.com/instructlab/instructlab/actions/workflows/test.yml/badge.svg?branch=main)
 ![Build](https://github.com/instructlab/instructlab/actions/workflows/pypi.yaml/badge.svg?branch=main)
-[![Demo](https://img.shields.io/badge/Demo-v0.13.0-blue)](https://asciinema.org/a/PmRU7IrReep04FY6qpzo2Zclc)
+![Release](https://img.shields.io/github/v/release/instructlab/instructlab)
 ![License](https://img.shields.io/github/license/instructlab/instructlab)
 
 ## 📖 Contents
@@ -11,7 +11,7 @@
 - [❓What is `ilab`](#-what-is-ilab)
 - [📋 Requirements](#-requirements)
 - [✅ Getting started](#-getting-started)
-  - [🧰 Installing`ilab`](#-installing-ilab)
+  - [🧰 Installing `ilab`](#-installing-ilab)
   - [🏗️ Initialize `ilab`](#%EF%B8%8F-initialize-ilab)
   - [📥 Download the model](#-download-the-model)
   - [🍴 Serving the model](#-serving-the-model)
@@ -25,7 +25,7 @@
   - [🍴 Serve the newly trained model](#-serve-the-newly-trained-model)
   - [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
 - [🎁 Submit your new knowledge or skills](#-submit-your-new-knowledge-or-skills)
-- [📬 Contributing to Instruct-Lab CLI](#-contributing)
+- [📬 Contributing to InstructLab CLI](#-contributing)
 
 ## Welcome to the InstructLab CLI
 
@@ -70,7 +70,7 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
 ### 🧰 Installing `ilab`
 
-1. If you are on Fedora Linux, install C++, Python 3.9+, and other necessary tools by running the following command:
+1. When installing on Fedora Linux, install C++, Python 3.9+, and other necessary tools by running the following command:
 
    ```shell
    sudo dnf install g++ gcc make pip python3 python3-devel python3-GitPython
@@ -78,9 +78,11 @@ The full process is described graphically in the [workflow diagram](./docs/workf
 
    Optional: If `g++` is not found, try `gcc-c++` by running the following command:
 
-     ```shell
-     sudo dnf install gcc-c++ gcc make pip python3 python3-devel python3-GitPython
-     ```
+   ```shell
+   sudo dnf install gcc-c++ gcc make pip python3 python3-devel python3-GitPython
+   ```
+
+   If you are running on macOS, this installation is not necessary and you can begin your process with the following step.  
 
 2. Create a new directory called `instructlab` to store the files the `ilab` CLI needs when running and `cd` into the directory by running the following command:
 
@@ -174,10 +176,20 @@ The full process is described graphically in the [workflow diagram](./docs/workf
    `taxonomy` seems to not exists or is empty. Should I clone https://github.com/instructlab/taxonomy.git for you? [y/N]: y
    Cloning https://github.com/instructlab/taxonomy.git...
    Generating `config.yaml` in the current directory...
-   Initialization completed successfully, you're ready to start using `lab`. Enjoy!
+   Initialization completed successfully, you're ready to start using `ilab`. Enjoy!
    ```
 
    `ilab` will use the default configuration file unless otherwise specified. You can override this behavior with the `--config` parameter for any `ilab` command.
+
+   The taxonomy repository uses [submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules) to incorporate the [taxonomy schema](https://github.com/instructlab/schema.git).
+   When the `ilab init` command clones the taxonomy repository, it automatically handles the submodules.
+   If you clone the taxonomy repository yourself, be sure to use the [`--recurse-submodules`](https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---recurse-submodulesltpathspecgt) option on the `git clone` command and the `git pull` command when pulling updates from the remote repository.
+   For example:
+
+   ```shell
+   git clone --recurse-submodules https://github.com/instructlab/taxonomy.git
+   git pull --recurse-submodules
+   ```
 
 ### 📥 Download the model
 
@@ -400,7 +412,7 @@ The model can also be downloaded and served locally.
    ilab convert
    ```
 
-3. Serve the newly trained model locally via `ilab serve` command with the `--model`
+3. Serve the newly trained model locally via `ilab serve` command with the `--model-path`
 argument to specify your new model:
 
    ```shell

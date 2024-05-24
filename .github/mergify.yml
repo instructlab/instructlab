@@ -5,9 +5,12 @@ pull_request_rules:
     - "#approved-reviews-by>=1"
     - "#review-requested=0"
     - "#changes-requested-reviews-by=0"
-    - base=main
+    - or:
+      - base=main
+      - base~=release-.*
     - label!=hold
     - label!=do-not-merge
+    - label!=needs-rebase
     - check-success=DCO
 
     # If files are changed in .github/, the actionlint check must pass
@@ -22,7 +25,7 @@ pull_request_rules:
     - or:
       - and:
         - check-success=lint
-        - check-success=test
+        - check-success=test-workflow-complete
         - or:
           # see .github/workflows/lint.yml and test.yml
           - files~=.*\.py$
@@ -37,7 +40,116 @@ pull_request_rules:
         - -files~=tox.ini$
         - -files~=scripts/.*\.sh$
 
+    - or:
+      - and:
+        - or:
+          - files~='.*\.md'
+          - files='.markdownlint-cli2.yaml'
+        - check-success=markdown-lint
+      - and:
+        - -files~='.*\.md'
+        - -files='.markdownlint-cli2.yaml'
+
   actions:
     merge:
       method: merge
     delete_head_branch:
+
+- name: label-cicd
+  description: Automatically apply CI/CD label
+  conditions:
+    - or:
+      - files=.github/mergify.yml
+      - files=.github/workflows/**/*
+      - files=scripts/ruff.sh
+      - files=.pre-commit-config.yaml
+      - files=.pylintrc
+      - files=.spellcheck-en-custom.txt
+      - files=.spellcheck.yml
+      - files=tox.ini
+      - files=.markdownlint-cli2.yaml
+  actions:
+    label:
+      add:
+        - CI/CD
+
+- name: label-container
+  description: Automatically apply container label
+  conditions:
+    - or:
+      - files~=containers/.*
+      - files=.dockerignore
+  actions:
+    label:
+      add:
+        - container
+
+- name: label-documentation
+  description: Automatically apply documentation label
+  conditions:
+    - or:
+      - files=CODE_OF_CONDUCT.md
+      - files=CONTRIBUTOR_RULES.md
+      - files=governance.md
+      - files=MAINTAINERS.md
+      - files=README.md
+      - files=SECURITY.md
+      - files=TROUBLESHOOTING.md
+      - files~=CONTRIBUTING/.*
+      - files~=docs/.*
+      - files~=MAINTAINERS/.*
+  actions:
+    label:
+      add:
+        - documentation
+
+- name: label-testing
+  description: Automatically apply testing label
+  conditions:
+    - or:
+      - files~=tests/.*
+      - files=scripts/functional-tests.sh
+      - files=tox.ini
+  actions:
+    label:
+      add:
+        - testing
+
+- name: ping author on conflicts and add 'needs-rebase' label
+  conditions:
+      - conflict
+      - -closed
+  actions:
+    label:
+      add:
+        - needs-rebase
+    comment:
+      message: |
+       This pull request has merge conflicts that must be resolved before it can be
+       merged. @{{author}} please rebase it. https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/syncing-a-fork
+
+- name: remove 'needs-rebase' label when conflict is resolved
+  conditions:
+      - -conflict
+      - -closed
+  actions:
+    label:
+      remove:
+        - needs-rebase
+
+- name: release-branch-label
+  description: Automatically apply the release-branch label to release branch PRs
+  conditions:
+    - base~=release-.*
+  actions:
+    label:
+      add:
+        - release-branch
+
+- name: backport release-v0.14
+  actions:
+    backport:
+      branches:
+        - release-v0.14
+  conditions:
+    - label=backport-release-v0.14

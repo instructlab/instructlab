@@ -14,6 +14,7 @@ Colab
 compositional
 Conda
 Containerfile
+coreutils
 cpp
 cuBLAS
 CUDA
@@ -83,6 +84,7 @@ SHA
 Shivchander
 Srivastava
 subdirectory
+submodules
 Sudalairaj
 Taj
 tatsu
@@ -92,6 +94,7 @@ th
 th
 tl
 tox
+UI
 unquantized
 USM
 venv

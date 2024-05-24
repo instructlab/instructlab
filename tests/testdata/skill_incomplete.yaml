@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 created_by: test
-version: 1
+version: 2
 seed_examples:
 - question: "Does this yaml pass schema validation?"
   answer: "No, it does not! It should have 5 examples."
