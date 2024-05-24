@@ -541,12 +541,12 @@ The model can also be downloaded and served locally.
 argument to specify your new model:
 
    ```shell
-   ilab serve --model-path <New model name>
+   ilab serve --model-path <new model path>
    ```
 
-   Which model should you select to serve? After running the `ilab convert` command, a few files and directories are generated. The one you will want to serve will end in `.gguf`
-   and will exist in a directory with the suffix `fused-pt`. For example:
-   `instructlab-merlinite-7b-lab-mlx-q-fused-pt/ggml-model-Q4_K_M.gguf`
+   Which model should you select to serve? After running the `ilab convert` command, some files and a directory are generated. The model you will want to serve ends with an extension of `.gguf`
+   and exists in a directory with the suffix `trained`. For example:
+   `instructlab-merlinite-7b-lab-trained/instructlab-merlinite-7b-lab-Q4_K_M.gguf`.
 
 ## 📣 Chat with the new model (not optional this time)
 
