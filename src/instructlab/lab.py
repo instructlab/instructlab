@@ -208,7 +208,7 @@ def init(
         model_path = utils.expand_path(
             click.prompt("Path to your model", default=model_path)
         )
-    click.echo(f"Generating `{config.DEFAULT_CONFIG}` in the workspace directory...")
+    click.echo(f"Generating `{config.DEFAULT_CONFIG}` in the current directory...")
     cfg = config.get_default_config()
     model = splitext(basename(model_path))[0]
     cfg.chat.model = model
@@ -216,7 +216,7 @@ def init(
     cfg.serve.model_path = model_path
     cfg.generate.taxonomy_path = taxonomy_path
     cfg.generate.taxonomy_base = taxonomy_base
-    config.write_config(cfg, config.DEFAULT_CONFIG)
+    config.write_config(cfg)
 
     click.echo(
         "Initialization completed successfully, you're ready to start using `ilab`. Enjoy!"
