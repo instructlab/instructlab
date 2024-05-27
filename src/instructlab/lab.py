@@ -138,7 +138,6 @@ def cli(ctx, config):
     "workspace_path",
     "--workspace-path",
     type=click.Path(),
-    default="",
     envvar="ILAB_WORKSPACE_PATH",
     help="Path to a workspace directory. It's created if it doesn't exist.",
 )
@@ -155,9 +154,13 @@ def init(
 
     clone_taxonomy_repo = True
     if interactive:
-        if exists(os.path.join(workspace_path, config.DEFAULT_CONFIG)):
+        if workspace_path:
+            config.DEFAULT_CONFIG = os.path.join(workspace_path, config.DEFAULT_CONFIG)
+            if not exists(workspace_path):
+                os.mkdir(workspace_path)
+        if exists(config.DEFAULT_CONFIG):
             overwrite = click.confirm(
-                f"Found {config.DEFAULT_CONFIG} in the workspace directory, do you still want to continue?"
+                f"Found {config.DEFAULT_CONFIG} in the current directory, do you still want to continue?"
             )
             if not overwrite:
                 return
@@ -171,8 +174,6 @@ def init(
         taxonomy_path = utils.expand_path(
             click.prompt("Path to taxonomy repo", default=taxonomy_path)
         )
-    if not exists(workspace_path):
-        os.mkdir(workspace_path)
     try:
         taxonomy_contents = os.listdir(taxonomy_path)
     except FileNotFoundError:
@@ -215,7 +216,7 @@ def init(
     cfg.serve.model_path = model_path
     cfg.generate.taxonomy_path = taxonomy_path
     cfg.generate.taxonomy_base = taxonomy_base
-    config.write_config(cfg, os.path.join(workspace_path, config.DEFAULT_CONFIG))
+    config.write_config(cfg, config.DEFAULT_CONFIG)
 
     click.echo(
         "Initialization completed successfully, you're ready to start using `ilab`. Enjoy!"
