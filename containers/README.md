@@ -9,26 +9,14 @@ experience.
 ## Steps to build an image then run a container
 
 The [`Containerfile`](../containers/cuda/Containerfile)
-is based on Nvidia CUDA image, which lucky for us plugs
+is based on Nvidia CUDA image, which plugs
 directly into Podman via their `nvidia-container-toolkit`! The `ubi9` base
 image does not have most packages installed. The bulk of the `Containerfile` is
 spent configuring your system so `ilab` can be installed and run properly.
 `ubi9` as compared to `ubuntu` cannot install the entire `nvidia-12-4` toolkit.
 This did not impact performance during testing.
 
-```shell
-1. podman build -f <Containerfile_Path>
-2. curl -s -L https://nvidia.github.io/libnvidia-container/stable/rpm/nvidia-container-toolkit.repo |   sudo tee /etc/yum.repos.d/nvidia-container-toolkit.repo
-3. sudo yum-config-manager --enable nvidia-container-toolkit-experimental
-4. sudo dnf install -y nvidia-container-toolkit
-5. sudo nvidia-ctk cdi generate --output=/etc/cdi/nvidia.yaml
-6. nvidia-ctk cdi list
-    Example output: 
-    INFO[0000] Found 2 CDI devices
-    nvidia.com/gpu=0
-    nvidia.com/gpu=all
-7. podman run --device nvidia.com/gpu=0  --security-opt=label=disable -it <IMAGE_ID>
-```
+The CUDA Containerfile is located [here](../containers/cuda/Containerfile).
 
 Voila! You now have a container with CUDA and GPUs enabled!
 
