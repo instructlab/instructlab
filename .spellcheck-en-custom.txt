@@ -7,6 +7,7 @@ CRB
 CUDA
 Colab
 Conda
+Config
 Containerfile
 DKMS
 Dropdown
@@ -47,6 +48,7 @@ PEFT
 Pareja
 PlantUML
 Podman
+Prereqs
 PyPI
 PyPi
 PyTorch
@@ -79,6 +81,7 @@ YAML
 Zsh
 arXiv
 arge
+aws
 backend
 backends
 backport
@@ -86,6 +89,7 @@ backported
 cli
 codebase
 compositional
+config
 coreutils
 cpp
 cuBLAS
@@ -98,10 +102,13 @@ frontend
 gpu
 habana
 hipBLAS
+ibmcloud
 ilab
 impactful
 instructlab
+ip
 journald
+keypair
 lignment
 llms
 lora
@@ -123,6 +130,7 @@ quantized
 repo
 runtime
 sexualized
+sshkey
 subdirectory
 submodules
 tatsu
