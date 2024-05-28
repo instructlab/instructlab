@@ -1,9 +1,17 @@
 name: Differential ShellCheck
 on:
   push:
-    branches: [ main ]
+    branches:
+      - "main"
+      - "release-**"
+    paths:
+      - ''**.sh'
   pull_request:
-    branches: [ main ]
+    branches:
+      - "main"
+      - "release-**"
+    paths:
+      - ''**.sh'
 
 permissions:
   contents: read
