@@ -127,7 +127,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       (venv) $ pip cache remove llama_cpp_python
-      (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable --extra-index-url=https://download.pytorch.org/whl/cpu
+      (venv) $ pip install instructlab --extra-index-url=https://download.pytorch.org/whl/cpu
       ```
 
       > **NOTE**: *Additional Build Argument for Intel Macs*
@@ -144,7 +144,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       (venv) $ pip cache remove llama_cpp_python
-      (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable \
+      (venv) $ pip install instructlab \
          --extra-index-url https://download.pytorch.org/whl/rocm6.0 \
          -C cmake.args="-DLLAMA_HIPBLAS=on" \
          -C cmake.args="-DAMDGPU_TARGETS=all" \
@@ -161,7 +161,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       (venv) $ pip cache remove llama_cpp_python
-      (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable -C cmake.args="-DLLAMA_METAL=on"
+      (venv) $ pip install instructlab
       ```
 
    #### Install with Nvidia CUDA
@@ -170,7 +170,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       (venv) $ pip cache remove llama_cpp_python
-      (venv) $ pip install git+https://github.com/instructlab/instructlab.git@stable -C cmake.args="-DLLAMA_CUBLAS=on"
+      (venv) $ pip install instructlab -C cmake.args="-DLLAMA_CUBLAS=on"
    ```
 
 4. From your `venv` environment, verify `ilab` is installed correctly, by running the `ilab` command.
