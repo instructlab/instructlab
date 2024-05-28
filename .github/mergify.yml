@@ -50,6 +50,14 @@ pull_request_rules:
         - -files~='.*\.md'
         - -files='.markdownlint-cli2.yaml'
 
+    - or:
+      - and:
+        - or:
+          - files~='notebooks/.*\.ipynb$'
+        - check-success=validate-notebook
+      - and:
+        - -files~='notebooks/.*\.ipynb$'
+
   actions:
     merge:
       method: merge
