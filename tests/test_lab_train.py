@@ -62,6 +62,7 @@ def is_arm_mac():
 def mock_convert_llama_to_gguf(model, pad_vocab):
     with open(LINUX_GGUF_FILE, "w", encoding="utf-8") as fp:
         fp.write(str(model) + str(pad_vocab))
+    return LINUX_GGUF_FILE
 
 
 @pytest.mark.usefixtures("mock_mlx_package")

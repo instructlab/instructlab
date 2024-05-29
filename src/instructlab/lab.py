@@ -1117,14 +1117,14 @@ def train(
             )
             return
 
-        convert_llama_to_gguf(model=final_results_dir, pad_vocab=True)
+        gguf_file_path = convert_llama_to_gguf(model=final_results_dir, pad_vocab=True)
 
         # Remove safetensors files to save space, were done with them here
         # and the huggingface lib has them cached
         for file in glob(final_results_dir + "/*.safetensors"):
             os.remove(file)
 
-        shutil.move(final_results_dir + "/ggml-model-f16.gguf", gguf_models_file)
+        shutil.move(gguf_file_path, gguf_models_file)
 
         # cleanup checkpoint dir since it's name is unpredictable
         # TODO: figure out how checkpoint dirs should be cleaned up
