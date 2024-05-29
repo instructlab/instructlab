@@ -1,0 +1,47 @@
+# SPDX-License-Identifier: Apache-2.0
+
+name: Shellcheck
+
+on:
+  push:
+    branches:
+      - "main"
+      - "release-**"
+    paths:
+      - '**.sh'
+      - '.github/workflows/shellcheck.yaml' # This workflow file
+  pull_request:
+    branches:
+      - "main"
+      - "release-**"
+    paths:
+      - '**.sh'
+      - '.github/workflows/shellcheck.yaml' # This workflow file
+
+env:
+  LC_ALL: en_US.UTF-8
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
+
+jobs:
+  shellcheck:
+    name: Shellcheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # https://github.com/actions/checkout/issues/249
+          fetch-depth: 0
+          submodules: true
+
+      - name: Run ShellCheck
+        uses: ludeeus/action-shellcheck@master
+        with:
+          check_together: 'yes'
+          format: gcc

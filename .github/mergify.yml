@@ -58,6 +58,14 @@ pull_request_rules:
       - and:
         - -files~='notebooks/.*\.ipynb$'
 
+    - or:
+      - and:
+        - or:
+          - files~='.*\.sh$'
+        - check-success=shellcheck
+      - and:
+        - -files~='.*\.sh$'
+
   actions:
     merge:
       method: merge
