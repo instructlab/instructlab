@@ -20,7 +20,7 @@ from transformers import (
 )
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 import click
-import psutil # to determine system memory
+import psutil  # to determine system memory
 import torch
 
 # Local
@@ -125,6 +125,7 @@ def report_cuda_device(args_device: torch.device, min_vram: int = 0) -> None:
             "  Training does not use the local InstructLab serve. Consider "
             "stopping the server to free up about 5 GiB of GPU memory."
         )
+
 
 def determine_batch_size(device):
     if device.type == "cpu":
@@ -353,7 +354,7 @@ def linux_train(
         }
     else:
         use_bf16 = not use_fp16
-        if device.type == 'cpu':
+        if device.type == "cpu":
             # CPU performance is very bad with fp16 or bf16, so disable both
             use_fp16 = use_bf16 = False
 
