@@ -29,6 +29,7 @@ env
 EPEL
 Eval
 Finetuning
+frontend
 Gaudi
 GFX
 GGUF
@@ -58,6 +59,8 @@ LLM
 llms
 LLVM
 lora
+md
+Mergify
 Merlinite
 Miniforge
 Mixtral
@@ -76,8 +79,10 @@ PEFT
 PlantUML
 Podman
 pre
+preceeds
 preprint
 pyenv
+PyPi
 PyPI
 PyTorch
 qlora
