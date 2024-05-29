@@ -8,7 +8,6 @@ from typing import Any, Dict, List, Mapping, Optional, Union
 import copy
 import glob
 import json
-import logging
 import os
 import platform
 import re
@@ -35,11 +34,6 @@ rules:
 """
 
 DEFAULT_CHUNK_OVERLAP = 100
-
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(levelname)s %(asctime)s %(filename)s:%(lineno)d %(message)s",
-)
 
 
 class TaxonomyReadingException(Exception):
