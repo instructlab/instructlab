@@ -20,7 +20,7 @@ import uvicorn
 
 # Local
 from .client import ClientException, list_models
-from .config import get_api_base
+from .config import get_api_base, get_model_family
 
 templates = [
     {
@@ -181,7 +181,7 @@ def server(
     eos_token = "<|endoftext|>"
     bos_token = ""
     for template_dict in templates:
-        if template_dict["model"] == model_family:
+        if template_dict["model"] == get_model_family(model_family, model_path):
             template = template_dict["template"]
             if template_dict["model"] == "mixtral":
                 eos_token = "</s>"
