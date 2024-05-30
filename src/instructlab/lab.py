@@ -79,7 +79,7 @@ class Lab:
 @click.version_option(package_name="instructlab")
 @click.pass_context
 # pylint: disable=redefined-outer-name
-def cli(ctx, config_file):
+def ilab(ctx, config_file):
     """CLI for interacting with InstructLab.
 
     If this is your first time running InstructLab, it's best to start with `ilab init` to create the environment.
@@ -110,7 +110,7 @@ def cli(ctx, config_file):
         ctx.default_map = config.get_dict(ctx.obj.config)
 
 
-@cli.command()
+@ilab.command()
 @click.option(
     "--interactive/--non-interactive",
     default=True,
@@ -169,7 +169,7 @@ def init(
             if not overwrite:
                 return
         click.echo(
-            "Welcome to InstructLab CLI. This guide will help you to setup your environment."
+            "Welcome to InstructLab ilab. This guide will help you to setup your environment."
         )
         click.echo(
             "Please provide the following values to initiate the "
@@ -228,7 +228,7 @@ def init(
     )
 
 
-@cli.command()
+@ilab.command()
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
@@ -304,7 +304,7 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
 utils.make_lab_diff_aliases(cli, diff)
 
 
-@cli.command()
+@ilab.command()
 @click.option(
     "--model-path",
     type=click.Path(),
@@ -367,7 +367,7 @@ def serve(
         raise click.exceptions.Exit(1)
 
 
-@cli.command()
+@ilab.command()
 @click.option(
     "--model",
     default=config.DEFAULT_MODEL,
@@ -586,7 +586,7 @@ def generate(
             server_queue.join_thread()
 
 
-@cli.command()
+@ilab.command()
 @click.argument(
     "question",
     nargs=-1,
@@ -791,7 +791,7 @@ def chat(
             server_queue.join_thread()
 
 
-@cli.command()
+@ilab.command()
 @click.option(
     "--repository",
     default="instructlab/merlinite-7b-lab-GGUF",  # TODO: add to config.yaml
@@ -921,7 +921,7 @@ class TorchDeviceParam(click.ParamType):
 TORCH_DEVICE = TorchDeviceParam()
 
 
-@cli.command()
+@ilab.command()
 @click.option("--data-dir", help="Base directory where data is stored.", default=None)
 @click.option(
     "--input-dir",
@@ -1212,7 +1212,7 @@ def train(
         # Seems to be not a problem if working with a remote download with convert.py
 
 
-@cli.command()
+@ilab.command()
 @click.option(
     "--data-dir",
     help="Base directory where data is stored.",
@@ -1277,7 +1277,7 @@ def test(data_dir, model_dir, adapter_file):
             )
 
 
-@cli.command()
+@ilab.command()
 @click.option(
     "--model-dir",
     help="Base directory where model is stored.",
@@ -1368,7 +1368,7 @@ def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model
     os.remove(os.path.join(model_dir_fused_pt, f"{model_name}.gguf"))
 
 
-@cli.command
+@ilab.command
 def sysinfo():
     """Print system information"""
     for key, value in get_sysinfo().items():

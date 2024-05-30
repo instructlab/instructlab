@@ -3,4 +3,4 @@
 # First Party
 from instructlab import lab
 
-lab.cli(None, None)
+lab.ilab(None, None)

@@ -36,7 +36,7 @@ class TestLabDiff:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "diff",
@@ -57,7 +57,7 @@ class TestLabDiff:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "diff",
@@ -76,7 +76,7 @@ class TestLabDiff:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "diff",
@@ -96,7 +96,7 @@ class TestLabDiff:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "diff",
@@ -117,7 +117,7 @@ class TestLabDiff:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "diff",
@@ -136,7 +136,7 @@ class TestLabDiff:
             self.taxonomy.create_untracked(valid_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "diff",
@@ -155,7 +155,7 @@ class TestLabDiff:
             file_path = self.taxonomy.create_untracked(valid_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "diff",
@@ -174,7 +174,7 @@ class TestLabDiff:
             self.taxonomy.create_untracked(valid_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "diff",
@@ -194,7 +194,7 @@ class TestLabDiff:
             file_path = self.taxonomy.create_untracked(valid_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "diff",
@@ -215,7 +215,7 @@ class TestLabDiff:
             )
             runner = CliRunner()
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "diff",
@@ -235,7 +235,7 @@ class TestLabDiff:
             )
             runner = CliRunner()
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "diff",
@@ -257,7 +257,7 @@ class TestLabDiff:
             self.taxonomy.create_untracked(invalid_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "diff",
@@ -281,7 +281,7 @@ class TestLabDiff:
             self.taxonomy.create_untracked(failing_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "diff",

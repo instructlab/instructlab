@@ -32,7 +32,7 @@ dynamic = ["dependencies", "optional-dependencies", "version"]
 
 [project.scripts]
 # defines ilab executable
-ilab = "instructlab.lab:cli"
+ilab = "instructlab.lab:ilab"
 
 [project.urls]
 homepage = "https://instructlab.io"

@@ -21,7 +21,7 @@ class TestLabDownload:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "download",
@@ -40,7 +40,7 @@ class TestLabDownload:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "download",

@@ -35,7 +35,7 @@ class TestLabGenerate:
         with runner.isolated_filesystem():
             mt = MockTaxonomy(pathlib.Path("taxonomy"))
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "generate",
@@ -61,7 +61,7 @@ class TestLabGenerate:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "generate",
@@ -79,7 +79,7 @@ class TestLabGenerate:
         with runner.isolated_filesystem():
             mt = MockTaxonomy(pathlib.Path("taxonomy"))
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
                     "generate",
@@ -106,7 +106,7 @@ class TestLabGenerate:
                     "compositional_skills/tracked/qna.yaml", qnafile.read()
                 )
                 result = runner.invoke(
-                    lab.cli,
+                    lab.ilab,
                     [
                         "--config=DEFAULT",
                         "generate",
@@ -176,7 +176,7 @@ class TestLabGenerate:
                     "compositional_skills/tracked/qna.yaml", qnafile.read()
                 )
                 result = runner.invoke(
-                    lab.cli,
+                    lab.ilab,
                     [
                         "--config",
                         cfg_file,
