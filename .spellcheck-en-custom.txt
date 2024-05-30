@@ -84,6 +84,7 @@ backends
 backport
 backported
 cli
+codebase
 compositional
 coreutils
 cpp
