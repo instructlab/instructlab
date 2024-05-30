@@ -1097,36 +1097,19 @@ def train(
 
         # TODO: Figure out what to do when there are multiple checkpoint dirs.
         # Right now it's just copying files from the first one numerically not necessarily the best one
-        added_tokens_file = glob(
-            training_results_dir + "/checkpoint-*/added_tokens.json"
-        )
-        special_tokens_map = glob(
-            training_results_dir + "/checkpoint-*/special_tokens_map.json"
-        )
-        tokenizer_json = glob(training_results_dir + "/checkpoint-*/tokenizer.json")
-        tokenizer_model = glob(training_results_dir + "/checkpoint-*/tokenizer.model")
-        tokenizer_config_json = glob(
-            training_results_dir + "/checkpoint-*/tokenizer_config.json"
-        )
-        config_json = glob(training_results_dir + "/merged_model/config.json")
-        generation_config_json = glob(
-            training_results_dir + "/merged_model/generation_config.json"
-        )
+        for fpath in (
+            "/checkpoint-*/added_tokens.json",
+            "/checkpoint-*/special_tokens_map.json",
+            "/checkpoint-*/tokenizer.json",
+            "/checkpoint-*/tokenizer.model",
+            "/checkpoint-*/tokenizer_config.json",
+            "/merged_model/config.json",
+            "/merged_model/generation_config.json",
+        ):
+            file_ = glob(training_results_dir + fpath)[0]
+            shutil.copy(file_, final_results_dir)
+            print("Copied ", file_, "to ", final_results_dir)
 
-        shutil.copy(added_tokens_file[0], final_results_dir)
-        print("Copied ", added_tokens_file[0], "to ", final_results_dir)
-        shutil.copy(special_tokens_map[0], final_results_dir)
-        print("Copied ", special_tokens_map[0], "to ", final_results_dir)
-        shutil.copy(tokenizer_json[0], final_results_dir)
-        print("Copied ", tokenizer_json[0], "to ", final_results_dir)
-        shutil.copy(tokenizer_model[0], final_results_dir)
-        print("Copied ", tokenizer_model[0], "to ", final_results_dir)
-        shutil.copy(tokenizer_config_json[0], final_results_dir)
-        print("Copied ", tokenizer_config_json[0], "to ", final_results_dir)
-        shutil.copy(config_json[0], final_results_dir)
-        print("Copied ", config_json[0], "to ", final_results_dir)
-        shutil.copy(generation_config_json[0], final_results_dir)
-        print("Copied ", generation_config_json[0], "to ", final_results_dir)
         for file in glob(training_results_dir + "/merged_model/*.safetensors"):
             shutil.move(file, final_results_dir)
             print("Moved ", file, "to ", final_results_dir)
