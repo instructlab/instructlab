@@ -24,7 +24,6 @@ import yaml
 # Local
 from . import log
 
-
 DEFAULT_API_KEY = "no_api_key"
 DEFAULT_CONFIG = "config.yaml"
 # TODO: Consolidate --model and --model-path into one --model-path flag since we always need a path now
@@ -225,6 +224,7 @@ def get_model_family(forced, model_path):
 
     return guess if guess in MODEL_FAMILIES else DEFAULT_MODEL_FAMILY
 
+
 class Lab:
     """Lab object holds high-level information about ilab CLI"""
 
@@ -248,7 +248,6 @@ class Lab:
 
         self.logger.setLevel(self.config.general.log_level.upper())
 
-    
 
 def init_config(ctx, config_file):
     if (
