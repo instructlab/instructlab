@@ -1033,8 +1033,7 @@ def train(
         data_dir = "./taxonomy_data"
         try:
             os.listdir(input_dir)  # Test to throw FileNotFound exception
-            if not os.path.isdir(data_dir):
-                os.mkdir(data_dir)
+            os.makedirs(data_dir, exist_ok=True)
             # generated input files reverse sorted by name (contains timestamp)
             train_files = sorted(glob(input_dir + "/train_*"), reverse=True)
             test_files = sorted(glob(input_dir + "/test_*"), reverse=True)
@@ -1088,8 +1087,8 @@ def train(
         os.makedirs(final_results_dir, exist_ok=True)
 
         gguf_models_dir = "./models"
-        if not os.path.isdir(gguf_models_dir):
-            os.mkdir(gguf_models_dir)
+        os.makedirs(gguf_models_dir, exist_ok=True)
+
         gguf_models_file = os.path.join(gguf_models_dir, "ggml-model-f16.gguf")
         # Remove previously trained model, its taking up space we may need in the next step
         if os.path.isfile(gguf_models_file):

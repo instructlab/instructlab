@@ -387,8 +387,7 @@ def generate_data(
     machine_seed_instruction_data = []
     generate_start = time.time()
 
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+    os.makedirs(output_dir, exist_ok=True)
 
     # check taxonomy first then seed_tasks_path
     # throw an error if both not found
