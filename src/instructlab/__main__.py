@@ -3,4 +3,5 @@
 # First Party
 from instructlab import lab
 
-lab.cli(None, None)
+# pylint does not understand click's decorators
+lab.cli()  # pylint: disable=no-value-for-parameter
