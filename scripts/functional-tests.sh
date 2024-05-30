@@ -344,28 +344,12 @@ test_model_print(){
         }
     '
 
-    # validate that we print the model from the CLI
+    # validate that we fail on invalid model
     expect -c '
         set timeout 30
         spawn ilab chat -m bar
         expect {
-            -re "Welcome to InstructLab Chat w/ \\\u001b\\\[1mBAR\\\u001b\\\[0m" { exit 0 }
-            eof { catch wait result; exit [lindex $result 3] }
-            timeout { exit 1 }
-        }
-    '
-
-    # validate that we print the model from the config
-    expect -c '
-        exec sed -i.bak "s/merlinite-7b-lab-Q4_K_M/baz/g" config.yaml
-        spawn ilab chat
-        expect {
-            -re "Welcome to InstructLab Chat w/ \\\u001b\\\[1mBAZ\\\u001b\\\[0m" {
-                exec sed -i.bak "s/baz/merlinite-7b-lab-Q4_K_M/g" config.yaml
-                exit 0
-            }
-            eof { catch wait result; exit [lindex $result 3] }
-            timeout { exit 1 }
+           "Executing chat failed with: Model bar is not served by the server. These are the served models: ['models/foo.gguf']" { exit 0 }
         }
     '
 

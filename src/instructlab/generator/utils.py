@@ -16,7 +16,7 @@ from openai import OpenAI, OpenAIError
 import httpx
 
 # Local
-from ..config import DEFAULT_API_KEY
+from ..config import DEFAULT_API_KEY, DEFAULT_MODEL_OLD
 from ..utils import get_sysprompt
 
 StrOrOpenAIObject = Union[str, object]
@@ -132,6 +132,21 @@ def openai_completion(
             api_key=api_key,
             http_client=httpx.Client(cert=cert, verify=verify),
         )
+
+        # ensure the model specified exists on the server. with backends like vllm, this is crucial.
+        model_list = client.models.list().data
+        model_ids = []
+        for model in model_list:
+            model_ids.append(model.id)
+        if not any(model_name == m for m in model_ids):
+            if model_name == DEFAULT_MODEL_OLD:
+                logging.info(
+                    "Model %s is not a full path. Try running ilab init or edit your config to have the full model path for serving, chatting, and generation.",
+                    model_name,
+                )
+            raise GenerateException(
+                f"Model {model_name} is not served by the server. These are the served models {model_ids}"
+            )
 
         messages = [
             {"role": "system", "content": get_sysprompt()},

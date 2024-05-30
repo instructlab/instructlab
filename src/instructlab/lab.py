@@ -4,7 +4,7 @@
 
 # Standard
 from glob import glob
-from os.path import basename, dirname, exists, splitext
+from os.path import basename, dirname, exists
 import json
 import logging
 import multiprocessing
@@ -215,9 +215,8 @@ def init(
         )
     click.echo(f"Generating `{config.DEFAULT_CONFIG}` in the current directory...")
     cfg = config.get_default_config()
-    model = splitext(basename(model_path))[0]
-    cfg.chat.model = model
-    cfg.generate.model = model
+    cfg.chat.model = model_path
+    cfg.generate.model = model_path
     cfg.serve.model_path = model_path
     cfg.generate.taxonomy_path = taxonomy_path
     cfg.generate.taxonomy_base = taxonomy_base
@@ -308,6 +307,8 @@ utils.make_lab_diff_aliases(cli, diff)
 @click.option(
     "--model-path",
     type=click.Path(),
+    default=config.DEFAULT_MODEL_PATH,
+    show_default=True,
     help="Path to the model used during generation.",
 )
 @click.option(
@@ -586,6 +587,8 @@ def generate(
 @click.option(
     "-m",
     "--model",
+    default=config.DEFAULT_MODEL,
+    show_default=True,
     help="Model name to print in chat process",
 )
 @click.option(
