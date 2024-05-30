@@ -15,8 +15,8 @@ import pytest
 # First Party
 from instructlab import lab
 from instructlab.config import get_default_config, write_config
-from instructlab.generator.generate_data import generate_data
-from instructlab.generator.utils import GenerateException
+from instructlab.data.generator.generate_data import generate_data
+from instructlab.data.generator.utils import GenerateException
 
 # Local
 from .taxonomy import MockTaxonomy

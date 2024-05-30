@@ -15,9 +15,9 @@ import sys
 from openai import OpenAI, OpenAIError
 import httpx
 
-# Local
-from ..config import DEFAULT_API_KEY, DEFAULT_MODEL_OLD
-from ..utils import get_ssl_cert_config, get_sysprompt
+# First Party
+from instructlab.config import DEFAULT_API_KEY, DEFAULT_MODEL_OLD
+from instructlab.utils import get_ssl_cert_config, get_sysprompt
 
 StrOrOpenAIObject = Union[str, object]
 

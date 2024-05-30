@@ -19,16 +19,11 @@ from rouge_score import rouge_scorer
 import click
 import tqdm
 
+# First Party
+from instructlab import config, utils
+
 # Local
-from ..config import get_model_family
-from ..utils import (
-    chunk_document,
-    max_seed_example_tokens,
-    num_chars_from_tokens,
-    read_taxonomy,
-)
-from . import utils
-from .utils import GenerateException
+from . import utils as generateutils
 
 DEFAULT_PROMPT_TEMPLATE_MERLINITE = """\
 You are asked to come up with a set of 5 diverse task instructions under {{taxonomy}}{{" for the task \\"%s\\""|format(task_description)  if task_description}}. These task instructions will be given to a GPT model and we will evaluate the GPT model for completing the instructions.
@@ -286,14 +281,14 @@ def get_instructions_from_model(
                 instruction_data_pool, num_prompt_instructions
             )
         except ValueError as exc:
-            raise GenerateException(
+            raise generateutils.GenerateException(
                 f"There was a problem with the new data, please make sure the "
                 f"yaml is formatted correctly, and there is enough "
                 f"new data({num_prompt_instructions}+ Q&A))"
             ) from exc
         prompt = encode_prompt(prompt_instructions, prompt_template)
         batch_inputs.append(prompt)
-    decoding_args = utils.OpenAIDecodingArguments(
+    decoding_args = generateutils.OpenAIDecodingArguments(
         temperature=temperature,
         n=1,
         # Hard-coded to maximize length.
@@ -304,7 +299,7 @@ def get_instructions_from_model(
     )
     request_start = time.time()
     try:
-        results = utils.openai_completion(
+        results = generateutils.openai_completion(
             api_base=api_base,
             api_key=api_key,
             prompts=batch_inputs,
@@ -316,7 +311,7 @@ def get_instructions_from_model(
             batch_size=request_batch_size,
             decoding_args=decoding_args,
         )
-    except GenerateException as exc:
+    except generateutils.GenerateException as exc:
         # Attempt to log and gracefully recover from exceeding the server's
         # maximum context length. This won't work for all servers.
         #
@@ -393,17 +388,19 @@ def generate_data(
     # throw an error if both not found
     # pylint: disable=broad-exception-caught,raise-missing-from
     if taxonomy and os.path.exists(taxonomy):
-        seed_instruction_data = read_taxonomy(
+        seed_instruction_data = utils.read_taxonomy(
             logger, taxonomy, taxonomy_base, yaml_rules
         )
     else:
         raise SystemExit(f"Error: taxonomy ({taxonomy}) does not exist.")
 
     prompt_template = check_prompt_file(
-        prompt_file_path, get_model_family(model_family, model_name)
+        prompt_file_path, config.get_model_family(model_family, model_name)
     )
-    max_seed_tokens = max_seed_example_tokens(server_ctx_size, len(prompt_template))
-    max_seed_chars = num_chars_from_tokens(max_seed_tokens)
+    max_seed_tokens = utils.max_seed_example_tokens(
+        server_ctx_size, len(prompt_template)
+    )
+    max_seed_chars = utils.num_chars_from_tokens(max_seed_tokens)
     for seed_example in seed_instruction_data:
         if (
             len(seed_example["instruction"])
@@ -429,7 +426,7 @@ def generate_data(
 
         documents = seed_example["document"]
         if documents:
-            seed_example["document"] = chunk_document(
+            seed_example["document"] = utils.chunk_document(
                 documents=documents,
                 server_ctx_size=server_ctx_size,
                 chunk_word_count=chunk_word_count,
@@ -466,7 +463,9 @@ def generate_data(
     # load the LM-generated instructions
     machine_instruction_data = []
     if os.path.exists(os.path.join(output_dir, "regen.json")):
-        machine_instruction_data = utils.jload(os.path.join(output_dir, "regen.json"))
+        machine_instruction_data = generateutils.jload(
+            os.path.join(output_dir, "regen.json")
+        )
         logger.debug(
             f"Loaded {len(machine_instruction_data)} machine-generated instructions"
         )
@@ -573,7 +572,9 @@ def generate_data(
         logger.debug(
             f"Generated {total} instructions(discarded {discarded}), rouged {total - keep}, kept {keep} instructions"
         )
-        utils.jdump(machine_instruction_data, os.path.join(output_dir, output_file))
+        generateutils.jdump(
+            machine_instruction_data, os.path.join(output_dir, output_file)
+        )
         train_data = []
         for synth_example in machine_instruction_data:
             user = synth_example["instruction"]
