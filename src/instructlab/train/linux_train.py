@@ -20,6 +20,7 @@ from transformers import (
 )
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 import click
+import psutil
 import torch
 
 # Local
@@ -191,6 +192,18 @@ def linux_train(
         use_fp16 = False
 
     torch_dtype = "auto" if device.type == "cuda" else None
+    if device.type == "cpu":
+        total_memory = psutil.virtual_memory().total / (1024**3)
+        if total_memory < 64:
+            # Using our default model, a system with 32 GB of RAM
+            # will get OOM killed using torch_dtype=None, though we
+            # seem to get much better performance with this setting
+            # where there's enough memory.
+            #
+            # There's more going on here and needs deeper exploration to find
+            # the right parameters to be checking for choosing the best
+            # configuration.
+            torch_dtype = "auto"
 
     # torch compile fails to build, see PyTorch #124707
     # scaled_dot_product_attention(): argument 'is_causal' must be bool, not SymBool
