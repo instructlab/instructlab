@@ -143,6 +143,10 @@ tests: check-tox ## Run tox -e unit against code
 verify: check-tox ## Run tox -e fmt,lint,spellcheck against code
 	tox p -e ruff,fastlint,spellcheck
 
+.PHONY: spellcheck
+spellcheck: .spellcheck.yml ## Spellcheck markdown files
+	pyspelling --config $<
+
 .PHONY: spellcheck-sort
 spellcheck-sort: .spellcheck-en-custom.txt ## Sort spellcheck directory
 	sort -d -o $< $<
