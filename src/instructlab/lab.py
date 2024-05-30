@@ -1021,7 +1021,6 @@ def train(
     Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
-    # pylint: disable=C0415
     if not input_dir:
         # By default, generate output-dir is used as train input-dir
         input_dir = ctx.obj.config.generate.output_dir
@@ -1074,6 +1073,7 @@ def train(
         shutil.copy(train_files[0], train_file)
         shutil.copy(test_files[0], test_file)
 
+    # pylint: disable=import-outside-toplevel
     if not utils.is_macos_with_m_chip():
         # Local
         from .llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
