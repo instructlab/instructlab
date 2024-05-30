@@ -159,7 +159,7 @@ class TestLabTrain:
                 lab.cli, ["--config=DEFAULT", "train", "--input-dir", "invalid"]
             )
             assert result.exception is not None
-            assert "No such file or directory: 'invalid'" in result.output
+            assert "Could not read directory: invalid" in result.output
             assert result.exit_code == 1
 
     def test_invalid_taxonomy(self):

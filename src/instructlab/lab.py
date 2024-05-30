@@ -1032,8 +1032,14 @@ def train(
     # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
     if data_dir is None:
         data_dir = "./taxonomy_data"
+        if not os.path.exists(input_dir):
+            click.secho(
+                f"Could not read directory: {input_dir}",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
+
         try:
-            os.listdir(input_dir)  # Test to throw FileNotFound exception
             os.makedirs(data_dir, exist_ok=True)
             # generated input files reverse sorted by name (contains timestamp)
             train_files = sorted(glob(input_dir + "/train_*"), reverse=True)
@@ -1054,12 +1060,6 @@ def train(
             # First file is latest (by above reverse sort and timestamped names)
             shutil.copy(train_files[0], data_dir + "/train_gen.jsonl")
             shutil.copy(test_files[0], data_dir + "/test_gen.jsonl")
-        except FileNotFoundError as exc:
-            click.secho(
-                f"Could not read directory: {exc}",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
         except OSError as exc:
             click.secho(
                 f"Could not create data dir: {exc}",
