@@ -14,6 +14,7 @@ import pytest
 
 # First Party
 from instructlab import lab
+from instructlab.config import get_default_config, write_config
 from instructlab.generator.generate_data import generate_data
 from instructlab.generator.utils import GenerateException
 
@@ -159,6 +160,41 @@ class TestLabGenerate:
                     exc.value
                 )
                 get_instructions_from_model.assert_called_once()
+                mt.teardown()
+
+    def test_new_data_too_long(self):
+        runner = CliRunner()
+        with open("tests/testdata/skill_too_long_answer.yaml", "rb") as qnafile:
+            with runner.isolated_filesystem():
+                cfg_file = "small_ctx_config.yaml"
+                smaller_ctx = 3072
+                config = get_default_config()
+                config.serve.max_ctx_size = smaller_ctx
+                write_config(config, config_file=cfg_file)
+                mt = MockTaxonomy(pathlib.Path("taxonomy"))
+                mt.create_untracked(
+                    "compositional_skills/tracked/qna.yaml", qnafile.read()
+                )
+                result = runner.invoke(
+                    lab.cli,
+                    [
+                        "--config",
+                        cfg_file,
+                        "generate",
+                        "--taxonomy-base",
+                        "main",
+                        "--taxonomy-path",
+                        mt.root,
+                        "--endpoint-url",
+                        "localhost:8000",
+                        "--server-ctx-size",
+                        smaller_ctx,
+                    ],
+                )
+                assert (
+                    result.exit_code == 1
+                ), "command finished with an unexpected exit code"
+                assert "too long for the server context size" in result.output
                 mt.teardown()
 
     @patch(
