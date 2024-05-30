@@ -1107,11 +1107,11 @@ def train(
         ):
             file_ = next(training_results_dir.glob(fpath))
             shutil.copy(file_, final_results_dir)
-            print("Copied ", file_, "to ", final_results_dir)
+            print(f"Copied {file_} to {final_results_dir}")
 
         for file in training_results_dir.glob("merged_model/*.safetensors"):
             shutil.move(file, final_results_dir)
-            print("Moved ", file, "to ", final_results_dir)
+            print(f"Moved {file} to {final_results_dir}")
 
         if four_bit_quant:
             print(
