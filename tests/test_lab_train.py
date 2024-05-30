@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+from pathlib import Path
 from unittest.mock import patch
 import os
 import platform
@@ -362,9 +363,8 @@ class TestLabTrain:
             )
             assert result.exit_code == 0
             convert_llama_to_gguf_mock.assert_called_once()
-            assert (
-                convert_llama_to_gguf_mock.call_args[1]["model"]
-                == "./training_results/final"
+            assert convert_llama_to_gguf_mock.call_args[1]["model"] == Path(
+                "./training_results/final"
             )
             assert convert_llama_to_gguf_mock.call_args[1]["pad_vocab"] is True
             assert len(convert_llama_to_gguf_mock.call_args[1]) == 2

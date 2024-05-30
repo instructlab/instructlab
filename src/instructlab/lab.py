@@ -1082,34 +1082,34 @@ def train(
             four_bit_quant=four_bit_quant,
         )
 
-        training_results_dir = "./training_results"
+        training_results_dir = Path("./training_results")
 
-        final_results_dir = training_results_dir + "/final"
-        os.makedirs(final_results_dir, exist_ok=True)
+        final_results_dir = training_results_dir / "final"
+        final_results_dir.mkdir(exist_ok=True)
 
-        gguf_models_dir = "./models"
-        os.makedirs(gguf_models_dir, exist_ok=True)
+        gguf_models_dir = Path("./models")
+        gguf_models_dir.mkdir(exist_ok=True)
+        gguf_models_file = gguf_models_dir / "ggml-model-f16.gguf"
 
         # Remove previously trained model, its taking up space we may need in the next step
-        gguf_models_file = Path(gguf_models_dir) / "ggml-model-f16.gguf"
         gguf_models_file.unlink(missing_ok=True)
 
         # TODO: Figure out what to do when there are multiple checkpoint dirs.
         # Right now it's just copying files from the first one numerically not necessarily the best one
         for fpath in (
-            "/checkpoint-*/added_tokens.json",
-            "/checkpoint-*/special_tokens_map.json",
-            "/checkpoint-*/tokenizer.json",
-            "/checkpoint-*/tokenizer.model",
-            "/checkpoint-*/tokenizer_config.json",
-            "/merged_model/config.json",
-            "/merged_model/generation_config.json",
+            "checkpoint-*/added_tokens.json",
+            "checkpoint-*/special_tokens_map.json",
+            "checkpoint-*/tokenizer.json",
+            "checkpoint-*/tokenizer.model",
+            "checkpoint-*/tokenizer_config.json",
+            "merged_model/config.json",
+            "merged_model/generation_config.json",
         ):
-            file_ = glob(training_results_dir + fpath)[0]
+            file_ = next(training_results_dir.glob(fpath))
             shutil.copy(file_, final_results_dir)
             print("Copied ", file_, "to ", final_results_dir)
 
-        for file in glob(training_results_dir + "/merged_model/*.safetensors"):
+        for file in training_results_dir.glob("merged_model/*.safetensors"):
             shutil.move(file, final_results_dir)
             print("Moved ", file, "to ", final_results_dir)
 
@@ -1124,14 +1124,14 @@ def train(
 
         # Remove safetensors files to save space, were done with them here
         # and the huggingface lib has them cached
-        for file in glob(final_results_dir + "/*.safetensors"):
-            os.remove(file)
+        for file in final_results_dir.glob("*.safetensors"):
+            file.unlink()
 
         shutil.move(gguf_file_path, gguf_models_file)
 
         # cleanup checkpoint dir since it's name is unpredictable
         # TODO: figure out how checkpoint dirs should be cleaned up
-        # checkpoint_dirs = glob(training_results_dir + "/checkpoint*")
+        # checkpoint_dirs = training_results_dir.glob("checkpoint*")
         # shutil.rmtree(checkpoint_dirs[0])
     else:
         # Local
@@ -1341,7 +1341,7 @@ def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model
     shutil.rmtree(model_dir_fused)
 
     convert_llama_to_gguf(
-        model=model_dir_fused_pt,
+        model=Path(model_dir_fused_pt),
         pad_vocab=True,
         skip_unknown=True,
         outfile=f"{model_dir_fused_pt}/{model_name}.gguf",
