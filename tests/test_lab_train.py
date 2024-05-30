@@ -370,13 +370,11 @@ class TestLabTrain:
             assert len(convert_llama_to_gguf_mock.call_args[1]) == 2
             linux_train_mock.assert_called_once()
             print(linux_train_mock.call_args[1])
-            assert (
-                linux_train_mock.call_args[1]["train_file"]
-                == "test_generated/train_1.jsonl"
+            assert linux_train_mock.call_args[1]["train_file"] == Path(
+                "test_generated/train_1.jsonl"
             )
-            assert (
-                linux_train_mock.call_args[1]["test_file"]
-                == "test_generated/test_1.jsonl"
+            assert linux_train_mock.call_args[1]["test_file"] == Path(
+                "test_generated/test_1.jsonl"
             )
             assert linux_train_mock.call_args[1]["num_epochs"] == 1
             assert linux_train_mock.call_args[1]["device"] is not None

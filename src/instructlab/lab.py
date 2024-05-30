@@ -1049,8 +1049,11 @@ def train(
             raise click.exceptions.Exit(1)
 
         # generated input files reverse sorted by name (contains timestamp)
-        train_files = sorted(glob(input_dir + "/train_*"), reverse=True)
-        test_files = sorted(glob(input_dir + "/test_*"), reverse=True)
+        def get_files(pattern):
+            return sorted(Path(input_dir).glob(pattern), reverse=True)
+
+        train_files = get_files("train_*")
+        test_files = get_files("test_*")
 
         if not train_files or not test_files:
             click.secho(
