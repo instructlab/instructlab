@@ -1041,31 +1041,32 @@ def train(
 
         try:
             os.makedirs(data_dir, exist_ok=True)
-            # generated input files reverse sorted by name (contains timestamp)
-            train_files = sorted(glob(input_dir + "/train_*"), reverse=True)
-            test_files = sorted(glob(input_dir + "/test_*"), reverse=True)
-
-            if not train_files or not test_files:
-                click.secho(
-                    f"{input_dir} does not contain training or test files, did you run `ilab generate`?",
-                    fg="red",
-                )
-                raise click.exceptions.Exit(1)
-            if len(train_files) > 1 or len(test_files) > 1:
-                # pylint: disable=f-string-without-interpolation
-                click.secho(
-                    f"Found multiple files from `ilab generate`. Using the most recent generation.",
-                    fg="yellow",
-                )
-            # First file is latest (by above reverse sort and timestamped names)
-            shutil.copy(train_files[0], data_dir + "/train_gen.jsonl")
-            shutil.copy(test_files[0], data_dir + "/test_gen.jsonl")
         except OSError as exc:
             click.secho(
                 f"Could not create data dir: {exc}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
+
+        # generated input files reverse sorted by name (contains timestamp)
+        train_files = sorted(glob(input_dir + "/train_*"), reverse=True)
+        test_files = sorted(glob(input_dir + "/test_*"), reverse=True)
+
+        if not train_files or not test_files:
+            click.secho(
+                f"{input_dir} does not contain training or test files, did you run `ilab generate`?",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
+        if len(train_files) > 1 or len(test_files) > 1:
+            # pylint: disable=f-string-without-interpolation
+            click.secho(
+                f"Found multiple files from `ilab generate`. Using the most recent generation.",
+                fg="yellow",
+            )
+        # First file is latest (by above reverse sort and timestamped names)
+        shutil.copy(train_files[0], data_dir + "/train_gen.jsonl")
+        shutil.copy(test_files[0], data_dir + "/test_gen.jsonl")
 
     if not utils.is_macos_with_m_chip():
         # Local
