@@ -1066,9 +1066,8 @@ def train(
             )
             raise click.exceptions.Exit(1)
         if len(train_files) > 1 or len(test_files) > 1:
-            # pylint: disable=f-string-without-interpolation
             click.secho(
-                f"Found multiple files from `ilab generate`. Using the most recent generation.",
+                "Found multiple files from `ilab generate`. Using the most recent generation.",
                 fg="yellow",
             )
         # First file is latest (by above reverse sort and timestamped names)
