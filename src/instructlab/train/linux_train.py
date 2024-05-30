@@ -340,7 +340,7 @@ def linux_train(
             num_train_epochs=num_epochs,
             per_device_train_batch_size=per_device_train_batch_size,
             fp16=use_fp16,
-            bf16=not use_fp16,
+            bf16=not use_fp16 and device.type != "cpu",
             # use_ipex=True, # TODO CPU test this possible optimization
             use_cpu=model.device.type == "cpu",
             save_strategy="epoch",
