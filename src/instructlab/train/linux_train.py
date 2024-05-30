@@ -214,7 +214,7 @@ def linux_train(
 
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
-        torch_dtype="auto",
+        torch_dtype="auto" if device.type != "cpu" else None,
         quantization_config=bnb_config,
         config=config,
         trust_remote_code=True,
