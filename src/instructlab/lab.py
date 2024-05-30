@@ -5,6 +5,7 @@
 # Standard
 from glob import glob
 from os.path import basename, dirname, exists
+from pathlib import Path
 import json
 import logging
 import multiprocessing
@@ -1089,10 +1090,9 @@ def train(
         gguf_models_dir = "./models"
         os.makedirs(gguf_models_dir, exist_ok=True)
 
-        gguf_models_file = os.path.join(gguf_models_dir, "ggml-model-f16.gguf")
         # Remove previously trained model, its taking up space we may need in the next step
-        if os.path.isfile(gguf_models_file):
-            os.remove(gguf_models_file)
+        gguf_models_file = Path(gguf_models_dir) / "ggml-model-f16.gguf"
+        gguf_models_file.unlink(missing_ok=True)
 
         # TODO: Figure out what to do when there are multiple checkpoint dirs.
         # Right now it's just copying files from the first one numerically not necessarily the best one
