@@ -94,7 +94,7 @@ class TestLabTrain:
             load_and_train_mock.assert_called_once()
             assert load_and_train_mock.call_args[1]["model"] is not None
             assert load_and_train_mock.call_args[1]["train"]
-            assert load_and_train_mock.call_args[1]["data"] == "./taxonomy_data"
+            assert load_and_train_mock.call_args[1]["data"] == Path("./taxonomy_data")
             assert load_and_train_mock.call_args[1]["adapter_file"] is not None
             assert load_and_train_mock.call_args[1]["iters"] == 100
             assert load_and_train_mock.call_args[1]["save_every"] == 10
@@ -112,7 +112,7 @@ class TestLabTrain:
             assert not convert_between_mlx_and_pytorch_mock.call_args[1]["local"]
             assert len(convert_between_mlx_and_pytorch_mock.call_args[1]) == 4
             make_data_mock.assert_called_once()
-            assert make_data_mock.call_args[1]["data_dir"] == "./taxonomy_data"
+            assert make_data_mock.call_args[1]["data_dir"] == Path("./taxonomy_data")
             assert len(make_data_mock.call_args[1]) == 1
             is_macos_with_m_chip_mock.assert_called_once()
 
@@ -371,10 +371,10 @@ class TestLabTrain:
             linux_train_mock.assert_called_once()
             print(linux_train_mock.call_args[1])
             assert linux_train_mock.call_args[1]["train_file"] == Path(
-                "test_generated/train_1.jsonl"
+                "taxonomy_data/train_gen.jsonl"
             )
             assert linux_train_mock.call_args[1]["test_file"] == Path(
-                "test_generated/test_1.jsonl"
+                "taxonomy_data/test_gen.jsonl"
             )
             assert linux_train_mock.call_args[1]["num_epochs"] == 1
             assert linux_train_mock.call_args[1]["device"] is not None

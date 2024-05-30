@@ -1029,9 +1029,13 @@ def train(
     if four_bit_quant and device.type != "cuda":
         ctx.fail("--4-bit-quant option requires --device=cuda")
 
+    effective_data_dir = Path(data_dir or "./taxonomy_data")
+    train_file = effective_data_dir / "train_gen.jsonl"
+    test_file = effective_data_dir / "test_gen.jsonl"
+
     # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
     if data_dir is None:
-        data_dir = "./taxonomy_data"
+        data_dir = effective_data_dir
         if not os.path.exists(input_dir):
             click.secho(
                 f"Could not read directory: {input_dir}",
@@ -1068,8 +1072,8 @@ def train(
                 fg="yellow",
             )
         # First file is latest (by above reverse sort and timestamped names)
-        shutil.copy(train_files[0], data_dir + "/train_gen.jsonl")
-        shutil.copy(test_files[0], data_dir + "/test_gen.jsonl")
+        shutil.copy(train_files[0], train_file)
+        shutil.copy(test_files[0], test_file)
 
     if not utils.is_macos_with_m_chip():
         # Local
@@ -1078,8 +1082,8 @@ def train(
 
         linux_train(
             ctx=ctx,
-            train_file=train_files[0],
-            test_file=test_files[0],
+            train_file=train_file,
+            test_file=test_file,
             model_name=model_name,
             num_epochs=num_epochs,
             device=device,
