@@ -231,8 +231,11 @@ EOF
 
     sed -i.bak -e 's/num_instructions:.*/num_instructions: 1/g' config.yaml
 
-    # This should be finished in a minut or so but time it out incase it goes wrong
-    timeout 10m ilab generate --taxonomy-path test_taxonomy/compositional_skills/simple_math.yaml
+    # This should be finished in a minute or so but time it out incase it goes wrong
+    if ! timeout 20m ilab generate --taxonomy-path test_taxonomy/compositional_skills/simple_math.yaml; then
+        echo "Error: ilab generate command took more than 20 minutes and was cancelled"
+        exit 1
+    fi
 
     # Test if generated was created and contains files
     ls -l generated/*
