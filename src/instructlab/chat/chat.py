@@ -147,7 +147,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
     def _handle_quit(self, _):
         raise ChatQuitException
 
-    def _handle_help(self):
+    def _handle_help(self, _):
         self._sys_print(Markdown(HELP_MD))
         raise KeyboardInterrupt
 
