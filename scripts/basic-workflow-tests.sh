@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -euf
 # set -x
 
@@ -133,13 +133,24 @@ test_generate() {
 test_train() {
     task Train the model
 
+    # Reduce testfile to 1 sample, generating from the new model is extreemly slow in CI
+    # generating only a single test should be enough as we're not verifying the output
+    TESTFILE=$(set +f ; ls -tr generated/test_*jsonl | tail -n 1)
+    mv $TESTFILE ${TESTFILE}_
+    head -n 1 ${TESTFILE}_ > $TESTFILE
+    rm ${TESTFILE}_
+
     # TODO Only cuda for now
-    TRAIN_ARGS="--device=cuda --4-bit-quant"
+    TRAIN_ARGS=()
+    TRAIN_ARGS+=("--device=cuda")
+    TRAIN_ARGS+=("--override-training-args")
+    TRAIN_ARGS+=("{\"bf16\":false, \"gradient_checkpointing\":true, \"gradient_accumulation_steps\":8}")
     if [ "$GRANITE" -eq 1 ]; then
-        TRAIN_ARGS="--gguf-model-path models/granite-7b-lab-Q4_K_M.gguf ${TRAIN_ARGS}"
+        TRAIN_ARGS+=("--gguf-model-path")
+        TRAIN_ARGS+=("models/granite-7b-lab-Q4_K_M.gguf")
     fi
 
-    ilab train ${TRAIN_ARGS}
+    ilab train "${TRAIN_ARGS[@]}"
 }
 
 test_convert() {

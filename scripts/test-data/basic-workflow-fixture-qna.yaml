@@ -4,7 +4,7 @@ seed_examples:
 - answer: |
     1st base, 2nd base, 3rd base, and Home
   question: |
-    What are the 4 bases in softball?
+    List the 4 bases in softball? keep your response to a single line.
 - answer: |
     Kitten ball was the first version of modern day softball.
   question: |
