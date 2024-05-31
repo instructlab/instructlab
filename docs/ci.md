@@ -6,6 +6,11 @@ This CI job is manually triggered by `instructlab` repo triagers or maintainers.
 It runs as much of the `ilab` workflow as it can on the GPU-enabled worker we
 have available through GitHub Actions.
 
+Any PR that makes functional changes that may affect the `ilab` workflow is
+a good candidate for running this workflow. It does not run automatically since
+the cost of this workflow is substantially higher than all other CI jobs that
+run on normal runners.
+
 ### Trigger via GitHub Actions
 
 1. Visit the [Actions tab](https://github.com/instructlab/instructlab/actions).
