@@ -329,6 +329,22 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
   > **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
 
+  #### Downloading a specific model from a Hugging Face repository
+
+- Specify repository, model, and a Hugging Face token if necessary. More information about Hugging Face tokens can be found [here](https://huggingface.co/docs/hub/en/security-tokens)
+
+  ```shell
+  HF_TOKEN=<YOUR HUGGINGFACE TOKEN GOES HERE> ilab download --repository=TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF --filename=mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
+  ```
+
+  #### Downloading an entire Hugging Face repository
+
+- Specify repository, and a Hugging Face token if necessary. For example:
+
+  ```shell
+  HF_TOKEN=<YOUR HUGGINGFACE TOKEN GOES HERE> ilab download --repository=mistralai/Mixtral-8x7B-v0.1
+  ```
+
 ### 🍴 Serving the model
 
 - Serve the model by running the following command:
