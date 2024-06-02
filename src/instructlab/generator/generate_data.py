@@ -383,6 +383,67 @@ def generate_data(
     tls_client_key: Optional[str] = None,
     tls_client_passwd: Optional[str] = None,
 ):
+    def unescape(s):
+        return bytes(s, "utf-8").decode("utf-8")
+
+    def gen_test_data():
+        max_seed_chars = num_chars_from_tokens(max_seed_tokens)
+
+        for seed_example in seed_instruction_data:
+            if (
+                len(seed_example["instruction"])
+                + len(seed_example["input"])
+                + len(seed_example["output"])
+                >= max_seed_chars
+            ):
+                raise SystemExit(
+                    f"Error: An example in the taxonomy path {seed_example['taxonomy_path']} "
+                    f"is too long for the server context size of {server_ctx_size}. "
+                    f"Ensure the total number of characters across the combined question, answer, "
+                    f"and context is less than {max_seed_chars} "
+                    f"for each example or use a server with a larger context size."
+                )
+
+        seeds = len(seed_instruction_data)
+        logger.debug(f"Loaded {seeds} human-written seed instructions from {taxonomy}")
+        if not seeds:
+            raise SystemExit("Nothing to generate. Exiting.")
+
+        test_data = []
+        for seed_example in seed_instruction_data:
+            user = seed_example["instruction"]
+
+            documents = seed_example["document"]
+            if documents:
+                seed_example["document"] = chunk_document(
+                    documents=documents,
+                    server_ctx_size=server_ctx_size,
+                    chunk_word_count=chunk_word_count,
+                )
+
+            if len(seed_example["input"]) > 0:
+                user += "\n" + seed_example["input"]
+            try:
+                test_data.append(
+                    {
+                        "system": utils.get_sysprompt(),
+                        "user": unescape(user),
+                        "assistant": unescape(seed_example["output"]),
+                    }
+                )
+            except TypeError as exc:
+                click.secho(
+                    f"Error reading seed examples: {exc}. Please make sure your answers are verbose enough.",
+                    fg="red",
+                )
+                raise click.exceptions.Exit(1)
+        with open(
+            os.path.join(output_dir, output_file_test), "w", encoding="utf-8"
+        ) as outfile:
+            for entry in test_data:
+                json.dump(entry, outfile, ensure_ascii=False)
+                outfile.write("\n")
+
     seed_instruction_data = []
     machine_seed_instruction_data = []
     generate_start = time.time()
@@ -404,54 +465,6 @@ def generate_data(
         prompt_file_path, get_model_family(model_family, model_name)
     )
     max_seed_tokens = max_seed_example_tokens(server_ctx_size, len(prompt_template))
-    max_seed_chars = num_chars_from_tokens(max_seed_tokens)
-    for seed_example in seed_instruction_data:
-        if (
-            len(seed_example["instruction"])
-            + len(seed_example["input"])
-            + len(seed_example["output"])
-            >= max_seed_chars
-        ):
-            raise SystemExit(
-                f"Error: An example in the taxonomy path {seed_example['taxonomy_path']} is too long for the server context size of {server_ctx_size}. Ensure the total number of characters across the combined question, answer, and context is less than {max_seed_chars} for each example or use a server with a larger context size."
-            )
-
-    seeds = len(seed_instruction_data)
-    logger.debug(f"Loaded {seeds} human-written seed instructions from {taxonomy}")
-    if not seeds:
-        raise SystemExit("Nothing to generate. Exiting.")
-
-    def unescape(s):
-        return bytes(s, "utf-8").decode("utf-8")
-
-    test_data = []
-    for seed_example in seed_instruction_data:
-        user = seed_example["instruction"]
-
-        documents = seed_example["document"]
-        if documents:
-            seed_example["document"] = chunk_document(
-                documents=documents,
-                server_ctx_size=server_ctx_size,
-                chunk_word_count=chunk_word_count,
-            )
-
-        if len(seed_example["input"]) > 0:
-            user += "\n" + seed_example["input"]
-        try:
-            test_data.append(
-                {
-                    "system": utils.get_sysprompt(),
-                    "user": unescape(user),
-                    "assistant": unescape(seed_example["output"]),
-                }
-            )
-        except TypeError as exc:
-            click.secho(
-                f"Error reading seed examples: {exc}. Please make sure your answers are verbose enough.",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
 
     name = Path(model_name).stem  # Just in case it is a file path
     date_suffix = datetime.now().replace(microsecond=0).isoformat().replace(":", "_")
@@ -462,6 +475,8 @@ def generate_data(
         output_dir, f"discarded_{name}_{date_suffix}.log"
     )
     logger.debug(f"Generating to: {os.path.join(output_dir, output_file)}")
+
+    gen_test_data()
 
     request_idx = 0
     # load the LM-generated instructions
@@ -592,13 +607,6 @@ def generate_data(
             os.path.join(output_dir, output_file_train), "w", encoding="utf-8"
         ) as outfile:
             for entry in train_data:
-                json.dump(entry, outfile, ensure_ascii=False)
-                outfile.write("\n")
-        # utils.jdump(test_data, os.path.join(output_dir, output_file_test))
-        with open(
-            os.path.join(output_dir, output_file_test), "w", encoding="utf-8"
-        ) as outfile:
-            for entry in test_data:
                 json.dump(entry, outfile, ensure_ascii=False)
                 outfile.write("\n")
 
