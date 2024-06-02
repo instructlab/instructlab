@@ -20,7 +20,7 @@ import click
 import tqdm
 
 # Local
-from ..config import DEFAULT_MULTIPROCESSING_START_METHOD, get_model_family
+from ..config import get_model_family
 from ..utils import (
     chunk_document,
     max_seed_example_tokens,
@@ -493,7 +493,7 @@ def generate_data(
             "Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help."
         )
 
-    mpctx = multiprocessing.get_context(DEFAULT_MULTIPROCESSING_START_METHOD)
+    mpctx = multiprocessing.get_context(None)
 
     all_taxonomy_paths = list(set(e["taxonomy_path"] for e in seed_instruction_data))
     total_discarded = 0
