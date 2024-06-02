@@ -1,0 +1,20 @@
+PROJECT_NAME           = "InstructLab CLI"
+EXTRACT_ALL            = yes
+QUIET                  = yes
+INPUT                  = ../src
+RECURSIVE              = yes
+EXCLUDE_PATTERNS       = __init__.py \
+                         __main__.py
+SOURCE_BROWSER         = yes
+REFERENCED_BY_RELATION = yes
+REFERENCES_RELATION    = yes
+HTML_OUTPUT            = doxygen
+GENERATE_TREEVIEW      = yes
+GENERATE_LATEX         = no
+HAVE_DOT               = yes
+DOT_COMMON_ATTR        = "fontname=\"Helvetica,Arial,sans-serif\""
+DOT_EDGE_ATTR          = "labelfontsize=10 arrowhead=open arrowtail=open arrowsize=0.5"
+DOT_NODE_ATTR          = "fontsize=12 shape=plaintext"
+CALL_GRAPH             = yes
+CALLER_GRAPH           = yes
+DOT_IMAGE_FORMAT       = svg
