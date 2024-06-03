@@ -8,7 +8,7 @@ The following is a set of guidelines for contributing. These are just guidelines
 
 ### Code of Conduct
 
-This project adheres to the [InstructLab/cli - Code of Conduct and Covenant](../CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+This project adheres to the [InstructLab - Code of Conduct and Covenant](https://github.com/instructlab/community/blob/main/CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
 ### How Do I Start Contributing?
 
@@ -18,7 +18,7 @@ Help on open source projects is always welcome and there is always something tha
 
 ## How Can I Contribute?
 
-When contributing, it's useful to start by looking at [issues](https://github.com/instructlab/instructlab/issues). After picking up an issue, writing code, or updating a document, make a pull request and your work will be reviewed and merged. If you're adding a new feature or find a bug, it's best to [write an issue](https://github.com/instructlab/cli/issues/new?assignees=&labels=&template=feature_request.md&title=) first to discuss it with maintainers.
+When contributing, it's useful to start by looking at [issues](https://github.com/instructlab/instructlab/issues). After picking up an issue, writing code, or updating a document, make a pull request and your work will be reviewed and merged. If you're adding a new feature or find a bug, it's best to [write an issue](https://github.com/instructlab/instructlab/issues/new?assignees=&labels=&template=feature_request.md&title=) first to discuss it with maintainers.
 
 To contribute to this repository, you'll use the Fork and Pull model common in many open source repositories. For details on this process, check out [The GitHub Workflow
 Guide](https://github.com/kubernetes/community/blob/master/contributors/guide/github-workflow.md)
