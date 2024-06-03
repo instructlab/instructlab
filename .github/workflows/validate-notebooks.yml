@@ -40,4 +40,4 @@ jobs:
           python -m pip install nbformat
 
       - name: Validate Jupyter Notebooks
-        run: find notebooks/ -name "*.ipynb" -exec python scripts/validate_notebook.py {} \;
+        run: find notebooks/ -name "*.ipynb" -print0 | xargs python scripts/validate_notebook.py
