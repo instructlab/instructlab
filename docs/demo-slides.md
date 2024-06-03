@@ -34,7 +34,7 @@ source venv/bin/activate.fish
 Install CLI
 
 ```fish
-pip install git+https://github.com/instructlab/instructlab.git@stable
+pip install instructlab
 ```
 
 <!-- pause -->
