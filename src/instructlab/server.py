@@ -113,8 +113,8 @@ def ensure_server(
             kwargs={
                 "logger": logger,
                 "model_path": serve_config.model_path,
-                "gpu_layers": serve_config.gpu_layers,
-                "max_ctx_size": serve_config.max_ctx_size,
+                "llama_cpp_gpu_layers": serve_config.llama_cpp_gpu_layers,
+                "llama_cpp_max_ctx_size": serve_config.llama_cpp_max_ctx_size,
                 "model_family": model_family,
                 "port": port,
                 "host": host,
@@ -142,8 +142,8 @@ def ensure_server(
 def server(
     logger,
     model_path,
-    gpu_layers,
-    max_ctx_size,
+    llama_cpp_gpu_layers,
+    llama_cpp_max_ctx_size,
     model_family,
     threads=None,
     host="localhost",
@@ -155,8 +155,8 @@ def server(
         host=host,
         port=port,
         model=model_path,
-        n_ctx=max_ctx_size,
-        n_gpu_layers=gpu_layers,
+        n_ctx=llama_cpp_max_ctx_size,
+        n_gpu_layers=llama_cpp_gpu_layers,
         verbose=logger.level == logging.DEBUG,
     )
     if threads is not None:

@@ -123,8 +123,8 @@ class _serve(BaseModel):
 
     # additional fields with defaults
     host_port: StrictStr = "127.0.0.1:8000"
-    gpu_layers: int = -1
-    max_ctx_size: PositiveInt = 4096
+    llama_cpp_gpu_layers: int = -1
+    llama_cpp_max_ctx_size: PositiveInt = 4096
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""

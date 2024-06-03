@@ -71,7 +71,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
             echo "Metal GPU detected"
         else
             echo "No Metal GPU detected"
-            sed -i.bak -e 's/gpu_layers: -1/gpu_layers: 0/g;' config.yaml
+            sed -i.bak -e 's/llama_cpp_gpu_layers: -1/llama_cpp_gpu_layers: 0/g;' config.yaml
         fi
     else
         echo "system_profiler not found, cannot determine GPU"
@@ -114,11 +114,11 @@ test_bind_port(){
 
 test_ctx_size(){
     # A context size of 55 will allow a small message
-    ilab serve --max-ctx-size 25 &> "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" &
+    ilab serve --llama-cpp-max-ctx-size 25 &> "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" &
     PID_SERVE=$!
 
     # Make sure the server has time to open the port
-    # if "ilab chat" tests it before its open then it will run its own server without --max-ctx-size 1
+    # if "ilab chat" tests it before its open then it will run its own server without --llama-cpp-max-ctx-size 1
     wait_for_server
 
     # SHOULD SUCCEED: ilab chat will trim the SYS_PROMPT then take the second message
@@ -176,7 +176,7 @@ test_server_shutdown_while_chatting(){
 }
 
 test_loading_session_history(){
-    ilab serve --max-ctx-size 128 &
+    ilab serve --llama-cpp-max-ctx-size 128 &
     PID_SERVE=$!
 
     # chat with the server

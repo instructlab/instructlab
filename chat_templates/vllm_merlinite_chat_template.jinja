@@ -1,0 +1,13 @@
+{% for message in messages %}
+    {% if message['role'] == 'user' %}
+        {{ '<|user|>' + message['content'] }}
+    {% elif message['role'] == 'system' %}
+        {{ '<|system|>' + message['content'] }}
+    {% elif message['role'] == 'assistant' %}
+        {{ '<|assistant|>' + message['content'] + eos_token }}
+    {% endif %}
+
+    {% if loop.last and add_generation_prompt %}
+        {{ '<|assistant|>' }}
+    {% endif %}
+{% endfor %}"

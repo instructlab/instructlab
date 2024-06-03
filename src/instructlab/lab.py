@@ -13,6 +13,7 @@ import os
 import shutil
 import sys
 import typing
+import subprocess
 
 # Third Party
 from click_didyoumean import DYMGroup
@@ -310,61 +311,108 @@ utils.make_lab_diff_aliases(cli, diff)
     type=click.Path(),
     default=config.DEFAULT_MODEL_PATH,
     show_default=True,
-    help="Path to the model used during generation.",
-)
-@click.option(
-    "--gpu-layers",
-    type=click.INT,
-    help="The number of layers to put on the GPU. The rest will be on the CPU. Defaults to -1 to move all to GPU.",
-)
-@click.option("--num-threads", type=click.INT, help="The number of CPU threads to use.")
-@click.option(
-    "--max-ctx-size",
-    type=click.INT,
-    help="The context size is the maximum number of tokens considered by the model, for both the prompt and response. Defaults to 4096.",
-)
-@click.option(
-    "--model-family",
-    type=str,
-    help="Force model family to specify which chat template to serve with",
+    help="Local or HF path to the model used during generation.",
 )
 @click.option(
     "--log-file",
     type=click.Path(),
     help="Log file path to write server logs to.",
 )
+@click.option(
+    "--llama-cpp-gpu-layers",
+    type=click.INT,
+    help="The number of layers to put on the GPU. The rest will be on the CPU. Defaults to -1 to move all to GPU.",
+)
+@click.option("--llama-cpp-num-threads", type=click.INT, help="The number of CPU threads to use.")
+@click.option(
+    "--llama-cpp-max-ctx-size",
+    type=click.INT,
+    help="The context size is the maximum number of tokens considered by the model, for both the prompt and response. Defaults to 4096.",
+)
+@click.option(
+    "--llama-cpp-model-family",
+    type=str,
+    help="Force model family to specify which chat template to serve with",
+)
+@click.option(
+    "--use-vllm",
+    type=click.BOOL,
+    default=False,
+    show_default=True,
+    help="Use vllm for model serving.",
+)
+@click.option(
+    "--vllm-chat-template",
+    type=click.Path(),
+    help="Path to chat template file. Chat templates must be in .jinja format."
+)
+@click.option(
+    "--vllm-args",
+    type=str,
+    help="Specific arguments to pass into vllm. The value passed into this flag must be surrounded by double quotes.\n Example: --vllm-args '--dtype auto --enable-lora'",
+)
 @click.pass_context
-def serve(
-    ctx, model_path, gpu_layers, num_threads, max_ctx_size, model_family, log_file
-):
+def serve(ctx, model_path, log_file, llama_cpp_gpu_layers, llama_cpp_num_threads, llama_cpp_max_ctx_size, llama_cpp_model_family, use_vllm, vllm_chat_template, vllm_args):
     """Start a local server"""
-    # pylint: disable=C0415
-    # Local
-    from .server import ServerException, server
+    from pathlib import PurePath
 
     # Redirect server stdout and stderr to the logger
     log.stdout_stderr_to_logger(ctx.obj.logger, log_file)
 
-    ctx.obj.logger.info(
-        f"Using model '{model_path}' with {gpu_layers} gpu-layers and {max_ctx_size} max context size."
-    )
+    ctx.obj.logger.info(f"Model Path is {model_path}")
+    path = PurePath(model_path)
+    model_file = path.name
+    serve_safetensors = False
+    if ".gguf" not in model_file:
+        serve_safetensors = True
 
-    try:
-        host = ctx.obj.config.serve.host_port.split(":")[0]
-        port = int(ctx.obj.config.serve.host_port.split(":")[1])
-        server(
-            ctx.obj.logger,
-            model_path,
-            gpu_layers,
-            max_ctx_size,
-            model_family,
-            num_threads,
-            host,
-            port,
+    if use_vllm or serve_safetensors:
+        import importlib.util
+
+        ctx.obj.logger.info(f"Serving backend is vllm")
+
+        vllm_found = importlib.util.find_spec("vllm")
+        if vllm_found is None:
+            ctx.obj.logger.info(f"ERROR: vllm not installed")
+            raise click.exceptions.Exit(1)
+
+        vllm_cmd = ["python", "-m",  "vllm.entrypoints.openai.api_server", "--model", model_path]
+
+        if vllm_chat_template is not None:
+            vllm_cmd = vllm_cmd + vllm_chat_template.split()
+
+        if vllm_args is not None:
+            vllm_cmd = vllm_cmd + vllm_args.split()
+
+        vllm_cmd_str = " ".join(vllm_cmd)
+        ctx.obj.logger.info(f"vllm serving command is: {vllm_cmd_str}")
+        subprocess.run(args=vllm_cmd)
+    else:
+        # pylint: disable=C0415
+        # Local
+        from .server import ServerException, server
+
+        ctx.obj.logger.info(f"Serving backend is llama-cpp")
+        ctx.obj.logger.info(
+            f"Using model '{model_path}' with {llama_cpp_gpu_layers} gpu-layers and {llama_cpp_max_ctx_size} max context size."
         )
-    except ServerException as exc:
-        click.secho(f"Error creating server: {exc}", fg="red")
-        raise click.exceptions.Exit(1)
+
+        try:
+            host = ctx.obj.config.serve.host_port.split(":")[0]
+            port = int(ctx.obj.config.serve.host_port.split(":")[1])
+            server(
+                ctx.obj.logger,
+                model_path,
+                llama_cpp_gpu_layers,
+                llama_cpp_max_ctx_size,
+                llama_cpp_model_family,
+                llama_cpp_num_threads,
+                host,
+                port,
+            )
+        except ServerException as exc:
+            click.secho(f"Error creating server: {exc}", fg="red")
+            raise click.exceptions.Exit(1)
 
 
 @cli.command()

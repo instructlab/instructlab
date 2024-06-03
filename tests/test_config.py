@@ -38,9 +38,9 @@ class TestConfig:
 
         assert cfg.serve is not None
         assert cfg.serve.model_path == "models/merlinite-7b-lab-Q4_K_M.gguf"
-        assert cfg.serve.gpu_layers == -1
+        assert cfg.serve.llama_cpp_gpu_layers == -1
         assert cfg.serve.host_port == "127.0.0.1:8000"
-        assert cfg.serve.max_ctx_size == 4096
+        assert cfg.serve.llama_cpp_max_ctx_size == 4096
 
     def test_default_config(self):
         cfg = config.get_default_config()
@@ -90,9 +90,9 @@ generate:
   taxonomy_path: taxonomy
   chunk_word_count: 1000
 serve:
-  gpu_layers: -1
+  llama_cpp_gpu_layers: -1
   host_port: 127.0.0.1:8000
-  max_ctx_size: 4096
+  llama_cpp_max_ctx_size: 4096
   model_path: models/merlinite-7b-lab-Q4_K_M.gguf
 """
             )
