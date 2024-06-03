@@ -38,13 +38,13 @@ all: help
 ##@ General
 
 .PHONY: help
-help: ## Display this help.
+help: ## Display this help
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_0-9-]+:.*?##/ { printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
 
 ##@ Build
 
 .PHONY: images
-images: ## Get the current controller, set the path, and build the Containerfile image. (auto-detect the compatible controller)
+images: ## Get the current controller, set the path, and build the Containerfile image (auto-detect the compatible controller)
 	@if ! command -v lspci &> /dev/null; then \
 		echo "ERROR: Unable to detect GPU, lspci is not installed" >&2; \
 		exit 2; \
@@ -58,7 +58,7 @@ images: ## Get the current controller, set the path, and build the Containerfile
 	fi
 
 .PHONY: cuda
-cuda: check-engine $(CUDA_DEPS)  ## Build container for NVidia CUDA
+cuda: check-engine $(CUDA_DEPS)  ## Build container for Nvidia CUDA
 	$(CENGINE) build $(BUILD_ARGS) \
 		-t $(CONTAINER_PREFIX):$@ \
 		-f $(CUDA_CONTAINERFILE) \
@@ -140,7 +140,7 @@ tests: check-tox ## Run tox -e unit against code
 	tox -e py3-unit
 
 .PHONY: verify
-verify: check-tox ## Run tox -e fmt,lint,spellcheck against code
+verify: check-tox ## Run linting and formatting checks via tox
 	tox p -e ruff,fastlint,spellcheck
 
 .PHONY: spellcheck
