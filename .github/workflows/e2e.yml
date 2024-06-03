@@ -22,6 +22,15 @@ jobs:
           fetch-depth: 0
           submodules: 'true'
 
+      - name: Install GitHub CLI
+        run: |
+          if ! command -v gh &> /dev/null ; then
+            sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
+            sudo apt-add-repository https://cli.github.com/packages
+            sudo apt update
+            sudo apt install gh
+          fi
+
       - name: Determine if pr_or_branch is a PR number
         id: check_pr
         run: |
