@@ -201,7 +201,7 @@ pull_request_rules:
     github_actions:
       workflow:
         dispatch:
-          - workflow: e2e.yaml
+          - workflow: e2e.yml
             inputs:
               pr_or_branch: "{{ number }}"
     label:
