@@ -31,21 +31,59 @@ jobs:
             echo "is_pr=false" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Check if gh cli is installed
+        id: gh_cli
+        run: |
+          if command -v gh &> /dev/null ; then
+            echo "gh_cli_installed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "gh_cli_installed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Configure gh CLI APT repository
+        if: steps.gh_cli.outputs.gh_cli_installed == 'false'
+        run: |
+          (type -p wget >/dev/null || (sudo apt update && sudo apt-get install wget -y))
+          sudo mkdir -p -m 755 /etc/apt/keyrings
+          wget -qO- https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo tee /etc/apt/keyrings/githubcli-archive-keyring.gpg > /dev/null
+          sudo chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          sudo apt update
+
+      - name: Install gh CLI
+        if: steps.gh_cli.outputs.gh_cli_installed == 'false'
+        run: |
+          sudo apt install gh -y
+
+      - name: test gh CLI
+        run: |
+          gh --version
+
+      - name: set default repo
+        run: |
+          gh repo set-default ${{ github.server_url }}/${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Add comment to PR
         id: pr_comment
         if: steps.check_pr.outputs.is_pr == 'true'
         run: |
           gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "e2e workflow launched on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Fetch and checkout PR
         if: steps.check_pr.outputs.is_pr == 'true'
         run: |
-          git fetch origin pull/${{ github.event.inputs.pr_or_branch }}/head:pr-${{ github.event.inputs.pr_or_branch }}
-          git checkout pr-${{ github.event.inputs.pr_or_branch }}
+          gh pr checkout ${{ github.event.inputs.pr_or_branch }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout branch
         if: steps.check_pr.outputs.is_pr == 'false'
-        run: git checkout ${{ github.event.inputs.pr_or_branch }}
+        run: |
+          git checkout ${{ github.event.inputs.pr_or_branch }}
 
       - name: Install Packages
         run: |
