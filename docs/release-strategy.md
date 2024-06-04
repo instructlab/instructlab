@@ -68,3 +68,23 @@ The following are the steps for how Y-stream and Z-stream releases gets cut.
 1. Announce release via the following:
     - The `#announce` channel on Slack
     - The `announce` mailing list
+
+## Release Notes
+
+The project maintains a single `CHANGELOG.md` file that documents all releases. To ensure our users
+are well-informed about new features, improvements, and breaking changes, we maintain a
+`CHANGELOG.md` file. This file serves as a centralized place to document changes that will be
+included in the next (X) or (Y) release. Given that the project is in its early stages, we are
+currently focused on documenting changes for the next (Y) release.
+
+### Editing Release Notes
+
+When submitting a Pull Request (PR) that introduces notable features or breaking changes, committers
+need to update the `CHANGELOG.md` file. Clearly describe the changes, their impact, and
+any actions users might need to take. We want clear, concise, and user-friendly notes.
+
+### Branching for a New Release
+
+Each time we prepare for a new (X) or (Y) release, we branch out from the main codebase.
+As part of this branching process, the contents of `CHANGELOG.md` are reviewed and
+finalized.
