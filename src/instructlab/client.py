@@ -10,6 +10,7 @@ import httpx
 
 # Local
 from .config import DEFAULT_API_KEY, DEFAULT_CONNECTION_TIMEOUT
+from .utils import get_ssl_cert_config
 
 
 class ClientException(Exception):
@@ -26,8 +27,7 @@ def list_models(
 ):
     """List models from OpenAI-compatible server"""
     try:
-        orig_cert = (tls_client_cert, tls_client_key, tls_client_passwd)
-        cert = tuple(item for item in orig_cert if item)
+        cert = get_ssl_cert_config(tls_client_cert, tls_client_key, tls_client_passwd)
         verify = not tls_insecure
         client = OpenAI(
             base_url=api_base,

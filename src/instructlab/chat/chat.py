@@ -23,7 +23,7 @@ import openai
 
 # Local
 from ..config import DEFAULT_CONNECTION_TIMEOUT, DEFAULT_MODEL_OLD
-from ..utils import get_sysprompt
+from ..utils import get_ssl_cert_config, get_sysprompt
 
 HELP_MD = """
 Help / TL;DR
@@ -473,8 +473,7 @@ def chat_cli(
     tls_client_passwd: Optional[str] = None,
 ):
     """Starts a CLI-based chat with the server"""
-    orig_cert = (tls_client_cert, tls_client_key, tls_client_passwd)
-    cert = tuple(item for item in orig_cert if item)
+    cert = get_ssl_cert_config(tls_client_cert, tls_client_key, tls_client_passwd)
     verify = not tls_insecure
     client = OpenAI(
         base_url=api_base,
