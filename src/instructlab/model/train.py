@@ -3,6 +3,7 @@
 # Standard
 from glob import glob
 from pathlib import Path
+import logging
 import os
 import shutil
 
@@ -12,6 +13,8 @@ import torch
 
 # First Party
 from instructlab import utils
+
+logger = logging.getLogger(__name__)
 
 
 @click.command()
@@ -142,9 +145,11 @@ def train(
             )
             raise click.exceptions.Exit(1)
 
-        # generated input files reverse sorted by name (contains timestamp)
+        # generated input files reverse sorted by modification time
         def get_files(pattern):
-            return sorted(Path(input_dir).glob(pattern), reverse=True)
+            return sorted(
+                Path(input_dir).glob(pattern), key=os.path.getmtime, reverse=True
+            )
 
         train_files = get_files("train_*")
         test_files = get_files("test_*")
@@ -160,7 +165,9 @@ def train(
                 "Found multiple files from `ilab generate`. Using the most recent generation.",
                 fg="yellow",
             )
-        # First file is latest (by above reverse sort and timestamped names)
+        # The first file is latest
+        logger.debug("train_file=%s", train_files[0])
+        logger.debug("test_file=%s", test_files[0])
         shutil.copy(train_files[0], train_file)
         shutil.copy(test_files[0], test_file)
 
