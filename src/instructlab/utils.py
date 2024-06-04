@@ -599,5 +599,5 @@ def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
 
 
 def get_ssl_cert_config(tls_client_cert, tls_client_key, tls_client_passwd):
-    orig_cert = (tls_client_cert, tls_client_key, tls_client_passwd)
-    return tuple(item for item in orig_cert if item)
+    if tls_client_cert:
+        return tls_client_cert, tls_client_key, tls_client_passwd
