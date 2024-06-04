@@ -80,11 +80,6 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
         raise SystemExit(1) from exc
     if not quiet:
         click.secho(
-            f"Taxonomy in /{taxonomy_path}/ is valid :)",
+            f"Taxonomy in {taxonomy_path} is valid :)",
             fg="green",
         )
-
-
-# ilab list => ilab diff
-# ilab check => ilab diff --quiet
-# utils.make_lab_diff_aliases(ilab, diff)

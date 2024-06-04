@@ -39,6 +39,7 @@ class TestLabDiff:
                 lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -60,6 +61,7 @@ class TestLabDiff:
                 lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -79,6 +81,7 @@ class TestLabDiff:
                 lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -99,6 +102,7 @@ class TestLabDiff:
                 lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     taxonomy_base,
@@ -120,6 +124,7 @@ class TestLabDiff:
                 lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -139,6 +144,7 @@ class TestLabDiff:
                 lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -146,7 +152,7 @@ class TestLabDiff:
                     self.taxonomy.root,
                 ],
             )
-            assert f"Taxonomy in /{self.taxonomy.root}/ is valid :)" in result.output
+            assert f"Taxonomy in {self.taxonomy.root} is valid :)" in result.output
             assert result.exit_code == 0
 
     def test_diff_valid_yaml_file(self):
@@ -158,6 +164,7 @@ class TestLabDiff:
                 lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -165,7 +172,7 @@ class TestLabDiff:
                     file_path,
                 ],
             )
-            assert f"Taxonomy in /{file_path}/ is valid :)" in result.output
+            assert f"Taxonomy in {file_path} is valid :)" in result.output
             assert result.exit_code == 0
 
     def test_diff_valid_yaml_quiet(self):
@@ -177,6 +184,7 @@ class TestLabDiff:
                 lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -197,6 +205,7 @@ class TestLabDiff:
                 lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -218,6 +227,7 @@ class TestLabDiff:
                 lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -238,6 +248,7 @@ class TestLabDiff:
                 lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -260,6 +271,7 @@ class TestLabDiff:
                 lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -284,6 +296,7 @@ class TestLabDiff:
                 lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
