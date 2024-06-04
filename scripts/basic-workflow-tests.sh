@@ -1,6 +1,5 @@
-#!/bin/sh
+#!/usr/bin/env bash
 set -euf
-# set -x
 
 # This is a basic workflow test of the ilab CLI.
 #
@@ -14,8 +13,8 @@ set -euf
 
 MINIMAL=0
 NUM_INSTRUCTIONS=5
-GENERATE_ARGS=
-TRAIN_ARGS=
+GENERATE_ARGS=()
+TRAIN_ARGS=()
 CI=0
 GRANITE=0
 
@@ -26,12 +25,12 @@ NC='\033[0m' # No Color
 SCRIPTDIR=$(dirname "$0")
 
 step() {
-    echo -e "$BOLD$@ - $(date)$NC"
+    echo -e "$BOLD$* - $(date)$NC"
 }
 
 task() {
     echo -e "$BOLD------------------------------------------------------$NC"
-    step $@
+    step "$@"
 }
 
 set_defaults() {
@@ -40,8 +39,8 @@ set_defaults() {
     fi
 
     NUM_INSTRUCTIONS=1
-    GENERATE_ARGS="--num-cpus $(nproc)"
-    TRAIN_ARGS="--num-epochs 1"
+    GENERATE_ARGS+=("--num-cpus" "$(nproc)")
+    TRAIN_ARGS+=("--num-epochs" "1")
 }
 
 test_smoke() {
@@ -54,7 +53,7 @@ test_init() {
     [ -f config.yaml ] || ilab init --non-interactive
 
     step Checking config.yaml
-    cat config.yaml | grep merlinite
+    grep merlinite config.yaml
 }
 
 test_download() {
@@ -76,18 +75,18 @@ test_serve() {
     else
         model="${1:-}"
     fi
-    SERVE_ARGS=""
+    SERVE_ARGS=()
     if [ -n "$model" ]; then
-        SERVE_ARGS="--model-path ${model}"
+        SERVE_ARGS+=("--model-path ${model}")
     fi
 
     task Serve the model
-    ilab serve ${SERVE_ARGS} &
+    ilab serve "${SERVE_ARGS[@]}" &
 
     ret=1
     for i in $(seq 1 10); do
         sleep 5
-    	step $i/10: Waiting for model to start
+    	step "$i"/10: Waiting for model to start
         if curl -sS http://localhost:8000/docs > /dev/null; then
             ret=0
             break
@@ -99,11 +98,11 @@ test_serve() {
 
 test_chat() {
     task Chat with the model
-    CHAT_ARGS=""
+    CHAT_ARGS=()
     if [ "$GRANITE" -eq 1 ]; then
-        CHAT_ARGS="-m models/granite-7b-lab-Q4_K_M.gguf"
+        CHAT_ARGS+=("-m models/granite-7b-lab-Q4_K_M.gguf")
     fi
-    printf 'Say "Hello"\n' | ilab chat ${CHAT_ARGS} | grep --color 'Hello'
+    printf 'Say "Hello"\n' | ilab chat "${CHAT_ARGS[@]}" | grep --color 'Hello'
 }
 
 test_taxonomy() {
@@ -115,7 +114,7 @@ test_taxonomy() {
     mkdir -p taxonomy/knowledge/sports/overview/softball
 
     step Put new qna file into place
-    cp $SCRIPTDIR/test-data/basic-workflow-fixture-qna.yaml taxonomy/knowledge/sports/overview/softball/qna.yaml
+    cp "$SCRIPTDIR"/test-data/basic-workflow-fixture-qna.yaml taxonomy/knowledge/sports/overview/softball/qna.yaml
     head taxonomy/knowledge/sports/overview/softball/qna.yaml | grep --color '1st base'
 
     step Verification
@@ -125,21 +124,21 @@ test_taxonomy() {
 test_generate() {
     task Generate synthetic data
     if [ "$GRANITE" -eq 1 ]; then
-        GENERATE_ARGS="--model ./models/granite-7b-lab-Q4_K_M.gguf ${GENERATE_ARGS}"
+        GENERATE_ARGS+=("--model ./models/granite-7b-lab-Q4_K_M.gguf")
     fi
-    ilab generate --num-instructions ${NUM_INSTRUCTIONS} ${GENERATE_ARGS}
+    ilab generate --num-instructions ${NUM_INSTRUCTIONS} "${GENERATE_ARGS[@]}"
 }
 
 test_train() {
     task Train the model
 
     # TODO Only cuda for now
-    TRAIN_ARGS="--device=cuda --4-bit-quant"
+    TRAIN_ARGS=("--device=cuda" "--4-bit-quant")
     if [ "$GRANITE" -eq 1 ]; then
-        TRAIN_ARGS="--gguf-model-path models/granite-7b-lab-Q4_K_M.gguf ${TRAIN_ARGS}"
+        TRAIN_ARGS+=("--gguf-model-path models/granite-7b-lab-Q4_K_M.gguf")
     fi
 
-    ilab train ${TRAIN_ARGS}
+    ilab train "${TRAIN_ARGS[@]}"
 }
 
 test_convert() {

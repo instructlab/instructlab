@@ -13,9 +13,9 @@ case "$AMDGPU_ARCH" in
 		rm -f /usr/lib*/rocblas/library/*gfx8*
 		rm -f /usr/lib*/rocblas/library/*gfx10*
 		rm -f /usr/lib*/rocblas/library/*gfx11*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx8*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx10*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx11*
+		rm -f "${TORCH}"/lib/rocblas/library/*gfx8*
+		rm -f "${TORCH}"/lib/rocblas/library/*gfx10*
+		rm -f "${TORCH}"/lib/rocblas/library/*gfx11*
 		;;
 	gfx10*)
 		rm -rf /usr/lib*/rocm/gfx8
@@ -24,9 +24,9 @@ case "$AMDGPU_ARCH" in
 		rm -f /usr/lib*/rocblas/library/*gfx8*
 		rm -f /usr/lib*/rocblas/library/*gfx9*
 		rm -f /usr/lib*/rocblas/library/*gfx11*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx8*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx9*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx11*
+		rm -f "${TORCH}"/lib/rocblas/library/*gfx8*
+		rm -f "${TORCH}"/lib/rocblas/library/*gfx9*
+		rm -f "${TORCH}"/lib/rocblas/library/*gfx11*
 		;;
 	gfx11*)
 		rm -rf /usr/lib*/rocm/gfx8
@@ -35,9 +35,9 @@ case "$AMDGPU_ARCH" in
 		rm -f /usr/lib*/rocblas/library/*gfx8*
 		rm -f /usr/lib*/rocblas/library/*gfx9*
 		rm -f /usr/lib*/rocblas/library/*gfx10*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx8*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx9*
-		rm -f ${TORCH}/lib/rocblas/library/*gfx10*
+		rm -f "${TORCH}"/lib/rocblas/library/*gfx8*
+		rm -f "${TORCH}"/lib/rocblas/library/*gfx9*
+		rm -f "${TORCH}"/lib/rocblas/library/*gfx10*
 		;;
 	*)
 		echo "ERROR: $0 unknown AMDGPU_ARCH=$AMDGPU_ARCH"

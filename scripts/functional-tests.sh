@@ -131,24 +131,24 @@ test_ctx_size(){
     PID_CHAT=$!
 
     # look for the context size error in the server logs
-    if ! timeout 20 bash -c '
-        until grep -q "exceed context window of" "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE"; do
-        echo "waiting for context size error"
+    if ! timeout 20 bash -c "
+        until grep -q 'exceed context window of' $TEST_CTX_SIZE_LAB_SERVE_LOG_FILE; do
+        echo 'waiting for context size error'
         sleep 1
     done
-'; then
+"; then
         echo "context size error not found in server logs"
         cat $TEST_CTX_SIZE_LAB_SERVE_LOG_FILE
         exit 1
     fi
 
     # look for the context size error in the chat logs
-    if ! timeout 20 bash -c '
-        until grep -q "Message too large for context size." "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE"; do
-        echo "waiting for chat error"
+    if ! timeout 20 bash -c "
+        until grep -q 'Message too large for context size.' $TEST_CTX_SIZE_LAB_CHAT_LOG_FILE; do
+        echo 'waiting for chat error'
         sleep 1
     done
-'; then
+"; then
         echo "context size error not found in chat logs"
         cat $TEST_CTX_SIZE_LAB_CHAT_LOG_FILE
         exit 1
@@ -239,7 +239,7 @@ EOF
 
     # Test if generated was created and contains files
     ls -l generated/*
-    if [ $(cat $(ls -tr generated/generated_* | tail -n 1) | jq ". | length" ) -lt 1 ] ; then
+    if [ "$(jq ". | length" < "$(find generated/generated_* | tail -n 1)")" -lt 1 ] ; then
         echo "Not enough generated results"
         exit 1
     fi
@@ -287,7 +287,9 @@ test_no_chat_logs(){
         '
 }
 
+
 test_temp_server_ignore_internal_messages(){
+    # shellcheck disable=SC2016
     expect -c '
         set timeout 20
         spawn ilab chat
@@ -338,6 +340,7 @@ test_model_print(){
     wait_for_server
 
     # validate that we print the model from the server since it is different from the config
+    # shellcheck disable=SC2154,SC1001,SC2016
     expect -c '
         spawn ilab chat
         expect {
@@ -358,6 +361,7 @@ test_model_print(){
 
     # If we don't specify a model, validate that we print the model reported
     # by the server since it is different from the config.
+    # shellcheck disable=SC2016
     expect -c '
         spawn ilab chat
         expect {
