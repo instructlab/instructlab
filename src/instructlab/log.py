@@ -37,6 +37,16 @@ class LoggerWriter:
         return False
 
 
-def stdout_stderr_to_logger(logger):
+def stdout_stderr_to_logger(logger, log_file):
+    if log_file:
+        # Use the existing log file if it exists and append to it
+        mode = "a"
+        # Create file handler
+        file_handler = logging.FileHandler(log_file, mode, encoding="utf-8")
+        logger.addHandler(file_handler)
+        # Create formatter and set it for both handlers
+        formatter = CustomFormatter(FORMAT)
+        file_handler.setFormatter(formatter)
+
     sys.stdout = LoggerWriter(logger.info)
     sys.stderr = LoggerWriter(logger.error)
