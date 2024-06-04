@@ -356,7 +356,7 @@ class TestLabTrain:
             is_macos_with_m_chip_mock.assert_called_once()
 
     @patch("instructlab.utils.is_macos_with_m_chip", return_value=False)
-    @patch.object(linux_train, "linux_train")
+    @patch.object(linux_train, "linux_train", return_value=Path("training_results"))
     @patch(
         "instructlab.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf",
         side_effect=mock_convert_llama_to_gguf,
@@ -378,7 +378,7 @@ class TestLabTrain:
             assert result.exit_code == 0
             convert_llama_to_gguf_mock.assert_called_once()
             assert convert_llama_to_gguf_mock.call_args[1]["model"] == Path(
-                "./training_results/final"
+                "training_results/final"
             )
             assert convert_llama_to_gguf_mock.call_args[1]["pad_vocab"] is True
             assert len(convert_llama_to_gguf_mock.call_args[1]) == 2
@@ -398,7 +398,10 @@ class TestLabTrain:
             assert not os.path.isfile(LINUX_GGUF_FILE)
 
     @patch("instructlab.utils.is_macos_with_m_chip", return_value=False)
-    @patch("instructlab.train.linux_train.linux_train")
+    @patch(
+        "instructlab.train.linux_train.linux_train",
+        return_value=Path("training_results"),
+    )
     @patch(
         "instructlab.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf",
         side_effect=mock_convert_llama_to_gguf,

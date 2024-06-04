@@ -151,13 +151,15 @@ def linux_train(
     num_epochs: Optional[int] = None,
     device: torch.device = torch.device("cpu"),
     four_bit_quant: bool = False,
-):
+    output_dir: Path = Path("training_results"),
+) -> Path:
     """Lab Train for Linux!"""
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", num_epochs)
     print("LINUX_TRAIN.PY: TRAIN FILE IS: ", train_file)
     print("LINUX_TRAIN.PY: TEST FILE IS: ", test_file)
 
     print(f"LINUX_TRAIN.PY: Using device '{device}'")
+    output_dir = Path(output_dir)
     if device.type == "cuda":
         # estimated by watching nvtop / radeontop during training
         min_vram = 11 if four_bit_quant else 17
@@ -292,7 +294,6 @@ def linux_train(
     )
 
     tokenizer.padding_side = "right"
-    output_dir = "./training_results"
     per_device_train_batch_size = 1
     max_seq_length = 300
 
@@ -396,6 +397,7 @@ def linux_train(
 
     print("LINUX_TRAIN.PY: MERGING ADAPTERS")
     model = trainer.model.merge_and_unload()
-    model.save_pretrained("./training_results/merged_model")
+    model.save_pretrained(output_dir / "merged_model")
 
     print("LINUX_TRAIN.PY: FINISHED")
+    return output_dir
