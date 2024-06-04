@@ -1105,7 +1105,6 @@ def train(
         generation_config_json = glob(
             training_results_dir + "/merged_model/generation_config.json"
         )
-        safe_tensors = glob(training_results_dir + "/merged_model/*.safetensors")
 
         shutil.copy(added_tokens_file[0], final_results_dir)
         print("Copied ", added_tokens_file[0], "to ", final_results_dir)
@@ -1121,7 +1120,7 @@ def train(
         print("Copied ", config_json[0], "to ", final_results_dir)
         shutil.copy(generation_config_json[0], final_results_dir)
         print("Copied ", generation_config_json[0], "to ", final_results_dir)
-        for file in safe_tensors:
+        for file in glob(training_results_dir + "/merged_model/*.safetensors"):
             shutil.move(file, final_results_dir)
             print("Moved ", file, "to ", final_results_dir)
 
