@@ -85,6 +85,7 @@ def cli(ctx, config_file):
     If this is your first time running InstructLab, it's best to start with `ilab init` to create the environment.
     """
     deprecated_cmds = {
+        "diff": "taxonomy diff",
         "generate": "data generate",
         "init": "config init",
     }
@@ -326,6 +327,15 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
 # ilab list => ilab diff
 # ilab check => ilab diff --quiet
 utils.make_lab_diff_aliases(cli, diff)
+
+
+@click.group(name="taxonomy", cls=DYMGroup)
+def taxonomy_group():
+    """Commands for managing InstructLab taxonomy."""
+
+
+cli.add_command(taxonomy_group)
+taxonomy_group.add_command(diff)
 
 
 @cli.command()
