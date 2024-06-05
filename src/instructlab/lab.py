@@ -88,6 +88,7 @@ def cli(ctx, config_file):
         "chat": "model chat",
         "convert": "model convert",
         "diff": "taxonomy diff",
+        "download": "model download",
         "generate": "data generate",
         "init": "config init",
         "sysinfo": "system info",
@@ -1422,6 +1423,7 @@ def model_group():
 cli.add_command(model_group)
 model_group.add_command(chat)
 model_group.add_command(convert)
+model_group.add_command(download)
 
 
 @cli.command
