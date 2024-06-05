@@ -88,6 +88,7 @@ def cli(ctx, config_file):
         "diff": "taxonomy diff",
         "generate": "data generate",
         "init": "config init",
+        "sysinfo": "system info",
     }
     if ctx.invoked_subcommand in deprecated_cmds:
         new_cmd = deprecated_cmds[ctx.invoked_subcommand]
@@ -1416,3 +1417,12 @@ def sysinfo():
     """Print system information"""
     for key, value in get_sysinfo().items():
         print(f"{key}: {value}")
+
+
+@click.group(name="system", cls=DYMGroup)
+def system_group():
+    """Commands for gathering system information."""
+
+
+cli.add_command(system_group)
+system_group.add_command(sysinfo, name="info")
