@@ -2,7 +2,10 @@
 
 ## End-to-end CI Job
 
-This CI job is manually triggered by `instructlab` repo triagers or maintainers.
+This CI job is triggered right before merging a PR to the `main` branch when a PR received two
+approvals. Alternatively, it can be triggered manually by adding the `e2e-trigger` label to a PR.
+Additionally, the workflow will be triggered manually by a maintainer before branching a new release.
+
 It runs as much of the `ilab` workflow as it can on the GPU-enabled worker we
 have available through GitHub Actions.
 

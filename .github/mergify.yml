@@ -12,6 +12,7 @@ pull_request_rules:
     - label!=do-not-merge
     - label!=needs-rebase
     - check-success=DCO
+    - label=e2e-success # this will wait for the e2e workflow to pass, this label will be set by the workflow
 
     # If files are changed in .github/, the actionlint check must pass
     - or:
@@ -215,3 +216,18 @@ pull_request_rules:
     label:
       remove:
         - e2e-trigger
+
+- name: Trigger e2e workflow when two approvals are given
+  conditions:
+    - "#approved-reviews-by>=2"
+    - or:
+      - files~=.*\.py$
+      - files=scripts/basic-workflow-tests.sh
+      - files=.github/workflows/e2e.yml
+  actions:
+    github_actions:
+      workflow:
+        dispatch:
+          - workflow: e2e.yml
+            inputs:
+              pr_or_branch: "{{ number }}"

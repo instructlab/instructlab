@@ -146,5 +146,6 @@ jobs:
         if: success() && steps.check_pr.outputs.is_pr == 'true'
         run: |
           gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "e2e workflow succeeded on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), congrats!"
+          gh pr edit "${{ github.event.inputs.pr_or_branch }}" --add-label e2e-success
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
