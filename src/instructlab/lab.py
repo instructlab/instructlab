@@ -84,11 +84,16 @@ def cli(ctx, config_file):
 
     If this is your first time running InstructLab, it's best to start with `ilab init` to create the environment.
     """
+    if ctx.invoked_subcommand == "init":
+        click.secho(
+            "This command is deprecated. Use `ilab config init` instead.", fg="red"
+        )
+
     # ilab init or "--help" have no config file. ilab sysinfo does not need one.
     # CliRunner does fill ctx.invoke_subcommand in option callbacks. We have
     # to validate config_file here.
     if (
-        ctx.invoked_subcommand not in {"init", "sysinfo"}
+        ctx.invoked_subcommand not in {"config", "init", "sysinfo"}
         and "--help" not in sys.argv[1:]
     ):
         if config_file == "DEFAULT":
@@ -226,6 +231,15 @@ def init(
     click.echo(
         "Initialization completed successfully, you're ready to start using `ilab`. Enjoy!"
     )
+
+
+@click.group(name="config", cls=DYMGroup)
+def config_group():
+    """Commands for managing InstructLab configuration."""
+
+
+cli.add_command(config_group)
+config_group.add_command(init)
 
 
 @cli.command()
