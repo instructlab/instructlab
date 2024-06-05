@@ -1081,8 +1081,8 @@ def train(
 
         linux_train(
             ctx=ctx,
-            train_file=[train_file.as_posix()],
-            test_file=[test_file.as_posix()],
+            train_file=train_file,
+            test_file=test_file,
             model_name=model_name,
             num_epochs=num_epochs,
             device=device,
