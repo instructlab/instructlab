@@ -5,6 +5,7 @@
 # Standard
 from glob import glob
 from os.path import basename, dirname, exists
+from pathlib import Path
 import json
 import logging
 import multiprocessing
@@ -1020,7 +1021,6 @@ def train(
     Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
-    # pylint: disable=C0415
     if not input_dir:
         # By default, generate output-dir is used as train input-dir
         input_dir = ctx.obj.config.generate.output_dir
@@ -1028,38 +1028,22 @@ def train(
     if four_bit_quant and device.type != "cuda":
         ctx.fail("--4-bit-quant option requires --device=cuda")
 
+    effective_data_dir = Path(data_dir or "./taxonomy_data")
+    train_file = effective_data_dir / "train_gen.jsonl"
+    test_file = effective_data_dir / "test_gen.jsonl"
+
     # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
     if data_dir is None:
-        data_dir = "./taxonomy_data"
-        try:
-            os.listdir(input_dir)  # Test to throw FileNotFound exception
-            if not os.path.isdir(data_dir):
-                os.mkdir(data_dir)
-            # generated input files reverse sorted by name (contains timestamp)
-            train_files = sorted(glob(input_dir + "/train_*"), reverse=True)
-            test_files = sorted(glob(input_dir + "/test_*"), reverse=True)
-
-            if not train_files or not test_files:
-                click.secho(
-                    f"{input_dir} does not contain training or test files, did you run `ilab generate`?",
-                    fg="red",
-                )
-                raise click.exceptions.Exit(1)
-            if len(train_files) > 1 or len(test_files) > 1:
-                # pylint: disable=f-string-without-interpolation
-                click.secho(
-                    f"Found multiple files from `ilab generate`. Using the most recent generation.",
-                    fg="yellow",
-                )
-            # First file is latest (by above reverse sort and timestamped names)
-            shutil.copy(train_files[0], data_dir + "/train_gen.jsonl")
-            shutil.copy(test_files[0], data_dir + "/test_gen.jsonl")
-        except FileNotFoundError as exc:
+        data_dir = effective_data_dir
+        if not os.path.exists(input_dir):
             click.secho(
-                f"Could not read directory: {exc}",
+                f"Could not read directory: {input_dir}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
+
+        try:
+            os.makedirs(data_dir, exist_ok=True)
         except OSError as exc:
             click.secho(
                 f"Could not create data dir: {exc}",
@@ -1067,6 +1051,29 @@ def train(
             )
             raise click.exceptions.Exit(1)
 
+        # generated input files reverse sorted by name (contains timestamp)
+        def get_files(pattern):
+            return sorted(Path(input_dir).glob(pattern), reverse=True)
+
+        train_files = get_files("train_*")
+        test_files = get_files("test_*")
+
+        if not train_files or not test_files:
+            click.secho(
+                f"{input_dir} does not contain training or test files, did you run `ilab generate`?",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
+        if len(train_files) > 1 or len(test_files) > 1:
+            click.secho(
+                "Found multiple files from `ilab generate`. Using the most recent generation.",
+                fg="yellow",
+            )
+        # First file is latest (by above reverse sort and timestamped names)
+        shutil.copy(train_files[0], train_file)
+        shutil.copy(test_files[0], test_file)
+
+    # pylint: disable=import-outside-toplevel
     if not utils.is_macos_with_m_chip():
         # Local
         from .llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
@@ -1074,62 +1081,44 @@ def train(
 
         linux_train(
             ctx=ctx,
-            train_file=train_files[0],
-            test_file=test_files[0],
+            train_file=train_file,
+            test_file=test_file,
             model_name=model_name,
             num_epochs=num_epochs,
             device=device,
             four_bit_quant=four_bit_quant,
         )
 
-        training_results_dir = "./training_results"
+        training_results_dir = Path("./training_results")
 
-        final_results_dir = training_results_dir + "/final"
-        os.makedirs(final_results_dir, exist_ok=True)
+        final_results_dir = training_results_dir / "final"
+        final_results_dir.mkdir(exist_ok=True)
 
-        gguf_models_dir = "./models"
-        if not os.path.isdir(gguf_models_dir):
-            os.mkdir(gguf_models_dir)
-        gguf_models_file = os.path.join(gguf_models_dir, "ggml-model-f16.gguf")
+        gguf_models_dir = Path("./models")
+        gguf_models_dir.mkdir(exist_ok=True)
+        gguf_models_file = gguf_models_dir / "ggml-model-f16.gguf"
+
         # Remove previously trained model, its taking up space we may need in the next step
-        if os.path.isfile(gguf_models_file):
-            os.remove(gguf_models_file)
+        gguf_models_file.unlink(missing_ok=True)
 
         # TODO: Figure out what to do when there are multiple checkpoint dirs.
         # Right now it's just copying files from the first one numerically not necessarily the best one
-        added_tokens_file = glob(
-            training_results_dir + "/checkpoint-*/added_tokens.json"
-        )
-        special_tokens_map = glob(
-            training_results_dir + "/checkpoint-*/special_tokens_map.json"
-        )
-        tokenizer_json = glob(training_results_dir + "/checkpoint-*/tokenizer.json")
-        tokenizer_model = glob(training_results_dir + "/checkpoint-*/tokenizer.model")
-        tokenizer_config_json = glob(
-            training_results_dir + "/checkpoint-*/tokenizer_config.json"
-        )
-        config_json = glob(training_results_dir + "/merged_model/config.json")
-        generation_config_json = glob(
-            training_results_dir + "/merged_model/generation_config.json"
-        )
+        for fpath in (
+            "checkpoint-*/added_tokens.json",
+            "checkpoint-*/special_tokens_map.json",
+            "checkpoint-*/tokenizer.json",
+            "checkpoint-*/tokenizer.model",
+            "checkpoint-*/tokenizer_config.json",
+            "merged_model/config.json",
+            "merged_model/generation_config.json",
+        ):
+            file_ = next(training_results_dir.glob(fpath))
+            shutil.copy(file_, final_results_dir)
+            print(f"Copied {file_} to {final_results_dir}")
 
-        shutil.copy(added_tokens_file[0], final_results_dir)
-        print("Copied ", added_tokens_file[0], "to ", final_results_dir)
-        shutil.copy(special_tokens_map[0], final_results_dir)
-        print("Copied ", special_tokens_map[0], "to ", final_results_dir)
-        shutil.copy(tokenizer_json[0], final_results_dir)
-        print("Copied ", tokenizer_json[0], "to ", final_results_dir)
-        shutil.copy(tokenizer_model[0], final_results_dir)
-        print("Copied ", tokenizer_model[0], "to ", final_results_dir)
-        shutil.copy(tokenizer_config_json[0], final_results_dir)
-        print("Copied ", tokenizer_config_json[0], "to ", final_results_dir)
-        shutil.copy(config_json[0], final_results_dir)
-        print("Copied ", config_json[0], "to ", final_results_dir)
-        shutil.copy(generation_config_json[0], final_results_dir)
-        print("Copied ", generation_config_json[0], "to ", final_results_dir)
-        for file in glob(training_results_dir + "/merged_model/*.safetensors"):
+        for file in training_results_dir.glob("merged_model/*.safetensors"):
             shutil.move(file, final_results_dir)
-            print("Moved ", file, "to ", final_results_dir)
+            print(f"Moved {file} to {final_results_dir}")
 
         if four_bit_quant:
             print(
@@ -1142,14 +1131,14 @@ def train(
 
         # Remove safetensors files to save space, were done with them here
         # and the huggingface lib has them cached
-        for file in glob(final_results_dir + "/*.safetensors"):
-            os.remove(file)
+        for file in final_results_dir.glob("*.safetensors"):
+            file.unlink()
 
         shutil.move(gguf_file_path, gguf_models_file)
 
         # cleanup checkpoint dir since it's name is unpredictable
         # TODO: figure out how checkpoint dirs should be cleaned up
-        # checkpoint_dirs = glob(training_results_dir + "/checkpoint*")
+        # checkpoint_dirs = training_results_dir.glob("checkpoint*")
         # shutil.rmtree(checkpoint_dirs[0])
     else:
         # Local
@@ -1359,7 +1348,7 @@ def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model
     shutil.rmtree(model_dir_fused)
 
     convert_llama_to_gguf(
-        model=model_dir_fused_pt,
+        model=Path(model_dir_fused_pt),
         pad_vocab=True,
         skip_unknown=True,
         outfile=f"{model_dir_fused_pt}/{model_name}.gguf",

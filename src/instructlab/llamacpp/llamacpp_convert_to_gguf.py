@@ -1613,7 +1613,7 @@ def do_dump_model(model_plus: ModelPlus) -> None:
 
 
 def convert_llama_to_gguf(
-    model: str,
+    model: Path,
     awq_path: Optional[str] = None,
     dump: bool = False,
     dump_single: bool = False,
@@ -1637,9 +1637,6 @@ def convert_llama_to_gguf(
     #     case_sensitive=True,
     # )
 
-    # click.argument doesn't seem to be returning a Path for model
-    if isinstance(model, str):
-        model = Path(model)
     if awq_path:
         sys.path.insert(1, str(Path(__file__).parent / "awq-py"))
         # Third Party
