@@ -596,3 +596,8 @@ def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
                 yaml.YAMLError(f"{total_errors} taxonomy files with errors! Exiting.")
             )
     return seed_instruction_data
+
+
+def get_ssl_cert_config(tls_client_cert, tls_client_key, tls_client_passwd):
+    if tls_client_cert:
+        return tls_client_cert, tls_client_key, tls_client_passwd
