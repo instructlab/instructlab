@@ -8,7 +8,6 @@ import multiprocessing
 import typing
 
 # Third Party
-from click_didyoumean import DYMGroup
 import click
 
 # First Party
@@ -38,7 +37,54 @@ if typing.TYPE_CHECKING:
     import torch
 
 
-@click.group(cls=DYMGroup)
+class ExpandAliasesGroup(click.Group):
+    def __init__(self, *args, **kwargs):
+        self.aliases = kwargs.pop("aliases", {})
+        super().__init__(*args, **kwargs)
+
+    def get_command(self, ctx, cmd_name):
+        if cmd_name in self.aliases:
+            cmd = self.aliases[cmd_name]["cmd"]
+            group = self.aliases[cmd_name]["group"].name
+            c = self.aliases[cmd_name]["cmd"].name
+            print(
+                f"You are using an aliased command, this will be deprecated in a future release. Please consider using `ilab {group} {c}` instead"
+            )
+            return cmd
+        cmd = click.Group.get_command(self, ctx, cmd_name)
+        return cmd
+
+    def format_epilog(self, ctx, formatter):
+        """Inject our aliases into the help string"""
+        if self.aliases:
+            formatter.write_paragraph()
+            formatter.write_text("Aliases:")
+            with formatter.indentation():
+                for alias, commands in sorted(self.aliases.items()):
+                    formatter.write(
+                        "{}: {} {}\n".format(
+                            alias, commands["group"].name, commands["cmd"].name
+                        )
+                    )
+
+        super().format_epilog(ctx, formatter)
+
+
+aliases = {
+    "serve": {"group": model_group.model, "cmd": model_group.serve},
+    "train": {"group": model_group.model, "cmd": model_group.train},
+    "convert": {"group": model_group.model, "cmd": model_group.convert},
+    "chat": {"group": model_group.model, "cmd": model_group.chat},
+    "test": {"group": model_group.model, "cmd": model_group.test},
+    "init": {"group": config_group.config, "cmd": config_group.init},
+    "download": {"group": model_group.model, "cmd": model_group.download},
+    "diff": {"group": taxonomy_group.taxonomy, "cmd": taxonomy_group.diff},
+    "generate": {"group": data_group.data, "cmd": data_group.generate},
+}
+
+
+@click.group(cls=ExpandAliasesGroup, aliases=aliases)
+@click.version_option(package_name="instructlab")
 @click.option(
     "--config",
     "config_file",
