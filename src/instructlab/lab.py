@@ -85,6 +85,7 @@ def cli(ctx, config_file):
     If this is your first time running InstructLab, it's best to start with `ilab init` to create the environment.
     """
     deprecated_cmds = {
+        "chat": "model chat",
         "diff": "taxonomy diff",
         "generate": "data generate",
         "init": "config init",
@@ -1418,6 +1419,7 @@ def model_group():
 
 
 cli.add_command(model_group)
+model_group.add_command(chat)
 
 
 @cli.command
