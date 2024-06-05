@@ -1,5 +1,5 @@
-ARG HABANA_VERSION=1.15.1
-ARG BASEIMAGE=vault.habana.ai/gaudi-docker/${HABANA_VERSION}/rhel9.2/habanalabs/pytorch-installer-2.2.0
+ARG HABANA_VERSION=1.16.1
+ARG BASEIMAGE=vault.habana.ai/gaudi-docker/${HABANA_VERSION}/rhel9.2/habanalabs/pytorch-installer-2.2.2
 
 FROM ${BASEIMAGE} AS runtime
 # base image has PyTorch fork with Habana plugins in self-compiled Python 3.10
@@ -25,9 +25,8 @@ COPY containers/bin/debug-* ${VIRTUAL_ENV}/bin/
 COPY requirements.txt requirements-hpu.txt /tmp
 RUN sed 's/\[.*\]//' /tmp/requirements.txt >/tmp/constraints.txt && \
     export PIP_NO_CACHE_DIR=off; \
-    ${VIRTUAL_ENV}/bin/pip install wheel && \
-    CMAKE_ARGS="" \
-        CFLAGS="-mno-avx" \
+    ${VIRTUAL_ENV}/bin/pip install -U wheel pip && \
+    CMAKE_ARGS="-DLLAMA_NATIVE=off" \
         FORCE_CMAKE=1 \
         ${VIRTUAL_ENV}/bin/pip install --no-binary llama_cpp_python -c /tmp/constraints.txt llama_cpp_python && \
     ${VIRTUAL_ENV}/bin/pip install -r /tmp/requirements.txt -r /tmp/requirements-hpu.txt && \
@@ -35,7 +34,7 @@ RUN sed 's/\[.*\]//' /tmp/requirements.txt >/tmp/constraints.txt && \
     find ${VIRTUAL_ENV} -name __pycache__ | xargs rm -rf
 
 COPY . /tmp/instructlab
-RUN ${VIRTUAL_ENV}/bin/pip install "/tmp/instructlab[habana]" && \
+RUN ${VIRTUAL_ENV}/bin/pip install "/tmp/instructlab[hpu]" && \
     pip list && \
     find ${VIRTUAL_ENV} -name __pycache__ | xargs rm -rf
 

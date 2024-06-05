@@ -1,16 +1,14 @@
 # Dependencies for Intel Gaudi / Habana Labs HPU devices
 #
 
-# upstream version "optimum[habana]>=1.19.0,<2.0.0" does not work
-# use Habana Lab's fork of optimum-habana
-optimum-habana @ git+https://github.com/HabanaAI/optimum-habana-fork.git@5a47add068cb693986eb101becb58aa666f59600
-# Habana Labs 1.15.1 has NumPy 1.23.5
+optimum-habana>=1.11.1
+# Habana Labs 1.16.1 has NumPy 1.23.5
 numpy>=1.23.5,<2.0.0
-# Habana Labs 1.15.1 has PyTorch 2.2.0a0+git8964477
-torch>=2.2.0a0,<3.0.0
+# Habana Labs 1.16.1 has PyTorch 2.2.2a0+gitb5d0b9b
+torch>=2.2.2a0,<3.0.0
 # Habana Labs frameworks
-habana-torch-plugin
-habana_gpu_migration
+habana-torch-plugin>=1.16.1
+habana_gpu_migration>=1.16.1
 # additional Habana Labs packages (installed, but not used)
 #habana-media-loader
 #habana-pyhlml

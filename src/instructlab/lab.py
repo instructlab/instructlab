@@ -5,7 +5,7 @@
 # Standard
 import logging
 import multiprocessing
-import typing
+import os
 
 # Third Party
 import click
@@ -29,9 +29,9 @@ multiprocessing.set_start_method(cfg.DEFAULT_MULTIPROCESSING_START_METHOD, force
 logging.getLogger("openai").setLevel(logging.ERROR)
 logging.getLogger("httpx").setLevel(logging.ERROR)
 
-if typing.TYPE_CHECKING:
-    # Third Party
-    import torch
+# Intel Gaudi: workaround for race condition in oneMKL [HS-1795]
+# Must be set before torch is imported by an application.
+os.environ["MKL_NUM_THREADS"] = "1"
 
 
 class ExpandAliasesGroup(click.Group):
