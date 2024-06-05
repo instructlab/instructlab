@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+from pathlib import Path
 from typing import Optional
 import logging
 import os
@@ -144,8 +145,8 @@ def report_hpu_device(args_device: torch.device) -> None:
 
 def linux_train(
     ctx: click.Context,
-    train_file: str,
-    test_file: str,
+    train_file: Path,
+    test_file: Path,
     model_name: str,
     num_epochs: Optional[int] = None,
     device: torch.device = torch.device("cpu"),
@@ -175,9 +176,11 @@ def linux_train(
 
     print("LINUX_TRAIN.PY: LOADING DATASETS")
     # Get the file name
-    train_dataset = load_dataset("json", data_files=train_file, split="train")
+    train_dataset = load_dataset(
+        "json", data_files=os.fspath(train_file), split="train"
+    )
 
-    test_dataset = load_dataset("json", data_files=test_file, split="train")
+    test_dataset = load_dataset("json", data_files=os.fspath(test_file), split="train")
     train_dataset.to_pandas().head()
 
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)

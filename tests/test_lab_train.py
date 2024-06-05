@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from pathlib import Path, PosixPath
+from pathlib import Path
 from unittest.mock import patch
 import os
 import platform
@@ -370,12 +370,12 @@ class TestLabTrain:
             assert len(convert_llama_to_gguf_mock.call_args[1]) == 2
             linux_train_mock.assert_called_once()
             print(linux_train_mock.call_args[1])
-            assert ["taxonomy_data/train_gen.jsonl"] == [
-                str(PosixPath("taxonomy_data/train_gen.jsonl"))
-            ]
-            assert ["taxonomy_data/test_gen.jsonl"] == [
-                str(PosixPath("taxonomy_data/test_gen.jsonl"))
-            ]
+            assert linux_train_mock.call_args[1]["train_file"] == Path(
+                "taxonomy_data/train_gen.jsonl"
+            )
+            assert linux_train_mock.call_args[1]["test_file"] == Path(
+                "taxonomy_data/test_gen.jsonl"
+            )
             assert linux_train_mock.call_args[1]["num_epochs"] == 1
             assert linux_train_mock.call_args[1]["device"] is not None
             assert not linux_train_mock.call_args[1]["four_bit_quant"]
