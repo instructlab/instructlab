@@ -150,6 +150,7 @@ def linux_train(
     num_epochs: Optional[int] = None,
     device: torch.device = torch.device("cpu"),
     four_bit_quant: bool = False,
+    override_training_args: dict = {},
 ):
     """Lab Train for Linux!"""
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", num_epochs)
@@ -293,25 +294,31 @@ def linux_train(
     per_device_train_batch_size = 1
     max_seq_length = 300
 
+    training_args = {}
+    training_args["num_train_epochs"] = num_epochs
+    training_args["per_device_train_batch_size"] = per_device_train_batch_size
+    training_args["save_strategy"] = "epoch"
+    training_args["report_to"] = "none"
+
     if device.type == "hpu":
         # Intel Gaudi trainer
         # https://docs.habana.ai/en/latest/PyTorch/Getting_Started_with_PyTorch_and_Gaudi/Getting_Started_with_PyTorch.html
         # https://huggingface.co/docs/optimum/habana/quickstart
         # https://huggingface.co/docs/optimum/habana/package_reference/gaudi_config
         if per_device_train_batch_size == 1:
-            per_device_train_batch_size = 8
+            training_args["per_device_train_batch_size"] = 8
+        training_args["bf16"] = True
+        training_args["use_habana"] = True
+        training_args["use_lazy_mode"] = True
+        training_args["save_on_each_node"] = True
+
+        # Update training args with user provided overrides
+        training_args.update(override_training_args)
 
         training_arguments = GaudiTrainingArguments(
             output_dir=output_dir,
-            num_train_epochs=num_epochs,
-            per_device_train_batch_size=per_device_train_batch_size,
-            bf16=True,
-            save_strategy="epoch",
-            report_to="none",
-            use_habana=True,
-            use_lazy_mode=True,
+            **training_args,
             # create checkpoint directories
-            save_on_each_node=True,
             # gaudi_config_name=gaudi_config_name,
         )
         gaudi_config = GaudiConfig(
@@ -335,16 +342,17 @@ def linux_train(
             "generation_config": GaudiGenerationConfig(),
         }
     else:
+        training_args["fp16"] = use_fp16
+        training_args["bf16"] = not use_fp16
+        training_args["use_cpu"] = model.device.type == "cpu"
+
+        # Update training args with user provided overrides
+        training_args.update(override_training_args)
+
         training_arguments = TrainingArguments(
             output_dir=output_dir,
-            num_train_epochs=num_epochs,
-            per_device_train_batch_size=per_device_train_batch_size,
-            fp16=use_fp16,
-            bf16=not use_fp16,
+            **training_args,
             # use_ipex=True, # TODO CPU test this possible optimization
-            use_cpu=model.device.type == "cpu",
-            save_strategy="epoch",
-            report_to="none",
             # options to reduce GPU memory usage and improve performance
             # https://huggingface.co/docs/transformers/perf_train_gpu_one
             # https://stackoverflow.com/a/75793317
