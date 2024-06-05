@@ -84,9 +84,14 @@ def cli(ctx, config_file):
 
     If this is your first time running InstructLab, it's best to start with `ilab init` to create the environment.
     """
-    if ctx.invoked_subcommand == "init":
+    deprecated_cmds = {
+        "generate": "data generate",
+        "init": "config init",
+    }
+    if ctx.invoked_subcommand in deprecated_cmds:
+        new_cmd = deprecated_cmds[ctx.invoked_subcommand]
         click.secho(
-            "This command is deprecated. Use `ilab config init` instead.", fg="red"
+            "This command is deprecated. Use `ilab %s` instead." % new_cmd, fg="red"
         )
 
     # ilab init or "--help" have no config file. ilab sysinfo does not need one.
@@ -598,6 +603,15 @@ def generate(
             server_process.join(timeout=30)
             server_queue.close()
             server_queue.join_thread()
+
+
+@click.group(name="data", cls=DYMGroup)
+def data_group():
+    """Commands for generating synthetic data."""
+
+
+cli.add_command(data_group)
+data_group.add_command(generate)
 
 
 @cli.command()
