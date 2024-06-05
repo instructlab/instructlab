@@ -247,7 +247,7 @@ def load_and_train(
     train: bool = False,
     data: str = "data/",
     lora_layers: int = 16,
-    batch_size: int = 4,
+    batch_size: int = None,
     iters: int = 1000,
     val_batches: int = 25,
     learning_rate: float = 1e-5,
@@ -263,6 +263,10 @@ def load_and_train(
     seed: int = 0,
 ):
     """LoRA or QLoRA fine tuning."""
+
+    if not batch_size:
+        batch_size = 4
+
     np.random.seed(seed)
 
     print("Loading pretrained model")

@@ -1003,9 +1003,9 @@ TORCH_DEVICE = TorchDeviceParam()
 @click.option(
     "--batch-size",
     "batch_size",
-    default=1,
+    default=None,
     help=(
-        "Batch size for training (only supported on Linux). Increase this if "
+        "Batch size for training Increase this if "
         "the GPU is underused."
     )
 )
