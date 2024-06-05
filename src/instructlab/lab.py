@@ -1412,6 +1412,14 @@ def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model
     os.remove(os.path.join(model_dir_fused_pt, f"{model_name}.gguf"))
 
 
+@click.group(name="model", cls=DYMGroup)
+def model_group():
+    """Commands for interacting with models."""
+
+
+cli.add_command(model_group)
+
+
 @cli.command
 def sysinfo():
     """Print system information"""
