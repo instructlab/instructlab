@@ -86,6 +86,7 @@ def cli(ctx, config_file):
     """
     deprecated_cmds = {
         "chat": "model chat",
+        "convert": "model convert",
         "diff": "taxonomy diff",
         "generate": "data generate",
         "init": "config init",
@@ -1420,6 +1421,7 @@ def model_group():
 
 cli.add_command(model_group)
 model_group.add_command(chat)
+model_group.add_command(convert)
 
 
 @cli.command
