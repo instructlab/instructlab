@@ -134,3 +134,17 @@ jobs:
         if: always()
         run: |
           pip cache remove llama_cpp_python
+
+      - name: Add comment to PR if the workflow failed
+        if: failure() && steps.check_pr.outputs.is_pr == 'true'
+        run: |
+          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "e2e workflow failed on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), please investigate."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add comment to PR if the workflow succeeded
+        if: success() && steps.check_pr.outputs.is_pr == 'true'
+        run: |
+          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "e2e workflow succeeded on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), congrats!"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
