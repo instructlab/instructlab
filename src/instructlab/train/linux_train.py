@@ -175,9 +175,9 @@ def linux_train(
 
     print("LINUX_TRAIN.PY: LOADING DATASETS")
     # Get the file name
-    train_dataset = load_dataset("json", data_files=train_file, split="train")
+    train_dataset = load_dataset("json", data_files=str(train_file), split="train")
 
-    test_dataset = load_dataset("json", data_files=test_file, split="train")
+    test_dataset = load_dataset("json", data_files=str(test_file), split="train")
     train_dataset.to_pandas().head()
 
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
