@@ -194,15 +194,17 @@ def linux_train(
     torch_dtype = "auto" if device.type == "cuda" else None
     if device.type == "cpu":
         total_memory = psutil.virtual_memory().total / (1024**3)
-        if total_memory < 64:
+        if total_memory < 60:
             # Using our default model, a system with 32 GB of RAM
             # will get OOM killed using torch_dtype=None, though we
             # seem to get much better performance with this setting
-            # where there's enough memory.
+            # where there's enough memory. Using `None` makes it
+            # use float32 as opposed to float16 or bf16.
             #
-            # There's more going on here and needs deeper exploration to find
-            # the right parameters to be checking for choosing the best
-            # configuration.
+            # Anecdotally, 64 GB seems to be enough, but this calculation
+            # may come out to be slightly less than 64 GB, so we just check
+            # for 60 GB. It would be better to do a smarter calculation on
+            # the actual memory requirement here.
             torch_dtype = "auto"
 
     # torch compile fails to build, see PyTorch #124707
