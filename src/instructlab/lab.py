@@ -14,10 +14,9 @@ import click
 from instructlab import config
 
 # Local
+# NOTE: Subcommands are using local imports to speed up startup time.
 from .configuration import config as config_group
 from .data import data as data_group
-
-# NOTE: Subcommands are using local imports to speed up startup time.
 from .model import model as model_group
 from .sysinfo import get_sysinfo
 from .taxonomy import taxonomy as taxonomy_group
