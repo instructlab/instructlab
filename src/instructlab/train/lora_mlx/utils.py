@@ -3,7 +3,7 @@
 
 # Standard
 from pathlib import Path
-from typing import Generator
+from typing import Any, Generator
 import glob
 import json
 import logging
@@ -115,7 +115,8 @@ python generate.py --model {repo_id} --prompt "My name is"
 def make_shards(weights: dict, max_file_size_gibibyte: int = 15):
     max_file_size_bytes = max_file_size_gibibyte << 30
     shards = []
-    shard, shard_size = {}, 0
+    shard: dict[str, Any] = {}
+    shard_size = 0
     for k, v in weights.items():
         if shard_size + v.nbytes > max_file_size_bytes:
             shards.append(shard)
