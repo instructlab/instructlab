@@ -118,6 +118,11 @@ def cli(ctx, config_file):
         ctx.obj = Lab(config_obj)
         # default_map holds a dictionary with default values for each command parameters
         ctx.default_map = config.get_dict(ctx.obj.config)
+        for old_cmd, new_cmd in deprecated_cmds.items():
+            new_cmd = new_cmd.split()
+            new_cmd_cfg = ctx.default_map.get(new_cmd[0], {})
+            new_cmd_cfg[new_cmd[1]] = ctx.default_map.get(old_cmd, {})
+            ctx.default_map[new_cmd[0]] = new_cmd_cfg
 
 
 @cli.command()
