@@ -9,7 +9,7 @@ This guide should teach you how to set up your development environment to start 
 Here we install from the upstream repository, but you may want to fork the repository and replace the git clone URL below with the URL for your fork:
 
 ```ShellSession
-git clone --recurse-submodules https://github.com/instructlab/instructlab.git
+git clone https://github.com/instructlab/instructlab.git
 cd instructlab
 python3 -m venv venv
 source venv/bin/activate
@@ -23,10 +23,6 @@ These are the steps that we're executing above, in plain language:
 3. In the `instructlab` directory, create a new Python virtual environment.
 4. Turn the virtual environment on.
 5. Install `ilab` into your newly created Python virtual environment.
-
-The `instructlab/instructlab` repository uses [submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules) to incorporate the [taxonomy schema](https://github.com/instructlab/schema.git).
-So, when cloning this Git repository locally, be sure to use the [`--recurse-submodules`](https://git-scm.com/docs/git-clone#Documentation/git-clone.txt---recurse-submodulesltpathspecgt) option on the `git clone` command as shown above.
-When pulling updates from the remote repository, be sure to use the [`--recurse-submodules`](https://git-scm.com/docs/git-pull#Documentation/git-pull.txt---no-recurse-submodulesyeson-demandno) option on the `git pull` command or use the `git submodule update` command.
 
 Success! 🌟 Now, when you run `ilab` commands, it's using the source code on your computer.
 

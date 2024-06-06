@@ -10,6 +10,7 @@ GitPython>=3.1.42,<4.0.0
 # bitsandbytes; sys_platform=='linux' and platform_machine=='x86_64'
 httpx>=0.25.0,<1.0.0
 instructlab-quantize>=0.1.0
+instructlab-schema>=0.2.0
 jsonschema>=4.21.1,<5.0.0
 llama_cpp_python[server]==0.2.75
 mlx>=0.5.1,<0.6.0; sys_platform == 'darwin' and platform_machine == 'arm64'
