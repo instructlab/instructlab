@@ -119,7 +119,6 @@ exclude = [
     "^src/instructlab/train/lora_mlx/models/llama\\.py$",
     "^src/instructlab/train/lora_mlx/models/mixtral\\.py$",
     "^src/instructlab/train/lora_mlx/models/models\\.py$",
-    "^src/instructlab/train/lora_mlx/utils\\.py$",
     "^src/instructlab/utils\\.py$",
 ]
 # honor excludes by not following there through imports
