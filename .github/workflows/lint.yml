@@ -78,7 +78,13 @@ jobs:
       - name: Run mypy type checks
         if: ${{ !cancelled() && (steps.deps.outcome == 'success') }}
         run: |
+          echo "::add-matcher::.github/workflows/matchers/mypy.json"
           tox -e mypy
+
+      - name: Remove mypy matcher
+        if: ${{ !cancelled() && (steps.deps.outcome == 'success') }}
+        run: |
+          echo "::remove-matcher owner=mypy::"
 
       - name: Remove llama-cpp-python from cache
         if: always()
