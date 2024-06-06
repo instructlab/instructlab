@@ -91,6 +91,7 @@ def cli(ctx, config_file):
         "download": "model download",
         "generate": "data generate",
         "init": "config init",
+        "serve": "model serve",
         "sysinfo": "system info",
     }
     if ctx.invoked_subcommand in deprecated_cmds:
@@ -1424,6 +1425,7 @@ cli.add_command(model_group)
 model_group.add_command(chat)
 model_group.add_command(convert)
 model_group.add_command(download)
+model_group.add_command(serve)
 
 
 @cli.command
