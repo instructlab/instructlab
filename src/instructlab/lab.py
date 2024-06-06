@@ -3,6 +3,7 @@
 # pylint: disable=too-many-lines
 
 # Standard
+from datetime import datetime
 from glob import glob
 from os.path import basename, dirname, exists
 from pathlib import Path
@@ -65,6 +66,7 @@ class Lab:
         )
 
         self.logger.setLevel(self.config.general.log_level.upper())
+        self.logger.debug("%s", datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
 
 @click.group(cls=DYMGroup)
