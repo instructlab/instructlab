@@ -113,7 +113,6 @@ exclude = [
     "^src/instructlab/client\\.py$",
     "^src/instructlab/generator/generate_data\\.py$",
     "^src/instructlab/generator/utils\\.py$",
-    "^src/instructlab/llamacpp/llamacpp_convert_to_gguf\\.py$",
     "^src/instructlab/mlx_explore/gguf_convert_to_mlx\\.py$",
     "^src/instructlab/mlx_explore/utils\\.py$",
     "^src/instructlab/server\\.py$",
