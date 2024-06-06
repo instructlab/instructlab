@@ -70,11 +70,11 @@ jobs:
           tox -e lint
           echo "::remove-matcher owner=pylint-error::"
           echo "::remove-matcher owner=pylint-warning::"
+          echo "::add-matcher::.github/workflows/matchers/mypy.json"
 
       - name: Run mypy type checks
         if: ${{ !cancelled() && (steps.deps.outcome == 'success') }}
         run: |
-          echo "::add-matcher::.github/workflows/matchers/mypy.json"
           tox -e mypy
           echo "::remove-matcher owner=mypy::"
 
