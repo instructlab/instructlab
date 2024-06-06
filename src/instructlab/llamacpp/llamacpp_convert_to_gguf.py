@@ -190,8 +190,6 @@ class Params:
     n_ff: int
     n_head: int
     n_head_kv: int
-    n_experts: int | None = None
-    n_experts_used: int | None = None
     f_norm_eps: float | None = None
 
     rope_scaling_type: gguf.RopeScalingType | None = None
@@ -289,13 +287,6 @@ class Params:
                 "Suggestion: provide 'config.json' of the model in the same directory containing model files."
             )
 
-        n_experts = None
-        n_experts_used = None
-
-        if "num_local_experts" in config:
-            n_experts = config["num_local_experts"]
-            n_experts_used = config["num_experts_per_tok"]
-
         return Params(
             n_vocab=config["vocab_size"],
             n_embd=config["hidden_size"],
@@ -304,8 +295,6 @@ class Params:
             n_ff=config["intermediate_size"],
             n_head=(n_head := config["num_attention_heads"]),
             n_head_kv=config.get("num_key_value_heads", n_head),
-            n_experts=n_experts,
-            n_experts_used=n_experts_used,
             f_norm_eps=config["rms_norm_eps"],
             f_rope_freq_base=config.get("rope_theta"),
             rope_scaling_type=rope_scaling_type,
@@ -320,8 +309,6 @@ class Params:
     def loadOriginalParamsJson(model: LazyModel, config_path: Path) -> Params:
         config = json.load(open(config_path))
 
-        n_experts = None
-        n_experts_used = None
         f_rope_freq_base = None
 
         # hack to determine LLaMA v1 vs v2 vs CodeLlama
@@ -343,8 +330,6 @@ class Params:
 
         if config.get("moe"):
             n_ff = model["layers.0.feed_forward.experts.0.w1.weight"].shape[0]
-            n_experts = config["moe"]["num_experts"]
-            n_experts_used = config["moe"]["num_experts_per_tok"]
             f_rope_freq_base = 1e6
 
         return Params(
@@ -355,8 +340,6 @@ class Params:
             n_ff=n_ff,
             n_head=(n_head := config["n_heads"]),
             n_head_kv=config.get("n_kv_heads", n_head),
-            n_experts=n_experts,
-            n_experts_used=n_experts_used,
             f_norm_eps=config["norm_eps"],
             f_rope_freq_base=config.get("rope_theta", f_rope_freq_base),
         )
@@ -1150,12 +1133,6 @@ class OutputFile:
         self.gguf.add_rope_dimension_count(params.n_embd // params.n_head)
         self.gguf.add_head_count(params.n_head)
         self.gguf.add_head_count_kv(params.n_head_kv)
-
-        if params.n_experts:
-            self.gguf.add_expert_count(params.n_experts)
-
-        if params.n_experts_used:
-            self.gguf.add_expert_used_count(params.n_experts_used)
 
         if params.f_norm_eps:
             self.gguf.add_layer_norm_rms_eps(params.f_norm_eps)
