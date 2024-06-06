@@ -93,6 +93,7 @@ def cli(ctx, config_file):
         "init": "config init",
         "serve": "model serve",
         "sysinfo": "system info",
+        "test": "model evaluate",
     }
     if ctx.invoked_subcommand in deprecated_cmds:
         new_cmd = deprecated_cmds[ctx.invoked_subcommand]
@@ -1426,6 +1427,7 @@ model_group.add_command(chat)
 model_group.add_command(convert)
 model_group.add_command(download)
 model_group.add_command(serve)
+model_group.add_command(test, name="evaluate")
 
 
 @cli.command
