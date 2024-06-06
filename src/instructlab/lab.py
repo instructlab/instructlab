@@ -42,31 +42,6 @@ if typing.TYPE_CHECKING:
     # Third Party
     import torch
 
-
-class Lab:
-    """Lab object holds high-level information about ilab CLI"""
-
-    def __init__(self, config_obj: config.Config):
-        self.config = config_obj
-
-        # Set up logging for the Lab class
-        self.logger = logging.getLogger(__name__)
-
-        # Create a formatter
-        formatter = log.CustomFormatter(log.FORMAT)
-
-        # Create a handler and set the formatter
-        handler = logging.StreamHandler()
-        handler.setFormatter(formatter)
-
-        logging.basicConfig(
-            format=log.FORMAT,
-            handlers=[handler],
-        )
-
-        self.logger.setLevel(self.config.general.log_level.upper())
-
-
 @click.group(cls=DYMGroup)
 @click.option(
     "--config",
@@ -87,27 +62,7 @@ def ilab(ctx, config_file):
     # ilab init or "--help" have no config file. ilab sysinfo does not need one.
     # CliRunner does fill ctx.invoke_subcommand in option callbacks. We have
     # to validate config_file here.
-    if (
-        ctx.invoked_subcommand not in {"init", "sysinfo"}
-        and "--help" not in sys.argv[1:]
-    ):
-        if config_file == "DEFAULT":
-            config_obj = config.get_default_config()
-        elif not os.path.isfile(config_file):
-            config_obj = None
-            ctx.fail(
-                f"`{config_file}` does not exists, please run `ilab init` "
-                "or point to a valid configuration file using `--config=<path>`."
-            )
-        else:
-            try:
-                config_obj = config.read_config(config_file)
-            except config.ConfigException as ex:
-                raise click.ClickException(str(ex))
-
-        ctx.obj = Lab(config_obj)
-        # default_map holds a dictionary with default values for each command parameters
-        ctx.default_map = config.get_dict(ctx.obj.config)
+    config.init_config(ctx, config_file)
 
 
 @ilab.command()
