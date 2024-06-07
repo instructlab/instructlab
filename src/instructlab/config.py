@@ -38,6 +38,17 @@ DEFAULT_CONNECTION_TIMEOUT = httpx.Timeout(timeout=30.0)
 # use spawn start method, fork is not thread-safe
 DEFAULT_MULTIPROCESSING_START_METHOD = "spawn"
 
+# When otherwise unknown, ilab uses this as the default family
+DEFAULT_MODEL_FAMILY = "merlinite"
+
+# Model families understood by ilab
+MODEL_FAMILIES = set(("merlinite", "mixtral"))
+
+# Map model names to their family
+MODEL_FAMILY_MAPPINGS = {
+    "granite": "merlinite",
+}
+
 
 class ConfigException(Exception):
     """An exception that a configuration file has an error."""
@@ -197,4 +208,11 @@ def get_api_base(host_port):
 
 
 def get_model_family(forced, model_path):
-    return forced if forced else match(r"^\w*", path.basename(model_path)).group(0)
+    if forced and forced.lower() not in MODEL_FAMILIES:
+        raise ConfigException("Unknown model family: %s" % forced)
+
+    # Try to guess the model family based on the model's filename
+    guess = match(r"^\w*", path.basename(model_path)).group(0).lower()
+    guess = MODEL_FAMILY_MAPPINGS.get(guess, guess)
+
+    return guess if guess in MODEL_FAMILIES else DEFAULT_MODEL_FAMILY
