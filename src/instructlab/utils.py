@@ -130,7 +130,9 @@ TAXONOMY_FOLDERS: List[str] = ["compositional_skills", "knowledge"]
 
 def istaxonomyfile(fn):
     path = Path(fn)
-    if (path.suffix == ".yaml" or path.suffix == ".yml") and path.parts[0] in TAXONOMY_FOLDERS:
+    if path.suffix in ('.yaml', '.yml') and path.parts[
+        0
+    ] in TAXONOMY_FOLDERS:
         return True
     return False
 
@@ -449,8 +451,10 @@ def read_taxonomy_file(
     errors = 0
     file_path = Path(file_path).resolve()
     # file should end with ".yaml" or ".yml" explicitly
-    if (file_path.suffix != ".yaml" or file_path.suffix != ".yml"):
-        logger.warn(f"Skipping {file_path}! Use lowercase '.yaml' or '.yml' extension instead.")
+    if file_path.suffix not in ('.yaml', '.yml'):
+        logger.warn(
+            f"Skipping {file_path}! Use lowercase '.yaml' or '.yml' extension instead."
+        )
         warnings += 1
         return None, warnings, errors
     for i in range(len(file_path.parts) - 1, -1, -1):
