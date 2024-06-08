@@ -146,24 +146,23 @@ def openai_completion(
             raise GenerateException(
                 f"Model {model_name} is not served by the server. These are the served models {model_ids}"
             )
+        for prompt in prompt_batch:
+            messages = [
+                {"role": "system", "content": get_sysprompt()},
+                {"role": "user", "content": prompt},
+            ]
+            # Inference the model
+            try:
+                response = client.chat.completions.create(
+                    messages=messages,
+                    **shared_kwargs,
+                )
+            except OpenAIError as exc:
+                raise GenerateException(
+                    f"There was a problem connecting to the server {exc}"
+                ) from exc
 
-        messages = [
-            {"role": "system", "content": get_sysprompt()},
-            {"role": "user", "content": prompt_batch[batch_id]},
-        ]
-
-        # Inference the model
-        try:
-            response = client.chat.completions.create(
-                messages=messages,
-                **shared_kwargs,
-            )
-        except OpenAIError as exc:
-            raise GenerateException(
-                f"There was a problem connecting to the server {exc}"
-            ) from exc
-
-        completions.extend(response.choices)
+            completions.extend(response.choices)
 
     if return_text:
         completions = [completion.text for completion in completions]
