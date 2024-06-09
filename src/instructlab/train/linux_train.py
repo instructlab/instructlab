@@ -158,6 +158,10 @@ def load_base_model(model_name, bnb_config):
     )
 
 
+response_template = "\n<|assistant|>\n"
+merged_model_dir = "training_results/merged_model"
+
+
 def linux_train(
     ctx: click.Context,
     train_file: Path,
@@ -201,8 +205,6 @@ def linux_train(
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     tokenizer.pad_token = tokenizer.eos_token
 
-    response_template = "\n<|assistant|>\n"
-
     response_template_ids = tokenizer.encode(
         response_template, add_special_tokens=False
     )[2:]
@@ -235,37 +237,6 @@ def linux_train(
         print(torch.cuda.memory_summary())
 
     print("LINUX_TRAIN.PY: SANITY CHECKING THE BASE MODEL")
-    stop_words = ["<|endoftext|>", "<|assistant|>"]
-    stop_words_ids = [
-        tokenizer(stop_word, return_tensors="pt", add_special_tokens=False)[
-            "input_ids"
-        ].squeeze()
-        for stop_word in stop_words
-    ]
-    stopping_criteria = StoppingCriteriaList(
-        [StoppingCriteriaSub(stops=stop_words_ids, device=model.device)]
-    )
-
-    def model_generate(user, **kwargs):
-        text = create_prompt(user=user)
-
-        input_ids = tokenizer(text, return_tensors="pt").input_ids.to(model.device)
-        outputs = model.generate(
-            input_ids=input_ids,
-            max_new_tokens=256,
-            pad_token_id=tokenizer.eos_token_id,
-            temperature=0.7,
-            top_p=0.9,
-            stopping_criteria=stopping_criteria,
-            do_sample=True,
-            **kwargs,
-        )
-        return tokenizer.batch_decode([o[:-1] for o in outputs])[0]
-
-    assistant_old_lst = [
-        model_generate(d["user"]).split(response_template.strip())[-1].strip()
-        for d in tqdm(test_dataset)
-    ]
     attention_layers = [
         module for module in model.modules() if "attention" in str(type(module)).lower()
     ]
@@ -382,10 +353,79 @@ def linux_train(
 
     model.config.use_cache = True
 
-    print("LINUX_TRAIN.PY: RUNNING INFERENCE ON THE OUTPUT MODEL")
+    print("LINUX_TRAIN.PY: MERGING ADAPTERS")
+    model = trainer.model.merge_and_unload()
+    model.save_pretrained(merged_model_dir)
+    print("LINUX_TRAIN.PY: FINISHED")
 
+
+def linux_test(
+    ctx: click.Context,
+    test_file: Path,
+    model_name: str,
+    device: torch.device = torch.device("cpu"),
+    four_bit_quant: bool = False,
+):
+    def model_generate(ctx, model, model_name, tokenizer, user, **kwargs):
+        ctx.obj.logger.debug("")
+        stop_words = ["<|endoftext|>", "<|assistant|>"]
+        stop_words_ids = [
+            tokenizer(stop_word, return_tensors="pt", add_special_tokens=False)[
+                "input_ids"
+            ].squeeze()
+            for stop_word in stop_words
+        ]
+        stopping_criteria = StoppingCriteriaList(
+            [StoppingCriteriaSub(stops=stop_words_ids, device=model.device)]
+        )
+        text = create_prompt(user=user)
+
+        input_ids = tokenizer(text, return_tensors="pt").input_ids.to(model.device)
+        ctx.obj.logger.debug("model.generate ...")
+        outputs = model.generate(
+            input_ids=input_ids,
+            max_new_tokens=1,  # 256,
+            pad_token_id=tokenizer.eos_token_id,
+            temperature=0.7,
+            top_p=0.9,
+            stopping_criteria=stopping_criteria,
+            do_sample=True,
+            **kwargs,
+        )
+        return tokenizer.batch_decode([o[:-1] for o in outputs])[0]
+
+    test_dataset = load_dataset("json", data_files=os.fspath(test_file), split="train")
+    bnb_config = None
+    if four_bit_quant:
+        bnb_config = BitsAndBytesConfig(
+            load_in_4bit=True,
+            bnb_4bit_quant_type="nf4",
+            bnb_4bit_use_double_quant=True,
+            bnb_4bit_compute_dtype=torch.float16,  # if not set will throw a warning about slow speeds when training
+        )
+
+    model = load_base_model(model_name, bnb_config)
+    if model.device != device:
+        model = model.to(device)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
+    tokenizer.pad_token = tokenizer.eos_token
+
+    assistant_old_lst = [
+        model_generate(ctx, model, model_name, tokenizer, d["user"])
+        .split(response_template.strip())[-1]
+        .strip()
+        for d in tqdm(test_dataset)
+    ]
+    generate_kwargs = {}
+    if device.type == "hpu":
+        generate_kwargs = {"generation_config": GaudiGenerationConfig()}
+    ctx.obj.logger.debug("loading fine-tuned model")
+    model = AutoModelForCausalLM.from_pretrained(merged_model_dir)
+    ctx.obj.logger.info("Running inference on the fine-tuned model")
     for i, (d, assistant_old) in enumerate(zip(test_dataset, assistant_old_lst)):
-        output = model_generate(d["user"], **generate_kwargs)
+        output = model_generate(
+            ctx, model_name, tokenizer, d["user"], **generate_kwargs
+        )
         assistant_new = output.split(response_template.strip())[-1].strip()
         assistant_expected = d["assistant"]
 
@@ -398,9 +438,3 @@ def linux_train(
         print(assistant_new)
         print("\n===\nassistant_expected\n===\n")
         print(assistant_expected)
-
-    print("LINUX_TRAIN.PY: MERGING ADAPTERS")
-    model = trainer.model.merge_and_unload()
-    model.save_pretrained("./training_results/merged_model")
-
-    print("LINUX_TRAIN.PY: FINISHED")

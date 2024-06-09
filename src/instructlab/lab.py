@@ -1231,10 +1231,30 @@ def train(
     default="auto",
     show_default=True,
 )
-@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
+@click.option(
+    "--model-name",
+    default="instructlab/merlinite-7b-lab",
+    show_default=True,
+    help="model name to use for testing",
+)
+@click.pass_context
 # pylint: disable=function-redefined
-def test(data_dir, model_dir, adapter_file):
+def test(
+    ctx,
+    data_dir,
+    model_dir,
+    adapter_file,
+    model_name: str,
+):
     """Runs basic test to ensure model correctness"""
+    ctx.obj.logger.info("")
+    if not utils.is_macos_with_m_chip():
+        # pylint: disable=C0415
+        # Local
+        from .train.linux_train import linux_test
+
+        return linux_test(ctx, Path(data_dir) / "test_gen.jsonl", model_name)
+
     # pylint: disable=C0415
     # Local
     from .train.lora_mlx.lora import load_and_train
