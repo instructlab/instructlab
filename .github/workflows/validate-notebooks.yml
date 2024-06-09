@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 name: Validate Notebooks
 
 on:
@@ -7,29 +9,44 @@ on:
       - "release-**"
     paths:
       - 'notebooks/*.ipynb'
+      - 'scripts/*.sh' # Used by this workflow
+      - '.github/workflows/validate-notebooks.yml' # This workflow
   pull_request:
     branches:
       - "main"
       - "release-**"
     paths:
       - 'notebooks/*.ipynb'
+      - 'scripts/*.sh' # Used by this workflow
+      - '.github/workflows/validate-notebooks.yml' # This workflow
 
 env:
-  PYTHON_VERSION: 3.11
+  LC_ALL: en_US.UTF-8
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
 
 jobs:
   validate-notebook:
     runs-on: ubuntu-latest
     steps:
+      - name: "Harden Runner"
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
           submodules: true
 
       - name: Setup Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
         with:
           python-version: 3.11
           cache: pip
@@ -40,4 +57,5 @@ jobs:
           python -m pip install nbformat
 
       - name: Validate Jupyter Notebooks
-        run: find notebooks/ -name "*.ipynb" -print0 | xargs python scripts/validate_notebook.py
+        run: |
+          find notebooks/ -name "*.ipynb" -print0 | xargs python scripts/validate_notebook.py

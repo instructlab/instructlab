@@ -18,8 +18,9 @@ jobs:
       pull-requests: write
 
     steps:
+      # No step-security/harden-runner since this is a self-hosted runner
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
@@ -94,7 +95,7 @@ jobs:
           ls -l /dev/nvidia*
 
       - name: Setup Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
         with:
           python-version: 3.11
           cache: pip
@@ -107,7 +108,7 @@ jobs:
           pip cache remove llama_cpp_python
 
       - name: Cache huggingface
-        uses: actions/cache@v4
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ~/.cache/huggingface
           # config contains DEFAULT_MODEL
