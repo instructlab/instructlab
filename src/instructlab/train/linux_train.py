@@ -143,6 +143,21 @@ def report_hpu_device(args_device: torch.device) -> None:
             print(f'  {key}="{value}"')
 
 
+def load_base_model(model_name, bnb_config):
+    config = AutoConfig.from_pretrained(
+        model_name, torchscript=True, trust_remote_code=True
+    )
+
+    return AutoModelForCausalLM.from_pretrained(
+        model_name,
+        torch_dtype="auto",
+        quantization_config=bnb_config,
+        config=config,
+        trust_remote_code=True,
+        low_cpu_mem_usage=True,
+    )
+
+
 def linux_train(
     ctx: click.Context,
     train_file: Path,
@@ -211,18 +226,8 @@ def linux_train(
 
     # Loading the model
     print("LINUX_TRAIN.PY: LOADING THE BASE MODEL")
-    config = AutoConfig.from_pretrained(
-        model_name, torchscript=True, trust_remote_code=True
-    )
 
-    model = AutoModelForCausalLM.from_pretrained(
-        model_name,
-        torch_dtype="auto",
-        quantization_config=bnb_config,
-        config=config,
-        trust_remote_code=True,
-        low_cpu_mem_usage=True,
-    )
+    model = load_base_model(model_name, bnb_config)
     if model.device != device:
         model = model.to(device)
     print(f"LINUX_TRAIN.PY: Model device {model.device}")
