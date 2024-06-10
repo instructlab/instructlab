@@ -30,7 +30,6 @@ permissions:
 
 jobs:
   shellcheck:
-    name: Shellcheck
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
