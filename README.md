@@ -333,7 +333,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
   #### Downloading another instructLab model from Hugging Face
 
-  If you wish to download another [instructlab model](https://huggingface.co/instructlab) from Hugging Face, for example the [instructlab/granite-7b-lab-GGUF](https://huggingface.co/instructlab/granite-7b-lab-GGUF) model, you can use this command with additional parameters as follows:
+  If you wish to download another [instructLab model](https://huggingface.co/instructlab) from Hugging Face, for example the [`instructlab/granite-7b-lab-GGUF`](https://huggingface.co/instructlab/granite-7b-lab-GGUF) model, you can use this command with additional parameters as follows:
 
   ```shell
   ilab download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf --model-dir models
