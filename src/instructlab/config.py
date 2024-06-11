@@ -54,7 +54,7 @@ class ConfigException(Exception):
     """An exception that a configuration file has an error."""
 
 
-class _general(BaseModel):
+class General(BaseModel):
     """Class describing various top-level configuration options for all commands."""
 
     # model configuration
@@ -84,7 +84,7 @@ class _general(BaseModel):
         return v.upper()
 
 
-class _chat(BaseModel):
+class Chat(BaseModel):
     """Class describing configuration of the chat sub-command."""
 
     # model configuration
@@ -103,7 +103,7 @@ class _chat(BaseModel):
     max_tokens: Optional[int] = None
 
 
-class _generate(BaseModel):
+class Generate(BaseModel):
     """Class describing configuration of the generate sub-command."""
 
     # model configuration
@@ -123,7 +123,7 @@ class _generate(BaseModel):
     seed_file: StrictStr = "seed_tasks.json"
 
 
-class _serve(BaseModel):
+class Serve(BaseModel):
     """Class describing configuration of the serve sub-command."""
 
     # model configuration
@@ -146,12 +146,12 @@ class Config(BaseModel):
     """Configuration for the InstructLab CLI."""
 
     # required fields
-    chat: _chat
-    generate: _generate
-    serve: _serve
+    chat: Chat
+    generate: Generate
+    serve: Serve
 
     # additional fields with defaults
-    general: _general = _general()
+    general: General = General()
 
     # model configuration
     model_config = ConfigDict(extra="ignore")
@@ -160,13 +160,13 @@ class Config(BaseModel):
 def get_default_config():
     """Generates default configuration for CLI"""
     return Config(
-        chat=_chat(model=DEFAULT_MODEL),
-        generate=_generate(
+        chat=Chat(model=DEFAULT_MODEL),
+        generate=Generate(
             model=DEFAULT_MODEL,
             taxonomy_path=DEFAULT_TAXONOMY_PATH,
             taxonomy_base=DEFAULT_TAXONOMY_BASE,
         ),
-        serve=_serve(model_path=DEFAULT_MODEL_PATH),
+        serve=Serve(model_path=DEFAULT_MODEL_PATH),
     )
 
 

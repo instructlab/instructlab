@@ -105,7 +105,7 @@ jobs:
       - name: Test Workflow Complete
         run: echo "Test Workflow Complete"
 
-  man:
+  docs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -129,7 +129,7 @@ jobs:
           pip cache remove llama_cpp_python
 
       - name: Run tox docs target (expect failure since tox is not present)
-        run: make man
+        run: make docs
         continue-on-error: true
 
       - name: Run tox docs target
@@ -150,7 +150,7 @@ jobs:
           python -m pip install tox
 
       - name: Run tox docs target
-        run: make man
+        run: make docs
 
       - name: Check that man pages were generated
         uses: andstor/file-existence-action@v3

@@ -873,6 +873,7 @@ class TorchDeviceParam(click.ParamType):
     supported_devices = {"cuda", "cpu", "hpu"}
 
     def convert(self, value, param, ctx) -> "torch.device":
+        """Convert value to a torch.device object"""
         # pylint: disable=C0415
         # Function local import, import torch can take more than a second
         # Third Party

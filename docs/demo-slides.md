@@ -1,10 +1,9 @@
 ---
-title: Demo for InstructLab CLI
 author: Kai Xu
 date: April 16th, 2024 | v0.13.0
 ---
 
-## Welcome to Demo for InstructLab CLI
+# Welcome to Demo for InstructLab CLI
 
 A tool to help you contribute to InstructLab Taxonomy.
 <!-- pause -->

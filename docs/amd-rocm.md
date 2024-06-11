@@ -1,3 +1,7 @@
+---
+author: Christian Heimes
+---
+
 # InstructLab toolbox container for AMD ROCm GPUs
 
 The ROCm container file is designed for AMD GPUs with RDNA3 architecture (`gfx1100`). The container can be build for RDNA2 (`gfx1030`) and older GPUs, too. Please refer to [AMD's system requirements](https://rocm.docs.amd.com/projects/install-on-linux/en/develop/reference/system-requirements.html) for a list of officially supported cards. ROCm is known to work on more consumer GPUs.

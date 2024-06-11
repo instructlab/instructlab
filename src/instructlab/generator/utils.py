@@ -85,9 +85,9 @@ def openai_completion(
     Returns:
         A completion or a list of completions. Depending on return_text, return_openai_object,
         and decoding_args.n, the completion type can be one of:
-            - a string (if return_text is True)
-            - an openai_object.OpenAIObject object (if return_text is False)
-            - a list of objects of the above types (if decoding_args.n > 1)
+        - a string (if return_text is True)
+        - an openai_object.OpenAIObject object (if return_text is False)
+        - a list of objects of the above types (if decoding_args.n > 1)
     """
     is_single_prompt = isinstance(prompts, (str, dict))
     if is_single_prompt:
