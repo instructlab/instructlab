@@ -36,9 +36,10 @@ class TestLabDiff:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -57,9 +58,10 @@ class TestLabDiff:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -76,9 +78,10 @@ class TestLabDiff:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -96,9 +99,10 @@ class TestLabDiff:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     taxonomy_base,
@@ -117,9 +121,10 @@ class TestLabDiff:
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -136,9 +141,10 @@ class TestLabDiff:
             self.taxonomy.create_untracked(valid_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -146,7 +152,7 @@ class TestLabDiff:
                     self.taxonomy.root,
                 ],
             )
-            assert f"Taxonomy in /{self.taxonomy.root}/ is valid :)" in result.output
+            assert f"Taxonomy in {self.taxonomy.root} is valid :)" in result.output
             assert result.exit_code == 0
 
     def test_diff_valid_yaml_file(self):
@@ -155,9 +161,10 @@ class TestLabDiff:
             file_path = self.taxonomy.create_untracked(valid_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -165,7 +172,7 @@ class TestLabDiff:
                     file_path,
                 ],
             )
-            assert f"Taxonomy in /{file_path}/ is valid :)" in result.output
+            assert f"Taxonomy in {file_path} is valid :)" in result.output
             assert result.exit_code == 0
 
     def test_diff_valid_yaml_quiet(self):
@@ -174,9 +181,10 @@ class TestLabDiff:
             self.taxonomy.create_untracked(valid_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -194,9 +202,10 @@ class TestLabDiff:
             file_path = self.taxonomy.create_untracked(valid_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -215,9 +224,10 @@ class TestLabDiff:
             )
             runner = CliRunner()
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -235,9 +245,10 @@ class TestLabDiff:
             )
             runner = CliRunner()
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -257,9 +268,10 @@ class TestLabDiff:
             self.taxonomy.create_untracked(invalid_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,
@@ -281,9 +293,10 @@ class TestLabDiff:
             self.taxonomy.create_untracked(failing_yaml_file, qnafile.read())
             runner = CliRunner()
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "taxonomy",
                     "diff",
                     "--taxonomy-base",
                     TAXONOMY_BASE,

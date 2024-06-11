@@ -19,11 +19,11 @@ class TestLabInit:
     # of your module, so you should use `my_module.Y`` to patch.
     # When using `import X`, you should use `X.Y` to patch.
     # https://docs.python.org/3/library/unittest.mock.html#where-to-patch?
-    @patch("instructlab.lab.Repo.clone_from")
+    @patch("instructlab.configuration.init.Repo.clone_from")
     def test_init_noninteractive(self, mock_clone_from):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(lab.cli, ["init", "--non-interactive"])
+            result = runner.invoke(lab.ilab, ["init", "--non-interactive"])
             assert result.exit_code == 0
             assert "config.yaml" in os.listdir()
             mock_clone_from.assert_called_once()
@@ -31,18 +31,18 @@ class TestLabInit:
     def test_init_interactive(self):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(lab.cli, ["init"], input="\nn")
+            result = runner.invoke(lab.ilab, ["init"], input="\nn")
             assert result.exit_code == 0
             assert "config.yaml" in os.listdir()
 
     @patch(
-        "instructlab.lab.Repo.clone_from",
+        "instructlab.configuration.init.Repo.clone_from",
         MagicMock(side_effect=GitError("Authentication failed")),
     )
     def test_init_interactive_git_error(self):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(lab.cli, ["init"], input="\ny")
+            result = runner.invoke(lab.ilab, ["init"], input="\ny")
             assert (
                 result.exit_code == 1
             ), "command finished with an unexpected exit code"
@@ -51,11 +51,11 @@ class TestLabInit:
             )
             assert "manually run" in result.output
 
-    @patch("instructlab.lab.Repo.clone_from")
+    @patch("instructlab.configuration.init.Repo.clone_from")
     def test_init_interactive_clone(self, mock_clone_from):
         runner = CliRunner()
         with runner.isolated_filesystem():
-            result = runner.invoke(lab.cli, ["init"], input="\ny")
+            result = runner.invoke(lab.ilab, ["init"], input="\ny")
             assert result.exit_code == 0
             assert "config.yaml" in os.listdir()
             mock_clone_from.assert_called_once()
@@ -64,7 +64,7 @@ class TestLabInit:
         runner = CliRunner()
         with runner.isolated_filesystem():
             os.makedirs("taxonomy/contents")
-            result = runner.invoke(lab.cli, ["init"], input="\n")
+            result = runner.invoke(lab.ilab, ["init"], input="\n")
             assert result.exit_code == 0
             assert "config.yaml" in os.listdir()
             assert "taxonomy" in os.listdir()
@@ -73,21 +73,21 @@ class TestLabInit:
         runner = CliRunner()
         with runner.isolated_filesystem():
             # first run to prime the config.yaml in current directory
-            result = runner.invoke(lab.cli, ["init"], input="non-default-taxonomy\nn")
+            result = runner.invoke(lab.ilab, ["init"], input="non-default-taxonomy\nn")
             assert result.exit_code == 0
             assert "config.yaml" in os.listdir()
             config = read_config("config.yaml")
             assert config.generate.taxonomy_path == "non-default-taxonomy"
 
             # second invocation should ask if we want to overwrite - yes, and change taxonomy path
-            result = runner.invoke(lab.cli, ["init"], input="y\ndifferent-taxonomy\nn")
+            result = runner.invoke(lab.ilab, ["init"], input="y\ndifferent-taxonomy\nn")
             assert result.exit_code == 0
             assert "config.yaml" in os.listdir()
             config = read_config("config.yaml")
             assert config.generate.taxonomy_path == "different-taxonomy"
 
             # third invocation should again ask, but this time don't overwrite
-            result = runner.invoke(lab.cli, ["init"], input="n")
+            result = runner.invoke(lab.ilab, ["init"], input="n")
             assert result.exit_code == 0
             assert "config.yaml" in os.listdir()
             config = read_config("config.yaml")

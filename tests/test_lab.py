@@ -16,7 +16,7 @@ class TestConfig:
     def test_cli_params_hyphenated(self):
         flag_pattern = re.compile("-{1,2}[0-9a-z-]+")
         invalid_flags = []
-        for name, cmd in lab.cli.commands.items():
+        for name, cmd in lab.ilab.commands.items():
             for param in cmd.params:
                 if not isinstance(param, click.Option):
                     continue

@@ -4,6 +4,9 @@
 from os import path
 from re import match
 from typing import Optional
+import logging
+import os
+import sys
 
 # Third Party
 from pydantic import (
@@ -14,8 +17,12 @@ from pydantic import (
     ValidationError,
     field_validator,
 )
+import click
 import httpx
 import yaml
+
+# Local
+from . import log
 
 DEFAULT_API_KEY = "no_api_key"
 DEFAULT_CONFIG = "config.yaml"
@@ -216,3 +223,50 @@ def get_model_family(forced, model_path):
     guess = MODEL_FAMILY_MAPPINGS.get(guess, guess)
 
     return guess if guess in MODEL_FAMILIES else DEFAULT_MODEL_FAMILY
+
+
+class Lab:
+    """Lab object holds high-level information about ilab CLI"""
+
+    def __init__(self, config_obj: Config):
+        self.config = config_obj
+
+        # Set up logging for the Lab class
+        self.logger = logging.getLogger(__name__)
+
+        # Create a formatter
+        formatter = log.CustomFormatter(log.FORMAT)
+
+        # Create a handler and set the formatter
+        handler = logging.StreamHandler()
+        handler.setFormatter(formatter)
+
+        logging.basicConfig(
+            format=log.FORMAT,
+            handlers=[handler],
+        )
+
+        self.logger.setLevel(self.config.general.log_level.upper())
+
+
+def init_config(ctx, config_file):
+    if (
+        ctx.invoked_subcommand not in {"config", "init", "sysinfo"}
+        and "--help" not in sys.argv[1:]
+    ):
+        if config_file == "DEFAULT":
+            config_obj = get_default_config()
+        elif not os.path.isfile(config_file):
+            config_obj = None
+            ctx.fail(
+                f"`{config_file}` does not exists, please run `ilab init` "
+                "or point to a valid configuration file using `--config=<path>`."
+            )
+        else:
+            try:
+                config_obj = read_config(config_file)
+            except ConfigException as ex:
+                raise click.ClickException(str(ex))
+        ctx.obj = Lab(config_obj)
+        # default_map holds a dictionary with default values for each command parameters
+        ctx.default_map = get_dict(ctx.obj.config)

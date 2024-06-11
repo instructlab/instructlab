@@ -9,6 +9,8 @@ import sys
 import time
 
 # Third Party
+from huggingface_hub import hf_hub_download
+from huggingface_hub import logging as hf_logging
 from openai import OpenAI
 from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import FormattedText
@@ -18,11 +20,16 @@ from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.text import Text
+import click
 import httpx
 import openai
 
+# First Party
+from instructlab import client, config
+from instructlab.config import DEFAULT_CONNECTION_TIMEOUT, DEFAULT_MODEL_OLD
+from instructlab.server import is_temp_server_running
+
 # Local
-from ..config import DEFAULT_CONNECTION_TIMEOUT, DEFAULT_MODEL_OLD
 from ..utils import get_ssl_cert_config, get_sysprompt
 
 HELP_MD = """
@@ -53,6 +60,209 @@ CONTEXTS = {
 PROMPT_HISTORY_FILEPATH = os.path.expanduser("~/.local/chat-cli.history")
 
 PROMPT_PREFIX = ">>> "
+
+
+@click.command()
+@click.argument(
+    "question",
+    nargs=-1,
+    type=click.UNPROCESSED,
+)
+@click.option(
+    "-m",
+    "--model",
+    default=config.DEFAULT_MODEL,
+    show_default=True,
+    help="Model name to print in chat process",
+)
+@click.option(
+    "-c",
+    "--context",
+    default="default",
+    show_default=True,
+    help="Name of system context in config file.",
+)
+@click.option(
+    "-s",
+    "--session",
+    type=click.File("r"),
+    help="Filepath of a dialog session file.",
+)
+@click.option(
+    "-qq",
+    "--quick-question",
+    is_flag=True,
+    help="Exit after answering question.",
+)
+@click.option(
+    "-gm",
+    "--greedy-mode",
+    is_flag=True,
+    help="Use model greedy decoding. Useful for debugging and reproducing errors.",
+)
+@click.option(
+    "--max-tokens",
+    type=click.INT,
+    help="Set a maximum number of tokens to request from the model endpoint.",
+)
+@click.option(
+    "--endpoint-url",
+    type=click.STRING,
+    help="Custom URL endpoint for OpenAI-compatible API. Defaults to the `ilab model serve` endpoint.",
+)
+@click.option(
+    "--api-key",
+    type=click.STRING,
+    default=config.DEFAULT_API_KEY,  # Note: do not expose default API key
+    help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
+)
+@click.option(
+    "--tls-insecure",
+    is_flag=True,
+    help="Disable TLS verification.",
+)
+@click.option(
+    "--tls-client-cert",
+    type=click.Path(),
+    default="",
+    show_default=True,
+    help="Path to the TLS client certificate to use.",
+)
+@click.option(
+    "--tls-client-key",
+    type=click.Path(),
+    default="",
+    show_default=True,
+    help="Path to the TLS client key to use.",
+)
+@click.option(
+    "--tls-client-passwd",
+    type=click.STRING,
+    default="",
+    help="TLS client certificate password.",
+)
+@click.option(
+    "--model-family",
+    help="Force model family to use when picking a chat template",
+)
+@click.pass_context
+def chat(
+    ctx,
+    question,
+    model,
+    context,
+    session,
+    quick_question,
+    greedy_mode,
+    max_tokens,
+    endpoint_url,
+    api_key,
+    tls_insecure,
+    tls_client_cert,
+    tls_client_key,
+    tls_client_passwd,
+    model_family,
+):
+    """Run a chat using the modified model"""
+    # pylint: disable=C0415
+    # First Party
+    from instructlab.server import ensure_server
+
+    if endpoint_url:
+        api_base = endpoint_url
+        server_process = None
+        server_queue = None
+    else:
+        try:
+            server_process, api_base, server_queue = ensure_server(
+                ctx.obj.logger,
+                ctx.obj.config.serve,
+                tls_insecure,
+                tls_client_cert,
+                tls_client_key,
+                tls_client_passwd,
+                model_family,
+            )
+        except Exception as exc:
+            click.secho(f"Failed to start server: {exc}", fg="red")
+            raise click.exceptions.Exit(1)
+        if not api_base:
+            api_base = ctx.obj.config.serve.api_base()
+
+    # if only the chat is running (`ilab chat`) and the temp server is not, the chat interacts
+    # in server mode (`ilab serve` is running somewhere, or we are talking to another
+    # OpenAI compatible endpoint).
+    if not is_temp_server_running():
+        # Try to get the model name right if we know we're talking to a local `ilab serve`.
+        #
+        # If the model from the CLI and the one in the config are the same, use the one from the
+        # server if they are different else let's use what the user provided
+        #
+        # 'model' will always get a value and never be None so it's hard to distinguish whether
+        # the value came from the user input or the default value.
+        # We can only assume that if the value is the same as the default value and the value
+        # from the config is the same as the default value, then the user didn't provide a value
+        # we then compare it with the value from the server to see if it's different
+        if (
+            model == config.DEFAULT_MODEL
+            and ctx.obj.config.chat.model == config.DEFAULT_MODEL
+            and api_base == ctx.obj.config.serve.api_base()
+        ):
+            try:
+                models = client.list_models(
+                    api_base=api_base,
+                    tls_insecure=tls_insecure,
+                    tls_client_cert=tls_client_cert,
+                    tls_client_key=tls_client_key,
+                    tls_client_passwd=tls_client_passwd,
+                )
+
+                # Currently, we only present a single model so we can safely assume that the first model
+                server_model = models.data[0].id if models is not None else None
+
+                # override 'model' with the first returned model if not provided so that the chat print
+                # the model used by the server
+                model = (
+                    server_model
+                    if server_model is not None
+                    and server_model != ctx.obj.config.chat.model
+                    else model
+                )
+
+            except client.ClientException as exc:
+                click.secho(
+                    f"Failed to list models from {api_base}. Please check the API key and endpoint.",
+                    fg="red",
+                )
+                raise click.exceptions.Exit(1) from exc
+
+    try:
+        chat_cli(
+            logger=ctx.obj.logger,
+            api_base=api_base,
+            api_key=api_key,
+            config=ctx.obj.config.chat,
+            question=question,
+            model=model,
+            context=context,
+            session=session,
+            qq=quick_question,
+            greedy_mode=greedy_mode,
+            max_tokens=max_tokens,
+            tls_insecure=tls_insecure,
+            tls_client_cert=tls_client_cert,
+            tls_client_key=tls_client_key,
+            tls_client_passwd=tls_client_passwd,
+        )
+    except ChatException as exc:
+        click.secho(f"Executing chat failed with: {exc}", fg="red")
+        raise click.exceptions.Exit(1)
+    finally:
+        if server_process and server_queue:
+            server_process.terminate()
+            server_process.join(timeout=30)
+            server_queue.close()
+            server_queue.join_thread()
 
 
 class ChatException(Exception):

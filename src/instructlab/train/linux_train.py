@@ -24,7 +24,7 @@ import click
 import torch
 
 # Local
-from ..chat.chat import CONTEXTS
+from ..model.chat import CONTEXTS
 
 # TODO CPU: Look into using these extensions
 # import intel_extension_for_pytorch as ipex

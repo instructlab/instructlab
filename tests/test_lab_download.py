@@ -16,14 +16,15 @@ class TestLabDownload:
     # of your module, so you should use `my_module.Y`` to patch.
     # When using `import X`, you should use `X.Y` to patch.
     # https://docs.python.org/3/library/unittest.mock.html#where-to-patch?
-    @patch("instructlab.lab.hf_hub_download")
+    @patch("instructlab.model.download.hf_hub_download")
     def test_download(self, mock_hf_hub_download):
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "model",
                     "download",
                 ],
             )
@@ -33,16 +34,17 @@ class TestLabDownload:
             mock_hf_hub_download.assert_called_once()
 
     @patch(
-        "instructlab.lab.hf_hub_download",
+        "instructlab.model.download.hf_hub_download",
         MagicMock(side_effect=HfHubHTTPError("Could not reach hugging face server")),
     )
     def test_download_error(self):
         runner = CliRunner()
         with runner.isolated_filesystem():
             result = runner.invoke(
-                lab.cli,
+                lab.ilab,
                 [
                     "--config=DEFAULT",
+                    "model",
                     "download",
                 ],
             )

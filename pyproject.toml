@@ -32,7 +32,7 @@ dynamic = ["dependencies", "optional-dependencies", "version"]
 
 [project.scripts]
 # defines ilab executable
-ilab = "instructlab.lab:cli"
+ilab = "instructlab.lab:ilab"
 
 [project.urls]
 homepage = "https://instructlab.io"
@@ -109,18 +109,32 @@ known-local-folder = ["tuning"]
 [tool.mypy]
 disable_error_code = ["import-not-found", "import-untyped"]
 exclude = [
-    "^src/instructlab/generator/generate_data\\.py$",
-    "^src/instructlab/generator/utils\\.py$",
+    "^src/instructlab/model/chat\\.py$",
+    "^src/instructlab/model/convert\\.py$",
+    "^src/instructlab/model/download\\.py$",
+    "^src/instructlab/model/test\\.py$",
+    "^src/instructlab/model/serve\\.py$",
+    "^src/instructlab/model/list\\.py$",
+    "^src/instructlab/model/model\\.py$",
+    "^src/instructlab/model/train\\.py$",
+    "^src/instructlab/configuration/config\\.py$",
+    "^src/instructlab/configuration/init\\.py$",
+    "^src/instructlab/data/data\\.py$",
+    "^src/instructlab/data/generate\\.py$",
+    "^src/instructlab/data/generator/generate_data\\.py$",
+    "^src/instructlab/data/generator/utils\\.py$",
+    "^src/instructlab/taxonomy/taxonomy\\.py$",
+    "^src/instructlab/taxonomy/diff\\.py$",
     "^src/instructlab/llamacpp/llamacpp_convert_to_gguf\\.py$",
     "^src/instructlab/mlx_explore/gguf_convert_to_mlx\\.py$",
     "^src/instructlab/mlx_explore/utils\\.py$",
-    "^src/instructlab/server\\.py$",
     "^src/instructlab/train/lora_mlx/lora\\.py$",
     "^src/instructlab/train/lora_mlx/models/llama\\.py$",
     "^src/instructlab/train/lora_mlx/models/mixtral\\.py$",
     "^src/instructlab/train/lora_mlx/models/models\\.py$",
     "^src/instructlab/train/lora_mlx/utils\\.py$",
     "^src/instructlab/utils\\.py$",
+    "^src/instructlab/server\\.py$",
 ]
 # honor excludes by not following there through imports
 follow_imports = "silent"
