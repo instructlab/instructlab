@@ -5,6 +5,7 @@ click-didyoumean>=0.3.0,<0.4.0
 datasets>=2.18.0,<3.0.0
 gguf>=0.6.0,<0.7.0
 GitPython>=3.1.42,<4.0.0
+sigstore
 # Linux: 4-bit quantization with BitsAndBytes is not ready to use, yet.
 # see https://github.com/instructlab/instructlab/issues/579
 # bitsandbytes; sys_platform=='linux' and platform_machine=='x86_64'
