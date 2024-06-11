@@ -2,7 +2,6 @@
 
 # Standard
 from contextlib import redirect_stderr, redirect_stdout
-from time import sleep
 import logging
 import multiprocessing
 import os
@@ -124,13 +123,20 @@ def ensure_server(
         )
         server_process.start()
 
-        # in case the server takes some time to fail we wait a bit
-        count = 0
-        while server_process.is_alive():
-            sleep(0.1)
-            if count > 10:
+        # ensure the server has finished starting and is ready
+        for a in range(1, 10):
+            logger.debug("check=%d", a)
+            try:
+                list_models(
+                    api_base=temp_api_base,
+                    tls_insecure=tls_insecure,
+                    tls_client_cert=tls_client_cert,
+                    tls_client_key=tls_client_key,
+                    tls_client_passwd=tls_client_passwd,
+                )
                 break
-            count += 1
+            except ClientException:
+                pass
 
         # if the queue is not empty it means the server failed to start
         if not queue.empty():
