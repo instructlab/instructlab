@@ -106,12 +106,12 @@ def ensure_server(
             f"Connection to {api_base} failed. Starting a temporary server at {temp_api_base}..."
         )
         # create a temporary, throw-away logger
-        logger = logging.getLogger(host_port)
-        logger.setLevel(logging.FATAL)
+        server_logger = logging.getLogger(host_port)
+        server_logger.setLevel(logging.FATAL)
         server_process = mpctx.Process(
             target=server,
             kwargs={
-                "logger": logger,
+                "logger": server_logger,
                 "model_path": serve_config.model_path,
                 "gpu_layers": serve_config.gpu_layers,
                 "max_ctx_size": serve_config.max_ctx_size,
@@ -127,7 +127,19 @@ def ensure_server(
         count = 0
         while server_process.is_alive():
             sleep(0.1)
-            if count > 10:
+            try:
+                list_models(
+                    api_base=temp_api_base,
+                    tls_insecure=tls_insecure,
+                    tls_client_cert=tls_client_cert,
+                    tls_client_key=tls_client_key,
+                    tls_client_passwd=tls_client_passwd,
+                )
+                break
+            except ClientException:
+                pass
+            if count > 50:
+                logger.error("failed to reach the API server")
                 break
             count += 1
 
