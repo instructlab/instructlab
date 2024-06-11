@@ -151,6 +151,7 @@ def linux_train(
     num_epochs: Optional[int] = None,
     device: torch.device = torch.device("cpu"),
     four_bit_quant: bool = False,
+    batch_size: int = None,
 ):
     """Lab Train for Linux!"""
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", num_epochs)
@@ -293,7 +294,6 @@ def linux_train(
 
     tokenizer.padding_side = "right"
     output_dir = "./training_results"
-    per_device_train_batch_size = 1
     max_seq_length = 300
 
     if device.type == "hpu":
@@ -301,7 +301,9 @@ def linux_train(
         # https://docs.habana.ai/en/latest/PyTorch/Getting_Started_with_PyTorch_and_Gaudi/Getting_Started_with_PyTorch.html
         # https://huggingface.co/docs/optimum/habana/quickstart
         # https://huggingface.co/docs/optimum/habana/package_reference/gaudi_config
-        if per_device_train_batch_size == 1:
+        if batch_size:
+            per_device_train_batch_size = batch_size
+        else:
             per_device_train_batch_size = 8
 
         training_arguments = GaudiTrainingArguments(
@@ -338,6 +340,11 @@ def linux_train(
             "generation_config": GaudiGenerationConfig(),
         }
     else:
+        if batch_size:
+            per_device_train_batch_size = batch_size
+        else:
+            per_device_train_batch_size = 1
+
         training_arguments = TrainingArguments(
             output_dir=output_dir,
             num_train_epochs=num_epochs,
