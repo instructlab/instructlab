@@ -1085,7 +1085,7 @@ def train(
             test_file=test_file,
             model_name=model_name,
             num_epochs=num_epochs,
-            device=device,
+            args_device=device,
             four_bit_quant=four_bit_quant,
         )
 
