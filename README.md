@@ -170,7 +170,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       (venv) $ pip cache remove llama_cpp_python
-      (venv) $ pip install instructlab -C cmake.args="-DLLAMA_CUBLAS=on"
+      (venv) $ pip install instructlab -C cmake.args="-DLLAMA_CUDA=on"
    ```
 
 4. From your `venv` environment, verify `ilab` is installed correctly, by running the `ilab` command.
