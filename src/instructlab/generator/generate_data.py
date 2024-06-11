@@ -5,7 +5,6 @@ from datetime import datetime
 from functools import partial
 from pathlib import Path
 from typing import Optional
-import json
 import multiprocessing
 import os
 import random
@@ -357,6 +356,33 @@ def get_instructions_from_model(
     return instruction_data, discarded
 
 
+def dump_data(fname, data):
+    def unescape(s):
+        return bytes(s, "utf-8").decode("utf-8")
+
+    test_data = []
+    for seed_example in data:
+        user = seed_example["instruction"]
+
+        if len(seed_example["input"]) > 0:
+            user += "\n" + seed_example["input"]
+        try:
+            test_data.append(
+                {
+                    "system": utils.get_sysprompt(),
+                    "user": unescape(user),
+                    "assistant": unescape(seed_example["output"]),
+                }
+            )
+        except TypeError as exc:
+            click.secho(
+                f"Error reading data samples: {exc}",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
+    utils.dump_jsonl(fname, test_data)
+
+
 def generate_data(
     logger,
     api_base,
@@ -420,38 +446,6 @@ def generate_data(
     if not seeds:
         raise SystemExit("Nothing to generate. Exiting.")
 
-    def unescape(s):
-        return bytes(s, "utf-8").decode("utf-8")
-
-    test_data = []
-    for seed_example in seed_instruction_data:
-        user = seed_example["instruction"]
-
-        documents = seed_example["document"]
-        if documents:
-            seed_example["document"] = chunk_document(
-                documents=documents,
-                server_ctx_size=server_ctx_size,
-                chunk_word_count=chunk_word_count,
-            )
-
-        if len(seed_example["input"]) > 0:
-            user += "\n" + seed_example["input"]
-        try:
-            test_data.append(
-                {
-                    "system": utils.get_sysprompt(),
-                    "user": unescape(user),
-                    "assistant": unescape(seed_example["output"]),
-                }
-            )
-        except TypeError as exc:
-            click.secho(
-                f"Error reading seed examples: {exc}. Please make sure your answers are verbose enough.",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
-
     name = Path(model_name).stem  # Just in case it is a file path
     date_suffix = datetime.now().replace(microsecond=0).isoformat().replace(":", "_")
     output_file = f"generated_{name}_{date_suffix}.json"
@@ -461,6 +455,17 @@ def generate_data(
         output_dir, f"discarded_{name}_{date_suffix}.log"
     )
     logger.debug(f"Generating to: {os.path.join(output_dir, output_file)}")
+
+    for seed_example in seed_instruction_data:
+        documents = seed_example["document"]
+        if documents:
+            seed_example["document"] = chunk_document(
+                documents=documents,
+                server_ctx_size=server_ctx_size,
+                chunk_word_count=chunk_word_count,
+            )
+
+    dump_data(os.path.join(output_dir, output_file_test), seed_instruction_data)
 
     request_idx = 0
     # load the LM-generated instructions
@@ -574,32 +579,7 @@ def generate_data(
             f"Generated {total} instructions(discarded {discarded}), rouged {total - keep}, kept {keep} instructions"
         )
         utils.jdump(machine_instruction_data, os.path.join(output_dir, output_file))
-        train_data = []
-        for synth_example in machine_instruction_data:
-            user = synth_example["instruction"]
-            if len(synth_example["input"]) > 0:
-                user += "\n" + synth_example["input"]
-            train_data.append(
-                {
-                    "system": utils.get_sysprompt(),
-                    "user": unescape(user),
-                    "assistant": unescape(synth_example["output"]),
-                }
-            )
-        # utils.jdump(train_data, os.path.join(output_dir, output_file_train))
-        with open(
-            os.path.join(output_dir, output_file_train), "w", encoding="utf-8"
-        ) as outfile:
-            for entry in train_data:
-                json.dump(entry, outfile, ensure_ascii=False)
-                outfile.write("\n")
-        # utils.jdump(test_data, os.path.join(output_dir, output_file_test))
-        with open(
-            os.path.join(output_dir, output_file_test), "w", encoding="utf-8"
-        ) as outfile:
-            for entry in test_data:
-                json.dump(entry, outfile, ensure_ascii=False)
-                outfile.write("\n")
+        dump_data(os.path.join(output_dir, output_file_train), machine_instruction_data)
 
     progress_bar.close()
 
