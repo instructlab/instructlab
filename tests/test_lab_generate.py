@@ -139,6 +139,7 @@ class TestLabGenerate:
                 )
                 with pytest.raises(GenerateException) as exc:
                     generate_data(
+                        None,
                         logger=logging.getLogger("test_logger"),
                         api_base="localhost:8000",
                         api_key="",
@@ -209,6 +210,7 @@ class TestLabGenerate:
                     "compositional_skills/tracked/qna.yaml", qnafile.read()
                 )
                 generate_data(
+                    None,
                     logger=logging.getLogger("test_logger"),
                     api_base="localhost:8000",
                     api_key="",
@@ -254,6 +256,7 @@ class TestLabGenerate:
                     "knowledge/technical-manual/test/qna.yaml", qnafile.read()
                 )
                 generate_data(
+                    None,
                     logger=logging.getLogger("test_logger"),
                     api_base="localhost:8000",
                     api_key="",

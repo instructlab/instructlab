@@ -1,0 +1,9 @@
+document:
+  confluence:
+    host: https://spaces.confluence.intranet
+    spaces:
+      - name: a_space
+        pages:
+          - title: P1
+          - title: P2
+            version: 2

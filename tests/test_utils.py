@@ -61,14 +61,45 @@ class TestUtils:
         "instructlab.utils.git_clone_checkout",
         return_value=Mock(spec=git.Repo, working_dir="tests/testdata/temp_repo"),
     )
-    def test_get_document(self, git_clone_checkout):
+    def test_get_git_docs(self, git_clone_checkout):
         with open(
             "tests/testdata/knowledge_valid.yaml", "r", encoding="utf-8"
         ) as qnafile:
-            documents = utils.get_documents(
+            documents = utils.get_git_docs(
                 source=yaml.safe_load(qnafile).get("document"),
                 skip_checkout=True,
                 logger=logging.getLogger("_test_"),
             )
             git_clone_checkout.assert_called_once()
             assert len(documents) == 2
+
+    def test_get_confluence_docs(self, monkeypatch):
+        class ConfluenceMock:
+            # pylint: disable=W0613
+            def __init__(self, url, username, token):
+                pass
+
+            def get_page_id(self, space, title):
+                return {"P1": 1, "P2": 2}[title]
+
+            def get_page_by_id(self, n, spec, version):
+                return [
+                    {},
+                    {
+                        "title": "P1",
+                        "version": {"number": 2},
+                        "body": {"view": {"value": "<h2>C1</h2>"}},
+                    },
+                    {
+                        "title": "P2",
+                        "version": {"number": 2},
+                        "body": {"view": {"value": "<h2>C2</h2>"}},
+                    },
+                ][n]
+
+        monkeypatch.setattr("atlassian.Confluence", ConfluenceMock)
+        with open("tests/testdata/confluence.yaml", "r", encoding="utf-8") as qna:
+            ctx = Mock()
+            ctx.obj.config.confluence = Mock(user="", token="")
+            docs = utils.get_confluence_docs(ctx, yaml.safe_load(qna).get("document"))
+            assert docs == ["P1\n\nC1\n--\n\n", "P2\n\nC2\n--\n\n"]

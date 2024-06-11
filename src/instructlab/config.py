@@ -142,6 +142,16 @@ class _serve(BaseModel):
         return get_api_base(self.host_port)
 
 
+class _confluence(BaseModel):
+    """Confluence credentials"""
+
+    # model configuration
+    model_config = ConfigDict(extra="ignore")
+
+    user: str
+    token: str
+
+
 class Config(BaseModel):
     """Configuration for the InstructLab CLI."""
 
@@ -152,6 +162,7 @@ class Config(BaseModel):
 
     # additional fields with defaults
     general: _general = _general()
+    confluence: Optional[_confluence] = None
 
     # model configuration
     model_config = ConfigDict(extra="ignore")
