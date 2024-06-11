@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+from dataclasses import dataclass
 from os import path
 from re import match
 from typing import Optional
@@ -16,6 +17,7 @@ from pydantic import (
 )
 import httpx
 import yaml
+from ilab_train.config import TorchrunTrainArgs, FullTrainArgs
 
 DEFAULT_API_KEY = "no_api_key"
 DEFAULT_CONFIG = "config.yaml"
@@ -143,6 +145,99 @@ class Config(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore")
 
+@dataclass
+class TrainingConfig:
+    """
+    Contains configuration options that are populated from the commandline
+    and passed to the training code.
+
+    Right now this is just a 1:1 map between the training args and the CLI args,
+    but we can and should change this in the future to be more human.
+
+    XXX(Aldo): This should use OmegaConf instead of the dataclass because we get lot of this stuff for free
+    """
+    nproc_per_node: int
+    nnodes: int
+    node_rank: int
+    rdzv_id: int
+    rdzv_endpoint: str
+    data_path: str
+    input_dir: str
+    model_name_or_path: str
+    output_dir: str
+    num_epochs: int
+    effective_batch_size: int
+    learning_rate: float
+    num_warmup_steps: int
+    save_samples: int
+    log_level: str
+    seed: int
+    mock_data: bool
+    mock_len: int
+    is_granite: bool
+    max_batch_len: int
+    # I don't believe this is actually used anywhere anymore,
+    # but we should still keep it to avoid changing too much at once
+    samples_per_gpu: int
+
+    def __str__(self):
+        """
+        Allows pretty-printing this config
+        """
+        return yaml.dump(vars(self), sort_keys=False)
+
+    def get_torchrun_config(self) -> TorchrunTrainArgs:
+        """
+        XXX(osilkin): This is a temporary solution to pass all the training args
+                        In the future the configs will differ so there'll be more 
+                        transformation happening here
+        """
+        return TorchrunTrainArgs(
+            nnodes=self.nnodes,
+            node_rank=self.node_rank,
+            nproc_per_node=self.nproc_per_node,
+            rdzv_endpoint=self.rdzv_endpoint,
+            rdzv_id=self.rdzv_id,
+        )
+
+    def get_full_train_args(self) -> FullTrainArgs:
+        """
+        XXX(osilkin): This is a temporary solution to pass all the training args
+                        In the future the configs will differ so there'll be more 
+                        transformation happening here
+        """
+        return FullTrainArgs(
+            data_path=self.data_path,
+            effective_batch_size=self.effective_batch_size,
+            input_dir=self.input_dir,
+            learning_rate=self.learning_rate,
+            is_granite=self.is_granite,
+            max_batch_len=self.max_batch_len,
+            log_level=self.log_level,
+            mock_data=self.mock_data,
+            mock_len=self.mock_len,
+            model_name_or_path=self.model_name_or_path,
+            num_epochs=self.num_epochs,
+            num_warmup_steps=self.num_warmup_steps,
+            output_dir=self.output_dir,
+            samples_per_gpu=self.samples_per_gpu,
+            save_samples=self.save_samples,
+            seed=self.seed,
+        )
+
+def read_training_config(fp: str) -> TrainingConfig:
+    """
+    Returns a training config by reading from the given path.
+    Throws a FileNotFoundError if the file doesn't exist.
+    """
+    if not os.path.exists(fp):
+        raise FileNotFoundError(f'config file \'{fp}\' does not exist')
+    
+    with open(fp, 'r', encoding='utf-8') as infile:
+        config_dict = yaml.safe_load(infile)
+    
+    config = TrainingConfig(**config_dict)
+    return config
 
 def get_default_config():
     """Generates default configuration for CLI"""

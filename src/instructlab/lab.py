@@ -3,6 +3,7 @@
 # pylint: disable=too-many-lines
 
 # Standard
+from dataclasses import dataclass
 from glob import glob
 from os.path import basename, dirname, exists, splitext
 import json
@@ -1212,6 +1213,204 @@ def train(
 
         # TODO copy some downloaded files from the PyTorch model folder
         # Seems to be not a problem if working with a remote download with convert.py
+
+@cli.command
+@click.pass_context
+@click.option(
+    "--train-config",
+    help="Name or path to the training config.",
+    type=click.STRING,
+    required=True,
+)
+@click.option("--data_path", help="Base directory where data is stored.", default=None)
+@click.option(
+    "--input_dir",
+    type=click.Path(exists=True, file_okay=False, dir_okay=True),
+    show_default=True,  # TODO: set to None and change help message
+    help="Path to generated files to use as input.",
+)
+@click.option(
+    "--model_name_or_path",
+    help="Base repository where model is stored.",
+    default="mistralai/Mistral-7B-v0.1",
+    show_default=True,
+)
+@click.option(
+    "--output_dir",
+    help="Directory where the generated checkpoints will be saved",
+    type=click.STRING,
+)
+@click.option(
+    "--num_epochs",
+    type=click.INT,
+    default=1,  # TODO: change this to a more reasonable default
+    show_default=True,
+    help="The number of times the training data is passed through the training algorithm. Please note that this value is used on Linux platforms only.",
+)
+@click.option(
+    "--effective_batch_size",
+    type=click.INT,
+    default=3_840,
+    help="The total batch size intended to be processed across all GPUs and accumulation steps."
+)
+@click.option(
+    "--learning_rate",
+    type=click.FLOAT,
+    default=1e-4,
+    help="The rate at which we move the weights in the gradient's direction. I.e., the rate at which the model learns.",
+)
+@click.option(
+    "--num_warmup_steps",
+    type=click.INT,
+    help="Number of steps it takes before the full learning rate kicks in. E.g., if set to 800, then it'll take 800 training steps for the learning rate to go from 0 to its full value.",
+    default=1_000
+)
+@click.option(
+    "--save_samples",
+    type=click.INT,
+    help="The number of samples the model needs to see before saving a new checkpoint. For example: when this value is set to 50,000, then a new checkpoint will be generated after every 50,000 samples. The lower the value, the more disk storage space will be consumed during each fine-tune.",
+    default=250_000
+)
+# TODO: remove this option and instead use the CLI-provided context
+@click.option(
+    "--log_level",
+    type=click.STRING,
+    help="The log level to use when printing stuff out.",
+    default="INFO"
+)
+@click.option(
+    "--seed",
+    type=click.INT,
+    default=42,
+    help="The seed value to use for the random number generator."
+)
+@click.option(
+    "--mock_data",
+    type=click.BOOL,
+    default=False,
+    help="Whether or not to use mock data when running train. This is for debug purposes."
+)
+@click.option(
+    "--mock_len",
+    type=click.INT,
+    default=2_600,
+    help="The length of each mock data sample"
+)
+# These options are specifically for FSDP (FullyShardedDataParallel) 
+# Since we're using DeepSpeed, we can leave this commented out for now.
+# Once we start using FSDP, we can expose this option again.
+# @click.option(
+#     "--sharding-strategy",
+#     type=click.Choice(["FULL_SHARD", "SHARD_GRAD_OP", "NO_SHARD", "HYBRID_SHARD", "_HYBRID_SHARD_ZERO2"], case_sensitive=False),
+#     help="The sharding strategy to be used for distributed training by FullyShardedDataParallel"
+# )
+@click.option(
+    "--is_granite",
+    type=click.BOOL,
+    help="Whether the model to be trained is a Granite model or not.",
+    default=False
+)
+@click.option(
+    "--max_batch_len",
+    type=click.INT,
+    help="The maximum length of the batch. This is used to determine the maximum number of tokens in a batch.",
+    default=10_000
+)
+@click.option(
+    "--world_size",
+    type=click.INT,
+    help="The number of GPUs to use for training.",
+    default=1
+)
+@click.option(
+    "--node_rank",
+    type=click.INT,
+    help="The rank of the node in the distributed training setup.",
+    default=0
+)
+@click.option(
+    "--nproc_per_node",
+    type=click.INT,
+    help="[torchrun] Number of workers per node; supported values: [auto, cpu, gpu, int].",
+    default=1,
+)
+@click.option(
+    "--rdzv_endpoint",
+    type=click.STRING,
+    help="[torchrun] Rendezvous backend endpoint; Usually in the format of <hostname>:<port> or <ip>:<port>.",
+    default="localhost:12355"
+)
+@click.option(
+    "--rdzv_id",
+    type=click.STRING,
+    help="[torchrun] The Rendezvous ID for a worker group. This is used to identify a group of workers that should be able to discover each other.",
+    default="ilab-dist-train"
+)
+def phased(
+    ctx,
+    train_config: str,
+    **kwargs,
+):
+    # TODO(osilkin): need to handle the kwargs
+    training_config = config.read_training_config(train_config)
+    torchrun_args = training_config.get_torchrun_config()
+    train_args = training_config.get_full_train_args()
+
+    # import this here so we're not importing PyTorch every time the CLI is run
+    from ilab_train import main_ds
+
+    main_ds.run_training(torch_args=torchrun_args, train_args=train_args)
+
+@train.command
+@click.pass_context
+@click.option(
+    "--logging_level",
+    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]),
+)
+@click.option(
+    "--data_path",
+    type=click.STRING,
+    help="Path to the dataset file.",
+    required=True
+)
+@click.option(
+    "--data_output_path",
+    type=click.STRING,
+    required=True,
+    help="Path to the output dataset file."
+)
+@click.option(
+    "--max_seq_len",
+    type=click.INT,
+    required=True,
+    help="The maximum sequence length."
+)
+@click.option(
+    "--model_name_or_path",
+    type=click.STRING,
+    required=True,
+    help="The model name or path."
+)
+def process_data(ctx, logging_level: str, data_path: str, data_output_path: str, max_seq_len: int, model_name_or_path: str):
+    # shim into getting this stuff to work
+    import ilab_train.data_process as data_process
+
+    @dataclass
+    class DataProcessArgs:
+        logging_level: str
+        data_path: str
+        data_output_path: str
+        max_seq_len: int
+        model_name_or_path: str
+
+    args = DataProcessArgs(
+        logging_level=logging_level,
+        data_path=data_path,
+        data_output_path=data_output_path,
+        max_seq_len=max_seq_len,
+        model_name_or_path=model_name_or_path
+    )
+    data_process._main(args)
 
 
 @cli.command()
