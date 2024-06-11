@@ -12,7 +12,7 @@ on:
       - 'pyproject.toml'
       - 'requirements*.txt'
       - 'tox.ini'
-      - 'scripts/*.sh'
+      - 'scripts/**/*.sh'
       - '.github/**'
   pull_request:
     branches:
@@ -23,7 +23,7 @@ on:
       - 'pyproject.toml'
       - 'requirements*.txt'
       - 'tox.ini'
-      - 'scripts/*.sh'
+      - 'scripts/**/*.sh'
       - '.github/**'
 
 env:
