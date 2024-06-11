@@ -482,7 +482,10 @@ def chat_cli(
         http_client=httpx.Client(cert=cert, verify=verify),
     )
     # ensure the model specified exists on the server. with backends like vllm, this is crucial.
-    model_list = client.models.list().data
+    try:
+        model_list = client.models.list().data
+    except openai.OpenAIError as exc:
+        raise ChatException(f"Is the server running? {exc}") from exc
     model_ids = []
     for m in model_list:
         model_ids.append(m.id)
