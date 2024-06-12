@@ -82,7 +82,7 @@ def is_macos_with_m_chip():
         result = subprocess.check_output(["sysctl", "-a"], text=True)
         is_m_chip = "machdep.cpu.brand_string: Apple" in result
         return is_m_chip
-    except subprocess.SubprocessError:
+    except subprocess.CalledProcessError:
         return False
 
 
