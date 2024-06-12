@@ -2,6 +2,7 @@
 
 # Standard
 from functools import cache, wraps
+from importlib import resources
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Union
 from urllib.parse import urlparse
@@ -246,7 +247,7 @@ def get_sysprompt(model=None):
 
 
 @cache
-def _load_schema(path: "importlib.resources.abc.Traversable") -> "referencing.Resource":
+def _load_schema(path: resources.abc.Traversable) -> "referencing.Resource":
     """Load the schema from the path into a Resource object.
 
     Args:
@@ -287,11 +288,8 @@ def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
         int: The number of errors found during validation.
         Messages for each error have been logged.
     """
-    # pylint: disable=C0415
-    # Standard
-    from importlib import resources
-
     # Third Party
+    # pylint: disable=C0415
     from jsonschema.protocols import Validator
     from jsonschema.validators import validator_for
     from referencing import Registry, Resource
