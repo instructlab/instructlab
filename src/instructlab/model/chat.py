@@ -693,7 +693,14 @@ def chat_cli(
     model_ids = []
     for m in model_list:
         model_ids.append(m.id)
-    if not any(model == m for m in model_ids):
+
+    model_found = False
+    for m in model_ids:
+        if os.path.abspath(m) == os.path.abspath(model):
+            model_found = True
+            break
+
+    if not model_found:
         if model == cfg.DEFAULTS.MODEL_NAME_OLD:
             logger.info(
                 f"Model {model} is not a full path. Try running ilab config init or edit your config to have the full model path for serving, chatting, and generation."
