@@ -148,12 +148,12 @@ def generate(
 ):
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=C0415
+    # Third Party
+    from instructlab.sdg.generate_data import generate_data
+    from instructlab.sdg.utils import GenerateException
+
     # First Party
     from instructlab.model.backends.llama import ensure_server
-
-    # Local
-    from .generator.generate_data import generate_data
-    from .generator.utils import GenerateException
 
     server_process = None
     server_queue = None

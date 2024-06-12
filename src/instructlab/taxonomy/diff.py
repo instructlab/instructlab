@@ -12,7 +12,6 @@ import yaml
 # First Party
 from instructlab import configuration as config
 from instructlab import utils
-from instructlab.data import generator
 
 
 @click.command()
