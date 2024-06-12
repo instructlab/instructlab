@@ -18,6 +18,7 @@ import tempfile
 
 # Third Party
 from git import Repo, exc
+from referencing import Resource
 import click
 import git
 import gitdb
@@ -247,7 +248,7 @@ def get_sysprompt(model=None):
 
 
 @cache
-def _load_schema(path: resources.abc.Traversable) -> "referencing.Resource":
+def _load_schema(path: resources.abc.Traversable) -> Resource:
     """Load the schema from the path into a Resource object.
 
     Args:
@@ -261,7 +262,6 @@ def _load_schema(path: resources.abc.Traversable) -> "referencing.Resource":
     """
     # pylint: disable=C0415
     # Third Party
-    from referencing import Resource
     from referencing.exceptions import NoSuchResource
     from referencing.jsonschema import DRAFT202012
 
@@ -292,7 +292,7 @@ def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
     # pylint: disable=C0415
     from jsonschema.protocols import Validator
     from jsonschema.validators import validator_for
-    from referencing import Registry, Resource
+    from referencing import Registry
     from referencing.exceptions import NoSuchResource
     from referencing.typing import URI
 
