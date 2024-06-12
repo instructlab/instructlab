@@ -429,7 +429,7 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
                 ]
             try:
                 subprocess.check_output(yamllint_cmd, text=True)
-            except subprocess.SubprocessError as e:
+            except subprocess.CalledProcessError as e:
                 lint_messages = [f"Problems found in file {file_path}"]
                 parsed_output = e.output.splitlines()
                 for p in parsed_output:
