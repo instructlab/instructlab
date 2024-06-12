@@ -68,8 +68,7 @@ class Server(BackendServer):
 
     def create_server_process(self, port: str) -> multiprocessing.Process:
         mpctx = multiprocessing.get_context(None)
-        queue = mpctx.Queue()
-        self.queue = queue
+        self.queue = mpctx.Queue()
         host_port = f"{self.host}:{self.port}"
         # create a temporary, throw-away logger
         server_logger = logging.getLogger(host_port)

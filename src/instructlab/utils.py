@@ -393,8 +393,7 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
         version = get_version(contents)
         if version > 1:  # no linting for version 1 yaml
             if yaml_rules is not None:
-                is_file = os.path.isfile(yaml_rules)
-                if is_file:
+                if os.path.isfile(yaml_rules):
                     logger.debug(f"Using YAML rules from {yaml_rules}")
                     yamllint_cmd = [
                         "yamllint",
@@ -476,8 +475,7 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
 # TODO: remove `_logger` parameter after instructlab.sdg is fixed.
 def read_taxonomy(_logger, taxonomy, taxonomy_base, yaml_rules):
     seed_instruction_data = []
-    is_file = os.path.isfile(taxonomy)
-    if is_file:  # taxonomy is file
+    if os.path.isfile(taxonomy):
         seed_instruction_data, warnings, errors = read_taxonomy_file(
             taxonomy, yaml_rules
         )
