@@ -319,12 +319,16 @@ def get_uvicorn_config(app: fastapi.FastAPI, host: str, port: int) -> Config:
     )
 
 
-def select_backend(cfg: serve_config, backend: Optional[str] = None) -> BackendServer:
+def select_backend(
+    cfg: serve_config,
+    backend: Optional[str] = None,
+    model_path: pathlib.Path | None = None,
+) -> BackendServer:
     # Local
     from .llama_cpp import Server as llama_cpp_server
     from .vllm import Server as vllm_server
 
-    model_path = pathlib.Path(cfg.model_path)
+    model_path = pathlib.Path(model_path or cfg.model_path)
     backend_name = backend if backend is not None else cfg.backend
     try:
         backend = get(model_path, backend_name)
