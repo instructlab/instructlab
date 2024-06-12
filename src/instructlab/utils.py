@@ -201,7 +201,7 @@ def get_documents(
     """ ""
     repo_url = source.get("repo")
     commit_hash = source.get("commit")
-    file_patterns = source.get("patterns")
+    file_patterns = source.get("patterns", [])
     with tempfile.TemporaryDirectory() as temp_dir:
         try:
             repo = git_clone_checkout(
