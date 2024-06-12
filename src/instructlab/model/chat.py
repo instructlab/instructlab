@@ -30,7 +30,7 @@ from instructlab import configuration as cfg
 from instructlab.server import is_temp_server_running
 
 # Local
-from ..utils import get_ssl_cert_config, get_sysprompt
+from ..utils import get_sysprompt, http_client
 
 HELP_MD = """
 Help / TL;DR
@@ -238,9 +238,8 @@ def chat(
 
     try:
         chat_cli(
-            logger=ctx.obj.logger,
+            ctx,
             api_base=api_base,
-            api_key=api_key,
             config=ctx.obj.config.chat,
             question=question,
             model=model,
@@ -249,10 +248,6 @@ def chat(
             qq=quick_question,
             greedy_mode=greedy_mode,
             max_tokens=max_tokens,
-            tls_insecure=tls_insecure,
-            tls_client_cert=tls_client_cert,
-            tls_client_key=tls_client_key,
-            tls_client_passwd=tls_client_passwd,
         )
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
@@ -666,9 +661,8 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
 
 def chat_cli(
-    logger,
+    ctx,
     api_base,
-    api_key,
     config,
     question,
     model,
@@ -677,19 +671,14 @@ def chat_cli(
     qq,
     greedy_mode,
     max_tokens,
-    tls_insecure,
-    tls_client_cert: Optional[str] = None,
-    tls_client_key: Optional[str] = None,
-    tls_client_passwd: Optional[str] = None,
 ):
     """Starts a CLI-based chat with the server"""
-    cert = get_ssl_cert_config(tls_client_cert, tls_client_key, tls_client_passwd)
-    verify = not tls_insecure
+    logger = ctx.obj.logger
     client = OpenAI(
         base_url=api_base,
-        api_key=api_key,
+        api_key=ctx.params["api_key"],
         timeout=cfg.DEFAULT_CONNECTION_TIMEOUT,
-        http_client=httpx.Client(cert=cert, verify=verify),
+        http_client=http_client(ctx.params),
     )
     # ensure the model specified exists on the server. with backends like vllm, this is crucial.
     try:
