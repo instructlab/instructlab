@@ -248,11 +248,11 @@ def get_sysprompt(model=None):
 
 
 @cache
-def _load_schema(path: resources.abc.Traversable) -> Resource:
+def _load_schema(path: Path) -> Resource:
     """Load the schema from the path into a Resource object.
 
     Args:
-        path (Traversable): Path to the schema to be loaded.
+        path (Path): Path to the schema to be loaded.
 
     Raises:
         NoSuchResource: If the resource cannot be loaded.
@@ -302,7 +302,8 @@ def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
 
     def retrieve(uri: URI) -> Resource:
         path = schemas_path.joinpath(uri)
-        return _load_schema(path)
+        with resources.as_file(path) as file:
+            return _load_schema(file)
 
     schema_name = taxonomy_path.parts[0]
     if schema_name not in TAXONOMY_FOLDERS:
