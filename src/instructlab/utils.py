@@ -452,7 +452,7 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
             documents = get_documents(source=documents)
             logger.debug("Content from git repo fetched")
 
-        for seed_example in contents.get("seed_examples"):
+        for seed_example in contents.get("seed_examples", []):
             question = seed_example.get("question")
             answer = seed_example.get("answer")
             context = seed_example.get("context", "")
