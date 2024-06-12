@@ -318,7 +318,10 @@ def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
         schema = schema_resource.contents
         validator_cls = validator_for(schema)
         validator: Validator = validator_cls(
-            schema, registry=Registry(retrieve=retrieve)
+            # mypy doesn't understand attrs classes fields, see:
+            # https://github.com/python/mypy/issues/5406
+            schema,
+            registry=Registry(retrieve=retrieve),  # type: ignore[call-arg]
         )
 
         for validation_error in validator.iter_errors(contents):
