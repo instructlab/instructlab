@@ -3,7 +3,7 @@
 
 # Standard
 from pathlib import Path
-from typing import Generator
+from typing import Any, Generator
 import glob
 import json
 import logging
@@ -115,7 +115,8 @@ python generate.py --model {repo_id} --prompt "My name is"
 def make_shards(weights: dict, max_file_size_gibibyte: int = 15):
     max_file_size_bytes = max_file_size_gibibyte << 30
     shards = []
-    shard, shard_size = {}, 0
+    shard: dict[str, Any] = {}
+    shard_size = 0
     for k, v in weights.items():
         if shard_size + v.nbytes > max_file_size_bytes:
             shards.append(shard)
@@ -127,8 +128,8 @@ def make_shards(weights: dict, max_file_size_gibibyte: int = 15):
 
 
 def save_model(save_dir: str, weights, tokenizer, config):
-    save_dir = Path(save_dir)
-    save_dir.mkdir(parents=True, exist_ok=True)
+    save_dir_path = Path(save_dir)
+    save_dir_path.mkdir(parents=True, exist_ok=True)
 
     dtype = weights[next(iter(weights.keys()))].dtype
     if str(dtype) in [str(dtype) for dtype in [mx.float16, mx.bfloat16, mx.float32]]:
@@ -142,18 +143,18 @@ def save_model(save_dir: str, weights, tokenizer, config):
 
         for i, shard in enumerate(shards):
             shard_name = shard_file_format.format(i + 1, shards_count)
-            mx.save_safetensors(str(save_dir / shard_name), shard)
+            mx.save_safetensors(str(save_dir_path / shard_name), shard)
     else:
         save_file(
             weights,
-            os.path.join(save_dir, "model.safetensors"),
+            os.path.join(save_dir_path, "model.safetensors"),
             metadata={"format": "pt"},
         )
 
-    tokenizer.save_pretrained(save_dir)
-    tokenizer.save_vocabulary(save_dir)
+    tokenizer.save_pretrained(save_dir_path)
+    tokenizer.save_vocabulary(save_dir_path)
 
-    with open(save_dir / "config.json", "w") as fid:
+    with open(save_dir_path / "config.json", "w") as fid:
         json.dump(config, fid, indent=4)
 
 

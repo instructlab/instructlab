@@ -132,7 +132,6 @@ exclude = [
     "^src/instructlab/train/lora_mlx/models/llama\\.py$",
     "^src/instructlab/train/lora_mlx/models/mixtral\\.py$",
     "^src/instructlab/train/lora_mlx/models/models\\.py$",
-    "^src/instructlab/train/lora_mlx/utils\\.py$",
     "^src/instructlab/utils\\.py$",
     "^src/instructlab/server\\.py$",
 ]
