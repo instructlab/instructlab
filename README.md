@@ -478,6 +478,7 @@ ilab train
 ```
 
 > **NOTE:** ⏳ This step can potentially take **several hours** to complete depending on your computing resources. Please stop `ilab chat` and `ilab serve` first to free resources.
+> **NOTE:** `ilab serve` should be stopped during this step. Serving a model can consume valuable compute resources needed during training.
 
 `ilab train` outputs a brand-new model that can be served in the `models` directory called `ggml-model-f16.gguf`.
 
