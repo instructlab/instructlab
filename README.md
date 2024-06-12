@@ -102,7 +102,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    sudo dnf install gcc-c++ gcc make pip python3 python3-devel python3-GitPython
    ```
 
-   If you are running on macOS, this installation is not necessary and you can begin your process with the following step.  
+   If you are running on macOS, this installation is not necessary and you can begin your process with the following step.
 
 2. Create a new directory called `instructlab` to store the files the `ilab` CLI needs when running and `cd` into the directory by running the following command:
 
@@ -172,7 +172,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       (venv) $ pip cache remove llama_cpp_python
-      (venv) $ pip install instructlab -C cmake.args="-DLLAMA_CUDA=on"
+      (venv) $ pip install instructlab -C cmake.args="-DLLAMA_CUBLAS=on"
    ```
 
 4. From your `venv` environment, verify `ilab` is installed correctly, by running the `ilab` command.
@@ -320,7 +320,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
   ilab download
   ```
 
-  `ilab download` downloads a compact pre-trained version of the [model](https://huggingface.co/instructlab/) (~4.4G) from HuggingFace and store it in a `models` directory:
+  By default, `ilab download` downloads a compact pre-trained version of the [model](https://huggingface.co/instructlab/) (~4.4G) from HuggingFace and store it in a `models` directory:
 
   ```shell
   (venv) $ ilab download
@@ -331,9 +331,21 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
   > **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
 
+  #### Downloading another instructLab model from Hugging Face
+
+  If you wish to download another [InstructLab model](https://huggingface.co/instructlab) from Hugging Face, for example the [`instructlab/granite-7b-lab-GGUF`](https://huggingface.co/instructlab/granite-7b-lab-GGUF) model, you can use this command with additional parameters as follows:
+
+  ```shell
+  ilab download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf --model-dir models
+  ```
+
+  This will place the downloaded model into the project's `./models` directory from which you can reference it on other commands.  To make this newly downloaded model the default, simply rerun the [`ilab init`](#️-initialize-ilab) command and when prompted enter `models/granite-7b-lab-Q4_K_M.gguf` for the model path.
+
   #### Downloading a specific model from a Hugging Face repository
 
-- Specify repository, model, and a Hugging Face token if necessary. More information about Hugging Face tokens can be found [here](https://huggingface.co/docs/hub/en/security-tokens)
+  If you wish to download and use other models published to Hugging Face, a Hugging Face token may be necessary. More information about Hugging Face tokens can be found [here](https://huggingface.co/docs/hub/en/security-tokens).
+
+  Once you have a Hugging Face token, you can supply it as the `HF_TOKEN` environment variable to be used for a subsequent download command:
 
   ```shell
   HF_TOKEN=<YOUR HUGGINGFACE TOKEN GOES HERE> ilab download --repository=TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF --filename=mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
@@ -341,7 +353,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
   #### Downloading an entire Hugging Face repository
 
-- Specify repository, and a Hugging Face token if necessary. For example:
+  - Specify the repository, and a Hugging Face token if necessary. For example:
 
   ```shell
   HF_TOKEN=<YOUR HUGGINGFACE TOKEN GOES HERE> ilab download --repository=mistralai/Mixtral-8x7B-v0.1
