@@ -114,3 +114,4 @@ def sysinfo():
     """Print system information"""
     for key, value in get_sysinfo().items():
         print(f"{key}: {value}")
+

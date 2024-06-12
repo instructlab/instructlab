@@ -288,6 +288,7 @@ def train(
             file.unlink()
 
         shutil.move(gguf_file_path, gguf_models_file)
+        print(f"Save trained model to {gguf_models_file}")
 
         # cleanup checkpoint dir since it's name is unpredictable
         # TODO: figure out how checkpoint dirs should be cleaned up
