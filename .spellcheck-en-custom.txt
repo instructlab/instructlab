@@ -93,6 +93,8 @@ config
 coreutils
 cpp
 cuBLAS
+cuda
+cuda:0
 dataset
 dev
 ditaa

@@ -155,11 +155,39 @@ def linux_train(
     test_file: Path,
     model_name: str,
     num_epochs: Optional[int] = None,
-    device: torch.device = torch.device("cpu"),
+    train_device: str = "cpu",
     four_bit_quant: bool = False,
     output_dir: Path = Path("training_results"),
 ) -> Path:
     """Lab Train for Linux!"""
+
+    try:
+        device = torch.device(train_device)
+    except RuntimeError as e:
+        ctx.fail(str(e))
+
+    # Detect CUDA/ROCm device
+    if device.type == "cuda":
+        if not torch.cuda.is_available():
+            ctx.fail(
+                f"{device.type}: Torch has no CUDA/ROCm support or could not detect "
+                "a compatible device."
+            )
+        # map unqualified 'cuda' to current device
+        if device.index is None:
+            device = torch.device(device.type, torch.cuda.current_device())
+
+    if device.type == "hpu":
+        click.secho(
+            "WARNING: HPU support is experimental, unstable, and not "
+            "optimized, yet.",
+            fg="red",
+            bold=True,
+        )
+
+    if four_bit_quant and device.type != "cuda":
+        ctx.fail("'--4-bit-quant' option requires '--device=cuda'")
+
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", num_epochs)
     print("LINUX_TRAIN.PY: TRAIN FILE IS: ", train_file)
     print("LINUX_TRAIN.PY: TEST FILE IS: ", test_file)
