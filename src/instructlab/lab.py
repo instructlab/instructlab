@@ -60,7 +60,7 @@ class ExpandAliasesGroup(click.Group):
             formatter.write_text("Aliases:")
             with formatter.indentation():
                 for alias, commands in sorted(self.aliases.items()):
-                    formatter.write(
+                    formatter.write_text(
                         "{}: {} {}\n".format(
                             alias, commands["group"].name, commands["cmd"].name
                         )
