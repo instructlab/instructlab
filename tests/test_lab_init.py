@@ -11,7 +11,7 @@ from git import GitError
 
 # First Party
 from instructlab import lab
-from instructlab.config import read_config
+from instructlab.configuration import read_config
 
 
 class TestLabInit:
@@ -19,7 +19,7 @@ class TestLabInit:
     # of your module, so you should use `my_module.Y`` to patch.
     # When using `import X`, you should use `X.Y` to patch.
     # https://docs.python.org/3/library/unittest.mock.html#where-to-patch?
-    @patch("instructlab.configuration.init.Repo.clone_from")
+    @patch("instructlab.config.init.Repo.clone_from")
     def test_init_noninteractive(self, mock_clone_from):
         runner = CliRunner()
         with runner.isolated_filesystem():
@@ -36,7 +36,7 @@ class TestLabInit:
             assert "config.yaml" in os.listdir()
 
     @patch(
-        "instructlab.configuration.init.Repo.clone_from",
+        "instructlab.config.init.Repo.clone_from",
         MagicMock(side_effect=GitError("Authentication failed")),
     )
     def test_init_interactive_git_error(self):
@@ -51,7 +51,7 @@ class TestLabInit:
             )
             assert "manually run" in result.output
 
-    @patch("instructlab.configuration.init.Repo.clone_from")
+    @patch("instructlab.config.init.Repo.clone_from")
     def test_init_interactive_clone(self, mock_clone_from):
         runner = CliRunner()
         with runner.isolated_filesystem():

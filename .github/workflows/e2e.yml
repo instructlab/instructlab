@@ -111,7 +111,7 @@ jobs:
         with:
           path: ~/.cache/huggingface
           # config contains DEFAULT_MODEL
-          key: huggingface-${{ hashFiles('src/instructlab/config.py') }}
+          key: huggingface-${{ hashFiles('src/instructlab/configuration.py') }}
 
       - name: Install ilab
         run: |

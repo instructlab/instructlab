@@ -11,7 +11,7 @@ from huggingface_hub import snapshot_download
 import click
 
 # First Party
-from instructlab import config
+from instructlab import configuration as config
 
 
 @click.command()

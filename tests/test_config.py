@@ -4,7 +4,7 @@
 import pytest
 
 # First Party
-from instructlab import config
+from instructlab import configuration as config
 
 
 class TestConfig:

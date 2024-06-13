@@ -20,7 +20,8 @@ import click
 import tqdm
 
 # First Party
-from instructlab import config, utils
+from instructlab import configuration as config
+from instructlab import utils
 
 # Local
 from . import utils as generateutils
