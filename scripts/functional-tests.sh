@@ -26,7 +26,13 @@ chat_shot="ilab chat -qq"
 cleanup() {
     set +e
     if [ "${1:-0}" -ne 0 ]; then
-        echo "Error occurred in function: ${FUNCNAME[1]} with exit code: $1"
+        printf "\n\n"
+        printf "\e[31m=%.0s\e[0m" {1..80}
+        printf "\n\e[31mERROR OCCURRED\e[0m\n"
+        printf "\e[31mFunction: %s\e[0m\n" "${FUNCNAME[1]}"
+        printf "\e[31mExit Code: %s\e[0m\n" "$1"
+        printf "\e[31m=%.0s\e[0m" {1..80}
+        printf "\n\n"
     fi
     for pid in $PID_SERVE $PID_CHAT; do
         if [ -n "$pid" ]; then
