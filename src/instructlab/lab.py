@@ -98,7 +98,7 @@ def ilab(ctx, config_file):
 
     If this is your first time running ilab, it's best to start with `ilab init` to create the environment.
     """
-    cfg.init_config(ctx, config_file)
+    cfg.init(ctx, config_file)
 
 
 ilab.add_command(model_group.model)

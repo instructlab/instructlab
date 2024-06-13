@@ -249,7 +249,7 @@ class Lab:
         self.logger.setLevel(self.config.general.log_level.upper())
 
 
-def init_config(ctx, config_file):
+def init(ctx, config_file):
     if (
         ctx.invoked_subcommand not in {"config", "init", "sysinfo"}
         and "--help" not in sys.argv[1:]
