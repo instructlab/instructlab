@@ -108,6 +108,7 @@ ibmcloud
 ilab
 impactful
 instructlab
+init
 ip
 journald
 kaggle

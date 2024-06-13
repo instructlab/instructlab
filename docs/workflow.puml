@@ -1,27 +1,27 @@
 @startditaa
-                         +----------------+
-                         |ilab init       |-=-taxonomy repo cloned           legend
-                         +---+------------+                                  +---------------+
+                         +-----------------+
+                         |ilab config init |-=-taxonomy repo cloned          legend
+                         +---+-------------+                                 +---------------+
                              |                                               |ilab CLI       |
                              v                                               +---------------+
                          +---+----------------+                              +-----------+
-                         |ilab download       |-=-model weights downloaded   |manual cPNK|
+                         |ilab model download |-=-model weights downloaded   |manual cPNK|
                          +---+----------------+                              +-----------+
                              |                                               +-------------+
                              v optional                                      |notebook cYEL|
                          +---+-------------+                                 +-------------+
-                         |ilab serve       |-=-start model server
+                         |ilab model serve |-=-start model server
                          +---+-------------+
                              |
                              v
                          +---+------------+
-                         |ilab chat       |-=-chat with the model
+                         |ilab model chat |-=-chat with the model
                          +---+------------+
                              |
                              v
-                         +---+------------+
-                         |ilab diff       |-=-view the taxonomy diff
-                         +---+------------+     expecting nothing
+                         +---+--------------+
+                         |ilab taxonomy diff|-=-view the taxonomy diff
+                         +---+--------------+     expecting nothing
                              |
                              v
                          +---+-----------------------+
@@ -30,18 +30,18 @@
                          +---+-----------------------+                  |
                              |                                          |
                              v                                          |
-level 1                  +---+------------+                             |
-  only validated     +---|ilab diff       |-=-view the taxonomy diff    |
-  the YAML files     |   +---+------------+     and validate YAML files |
+level 1                  +---+--------------+                           |
+  only validated     +---|ilab taxonomy diff|-=-view the taxonomy diff  |
+  the YAML files     |   +---+--------------+   and validate YAML files |
                      |       |                                          |
                      |       v                                          |
 level 2              |   +---+----------------+                         |
-  inspected the      +---|ilab generate       |-------------------------+ -=-synthesize data;
+  inspected the      +---|ilab data generate       |-------------------------+ -=-synthesize data;
   generated samples  |   +---+----------------++other hardware          |      iterate by modifying examples
                      |       |mac or          |   +--------+----------+ |      if samples do not look good
                      |       vLinux           +-->|notebook train cYEL| |
                      |   +---+-------------+      +--------+----------+ |
-                     |   |ilab train       |-=-w/ MLX or   |            |
+                     |   |ilab model train |-=-w/ MLX or   |            |
                      |   +---+-------------+      PyTorch  v            |
                      |       |                  +----------+-------+    |
                      |       v                  |notebook test cYEL+--+ |
@@ -51,22 +51,22 @@ level 3              |   +---+------------+     +---------+--------+  | |
                      |       |                  +---------+--------+    |
                      |       v optional         |download new model|    |
                      |   +---+---------------+  +-----------------++    |
-                     |   |ilab convert       |-=-MLX to GGUF       |    |
+                     |   |ilab model convert |-=-MLX to GGUF       |    |
                      |   +---+---------------+  +------------------+    |
                      |       |                  |                       |
                      |       v optional         v                       |
                      |   +---+------------------+----+                  |
-                     |   |kill ilab serve cPNK       |-=-kill old server|
+                     |   |kill ilab model serve cPNK |-=-kill old server|
                      |   +---+-----------------------+                  |
                      |       |                                          |
                      |       v optional                                 |
                      |   +---+-------------+                            |
-                     |   |ilab serve       |-=-start server with        |
+                     |   |ilab model serve |-=-start server with        |
                      |   +---+-------------+   new model                |
                      |       |                                          |
                      |       v optional                                 |
 level 4              |   +---+------------+                             |
-  performed the full |   |ilab chat       |-----------------------------+ -=-chat with the model again;
+  performed the full |   |ilab model chat |-----------------------------+ -=-chat with the model again;
   local smoke test   |   +---+------------+                             |      iterate if not happy with outputs
                      |       |                                          |
                      |       v                                          |
