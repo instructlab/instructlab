@@ -137,14 +137,21 @@ def openai_completion(
         model_ids = []
         for model in model_list:
             model_ids.append(model.id)
-        if not any(model_name == m for m in model_ids):
-            if model_name == DEFAULT_MODEL_OLD:
+
+        model_found = False
+        for m in model_ids:
+            if os.path.abspath(m) == os.path.abspath(model_name):
+                model_found = True
+                break
+
+        if not model_found:
+            if model == DEFAULT_MODEL_OLD:
                 logging.info(
                     "Model %s is not a full path. Try running ilab init or edit your config to have the full model path for serving, chatting, and generation.",
                     model_name,
                 )
             raise GenerateException(
-                f"Model {model_name} is not served by the server. These are the served models {model_ids}"
+                f"Model {model_name} is not served by the server. These are the served models: {model_ids}"
             )
 
         messages = [
