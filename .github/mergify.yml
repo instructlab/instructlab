@@ -32,13 +32,13 @@ pull_request_rules:
           - files~=pyproject.toml$
           - files~=requirements.*\.txt$
           - files~=tox.ini$
-          - files~=scripts/.*\.sh$
+          - files~=scripts/[^/]+\.sh$
       - and:
         - -files~=.*\.py$
         - -files~=pyproject.toml$
         - -files~=requirements.*\.txt$
         - -files~=tox.ini$
-        - -files~=scripts/.*\.sh$
+        - -files~=scripts/[^/]+\.sh$
 
     - or:
       - and:
