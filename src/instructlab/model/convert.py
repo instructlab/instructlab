@@ -41,6 +41,7 @@ from instructlab import utils
 )
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 @click.pass_context
+@utils.display_params
 def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model_name):
     """Converts model to GGUF"""
     # pylint: disable=C0415

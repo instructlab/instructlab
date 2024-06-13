@@ -5,7 +5,7 @@ import click
 
 # First Party
 from instructlab import configuration as config
-from instructlab import log
+from instructlab import log, utils
 from instructlab.server import ServerException, server
 
 
@@ -39,6 +39,7 @@ from instructlab.server import ServerException, server
     help="Log file path to write server logs to.",
 )
 @click.pass_context
+@utils.display_params
 def serve(
     ctx, model_path, gpu_layers, num_threads, max_ctx_size, model_family, log_file
 ):

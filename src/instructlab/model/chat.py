@@ -27,6 +27,7 @@ import openai
 # First Party
 from instructlab import client
 from instructlab import configuration as cfg
+from instructlab import utils
 from instructlab.server import is_temp_server_running
 
 # Local
@@ -146,6 +147,7 @@ PROMPT_PREFIX = ">>> "
     help="Force model family to use when picking a chat template",
 )
 @click.pass_context
+@utils.display_params
 def chat(
     ctx,
     question,
