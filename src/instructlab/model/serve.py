@@ -4,7 +4,8 @@
 import click
 
 # First Party
-from instructlab import config, log
+from instructlab import configuration as config
+from instructlab import log
 from instructlab.server import ServerException, server
 
 

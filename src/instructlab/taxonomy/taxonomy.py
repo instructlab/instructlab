@@ -4,9 +4,6 @@
 from click_didyoumean import DYMGroup
 import click
 
-# First Party
-from instructlab import config
-
 # Local
 from .diff import diff
 

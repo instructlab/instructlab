@@ -16,7 +16,7 @@ from openai import OpenAI, OpenAIError
 import httpx
 
 # First Party
-from instructlab.config import DEFAULT_API_KEY, DEFAULT_MODEL_OLD
+from instructlab.configuration import DEFAULT_API_KEY, DEFAULT_MODEL_OLD
 from instructlab.utils import get_ssl_cert_config, get_sysprompt
 
 StrOrOpenAIObject = Union[str, object]

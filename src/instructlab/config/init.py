@@ -9,7 +9,8 @@ from git import GitError, Repo
 import click
 
 # First Party
-from instructlab import config, utils
+from instructlab import configuration as config
+from instructlab import utils
 
 
 @click.command()

@@ -11,11 +11,11 @@ import typing
 import click
 
 # First Party
-from instructlab import config
+from instructlab import configuration as cfg
 
 # Local
 # NOTE: Subcommands are using local imports to speed up startup time.
-from .configuration import config as config_group
+from .config import config as config_group
 from .data import data as data_group
 from .model import model as model_group
 from .sysinfo import get_sysinfo
@@ -23,9 +23,7 @@ from .taxonomy import taxonomy as taxonomy_group
 
 # 'fork' is unsafe and incompatible with some hardware accelerators.
 # Python 3.14 will switch to 'spawn' on all platforms.
-multiprocessing.set_start_method(
-    config.DEFAULT_MULTIPROCESSING_START_METHOD, force=True
-)
+multiprocessing.set_start_method(cfg.DEFAULT_MULTIPROCESSING_START_METHOD, force=True)
 
 # Set logging level of OpenAI client and httpx library to ERROR to suppress INFO messages
 logging.getLogger("openai").setLevel(logging.ERROR)
@@ -88,7 +86,7 @@ aliases = {
     "--config",
     "config_file",
     type=click.Path(),
-    default=config.DEFAULT_CONFIG,
+    default=cfg.DEFAULT_CONFIG,
     show_default=True,
     help="Path to a configuration file.",
 )
@@ -100,7 +98,7 @@ def ilab(ctx, config_file):
 
     If this is your first time running ilab, it's best to start with `ilab init` to create the environment.
     """
-    config.init_config(ctx, config_file)
+    cfg.init_config(ctx, config_file)
 
 
 ilab.add_command(model_group.model)

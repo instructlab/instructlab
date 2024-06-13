@@ -10,7 +10,8 @@ import click
 import yaml
 
 # First Party
-from instructlab import config, utils
+from instructlab import configuration as config
+from instructlab import utils
 from instructlab.data import generator
 
 

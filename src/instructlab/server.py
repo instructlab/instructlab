@@ -20,7 +20,7 @@ import uvicorn
 
 # Local
 from .client import ClientException, list_models
-from .config import get_api_base, get_model_family
+from .configuration import get_api_base, get_model_family
 
 templates = [
     {

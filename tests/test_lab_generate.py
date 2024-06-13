@@ -14,7 +14,7 @@ import pytest
 
 # First Party
 from instructlab import lab
-from instructlab.config import get_default_config, write_config
+from instructlab.configuration import get_default_config, write_config
 from instructlab.data.generator.generate_data import generate_data
 from instructlab.data.generator.utils import GenerateException
 

@@ -9,7 +9,7 @@ from openai import OpenAI, OpenAIError
 import httpx
 
 # Local
-from .config import DEFAULT_API_KEY, DEFAULT_CONNECTION_TIMEOUT
+from .configuration import DEFAULT_API_KEY, DEFAULT_CONNECTION_TIMEOUT
 from .utils import get_ssl_cert_config
 
 
