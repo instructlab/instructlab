@@ -9,7 +9,6 @@ from .diff import diff
 
 
 @click.group(cls=DYMGroup)
-@click.version_option(package_name="instructlab")
 @click.pass_context
 def taxonomy(ctx):
     """Command Group for Interacting with the Taxonomy of InstructLab.

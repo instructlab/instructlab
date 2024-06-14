@@ -9,7 +9,6 @@ from .init import init
 
 
 @click.group(cls=DYMGroup)
-@click.version_option(package_name="instructlab")
 @click.pass_context
 def config(ctx):
     """Command Group for Interacting with the Config of InstructLab.

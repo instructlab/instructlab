@@ -14,7 +14,6 @@ from .train import train
 
 
 @click.group(cls=DYMGroup)
-@click.version_option(package_name="instructlab")
 @click.pass_context
 # pylint: disable=redefined-outer-name
 def model(ctx):
