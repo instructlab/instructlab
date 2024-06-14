@@ -9,6 +9,24 @@ on:
         description: 'pull request number or branch name'
         required: true
         default: 'main'
+  push:
+    branches:
+      - "main"
+      - "release-**"
+    paths:
+      - '**.py'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+      - '.github/workflows/e2e.yml'
+  pull_request:
+    branches:
+      - "main"
+      - "release-**"
+    paths:
+      - '**.py'
+      - 'pyproject.toml'
+      - 'requirements*.txt'
+      - '.github/workflows/e2e.yml'
 
 jobs:
   e2e:
