@@ -46,12 +46,18 @@ def test(data_dir, model_dir, adapter_file):
     adapter_file_exists = adapter_file and os.path.exists(adapter_file)
     if adapter_file and not adapter_file_exists:
         print(
-            "NOTE: Adapter file does not exist. Testing behavior before training only. - %s\n"
+            "NOTE: Adapter file does not exist. Testing behavior before training only. - %s"
             % adapter_file
         )
 
     # Load the JSON Lines file
     test_data_dir = f"{data_dir}/test.jsonl"
+    if not os.path.exists(test_data_dir):
+        click.secho(
+            f"'{test_data_dir}' not such file or directory. Did you run 'ilab model train'?",
+            fg="red",
+        )
+        raise click.exceptions.Exit(1)
     with open(test_data_dir, "r", encoding="utf-8") as f:
         test_data = [json.loads(line) for line in f]
 
