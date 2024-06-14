@@ -81,7 +81,6 @@ aliases = {
 
 
 @click.group(cls=ExpandAliasesGroup, aliases=aliases)
-@click.version_option(package_name="instructlab")
 @click.option(
     "--config",
     "config_file",
