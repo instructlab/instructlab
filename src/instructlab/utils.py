@@ -20,6 +20,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 import click
 import git
 import gitdb
+import httpx
 import yaml
 
 # Local
@@ -601,3 +602,14 @@ def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
 def get_ssl_cert_config(tls_client_cert, tls_client_key, tls_client_passwd):
     if tls_client_cert:
         return tls_client_cert, tls_client_key, tls_client_passwd
+
+
+def http_client(params):
+    return httpx.Client(
+        cert=get_ssl_cert_config(
+            params["tls_client_cert"],
+            params["tls_client_key"],
+            params["tls_client_passwd"],
+        ),
+        verify=not params["tls_insecure"],
+    )
