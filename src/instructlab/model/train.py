@@ -12,7 +12,7 @@ import torch
 
 # First Party
 from instructlab import utils
-
+from instructlab_train import train
 
 class TorchDeviceParam(click.ParamType):
     """Parse and convert device string
@@ -145,6 +145,87 @@ TORCH_DEVICE = TorchDeviceParam()
         "(reduces GPU VRAM usage and may slow down training)"
     ),
 )
+@click.option(
+    "--gpus",
+    type=str,
+    default="-1",
+    help="GPUs to use for training"
+
+)
+@click.option(
+    "--max-seq-len",
+    type=int
+)
+@click.option(
+    "--max-batch-len",
+    type=int
+)
+@click.option(
+    "--effective-batch-size",
+    type=int
+)
+@click.option(
+    "--save-samples",
+    type=int
+)
+@click.option(
+    "--learning-rate",
+    "lr",
+    type=float
+)
+@click.option(
+    "--warmup-steps",
+    type=int
+)
+@click.option(
+    "--deepspeed",
+    type=bool
+)
+@click.option(
+    "--deepspeed-config",
+    type=click.Path
+)
+@click.option(
+    "--offload-strategy",
+    type=click.Choice(["cpu", "nvme", None]),
+    default=None
+)
+# these two seem like they could be inferred by the above?
+@click.option(
+    "--cpu-offload-optim",
+    type=bool,
+)
+@click.option(
+    "--cpu-offload-params",
+    type=bool
+)
+@click.option(
+    "--ds-quantize-type",
+    type=click.Choice(["nf4", "fp8", None]),
+    default=None
+)
+@click.option(
+    "--lora",
+    type=bool,
+    default=False
+)
+# below flags are invalid if lora == false
+@click.option(
+    "--lora-rank",
+    type=int
+)
+@click.option(
+    "--lora-alpha",
+    type=float
+)
+@click.option(
+    "--lora-dropout",
+    type=float
+)
+@click.option(
+    "--target-modules",
+    type=[],
+)
 @click.pass_context
 def train(
     ctx,
@@ -159,6 +240,23 @@ def train(
     num_epochs,
     device: "torch.device",
     four_bit_quant: bool,
+    gpus,
+    max_seq_len,
+    max_batch_len,
+    effective_batch_size,
+    save_samples,
+    learning_rate,
+    warmup_steps,
+    deepspeed,
+    deepspeed_config,
+    offload_strategy,
+    cpu_offload_optim,
+    cpu_offload_params,
+    ds_quantize_dtype,
+    lora,
+    lora_rank,
+    lora_dropout,
+    target_modules,
 ):
     """
     Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
