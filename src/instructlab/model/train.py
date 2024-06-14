@@ -75,7 +75,11 @@ TORCH_DEVICE = TorchDeviceParam()
 
 
 @click.command()
-@click.option("--data-dir", help="Base directory where data is stored.", default=None)
+@click.option(
+    "--data-dir", 
+    help="Base directory where data is stored.", 
+    default=None
+)
 @click.option(
     "--input-dir",
     type=click.Path(),
@@ -89,12 +93,6 @@ TORCH_DEVICE = TorchDeviceParam()
 @click.option(
     "--tokenizer-dir",
     help="Base directory where tokenizer is stored.",
-    default=None,
-    show_default=True,
-)
-@click.option(
-    "--gguf-model-path",
-    help="Local directory where gguf model is stored.",
     default=None,
     show_default=True,
 )
@@ -147,12 +145,6 @@ TORCH_DEVICE = TorchDeviceParam()
         "(reduces GPU VRAM usage and may slow down training)"
     ),
 )
-@click.option(
-    "--model-name",
-    default="instructlab/merlinite-7b-lab",
-    show_default=True,
-    help="model name to use in training",
-)
 @click.pass_context
 def train(
     ctx,
@@ -160,7 +152,6 @@ def train(
     input_dir,
     skip_preprocessing,
     tokenizer_dir,
-    gguf_model_path,
     model_dir,
     iters,
     local,
@@ -168,7 +159,6 @@ def train(
     num_epochs,
     device: "torch.device",
     four_bit_quant: bool,
-    model_name: str,
 ):
     """
     Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
@@ -236,7 +226,7 @@ def train(
             ctx=ctx,
             train_file=train_file,
             test_file=test_file,
-            model_name=model_name,
+            model_name=model_dir,
             num_epochs=num_epochs,
             device=device,
             four_bit_quant=four_bit_quant,
@@ -296,8 +286,6 @@ def train(
         # shutil.rmtree(checkpoint_dirs[0])
     else:
         # Local
-        from ..mlx_explore.gguf_convert_to_mlx import load
-        from ..mlx_explore.utils import fetch_tokenizer_from_hub
         from ..train.lora_mlx.convert import convert_between_mlx_and_pytorch
         from ..train.lora_mlx.lora import load_and_train
         from ..train.lora_mlx.make_data import make_data
@@ -325,29 +313,14 @@ def train(
             dest_model_dir = model_dir_mlx_quantized
             quantize_arg = True
 
-        if tokenizer_dir is not None and gguf_model_path is not None:
-            if not local:
-                tokenizer_dir_local = tokenizer_dir.replace("/", "-")
-                fetch_tokenizer_from_hub(tokenizer_dir, tokenizer_dir_local)
 
-            # no need to pass quantize_arg for now, script automatically detects if quantization is necessary based on whether gguf model is quantized or not
-            load(gguf=gguf_model_path, repo=tokenizer_dir, mlx_path=dest_model_dir)
-
-            for filename in os.listdir(model_dir_local):
-                shutil.copy(
-                    os.path.join(model_dir_local, filename),
-                    os.path.join(dest_model_dir, filename),
-                )
-            shutil.rmtree(model_dir_local, ignore_errors=True)
-
-        else:
-            # Downloading PyTorch SafeTensor and Converting to MLX SafeTensor
-            convert_between_mlx_and_pytorch(
-                hf_path=model_dir,
-                mlx_path=dest_model_dir,
-                quantize=quantize_arg,
-                local=local,
-            )
+        # Downloading PyTorch SafeTensor and Converting to MLX SafeTensor
+        convert_between_mlx_and_pytorch(
+            hf_path=model_dir,
+            mlx_path=dest_model_dir,
+            quantize=quantize_arg,
+            local=local,
+        )
 
         adapter_file_path = f"{dest_model_dir}/adapters.npz"
         # train the model with LoRA
