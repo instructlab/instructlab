@@ -36,6 +36,13 @@ logger = logging.getLogger(__name__)
     default="auto",
     show_default=True,
 )
+@click.option(
+    "--max-tokens",
+    help="Maximum tokens to be generated during test.",
+    default=100,
+    type=int,
+    show_default=True,
+)
 # for Linux:
 @click.option(
     "-m",
@@ -74,6 +81,7 @@ def test(
     test_file: Path,
     api_key: str,  # pylint: disable=unused-argument
     model_family: str,  # pylint: disable=unused-argument
+    max_tokens: int,
 ):
     """Runs basic test to ensure model correctness"""
     if utils.is_macos_with_m_chip():
@@ -113,23 +121,20 @@ def test(
             prompt = f"<|system|>\n{system}\n<|user|>\n{user}\n<|assistant|>"
             print("expected output:", example["assistant"])
 
-            print("\n-----model output BEFORE training----:\n")
+        print("\n-----model output BEFORE training----:\n")
+        load_and_train(
+            model=model_dir, no_adapter=True, max_tokens=max_tokens, prompt=prompt
+        )
+
+        if adapter_file_exists:
+            print("\n-----model output AFTER training----:\n")
+            assert processed_adapter is not None
             load_and_train(
                 model=model_dir,
-                no_adapter=True,
-                max_tokens=100,
+                adapter_file=processed_adapter,
+                max_tokens=max_tokens,
                 prompt=prompt,
             )
-
-            if adapter_file_exists:
-                print("\n-----model output AFTER training----:\n")
-                assert processed_adapter is not None
-                load_and_train(
-                    model=model_dir,
-                    adapter_file=processed_adapter,
-                    max_tokens=100,
-                    prompt=prompt,
-                )
     else:
         logger.debug("")
         # pylint: disable=import-outside-toplevel
@@ -151,7 +156,7 @@ def test(
                 ctx,
                 test_file,
                 models=[model, Path(DEFAULTS.CHECKPOINTS_DIR) / "ggml-model-f16.gguf"],
-                create_params={"max_tokens": 100},
+                create_params={"max_tokens": max_tokens},
             )
             for question, models in answers.items():
                 # print in markdown format
