@@ -18,11 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 @click.command()
-@click.option(
-    "--data-dir", 
-    help="Base directory where data is stored.", 
-    default=None
-)
+@click.option("--data-dir", help="Base directory where data is stored.", default=None)
 @click.option(
     "--input-dir",
     type=click.Path(),
@@ -94,11 +90,44 @@ logger = logging.getLogger(__name__)
         "(reduces GPU VRAM usage and may slow down training)"
     ),
 )
+@click.option("--max-seq-len", type=int)
+@click.option("--max-batch-len", type=int)
+@click.option("--effective-batch-size", type=int)
+@click.option("--save-samples", type=int)
+@click.option("--learning-rate", type=float)
+@click.option("--warmup-steps", type=int)
+@click.option("--deepspeed-config", type=click.Path)
+# these two seem like they could be inferred by the above?
+@click.option(
+    "--cpu-offload-optim",
+    type=bool,
+)
+@click.option("--cpu-offload-params", type=bool)
+@click.option("--ds-quantize-dtype", type=click.Choice(["nf4", "fp8"]), default=None)
+# below flags are invalid if lora == false
+@click.option("--lora-rank", type=int)
+@click.option("--lora-alpha", type=float)
+@click.option("--lora-dropout", type=float)
+@click.option(
+    "--target-modules",
+    type=[],
+)
+@click.option(
+    "--is-padding-free",
+    type=bool,
+)
+@click.option("--nproc-per-node", type=int)
+@click.option("--nnodes", type=int)
+@click.option("--node-rank", type=int)
+@click.option("--rdzv-id", type=int)
+@click.option("--rdzv-endpoint", type=str)
 @click.pass_context
 @utils.display_params
 def train(
     ctx,
-    data_dir,
+    data_path,
+    ckpt_output_dir,
+    data_output_dir,
     input_dir,
     skip_preprocessing,
     tokenizer_dir,
@@ -110,6 +139,26 @@ def train(
     num_epochs,
     device: str,
     four_bit_quant: bool,
+    max_seq_len,
+    max_batch_len,
+    effective_batch_size,
+    save_samples,
+    learning_rate,
+    warmup_steps,
+    deepspeed_config,
+    cpu_offload_optim,
+    cpu_offload_params,
+    ds_quantize_dtype,
+    lora_rank,
+    lora_alpha,
+    lora_dropout,
+    target_modules,
+    is_padding_free,
+    nproc_per_node,
+    nnodes,
+    node_rank,
+    rdzv_id,
+    rdzv_endpoint,
 ):
     """
     Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
@@ -119,13 +168,16 @@ def train(
         # By default, generate output-dir is used as train input-dir
         input_dir = ctx.obj.config.generate.output_dir
 
-    effective_data_dir = Path(data_dir or "./taxonomy_data")
+    if four_bit_quant and device.type != "cuda":
+        ctx.fail("--4-bit-quant option requires --device=cuda")
+
+    effective_data_dir = Path(data_path or "./taxonomy_data")
     train_file = effective_data_dir / "train_gen.jsonl"
     test_file = effective_data_dir / "test_gen.jsonl"
 
     # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
-    if data_dir is None:
-        data_dir = effective_data_dir
+    if data_path is None:
+        data_path = effective_data_dir
         if not os.path.exists(input_dir):
             click.secho(
                 f"Could not read directory: {input_dir}",
@@ -134,7 +186,7 @@ def train(
             raise click.exceptions.Exit(1)
 
         try:
-            os.makedirs(data_dir, exist_ok=True)
+            os.makedirs(data_path, exist_ok=True)
         except OSError as exc:
             click.secho(
                 f"Could not create data dir: {exc}",
@@ -246,7 +298,7 @@ def train(
 
         if not skip_preprocessing:
             try:
-                make_data(data_dir=data_dir)
+                make_data(data_dir=data_path)
             except FileNotFoundError as exc:
                 click.secho(
                     f"Could not read from data directory: {exc}",
@@ -290,23 +342,14 @@ def train(
                 quantize=quantize_arg,
                 local=local,
             )
-
-
-        # Downloading PyTorch SafeTensor and Converting to MLX SafeTensor
-        convert_between_mlx_and_pytorch(
-            hf_path=model_dir,
-            mlx_path=dest_model_dir,
-            quantize=quantize_arg,
-            local=local,
-        )
-
+            
         adapter_file_path = f"{dest_model_dir}/adapters.npz"
         # train the model with LoRA
 
         load_and_train(
             model=dest_model_dir,
             train=True,
-            data=data_dir,
+            data=data_path,
             adapter_file=adapter_file_path,
             iters=iters,
             save_every=10,
