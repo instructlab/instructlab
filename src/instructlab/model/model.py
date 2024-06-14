@@ -11,6 +11,7 @@ from .download import download
 from .serve import serve
 from .test import test
 from .train import train
+from .evaluate import evaluate
 
 
 @click.group(cls=DYMGroup)
@@ -31,3 +32,4 @@ model.add_command(convert)
 model.add_command(chat)
 model.add_command(test)
 model.add_command(download)
+model.add_command(evaluate)
