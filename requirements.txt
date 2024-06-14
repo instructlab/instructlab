@@ -44,3 +44,4 @@ wandb>=0.16.4
 # it is for CLI usage ONLY
 yamllint>=1.35.1
 instructlab-training>=0.0.3
+instructlab-eval>=0.0.1rc1
