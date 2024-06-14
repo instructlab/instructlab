@@ -9,7 +9,16 @@ on:
       - "release-**"
     paths:
       - '**.md'
-      - .github/**
+      - 'tox.ini'
+      - '.spellcheck*'
+      - '.github/workflows/spellcheck.yaml' # This workflow file
+
+env:
+  LC_ALL: en_US.UTF-8
+
+defaults:
+  run:
+    shell: bash
 
 permissions:
   contents: read
@@ -19,8 +28,13 @@ jobs:
     name: Spellcheck (en_US)
     runs-on: ubuntu-latest
     steps:
+      - name: "Harden Runner"
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       - name: Checkout Code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           fetch-depth: 0
           submodules: true

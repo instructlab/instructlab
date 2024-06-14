@@ -1,4 +1,6 @@
-name: docs
+# SPDX-License-Identifier: Apache-2.0
+
+name: Lint Markdown documents
 
 on:
   push:
@@ -8,6 +10,7 @@ on:
     paths:
       - '**/*.md'
       - '.markdownlint-cli2.yaml'
+      - '.github/workflows/docs.yml' # This workflow
   pull_request:
     branches:
       - "main"
@@ -15,13 +18,31 @@ on:
     paths:
       - '**/*.md'
       - '.markdownlint-cli2.yaml'
+      - '.github/workflows/docs.yml' # This workflow
+
+env:
+  LC_ALL: en_US.UTF-8
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
 
 jobs:
   markdown-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: markdownlint-cli2-action
-        uses: DavidAnson/markdownlint-cli2-action@v15
+      - name: "Harden Runner"
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+      - name: "Checkout"
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+      - name: "Check Markdown documents"
+        uses: DavidAnson/markdownlint-cli2-action@b4c9feab76d8025d1e83c653fa3990936df0e6c8 # v16.0.0
         with:
           globs: '**/*.md'

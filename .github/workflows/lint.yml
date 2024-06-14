@@ -12,8 +12,8 @@ on:
       - 'pyproject.toml'
       - 'requirements*.txt'
       - 'tox.ini'
-      - 'scripts/*.sh'
-      - '.github/**'
+      - 'scripts/*.sh' # Used by this workflow
+      - '.github/workflows/lint.yml' # This workflow
   pull_request:
     branches:
       - "main"
@@ -23,25 +23,53 @@ on:
       - 'pyproject.toml'
       - 'requirements*.txt'
       - 'tox.ini'
-      - 'scripts/*.sh'
-      - '.github/**'
+      - 'scripts/*.sh' # Used by this workflow
+      - '.github/workflows/lint.yml' # This workflow
 
 env:
-  PYTHON_VERSION: 3.11
+  LC_ALL: en_US.UTF-8
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
 
 jobs:
   lint:
     runs-on: ubuntu-latest
+    name: "${{ matrix.lint.name }}"
+    strategy:
+      fail-fast: false
+      matrix:
+        lint:
+          - name: "ruff"
+            commands: |
+              tox -e ruff -- check
+          - name: "pylint"
+            commands: |
+              echo "::add-matcher::.github/workflows/matchers/pylint.json"
+              tox -e lint
+          - name: "mypy"
+            commands: |
+              echo "::add-matcher::.github/workflows/matchers/mypy.json"
+              tox -e mypy
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: "Harden Runner"
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
+      - name: "Checkout"
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
           submodules: true
 
       - name: Setup Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
         with:
           python-version: 3.11
           cache: pip
@@ -51,42 +79,29 @@ jobs:
 
       - name: Remove llama-cpp-python from cache
         run: |
-          pip cache remove llama_cpp_python
+          python -m pip cache remove llama_cpp_python
 
-      - name: Install dependencies
-        id: deps
+      - name: "Install tox"
         run: |
           python -m pip install --upgrade pip
-          python -m pip install tox
+          python -m pip install tox tox-gh
 
-      - name: Run Ruff check
+      - name: "${{ matrix.lint.name }}"
         run: |
-          tox -e ruff -- check
-
-      - name: Run linting
-        if: ${{ !cancelled() && (steps.deps.outcome == 'success') }}
-        run: |
-          echo "::add-matcher::.github/workflows/matchers/pylint.json"
-          tox -e lint
-
-      - name: Remove pylint matchers
-        if: ${{ !cancelled() && (steps.deps.outcome == 'success') }}
-        run: |
-          echo "::remove-matcher owner=pylint-error::"
-          echo "::remove-matcher owner=pylint-warning::"
-
-      - name: Run mypy type checks
-        if: ${{ !cancelled() && (steps.deps.outcome == 'success') }}
-        run: |
-          echo "::add-matcher::.github/workflows/matchers/mypy.json"
-          tox -e mypy
-
-      - name: Remove mypy matcher
-        if: ${{ !cancelled() && (steps.deps.outcome == 'success') }}
-        run: |
-          echo "::remove-matcher owner=mypy::"
+          ${{ matrix.lint.commands }}
+        env:
+          RUFF_OUTPUT_FORMAT: github
 
       - name: Remove llama-cpp-python from cache
         if: always()
         run: |
-          pip cache remove llama_cpp_python
+          python -m pip cache remove llama_cpp_python
+
+  lint-workflow-complete:
+    needs:
+      - "lint"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Lint Workflow Complete
+        run: |
+          echo "Lint Workflow Complete"

@@ -24,7 +24,7 @@ pull_request_rules:
     # lint and test must pass if files change that would trigger this job
     - or:
       - and:
-        - check-success=lint
+        - check-success=lint-workflow-complete
         - check-success=test-workflow-complete
         - or:
           # see .github/workflows/lint.yml and test.yml

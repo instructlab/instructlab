@@ -13,8 +13,8 @@ on:
       - 'pyproject.toml'
       - 'requirements*.txt'
       - 'tox.ini'
-      - 'scripts/*.sh'
-      - '.github/**'
+      - 'scripts/*.sh' # Used by this workflow
+      - '.github/workflows/test.yml' # This workflow
   pull_request:
     branches:
       - "main"
@@ -24,8 +24,18 @@ on:
       - 'pyproject.toml'
       - 'requirements*.txt'
       - 'tox.ini'
-      - 'scripts/*.sh'
-      - '.github/**'
+      - 'scripts/*.sh' # Used by this workflow
+      - '.github/workflows/test.yml' # This workflow
+
+env:
+  LC_ALL: en_US.UTF-8
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -48,8 +58,13 @@ jobs:
           - python: "3.11"
             platform: "macos-latest"
     steps:
+      - name: "Harden Runner"
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
@@ -66,7 +81,7 @@ jobs:
           brew install expect coreutils bash
 
       - name: Setup Python ${{ matrix.python }}
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
         with:
           python-version: ${{ matrix.python }}
           cache: pip
@@ -79,7 +94,7 @@ jobs:
           pip cache remove llama_cpp_python
 
       - name: Cache huggingface
-        uses: actions/cache@v4
+        uses: actions/cache@0c45773b623bea8c8e75f6c82b208c3cf94ea4f9 # v4.0.2
         with:
           path: ~/.cache/huggingface
           # config contains DEFAULT_MODEL
@@ -91,7 +106,8 @@ jobs:
           python -m pip install tox tox-gh>=1.2
 
       - name: Run unit and functional tests with tox
-        run: tox
+        run: |
+          tox
 
       - name: Remove llama-cpp-python from cache
         if: always()
@@ -108,15 +124,20 @@ jobs:
   man:
     runs-on: ubuntu-latest
     steps:
+      - name: "Harden Runner"
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
           submodules: true
 
       - name: Setup Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0
         with:
           python-version: 3.11
           cache: pip
@@ -129,12 +150,14 @@ jobs:
           pip cache remove llama_cpp_python
 
       - name: Run tox docs target (expect failure since tox is not present)
-        run: make man
+        run: |
+          make man
         continue-on-error: true
 
       - name: Run tox docs target
         id: tox-docs
-        run: make man || echo "status=failed" >> "$GITHUB_OUTPUT"
+        run: |
+          make man || echo "status=failed" >> "$GITHUB_OUTPUT"
         continue-on-error: true
 
       - name: Check for 'make man' failure
@@ -150,10 +173,11 @@ jobs:
           python -m pip install tox
 
       - name: Run tox docs target
-        run: make man
+        run: |
+          make man
 
       - name: Check that man pages were generated
-        uses: andstor/file-existence-action@v3
+        uses: andstor/file-existence-action@076e0072799f4942c8bc574a82233e1e4d13e9d6 # v3.0.0
         with:
           files: 'man/*.1'
           fail: true

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 name: Test build cuda container image
 
 on:
@@ -6,13 +8,13 @@ on:
       - main
     paths:
       - 'containers/cuda/Containerfile'
-      - '.github/workflows/image-cuda.yml'
+      - '.github/workflows/image-cuda.yml' # This workflow
   pull_request:
     branches:
       - main
     paths:
       - 'containers/cuda/Containerfile'
-      - '.github/workflows/image-cuda.yml'
+      - '.github/workflows/image-cuda.yml' # This workflow
 
 # Note that the current containerfile builds against a git ref.
 # It is not built against the current source tree. So, we test
@@ -22,6 +24,11 @@ jobs:
     name: Build CUDA image for stable
     runs-on: ubuntu-latest
     steps:
+      - name: "Harden Runner"
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       - name: Free disk space
         run: |
           df -h
@@ -37,20 +44,20 @@ jobs:
           sudo apt-get autoclean -y >/dev/null 2>&1
           df -h
 
-      - name: Check out the repo
-        uses: actions/checkout@v4
+      - name: "Checkout"
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
 
       - name: Extract metadata (tags, labels) for gotbot image
         id: gobot_meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         with:
           images: |
             ghcr.io/${{ github.repository }}/instructlab-cuda
 
       - name: Build and push gobot image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
         with:
           context: .
           platforms: linux/amd64
@@ -67,6 +74,11 @@ jobs:
     name: Build CUDA image for main
     runs-on: ubuntu-latest
     steps:
+      - name: "Harden Runner"
+        uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
       - name: Free disk space
         run: |
           df -h
@@ -82,20 +94,20 @@ jobs:
           sudo apt-get autoclean -y >/dev/null 2>&1
           df -h
 
-      - name: Check out the repo
-        uses: actions/checkout@v4
+      - name: "Checkout"
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
 
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb # v3.3.0
 
       - name: Extract metadata (tags, labels) for gotbot image
         id: gobot_meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81 # v5.5.1
         with:
           images: |
             ghcr.io/${{ github.repository }}/instructlab-cuda
 
       - name: Build and push gobot image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@2cdde995de11925a030ce8070c3d77a52ffcf1c0 # v5.3.0
         with:
           context: .
           platforms: linux/amd64
