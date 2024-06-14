@@ -52,6 +52,12 @@ def test(data_dir, model_dir, adapter_file):
 
     # Load the JSON Lines file
     test_data_dir = f"{data_dir}/test.jsonl"
+    if not os.path.exists(test_data_dir):
+        click.secho(
+            f"'{test_data_dir}' not such file or directory. Did you run 'ilab model train'?",
+            fg="red",
+        )
+        raise click.exceptions.Exit(1)
     with open(test_data_dir, "r", encoding="utf-8") as f:
         test_data = [json.loads(line) for line in f]
 
