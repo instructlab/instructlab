@@ -18,12 +18,22 @@ logger = logging.getLogger(__name__)
 
 
 @click.command()
-@click.option("--data-dir", help="Base directory where data is stored.", default=None)
+@click.option(
+    "--data-dir", 
+    help="Base directory where data is stored.", 
+    default=None
+)
 @click.option(
     "--input-dir",
     type=click.Path(),
     show_default=True,  # TODO: set to None and change help message
     help="Path to generated files to use as input.",
+)
+@click.option(
+    "--gguf-model-path",
+    help="Local directory where gguf model is stored.",
+    default=None,
+    show_default=True,
 )
 @click.option(
     "--skip-preprocessing",
@@ -32,12 +42,6 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--tokenizer-dir",
     help="Base directory where tokenizer is stored.",
-    default=None,
-    show_default=True,
-)
-@click.option(
-    "--gguf-model-path",
-    help="Local directory where gguf model is stored.",
     default=None,
     show_default=True,
 )
@@ -90,12 +94,6 @@ logger = logging.getLogger(__name__)
         "(reduces GPU VRAM usage and may slow down training)"
     ),
 )
-@click.option(
-    "--model-name",
-    default="instructlab/merlinite-7b-lab",
-    show_default=True,
-    help="model name to use in training",
-)
 @click.pass_context
 @utils.display_params
 def train(
@@ -112,7 +110,6 @@ def train(
     num_epochs,
     device: str,
     four_bit_quant: bool,
-    model_name: str,
 ):
     """
     Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
@@ -181,7 +178,7 @@ def train(
             ctx=ctx,
             train_file=train_file,
             test_file=test_file,
-            model_name=model_name,
+            model_name=model_dir,
             num_epochs=num_epochs,
             train_device=device,
             four_bit_quant=four_bit_quant,
@@ -293,6 +290,15 @@ def train(
                 quantize=quantize_arg,
                 local=local,
             )
+
+
+        # Downloading PyTorch SafeTensor and Converting to MLX SafeTensor
+        convert_between_mlx_and_pytorch(
+            hf_path=model_dir,
+            mlx_path=dest_model_dir,
+            quantize=quantize_arg,
+            local=local,
+        )
 
         adapter_file_path = f"{dest_model_dir}/adapters.npz"
         # train the model with LoRA
