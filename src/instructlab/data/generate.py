@@ -153,8 +153,7 @@ def generate(
     from .generator.generate_data import generate_data
     from .generator.utils import GenerateException
 
-    server_process = None
-    server_queue = None
+    backend_server = None
     logger = logging.getLogger("TODO")
     prompt_file_path = config.DEFAULT_PROMPT_FILE
     if ctx.obj is not None:
@@ -165,19 +164,20 @@ def generate(
         api_base = endpoint_url
     else:
         # Third Party
-        import llama_cpp
 
-        if not llama_cpp.llama_supports_gpu_offload():
-            # TODO: check for working offloading. The function only checks
-            # for compile time defines like `GGML_USE_CUDA`.
-            click.secho(
-                "llama_cpp_python is built without hardware acceleration. "
-                "ilab generate will be very slow.",
-                fg="red",
-            )
+        if ctx.obj.config.serve.backend == "llama-cpp":
+            import llama_cpp
+            if not llama_cpp.llama_supports_gpu_offload():
+                # TODO: check for working offloading. The function only checks
+                # for compile time defines like `GGML_USE_CUDA`.
+                click.secho(
+                    "llama_cpp_python is built without hardware acceleration. "
+                    "ilab generate will be very slow.",
+                    fg="red",
+                )
 
         try:
-            server_process, api_base, server_queue = ensure_server(
+            backend_server = ensure_server(
                 ctx.obj.logger,
                 ctx.obj.config.serve,
                 tls_insecure,
@@ -189,7 +189,9 @@ def generate(
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
             raise click.exceptions.Exit(1)
-        if not api_base:
+        if backend_server:
+            api_base = backend_server.api_base
+        else:
             api_base = ctx.obj.config.serve.api_base()
     try:
         click.echo(
@@ -224,8 +226,5 @@ def generate(
         )
         raise click.exceptions.Exit(1)
     finally:
-        if server_process and server_queue:
-            server_process.terminate()
-            server_process.join(timeout=30)
-            server_queue.close()
-            server_queue.join_thread()
+        if backend_server:
+            backend_server.shutdown()
