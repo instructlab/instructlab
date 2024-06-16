@@ -91,17 +91,15 @@ class Server(BackendServer):
         return server_process
 
     def run_detached(
-        self, tls_insecure, tls_client_cert, tls_client_key, tls_client_passwd
+        self,
+        http_client,
     ):
         try:
             llama_cpp_server_process, _, api_base = ensure_server(
                 logger=self.logger,
                 backend=LLAMA_CPP,
                 api_base=self.api_base,
-                tls_insecure=tls_insecure,
-                tls_client_cert=tls_client_cert,
-                tls_client_key=tls_client_key,
-                tls_client_passwd=tls_client_passwd,
+                http_client=http_client,
                 host=self.host,
                 port=self.port,
                 queue=self.queue,

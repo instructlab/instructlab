@@ -78,9 +78,7 @@ class BackendServer(abc.ABC):
         """Run serving backend in foreground (ilab model serve)"""
 
     @abc.abstractmethod
-    def run_detached(
-        self, tls_insecure, tls_client_cert, tls_client_key, tls_client_passwd
-    ):
+    def run_detached(self, http_client):
         """Run serving backend in background ('ilab model chat' when server is not running)"""
 
     @abc.abstractmethod
@@ -218,10 +216,7 @@ def ensure_server(
     logger: logging.Logger,
     backend: str,
     api_base: str,
-    tls_insecure: bool,
-    tls_client_cert: Optional[str] = None,
-    tls_client_key: Optional[str] = None,
-    tls_client_passwd: Optional[str] = None,
+    http_client=None,
     host="localhost",
     port=8000,
     queue=None,
@@ -235,10 +230,7 @@ def ensure_server(
         # pylint: disable=duplicate-code
         list_models(
             api_base=api_base,
-            tls_insecure=tls_insecure,
-            tls_client_cert=tls_client_cert,
-            tls_client_key=tls_client_key,
-            tls_client_passwd=tls_client_passwd,
+            http_client=http_client,
         )
         return (None, None, None)
         # pylint: enable=duplicate-code
@@ -284,10 +276,7 @@ def ensure_server(
                 try:
                     list_models(
                         api_base=temp_api_base,
-                        tls_insecure=tls_insecure,
-                        tls_client_cert=tls_client_cert,
-                        tls_client_key=tls_client_key,
-                        tls_client_passwd=tls_client_passwd,
+                        http_client=http_client,
                     )
                     logger.debug(f"model at {temp_api_base} served on vLLM")
                     break
@@ -315,10 +304,7 @@ def ensure_server(
                 try:
                     list_models(
                         api_base=temp_api_base,
-                        tls_insecure=tls_insecure,
-                        tls_client_cert=tls_client_cert,
-                        tls_client_key=tls_client_key,
-                        tls_client_passwd=tls_client_passwd,
+                        http_client=http_client,
                     )
                     break
                 except ClientException:
