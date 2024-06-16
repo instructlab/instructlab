@@ -49,15 +49,157 @@ class Server(uvicorn.Server):
         if not is_temp_server_running() or sig != signal.SIGINT:
             super().handle_exit(sig=sig, frame=frame)
 
+class BackEndServer:
+    """Base class for a serving backend"""
+    # TODO: use ABC here
+    def __init__(self, logger, api_base, model_path, host, port):
+        self.logger = logger
+        self.api_base = api_base
+        self.model_path = model_path
+        self.host = host
+        self.port = port
 
-def ensure_server_vllm(
+    def run(self, tls_insecure, tls_client_cert, tls_client_key, tls_client_passwd):
+        """Run serving backend"""
+        #TODO: Currently implementations of this function return nothing, figure out proper return value and error handling
+        raise NotImplementedError("Serving backend subclass must implement this")
+
+    def shutdown(self):
+        """Shutdown serving backend"""
+        raise NotImplementedError("Serving backend subclass must implement this")
+
+class VllmServer(BackEndServer):
+    def __init__(self, logger, api_base, model_path, host, port, vllm_args):
+        self.logger = logger
+        self.api_base = api_base
+        self.model_path = model_path
+        self.host = host
+        self.port = port
+        self.vllm_args = vllm_args
+        self.process = None
+        self.timeout = 300
+
+    def run(self, tls_insecure, tls_client_cert, tls_client_key, tls_client_passwd):
+        """Start an OpenAI-compatible server with vllm"""
+        vllm_cmd = [sys.executable, 
+                    "-m",
+                    "vllm.entrypoints.openai.api_server", 
+                    "--host", self.host,
+                    "--port", str(self.port),
+                    "--model", self.model_path,
+                    ]
+        if self.vllm_args is not None:
+            vllm_cmd.extend(self.vllm_args.split())
+
+        self.logger.info(f"vllm serving command is: {vllm_cmd}")
+        try:
+            self.process = subprocess.Popen(args=vllm_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        except subprocess.CalledProcessError as err:
+            logger.debug(f"Vllm did not start properly. Exited with return code: {err.returncode}")
+
+        count = 0
+        self.logger.debug(f"Starting up vllm on {self.api_base}...")
+        while count < self.timeout:
+            sleep(1)
+            try:
+                list_models(
+                    api_base=self.api_base,
+                    tls_insecure=tls_insecure,
+                    tls_client_cert=tls_client_cert,
+                    tls_client_key=tls_client_key,
+                    tls_client_passwd=tls_client_passwd,
+                )
+                self.logger.info(f"model at {self.model_path} served on vllm")
+                break
+            except ClientException:
+                count += 1
+
+
+    def shutdown(self):
+        """Shutdown vllm server"""
+        self.process.terminate()
+
+class LlamaCppServer(BackEndServer):
+    def __init__(self, logger, api_base, model_path, host, port, gpu_layers, max_ctx_size, model_family):
+        self.logger = logger
+        self.api_base = api_base
+        self.model_path = model_path
+        self.host = host
+        self.port = port
+        self.gpu_layers = gpu_layers
+        self.max_ctx_size = max_ctx_size
+        self.model_family = model_family
+        self.process = None
+        self.queue = None
+
+    def run(self, tls_insecure, tls_client_cert, tls_client_key, tls_client_passwd):
+        """Start an OpenAI-compatible server with llama-cpp"""
+        host_port = f"{self.host}:{self.port}"
+        mpctx = multiprocessing.get_context(None)
+        # use a queue to communicate between the main process and the server process
+        self.queue = mpctx.Queue()
+        # create a temporary, throw-away logger
+        server_logger = logging.getLogger(host_port)
+        server_logger.setLevel(logging.FATAL)
+        self.logger.debug(f"Starting up llama-cpp on {self.api_base}...")
+        self.process = mpctx.Process(
+            target=server,
+            kwargs={
+                "logger": server_logger,
+                "model_path": self.model_path,
+                "gpu_layers": self.gpu_layers,
+                "max_ctx_size": self.max_ctx_size,
+                "model_family": self.model_family,
+                "port": self.port,
+                "host": self.host,
+                "queue": self.queue,
+            },
+        )
+
+        self.process.start()
+
+        # in case the server takes some time to fail we wait a bit
+        count = 0
+        while self.process.is_alive():
+            sleep(0.1)
+            try:
+                list_models(
+                    api_base=self.api_base,
+                    tls_insecure=tls_insecure,
+                    tls_client_cert=tls_client_cert,
+                    tls_client_key=tls_client_key,
+                    tls_client_passwd=tls_client_passwd,
+                )
+                break
+            except ClientException:
+                pass
+            if count > 50:
+                self.logger.error("failed to reach the API server")
+                break
+            count += 1
+
+        # if the queue is not empty it means the server failed to start
+        if not self.queue.empty():
+            # pylint: disable=raise-missing-from
+            raise self.queue.get()
+
+    def shutdown(self):
+        """Clean up llama-cpp"""
+        if self.process and self.queue:
+            self.process.terminate()
+            self.process.join(timeout=30)
+            self.queue.close()
+            self.queue.join_thread()
+
+
+def ensure_server(
     logger,
     serve_config,
     tls_insecure,
     tls_client_cert,
     tls_client_key,
     tls_client_passwd,
-    model_family, # not used
+    model_family,
 ):
     """Checks if server is running, if not starts one as a subprocess. Returns the server process
     and the URL where it's available."""
@@ -73,199 +215,49 @@ def ensure_server_vllm(
             tls_client_key=tls_client_key,
             tls_client_passwd=tls_client_passwd,
         )
-        return (None, None, None)
-        # pylint: enable=duplicate-code
-    except ClientException:
-        tried_ports = set()
-        port = random.randint(1024, 65535)
-        host = serve_config.host_port.rsplit(":", 1)[0]
-        logger.debug(f"Trying port {port}...")
-
-        # extract address provided in the config
-        while not can_bind_to_port(host, port):
-            logger.debug(f"Port {port} is not available.")
-            # add the port to the map so that we can avoid using the same one
-            tried_ports.add(port)
-            port = random.randint(1024, 65535)
-            while True:
-                # if all the ports have been tried, exit
-                if len(tried_ports) == 65535 - 1024:
-                    # pylint: disable=raise-missing-from
-                    raise SystemExit(
-                        "No available ports to start the temporary server."
-                    )
-                if port in tried_ports:
-                    logger.debug(f"Port {port} has already been tried.")
-                    port = random.randint(1024, 65535)
-                else:
-                    break
-        logger.debug(f"Port {port} is available.")
-
-        host_port = f"{host}:{port}"
-        temp_api_base = get_api_base(host_port)
-        logger.debug(
-            f"Connection to {api_base} failed. Starting a temporary server at {temp_api_base}..."
-        )
-        logger.info(f"Using serving backend: {serve_config.backend}")
-        vllm_proc = vllm_serve(logger, serve_config.model_path, host, port, serve_config.vllm_args)
-
-        if vllm_proc is None:
-            logger.info("vllm_server did not start up properly")
-            return (None, None, None)
-
-        count = 0
-        logger.debug(f"Starting up vllm...")
-        while count < 300:
-            sleep(1)
-            try:
-                list_models(
-                    api_base=temp_api_base,
-                    tls_insecure=tls_insecure,
-                    tls_client_cert=tls_client_cert,
-                    tls_client_key=tls_client_key,
-                    tls_client_passwd=tls_client_passwd,
-                )
-                logger.info(f"model at {serve_config.model_path} served on vllm")
-                break
-            except ClientException:
-                count += 1
-
-        return (vllm_proc, temp_api_base, None)
-
-
-def ensure_server(
-    logger,
-    serve_config,
-    tls_insecure,
-    tls_client_cert,
-    tls_client_key,
-    tls_client_passwd,
-    model_family,
-):
-    """Checks if server is running, if not starts one as a subprocess. Returns the server process
-    and the URL where it's available."""
-    try:
-        api_base = serve_config.api_base()
-        logger.debug(f"Trying to connect to {api_base}...")
-        # pylint: disable=duplicate-code
-        list_models(
-            api_base=api_base,
-            tls_insecure=tls_insecure,
-            tls_client_cert=tls_client_cert,
-            tls_client_key=tls_client_key,
-            tls_client_passwd=tls_client_passwd,
-        )
-        return (None, None, None)
-        # pylint: enable=duplicate-code
-    except ClientException:
-        tried_ports = set()
-        mpctx = multiprocessing.get_context(None)
-        # use a queue to communicate between the main process and the server process
-        queue = mpctx.Queue()
-        port = random.randint(1024, 65535)
-        host = serve_config.host_port.rsplit(":", 1)[0]
-        logger.debug(f"Trying port {port}...")
-
-        # extract address provided in the config
-        while not can_bind_to_port(host, port):
-            logger.debug(f"Port {port} is not available.")
-            # add the port to the map so that we can avoid using the same one
-            tried_ports.add(port)
-            port = random.randint(1024, 65535)
-            while True:
-                # if all the ports have been tried, exit
-                if len(tried_ports) == 65535 - 1024:
-                    # pylint: disable=raise-missing-from
-                    raise SystemExit(
-                        "No available ports to start the temporary server."
-                    )
-                if port in tried_ports:
-                    logger.debug(f"Port {port} has already been tried.")
-                    port = random.randint(1024, 65535)
-                else:
-                    break
-        logger.debug(f"Port {port} is available.")
-
-        host_port = f"{host}:{port}"
-        temp_api_base = get_api_base(host_port)
-        logger.debug(
-            f"Connection to {api_base} failed. Starting a temporary server at {temp_api_base}..."
-        )
-        # create a temporary, throw-away logger
-        server_logger = logging.getLogger(host_port)
-        server_logger.setLevel(logging.FATAL)
-        logger.info(f"Using serving backend: {serve_config.backend}")
-        server_process = None
-        server_process = mpctx.Process(
-            target=server,
-            kwargs={
-                "logger": server_logger,
-                "model_path": serve_config.model_path,
-                "gpu_layers": serve_config.gpu_layers,
-                "max_ctx_size": serve_config.max_ctx_size,
-                "model_family": model_family,
-                "port": port,
-                "host": host,
-                "queue": queue,
-            },
-        )
-
-        server_process.start()
-
-        # in case the server takes some time to fail we wait a bit
-        count = 0
-        while server_process.is_alive():
-            sleep(0.1)
-            try:
-                list_models(
-                    api_base=temp_api_base,
-                    tls_insecure=tls_insecure,
-                    tls_client_cert=tls_client_cert,
-                    tls_client_key=tls_client_key,
-                    tls_client_passwd=tls_client_passwd,
-                )
-                break
-            except ClientException:
-                pass
-            if count > 50:
-                logger.error("failed to reach the API server")
-                break
-            count += 1
-
-        # if the queue is not empty it means the server failed to start
-        if not queue.empty():
-            # pylint: disable=raise-missing-from
-            raise queue.get()
-
-        return (server_process, temp_api_base, queue)
-
-
-def vllm_serve(
-    logger,
-    model_path,
-    host="localhost",
-    port=8000,
-    vllm_args=None,
-):
-    """Start an OpenAI-compatible server with vllm"""
-    logger.info(f"vllm host is {host}, port is {port}")
-    vllm_cmd = [sys.executable, 
-                "-m",
-                "vllm.entrypoints.openai.api_server", 
-                "--host", host,
-                "--port", str(port),
-                "--model", model_path,
-                ]
-    if vllm_args is not None:
-        vllm_cmd.extend(vllm_args.split())
-
-    logger.info(f"vllm serving command is: {vllm_cmd}")
-    try:
-        vllm_proc = subprocess.Popen(args=vllm_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        return vllm_proc
-    except subprocess.CalledProcessError as err:
-        logger.debug(f"Vllm did not start properly. Exited with return code: {err.returncode}")
         return None
+        # pylint: enable=duplicate-code
+    except ClientException:
+        tried_ports = set()
+        port = random.randint(1024, 65535)
+        host = serve_config.host_port.rsplit(":", 1)[0]
+        logger.debug(f"Trying port {port}...")
+
+        # extract address provided in the config
+        while not can_bind_to_port(host, port):
+            logger.debug(f"Port {port} is not available.")
+            # add the port to the map so that we can avoid using the same one
+            tried_ports.add(port)
+            port = random.randint(1024, 65535)
+            while True:
+                # if all the ports have been tried, exit
+                if len(tried_ports) == 65535 - 1024:
+                    # pylint: disable=raise-missing-from
+                    raise SystemExit(
+                        "No available ports to start the temporary server."
+                    )
+                if port in tried_ports:
+                    logger.debug(f"Port {port} has already been tried.")
+                    port = random.randint(1024, 65535)
+                else:
+                    break
+        logger.debug(f"Port {port} is available.")
+
+        host_port = f"{host}:{port}"
+        temp_api_base = get_api_base(host_port)
+        logger.debug(
+            f"Connection to {api_base} failed. Starting a temporary server at {temp_api_base}..."
+        )
+        backend_server = None
+        if serve_config.backend == "vllm":
+            backend_server = VllmServer(logger, temp_api_base, serve_config.model_path, host, port, serve_config.vllm_args)
+        else:
+            backend_server = LlamaCppServer(logger, temp_api_base, serve_config.model_path, host, port, serve_config.gpu_layers, serve_config.max_ctx_size, model_family)
+
+        if backend_server:
+            backend_server.run(tls_insecure, tls_client_cert, tls_client_key, tls_client_passwd)
+
+        return backend_server
 
 
 def server(
