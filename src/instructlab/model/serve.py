@@ -2,11 +2,15 @@
 
 # Third Party
 import click
+import sys
+import subprocess
+import time
+import logging
 
 # First Party
 from instructlab import configuration as config
 from instructlab import log
-from instructlab.server import ServerException, server
+from instructlab.server import ServerException, server, VllmServer
 
 
 @click.command()
@@ -38,33 +42,67 @@ from instructlab.server import ServerException, server
     type=click.Path(),
     help="Log file path to write server logs to.",
 )
+@click.option(
+    "--vllm-args",
+    type=str,
+    help="Specific arguments to pass into vllm. The value passed into this flag must be surrounded by double quotes.\n Example: --vllm-args '--dtype auto --enable-lora'",
+)
 @click.pass_context
 def serve(
-    ctx, model_path, gpu_layers, num_threads, max_ctx_size, model_family, log_file
+    ctx, model_path, gpu_layers, num_threads, max_ctx_size, model_family, log_file, vllm_args
 ):
     """Start a local server"""
     # pylint: disable=C0415
 
     # Redirect server stdout and stderr to the logger
     log.stdout_stderr_to_logger(ctx.obj.logger, log_file)
+    serve_config = ctx.obj.config.serve
+    ctx.obj.logger.info(f"Serving model '{model_path}' with {serve_config.backend}")
+    if serve_config.backend == "vllm":
+        # TODO: check flags, then serve_config for values of model_path, vllm_args
+        # TODO: make sure all options in serve_config are also flags for model serve command
+        # TODO: look into using VllmServer and LlamaCppServer classes here
 
-    ctx.obj.logger.info(
-        f"Using model '{model_path}' with {gpu_layers} gpu-layers and {max_ctx_size} max context size."
-    )
+        vllm_cmd = [sys.executable, 
+                    "-m",
+                    "vllm.entrypoints.openai.api_server", 
+                    "--model", model_path,
+                    ]
+        if vllm_args is not None:
+            vllm_cmd.extend(vllm_args.split())
 
-    try:
-        host = ctx.obj.config.serve.host_port.split(":")[0]
-        port = int(ctx.obj.config.serve.host_port.split(":")[1])
-        server(
-            ctx.obj.logger,
-            model_path,
-            gpu_layers,
-            max_ctx_size,
-            model_family,
-            num_threads,
-            host,
-            port,
+        try:
+            #TODO: below command gives no output to stdout, play around with stdout, stderr options for UX
+            #vllm_process = subprocess.Popen(args=vllm_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            vllm_process = subprocess.Popen(args=vllm_cmd)
+        except subprocess.CalledProcessError as err:
+            ctx.obj.logger.debug(f"Vllm did not start properly. Exited with return code: {err.returncode}")
+
+        #TODO: look a into cleaner way to terminate vllm process
+        try:
+            while True:
+                time.sleep(1)
+        except KeyboardInterrupt:
+            ctx.obj.logger.debug(f"Vllm terminated by user")
+            vllm_process.terminate()
+    else:
+        ctx.obj.logger.info(
+            f"Using model '{model_path}' with {gpu_layers} gpu-layers and {max_ctx_size} max context size."
         )
-    except ServerException as exc:
-        click.secho(f"Error creating server: {exc}", fg="red")
-        raise click.exceptions.Exit(1)
+
+        try:
+            host = ctx.obj.config.serve.host_port.split(":")[0]
+            port = int(ctx.obj.config.serve.host_port.split(":")[1])
+            server(
+                ctx.obj.logger,
+                model_path,
+                gpu_layers,
+                max_ctx_size,
+                model_family,
+                num_threads,
+                host,
+                port,
+            )
+        except ServerException as exc:
+            click.secho(f"Error creating server: {exc}", fg="red")
+            raise click.exceptions.Exit(1)
