@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "instructlab"
-authors = [{ name = "TBD", email = "jon@example.com" }]
+authors = [{ name = "InstructLab", email = "dev@instructlab.ai" }]
 description = "CLI for interacting with InstructLab"
 readme = "README.md"
 license = { text = "Apache-2.0 AND MIT" }
@@ -33,7 +33,7 @@ dynamic = ["dependencies", "optional-dependencies", "version"]
 ilab = "instructlab.lab:ilab"
 
 [project.urls]
-homepage = "https://instructlab.io"
+homepage = "https://instructlab.ai"
 source = "https://github.com/instructlab/instructlab"
 issues = "https://github.com/instructlab/instructlab/issues"
 
