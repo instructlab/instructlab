@@ -7,6 +7,8 @@ import os
 import shutil
 
 # Third Party
+from huggingface_hub import errors as hf_errors
+from requests import exceptions as requests_exceptions
 import click
 
 # First Party
@@ -64,12 +66,19 @@ def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model
     model_dir_fused = f"{source_model_dir}-fused"
 
     # this combines adapter with the original model to produce the updated model
-    fine_tune(
-        model=source_model_dir,
-        save_path=model_dir_fused,
-        adapter_file=adapter_file,
-        de_quantize=not skip_de_quantize,
-    )
+    try:
+        fine_tune(
+            model=source_model_dir,
+            save_path=model_dir_fused,
+            adapter_file=adapter_file,
+            de_quantize=not skip_de_quantize,
+        )
+    except (requests_exceptions.HTTPError, hf_errors.HFValidationError) as e:
+        click.secho(
+            f"Failed to fine tune: {e}",
+            fg="red",
+        )
+        raise click.exceptions.Exit(1)
 
     ctx.obj.logger.info(f"deleting {source_model_dir}...")
     shutil.rmtree(source_model_dir)
