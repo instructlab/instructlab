@@ -37,6 +37,9 @@ transformers>=4.30.0,<=4.38.2
 trl>=0.7.11,<0.8.0
 wandb>=0.16.4,<0.17.0
 langchain-text-splitters
+# do not use 8.4.0 due to a bug in the library
+# https://github.com/instructlab/instructlab/issues/1389
+tenacity>=8.3.0,!=8.4.0
 # the below library should NOT be imported into any python files
 # it is for CLI usage ONLY
 yamllint>=1.35.1,<1.36.0
