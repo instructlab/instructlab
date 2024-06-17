@@ -7,8 +7,16 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    groups:
+      all:
+        patterns:
+          - "*"
   - package-ecosystem: "docker"
     directory: "/.github/workflows"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    groups:
+      all:
+        patterns:
+          - "*"
