@@ -177,6 +177,16 @@ md-lint: check-engine ## Lint markdown files
 	$(ECHO_PREFIX) printf "  %-12s ./...\n" "[MD LINT]"
 	$(CMD_PREFIX) $(CENGINE) run --rm -v $(CURDIR):/workdir --security-opt label=disable docker.io/davidanson/markdownlint-cli2:v0.12.1 > /dev/null
 
+.PHONY: toml-lint
+toml-lint: check-engine ## Lint pyproject.toml
+	$(ECHO_PREFIX) printf "  %-12s ./...\n" "[TOML LINT]"
+	$(CMD_PREFIX) $(CENGINE) run --rm -v $(CURDIR):/workdir --security-opt label=disable docker.io/tamasfe/taplo:0.8.1 lint /workdir/pyproject.toml
+
+.PHONY: toml-fmt
+toml-fmt: check-engine ## Format pyproject.toml
+	$(ECHO_PREFIX) printf "  %-12s ./...\n" "[TOML FMT]"
+	$(CMD_PREFIX) $(CENGINE) run --rm -v $(CURDIR):/workdir --security-opt label=disable docker.io/tamasfe/taplo:0.8.1 fmt /workdir/pyproject.toml
+
 .PHONY: check-tox
 check-tox:
 	@command -v tox &> /dev/null || (echo "'tox' is not installed" && exit 1)
