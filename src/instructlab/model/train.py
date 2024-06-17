@@ -20,7 +20,6 @@ from instructlab.training import (
 	run_training,
 	TorchrunArgs,
 	TrainingArgs,
-	DeepSpeedOptions
 )
 
 @click.command()
@@ -372,9 +371,8 @@ def train(
         # checkpoint_dirs = training_results_dir.glob("checkpoint*")
         # shutil.rmtree(checkpoint_dirs[0])
     else:
-        # TODO copy some downloaded files from the PyTorch model folder
-        # Seems to be not a problem if working with a remote download with convert.py
-    #   execute library code
+        # take flags, funnel them into a _train object, pass it to library.
+        #  execute library code
         run_training(
             # somehow pass all above flags
             # torch args too
