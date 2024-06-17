@@ -16,6 +16,12 @@ from instructlab import utils
 
 logger = logging.getLogger(__name__)
 
+from instructlab.training import (
+	run_training,
+	TorchrunArgs,
+	TrainingArgs,
+	DeepSpeedOptions
+)
 
 @click.command()
 @click.option("--data-dir", help="Base directory where data is stored.", default=None)
@@ -121,6 +127,12 @@ logger = logging.getLogger(__name__)
 @click.option("--node-rank", type=int)
 @click.option("--rdzv-id", type=int)
 @click.option("--rdzv-endpoint", type=str)
+@click.option(
+    "--legacy",
+    hidden=True,
+    type=bool,
+    default=False 
+)
 @click.pass_context
 @utils.display_params
 def train(
@@ -159,11 +171,15 @@ def train(
     node_rank,
     rdzv_id,
     rdzv_endpoint,
+    legacy
 ):
     """
     Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
+
+    # how do we differentiate between usecases?
+
     if not input_dir:
         # By default, generate output-dir is used as train input-dir
         input_dir = ctx.obj.config.generate.output_dir
@@ -220,75 +236,8 @@ def train(
         shutil.copy(train_files[0], train_file)
         shutil.copy(test_files[0], test_file)
 
-    # pylint: disable=import-outside-toplevel
-    if not utils.is_macos_with_m_chip():
-        # Local
-        from ..llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
-        from ..train.linux_train import linux_train
-
-        training_results_dir = linux_train(
-            ctx=ctx,
-            train_file=train_file,
-            test_file=test_file,
-            model_name=model_dir,
-            num_epochs=num_epochs,
-            train_device=device,
-            four_bit_quant=four_bit_quant,
-        )
-
-        final_results_dir = training_results_dir / "final"
-        if final_results_dir.exists():
-            shutil.rmtree(final_results_dir)
-        final_results_dir.mkdir()
-
-        gguf_models_dir = Path("./models")
-        gguf_models_dir.mkdir(exist_ok=True)
-        gguf_models_file = gguf_models_dir / "ggml-model-f16.gguf"
-
-        # Remove previously trained model, its taking up space we may need in the next step
-        gguf_models_file.unlink(missing_ok=True)
-
-        # TODO: Figure out what to do when there are multiple checkpoint dirs.
-        # Right now it's just copying files from the first one numerically not necessarily the best one
-        for fpath in (
-            "checkpoint-*/added_tokens.json",
-            "checkpoint-*/special_tokens_map.json",
-            "checkpoint-*/tokenizer.json",
-            "checkpoint-*/tokenizer.model",
-            "checkpoint-*/tokenizer_config.json",
-            "merged_model/config.json",
-            "merged_model/generation_config.json",
-        ):
-            file_ = next(training_results_dir.glob(fpath))
-            shutil.copy(file_, final_results_dir)
-            print(f"Copied {file_} to {final_results_dir}")
-
-        for file in training_results_dir.glob("merged_model/*.safetensors"):
-            shutil.move(file, final_results_dir)
-            print(f"Moved {file} to {final_results_dir}")
-
-        if four_bit_quant:
-            print(
-                "SKIPPING CONVERSION to gguf. This is unsupported with --4-bit-quant. "
-                + "See https://github.com/instructlab/instructlab/issues/579."
-            )
-            return
-
-        gguf_file_path = convert_llama_to_gguf(model=final_results_dir, pad_vocab=True)
-
-        # Remove safetensors files to save space, were done with them here
-        # and the huggingface lib has them cached
-        for file in final_results_dir.glob("*.safetensors"):
-            file.unlink()
-
-        shutil.move(gguf_file_path, gguf_models_file)
-        print(f"Save trained model to {gguf_models_file}")
-
-        # cleanup checkpoint dir since it's name is unpredictable
-        # TODO: figure out how checkpoint dirs should be cleaned up
-        # checkpoint_dirs = training_results_dir.glob("checkpoint*")
-        # shutil.rmtree(checkpoint_dirs[0])
-    else:
+    # if macos, preserve that path
+    if utils.is_macos_with_m_chip():
         # Local
         from ..mlx_explore.gguf_convert_to_mlx import load
         from ..mlx_explore.utils import fetch_tokenizer_from_hub
@@ -355,6 +304,78 @@ def train(
             save_every=10,
             steps_per_eval=10,
         )
+    elif legacy:
+                # Local
+        from ..llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
+        from ..train.linux_train import linux_train
 
+        training_results_dir = linux_train(
+            ctx=ctx,
+            train_file=train_file,
+            test_file=test_file,
+            model_name=model_dir,
+            num_epochs=num_epochs,
+            train_device=device,
+            four_bit_quant=four_bit_quant,
+        )
+
+        final_results_dir = training_results_dir / "final"
+        if final_results_dir.exists():
+            shutil.rmtree(final_results_dir)
+        final_results_dir.mkdir()
+
+        gguf_models_dir = Path("./models")
+        gguf_models_dir.mkdir(exist_ok=True)
+        gguf_models_file = gguf_models_dir / "ggml-model-f16.gguf"
+
+        # Remove previously trained model, its taking up space we may need in the next step
+        gguf_models_file.unlink(missing_ok=True)
+
+        # TODO: Figure out what to do when there are multiple checkpoint dirs.
+        # Right now it's just copying files from the first one numerically not necessarily the best one
+        for fpath in (
+            "checkpoint-*/added_tokens.json",
+            "checkpoint-*/special_tokens_map.json",
+            "checkpoint-*/tokenizer.json",
+            "checkpoint-*/tokenizer.model",
+            "checkpoint-*/tokenizer_config.json",
+            "merged_model/config.json",
+            "merged_model/generation_config.json",
+        ):
+            file_ = next(training_results_dir.glob(fpath))
+            shutil.copy(file_, final_results_dir)
+            print(f"Copied {file_} to {final_results_dir}")
+
+        for file in training_results_dir.glob("merged_model/*.safetensors"):
+            shutil.move(file, final_results_dir)
+            print(f"Moved {file} to {final_results_dir}")
+
+        if four_bit_quant:
+            print(
+                "SKIPPING CONVERSION to gguf. This is unsupported with --4-bit-quant. "
+                + "See https://github.com/instructlab/instructlab/issues/579."
+            )
+            return
+
+        gguf_file_path = convert_llama_to_gguf(model=final_results_dir, pad_vocab=True)
+
+        # Remove safetensors files to save space, were done with them here
+        # and the huggingface lib has them cached
+        for file in final_results_dir.glob("*.safetensors"):
+            file.unlink()
+
+        shutil.move(gguf_file_path, gguf_models_file)
+        print(f"Save trained model to {gguf_models_file}")
+
+        # cleanup checkpoint dir since it's name is unpredictable
+        # TODO: figure out how checkpoint dirs should be cleaned up
+        # checkpoint_dirs = training_results_dir.glob("checkpoint*")
+        # shutil.rmtree(checkpoint_dirs[0])
+    else:
         # TODO copy some downloaded files from the PyTorch model folder
         # Seems to be not a problem if working with a remote download with convert.py
+    #   execute library code
+        run_training(
+            # somehow pass all above flags
+            # torch args too
+        )
