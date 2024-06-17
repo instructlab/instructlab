@@ -84,7 +84,11 @@ TORCH_DEVICE = TorchDeviceParam()
 
 
 @click.command()
-@click.option("--data-dir", help="Base directory where data is stored.", default=None)
+@click.option(
+    "--data-path", help="Base directory where data is stored.", default="data-input"
+)
+@click.option("--ckpt-output-dir", type=click.Path(), default="checkpoints")
+@click.option("--data-output-dir", type=click.Path(), default="data")
 @click.option(
     "--input-dir",
     type=click.Path(),
@@ -108,7 +112,7 @@ TORCH_DEVICE = TorchDeviceParam()
     show_default=True,
 )
 @click.option(
-    "--model-dir",
+    "--model-path",
     help="Base directory where model is stored.",
     default="instructlab/merlinite-7b-lab",
     show_default=True,
@@ -231,10 +235,6 @@ def train(
     Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
-
-    train_args = TrainingArgs(ctx.params)
-    print(train_args)
-
     # how do we differentiate between usecases?
 
     if not input_dir:
@@ -314,7 +314,7 @@ def train(
 
         # NOTE we can skip this if we have a way ship MLX
         # PyTorch safetensors to MLX safetensors
-        model_dir_local = model_dir.replace("/", "-")
+        model_dir_local = model_path.replace("/", "-")
         model_dir_mlx = f"{model_dir_local}-mlx"
         model_dir_mlx_quantized = f"{model_dir_local}-mlx-q"
 
@@ -429,9 +429,9 @@ def train(
         # checkpoint_dirs = training_results_dir.glob("checkpoint*")
         # shutil.rmtree(checkpoint_dirs[0])
     else:
-        train_args = TrainingArgs()
-        # take flags, funnel them into a _train object, pass it to library.
-        # train_args =
-        train_args = TrainingArgs(ctx.params)
-        torch_args = TorchrunArgs(ctx.params)
+        # pull the training and torch args from the flags
+        # the flags are populated from the config as a base.
+        params = ctx.params
+        train_args = TrainingArgs(**params)
+        torch_args = TorchrunArgs(**params)
         run_training(train_args=train_args, torch_args=torch_args)

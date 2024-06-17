@@ -165,7 +165,7 @@ class Config(BaseModel):
     general: _general = _general()
 
     # train configuration
-    train: _train
+    train: Optional[_train] = None
 
     # model configuration
     model_config = ConfigDict(extra="ignore")
@@ -182,6 +182,26 @@ def get_default_config():
         ),
         serve=_serve(model_path=DEFAULT_MODEL_PATH),
     )
+
+
+def read_train_profile(train_file):
+    try:
+        with open(train_file, "r", encoding="utf-8") as yamlfile:
+            content = yaml.safe_load(yamlfile)
+            return _train(**content)
+    except ValidationError as exc:
+        msg = f"{exc.error_count()} errors in {train_file}:\n"
+        for err in exc.errors():
+            msg += (
+                "- "
+                + err.get("type", "")
+                + " "
+                + "->".join(err.get("loc", ""))
+                + ": "
+                + err.get("msg", "").lower()
+                + "\n"
+            )
+        raise ConfigException(msg) from exc
 
 
 def read_config(config_file=DEFAULT_CONFIG):
@@ -262,4 +282,10 @@ def init(ctx, config_file):
         log.configure_logging(log_level=config_obj.general.log_level.upper())
         ctx.obj = Lab(config_obj)
         # default_map holds a dictionary with default values for each command parameters
-        ctx.default_map = get_dict(ctx.obj.config)
+        training_dict = get_dict(ctx.obj.config)
+        # since torch and train args are sep, they need to be combined into a single `train` entity for the default map
+        # this is because the flags for `ilab model train` will only be populated if the default map has a single `train` entry, not two.
+        training_dict["train"] = (
+            training_dict["train"]["train_args"] | training_dict["train"]["torch_args"]
+        )
+        ctx.default_map = training_dict

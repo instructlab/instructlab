@@ -53,6 +53,7 @@ from instructlab import utils
     "Please do not use this option if you are planning to contribute back "
     "using the same taxonomy repository. ",
 )
+@click.option("--train-profile", type=click.Path(), default=None)
 def init(
     interactive,
     model_path,
@@ -60,6 +61,7 @@ def init(
     taxonomy_base,
     repository,
     min_taxonomy,
+    train_profile,
 ):
     """Initializes environment for InstructLab"""
     clone_taxonomy_repo = True
@@ -117,6 +119,8 @@ def init(
         )
     click.echo(f"Generating `{config.DEFAULT_CONFIG}` in the current directory...")
     cfg = config.get_default_config()
+    if train_profile != None:
+        cfg.train = config.read_train_profile(train_profile)
     cfg.chat.model = model_path
     cfg.generate.model = model_path
     cfg.serve.model_path = model_path
