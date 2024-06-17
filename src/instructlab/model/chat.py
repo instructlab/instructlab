@@ -73,7 +73,7 @@ PROMPT_PREFIX = ">>> "
     "--model",
     default=cfg.DEFAULT_MODEL,
     show_default=True,
-    help="Model name to print in chat process",
+    help="Path to the model used for chat",
 )
 @click.option(
     "-c",
@@ -174,6 +174,7 @@ def chat(
         server_queue = None
     else:
         try:
+            ctx.obj.config.serve.model_path = model
             server_process, api_base, server_queue = ensure_server(
                 ctx.obj.logger,
                 ctx.obj.config.serve,
