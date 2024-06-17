@@ -21,6 +21,7 @@ from instructlab.training import (
 	TorchrunArgs,
 	TrainingArgs,
 )
+from ..configuration import _train
 
 @click.command()
 @click.option("--data-dir", help="Base directory where data is stored.", default=None)
@@ -128,7 +129,6 @@ from instructlab.training import (
 @click.option("--rdzv-endpoint", type=str)
 @click.option(
     "--legacy",
-    hidden=True,
     type=bool,
     default=False 
 )
@@ -372,8 +372,8 @@ def train(
         # shutil.rmtree(checkpoint_dirs[0])
     else:
         # take flags, funnel them into a _train object, pass it to library.
-        #  execute library code
+        train_args = TrainingArgs(ctx.params)
         run_training(
-            # somehow pass all above flags
-            # torch args too
+            train_args=train_args
+            # torch args too, torch_args=somehow_get_torch_args
         )
