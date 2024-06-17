@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+from glob import glob
 from pathlib import Path
-import glob
 import os
 import shutil
 
