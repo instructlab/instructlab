@@ -6,10 +6,9 @@ from re import match
 from typing import Optional
 import os
 import sys
-from typing import List
-from instructlab.training import TrainingArgs, TorchrunArgs
 
 # Third Party
+from instructlab.training import TorchrunArgs, TrainingArgs
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -148,9 +147,11 @@ class _serve(BaseModel):
         """Returns server API URL, based on the configured host and port"""
         return get_api_base(self.host_port)
 
+
 class _train(BaseModel):
     train_args: TrainingArgs
     torch_args: TorchrunArgs
+
 
 class Config(BaseModel):
     """Configuration for the InstructLab CLI."""

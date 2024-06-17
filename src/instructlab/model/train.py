@@ -8,6 +8,7 @@ import os
 import shutil
 
 # Third Party
+from instructlab.training import TorchrunArgs, TrainingArgs, run_training
 import click
 import torch
 
@@ -21,7 +22,66 @@ from instructlab.training import (
 	TorchrunArgs,
 	TrainingArgs,
 )
-from ..configuration import _train
+
+class TorchDeviceParam(click.ParamType):
+    """Parse and convert device string
+
+    Returns a torch.device object:
+    - type is one of 'cpu', 'cuda', 'hpu'
+    - index is None or device index (e.g. 0 for first GPU)
+    """
+
+    name = "deviceinfo"
+    supported_devices = {"cuda", "cpu", "hpu"}
+
+    def convert(self, value, param, ctx) -> "torch.device":
+        # pylint: disable=C0415
+        # Function local import, import torch can take more than a second
+        # Third Party
+        import torch
+
+        if not isinstance(value, torch.device):
+            try:
+                device = torch.device(value)
+            except RuntimeError as e:
+                self.fail(str(e), param, ctx)
+
+        if device.type not in self.supported_devices:
+            supported = ", ".join(repr(s) for s in sorted(self.supported_devices))
+            self.fail(
+                f"Unsupported device type '{device.type}'. Only devices "
+                f"types {supported}, and indexed device strings like 'cuda:0' "
+                "are supported for now.",
+                param,
+                ctx,
+            )
+
+        # Detect CUDA/ROCm device
+        if device.type == "cuda":
+            if not torch.cuda.is_available():
+                self.fail(
+                    f"{value}: Torch has no CUDA/ROCm support or could not detect "
+                    "a compatible device.",
+                    param,
+                    ctx,
+                )
+            # map unqualified 'cuda' to current device
+            if device.index is None:
+                device = torch.device(device.type, torch.cuda.current_device())
+
+        if device.type == "hpu":
+            click.secho(
+                "WARNING: HPU support is experimental, unstable, and not "
+                "optimized, yet.",
+                fg="red",
+                bold=True,
+            )
+
+        return device
+
+
+TORCH_DEVICE = TorchDeviceParam()
+
 
 @click.command()
 @click.option("--data-dir", help="Base directory where data is stored.", default=None)
@@ -102,8 +162,7 @@ from ..configuration import _train
 @click.option("--save-samples", type=int)
 @click.option("--learning-rate", type=float)
 @click.option("--warmup-steps", type=int)
-@click.option("--deepspeed-config", type=click.Path)
-# these two seem like they could be inferred by the above?
+@click.option("--deepspeed-config", type=click.Path())
 @click.option(
     "--cpu-offload-optim",
     type=bool,
@@ -116,7 +175,7 @@ from ..configuration import _train
 @click.option("--lora-dropout", type=float)
 @click.option(
     "--target-modules",
-    type=[],
+    type=str,
 )
 @click.option(
     "--is-padding-free",
@@ -127,11 +186,7 @@ from ..configuration import _train
 @click.option("--node-rank", type=int)
 @click.option("--rdzv-id", type=int)
 @click.option("--rdzv-endpoint", type=str)
-@click.option(
-    "--legacy",
-    type=bool,
-    default=False 
-)
+@click.option("--legacy", type=bool, default=False)
 @click.pass_context
 @utils.display_params
 def train(
@@ -170,12 +225,15 @@ def train(
     node_rank,
     rdzv_id,
     rdzv_endpoint,
-    legacy
+    legacy,
 ):
     """
     Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
+
+    train_args = TrainingArgs(ctx.params)
+    print(train_args)
 
     # how do we differentiate between usecases?
 
@@ -304,7 +362,7 @@ def train(
             steps_per_eval=10,
         )
     elif legacy:
-                # Local
+        # Local
         from ..llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
         from ..train.linux_train import linux_train
 
@@ -371,9 +429,9 @@ def train(
         # checkpoint_dirs = training_results_dir.glob("checkpoint*")
         # shutil.rmtree(checkpoint_dirs[0])
     else:
+        train_args = TrainingArgs()
         # take flags, funnel them into a _train object, pass it to library.
+        # train_args =
         train_args = TrainingArgs(ctx.params)
-        run_training(
-            train_args=train_args
-            # torch args too, torch_args=somehow_get_torch_args
-        )
+        torch_args = TorchrunArgs(ctx.params)
+        run_training(train_args=train_args, torch_args=torch_args)

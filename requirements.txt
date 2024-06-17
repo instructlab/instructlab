@@ -46,3 +46,4 @@ tenacity>=8.3.0,!=8.4.0
 # the below library should NOT be imported into any python files
 # it is for CLI usage ONLY
 yamllint>=1.35.1
+instructlab-training>=0.0.3
