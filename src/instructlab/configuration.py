@@ -58,6 +58,9 @@ MODEL_FAMILY_MAPPINGS = {
 }
 
 
+class ProfileException(Exception):
+    """An exception that a profile has an error"""
+
 class ConfigException(Exception):
     """An exception that a configuration file has an error."""
 
@@ -179,6 +182,9 @@ class _train(BaseModel):
     deepspeed: _deepspeed
     lora: _lora
 
+class _profile(BaseModel):
+    train: _train
+
 class Config(BaseModel):
     """Configuration for the InstructLab CLI."""
 
@@ -190,8 +196,8 @@ class Config(BaseModel):
     # additional fields with defaults
     general: _general = _general()
 
-    # train configuration
-    train: _train
+    # profile configuration
+    profile: _profile
 
     # model configuration
     model_config = ConfigDict(extra="ignore")
@@ -209,6 +215,25 @@ def get_default_config():
         serve=_serve(model_path=DEFAULT_MODEL_PATH),
     )
 
+def read_profile(profile):
+    """Reads profile from disk"""
+    try:
+        with open(profile, "r", encoding="utf-8") as yamlfile:
+            content = yaml.safe_load(yamlfile)
+            return _profile(**content)
+    except ValidationError as exc:
+        msg = f"{exc.error_count()} errors in {profile}:\n"
+        for err in exc.errors():
+            msg += (
+                "- "
+                + err.get("type", "")
+                + " "
+                + "->".join(err.get("loc", ""))
+                + ": "
+                + err.get("msg", "").lower()
+                + "\n"
+            )
+        raise ProfileException(msg) from exc
 
 def read_config(config_file=DEFAULT_CONFIG):
     """Reads configuration from disk."""
