@@ -369,6 +369,7 @@ def train(
             steps_per_eval=10,
         )
     else:
+        # take flags, funnel them into a _train object, pass it to library.
     #   execute library code
         torchrun_train(
             # somehow pass all above flags

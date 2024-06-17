@@ -7,6 +7,7 @@ from typing import Optional
 import logging
 import os
 import sys
+from typing import List
 
 # Third Party
 from pydantic import (
@@ -148,6 +149,35 @@ class _serve(BaseModel):
         """Returns server API URL, based on the configured host and port"""
         return get_api_base(self.host_port)
 
+class _deepspeed(BaseModel):
+    deepspeed: bool
+    deepspeed_config: str
+    offload_strat: str
+    cpu_offload_optimizer: bool
+    cpu_offload_params: bool
+    quantize_dtype: str
+
+class _lora(BaseModel):
+    lora: bool
+    lora_rank: int
+    lora_alpha: float
+    lora_dropout: float
+    target_modules: List[str]
+
+class _train(BaseModel):
+    model_path: str
+    data_path: str
+    output_dir: str
+    num_gpus: int
+    max_seq_len: int
+    max_batch_len: int
+    num_epochs: int
+    effective_batch_size: int
+    save_samples: int
+    learning_rate: float
+    warmup_steps: int
+    deepspeed: _deepspeed
+    lora: _lora
 
 class Config(BaseModel):
     """Configuration for the InstructLab CLI."""
@@ -159,6 +189,9 @@ class Config(BaseModel):
 
     # additional fields with defaults
     general: _general = _general()
+
+    # train configuration
+    train: _train
 
     # model configuration
     model_config = ConfigDict(extra="ignore")
