@@ -2,6 +2,7 @@
 
 # Standard
 from contextlib import redirect_stderr, redirect_stdout
+from pathlib import Path
 from time import sleep
 import logging
 import multiprocessing
@@ -163,6 +164,19 @@ def server(
     queue=None,
 ):
     """Start OpenAI-compatible server"""
+
+    class ModelPathError(Exception):
+        pass
+
+    try:
+        if not Path(model_path).is_file():
+            raise ModelPathError(
+                f"Model file does not exist: '{model_path}'. If the model doesn't exist, download it using the 'ilab model download' command. Please verify the model path in 'config.yaml' or pass '--model-path'."
+            )
+    except ModelPathError as e:
+        logger.error(str(e))
+        raise e
+
     settings = Settings(
         host=host,
         port=port,
