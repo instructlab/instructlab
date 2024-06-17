@@ -13,6 +13,7 @@ import torch
 # First Party
 from instructlab import utils
 from instructlab_train import torchrun_train
+from ..configuration import _train
 
 class TorchDeviceParam(click.ParamType):
     """Parse and convert device string
@@ -370,8 +371,8 @@ def train(
         )
     else:
         # take flags, funnel them into a _train object, pass it to library.
-    #   execute library code
+        train_args = _train(ctx.params)
         torchrun_train(
-            # somehow pass all above flags
-            # torch args too
+            training_args=train_args
+            # torch args too, torch_args=somehow_get_torch_args
         )
