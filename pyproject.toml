@@ -6,9 +6,13 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "instructlab"
+<<<<<<< HEAD
 authors = [
     { name="TBD", email="jon@example.com" },
 ]
+=======
+authors = [{ name = "InstructLab", email = "dev@instructlab.ai" }]
+>>>>>>> 3f6b950 (update py project authors)
 description = "CLI for interacting with InstructLab"
 readme = "README.md"
 license = {text = "Apache-2.0 AND MIT"}
