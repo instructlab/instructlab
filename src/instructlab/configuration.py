@@ -33,7 +33,6 @@ DEFAULT_MODEL_PATH = "models/merlinite-7b-lab-Q4_K_M.gguf"
 DEFAULT_TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
 DEFAULT_TAXONOMY_PATH = "taxonomy"
 DEFAULT_TAXONOMY_BASE = "origin/main"
-DEFAULT_YAML_RULES = "yaml_rules.yaml"
 MAX_CONTEXT_SIZE = 4096
 # TODO: these constants should be removed, they should not leak out
 DEFAULT_NUM_CPUS = 10
