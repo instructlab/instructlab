@@ -534,10 +534,15 @@ def read_taxonomy_file(
         tax_path = "->".join(taxonomy_path.parent.parts)
         task_description = contents.get("task_description")
         documents = contents.get("document")
-        if documents:
+        local_document_directory = os.path.join(file_path.parent, "documents")
+        if documents and os.path.exists(local_document_directory):
+            documents = aggregate_document_content_from_directory(
+                logger=logger, document_directory=local_document_directory
+            )
+            logger.debug("Content from local document directory fetched")
+        elif documents:
             documents = get_documents(source=documents, logger=logger)
             logger.debug("Content from git repo fetched")
-
         for seed_example in contents.get("seed_examples"):
             question = seed_example.get("question")
             answer = seed_example.get("answer")
@@ -613,3 +618,18 @@ def http_client(params):
         ),
         verify=not params["tls_insecure"],
     )
+
+
+def aggregate_document_content_from_directory(logger, document_directory):
+    try:
+        file_contents = []
+        logger.debug("Processing files...")
+        for file_path in glob.glob(os.path.join(document_directory, "*.md")):
+            if os.path.isfile(file_path) and file_path.endswith(".md"):
+                with open(file_path, "r", encoding="utf-8") as file:
+                    file_contents.append(file.read())
+        if file_contents:
+            return file_contents
+        raise SystemExit("Couldn't find knowledge documents")
+    except (OSError, exc.GitCommandError, FileNotFoundError) as e:
+        raise e
