@@ -12,7 +12,8 @@ import torch
 
 # First Party
 from instructlab import utils
-
+from instructlab_train import torchrun_train
+from ..configuration import _train
 
 class TorchDeviceParam(click.ParamType):
     """Parse and convert device string
@@ -75,7 +76,11 @@ TORCH_DEVICE = TorchDeviceParam()
 
 
 @click.command()
-@click.option("--data-dir", help="Base directory where data is stored.", default=None)
+@click.option(
+    "--data-dir", 
+    help="Base directory where data is stored.", 
+    default=None
+)
 @click.option(
     "--input-dir",
     type=click.Path(),
@@ -89,12 +94,6 @@ TORCH_DEVICE = TorchDeviceParam()
 @click.option(
     "--tokenizer-dir",
     help="Base directory where tokenizer is stored.",
-    default=None,
-    show_default=True,
-)
-@click.option(
-    "--gguf-model-path",
-    help="Local directory where gguf model is stored.",
     default=None,
     show_default=True,
 )
@@ -148,10 +147,85 @@ TORCH_DEVICE = TorchDeviceParam()
     ),
 )
 @click.option(
-    "--model-name",
-    default="instructlab/merlinite-7b-lab",
-    show_default=True,
-    help="model name to use in training",
+    "--gpus",
+    type=str,
+    default="-1",
+    help="GPUs to use for training"
+
+)
+@click.option(
+    "--max-seq-len",
+    type=int
+)
+@click.option(
+    "--max-batch-len",
+    type=int
+)
+@click.option(
+    "--effective-batch-size",
+    type=int
+)
+@click.option(
+    "--save-samples",
+    type=int
+)
+@click.option(
+    "--learning-rate",
+    "lr",
+    type=float
+)
+@click.option(
+    "--warmup-steps",
+    type=int
+)
+@click.option(
+    "--deepspeed",
+    type=bool
+)
+@click.option(
+    "--deepspeed-config",
+    type=click.Path
+)
+@click.option(
+    "--offload-strategy",
+    type=click.Choice(["cpu", "nvme", None]),
+    default=None
+)
+# these two seem like they could be inferred by the above?
+@click.option(
+    "--cpu-offload-optim",
+    type=bool,
+)
+@click.option(
+    "--cpu-offload-params",
+    type=bool
+)
+@click.option(
+    "--ds-quantize-type",
+    type=click.Choice(["nf4", "fp8", None]),
+    default=None
+)
+@click.option(
+    "--lora",
+    type=bool,
+    default=False
+)
+# below flags are invalid if lora == false
+@click.option(
+    "--lora-rank",
+    type=int
+)
+@click.option(
+    "--lora-alpha",
+    type=float
+)
+@click.option(
+    "--lora-dropout",
+    type=float
+)
+@click.option(
+    "--target-modules",
+    type=[],
 )
 @click.pass_context
 @utils.display_params
@@ -161,7 +235,6 @@ def train(
     input_dir,
     skip_preprocessing,
     tokenizer_dir,
-    gguf_model_path,
     model_dir,
     iters,
     local,
@@ -169,12 +242,31 @@ def train(
     num_epochs,
     device: "torch.device",
     four_bit_quant: bool,
-    model_name: str,
+    gpus,
+    max_seq_len,
+    max_batch_len,
+    effective_batch_size,
+    save_samples,
+    learning_rate,
+    warmup_steps,
+    deepspeed,
+    deepspeed_config,
+    offload_strategy,
+    cpu_offload_optim,
+    cpu_offload_params,
+    ds_quantize_dtype,
+    lora,
+    lora_rank,
+    lora_dropout,
+    target_modules,
 ):
     """
     Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
+
+    # how do we differentiate between usecases?
+
     if not input_dir:
         # By default, generate output-dir is used as train input-dir
         input_dir = ctx.obj.config.generate.output_dir
@@ -227,78 +319,9 @@ def train(
         shutil.copy(train_files[0], train_file)
         shutil.copy(test_files[0], test_file)
 
-    # pylint: disable=import-outside-toplevel
-    if not utils.is_macos_with_m_chip():
+    # if macos, preserve that path
+    if utils.is_macos_with_m_chip():
         # Local
-        from ..llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
-        from ..train.linux_train import linux_train
-
-        linux_train(
-            ctx=ctx,
-            train_file=train_file,
-            test_file=test_file,
-            model_name=model_name,
-            num_epochs=num_epochs,
-            device=device,
-            four_bit_quant=four_bit_quant,
-        )
-
-        training_results_dir = Path("./training_results")
-
-        final_results_dir = training_results_dir / "final"
-        final_results_dir.mkdir(exist_ok=True)
-
-        gguf_models_dir = Path("./models")
-        gguf_models_dir.mkdir(exist_ok=True)
-        gguf_models_file = gguf_models_dir / "ggml-model-f16.gguf"
-
-        # Remove previously trained model, its taking up space we may need in the next step
-        gguf_models_file.unlink(missing_ok=True)
-
-        # TODO: Figure out what to do when there are multiple checkpoint dirs.
-        # Right now it's just copying files from the first one numerically not necessarily the best one
-        for fpath in (
-            "checkpoint-*/added_tokens.json",
-            "checkpoint-*/special_tokens_map.json",
-            "checkpoint-*/tokenizer.json",
-            "checkpoint-*/tokenizer.model",
-            "checkpoint-*/tokenizer_config.json",
-            "merged_model/config.json",
-            "merged_model/generation_config.json",
-        ):
-            file_ = next(training_results_dir.glob(fpath))
-            shutil.copy(file_, final_results_dir)
-            print(f"Copied {file_} to {final_results_dir}")
-
-        for file in training_results_dir.glob("merged_model/*.safetensors"):
-            shutil.move(file, final_results_dir)
-            print(f"Moved {file} to {final_results_dir}")
-
-        if four_bit_quant:
-            print(
-                "SKIPPING CONVERSION to gguf. This is unsupported with --4-bit-quant. "
-                + "See https://github.com/instructlab/instructlab/issues/579."
-            )
-            return
-
-        gguf_file_path = convert_llama_to_gguf(model=final_results_dir, pad_vocab=True)
-
-        # Remove safetensors files to save space, were done with them here
-        # and the huggingface lib has them cached
-        for file in final_results_dir.glob("*.safetensors"):
-            file.unlink()
-
-        shutil.move(gguf_file_path, gguf_models_file)
-        print(f"Save trained model to {gguf_models_file}")
-
-        # cleanup checkpoint dir since it's name is unpredictable
-        # TODO: figure out how checkpoint dirs should be cleaned up
-        # checkpoint_dirs = training_results_dir.glob("checkpoint*")
-        # shutil.rmtree(checkpoint_dirs[0])
-    else:
-        # Local
-        from ..mlx_explore.gguf_convert_to_mlx import load
-        from ..mlx_explore.utils import fetch_tokenizer_from_hub
         from ..train.lora_mlx.convert import convert_between_mlx_and_pytorch
         from ..train.lora_mlx.lora import load_and_train
         from ..train.lora_mlx.make_data import make_data
@@ -326,29 +349,14 @@ def train(
             dest_model_dir = model_dir_mlx_quantized
             quantize_arg = True
 
-        if tokenizer_dir is not None and gguf_model_path is not None:
-            if not local:
-                tokenizer_dir_local = tokenizer_dir.replace("/", "-")
-                fetch_tokenizer_from_hub(tokenizer_dir, tokenizer_dir_local)
 
-            # no need to pass quantize_arg for now, script automatically detects if quantization is necessary based on whether gguf model is quantized or not
-            load(gguf=gguf_model_path, repo=tokenizer_dir, mlx_path=dest_model_dir)
-
-            for filename in os.listdir(model_dir_local):
-                shutil.copy(
-                    os.path.join(model_dir_local, filename),
-                    os.path.join(dest_model_dir, filename),
-                )
-            shutil.rmtree(model_dir_local, ignore_errors=True)
-
-        else:
-            # Downloading PyTorch SafeTensor and Converting to MLX SafeTensor
-            convert_between_mlx_and_pytorch(
-                hf_path=model_dir,
-                mlx_path=dest_model_dir,
-                quantize=quantize_arg,
-                local=local,
-            )
+        # Downloading PyTorch SafeTensor and Converting to MLX SafeTensor
+        convert_between_mlx_and_pytorch(
+            hf_path=model_dir,
+            mlx_path=dest_model_dir,
+            quantize=quantize_arg,
+            local=local,
+        )
 
         adapter_file_path = f"{dest_model_dir}/adapters.npz"
         # train the model with LoRA
@@ -362,6 +370,10 @@ def train(
             save_every=10,
             steps_per_eval=10,
         )
-
-        # TODO copy some downloaded files from the PyTorch model folder
-        # Seems to be not a problem if working with a remote download with convert.py
+    else:
+        # take flags, funnel them into a _train object, pass it to library.
+        train_args = _train(ctx.params)
+        torchrun_train(
+            training_args=train_args
+            # torch args too, torch_args=somehow_get_torch_args
+        )
