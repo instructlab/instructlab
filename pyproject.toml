@@ -142,7 +142,7 @@ exclude = [
   "^src/instructlab/train/lora_mlx/models/mixtral\\.py$",
   "^src/instructlab/train/lora_mlx/models/models\\.py$",
   "^src/instructlab/utils\\.py$",
-  "^src/instructlab/server\\.py$",
+  "^src/instructlab/model/backends/llama\\.py$",
 ]
 # honor excludes by not following there through imports
 follow_imports = "silent"
