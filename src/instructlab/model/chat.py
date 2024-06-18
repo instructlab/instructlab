@@ -170,7 +170,10 @@ def chat(
     """Run a chat using the modified model"""
     # pylint: disable=C0415
     # First Party
-    from instructlab.model.backends.llama import ensure_server, is_temp_server_running
+    from instructlab.model.backends.llama_cpp import (
+        ensure_server,
+        is_temp_server_running,
+    )
 
     if endpoint_url:
         api_base = endpoint_url

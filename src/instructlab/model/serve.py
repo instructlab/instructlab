@@ -9,7 +9,7 @@ import click
 # First Party
 from instructlab import configuration as config
 from instructlab import log, utils
-from instructlab.model.backends.llama import ServerException, server
+from instructlab.model.backends.llama_cpp import ServerException, server
 
 logger = logging.getLogger(__name__)
 
@@ -43,12 +43,43 @@ logger = logging.getLogger(__name__)
     type=click.Path(),
     help="Log file path to write server logs to.",
 )
+@click.option(
+    "--backend",
+    type=click.STRING,  # purposely not using click.Choice to allow for auto-detection
+    help=(
+        "The backend to use for serving the model."
+        "Automatically detected based on the model file properties."
+        "Supported: 'llama-cpp'."
+    ),
+)
 @click.pass_context
 @utils.display_params
 def serve(
-    ctx, model_path, gpu_layers, num_threads, max_ctx_size, model_family, log_file
+    ctx,
+    model_path,
+    gpu_layers,
+    num_threads,
+    max_ctx_size,
+    model_family,
+    log_file,
+    backend,
 ):
     """Start a local server"""
+
+    # First Party
+    from instructlab.model.backends import llama_cpp
+
+    host = ctx.obj.config.serve.host_port.split(":")[0]
+    port = int(ctx.obj.config.serve.host_port.split(":")[1])
+
+    # First Party
+    from instructlab.model.backends import backends
+
+    try:
+        backend = backends.get(logger, model_path, backend)
+    except ValueError as e:
+        click.secho(f"Failed to determine backend: {e}", fg="red")
+        raise click.exceptions.Exit(1)
 
     # Redirect server stdout and stderr to the logger
     log.stdout_stderr_to_logger(logger, log_file)
@@ -57,27 +88,24 @@ def serve(
         f"Using model '{model_path}' with {gpu_layers} gpu-layers and {max_ctx_size} max context size."
     )
 
-    # First Party
-    from instructlab.model.backends import llama
+    logger.info(f"Serving model '{model_path}' with {backend}")
 
-    host = ctx.obj.config.serve.host_port.split(":")[0]
-    port = int(ctx.obj.config.serve.host_port.split(":")[1])
+    if backend == backends.LLAMA_CPP:
+        # Instantiate the llama server
+        llama_server = llama_cpp.Server(
+            logger=logger,
+            model_path=model_path,
+            gpu_layers=gpu_layers,
+            max_ctx_size=max_ctx_size,
+            num_threads=num_threads,
+            model_family=model_family,
+            host=host,
+            port=port,
+        )
 
-    # Instantiate the llama server
-    llama_server = llama.Server(
-        logger=logger,
-        model_path=model_path,
-        gpu_layers=gpu_layers,
-        max_ctx_size=max_ctx_size,
-        num_threads=num_threads,
-        model_family=model_family,
-        host=host,
-        port=port,
-    )
-
-    try:
-        # Run the llama server
-        llama_server.run()
-    except ServerException as exc:
-        click.secho(f"Error creating server: {exc}", fg="red")
-        raise click.exceptions.Exit(1)
+        try:
+            # Run the llama server
+            llama_server.run()
+        except ServerException as exc:
+            click.secho(f"Error creating server: {exc}", fg="red")
+            raise click.exceptions.Exit(1)

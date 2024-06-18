@@ -155,7 +155,7 @@ def generate(
     from instructlab.sdg.utils import GenerateException
 
     # First Party
-    from instructlab.model.backends.llama import ensure_server
+    from instructlab.model.backends.llama_cpp import ensure_server
 
     server_process = None
     server_queue = None

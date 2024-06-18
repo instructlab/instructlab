@@ -182,7 +182,7 @@ test_server_shutdown_while_chatting(){
 }
 
 test_loading_session_history(){
-    ilab serve --max-ctx-size 128 &
+    ilab serve --backend llama-cpp --max-ctx-size 128 &
     PID_SERVE=$!
 
     # chat with the server
