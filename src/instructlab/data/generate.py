@@ -149,7 +149,7 @@ def generate(
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=C0415
     # First Party
-    from instructlab.server import ensure_server
+    from instructlab.model.backends.llama import ensure_server
 
     # Local
     from .generator.generate_data import generate_data
