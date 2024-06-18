@@ -274,6 +274,7 @@ class ChatQuitException(Exception):
 class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
     def __init__(
         self,
+        logger,
         model,
         client,
         vi_mode=False,
@@ -284,7 +285,9 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         greedy_mode=False,
         max_tokens=None,
     ):
+        logger.debug("ConsoleChatBot")
         self.client = client
+        self.logger = logger
         self.model = model
         self.vi_mode = vi_mode
         self.vertical_overflow = vertical_overflow
@@ -518,7 +521,8 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         message = {"role": role, "content": content}
         self.info["messages"].append(message)
 
-    def start_prompt(self, logger, content=None, box=True):
+    def start_prompt(self, content=None, box=True):
+        self.logger.debug("")
         handlers = {
             "/q": self._handle_quit,
             "quit": self._handle_quit,
@@ -583,11 +587,11 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                         **create_params,
                     )
                 except openai.BadRequestError as e:
-                    logger.debug(f"BadRequestError: {e}")
+                    self.logger.debug(f"BadRequestError: {e}")
                     if e.code == "context_length_exceeded":
                         if len(self.info["messages"]) > 1:
                             # Trim the oldest entry in our message history
-                            logger.debug(
+                            self.logger.debug(
                                 "Trimming message history to attempt to fit context length"
                             )
                             self.info["messages"] = self.info["messages"][1:]
@@ -599,7 +603,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                         self.info["messages"].pop()
                         raise KeyboardInterrupt from e
                 except openai.InternalServerError as e:
-                    logger.debug(f"InternalServerError: {e}")
+                    self.logger.debug(f"InternalServerError: {e}")
                     self.info["messages"].clear()
                     raise KeyboardInterrupt from e
                 assert (
@@ -676,6 +680,7 @@ def chat_cli(
 ):
     """Starts a CLI-based chat with the server"""
     logger = ctx.obj.logger
+    logger.debug("creating OpenAI client")
     client = OpenAI(
         base_url=api_base,
         api_key=ctx.params["api_key"],
@@ -731,6 +736,7 @@ def chat_cli(
 
     # Initialize chat bot
     ccb = ConsoleChatBot(
+        logger,
         config.model if model is None else model,
         client=client,
         vi_mode=config.vi_mode,
@@ -754,7 +760,7 @@ def chat_cli(
         if not qq:
             print(f"{PROMPT_PREFIX}{question}")
         try:
-            ccb.start_prompt(logger, content=question, box=not qq)
+            ccb.start_prompt(content=question, box=not qq)
         except ChatException as exc:
             raise ChatException(f"API issue found while executing chat: {exc}") from exc
         except (ChatQuitException, KeyboardInterrupt, EOFError):
@@ -770,7 +776,7 @@ def chat_cli(
     # Start chatting
     while True:
         try:
-            ccb.start_prompt(logger)
+            ccb.start_prompt()
         except KeyboardInterrupt:
             continue
         except ChatException as exc:
