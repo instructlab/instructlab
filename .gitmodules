@@ -1,3 +1,0 @@
-[submodule "src/instructlab/schema"]
-	path = src/instructlab/schema
-	url = https://github.com/instructlab/schema.git

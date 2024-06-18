@@ -42,7 +42,6 @@ jobs:
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
-          submodules: 'true'
 
       - name: Determine if pr_or_branch is a PR number
         id: check_pr

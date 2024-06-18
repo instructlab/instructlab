@@ -135,7 +135,6 @@ runtime
 sexualized
 sshkey
 subdirectory
-submodules
 tatsu
 th
 tl
