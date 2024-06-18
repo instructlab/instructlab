@@ -17,11 +17,9 @@ from instructlab import utils
 
 logger = logging.getLogger(__name__)
 
-from instructlab.training import (
-	run_training,
-	TorchrunArgs,
-	TrainingArgs,
-)
+# Third Party
+from instructlab.training import TorchrunArgs, TrainingArgs, run_training
+
 
 class TorchDeviceParam(click.ParamType):
     """Parse and convert device string
@@ -87,8 +85,18 @@ TORCH_DEVICE = TorchDeviceParam()
 @click.option(
     "--data-path", help="Base directory where data is stored.", default="data-input"
 )
-@click.option("--ckpt-output-dir", type=click.Path(), default="checkpoints")
-@click.option("--data-output-dir", type=click.Path(), default="data")
+@click.option(
+    "--ckpt-output-dir",
+    type=click.Path(),
+    default="checkpoints",
+    help="output directory to store checkpoints in during training",
+)
+@click.option(
+    "--data-output-dir",
+    type=click.Path(),
+    default="data",
+    help="output directory to store training data in",
+)
 @click.option(
     "--input-dir",
     type=click.Path(),
@@ -160,37 +168,81 @@ TORCH_DEVICE = TorchDeviceParam()
         "(reduces GPU VRAM usage and may slow down training)"
     ),
 )
-@click.option("--max-seq-len", type=int)
-@click.option("--max-batch-len", type=int)
-@click.option("--effective-batch-size", type=int)
-@click.option("--save-samples", type=int)
-@click.option("--learning-rate", type=float)
-@click.option("--warmup-steps", type=int)
-@click.option("--deepspeed-config", type=click.Path())
 @click.option(
-    "--cpu-offload-optim",
-    type=bool,
+    "--max-seq-len", type=int, help="maximum length, in tokens, of a single sample."
+)
+@click.option("--max-batch-len", type=int, help="maximum overall length of samples processed in a given batch.")
+@click.option(
+    "--effective-batch-size", type=int, help="total batch size across all GPUs"
+)
+@click.option(
+    "--save-samples",
+    type=int,
+    help="The number of samples processed in between checkpoints.",
+)
+@click.option("--learning-rate", type=float, help="learning rate for training")
+@click.option("--warmup-steps", type=int, help="warmup steps for training")
+@click.option(
+    "--deepspeed-config",
+    type=click.Path(),
+    help="configuration to use for deepspeed training",
+    hidden=True,
+)
+@click.option(
+    "--cpu-offload-optim", type=bool, help="if true enables optimizer offload"
+)
+@click.option(
+    "--cpu-offload-params", type=bool, help="if true, enables parameter offload"
 )
 @click.option("--cpu-offload-params", type=bool)
-@click.option("--ds-quantize-dtype", type=click.Choice(["nf4", "fp8"]), default=None)
+@click.option(
+    "--ds-quantize-dtype",
+    type=click.Choice(["nf4", "fp8"]),
+    default=None,
+    help="quantization data type ot use when training a LoRA.",
+)
 # below flags are invalid if lora == false
-@click.option("--lora-rank", type=int)
-@click.option("--lora-alpha", type=float)
-@click.option("--lora-dropout", type=float)
+@click.option("--lora-rank", type=int, help="rank of update matricies")
+@click.option(
+    "--lora-alpha", type=float, help="how influential/strong lors tune will be"
+)
+@click.option("--lora-dropout", type=float, help="dropout for LoRA layers")
 @click.option(
     "--target-modules",
     type=str,
+    help="LoRA modules to use"
 )
 @click.option(
     "--is-padding-free",
     type=bool,
+    help="whether or not we are training a padding free transformer.",
 )
-@click.option("--nproc-per-node", type=int)
-@click.option("--nnodes", type=int)
-@click.option("--node-rank", type=int)
-@click.option("--rdzv-id", type=int)
-@click.option("--rdzv-endpoint", type=str)
-@click.option("--legacy", type=bool, default=False)
+@click.option(
+    "--gpus",
+    "nproc_per_node",
+    type=int,
+    help="this is the number of GPUs to use. This is a torch specific arg and must be called nproc-per-node",
+)
+@click.option("--nnodes", type=int, help="number of machines in the training pool.")
+@click.option(
+    "--node-rank", type=int, help="the rank of this machine in the training group."
+)
+@click.option(
+    "--rdzv-id",
+    type=int,
+    help="this is the training group ID. So, if there are multiple matching endpoints, only the machines with matching IDs can connect.",
+)
+@click.option(
+    "--rdzv-endpoint",
+    type=str,
+    help="this is the rendezvous endpoint which other torchrun jobs will join on.",
+)
+@click.option(
+    "--legacy",
+    type=bool,
+    default=False,
+    help="if true, enables the legacy linux training codepath from release 0.17.0 and prior.",
+)
 @click.pass_context
 @utils.display_params
 def train(
@@ -242,7 +294,7 @@ def train(
         input_dir = ctx.obj.config.generate.output_dir
 
     if four_bit_quant and device.type != "cuda":
-        ctx.fail("--4-bit-quant option requires --device=cuda")
+        ctx.fail("'--4-bit-quant' option requires '--device=cuda'")
 
     effective_data_dir = Path(data_path or "./taxonomy_data")
     train_file = effective_data_dir / "train_gen.jsonl"
@@ -350,8 +402,8 @@ def train(
             )
             
         adapter_file_path = f"{dest_model_dir}/adapters.npz"
-        # train the model with LoRA
 
+        # train the model with LoRA
         load_and_train(
             model=dest_model_dir,
             train=True,
