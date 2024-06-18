@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=duplicate-code
 
 # Standard
-from pathlib import Path
 from unittest.mock import patch
 import os
 import platform
@@ -13,7 +13,6 @@ import pytest
 
 # First Party
 from instructlab import lab
-from instructlab.model import test
 
 INPUT_DIR = "test_generated"
 TRAINING_RESULTS_DIR = "training_results"
@@ -73,18 +72,10 @@ class TestLabModelTest:
     """Test collection for `ilab model test` command."""
 
     @patch("instructlab.utils.is_macos_with_m_chip", return_value=True)
-    @patch("instructlab.mlx_explore.utils.fetch_tokenizer_from_hub")
-    @patch("instructlab.mlx_explore.gguf_convert_to_mlx.load")
-    @patch("instructlab.train.lora_mlx.make_data.make_data")
-    @patch("instructlab.train.lora_mlx.convert.convert_between_mlx_and_pytorch")
     @patch("instructlab.train.lora_mlx.lora.load_and_train")
     def test_load(
         self,
         load_and_train_mock,
-        convert_between_mlx_and_pytorch_mock,
-        make_data_mock,
-        load_mock,
-        fetch_tokenizer_from_hub_mock,
         is_macos_with_m_chip_mock,
     ):
         runner = CliRunner()
@@ -109,6 +100,8 @@ class TestLabModelTest:
             assert result.exit_code == 0
             load_and_train_mock.assert_called_once()
             assert load_and_train_mock.call_args[1]["max_tokens"] == 300
+
+            is_macos_with_m_chip_mock.assert_called_once()
 
             load_and_train_mock.reset_mock()
             result = runner.invoke(
