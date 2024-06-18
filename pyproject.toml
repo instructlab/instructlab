@@ -59,13 +59,7 @@ include = [
   "instructlab.train.lora_mlx.models",
   "instructlab.llamacpp",
   "instructlab.mlx_explore",
-  "instructlab.schema.v1",
-  "instructlab.schema.v2",
 ]
-
-[tool.setuptools.package-data]
-"instructlab.schema.v1" = ["*.json"]
-"instructlab.schema.v2" = ["*.json"]
 
 [tool.check-wheel-contents]
 # W002 - Wheel contains duplicate files:

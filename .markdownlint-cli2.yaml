@@ -16,7 +16,6 @@ ignores:
   - ".tox/**"
   - ".venv/**"
   - "build/**"
-  - "src/instructlab/schema/**"
   - "tests/**"
   - "venv/**"
   - ".github/ISSUE_TEMPLATE/**"
