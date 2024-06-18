@@ -30,6 +30,7 @@ DEFAULT_CONFIG = "config.yaml"
 DEFAULT_MODEL_OLD = "merlinite-7b-lab-Q4_K_M"
 DEFAULT_MODEL = "models/merlinite-7b-lab-Q4_K_M.gguf"
 DEFAULT_MODEL_PATH = "models/merlinite-7b-lab-Q4_K_M.gguf"
+DEFAULT_MODEL_REPO = "instructlab/granite-7b-lab"
 DEFAULT_TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
 DEFAULT_TAXONOMY_PATH = "taxonomy"
 DEFAULT_TAXONOMY_BASE = "origin/main"
@@ -54,6 +55,9 @@ MODEL_FAMILIES = set(("merlinite", "mixtral"))
 MODEL_FAMILY_MAPPINGS = {
     "granite": "merlinite",
 }
+
+DEFAULT_CKPT_DIR = "checkpoints"
+DEFAULT_OUT_DIR = "train-output"
 
 
 class ConfigException(Exception):
@@ -181,6 +185,30 @@ def get_default_config():
             taxonomy_base=DEFAULT_TAXONOMY_BASE,
         ),
         serve=_serve(model_path=DEFAULT_MODEL_PATH),
+        train=_train(
+            train_args=TrainingArgs(
+                model_path=DEFAULT_MODEL_REPO,
+                data_path=DEFAULT_GENERATED_FILES_OUTPUT_DIR,
+                ckpt_output_dir=DEFAULT_CKPT_DIR,
+                data_output_dir=DEFAULT_OUT_DIR,
+                max_seq_len=4096,
+                max_batch_len=10000,
+                num_epochs=10,
+                effective_batch_size=3840,
+                save_samples=25000,
+                learning_rate=2e-6,
+                warmup_steps=800,
+                is_padding_free=False,
+                random_seed=42,
+            ),
+            torch_args=TorchrunArgs(
+                node_rank=0,
+                nnodes=1,
+                nproc_per_node=1,
+                rdzv_id=123,
+                rdzv_endpoint="127.0.0.1:12222",
+            ),
+        ),
     )
 
 
