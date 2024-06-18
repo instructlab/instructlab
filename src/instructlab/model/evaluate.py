@@ -1,17 +1,15 @@
-import click
+# Third Party
 from click_didyoumean import DYMGroup
 from instructlab_eval import eval
+import click
 
+benchmark_names_to_classes = {"mmlu": eval.mmlu, "mt": eval.mt}
 
-benchmark_names_to_classes = {
-    "mmlu": eval.mmlu,
-    "mt": eval.mt
-}
 
 @click.command(cls=DYMGroup)
 @click.option(
-    "--benchmarks", 
-    type={}, 
+    "--benchmarks",
+    type={},
     help="benchmarks to run during evaluation",
 )
 @click.pass_context

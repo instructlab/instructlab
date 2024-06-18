@@ -8,10 +8,10 @@ import click
 from .chat import chat
 from .convert import convert
 from .download import download
+from .evaluate import evaluate
 from .serve import serve
 from .test import test
 from .train import train
-from .evaluate import evaluate
 
 
 @click.group(cls=DYMGroup)
