@@ -197,7 +197,12 @@ test_loading_session_history(){
     '
 
     # verify the session history file was created
-    if ! test -f test_session_history; then
+    if ! timeout 5 bash -c "
+        until test -s test_session_history; do
+        echo 'waiting for session history file to be created'
+        sleep 1
+    done
+"; then
         echo "session history file not found"
         exit 1
     fi
