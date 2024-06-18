@@ -82,9 +82,7 @@ TORCH_DEVICE = TorchDeviceParam()
 
 
 @click.command()
-@click.option(
-    "--data-path", help="Base directory where data is stored.", default=None
-)
+@click.option("--data-path", help="Base directory where data is stored.", default=None)
 @click.option(
     "--ckpt-output-dir",
     type=click.Path(),
@@ -194,7 +192,6 @@ TORCH_DEVICE = TorchDeviceParam()
 @click.option(
     "--cpu-offload-params", type=bool, help="if true, enables parameter offload"
 )
-@click.option("--cpu-offload-params", type=bool)
 @click.option(
     "--ds-quantize-dtype",
     type=click.Choice(["nf4", "fp8"]),
