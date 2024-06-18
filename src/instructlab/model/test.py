@@ -31,6 +31,7 @@ from instructlab import utils
     show_default=True,
 )
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
+@utils.display_params
 # pylint: disable=function-redefined
 def test(data_dir, model_dir, adapter_file):
     """Runs basic test to ensure model correctness"""

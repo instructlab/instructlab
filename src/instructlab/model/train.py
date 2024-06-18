@@ -154,6 +154,7 @@ TORCH_DEVICE = TorchDeviceParam()
     help="model name to use in training",
 )
 @click.pass_context
+@utils.display_params
 def train(
     ctx,
     data_dir,

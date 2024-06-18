@@ -12,6 +12,7 @@ import click
 
 # First Party
 from instructlab import configuration as config
+from instructlab import utils
 
 
 @click.command()
@@ -46,6 +47,7 @@ from instructlab import configuration as config
     help="User access token for connecting to the Hugging Face Hub.",
 )
 @click.pass_context
+@utils.display_params
 def download(ctx, repository, release, filename, model_dir, hf_token):
     """Download the model(s) to train"""
     click.echo(f"Downloading model from {repository}@{release} to {model_dir}...")
