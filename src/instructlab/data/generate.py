@@ -166,30 +166,42 @@ def generate(
     if endpoint_url:
         api_base = endpoint_url
     else:
-        # Third Party
-        import llama_cpp
+        # First Party
+        from instructlab.model.backends import backends
 
-        if not llama_cpp.llama_supports_gpu_offload():
-            # TODO: check for working offloading. The function only checks
-            # for compile time defines like `GGML_USE_CUDA`.
-            click.secho(
-                "llama_cpp_python is built without hardware acceleration. "
-                "ilab generate will be very slow.",
-                fg="red",
-            )
-
+        model_path = ctx.obj.config.serve.model_path
+        backend = ctx.obj.config.serve.backend
         try:
-            server_process, api_base, server_queue = ensure_server(
-                ctx.obj.config.serve,
-                tls_insecure,
-                tls_client_cert,
-                tls_client_key,
-                tls_client_passwd,
-                model_family,
-            )
-        except Exception as exc:
-            click.secho(f"Failed to start server: {exc}", fg="red")
+            backend = backends.get(logger, model_path, backend)
+        except ValueError as e:
+            click.secho(f"Failed to determine backend: {e}", fg="red")
             raise click.exceptions.Exit(1)
+
+        if backend == backends.LLAMA_CPP:
+            # Third Party
+            import llama_cpp
+
+            if not llama_cpp.llama_supports_gpu_offload():
+                # TODO: check for working offloading. The function only checks
+                # for compile time defines like `GGML_USE_CUDA`.
+                click.secho(
+                    "llama_cpp_python is built without hardware acceleration. "
+                    "ilab generate will be very slow.",
+                    fg="red",
+                )
+
+            try:
+                server_process, api_base, server_queue = ensure_server(
+                    ctx.obj.config.serve,
+                    tls_insecure,
+                    tls_client_cert,
+                    tls_client_key,
+                    tls_client_passwd,
+                    model_family,
+                )
+            except Exception as exc:
+                click.secho(f"Failed to start server: {exc}", fg="red")
+                raise click.exceptions.Exit(1)
         if not api_base:
             api_base = ctx.obj.config.serve.api_base()
     try:

@@ -180,18 +180,30 @@ def chat(
         server_process = None
         server_queue = None
     else:
+        # First Party
+        from instructlab.model.backends import backends
+
+        model_path = ctx.obj.config.serve.model_path
+        backend = ctx.obj.config.serve.backend
         try:
-            server_process, api_base, server_queue = ensure_server(
-                ctx.obj.config.serve,
-                tls_insecure,
-                tls_client_cert,
-                tls_client_key,
-                tls_client_passwd,
-                model_family,
-            )
-        except Exception as exc:
-            click.secho(f"Failed to start server: {exc}", fg="red")
+            backend = backends.get(logger, model_path, backend)
+        except ValueError as e:
+            click.secho(f"Failed to determine backend: {e}", fg="red")
             raise click.exceptions.Exit(1)
+
+        if backend == backends.LLAMA_CPP:
+            try:
+                server_process, api_base, server_queue = ensure_server(
+                    ctx.obj.config.serve,
+                    tls_insecure,
+                    tls_client_cert,
+                    tls_client_key,
+                    tls_client_passwd,
+                    model_family,
+                )
+            except Exception as exc:
+                click.secho(f"Failed to start server: {exc}", fg="red")
+                raise click.exceptions.Exit(1)
         if not api_base:
             api_base = ctx.obj.config.serve.api_base()
 
