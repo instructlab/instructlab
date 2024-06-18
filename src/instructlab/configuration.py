@@ -30,7 +30,7 @@ DEFAULT_CONFIG = "config.yaml"
 DEFAULT_MODEL_OLD = "merlinite-7b-lab-Q4_K_M"
 DEFAULT_MODEL = "models/merlinite-7b-lab-Q4_K_M.gguf"
 DEFAULT_MODEL_PATH = "models/merlinite-7b-lab-Q4_K_M.gguf"
-DEFAULT_MODEL_REPO = "instructlab/granite-7b-lab"
+DEFAULT_MODEL_REPO = "instructlab/granite-7b-base"
 DEFAULT_TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
 DEFAULT_TAXONOMY_PATH = "taxonomy"
 DEFAULT_TAXONOMY_BASE = "origin/main"
@@ -195,7 +195,7 @@ def get_default_config():
                 max_batch_len=10000,
                 num_epochs=10,
                 effective_batch_size=3840,
-                save_samples=25000,
+                save_samples=250000,
                 learning_rate=2e-6,
                 warmup_steps=800,
                 is_padding_free=False,

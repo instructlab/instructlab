@@ -83,7 +83,7 @@ TORCH_DEVICE = TorchDeviceParam()
 
 @click.command()
 @click.option(
-    "--data-path", help="Base directory where data is stored.", default="data-input"
+    "--data-path", help="Base directory where data is stored.", default=None
 )
 @click.option(
     "--ckpt-output-dir",
@@ -304,7 +304,7 @@ def train(
     test_file = effective_data_dir / "test_gen.jsonl"
 
     # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
-    if data_path is None:
+    if data_path is None or data_path == "":
         data_path = effective_data_dir
         if not os.path.exists(input_dir):
             click.secho(
