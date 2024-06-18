@@ -44,6 +44,7 @@ class TestConfig:
         assert cfg.serve.gpu_layers == -1
         assert cfg.serve.host_port == "127.0.0.1:8000"
         assert cfg.serve.max_ctx_size == 4096
+        assert cfg.serve.backend == ""
 
     def test_default_config(self):
         cfg = config.get_default_config()
@@ -97,6 +98,7 @@ serve:
   host_port: 127.0.0.1:8000
   max_ctx_size: 4096
   model_path: models/merlinite-7b-lab-Q4_K_M.gguf
+  backend: ''
 """
             )
         cfg = config.read_config(config_path)

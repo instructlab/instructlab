@@ -141,6 +141,7 @@ class _serve(BaseModel):
     host_port: StrictStr = "127.0.0.1:8000"
     gpu_layers: int = -1
     max_ctx_size: PositiveInt = 4096
+    backend: str = ""  # we don't set a default value here since it's auto-detected
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
