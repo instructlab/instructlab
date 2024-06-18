@@ -2,7 +2,6 @@
 
 # Standard
 from functools import cache, wraps
-from logging import Logger
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Union
 import copy
@@ -26,6 +25,8 @@ import yaml
 
 # Local
 from . import common
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_YAML_RULES = """\
 extends: relaxed
@@ -186,7 +187,6 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
 
 
 def get_documents(
-    logger,
     source: Dict[str, Union[str, List[str]]],
     skip_checkout: bool = False,
 ) -> List[str]:
@@ -358,14 +358,11 @@ def _load_schema(path: "importlib.resources.abc.Traversable") -> "referencing.Re
     return resource
 
 
-def validate_yaml(
-    logger: Logger, contents: Mapping[str, Any], taxonomy_path: Path
-) -> int:
+def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
     """Validate the parsed yaml document using the taxonomy path to
     determine the proper schema.
 
     Args:
-        logger (Logger): The logger for errors/warnings.
         contents (Mapping): The parsed yaml document to validate against the schema.
         taxonomy_path (Path): Relative path of the taxonomy yaml document where the
         first element is the schema to use.
@@ -443,16 +440,16 @@ def get_version(contents: Mapping) -> int:
 
 
 # pylint: disable=broad-exception-caught
-def read_taxonomy_file(
-    logger: Logger, file_path: str, yaml_rules: Optional[str] = None
-):
+def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
     seed_instruction_data = []
     warnings = 0
     errors = 0
     file_path = Path(file_path).resolve()
     # file should end with ".yaml" explicitly
     if file_path.suffix != ".yaml":
-        logger.warn(f"Skipping {file_path}! Use lowercase '.yaml' extension instead.")
+        logger.warning(
+            f"Skipping {file_path}! Use lowercase '.yaml' extension instead."
+        )
         warnings += 1
         return None, warnings, errors
     for i in range(len(file_path.parts) - 1, -1, -1):
@@ -466,7 +463,7 @@ def read_taxonomy_file(
         with open(file_path, "r", encoding="utf-8") as file:
             contents = yaml.safe_load(file)
         if not contents:
-            logger.warn(f"Skipping {file_path} because it is empty!")
+            logger.warning(f"Skipping {file_path} because it is empty!")
             warnings += 1
             return None, warnings, errors
         if not isinstance(contents, Mapping):
@@ -526,7 +523,7 @@ def read_taxonomy_file(
                 logger.error("\n".join(lint_messages))
                 return None, warnings, errors
 
-        validation_errors = validate_yaml(logger, contents, taxonomy_path)
+        validation_errors = validate_yaml(contents, taxonomy_path)
         if validation_errors:
             errors += validation_errors
             return None, warnings, errors
@@ -536,7 +533,7 @@ def read_taxonomy_file(
         task_description = contents.get("task_description")
         documents = contents.get("document")
         if documents:
-            documents = get_documents(source=documents, logger=logger)
+            documents = get_documents(source=documents)
             logger.debug("Content from git repo fetched")
 
         for seed_example in contents.get("seed_examples"):
@@ -560,15 +557,16 @@ def read_taxonomy_file(
     return seed_instruction_data, warnings, errors
 
 
-def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
+# TODO: remove `_logger` parameter after instructlab.sdg is fixed.
+def read_taxonomy(_logger, taxonomy, taxonomy_base, yaml_rules):
     seed_instruction_data = []
     is_file = os.path.isfile(taxonomy)
     if is_file:  # taxonomy is file
         seed_instruction_data, warnings, errors = read_taxonomy_file(
-            logger, taxonomy, yaml_rules
+            taxonomy, yaml_rules
         )
         if warnings:
-            logger.warn(
+            logger.warning(
                 f"{warnings} warnings (see above) due to taxonomy file not (fully) usable."
             )
         if errors:
@@ -584,13 +582,13 @@ def read_taxonomy(logger, taxonomy, taxonomy_base, yaml_rules):
                 logger.debug(f"* {e}")
         for f in updated_taxonomy_files:
             file_path = os.path.join(taxonomy, f)
-            data, warnings, errors = read_taxonomy_file(logger, file_path, yaml_rules)
+            data, warnings, errors = read_taxonomy_file(file_path, yaml_rules)
             total_warnings += warnings
             total_errors += errors
             if data:
                 seed_instruction_data.extend(data)
         if total_warnings:
-            logger.warn(
+            logger.warning(
                 f"{total_warnings} warnings (see above) due to taxonomy files that were not (fully) usable."
             )
         if total_errors:
@@ -622,7 +620,7 @@ def display_params(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
         try:
-            if (args[0].obj.logger.level == logging.DEBUG) and (
+            if (logger.isEnabledFor(logging.DEBUG)) and (
                 ("quiet" not in kwargs) or (not kwargs["quiet"])
             ):
                 print("===================using parameters ========================")

@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
+# Standard
+import logging
+
 # Third Party
 import click
 
@@ -7,6 +10,8 @@ import click
 from instructlab import configuration as config
 from instructlab import log, utils
 from instructlab.model.backends.llama import ServerException, server
+
+logger = logging.getLogger(__name__)
 
 
 @click.command()
@@ -46,9 +51,9 @@ def serve(
     """Start a local server"""
 
     # Redirect server stdout and stderr to the logger
-    log.stdout_stderr_to_logger(ctx.obj.logger, log_file)
+    log.stdout_stderr_to_logger(logger, log_file)
 
-    ctx.obj.logger.info(
+    logger.info(
         f"Using model '{model_path}' with {gpu_layers} gpu-layers and {max_ctx_size} max context size."
     )
 
@@ -60,7 +65,7 @@ def serve(
 
     # Instantiate the llama server
     llama_server = llama.Server(
-        logger=ctx.obj.logger,
+        logger=logger,
         model_path=model_path,
         gpu_layers=gpu_layers,
         max_ctx_size=max_ctx_size,

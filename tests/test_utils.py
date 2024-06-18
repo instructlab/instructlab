@@ -2,7 +2,6 @@
 
 # Standard
 from unittest.mock import Mock, patch
-import logging
 
 # Third Party
 import git
@@ -68,7 +67,6 @@ class TestUtils:
             documents = utils.get_documents(
                 source=yaml.safe_load(qnafile).get("document"),
                 skip_checkout=True,
-                logger=logging.getLogger("_test_"),
             )
             git_clone_checkout.assert_called_once()
             assert len(documents) == 2

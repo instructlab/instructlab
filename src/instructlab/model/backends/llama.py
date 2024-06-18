@@ -10,6 +10,7 @@ import pathlib
 import random
 import signal
 import socket
+import typing
 
 # Third Party
 from llama_cpp import llama_chat_format
@@ -23,6 +24,12 @@ import uvicorn
 from ...client import ClientException, list_models
 from ...configuration import get_api_base, get_model_family
 from .backends import BackendServer
+
+if typing.TYPE_CHECKING:
+    # Standard
+    from types import FrameType
+
+logger = logging.getLogger(__name__)
 
 templates = [
     {
@@ -44,7 +51,7 @@ class UvicornServer(uvicorn.Server):
     """Override uvicorn.Server to handle SIGINT."""
 
     def handle_exit(self, sig, frame):
-        # type: (int, Optional[FrameType]) -> None
+        # type: (int, typing.Optional[FrameType]) -> None
         if not is_temp_server_running() or sig != signal.SIGINT:
             super().handle_exit(sig=sig, frame=frame)
 
@@ -74,14 +81,14 @@ class Server(BackendServer):
         # ensure_server code here
         try:
             server(
-                self.logger,
-                self.model_path,
-                self.gpu_layers,
-                self.max_ctx_size,
-                self.model_family,
-                self.num_threads,
-                self.host,
-                self.port,
+                server_logger=self.logger,
+                model_path=self.model_path,
+                gpu_layers=self.gpu_layers,
+                max_ctx_size=self.max_ctx_size,
+                model_family=self.model_family,
+                threads=self.num_threads,
+                host=self.host,
+                port=self.port,
             )
         except ServerException as exc:
             raise exc
@@ -92,7 +99,6 @@ class Server(BackendServer):
 
 
 def ensure_server(
-    logger,
     serve_config,
     tls_insecure,
     tls_client_cert,
@@ -155,7 +161,7 @@ def ensure_server(
         server_process = mpctx.Process(
             target=server,
             kwargs={
-                "logger": server_logger,
+                "server_logger": server_logger,
                 "model_path": serve_config.model_path,
                 "gpu_layers": serve_config.gpu_layers,
                 "max_ctx_size": serve_config.max_ctx_size,
@@ -196,14 +202,14 @@ def ensure_server(
 
 
 def server(
-    logger,
-    model_path,
-    gpu_layers,
-    max_ctx_size,
-    model_family,
+    server_logger: logging.Logger,
+    model_path: pathlib.Path,
+    gpu_layers: int,
+    max_ctx_size: int,
+    model_family: str,
     threads=None,
-    host="localhost",
-    port=8000,
+    host: str = "localhost",
+    port: int = 8000,
     queue=None,
 ):
     """Start OpenAI-compatible server"""
@@ -213,7 +219,7 @@ def server(
         model=model_path,
         n_ctx=max_ctx_size,
         n_gpu_layers=gpu_layers,
-        verbose=logger.level == logging.DEBUG,
+        verbose=server_logger.isEnabledFor(logging.DEBUG),
     )
     if threads is not None:
         settings.n_threads = threads
@@ -259,8 +265,8 @@ def server(
             return
         raise ServerException(f"failed creating the server application: {exc}") from exc
 
-    logger.info("Starting server process, press CTRL+C to shutdown server...")
-    logger.info(
+    server_logger.info("Starting server process, press CTRL+C to shutdown server...")
+    server_logger.info(
         f"After application startup complete see http://{host}:{port}/docs for API."
     )
 

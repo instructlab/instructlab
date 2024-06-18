@@ -4,7 +4,6 @@
 from os import path
 from re import match
 from typing import Optional
-import logging
 import os
 import sys
 
@@ -231,23 +230,6 @@ class Lab:
     def __init__(self, config_obj: Config):
         self.config = config_obj
 
-        # Set up logging for the Lab class
-        self.logger = logging.getLogger(__name__)
-
-        # Create a formatter
-        formatter = log.CustomFormatter(log.FORMAT)
-
-        # Create a handler and set the formatter
-        handler = logging.StreamHandler()
-        handler.setFormatter(formatter)
-
-        logging.basicConfig(
-            format=log.FORMAT,
-            handlers=[handler],
-        )
-
-        self.logger.setLevel(self.config.general.log_level.upper())
-
 
 def init(ctx, config_file):
     if (
@@ -267,6 +249,8 @@ def init(ctx, config_file):
                 config_obj = read_config(config_file)
             except ConfigException as ex:
                 raise click.ClickException(str(ex))
+        # setup logging
+        log.configure_logging(log_level=config_obj.general.log_level.upper())
         ctx.obj = Lab(config_obj)
         # default_map holds a dictionary with default values for each command parameters
         ctx.default_map = get_dict(ctx.obj.config)
