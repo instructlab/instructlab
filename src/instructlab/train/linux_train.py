@@ -7,9 +7,12 @@ import logging
 import os
 
 # Third Party
+# https://huggingface.co/docs/datasets/en/package_reference/loading_methods#datasets.load_dataset
 from datasets import load_dataset
 from peft import LoraConfig
 from tqdm import tqdm
+
+# https://huggingface.co/docs/transformers/en/main_classes/trainer#transformers.TrainingArguments
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
@@ -19,6 +22,9 @@ from transformers import (
     StoppingCriteriaList,
     TrainingArguments,
 )
+
+# Transformer Reinforcement Learning
+# https://huggingface.co/docs/trl/index
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 import click
 import torch
@@ -183,6 +189,7 @@ def linux_train(
     test_dataset = load_dataset("json", data_files=os.fspath(test_file), split="train")
     train_dataset.to_pandas().head()
 
+    # https://huggingface.co/docs/transformers/en/model_doc/auto#transformers.AutoTokenizer.from_pretrained
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     tokenizer.pad_token = tokenizer.eos_token
 
@@ -215,6 +222,7 @@ def linux_train(
         model_name, torchscript=True, trust_remote_code=True
     )
 
+    # https://huggingface.co/docs/transformers/en/model_doc/auto#transformers.AutoModelForCausalLM.from_pretrained
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype="auto",
@@ -359,6 +367,7 @@ def linux_train(
             # per_device_eval_batch_size=1,
         )
 
+        # https://huggingface.co/docs/trl/main/en/sft_trainer#trl.SFTTrainer
         trainer = SFTTrainer(
             model=model,
             train_dataset=train_dataset,
