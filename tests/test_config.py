@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
+# Standard
+import os
+
 # Third Party
 import pytest
 
@@ -174,3 +177,26 @@ generate:
         assert cfg.general.validate_log_level("CRITICAL") == "CRITICAL"
         assert cfg.general.validate_log_level("ERROR") == "ERROR"
         assert cfg.general.validate_log_level("NOTSET") == "NOTSET"
+
+    def test_get_model_family(self):
+        good_cases = {
+            # two known families
+            "merlinite": "merlinite",
+            "mixtral": "mixtral",
+            # case insensitive
+            "MERLINiTe": "merlinite",
+            # mapping granite to merlinite
+            "granite": "merlinite",
+        }
+        bad_cases = [
+            # unknown family
+            "unknown",
+        ]
+        for model_name, expected_family in good_cases.items():
+            model_path = os.path.join("models", f"{model_name}-7b-lab-Q4_K_M.gguf")
+            assert config.get_model_family(model_name, model_path) == expected_family
+            assert config.get_model_family(None, model_path) == expected_family
+        for model_name in bad_cases:
+            model_path = os.path.join("models", f"{model_name}-7b-lab-Q4_K_M.gguf")
+            with pytest.raises(config.ConfigException):
+                config.get_model_family(model_name, model_path)
