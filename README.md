@@ -33,7 +33,7 @@
   - [📜 Test the newly trained model](#-test-the-newly-trained-model)
   - [🍴 Serve the newly trained model](#-serve-the-newly-trained-model)
 - [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
-- [🚀 Upgrade InstructLabs to latest version](#-upgrade-instructlab-to-latest-version)
+- [🚀 Upgrade InstructLab to latest version](#-upgrade-instructlab-to-latest-version)
 - [🎁 Submit your new knowledge or skills](#-submit-your-new-knowledge-or-skills)
 - [📬 Contributing](#-contributing)
 
@@ -570,7 +570,7 @@ argument to specify your new model:
 ## 🚀 Upgrade InstructLab to latest version
 - To upgrade InstructLab to the latest version, use the following command:
 
-   ```sh
+   ```shell
    pip install instructlab --upgrade
    ```
 
