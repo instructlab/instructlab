@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: Apache-2.0
 
 click>=8.1.7,<9.0.0
-click-didyoumean>=0.3.0,<0.4.0
-datasets>=2.18.0,<3.0.0
-gguf>=0.6.0,<0.7.0
-GitPython>=3.1.42,<4.0.0
+click-didyoumean>=0.3.0
+datasets>=2.18.0
+gguf>=0.6.0
+GitPython>=3.1.42
 # Linux: 4-bit quantization with BitsAndBytes is not ready to use, yet.
 # see https://github.com/instructlab/instructlab/issues/579
 # bitsandbytes; sys_platform=='linux' and platform_machine=='x86_64'
-httpx>=0.25.0,<1.0.0
+httpx>=0.25.0
 instructlab-quantize>=0.1.0
 instructlab-schema>=0.2.0
-jsonschema>=4.21.1,<5.0.0
+jsonschema>=4.21.1
 llama_cpp_python[server]==0.2.75
 mlx>=0.5.1,<0.6.0; sys_platform == 'darwin' and platform_machine == 'arm64'
 # HabanaLabs / Intel Gaudi env comes with Python 3.10 and slightly older
@@ -19,28 +19,28 @@ mlx>=0.5.1,<0.6.0; sys_platform == 'darwin' and platform_machine == 'arm64'
 # Habana installer has NumPy 1.23.5
 numpy>=1.23.5,<2.0.0 ; python_version == '3.10'
 numpy>=1.26.4,<2.0.0 ; python_version != '3.10'
-openai>=1.13.3,<2.0.0
-peft>=0.9.0,<0.10.0
-prompt-toolkit>=3.0.38,<4.0.0
-pydantic>=2.7.4,<3.0.0
-pydantic_yaml>=1.2.0,<2.0.0
-PyYAML>=6.0.0,<7.0.0
-rich>=13.3.1,<14.0.0
-rouge-score>=0.1.2,<0.2.0
-sentencepiece>=0.2.0,<0.3.0
-tokenizers>=0.15.2,<0.16.0
-toml>=0.10.2,<0.11.0
+openai>=1.13.3
+peft>=0.9.0
+prompt-toolkit>=3.0.38
+pydantic>=2.7.4
+pydantic_yaml>=1.2.0
+PyYAML>=6.0.0
+rich>=13.3.1
+rouge-score>=0.1.2
+sentencepiece>=0.2.0
+tokenizers>=0.15.2
+toml>=0.10.2
 # Habana installer has 2.2.0a0+git8964477 with oneMKL
 torch>=2.2.0a0,<3.0.0 ; python_version == '3.10'
 torch>=2.2.1,<3.0.0 ; python_version != '3.10'
-tqdm>=4.66.2,<5.0.0
-transformers>=4.30.0,<=4.38.2
-trl>=0.7.11,<0.8.0
-wandb>=0.16.4,<0.17.0
+tqdm>=4.66.2
+transformers>=4.30.0
+trl>=0.7.11
+wandb>=0.16.4
 langchain-text-splitters
 # do not use 8.4.0 due to a bug in the library
 # https://github.com/instructlab/instructlab/issues/1389
 tenacity>=8.3.0,!=8.4.0
 # the below library should NOT be imported into any python files
 # it is for CLI usage ONLY
-yamllint>=1.35.1,<1.36.0
+yamllint>=1.35.1
