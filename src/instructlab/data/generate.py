@@ -8,6 +8,7 @@ import click
 
 # First Party
 from instructlab import configuration as config
+from instructlab import utils
 
 
 @click.command()
@@ -123,6 +124,7 @@ from instructlab import configuration as config
     help="Force model family to use when picking a generation template",
 )
 @click.pass_context
+@utils.display_params
 def generate(
     ctx,
     model,
@@ -147,7 +149,7 @@ def generate(
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=C0415
     # First Party
-    from instructlab.server import ensure_server
+    from instructlab.model.backends.llama import ensure_server
 
     # Local
     from .generator.generate_data import generate_data

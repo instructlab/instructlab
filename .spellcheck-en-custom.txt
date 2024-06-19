@@ -108,6 +108,7 @@ impactful
 instructlab
 ip
 journald
+kaggle
 keypair
 lignment
 llms
@@ -115,9 +116,11 @@ lora
 lora
 md
 mlx
+nb
 oneMKL
 orchestrator
 ots
+png
 pre
 pre
 preceeds
@@ -132,7 +135,6 @@ runtime
 sexualized
 sshkey
 subdirectory
-submodules
 tatsu
 th
 tl

@@ -45,7 +45,6 @@ jobs:
               with:
                   # for setuptools-scm
                   fetch-depth: 0
-                  submodules: true
 
             - uses: hynek/build-and-inspect-python-package@b4fc3f6ba2b3da04f09659be99e2a29fb6146a61 # v2.6.0
 
@@ -80,7 +79,7 @@ jobs:
                   path: dist
 
             - name: Upload to Test PyPI
-              uses: pypa/gh-action-pypi-publish@81e9d935c883d0b210363ab89cf05f3894778450 # v1.8.14
+              uses: pypa/gh-action-pypi-publish@ec4db0b4ddc65acdf4bff5fa45ac92d78b56bdf0 # v1.9.0
               with:
                   repository-url: https://test.pypi.org/legacy/
 
@@ -130,4 +129,4 @@ jobs:
               run: rm ./dist/*.sigstore
 
             - name: Upload to PyPI
-              uses: pypa/gh-action-pypi-publish@81e9d935c883d0b210363ab89cf05f3894778450 # v1.8.14
+              uses: pypa/gh-action-pypi-publish@ec4db0b4ddc65acdf4bff5fa45ac92d78b56bdf0 # v1.9.0

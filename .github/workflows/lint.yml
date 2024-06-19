@@ -55,6 +55,9 @@ jobs:
             commands: |
               echo "::add-matcher::.github/workflows/matchers/mypy.json"
               tox -e mypy
+          - name: "tomllint"
+            commands: |
+              tox -e tomllint
     steps:
       - name: "Harden Runner"
         uses: step-security/harden-runner@17d0e2bd7d51742c71671bd19fa12bdc9d40a3d6 # v2.8.1
@@ -66,7 +69,6 @@ jobs:
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
-          submodules: true
 
       - name: Setup Python 3.11
         uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0

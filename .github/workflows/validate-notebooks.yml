@@ -43,7 +43,6 @@ jobs:
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
-          submodules: true
 
       - name: Setup Python 3.11
         uses: actions/setup-python@82c7e631bb3cdc910f68e0081d67478d79c6982d # v5.1.0

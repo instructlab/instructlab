@@ -7,9 +7,12 @@ import logging
 import os
 
 # Third Party
+# https://huggingface.co/docs/datasets/en/package_reference/loading_methods#datasets.load_dataset
 from datasets import load_dataset
 from peft import LoraConfig
 from tqdm import tqdm
+
+# https://huggingface.co/docs/transformers/en/main_classes/trainer#transformers.TrainingArguments
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
@@ -19,6 +22,9 @@ from transformers import (
     StoppingCriteriaList,
     TrainingArguments,
 )
+
+# Transformer Reinforcement Learning
+# https://huggingface.co/docs/trl/index
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 import click
 import torch
@@ -151,13 +157,15 @@ def linux_train(
     num_epochs: Optional[int] = None,
     device: torch.device = torch.device("cpu"),
     four_bit_quant: bool = False,
-):
+    output_dir: Path = Path("training_results"),
+) -> Path:
     """Lab Train for Linux!"""
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", num_epochs)
     print("LINUX_TRAIN.PY: TRAIN FILE IS: ", train_file)
     print("LINUX_TRAIN.PY: TEST FILE IS: ", test_file)
 
     print(f"LINUX_TRAIN.PY: Using device '{device}'")
+    output_dir = Path(output_dir)
     if device.type == "cuda":
         # estimated by watching nvtop / radeontop during training
         min_vram = 11 if four_bit_quant else 17
@@ -183,6 +191,7 @@ def linux_train(
     test_dataset = load_dataset("json", data_files=os.fspath(test_file), split="train")
     train_dataset.to_pandas().head()
 
+    # https://huggingface.co/docs/transformers/en/model_doc/auto#transformers.AutoTokenizer.from_pretrained
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
     tokenizer.pad_token = tokenizer.eos_token
 
@@ -215,6 +224,7 @@ def linux_train(
         model_name, torchscript=True, trust_remote_code=True
     )
 
+    # https://huggingface.co/docs/transformers/en/model_doc/auto#transformers.AutoModelForCausalLM.from_pretrained
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         torch_dtype="auto",
@@ -292,7 +302,6 @@ def linux_train(
     )
 
     tokenizer.padding_side = "right"
-    output_dir = "./training_results"
     per_device_train_batch_size = 1
     max_seq_length = 300
 
@@ -359,6 +368,7 @@ def linux_train(
             # per_device_eval_batch_size=1,
         )
 
+        # https://huggingface.co/docs/trl/main/en/sft_trainer#trl.SFTTrainer
         trainer = SFTTrainer(
             model=model,
             train_dataset=train_dataset,
@@ -396,6 +406,7 @@ def linux_train(
 
     print("LINUX_TRAIN.PY: MERGING ADAPTERS")
     model = trainer.model.merge_and_unload()
-    model.save_pretrained("./training_results/merged_model")
+    model.save_pretrained(output_dir / "merged_model")
 
     print("LINUX_TRAIN.PY: FINISHED")
+    return output_dir

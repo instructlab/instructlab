@@ -26,7 +26,7 @@ how to do that on Fedora with `dnf`:
   # Install Python 3.11
   sudo dnf install python3.11 python3.11-devel
 
-  # Remove old venv from instructlab/ directory (if it exists) 
+  # Remove old venv from instructlab/ directory (if it exists)
   rm -r venv
 
   # Create and activate new Python 3.11 venv
@@ -35,8 +35,8 @@ how to do that on Fedora with `dnf`:
 
   # Install lab (assumes a locally-cloned repo)
   # You can clone the repo if you haven't already done so (either one)
-  # gh repo clone instructlab/instructlab -- --recurse-submodules
-  # git clone --recurse-submodules https://github.com/instructlab/instructlab.git
+  # gh repo clone instructlab/instructlab
+  # git clone https://github.com/instructlab/instructlab.git
   pip install ./instructlab/
   ```
 
@@ -88,7 +88,7 @@ sudo dnf install https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-releas
 
 # Install Nvidia Drivers
 
-# There may be extra steps for enabling secure boot.  View the following blog for further details: https://blog.monosoul.dev/2022/05/17/automatically-sign-nvidia-kernel-module-in-fedora-36/ 
+# There may be extra steps for enabling secure boot.  View the following blog for further details: https://blog.monosoul.dev/2022/05/17/automatically-sign-nvidia-kernel-module-in-fedora-36/
 
 sudo dnf install akmod-nvidia xorg-x11-drv-nvidia-cuda
 
@@ -201,9 +201,9 @@ something like the following if you have an AMD Integrated and Dedicated GPU:
 
 ```shell
 $ rocminfo | grep gfx
-  Name:                    gfx1100                            
-      Name:                    amdgcn-amd-amdhsa--gfx1100         
-  Name:                    gfx1036                            
+  Name:                    gfx1100
+      Name:                    amdgcn-amd-amdhsa--gfx1100
+  Name:                    gfx1036
       Name:                    amdgcn-amd-amdhsa--gfx103
 ```
 

@@ -5,8 +5,8 @@ import click
 
 # First Party
 from instructlab import configuration as config
-from instructlab import log
-from instructlab.server import ServerException, server
+from instructlab import log, utils
+from instructlab.model.backends.llama import ServerException, server
 
 
 @click.command()
@@ -39,11 +39,11 @@ from instructlab.server import ServerException, server
     help="Log file path to write server logs to.",
 )
 @click.pass_context
+@utils.display_params
 def serve(
     ctx, model_path, gpu_layers, num_threads, max_ctx_size, model_family, log_file
 ):
     """Start a local server"""
-    # pylint: disable=C0415
 
     # Redirect server stdout and stderr to the logger
     log.stdout_stderr_to_logger(ctx.obj.logger, log_file)
@@ -52,19 +52,27 @@ def serve(
         f"Using model '{model_path}' with {gpu_layers} gpu-layers and {max_ctx_size} max context size."
     )
 
+    # First Party
+    from instructlab.model.backends import llama
+
+    host = ctx.obj.config.serve.host_port.split(":")[0]
+    port = int(ctx.obj.config.serve.host_port.split(":")[1])
+
+    # Instantiate the llama server
+    llama_server = llama.Server(
+        logger=ctx.obj.logger,
+        model_path=model_path,
+        gpu_layers=gpu_layers,
+        max_ctx_size=max_ctx_size,
+        num_threads=num_threads,
+        model_family=model_family,
+        host=host,
+        port=port,
+    )
+
     try:
-        host = ctx.obj.config.serve.host_port.split(":")[0]
-        port = int(ctx.obj.config.serve.host_port.split(":")[1])
-        server(
-            ctx.obj.logger,
-            model_path,
-            gpu_layers,
-            max_ctx_size,
-            model_family,
-            num_threads,
-            host,
-            port,
-        )
+        # Run the llama server
+        llama_server.run()
     except ServerException as exc:
         click.secho(f"Error creating server: {exc}", fg="red")
         raise click.exceptions.Exit(1)

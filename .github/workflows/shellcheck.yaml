@@ -42,7 +42,6 @@ jobs:
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
-          submodules: true
 
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38 # 2.0.0

@@ -6,6 +6,7 @@ from time import sleep
 import logging
 import multiprocessing
 import os
+import pathlib
 import random
 import signal
 import socket
@@ -19,8 +20,9 @@ import llama_cpp.server.app as llama_app
 import uvicorn
 
 # Local
-from .client import ClientException, list_models
-from .configuration import get_api_base, get_model_family
+from ...client import ClientException, list_models
+from ...configuration import get_api_base, get_model_family
+from .backends import BackendServer
 
 templates = [
     {
@@ -38,13 +40,55 @@ class ServerException(Exception):
     """An exception raised when serving the API."""
 
 
-class Server(uvicorn.Server):
+class UvicornServer(uvicorn.Server):
     """Override uvicorn.Server to handle SIGINT."""
 
     def handle_exit(self, sig, frame):
         # type: (int, Optional[FrameType]) -> None
         if not is_temp_server_running() or sig != signal.SIGINT:
             super().handle_exit(sig=sig, frame=frame)
+
+
+class Server(BackendServer):
+    def __init__(
+        self,
+        logger: logging.Logger,
+        model_path: pathlib.Path,
+        host: str,
+        port: int,
+        gpu_layers: int,
+        max_ctx_size: int,
+        num_threads: int,
+        model_family: str,
+    ):
+        super().__init__(logger, model_path, host, port)
+        self.gpu_layers = gpu_layers
+        self.max_ctx_size = max_ctx_size
+        self.num_threads = num_threads
+        self.model_family = model_family
+
+    def run(self):
+        """Start an OpenAI-compatible server with llama-cpp"""
+
+        # TODO: as the multibackend implementation progresses, we might move some of the
+        # ensure_server code here
+        try:
+            server(
+                self.logger,
+                self.model_path,
+                self.gpu_layers,
+                self.max_ctx_size,
+                self.model_family,
+                self.num_threads,
+                self.host,
+                self.port,
+            )
+        except ServerException as exc:
+            raise exc
+
+    def shutdown(self):
+        """Stop the server process and close the queue."""
+        pass
 
 
 def ensure_server(
@@ -228,7 +272,7 @@ def server(
         limit_concurrency=2,  # Make sure we only serve a single client at a time
         timeout_keep_alive=0,  # prevent clients holding connections open (we only have 1)
     )
-    s = Server(config)
+    s = UvicornServer(config)
 
     # If this is not the main process, this is the temp server process that ran in the background
     # after `ilab chat` was executed.

@@ -27,7 +27,7 @@ import openai
 # First Party
 from instructlab import client
 from instructlab import configuration as cfg
-from instructlab.server import is_temp_server_running
+from instructlab import utils
 
 # Local
 from ..utils import get_sysprompt, http_client
@@ -146,6 +146,7 @@ PROMPT_PREFIX = ">>> "
     help="Force model family to use when picking a chat template",
 )
 @click.pass_context
+@utils.display_params
 def chat(
     ctx,
     question,
@@ -166,7 +167,7 @@ def chat(
     """Run a chat using the modified model"""
     # pylint: disable=C0415
     # First Party
-    from instructlab.server import ensure_server
+    from instructlab.model.backends.llama import ensure_server, is_temp_server_running
 
     if endpoint_url:
         api_base = endpoint_url

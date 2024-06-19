@@ -9,13 +9,13 @@ config:
   ol-prefix: false
   heading-start-left: false
   no-duplicate-heading: false
+  no-inline-html: false
 globs:
   - "**/*.md"
 ignores:
   - ".tox/**"
   - ".venv/**"
   - "build/**"
-  - "src/instructlab/schema/**"
   - "tests/**"
   - "venv/**"
   - ".github/ISSUE_TEMPLATE/**"

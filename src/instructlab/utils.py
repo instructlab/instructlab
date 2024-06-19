@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Mapping, Optional, Union
 import copy
 import glob
 import json
+import logging
 import os
 import platform
 import re
@@ -386,7 +387,7 @@ def validate_yaml(
 
     errors = 0
     version = get_version(contents)
-    schemas_path = resources.files("instructlab").joinpath(f"schema/v{version}")
+    schemas_path = resources.files("instructlab.schema").joinpath(f"v{version}")
 
     def retrieve(uri: URI) -> Resource:
         path = schemas_path.joinpath(uri)
@@ -613,3 +614,26 @@ def http_client(params):
         ),
         verify=not params["tls_insecure"],
     )
+
+
+def display_params(func):
+    """Display command parameters."""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        try:
+            if (args[0].obj.logger.level == logging.DEBUG) and (
+                ("quiet" not in kwargs) or (not kwargs["quiet"])
+            ):
+                print("===================using parameters ========================")
+                max_param_length = max(len(param) for param in kwargs)
+                for param_name, param_value in kwargs.items():
+                    print(
+                        f"{param_name}{' ' * (max_param_length - len(param_name)):s}: {param_value}"
+                    )
+                print("============================================================")
+        except Exception:
+            pass
+        return func(*args, **kwargs)
+
+    return wrapper

@@ -154,6 +154,7 @@ TORCH_DEVICE = TorchDeviceParam()
     help="model name to use in training",
 )
 @click.pass_context
+@utils.display_params
 def train(
     ctx,
     data_dir,
@@ -232,7 +233,7 @@ def train(
         from ..llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
         from ..train.linux_train import linux_train
 
-        linux_train(
+        training_results_dir = linux_train(
             ctx=ctx,
             train_file=train_file,
             test_file=test_file,
@@ -241,8 +242,6 @@ def train(
             device=device,
             four_bit_quant=four_bit_quant,
         )
-
-        training_results_dir = Path("./training_results")
 
         final_results_dir = training_results_dir / "final"
         final_results_dir.mkdir(exist_ok=True)
