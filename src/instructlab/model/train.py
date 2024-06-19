@@ -244,7 +244,9 @@ def train(
         )
 
         final_results_dir = training_results_dir / "final"
-        final_results_dir.mkdir(exist_ok=True)
+        if final_results_dir.exists():
+            shutil.rmtree(final_results_dir)
+        final_results_dir.mkdir()
 
         gguf_models_dir = Path("./models")
         gguf_models_dir.mkdir(exist_ok=True)
