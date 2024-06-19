@@ -345,7 +345,13 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    ilab serve
    ```
 
-   Once the model is served and ready, you'll see the following output:
+- Serve a non-default model (e.g. Mixtral-8x7B-Instruct-v0.1):
+
+   ```shell
+   ilab serve --model-path models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
+   ```
+
+- Once the model is served and ready, you'll see the following output:
 
    ```shell
    (venv) $ ilab serve
@@ -364,6 +370,13 @@ Because you're serving the model in one terminal window, you will have to create
 ```shell
 source venv/bin/activate
 ilab chat
+```
+
+Chat with a non-default model (e.g. Mixtral-8x7B-Instruct-v0.1):
+
+```shell
+source venv/bin/activate
+ilab chat --model models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
 ```
 
 Before you start adding new skills and knowledge to your model, you can check its baseline performance by asking it a question such as `what is the capital of Canada?`.
@@ -418,6 +431,12 @@ Before following these instructions, ensure the existing model you are adding sk
 
    ```shell
    ilab generate
+   ```
+
+   Use a non-default model (e.g. Mixtral-8x7B-Instruct-v0.1) to generate data, run the following command:
+
+   ```shell
+   ilab generate --model models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
    ```
 
    > **NOTE:** ⏳ This can take from 15 minutes to 1+ hours to complete, depending on your computing resources.
