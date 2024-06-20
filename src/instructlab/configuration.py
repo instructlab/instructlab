@@ -28,6 +28,8 @@ DEFAULT_API_KEY = "no_api_key"
 DEFAULT_CONFIG = "config.yaml"
 # TODO: Consolidate --model and --model-path into one --model-path flag since we always need a path now
 DEFAULT_MODEL_OLD = "merlinite-7b-lab-Q4_K_M"
+DEFAULT_REPOSITORY = "instructlab/merlinite-7b-lab-GGUF"
+DEFAULT_REPOSITORY_TAG = "main"
 DEFAULT_MODEL = "models/merlinite-7b-lab-Q4_K_M.gguf"
 DEFAULT_MODEL_PATH = "models/merlinite-7b-lab-Q4_K_M.gguf"
 DEFAULT_TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
