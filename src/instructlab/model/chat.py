@@ -246,6 +246,8 @@ def chat(
                     backend_instance.shutdown()
                 raise click.exceptions.Exit(1) from exc
 
+    if not ctx.params["api_key"]:
+        ctx.params["api_key"] = api_key
     try:
         chat_cli(
             ctx,
