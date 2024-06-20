@@ -182,16 +182,10 @@ def chat(
 
         try:
             # Run the llama server
-            backend_instance.run_detached(
-                http_client(ctx.params),
-            )
-            # api_base will be set by run_detached
-            api_base = backend_instance.api_base
+            api_base = backend_instance.run_detached(http_client(ctx.params))
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
             raise click.exceptions.Exit(1)
-        if not api_base:
-            api_base = ctx.obj.config.serve.api_base()
 
     # if only the chat is running (`ilab model chat`) and the temp server is not, the chat interacts
     # in server mode (`ilab model serve` is running somewhere, or we are talking to another

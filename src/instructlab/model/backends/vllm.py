@@ -72,7 +72,7 @@ class Server(BackendServer):
         )
         return server_process
 
-    def run_detached(self, http_client: httpx.Client | None = None):
+    def run_detached(self, http_client: httpx.Client | None = None) -> str:
         try:
             _, vllm_server_process, api_base = ensure_server(
                 logger=self.logger,
@@ -85,6 +85,7 @@ class Server(BackendServer):
             )
             self.process = vllm_server_process
             self.api_base = api_base
+            return api_base
         except ServerException as exc:
             raise exc
         except SystemExit as exc:
