@@ -391,7 +391,7 @@ class TestLabTrain:
                 "taxonomy_data/test_gen.jsonl"
             )
             assert linux_train_mock.call_args[1]["num_epochs"] == 1
-            assert linux_train_mock.call_args[1]["device"] is not None
+            assert linux_train_mock.call_args[1]["train_device"] is not None
             assert not linux_train_mock.call_args[1]["four_bit_quant"]
             assert len(linux_train_mock.call_args[1]) == 7
             is_macos_with_m_chip_mock.assert_called_once()

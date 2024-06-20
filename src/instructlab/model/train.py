@@ -14,66 +14,6 @@ import torch
 from instructlab import utils
 
 
-class TorchDeviceParam(click.ParamType):
-    """Parse and convert device string
-
-    Returns a torch.device object:
-    - type is one of 'cpu', 'cuda', 'hpu'
-    - index is None or device index (e.g. 0 for first GPU)
-    """
-
-    name = "deviceinfo"
-    supported_devices = {"cuda", "cpu", "hpu"}
-
-    def convert(self, value, param, ctx) -> "torch.device":
-        # pylint: disable=C0415
-        # Function local import, import torch can take more than a second
-        # Third Party
-        import torch
-
-        if not isinstance(value, torch.device):
-            try:
-                device = torch.device(value)
-            except RuntimeError as e:
-                self.fail(str(e), param, ctx)
-
-        if device.type not in self.supported_devices:
-            supported = ", ".join(repr(s) for s in sorted(self.supported_devices))
-            self.fail(
-                f"Unsupported device type '{device.type}'. Only devices "
-                f"types {supported}, and indexed device strings like 'cuda:0' "
-                "are supported for now.",
-                param,
-                ctx,
-            )
-
-        # Detect CUDA/ROCm device
-        if device.type == "cuda":
-            if not torch.cuda.is_available():
-                self.fail(
-                    f"{value}: Torch has no CUDA/ROCm support or could not detect "
-                    "a compatible device.",
-                    param,
-                    ctx,
-                )
-            # map unqualified 'cuda' to current device
-            if device.index is None:
-                device = torch.device(device.type, torch.cuda.current_device())
-
-        if device.type == "hpu":
-            click.secho(
-                "WARNING: HPU support is experimental, unstable, and not "
-                "optimized, yet.",
-                fg="red",
-                bold=True,
-            )
-
-        return device
-
-
-TORCH_DEVICE = TorchDeviceParam()
-
-
 @click.command()
 @click.option("--data-dir", help="Base directory where data is stored.", default=None)
 @click.option(
@@ -125,12 +65,12 @@ TORCH_DEVICE = TorchDeviceParam()
 )
 @click.option(
     "--device",
-    type=TORCH_DEVICE,
+    type=click.Choice(["cpu", "cuda", "hpu"]),
     show_default=True,
     default="cpu",
     help=(
-        "PyTorch device for Linux training (default: 'cpu'). Use 'cuda' "
-        "for NVidia CUDA / AMD ROCm GPU, 'cuda:0' for first GPU."
+        "PyTorch device for Linux training. Use 'cuda' "
+        "for NVidia CUDA / AMD ROCm GPU, to use specific GPU, set visible GPU before run train command."
     ),
 )
 @click.option(
@@ -167,7 +107,7 @@ def train(
     local,
     skip_quantize,
     num_epochs,
-    device: "torch.device",
+    device: str,
     four_bit_quant: bool,
     model_name: str,
 ):
@@ -178,9 +118,6 @@ def train(
     if not input_dir:
         # By default, generate output-dir is used as train input-dir
         input_dir = ctx.obj.config.generate.output_dir
-
-    if four_bit_quant and device.type != "cuda":
-        ctx.fail("--4-bit-quant option requires --device=cuda")
 
     effective_data_dir = Path(data_dir or "./taxonomy_data")
     train_file = effective_data_dir / "train_gen.jsonl"
@@ -239,7 +176,7 @@ def train(
             test_file=test_file,
             model_name=model_name,
             num_epochs=num_epochs,
-            device=device,
+            train_device=device,
             four_bit_quant=four_bit_quant,
         )
 
