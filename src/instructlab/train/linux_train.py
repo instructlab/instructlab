@@ -12,7 +12,11 @@ from datasets import load_dataset
 from peft import LoraConfig
 from tqdm import tqdm
 
-# https://huggingface.co/docs/transformers/en/main_classes/trainer#transformers.TrainingArguments
+# https://huggingface.co/docs/transformers/model_doc/auto#transformers.AutoConfig
+# https://huggingface.co/docs/transformers/model_doc/auto#transformers.AutoModelForCausalLM
+# https://huggingface.co/docs/transformers/main_classes/quantization#transformers.BitsAndBytesConfig
+# https://huggingface.co/docs/transformers/internal/generation_utils#transformers.StoppingCriteria
+# https://huggingface.co/docs/transformers/main_classes/trainer#transformers.TrainingArguments
 from transformers import (
     AutoConfig,
     AutoModelForCausalLM,
