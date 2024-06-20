@@ -18,13 +18,13 @@ from instructlab import utils
 @click.command()
 @click.option(
     "--repository",
-    default="instructlab/merlinite-7b-lab-GGUF",  # TODO: add to config.yaml
+    default=config.get_default_config().general.repository,
     show_default=True,
     help="Hugging Face repository of the model to download.",
 )
 @click.option(
     "--release",
-    default="main",  # TODO: add to config.yaml
+    default=config.get_default_config().general.repository_tag,
     show_default=True,
     help="The git revision of the model to download - e.g. a branch, tag, or commit hash.",
 )
