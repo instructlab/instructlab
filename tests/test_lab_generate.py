@@ -10,9 +10,11 @@ import pathlib
 
 # Third Party
 from click.testing import CliRunner
+import pytest
+
+# InstructLab namespace packages
 from instructlab.sdg.generate_data import generate_data
 from instructlab.sdg.utils import GenerateException
-import pytest
 
 # First Party
 # pylint: disable=ungrouped-imports

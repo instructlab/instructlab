@@ -83,9 +83,9 @@ def _llama_cpp_info() -> typing.Dict[str, typing.Any]:
 
 def get_sysinfo() -> typing.Dict[str, typing.Any]:
     """Get system information"""
-    info = {
-        "instructlab.version": importlib.metadata.version("instructlab"),
-    }
+    info = {}
+    for name in sorted(["instructlab", "instructlab-sdg"]):
+        info[f"{name}.version"] = importlib.metadata.version(name)
     info.update(_platform_info())
     info.update(_torch_info())
     info.update(_torch_cuda_info())

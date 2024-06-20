@@ -148,7 +148,7 @@ def generate(
 ):
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=C0415
-    # Third Party
+    # InstructLab namespace packages
     from instructlab.sdg.generate_data import generate_data
     from instructlab.sdg.utils import GenerateException
 
