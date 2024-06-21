@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euf
+set -euf 
 
 # This is a basic workflow test of the ilab CLI.
 #
@@ -39,7 +39,13 @@ set_defaults() {
     fi
 
     NUM_INSTRUCTIONS=1
-    GENERATE_ARGS+=("--num-cpus" "$(nproc)")
+	# nproc doesn't exist on MacOS, so we have to use its equivalent:
+	# `sysctl -n hw.logicalcpu`: https://github.com/memkind/memkind/issues/33#issuecomment-540614162
+	if [[ "$(uname)" == "Darwin" ]]; then
+		GENERATE_ARGS+=("--num-cpus" "$(sysctl -n hw.logicalcpu)")
+	else
+		GENERATE_ARGS+=("--num-cpus" "$(nproc)")
+	fi
     TRAIN_ARGS+=("--num-epochs" "1")
 }
 
@@ -69,19 +75,19 @@ test_download() {
 }
 
 test_serve() {
-    # Accepts an argument of the model, or default here
-    if [ "$GRANITE" -eq 1 ]; then
-        model="${1:-./models/granite-7b-lab-Q4_K_M.gguf}"
-    else
-        model="${1:-}"
-    fi
-    SERVE_ARGS=()
-    if [ -n "$model" ]; then
-        SERVE_ARGS+=("--model-path ${model}")
-    fi
+	# Accepts an argument of the model, or default here
+	local model="${1:-}"
+	if [ "${GRANITE}" -eq 1 ]; then
+		model="${model:-./models/granite-7b-lab-Q4_K_M.gguf}"
+	fi
 
-    task Serve the model
-    ilab serve "${SERVE_ARGS[@]}" &
+	task Serve the model
+	if [ -z "${model}" ]; then
+		ilab serve &
+	else
+		ilab serve --model-path="${model}" &
+	fi
+
 
     ret=1
     for i in $(seq 1 10); do
@@ -99,10 +105,11 @@ test_serve() {
 test_chat() {
     task Chat with the model
     CHAT_ARGS=()
-    if [ "$GRANITE" -eq 1 ]; then
-        CHAT_ARGS+=("-m models/granite-7b-lab-Q4_K_M.gguf")
-    fi
-    printf 'Say "Hello"\n' | ilab chat "${CHAT_ARGS[@]}" | grep --color 'Hello'
+    if [ "${GRANITE}" -eq 1 ]; then
+    	printf 'Say "Hello"\n' | ilab chat -m models/granite-7b-lab-Q4_K_M.gguf | grep --color 'Hello'
+    else
+		printf 'Say "Hello"\n' | ilab chat | grep --color 'Hello'
+	fi
 }
 
 test_taxonomy() {
