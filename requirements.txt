@@ -37,7 +37,7 @@ torch>=2.2.1,<3.0.0 ; python_version != '3.10'
 tqdm>=4.66.2
 # 'optimum' for Intel Gaudi needs transformers <4.39.0,>=4.38.0
 transformers>=4.30.0
-trl>=0.7.11
+trl>=0.9.4
 wandb>=0.16.4
 langchain-text-splitters
 # do not use 8.4.0 due to a bug in the library
