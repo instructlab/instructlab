@@ -32,7 +32,7 @@ def list_models(
         client = OpenAI(
             base_url=api_base,
             api_key=api_key,
-            timeout=DEFAULT_CONNECTION_TIMEOUT,
+            timeout=httpx.Timeout(30.0),
             http_client=httpx.Client(cert=cert, verify=verify),
         )
         return client.models.list()

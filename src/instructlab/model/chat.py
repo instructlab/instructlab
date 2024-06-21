@@ -718,7 +718,7 @@ def chat_cli(
     client = OpenAI(
         base_url=api_base,
         api_key=ctx.params["api_key"],
-        timeout=cfg.DEFAULT_CONNECTION_TIMEOUT,
+        timeout=httpx.Timeout(config.connection_timeout),
         http_client=http_client(ctx.params),
     )
     # ensure the model specified exists on the server. with backends like vllm, this is crucial.
