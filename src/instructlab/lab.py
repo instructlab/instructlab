@@ -80,15 +80,24 @@ aliases = {
     show_default="config in user config directory",
     help="Path to a configuration file.",
 )
+@click.option(
+    "-v",
+    "--verbose",
+    "debug_level",
+    count=True,
+    default=0,
+    show_default=False,
+    help="Enable debug logging (repeat for even more verbosity)",
+)
 @click.version_option(package_name="instructlab")
 @click.pass_context
 # pylint: disable=redefined-outer-name
-def ilab(ctx, config_file):
+def ilab(ctx, config_file, debug_level: int = 0):
     """CLI for interacting with InstructLab.
 
     If this is your first time running ilab, it's best to start with `ilab config init` to create the environment.
     """
-    cfg.init(ctx, config_file)
+    cfg.init(ctx, config_file, debug_level)
 
 
 ilab.add_command(model_group.model)

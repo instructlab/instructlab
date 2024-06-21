@@ -135,8 +135,9 @@ ilab system sysinfo
 # pipe 3 carriage returns to ilab config init to get past the prompts
 echo -e "\n\n\n" | ilab init
 
-# Enable Debug in func tests
+# Enable Debug in func tests with debug level 1
 sed -i.bak -e 's/log_level:.*/log_level: DEBUG/g;' "${ILAB_CONFIG_FILE}"
+sed -i.bak -e 's/debug_level:.*/debug_level: 1/g;' "${ILAB_CONFIG_FILE}"
 
 # It looks like GitHub action MacOS runner does not have graphics
 # so we need to disable the GPU layers if we are running in GitHub actions

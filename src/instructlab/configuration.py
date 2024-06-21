@@ -23,6 +23,7 @@ from pydantic import (
     StrictStr,
     ValidationError,
     field_validator,
+    model_validator,
 )
 import click
 import httpx
@@ -172,6 +173,7 @@ class _general(BaseModel):
 
     # additional fields with defaults
     log_level: StrictStr = "INFO"
+    debug_level: int = 0
 
     @field_validator("log_level")
     def validate_log_level(cls, v):
@@ -192,6 +194,13 @@ class _general(BaseModel):
                 f"'{v}' is not a valid log level name. valid levels: {valid_levels}"
             )
         return v.upper()
+
+    @model_validator(mode="after")
+    def after_debug_level(self):
+        # set debug level when log level is DEBUG
+        if self.log_level == "DEBUG" and self.debug_level == 0:
+            self.debug_level = 1
+        return self
 
 
 class _chat(BaseModel):
@@ -532,7 +541,9 @@ class Lab:
             ctx.fail(self.error_msg)
 
 
-def init(ctx: click.Context, config_file: str | os.PathLike[str]) -> None:
+def init(
+    ctx: click.Context, config_file: str | os.PathLike[str], debug_level: int = 0
+) -> None:
     config_obj: Config
     error_msg: str | None = None
     if config_file == "DEFAULT":
@@ -560,6 +571,16 @@ def init(ctx: click.Context, config_file: str | os.PathLike[str]) -> None:
     ctx.obj = Lab(config_obj, config_file, error_msg)
     if config_obj is not None:
         ctx.default_map = get_dict(config_obj)
-        log.configure_logging(log_level=config_obj.general.log_level.upper())
+
+        # --verbose option overrides config file
+        if debug_level > 0:
+            config_obj.general.log_level = "DEBUG"
+            config_obj.general.debug_level = debug_level
+
+        # setup logging
+        log.configure_logging(
+            log_level=config_obj.general.log_level.upper(),
+            debug_level=config_obj.general.debug_level,
+        )
     else:
         ctx.default_map = None

@@ -14,6 +14,8 @@
    Includes --gpus option for specifying number of gpus to utilize when serving models for
    evaluation (currently applicable for vLLM only).  Also includes --merge-system-user-message
    flag to enable Mistral based judge models.
+* The `ilab` command now accepts a `-v` / `--verbose` option to enable debug logging.
+  `ilab -vv` or `ilab --verbose --verbose` enables more verbose debug logging.
 
 ### Breaking Changes
 

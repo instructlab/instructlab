@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+import logging
 import os
 
 # Third Party
@@ -9,6 +10,7 @@ import pytest
 
 # First Party
 from instructlab import configuration as config
+from instructlab.log import configure_logging
 
 
 class TestConfig:
@@ -27,6 +29,7 @@ class TestConfig:
 
         assert cfg.general is not None
         assert cfg.general.log_level == "INFO"
+        assert cfg.general.debug_level == 0
 
         assert cfg.chat is not None
         assert cfg.chat.model == default_model
@@ -209,6 +212,8 @@ evaluate:
     max_workers: 5
   mt_bench_branch:
     taxonomy_path: taxonomy
+general:
+  log_level: DEBUG
 """
             )
         cfg = config.read_config(config_path)
@@ -221,3 +226,22 @@ evaluate:
             "--dtype=auto",
             "--enable-lora",
         ]
+        assert cfg.general.log_level == "DEBUG"
+        assert cfg.general.debug_level == 1
+
+
+@pytest.mark.parametrize(
+    "log_level,debug_level,root,instructlab,openai_httpx",
+    [
+        ("INFO", 0, logging.INFO, logging.INFO, logging.ERROR),
+        ("DEBUG", 1, logging.INFO, logging.DEBUG, logging.ERROR),
+        ("DEBUG", 2, logging.DEBUG, logging.DEBUG, logging.DEBUG),
+        ("ERROR", 0, logging.ERROR, logging.ERROR, logging.ERROR),
+    ],
+)
+def test_logging(log_level, debug_level, root, instructlab, openai_httpx):
+    configure_logging(log_level=log_level, debug_level=debug_level)
+    assert logging.getLogger("root").getEffectiveLevel() == root
+    assert logging.getLogger("instructlab").getEffectiveLevel() == instructlab
+    assert logging.getLogger("openai").getEffectiveLevel() == openai_httpx
+    assert logging.getLogger("httpx").getEffectiveLevel() == openai_httpx
