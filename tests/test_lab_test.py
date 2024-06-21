@@ -9,7 +9,6 @@ import sys
 
 # Third Party
 from click.testing import CliRunner
-import pytest
 
 # First Party
 from instructlab import lab
@@ -67,7 +66,6 @@ def mock_convert_llama_to_gguf(model, pad_vocab):
     return LINUX_GGUF_FILE
 
 
-@pytest.mark.usefixtures("mock_mlx_package")
 class TestLabModelTest:
     """Test collection for `ilab model test` command."""
 

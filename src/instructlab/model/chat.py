@@ -30,7 +30,7 @@ from instructlab import configuration as cfg
 # Local
 from ..utils import get_sysprompt, http_client
 
-logger = logging.getLogger(__name__)
+global_logger = logging.getLogger(__name__)
 
 HELP_MD = """
 Help / TL;DR
@@ -725,7 +725,9 @@ def chat_cli(
     # global CONTEXTS
     # CONTEXTS = config["contexts"]
     if context not in CONTEXTS:
-        logger.info(f"Context {context} not found in the config file. Using default.")
+        global_logger.info(
+            f"Context {context} not found in the config file. Using default."
+        )
         context = "default"
     loaded["name"] = context
     loaded["messages"] = [{"role": "system", "content": CONTEXTS[context]}]
@@ -773,7 +775,7 @@ def chat_cli(
         if not qq:
             print(f"{PROMPT_PREFIX}{question}")
         try:
-            ccb.start_prompt(logger, content=question, box=not qq)
+            ccb.start_prompt(global_logger, content=question, box=not qq)
         except ChatException as exc:
             raise ChatException(f"API issue found while executing chat: {exc}") from exc
         except (ChatQuitException, KeyboardInterrupt, EOFError):
@@ -789,7 +791,7 @@ def chat_cli(
     # Start chatting
     while True:
         try:
-            ccb.start_prompt(logger)
+            ccb.start_prompt(global_logger)
         except KeyboardInterrupt:
             continue
         except ChatException as exc:
