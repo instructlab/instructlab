@@ -169,7 +169,11 @@ TORCH_DEVICE = TorchDeviceParam()
 @click.option(
     "--max-seq-len", type=int, help="maximum length, in tokens, of a single sample."
 )
-@click.option("--max-batch-len", type=int, help="maximum overall length of samples processed in a given batch.")
+@click.option(
+    "--max-batch-len",
+    type=int,
+    help="maximum overall length of samples processed in a given batch.",
+)
 @click.option(
     "--effective-batch-size", type=int, help="total batch size across all GPUs"
 )
@@ -204,11 +208,7 @@ TORCH_DEVICE = TorchDeviceParam()
     "--lora-alpha", type=float, help="how influential/strong lors tune will be"
 )
 @click.option("--lora-dropout", type=float, help="dropout for LoRA layers")
-@click.option(
-    "--target-modules",
-    type=str,
-    help="LoRA modules to use"
-)
+@click.option("--target-modules", type=str, help="LoRA modules to use")
 @click.option(
     "--is-padding-free",
     type=bool,
@@ -293,7 +293,7 @@ def train(
         # By default, generate output-dir is used as train input-dir
         input_dir = ctx.obj.config.generate.output_dir
 
-    if four_bit_quant and device.type != "cuda":
+    if four_bit_quant and device != "cuda":
         ctx.fail("'--4-bit-quant' option requires '--device=cuda'")
 
     effective_data_dir = Path(data_path or "./taxonomy_data")
@@ -400,7 +400,7 @@ def train(
                 quantize=quantize_arg,
                 local=local,
             )
-            
+
         adapter_file_path = f"{dest_model_dir}/adapters.npz"
 
         # train the model with LoRA
