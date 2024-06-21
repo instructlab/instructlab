@@ -10,6 +10,8 @@ import click
 from instructlab import configuration as config
 from instructlab import utils
 
+logger = logging.getLogger(__name__)
+
 
 @click.command()
 @click.option(
@@ -157,10 +159,8 @@ def generate(
 
     server_process = None
     server_queue = None
-    logger = logging.getLogger("TODO")
     prompt_file_path = config.DEFAULT_PROMPT_FILE
     if ctx.obj is not None:
-        logger = ctx.obj.logger
         prompt_file_path = ctx.obj.config.generate.prompt_file
 
     if endpoint_url:
@@ -180,7 +180,6 @@ def generate(
 
         try:
             server_process, api_base, server_queue = ensure_server(
-                ctx.obj.logger,
                 ctx.obj.config.serve,
                 tls_insecure,
                 tls_client_cert,
@@ -198,7 +197,7 @@ def generate(
             f"Generating synthetic data using '{model}' model, taxonomy:'{taxonomy_path}' against {api_base} server"
         )
         generate_data(
-            logger=logger,
+            logger=logging.getLogger("instructlab.sdg"),  # TODO: remove
             api_base=api_base,
             api_key=api_key,
             model_family=model_family,

@@ -4,6 +4,7 @@
 from typing import Optional
 import datetime
 import json
+import logging
 import os
 import sys
 import time
@@ -31,6 +32,8 @@ from instructlab import utils
 
 # Local
 from ..utils import get_sysprompt, http_client
+
+logger = logging.getLogger(__name__)
 
 HELP_MD = """
 Help / TL;DR
@@ -176,7 +179,6 @@ def chat(
     else:
         try:
             server_process, api_base, server_queue = ensure_server(
-                ctx.obj.logger,
                 ctx.obj.config.serve,
                 tls_insecure,
                 tls_client_cert,
@@ -674,7 +676,6 @@ def chat_cli(
     max_tokens,
 ):
     """Starts a CLI-based chat with the server"""
-    logger = ctx.obj.logger
     client = OpenAI(
         base_url=api_base,
         api_key=ctx.params["api_key"],

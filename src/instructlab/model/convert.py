@@ -3,6 +3,7 @@
 # Standard
 from glob import glob
 from pathlib import Path
+import logging
 import os
 import shutil
 
@@ -13,6 +14,8 @@ import click
 
 # First Party
 from instructlab import utils
+
+logger = logging.getLogger(__name__)
 
 
 @click.command()
@@ -81,7 +84,7 @@ def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model
         )
         raise click.exceptions.Exit(1)
 
-    ctx.obj.logger.info(f"deleting {source_model_dir}...")
+    logger.info(f"deleting {source_model_dir}...")
     shutil.rmtree(source_model_dir)
 
     model_dir_fused_pt = f"{model_name}-trained"
@@ -90,7 +93,7 @@ def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model
         hf_path=model_dir_fused, mlx_path=model_dir_fused_pt, local=True, to_pt=True
     )
 
-    ctx.obj.logger.info(f"deleting {model_dir_fused}...")
+    logger.info(f"deleting {model_dir_fused}...")
     shutil.rmtree(model_dir_fused)
 
     convert_llama_to_gguf(
@@ -100,7 +103,7 @@ def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model
         outfile=f"{model_dir_fused_pt}/{model_name}.gguf",
     )
 
-    ctx.obj.logger.info(f"deleting safetensors files from {model_dir_fused_pt}...")
+    logger.info(f"deleting safetensors files from {model_dir_fused_pt}...")
     for file in glob(os.path.join(model_dir_fused_pt, "*.safetensors")):
         os.remove(file)
 
@@ -110,5 +113,5 @@ def convert(ctx, model_dir, adapter_file, skip_de_quantize, skip_quantize, model
         gguf_model_q_dir = f"{model_dir_fused_pt}/{model_name}-Q4_K_M.gguf"
         run_quantize(gguf_model_dir, gguf_model_q_dir, "Q4_K_M")
 
-    ctx.obj.logger.info(f"deleting {model_dir_fused_pt}/{model_name}.gguf...")
+    logger.info(f"deleting {model_dir_fused_pt}/{model_name}.gguf...")
     os.remove(os.path.join(model_dir_fused_pt, f"{model_name}.gguf"))

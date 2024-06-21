@@ -144,7 +144,7 @@ class TestLabGenerate:
                 )
                 with pytest.raises(GenerateException) as exc:
                     generate_data(
-                        logger=logging.getLogger("test_logger"),
+                        logger=logging.getLogger("instructlab.sdg"),  # TODO: remove
                         api_base="localhost:8000",
                         api_key="",
                         model_family="merlinite",
@@ -215,7 +215,7 @@ class TestLabGenerate:
                     "compositional_skills/tracked/qna.yaml", qnafile.read()
                 )
                 generate_data(
-                    logger=logging.getLogger("test_logger"),
+                    logger=logging.getLogger("instructlab.sdg"),  # TODO: remove
                     api_base="localhost:8000",
                     api_key="",
                     model_name="my-model",
@@ -260,7 +260,7 @@ class TestLabGenerate:
                     "knowledge/technical-manual/test/qna.yaml", qnafile.read()
                 )
                 generate_data(
-                    logger=logging.getLogger("test_logger"),
+                    logger=logging.getLogger("instructlab.sdg"),  # TODO: remove
                     api_base="localhost:8000",
                     api_key="",
                     model_name="my-model",

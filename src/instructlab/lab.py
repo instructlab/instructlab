@@ -3,9 +3,7 @@
 # pylint: disable=too-many-lines
 
 # Standard
-import logging
 import multiprocessing
-import os
 
 # Third Party
 import click
@@ -24,14 +22,6 @@ from .taxonomy import taxonomy as taxonomy_group
 # 'fork' is unsafe and incompatible with some hardware accelerators.
 # Python 3.14 will switch to 'spawn' on all platforms.
 multiprocessing.set_start_method(cfg.DEFAULT_MULTIPROCESSING_START_METHOD, force=True)
-
-# Set logging level of OpenAI client and httpx library to ERROR to suppress INFO messages
-logging.getLogger("openai").setLevel(logging.ERROR)
-logging.getLogger("httpx").setLevel(logging.ERROR)
-
-# Intel Gaudi: workaround for race condition in oneMKL [HS-1795]
-# Must be set before torch is imported by an application.
-os.environ["MKL_NUM_THREADS"] = "1"
 
 
 class ExpandAliasesGroup(click.Group):
