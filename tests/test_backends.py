@@ -4,7 +4,7 @@ import pytest
 # First Party
 from instructlab.model.backends import backends
 
-supported_backends = ["llama-cpp"]  # Example supported backends
+supported_backends = ["llama-cpp", "vllm"]  # Example supported backends
 
 
 @pytest.fixture
@@ -25,6 +25,11 @@ class TestValidateBackend:
         # Test with a valid backend
         try:
             backends.validate_backend("LLAMA-CPP")
+        except ValueError:
+            pytest.fail("validate_backend raised ValueError unexpectedly!")
+        # Test with a valid backend
+        try:
+            backends.validate_backend("vllm")
         except ValueError:
             pytest.fail("validate_backend raised ValueError unexpectedly!")
 

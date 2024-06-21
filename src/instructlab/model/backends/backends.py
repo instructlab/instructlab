@@ -10,6 +10,7 @@ import pathlib
 import random
 import signal
 import socket
+import sys
 
 # Third Party
 from uvicorn import Config
@@ -20,6 +21,8 @@ from ...client import ClientException, list_models
 from ...configuration import get_api_base
 
 LLAMA_CPP = "llama-cpp"
+VLLM = "vllm"
+SUPPORTED_BACKENDS = frozenset({LLAMA_CPP, VLLM})
 API_ROOT_WELCOME_MESSAGE = "Hello from InstructLab! Visit us at https://instructlab.ai"
 templates = [
     {
@@ -126,6 +129,11 @@ def determine_backend(model_path: pathlib.Path) -> str:
         str: The backend to use.
     """
     # Check if the model is a GGUF file
+
+    # If the model is a directory, it's a VLLM model - it's kinda weak, but it's a start
+    if model_path.is_dir() and sys.platform == "linux":
+        return VLLM
+
     try:
         is_gguf = is_model_gguf(model_path)
     except Exception as e:
@@ -166,11 +174,12 @@ def get(logger: logging.Logger, model_path: pathlib.Path, backend: str) -> str:
     else:
         logger.debug(f"Validating '{backend}' backend")
         validate_backend(backend)
+        # TODO: keep this code logic and implement a `--force` flag to override the auto-detected backend
         # If the backend was set explicitly, but we detected the model should use a different backend, raise an error
-        if backend != auto_detected_backend:
-            raise ValueError(
-                f"The backend '{backend}' was set explicitly, but the model was detected as '{auto_detected_backend}'."
-            )
+        # if backend != auto_detected_backend:
+        #     raise ValueError(
+        #         f"The backend '{backend}' was set explicitly, but the model was detected as '{auto_detected_backend}'."
+        #     )
 
     return backend
 
