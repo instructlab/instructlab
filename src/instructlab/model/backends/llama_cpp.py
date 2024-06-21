@@ -2,58 +2,29 @@
 
 # Standard
 from contextlib import redirect_stderr, redirect_stdout
-from time import sleep
 import logging
 import multiprocessing
 import os
 import pathlib
-import random
-import signal
-import socket
-import typing
 
 # Third Party
 from llama_cpp import llama_chat_format
 from llama_cpp.server.app import create_app
 from llama_cpp.server.settings import Settings
-from uvicorn import Config
 import llama_cpp.server.app as llama_app
-import uvicorn
 
 # Local
-from ...client import ClientException, list_models
-from ...configuration import get_api_base, get_model_family
-from .backends import BackendServer
-
-if typing.TYPE_CHECKING:
-    # Standard
-    from types import FrameType
-
-logger = logging.getLogger(__name__)
-
-templates = [
-    {
-        "model": "merlinite",
-        "template": "{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '<|user|>\n' + message['content'] }}\n{% elif message['role'] == 'system' %}\n{{ '<|system|>\n' + message['content'] }}\n{% elif message['role'] == 'assistant' %}\n{{ '<|assistant|>\n' + message['content'] + eos_token }}\n{% endif %}\n{% if loop.last and add_generation_prompt %}\n{{ '<|assistant|>' }}\n{% endif %}\n{% endfor %}",
-    },
-    {
-        "model": "mixtral",
-        "template": "{{ bos_token }}\n{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '[INST] ' + message['content'] + ' [/INST]' }}\n{% elif message['role'] == 'assistant' %}\n{{ message['content'] + eos_token}}\n{% endif %}\n{% endfor %}",
-    },
-]
-
-
-class ServerException(Exception):
-    """An exception raised when serving the API."""
-
-
-class UvicornServer(uvicorn.Server):
-    """Override uvicorn.Server to handle SIGINT."""
-
-    def handle_exit(self, sig, frame):
-        # type: (int, typing.Optional[FrameType]) -> None
-        if not is_temp_server_running() or sig != signal.SIGINT:
-            super().handle_exit(sig=sig, frame=frame)
+from ...configuration import get_model_family
+from .backends import (
+    API_ROOT_WELCOME_MESSAGE,
+    BackendServer,
+    ServerException,
+    UvicornServer,
+    ensure_server,
+    get_uvicorn_config,
+    is_temp_server_running,
+    templates,
+)
 
 
 class Server(BackendServer):
@@ -61,24 +32,24 @@ class Server(BackendServer):
         self,
         logger: logging.Logger,
         model_path: pathlib.Path,
+        model_family: str,
+        api_base: str,
         host: str,
         port: int,
         gpu_layers: int,
         max_ctx_size: int,
         num_threads: int,
-        model_family: str,
+        queue: multiprocessing.Queue = None,
     ):
-        super().__init__(logger, model_path, host, port)
+        super().__init__(logger, model_path, api_base, host, port)
+        self.model_family = model_family
         self.gpu_layers = gpu_layers
         self.max_ctx_size = max_ctx_size
         self.num_threads = num_threads
-        self.model_family = model_family
+        self.queue = queue
 
     def run(self):
         """Start an OpenAI-compatible server with llama-cpp"""
-
-        # TODO: as the multibackend implementation progresses, we might move some of the
-        # ensure_server code here
         try:
             server(
                 server_logger=self.logger,
@@ -93,112 +64,59 @@ class Server(BackendServer):
         except ServerException as exc:
             raise exc
 
-    def shutdown(self):
-        """Stop the server process and close the queue."""
-        pass
-
-
-def ensure_server(
-    serve_config,
-    tls_insecure,
-    tls_client_cert,
-    tls_client_key,
-    tls_client_passwd,
-    model_family,
-):
-    """Checks if server is running, if not starts one as a subprocess. Returns the server process
-    and the URL where it's available."""
-    try:
-        api_base = serve_config.api_base()
-        logger.debug(f"Trying to connect to {api_base}...")
-        # pylint: disable=duplicate-code
-        list_models(
-            api_base=api_base,
-            tls_insecure=tls_insecure,
-            tls_client_cert=tls_client_cert,
-            tls_client_key=tls_client_key,
-            tls_client_passwd=tls_client_passwd,
-        )
-        return (None, None, None)
-        # pylint: enable=duplicate-code
-    except ClientException:
-        tried_ports = set()
+    def create_server_process(self, port: str) -> multiprocessing.Process:
         mpctx = multiprocessing.get_context(None)
-        # use a queue to communicate between the main process and the server process
         queue = mpctx.Queue()
-        port = random.randint(1024, 65535)
-        host = serve_config.host_port.rsplit(":", 1)[0]
-        logger.debug(f"Trying port {port}...")
-
-        # extract address provided in the config
-        while not can_bind_to_port(host, port):
-            logger.debug(f"Port {port} is not available.")
-            # add the port to the map so that we can avoid using the same one
-            tried_ports.add(port)
-            port = random.randint(1024, 65535)
-            while True:
-                # if all the ports have been tried, exit
-                if len(tried_ports) == 65535 - 1024:
-                    # pylint: disable=raise-missing-from
-                    raise SystemExit(
-                        "No available ports to start the temporary server."
-                    )
-                if port in tried_ports:
-                    logger.debug(f"Port {port} has already been tried.")
-                    port = random.randint(1024, 65535)
-                else:
-                    break
-        logger.debug(f"Port {port} is available.")
-
-        host_port = f"{host}:{port}"
-        temp_api_base = get_api_base(host_port)
-        logger.debug(
-            f"Connection to {api_base} failed. Starting a temporary server at {temp_api_base}..."
-        )
+        self.queue = queue
+        host_port = f"{self.host}:{self.port}"
         # create a temporary, throw-away logger
         server_logger = logging.getLogger(host_port)
         server_logger.setLevel(logging.FATAL)
+
         server_process = mpctx.Process(
             target=server,
             kwargs={
                 "server_logger": server_logger,
-                "model_path": serve_config.model_path,
-                "gpu_layers": serve_config.gpu_layers,
-                "max_ctx_size": serve_config.max_ctx_size,
-                "model_family": model_family,
+                "model_path": self.model_path.as_posix(),  # llamacpp expects a string not a Path
+                "gpu_layers": self.gpu_layers,
+                "max_ctx_size": self.max_ctx_size,
+                "model_family": self.model_family,
                 "port": port,
-                "host": host,
-                "queue": queue,
+                "host": self.host,
+                "queue": self.queue,
             },
         )
-        server_process.start()
 
-        # in case the server takes some time to fail we wait a bit
-        count = 0
-        while server_process.is_alive():
-            sleep(0.1)
-            try:
-                list_models(
-                    api_base=temp_api_base,
-                    tls_insecure=tls_insecure,
-                    tls_client_cert=tls_client_cert,
-                    tls_client_key=tls_client_key,
-                    tls_client_passwd=tls_client_passwd,
-                )
-                break
-            except ClientException:
-                pass
-            if count > 50:
-                logger.error("failed to reach the API server")
-                break
-            count += 1
+        return server_process
 
-        # if the queue is not empty it means the server failed to start
-        if not queue.empty():
-            # pylint: disable=raise-missing-from
-            raise queue.get()
+    def run_detached(
+        self, tls_insecure, tls_client_cert, tls_client_key, tls_client_passwd
+    ):
+        try:
+            server_process, api_base = ensure_server(
+                logger=self.logger,
+                server_process_func=self.create_server_process,
+                api_base=self.api_base,
+                tls_insecure=tls_insecure,
+                tls_client_cert=tls_client_cert,
+                tls_client_key=tls_client_key,
+                tls_client_passwd=tls_client_passwd,
+                host=self.host,
+                port=self.port,
+                queue=self.queue,
+            )
+            self.process = server_process
+            self.api_base = api_base
+        except ServerException as exc:
+            raise exc
 
-        return (server_process, temp_api_base, queue)
+    def shutdown(self):
+        """Stop the server process and close the queue."""
+        if self.process and self.queue:
+            self.process.terminate()
+            self.process.join(timeout=30)
+            self.queue.close()
+            self.queue.join_thread()
 
 
 def server(
@@ -228,9 +146,7 @@ def server(
 
         @app.get("/")
         def read_root():
-            return {
-                "message": "Hello from InstructLab! Visit us at https://instructlab.ai"
-            }
+            return {"message": API_ROOT_WELCOME_MESSAGE}
     except ValueError as exc:
         if queue:
             queue.put(exc)
@@ -270,13 +186,10 @@ def server(
         f"After application startup complete see http://{host}:{port}/docs for API."
     )
 
-    config = Config(
-        app,
+    config = get_uvicorn_config(
+        app=app,
         host=host,
         port=port,
-        log_level=logging.ERROR,
-        limit_concurrency=2,  # Make sure we only serve a single client at a time
-        timeout_keep_alive=0,  # prevent clients holding connections open (we only have 1)
     )
     s = UvicornServer(config)
 
@@ -299,17 +212,3 @@ def server(
     if queue:
         queue.close()
         queue.join_thread()
-
-
-def can_bind_to_port(host, port):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        try:
-            s.bind((host, port))
-            return True
-        except socket.error:
-            return False
-
-
-def is_temp_server_running():
-    """Check if the temp server is running."""
-    return multiprocessing.current_process().name != "MainProcess"
