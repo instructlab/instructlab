@@ -59,6 +59,7 @@ class BackendServer(abc.ABC):
         api_base: str,
         host: str,
         port: int,
+        process: multiprocessing.Process = None,
         **kwargs,
     ) -> None:
         self.logger = logger
@@ -66,10 +67,14 @@ class BackendServer(abc.ABC):
         self.api_base = api_base
         self.host = host
         self.port = port
+        self.process = process
 
     @abc.abstractmethod
     def run(self):
         """Run serving backend in foreground (ilab model serve)"""
+
+    def run_detached(self):
+        """Run serving backend in background ('ilab model chat' when server is not running)"""
 
     @abc.abstractmethod
     def shutdown(self):

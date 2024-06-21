@@ -2,6 +2,7 @@
 
 # Standard
 import logging
+import pathlib
 
 # Third Party
 import click
@@ -157,19 +158,29 @@ def generate(
     # First Party
     from instructlab.model.backends.llama_cpp import ensure_server
 
-    server_process = None
-    server_queue = None
     prompt_file_path = config.DEFAULT_PROMPT_FILE
     if ctx.obj is not None:
         prompt_file_path = ctx.obj.config.generate.prompt_file
 
+    backend_instance = None
     if endpoint_url:
         api_base = endpoint_url
     else:
-        # First Party
-        from instructlab.model.backends import backends
+        # Third Party
+        import llama_cpp as llama_cpp_python
 
-        model_path = ctx.obj.config.serve.model_path
+        # First Party
+        from instructlab.model.backends import backends, llama_cpp, vllm
+
+        if not llama_cpp_python.llama_supports_gpu_offload():
+            # TODO: check for working offloading. The function only checks
+            # for compile time defines like `GGML_USE_CUDA`.
+            click.secho(
+                "llama_cpp_python is built without hardware acceleration. "
+                "ilab generate will be very slow.",
+                fg="red",
+            )
+        model_path = pathlib.Path(ctx.obj.config.serve.model_path)
         backend = ctx.obj.config.serve.backend
         try:
             backend = backends.get(logger, model_path, backend)
@@ -177,31 +188,44 @@ def generate(
             click.secho(f"Failed to determine backend: {e}", fg="red")
             raise click.exceptions.Exit(1)
 
+        host = ctx.obj.config.serve.host_port.split(":")[0]
+        port = int(ctx.obj.config.serve.host_port.split(":")[1])
+
         if backend == backends.LLAMA_CPP:
-            # Third Party
-            import llama_cpp
+            # Instantiate the llama server
+            backend_instance = llama_cpp.Server(
+                logger=logger,
+                api_base=ctx.obj.config.serve.api_base(),
+                model_path=model_path,
+                gpu_layers=ctx.obj.config.serve.gpu_layers,
+                max_ctx_size=ctx.obj.config.serve.max_ctx_size,
+                num_threads=None,  # exists only as a flag not a config
+                model_family=model_family,
+                host=host,
+                port=port,
+            )
 
-            if not llama_cpp.llama_supports_gpu_offload():
-                # TODO: check for working offloading. The function only checks
-                # for compile time defines like `GGML_USE_CUDA`.
-                click.secho(
-                    "llama_cpp_python is built without hardware acceleration. "
-                    "ilab generate will be very slow.",
-                    fg="red",
-                )
+        if backend == backends.VLLM:
+            # Instantiate the vllm server
+            backend_instance = vllm.Server(
+                logger=logger,
+                api_base=ctx.obj.config.serve.api_base(),
+                model_path=model_path,
+                model_family=model_family,
+                host=host,
+                port=port,
+            )
 
-            try:
-                server_process, api_base, server_queue = ensure_server(
-                    ctx.obj.config.serve,
-                    tls_insecure,
-                    tls_client_cert,
-                    tls_client_key,
-                    tls_client_passwd,
-                    model_family,
-                )
-            except Exception as exc:
-                click.secho(f"Failed to start server: {exc}", fg="red")
-                raise click.exceptions.Exit(1)
+        try:
+            # Run the llama server
+            backend_instance.run_detached(
+                tls_insecure, tls_client_cert, tls_client_key, tls_client_passwd
+            )
+            # api_base will be set by run_detached
+            api_base = backend_instance.api_base
+        except Exception as exc:
+            click.secho(f"Failed to start server: {exc}", fg="red")
+            raise click.exceptions.Exit(1)
         if not api_base:
             api_base = ctx.obj.config.serve.api_base()
     try:
@@ -237,8 +261,5 @@ def generate(
         )
         raise click.exceptions.Exit(1)
     finally:
-        if server_process and server_queue:
-            server_process.terminate()
-            server_process.join(timeout=30)
-            server_queue.close()
-            server_queue.join_thread()
+        if backend_instance is not None:
+            backend_instance.shutdown()

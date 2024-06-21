@@ -53,7 +53,7 @@ class Server(BackendServer):
         try:
             server(
                 server_logger=self.logger,
-                model_path=self.model_path,
+                model_path=self.model_path.as_posix(),
                 gpu_layers=self.gpu_layers,
                 max_ctx_size=self.max_ctx_size,
                 model_family=self.model_family,
