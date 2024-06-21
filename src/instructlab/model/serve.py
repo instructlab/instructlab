@@ -2,6 +2,7 @@
 
 # Standard
 import logging
+import pathlib
 
 # Third Party
 import click
@@ -56,7 +57,7 @@ logger = logging.getLogger(__name__)
 @utils.display_params
 def serve(
     ctx,
-    model_path,
+    model_path: pathlib.Path,
     gpu_layers,
     num_threads,
     max_ctx_size,
@@ -67,7 +68,7 @@ def serve(
     """Start a local server"""
 
     # First Party
-    from instructlab.model.backends import llama_cpp
+    from instructlab.model.backends import llama_cpp, vllm
 
     host = ctx.obj.config.serve.host_port.split(":")[0]
     port = int(ctx.obj.config.serve.host_port.split(":")[1])
@@ -75,9 +76,10 @@ def serve(
     # First Party
     from instructlab.model.backends import backends
 
+    model_path = pathlib.Path(model_path)
     try:
         backend = backends.get(logger, model_path, backend)
-    except ValueError as e:
+    except (ValueError, AttributeError) as e:
         click.secho(f"Failed to determine backend: {e}", fg="red")
         raise click.exceptions.Exit(1)
 
@@ -90,22 +92,36 @@ def serve(
 
     logger.info(f"Serving model '{model_path}' with {backend}")
 
+    backend_instance = None
     if backend == backends.LLAMA_CPP:
         # Instantiate the llama server
-        llama_server = llama_cpp.Server(
+        backend_instance = llama_cpp.Server(
             logger=logger,
+            api_base=ctx.obj.config.serve.api_base(),
             model_path=model_path,
+            model_family=model_family,
+            host=host,
+            port=port,
             gpu_layers=gpu_layers,
             max_ctx_size=max_ctx_size,
             num_threads=num_threads,
+        )
+
+    if backend == backends.VLLM:
+        # Instantiate the vllm server
+        backend_instance = vllm.Server(
+            logger=logger,
+            api_base=ctx.obj.config.serve.api_base(),
+            model_path=model_path,
             model_family=model_family,
             host=host,
             port=port,
         )
 
-        try:
-            # Run the llama server
-            llama_server.run()
-        except ServerException as exc:
-            click.secho(f"Error creating server: {exc}", fg="red")
-            raise click.exceptions.Exit(1)
+    try:
+        # Run the llama server
+        backend_instance.run()
+
+    except ServerException as exc:
+        click.secho(f"Error creating server: {exc}", fg="red")
+        raise click.exceptions.Exit(1)

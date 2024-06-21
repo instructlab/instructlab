@@ -56,18 +56,20 @@ class BackendServer(abc.ABC):
         self,
         logger: logging.Logger,
         model_path: pathlib.Path,
+        api_base: str,
         host: str,
         port: int,
         **kwargs,
     ) -> None:
         self.logger = logger
         self.model_path = model_path
+        self.api_base = api_base
         self.host = host
         self.port = port
 
     @abc.abstractmethod
     def run(self):
-        """Run serving backend"""
+        """Run serving backend in foreground (ilab model serve)"""
 
     @abc.abstractmethod
     def shutdown(self):
