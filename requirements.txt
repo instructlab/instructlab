@@ -29,7 +29,8 @@ PyYAML>=6.0.0
 rich>=13.3.1
 rouge-score>=0.1.2
 sentencepiece>=0.2.0
-tokenizers>=0.15.2
+# "old" version required for vLLM on CUDA to build
+tokenizers>=0.11.1
 toml>=0.10.2
 # Intel Gaudi 1.16.1 has torch 2.2.0a0+git8964477 with oneMKL
 torch>=2.2.0a0,<3.0.0 ; python_version == '3.10'
