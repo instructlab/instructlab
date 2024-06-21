@@ -33,6 +33,7 @@
   - [📜 Test the newly trained model](#-test-the-newly-trained-model)
   - [🍴 Serve the newly trained model](#-serve-the-newly-trained-model)
 - [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
+- [🚀 Upgrade InstructLab to latest version](#-upgrade-instructlab-to-latest-version)
 - [🎁 Submit your new knowledge or skills](#-submit-your-new-knowledge-or-skills)
 - [📬 Contributing](#-contributing)
 
@@ -584,6 +585,14 @@ argument to specify your new model:
    ```
 
    If you are interested in optimizing the quality of the model's responses, please see [`TROUBLESHOOTING.md`](./TROUBLESHOOTING.md#model-fine-tuning-and-response-optimization)
+
+## 🚀 Upgrade InstructLab to latest version
+
+- To upgrade InstructLab to the latest version, use the following command:
+
+   ```shell
+   pip install instructlab --upgrade
+   ```
 
 ## 🎁 Submit your new knowledge or skills
 
