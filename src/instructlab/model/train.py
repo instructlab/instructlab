@@ -8,7 +8,13 @@ import os
 import shutil
 
 # Third Party
-from instructlab.training import TorchrunArgs, TrainingArgs, run_training
+from instructlab.training import (
+    DeepSpeedOptions,
+    LoraOptions,
+    TorchrunArgs,
+    TrainingArgs,
+    run_training,
+)
 import click
 import torch
 
@@ -190,30 +196,25 @@ TORCH_DEVICE = TorchDeviceParam()
 @click.option("--learning-rate", type=float, help="learning rate for training")
 @click.option("--warmup-steps", type=int, help="warmup steps for training")
 @click.option(
-    "--deepspeed-config",
-    type=click.Path(),
-    help="configuration to use for deepspeed training",
-    hidden=True,
+    "--cpu-offload-optimizer", type=bool, help="if true enables optimizer offload"
 )
+@click.option("--cpu-offload-ratio", type=float, help="cpu offload optimizer ratio")
 @click.option(
-    "--cpu-offload-optim", type=bool, help="if true enables optimizer offload"
-)
-@click.option(
-    "--cpu-offload-params", type=bool, help="if true, enables parameter offload"
-)
-@click.option(
-    "--ds-quantize-dtype",
-    type=click.Choice(["nf4", "fp8"]),
-    default=None,
-    help="quantization data type ot use when training a LoRA.",
+    "--cpu-offload-optimizer-pin-memory",
+    type=bool,
+    help="if true pin memory when using cpu optimizer",
 )
 # below flags are invalid if lora == false
-@click.option("--lora-rank", type=int, help="rank of update matricies")
+@click.option("--rank", type=int, help="rank of update matricies")
+@click.option("--alpha", type=float, help="how influential/strong lora tune will be")
+@click.option("--dropout", type=float, help="dropout for LoRA layers")
+@click.option("--target-modules", multiple=True, default=[], help="LoRA modules to use")
 @click.option(
-    "--lora-alpha", type=float, help="how influential/strong lors tune will be"
+    "--quantize-data-type",
+    type=str,
+    default=None,
+    help="quantization data type to use when training a LoRA.",
 )
-@click.option("--lora-dropout", type=float, help="dropout for LoRA layers")
-@click.option("--target-modules", type=str, help="LoRA modules to use")
 @click.option(
     "--is-padding-free",
     type=bool,
@@ -470,6 +471,10 @@ def train(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
+        ds_args = DeepSpeedOptions(**params)
+        lora_args = LoraOptions(**params)
         train_args = TrainingArgs(**params)
         torch_args = TorchrunArgs(**params)
+        train_args.deepspeed_options = ds_args
+        train_args.lora = lora_args
         run_training(train_args=train_args, torch_args=torch_args)

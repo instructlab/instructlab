@@ -8,7 +8,12 @@ import os
 import sys
 
 # Third Party
-from instructlab.training import TorchrunArgs, TrainingArgs
+from instructlab.training import (
+    DeepSpeedOptions,
+    LoraOptions,
+    TorchrunArgs,
+    TrainingArgs,
+)
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -200,6 +205,17 @@ def get_default_config():
                 warmup_steps=800,
                 is_padding_free=False,
                 random_seed=42,
+                lora=LoraOptions(
+                    rank=4,
+                    alpha=32,
+                    dropout=0.1,
+                    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+                ),
+                deepspeed_options=DeepSpeedOptions(
+                    cpu_offload_optimizer=False,
+                    cpu_offload_optimizer_ratio=1,
+                    cpu_offload_optimizer_pin_memory=False,
+                ),
             ),
             torch_args=TorchrunArgs(
                 node_rank=0,
@@ -261,7 +277,9 @@ def get_dict(cfg):
 def write_config(cfg, config_file=DEFAULT_CONFIG):
     """Writes configuration to a disk"""
     with open(config_file, "w", encoding="utf-8") as yamlfile:
-        yaml.safe_dump(get_dict(cfg), stream=yamlfile)
+        d = cfg.model_dump_json()
+        loaded = yaml.load(d, Loader=yaml.SafeLoader)
+        yaml.dump(loaded, stream=yamlfile)
 
 
 def get_api_base(host_port):
@@ -314,6 +332,9 @@ def init(ctx, config_file):
         # since torch and train args are sep, they need to be combined into a single `train` entity for the default map
         # this is because the flags for `ilab model train` will only be populated if the default map has a single `train` entry, not two.
         training_dict["train"] = (
-            training_dict["train"]["train_args"] | training_dict["train"]["torch_args"]
+            training_dict["train"]["train_args"]
+            | training_dict["train"]["torch_args"]
+            | training_dict["train"]["train_args"]["lora"]
+            | training_dict["train"]["train_args"]["deepspeed_options"]
         )
         ctx.default_map = training_dict
