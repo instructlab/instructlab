@@ -134,7 +134,7 @@ pip install instructlab/.
 Proceed to the `Initialize` section of
 the [CLI README](https://github.com/instructlab/instructlab?tab=readme-ov-file#%EF%B8%8F-initialize-lab),
 and use the `nvtop` utility to validate GPU utilization when interacting
-with `ilab chat` or `ilab generate`
+with `ilab model chat` or `ilab data generate`
 
 ### AMD/ROCm
 
@@ -269,9 +269,9 @@ to the `Testing` section.
 
 ### Testing
 
-Test your changes by chatting to the LLM. Run `ilab serve` and `ilab chat` and
+Test your changes by chatting to the LLM. Run `ilab model serve` and `ilab model chat` and
 chat to the LLM. If you notice significantly faster inference, congratulations!
-You've enabled GPU acceleration. You should also notice that the `ilab generate`
+You've enabled GPU acceleration. You should also notice that the `ilab data generate`
 step will take significantly less time.  You can use tools like `nvtop` and
 `radeontop` to monitor GPU usage.
 
@@ -310,7 +310,7 @@ ggml_init_cublas: found 1 ROCm devices:
 
 ## Training
 
-`ilab train`  also experimentally supports GPU acceleration on Linux. Details
+`ilab model train`  also experimentally supports GPU acceleration on Linux. Details
 of a working set up is included above. Training is memory-intensive and requires
 a modern GPU to work. The GPU must support `bfloat16` or `fp16` and have at
 least 17 GiB of free GPU memory. Nvidia CUDA on WSL2 is able to use shared host
@@ -337,11 +337,11 @@ Incompatible devices:
 > and treats AMD GPUs as CUDA devices. In a ROCm build of PyTorch, `cuda:0` is
 > actually the first ROCm device.
 <!-- -->
-> **Note:** Training does not use a local lab server. You can stop `ilab serve`
+> **Note:** Training does not use a local lab server. You can stop `ilab model serve`
 > to free up GPU memory.
 
 ```shell
-ilab train --device cuda
+ilab model train --device cuda
 ```
 
 ```shell
