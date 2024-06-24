@@ -27,6 +27,7 @@ class TestConfig:
         assert cfg.chat.session is None
         assert cfg.chat.logs_dir == "data/chatlogs"
         assert not cfg.chat.greedy_mode
+        assert cfg.chat.connection_timeout == 30.0
 
         assert cfg.generate is not None
         assert cfg.generate.model == "models/merlinite-7b-lab-Q4_K_M.gguf"
@@ -83,6 +84,7 @@ chat:
   session: null
   vi_mode: false
   visible_overflow: true
+  connection_timeout: 30.0
 generate:
   model: models/merlinite-7b-lab-Q4_K_M.gguf
   num_cpus: 10
