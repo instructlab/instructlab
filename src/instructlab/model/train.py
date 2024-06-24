@@ -82,7 +82,12 @@ TORCH_DEVICE = TorchDeviceParam()
 
 
 @click.command()
-@click.option("--data-path", help="Base directory where data is stored.", default=None)
+@click.option(
+    "--data-path",
+    type=click.Path(file_okay=True),
+    help="Base directory where data is stored.",
+    default=None,
+)
 @click.option(
     "--ckpt-output-dir",
     type=click.Path(),
@@ -258,37 +263,11 @@ def train(
     four_bit_quant: bool,
     legacy,
     **kargs,
-    # tokenizer_dir,
-    # ckpt_output_dir,
-    # data_output_dir,
-    # max_seq_len,
-    # max_batch_len,
-    # effective_batch_size,
-    # save_samples,
-    # learning_rate,
-    # warmup_steps,
-    # deepspeed_config,
-    # offload_strategy,
-    # cpu_offload_optim,
-    # cpu_offload_params,
-    # ds_quantize_dtype,
-    # lora_rank,
-    # lora_alpha,
-    # lora_dropout,
-    # target_modules,
-    # is_padding_free,
-    # nproc_per_node,
-    # nnodes,
-    # node_rank,
-    # rdzv_id,
-    # rdzv_endpoint,
 ):
     """
     Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
-    # how do we differentiate between usecases?
-
     if not input_dir:
         # By default, generate output-dir is used as train input-dir
         input_dir = ctx.obj.config.generate.output_dir
@@ -301,7 +280,7 @@ def train(
     test_file = effective_data_dir / "test_gen.jsonl"
 
     # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
-    if data_path is None or data_path == "":
+    if data_path is None or data_path == "./taxonomy_data" or data_path == "":
         data_path = effective_data_dir
         if not os.path.exists(input_dir):
             click.secho(
@@ -484,6 +463,13 @@ def train(
         # pull the training and torch args from the flags
         # the flags are populated from the config as a base.
         params = ctx.params
+
+        if os.path.isdir(data_path):
+            click.secho(
+                f"Data path cannot be a directory. It must be a path to a valid jsonl file. Value given: {data_path}",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
         train_args = TrainingArgs(**params)
         torch_args = TorchrunArgs(**params)
         run_training(train_args=train_args, torch_args=torch_args)
