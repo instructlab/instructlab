@@ -1,52 +1,145 @@
 # Third Party
 from click_didyoumean import DYMGroup
 from instructlab.eval import (
-    MMLU_Evaluator,
-    MT_Bench_Evaluator,
-    PR_Bench_Evaluator,
-    PR_MMLU_Evaluator,
+    Evaluator,
+    MMLUBranchEvaluator,
+    MMLUEvaluator,
+    MTBenchBranchEvaluator,
+    MTBenchEvaluator,
 )
 import click
 
-benchmark_names_to_classes = frozenset({
-    "mmlu": MMLU_Evaluator,
-    "mt_bench": MT_Bench_Evaluator,
-    "pr_bench": PR_Bench_Evaluator,
-    "pr_mmlu": PR_MMLU_Evaluator,
-})
+BENCHMARK_TO_CLASS_MAP = frozenset(
+    {
+        "mmlu": MMLUEvaluator,
+        "mmlu_branch": MMLUBranchEvaluator,
+        "mt_bench": MTBenchEvaluator,
+        "mt_bench_branch": MTBenchBranchEvaluator,
+    }
+)
+
+
+def get_evaluator(
+    model_name,
+    benchmark,
+    judge_model_name,
+    output_dir,
+    max_workers,
+    taxonomy_path,
+    branch,
+    tasks,
+    few_shots,
+    batch_size,
+    task,
+    sdg_path,
+) -> Evaluator:
+    """takes in arguments from the CLI and uses 'benchmark' to validate other arguments
+    if all needed configuration is present, returns the appropriate Evaluator class for the benchmark
+    otherwise raises an exception for the missing values
+    """
+
+    # ensure skills benchmarks have proper arguments if selected
+    if benchmark in ["mt_bench", "mt_bench_branch"]:
+        required_args = [
+            model_name,
+            judge_model_name,
+            output_dir,
+            max_workers,
+        ]
+        if benchmark == "mt_bench_branch":
+            required_args.append(taxonomy_path, branch)
+        if any(required_args) is None:
+            click.secho(
+                f"Benchmark {benchmark} requires the following args to be set: {required_args}",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
+        else:
+            evaluator_class = BENCHMARK_TO_CLASS_MAP[benchmark]
+            if benchmark == "mt_bench":
+                return evaluator_class(
+                    model_name, judge_model_name, output_dir, max_workers
+                )
+            else:
+                return evaluator_class(
+                    model_name,
+                    judge_model_name,
+                    taxonomy_path,
+                )
+
+    # ensure knowledge benchmarks have proper arguments if selected
+    if benchmark in ["mmlu", "mmlu_branch"]:
+        required_args = [few_shots, batch_size]
+        if benchmark == "mmlu":
+            required_args.append(tasks)
+        if benchmark == "mmlu_branch":
+            required_args.extend([task, sdg_path])
+        if any(required_args) is None:
+            click.secho(
+                f"Benchmark {benchmark} requires the following args to be set: {required_args}",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
+        else:
+            evaluator_class = BENCHMARK_TO_CLASS_MAP[benchmark]
+            if benchmark == "mmlu":
+                return evaluator_class(tasks, few_shots, batch_size)
+            else:
+                return evaluator_class(sdg_path, task, few_shots, batch_size)
 
 
 @click.command(cls=DYMGroup)
 @click.option(
+    "--model-name",
+    type=click.Path(),
+    help="Path to model to be evaluated",
+)
+@click.option(
     "--benchmark",
-    type=click.Choice(list(benchmark_names_to_classes.keys())),
+    type=click.Choice(list(BENCHMARK_TO_CLASS_MAP.keys())),
     case_sensitive=False,
     help="Benchmarks to run during evaluation",
 )
 @click.option(
-    "--server-url",
-    type=click.STRING,
-    help="vLLM or llama-cpp server endpoint. Needed for running mt_bench or pr_bench.",
+    "--judge-model-name",
+    type=click.Path(),
+    help="Path to model to be used as a judge for running mt_bench or mt_bench_branch",
 )
 @click.option(
-    "--questions",
+    "--output-dir",
     type=click.STRING,
-    multiple=True,
-    help="Questions to be asked. Needed for running pr_bench.",
+    help="The directory to use for evaluation output from mt_bench or mt_bench_branch",
+)
+@click.option(
+    "--max-workers",
+    type=click.INT,
+    default=40,
+    show_default=True,
+    help="Max parallel workers to run the evaluation with for mt_bench or mt_bench_branch",
+)
+@click.option(
+    "--taxonomy-path",
+    type=click.Path(),
+    help="Taxonomy git repo path for running mt_bench_branch",
+)
+@click.option(
+    "--branch",
+    type=click.STRING,
+    help="Branch of taxonomy repo to eval QNAs against model",
 )
 @click.option(
     "--few-shots",
     type=click.INT,
     default=2,
     show_default=True,
-    help="Number of examples. Needed for running mmlu or pr_mmlu.",
+    help="Number of examples. Needed for running mmlu or mmlu_branch.",
 )
 @click.option(
     "--batch-size",
     type=click.INT,
     default=5,
     show_default=True,
-    help="Number of GPUs. Needed for running mmlu or pr_mmlu.",
+    help="Number of GPUs. Needed for running mmlu or mmlu_branch.",
 )
 @click.option(
     "--tasks",
@@ -58,55 +151,45 @@ benchmark_names_to_classes = frozenset({
     "--task",
     type=click.STRING,
     multiple=True,
-    help="Group name that is shared by all the PR MMLU tasks. Needed for running pr_mmlu.",
+    help="Group name that is shared by all the MMLU Branch tasks. Needed for running mmlu_branch.",
 )
 @click.option(
     "--sdg-path",
     type=click.Path(),
     multiple=True,
-    help="Path where all the PR MMLU tasks are stored. Needed for running pr_mmlu.",
+    help="Path where all the MMLU Branch tasks are stored. Needed for running mmlu_branch.",
 )
 @click.pass_context
 def evaluate(
-    ctx, benchmark, server_url, questions, tasks, few_shots, batch_size, task, sdg_path
+    ctx,
+    model_name,
+    benchmark,
+    judge_model_name,
+    output_dir,
+    max_workers,
+    taxonomy_path,
+    branch,
+    tasks,
+    few_shots,
+    batch_size,
+    task,
+    sdg_path,
 ):
-    # ensure skills benchmarks have proper arguments if selected
-    if benchmark in ["mt_bench", "pr_bench"]:
-        required_args = [server_url]
-        if benchmark == "pr_bench":
-            required_args.append(questions)
-        if any(required_args) is None:
-            click.secho(
-                f"Benchmark {benchmark} requires the following args to be set: {required_args}",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
-        else:
-            evaluator_class = benchmark_names_to_classes[benchmark]
-            if benchmark == "mt_bench":
-                evaluator = evaluator_class(server_url)
-            else:
-                evaluator = evaluator_class(server_url, questions)
-
-    # ensure knowledge benchmarks have proper arguments if selected
-    if benchmark in ["mmlu", "pr_mmlu"]:
-        required_args = [few_shots, batch_size]
-        if benchmark == "mmlu":
-            required_args.append(tasks)
-        if benchmark == "pr_mmlu":
-            required_args.extend([task, sdg_path])
-        if any(required_args) is None:
-            click.secho(
-                f"Benchmark {benchmark} requires the following args to be set: {required_args}",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
-        else:
-            evaluator_class = benchmark_names_to_classes[benchmark]
-            if benchmark == "mmlu":
-                evaluator = evaluator_class(tasks, few_shots, batch_size)
-            else:
-                evaluator = evaluator_class(sdg_path, task, few_shots, batch_size)
+    # get appropriate evalautor class from Eval lib
+    evaluator = get_evaluator(
+        model_name,
+        benchmark,
+        judge_model_name,
+        output_dir,
+        max_workers,
+        taxonomy_path,
+        branch,
+        tasks,
+        few_shots,
+        batch_size,
+        task,
+        sdg_path,
+    )
 
     # execute given evaluator and capture results
     results = evaluator.run()
