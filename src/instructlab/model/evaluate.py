@@ -8,12 +8,12 @@ from instructlab.eval import (
 )
 import click
 
-benchmark_names_to_classes = {
+benchmark_names_to_classes = frozenset({
     "mmlu": MMLU_Evaluator,
     "mt_bench": MT_Bench_Evaluator,
     "pr_bench": PR_Bench_Evaluator,
     "pr_mmlu": PR_MMLU_Evaluator,
-}
+})
 
 
 @click.command(cls=DYMGroup)
