@@ -114,8 +114,6 @@ disable_error_code = ["import-not-found", "import-untyped"]
 exclude = [
   "^src/instructlab/model/serve\\.py$",
   "^src/instructlab/model/evaluate\\.py$",
-  "^src/instructlab/data/generator/generate_data\\.py$",
-  "^src/instructlab/data/generator/utils\\.py$",
   "^src/instructlab/llamacpp/llamacpp_convert_to_gguf\\.py$",
   "^src/instructlab/mlx_explore/gguf_convert_to_mlx\\.py$",
   "^src/instructlab/mlx_explore/utils\\.py$",
