@@ -9,6 +9,9 @@ from instructlab.eval import (
 )
 import click
 
+# First Party
+from instructlab import configuration as config
+
 BENCHMARK_TO_CLASS_MAP = frozenset(
     {
         "mmlu": MMLUEvaluator,
@@ -72,7 +75,7 @@ def get_evaluator(
         required_args = [few_shots, batch_size]
         if benchmark == "mmlu":
             required_args.append(tasks)
-        if benchmark == "mmlu_branch":
+        elif benchmark == "mmlu_branch":
             required_args.extend([task, sdg_path])
         if any(required_args) is None:
             click.secho(
@@ -91,8 +94,8 @@ def get_evaluator(
 @click.command(cls=DYMGroup)
 @click.option(
     "--model-name",
-    type=click.Path(),
-    help="Path to model to be evaluated",
+    type=click.STRING,
+    help="Name of the model to be evaluated",
 )
 @click.option(
     "--benchmark",
@@ -102,12 +105,13 @@ def get_evaluator(
 )
 @click.option(
     "--judge-model-name",
-    type=click.Path(),
-    help="Path to model to be used as a judge for running mt_bench or mt_bench_branch",
+    type=click.STRING,
+    help="Name of the model to be used as a judge for running mt_bench or mt_bench_branch",
 )
 @click.option(
     "--output-dir",
-    type=click.STRING,
+    type=click.Path(),
+    default=config.DEFAULT_EVAL_PATH,
     help="The directory to use for evaluation output from mt_bench or mt_bench_branch",
 )
 @click.option(
