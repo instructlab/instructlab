@@ -2,6 +2,8 @@
 
 ### Features
 
+HTTP connection timeout is now configurable via the `connection_timeout` field in `config.yaml` under `chat` and `serve`. Value takes a float representing the timeout length in seconds.
+
 * Add [vLLM](https://github.com/vllm-project/vllm) backend to serve, chat and generate commands.
 * Add `--backend` flag to `ilab model serve` command to allow for specifying the backend to use
    when serving a model. This is useful when you have multiple backends installed and want to

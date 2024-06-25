@@ -23,7 +23,6 @@ from pydantic import (
     field_validator,
 )
 import click
-import httpx
 import yaml
 
 # Local
@@ -153,6 +152,7 @@ class _serve(BaseModel):
     gpu_layers: int = -1
     max_ctx_size: PositiveInt = 4096
     backend: str = ""  # we don't set a default value here since it's auto-detected
+    connection_timeout: float = DEFAULT_CONNECTION_TIMEOUT
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""

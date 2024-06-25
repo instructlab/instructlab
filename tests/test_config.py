@@ -46,6 +46,7 @@ class TestConfig:
         assert cfg.serve.host_port == "127.0.0.1:8000"
         assert cfg.serve.max_ctx_size == 4096
         assert cfg.serve.backend == ""
+        assert cfg.serve.connection_timeout == 30.0
 
     def test_default_config(self):
         cfg = config.get_default_config()
@@ -101,6 +102,7 @@ serve:
   max_ctx_size: 4096
   model_path: models/merlinite-7b-lab-Q4_K_M.gguf
   backend: ''
+  connection_timeout: 30
 """
             )
         cfg = config.read_config(config_path)

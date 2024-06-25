@@ -9,7 +9,7 @@ from openai import OpenAI, OpenAIError
 import httpx
 
 # Local
-from .configuration import DEFAULT_API_KEY, DEFAULT_CONNECTION_TIMEOUT
+from .configuration import DEFAULT_API_KEY
 from .utils import get_ssl_cert_config
 
 
@@ -18,6 +18,7 @@ class ClientException(Exception):
 
 
 def list_models(
+    config,
     api_base,
     tls_insecure,
     api_key=DEFAULT_API_KEY,
@@ -32,7 +33,7 @@ def list_models(
         client = OpenAI(
             base_url=api_base,
             api_key=api_key,
-            timeout=httpx.Timeout(30.0),
+            timeout=httpx.Timeout(config.connection_timeout),
             http_client=httpx.Client(cert=cert, verify=verify),
         )
         return client.models.list()
