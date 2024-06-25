@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
     "--model",
     default=config.DEFAULT_MODEL,
     show_default=True,
-    help="Name of the model used during generation.",
+    help="Path to the model used during generation.",
 )
 @click.option(
     "--num-cpus",
@@ -179,6 +179,7 @@ def generate(
             )
 
         try:
+            ctx.obj.config.serve.model_path = model
             server_process, api_base, server_queue = ensure_server(
                 ctx.obj.config.serve,
                 tls_insecure,
