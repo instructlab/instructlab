@@ -49,7 +49,7 @@ cleanup() {
     # revert model name change from test_model_print()
     sed -i.bak "s/baz/merlinite-7b-lab-Q4_K_M/g" config.yaml
     mv models/foo.gguf models/merlinite-7b-lab-Q4_K_M.gguf || true
-    rm -f config.yaml.bak serve.log
+    rm -f config.yaml.bak serve.log models/foo.gguf
     set -e
 }
 
@@ -182,7 +182,7 @@ test_server_shutdown_while_chatting(){
 }
 
 test_loading_session_history(){
-    ilab serve --max-ctx-size 128 &
+    ilab serve --backend llama-cpp --max-ctx-size 128 &
     PID_SERVE=$!
 
     # chat with the server
@@ -354,7 +354,7 @@ wait_for_server(){
 }
 
 test_model_print(){
-    mv models/merlinite-7b-lab-Q4_K_M.gguf models/foo.gguf
+    cp models/merlinite-7b-lab-Q4_K_M.gguf models/foo.gguf
     ilab serve --model-path models/foo.gguf &
     PID_SERVE=$!
 

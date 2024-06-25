@@ -2,6 +2,11 @@
 
 ### Features
 
+* Add [vLLM](https://github.com/vllm-project/vllm) backend to serve, chat and generate commands.
+* Add `--backend` flag to `ilab model serve` command to allow for specifying the backend to use
+   when serving a model. This is useful when you have multiple backends installed and want to
+   specify which one to use. Currently, the only supported backend are `llama-cpp` and `vllm`.
+
 ### Breaking Changes
 
 * `ilab model train`: The '--device' parameter no longer supports specifying a GPU index (e.g., 'cuda:0'). To use a specific GPU, set the visible GPU before running the train command.

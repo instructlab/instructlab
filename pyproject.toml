@@ -47,6 +47,7 @@ package-dir = { "" = "src" }
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
 optional-dependencies.hpu = { file = ["requirements-hpu.txt"] }
+optional-dependencies.vllm-cuda = { file = ["requirements-vllm-cuda.txt"] }
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -136,7 +137,9 @@ exclude = [
   "^src/instructlab/train/lora_mlx/models/mixtral\\.py$",
   "^src/instructlab/train/lora_mlx/models/models\\.py$",
   "^src/instructlab/utils\\.py$",
-  "^src/instructlab/model/backends/llama\\.py$",
+  "^src/instructlab/model/backends/llama_cpp\\.py$",
+  "^src/instructlab/model/backends/vllm\\.py$",
+  "^src/instructlab/model/backends/backends\\.py$",
 ]
 # honor excludes by not following there through imports
 follow_imports = "silent"
