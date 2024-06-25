@@ -180,6 +180,7 @@ def ensure_server(
             sleep(0.1)
             try:
                 list_models(
+                    config=serve_config,
                     api_base=temp_api_base,
                     tls_insecure=tls_insecure,
                     tls_client_cert=tls_client_cert,
