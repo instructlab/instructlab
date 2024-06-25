@@ -362,31 +362,31 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
     seed_instruction_data = []
     warnings = 0
     errors = 0
-    file_path = Path(file_path).resolve()
+    file_path_p = Path(file_path).resolve()
     # file should end with ".yaml" explicitly
-    if file_path.suffix != ".yaml":
+    if file_path_p.suffix != ".yaml":
         logger.warning(
-            f"Skipping {file_path}! Use lowercase '.yaml' extension instead."
+            f"Skipping {file_path_p}! Use lowercase '.yaml' extension instead."
         )
         warnings += 1
         return None, warnings, errors
-    for i in range(len(file_path.parts) - 1, -1, -1):
-        if file_path.parts[i] in TAXONOMY_FOLDERS:
-            taxonomy_path = Path(*file_path.parts[i:])
+    for i in range(len(file_path_p.parts) - 1, -1, -1):
+        if file_path_p.parts[i] in TAXONOMY_FOLDERS:
+            taxonomy_path = Path(*file_path_p.parts[i:])
             break
     else:
-        taxonomy_path = file_path
+        taxonomy_path = file_path_p
     # read file if extension is correct
     try:
-        with open(file_path, "r", encoding="utf-8") as file:
+        with open(file_path_p, "r", encoding="utf-8") as file:
             contents = yaml.safe_load(file)
         if not contents:
-            logger.warning(f"Skipping {file_path} because it is empty!")
+            logger.warning(f"Skipping {file_path_p} because it is empty!")
             warnings += 1
             return None, warnings, errors
         if not isinstance(contents, Mapping):
             logger.error(
-                f"{file_path} is not valid. The top-level element is not an object with key-value pairs."
+                f"{file_path_p} is not valid. The top-level element is not an object with key-value pairs."
             )
             errors += 1
             return None, warnings, errors
@@ -403,7 +403,7 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
                         "parsable",
                         "-c",
                         yaml_rules,
-                        str(file_path),
+                        str(file_path_p),
                         "-s",
                     ]
                 else:
@@ -414,7 +414,7 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
                         "parsable",
                         "-d",
                         DEFAULT_YAML_RULES,
-                        str(file_path),
+                        str(file_path_p),
                         "-s",
                     ]
             else:
@@ -424,17 +424,17 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
                     "parsable",
                     "-d",
                     DEFAULT_YAML_RULES,
-                    str(file_path),
+                    str(file_path_p),
                     "-s",
                 ]
             try:
                 subprocess.check_output(yamllint_cmd, text=True)
             except subprocess.CalledProcessError as e:
-                lint_messages = [f"Problems found in file {file_path}"]
+                lint_messages = [f"Problems found in file {file_path_p}"]
                 parsed_output = e.output.splitlines()
                 for p in parsed_output:
                     errors += 1
-                    delim = str(file_path) + ":"
+                    delim = str(file_path_p) + ":"
                     parsed_p = p.split(delim)[1]
                     lint_messages.append(parsed_p)
                 logger.error("\n".join(lint_messages))
@@ -469,7 +469,7 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
             )
     except Exception as e:
         errors += 1
-        raise TaxonomyReadingException(f"Exception {e} raised in {file_path}") from e
+        raise TaxonomyReadingException(f"Exception {e} raised in {file_path_p}") from e
 
     return seed_instruction_data, warnings, errors
 
