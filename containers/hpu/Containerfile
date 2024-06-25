@@ -58,4 +58,5 @@ ENV OMP_NUM_THREADS=8
 LABEL com.github.instructlab.instructlab.target="hpu" \
       name="instructlab-hpu-${HABANA_VERSION}" \
       summary="PyTorch, llama.cpp, and InstructLab for Intel Gaudi / Habana Labs ${HABANA_VERSION}" \
-      usage="podman run -ti --privileged -v ./data:/opt/app-root/src:z ..."
+      usage="podman run -ti --privileged -v ./data:/opt/app-root/src:z ..." \
+      com.redhat.component="instructlab"

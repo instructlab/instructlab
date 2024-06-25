@@ -20,3 +20,5 @@ RUN if [[ "$(uname -m)" != "aarch64" ]]; then export CFLAGS="-mno-avx"; fi && \
 RUN python3.11 -m pip install git+https://github.com/instructlab/instructlab.git@${GIT_TAG}
 
 CMD ["/bin/bash"]
+
+LABEL com.redhat.component="instructlab"
