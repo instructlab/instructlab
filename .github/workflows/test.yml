@@ -63,6 +63,10 @@ jobs:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
 
+      - name: Free disk space
+        if: matrix.platform != 'macos-latest'
+        uses: ./.github/actions/free-disk-space
+
       - name: Install the expect package
         if: startsWith(matrix.platform, 'ubuntu')
         run: |
