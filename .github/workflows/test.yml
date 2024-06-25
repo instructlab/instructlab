@@ -44,16 +44,11 @@ jobs:
     strategy:
       matrix:
         python:
-          - "3.9"
           - "3.10"
           - "3.11"
           - "3.12"
         platform:
           - "ubuntu-latest"
-        exclude:
-          # GHA runner has no ARM64 3.9
-          - python: "3.9"
-            platform: "macos-latest"
         include:
           - python: "3.11"
             platform: "macos-latest"
