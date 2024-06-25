@@ -133,7 +133,7 @@ test_train() {
     task Train the model
 
     # TODO Only cuda for now
-    TRAIN_ARGS=("--device=cuda" "--4-bit-quant")
+    TRAIN_ARGS=("--legacy=True" "--device=cuda" "--4-bit-quant")
     if [ "$GRANITE" -eq 1 ]; then
         TRAIN_ARGS+=("--gguf-model-path models/granite-7b-lab-Q4_K_M.gguf")
     fi

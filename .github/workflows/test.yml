@@ -46,7 +46,6 @@ jobs:
         python:
           - "3.10"
           - "3.11"
-          - "3.12"
         platform:
           - "ubuntu-latest"
         include:
@@ -63,6 +62,10 @@ jobs:
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
+
+      - name: Free disk space
+        if: matrix.platform != 'macos-latest'
+        uses: ./.github/actions/free-disk-space
 
       - name: Install the expect package
         if: startsWith(matrix.platform, 'ubuntu')
