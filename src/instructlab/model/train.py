@@ -61,8 +61,7 @@ class TorchDeviceParam(click.ParamType):
         if device.type == "cuda":
             if not torch.cuda.is_available():
                 self.fail(
-                    f"{value}: Torch has no CUDA/ROCm support or could not detect "
-                    "a compatible device.",
+                    f"{value}: Torch could not detect a compatible CUDA/ROCm device.",
                     param,
                     ctx,
                 )
