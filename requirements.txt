@@ -11,7 +11,7 @@ GitPython>=3.1.42
 httpx>=0.25.0
 instructlab-quantize>=0.1.0
 instructlab-schema>=0.2.0
-instructlab-sdg>=0.0.2
+instructlab-sdg>=0.0.4
 jsonschema>=4.21.1
 llama_cpp_python[server]==0.2.75
 mlx>=0.5.1,<0.6.0; sys_platform == 'darwin' and platform_machine == 'arm64'
@@ -39,10 +39,6 @@ tqdm>=4.66.2
 transformers>=4.30.0
 trl>=0.7.11
 wandb>=0.16.4
-langchain-text-splitters
-# do not use 8.4.0 due to a bug in the library
-# https://github.com/instructlab/instructlab/issues/1389
-tenacity>=8.3.0,!=8.4.0
 # the below library should NOT be imported into any python files
 # it is for CLI usage ONLY
 yamllint>=1.35.1
