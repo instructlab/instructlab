@@ -85,7 +85,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 - **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora). We anticipate support for more operating systems in the future.
 - C++ compiler
-- Python 3.10+ (<3.12 for PyTorch JIT)
+- Python 3.10 or Python 3.11
 - Approximately 60GB disk space (entire process)
 
 > **NOTE:** PyTorch 2.2.1 does not support `torch.compile` with Python 3.12. On Fedora 39+, install `python3.11-devel` and create the virtual env with `python3.11` if you wish to use PyTorch's JIT compiler.
