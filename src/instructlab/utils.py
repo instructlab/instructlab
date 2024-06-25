@@ -17,6 +17,9 @@ import tempfile
 # Third Party
 from git import Repo, exc
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_text_splitters import Language, RecursiveCharacterTextSplitter
+from langchain_text_splitters import MarkdownHeaderTextSplitter
+from magika import Magika
 import click
 import git
 import gitdb
@@ -310,9 +313,95 @@ def chunk_document(documents: List, server_ctx_size, chunk_word_count) -> List[s
         chunk_overlap=DEFAULT_CHUNK_OVERLAP,
     )
 
+    headers_to_split_on = [
+        ("#", "Header 1"),
+        ("##", "Header 2"),
+    ]
+
+    markdown_splitter = MarkdownHeaderTextSplitter(
+        headers_to_split_on=headers_to_split_on,
+        strip_headers=False
+    )
+
+    text_splitter = RecursiveCharacterTextSplitter.from_language(
+        language=Language.MARKDOWN,
+        chunk_size=num_chars_from_tokens(no_tokens_per_doc),
+        chunk_overlap=DEFAULT_CHUNK_OVERLAP,
+    )
+
+    # Placeholder for params
+    content = []
+    chunk_size = num_chars_from_tokens(no_tokens_per_doc)
+    chunk_overlap = DEFAULT_CHUNK_OVERLAP
+    text_splitter = None
+
+    # Determine file type for heuristics, default with markdown
     for docs in documents:
-        temp = text_splitter.create_documents([docs])
-        content.extend([item.page_content for item in temp])
+        # Try Except Block if Magika fails
+        try:
+            m = Magika()
+            docs_bytes = docs.encode('utf-8')
+            res = m.identify_bytes(docs_bytes)
+            file_type = res.output.ct_label.lower()
+
+            # Full list of supported languages of Langchain
+            supported_types = [e.value for e in Language]
+
+            # Checks for file types:
+            file_type_to_language = {
+                "go": Language.GO,
+                "java": Language.JAVA,
+                "javascript": Language.JS,  # Adjusted to match the previous variable name Language.js
+                "php": Language.PHP,
+                "python": Language.PYTHON,
+                "ruby": Language.RUBY,
+                "rust": Language.RUST,
+                "latex": Language.LATEX,
+                "html": Language.HTML,
+                "cs": Language.CSHARP,
+                "c": Language.C,
+                "perl": Language.PERL,
+            }
+
+            print(file_type)
+            
+            if file_type in file_type_to_language:
+                language = file_type_to_language[file_type]
+                text_splitter = RecursiveCharacterTextSplitter.from_language(
+                    language=language,
+                    chunk_size=chunk_size,
+                    chunk_overlap=chunk_overlap,
+                )
+                temp = text_splitter.create_documents([docs])
+                content.extend([item.page_content for item in temp])
+
+            # Default case set for markdown, we assume most cases: pdf->md
+            else:
+                # Falls back to default case
+                text_splitter = RecursiveCharacterTextSplitter.from_language(
+                    language=Language.MARKDOWN,
+                    chunk_size=chunk_size,
+                    chunk_overlap=chunk_overlap,
+                )
+                # Use regex to remove unnecessary dashes in front of pipe characters in a markdown table.
+                docs = re.sub(r'-{2,}\|', '-|', docs)
+                # Remove unnecessary spaces in front of pipe characters in a markdown table.
+                docs = re.sub(r'\  +\|', ' |', docs)
+                temp = text_splitter.create_documents([docs])
+                content.extend([item.page_content for item in temp])
+
+        except Exception as e:
+            content = []
+            text_splitter = RecursiveCharacterTextSplitter(
+                separators=["\n\n", "\n", " "],
+                chunk_size=num_chars_from_tokens(no_tokens_per_doc),
+                chunk_overlap=DEFAULT_CHUNK_OVERLAP,
+            )
+
+            for docs in documents:
+                temp = text_splitter.create_documents([docs])
+                content.extend([item.page_content for item in temp])
+            print("Error {}".format(e))
 
     return content
 
