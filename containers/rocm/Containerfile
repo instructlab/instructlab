@@ -113,4 +113,5 @@ LABEL com.github.containers.toolbox="true" \
       name="instructlab-rocm-base-gfx${GFX_VERSION}" \
       usage="This image is meant to be used with the toolbox(1) command" \
       summary="PyTorch, llama.cpp, and InstructLab dependencies for AMD ROCm GPU ${AMDGPU_ARCH}" \
-      maintainer="Christian Heimes <cheimes@redhat.com>"
+      maintainer="Christian Heimes <cheimes@redhat.com>" \
+      com.redhat.component="instructlab"
