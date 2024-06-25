@@ -4,7 +4,7 @@
 
 ### Breaking Changes
 
-* `Python 3.9 no longer supported`: Due to upcoming changes to training requiring the usage of [GPTDolomite](https://github.com/instructlab/GPTDolomite), Python 3.9 support has been removed starting with this version. If you are using Python 3.9, you will need to upgrade to Python 3.10 or later to use this and subsequent versions of the CLI
+* `ilab`: **Deprecation of Python 3.9 and Python 3.12** Due to changes to training requiring the usage of [GPTDolomite](https://github.com/instructlab/GPTDolomite), Python versions 3.9 and 3.12 are no longer supported. If you are using either of these versions, you will need to start using either Python 3.10 or Python 3.11 to use this and subsequent versions of the CLI.
 * `ilab model train`: The '--device' parameter no longer supports specifying a GPU index (e.g., 'cuda:0'). To use a specific GPU, set the visible GPU before running the train command.
 
 ## v0.17
