@@ -403,13 +403,26 @@ def init(ctx, config_file):
         log.configure_logging(log_level=config_obj.general.log_level.upper())
         ctx.obj = Lab(config_obj)
         # default_map holds a dictionary with default values for each command parameters
-        training_dict = get_dict(ctx.obj.config)
+        config_dict = get_dict(ctx.obj.config)
         # since torch and train args are sep, they need to be combined into a single `train` entity for the default map
         # this is because the flags for `ilab model train` will only be populated if the default map has a single `train` entry, not two.
-        training_dict["train"] = (
-            training_dict["train"]["train_args"]
-            | training_dict["train"]["torch_args"]
-            | training_dict["train"]["train_args"]["lora"]
-            | training_dict["train"]["train_args"]["deepspeed_options"]
+        config_dict["train"] = (
+            config_dict["train"]["train_args"]
+            | config_dict["train"]["torch_args"]
+            | config_dict["train"]["train_args"]["lora"]
+            | config_dict["train"]["train_args"]["deepspeed_options"]
         )
-        ctx.default_map = training_dict
+        config_dict["evaluate"] = (
+            config_dict["evaluate"]
+            | config_dict["evaluate"]["mmlu"]
+            | config_dict["evaluate"]["mmlu_branch"]
+            | config_dict["evaluate"]["mt"]
+            | config_dict["evaluate"]["mt_branch"]
+        )
+        # need to delete the individual sub-classes from the map
+        del(config_dict["evaluate"]["mmlu"])
+        del(config_dict["evaluate"]["mmlu_branch"])
+        del(config_dict["evaluate"]["mt"])
+        del(config_dict["evaluate"]["mt_branch"])
+
+        ctx.default_map = config_dict
