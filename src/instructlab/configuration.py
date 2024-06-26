@@ -178,6 +178,29 @@ class _serve(BaseModel):
         """Returns server API URL, based on the configured host and port"""
         return get_api_base(self.host_port)
 
+class _mmlu(BaseModel):
+    few_shots: int
+    batch_size: int
+
+class _mt(BaseModel):
+    judge_model: str
+    output_dir: str
+    max_workers: int
+
+class _mtbranch(BaseModel):
+    taxonomy_path: str    
+
+class _mmlubranch(BaseModel):
+    sdg_path: str
+
+class _evaluate(BaseModel):
+    model_name: str
+    branch: str
+    mmlu: _mmlu
+    mmlu_branch: _mmlubranch
+    mt: _mt
+    mt_branch: _mtbranch
+
 
 class _train(BaseModel):
     train_args: TrainingArgs
@@ -197,6 +220,9 @@ class Config(BaseModel):
 
     # train configuration
     train: Optional[_train] = None
+
+    # evaluate configuration
+    evaluate: _evaluate
 
     # model configuration
     model_config = ConfigDict(extra="ignore")
