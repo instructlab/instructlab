@@ -1,25 +1,19 @@
 # Third Party
 from click_didyoumean import DYMGroup
-from instructlab.eval import (
-    Evaluator,
-    MMLUBranchEvaluator,
-    MMLUEvaluator,
-    MTBenchBranchEvaluator,
-    MTBenchEvaluator,
-)
+from instructlab.eval.evaluator import Evaluator
+from instructlab.eval.mmlu import MMLUBranchEvaluator, MMLUEvaluator
+from instructlab.eval.mt_bench import MTBenchBranchEvaluator, MTBenchEvaluator
 import click
 
 # First Party
 from instructlab import configuration as config
 
-BENCHMARK_TO_CLASS_MAP = frozenset(
-    {
+BENCHMARK_TO_CLASS_MAP = {
         "mmlu": MMLUEvaluator,
         "mmlu_branch": MMLUBranchEvaluator,
         "mt_bench": MTBenchEvaluator,
         "mt_bench_branch": MTBenchBranchEvaluator,
     }
-)
 
 
 def get_evaluator(
@@ -100,7 +94,7 @@ def get_evaluator(
 @click.option(
     "--benchmark",
     type=click.Choice(list(BENCHMARK_TO_CLASS_MAP.keys())),
-    case_sensitive=False,
+    #case_sensitive=False,
     help="Benchmarks to run during evaluation",
 )
 @click.option(
@@ -179,7 +173,7 @@ def evaluate(
     task,
     sdg_path,
 ):
-    # get appropriate evalautor class from Eval lib
+    # get appropriate evaluator class from Eval lib
     evaluator = get_evaluator(
         model_name,
         benchmark,
