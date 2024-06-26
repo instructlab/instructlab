@@ -14,7 +14,8 @@ set -euf
 MINIMAL=0
 MIXTRAL=0
 NUM_INSTRUCTIONS=5
-GENERATE_ARGS=("--num-cpus" "$(nproc)")
+GENERATE_ARGS=("--num-cpus" "$(nproc)" --taxonomy-path='./taxonomy')
+DIFF_ARGS=("--taxonomy-path" "./taxonomy")
 TRAIN_ARGS=()
 GRANITE=0
 FULLTRAIN=0
@@ -28,6 +29,44 @@ BOLD='\033[1m'
 NC='\033[0m' # No Color
 
 SCRIPTDIR=$(dirname "$0")
+export E2E_TEST_DIR
+# E2E_TEST_DIR="$(pwd)/__e2e_test"
+export CONFIG_HOME
+export DATA_HOME
+export CONFIG_HOME
+
+
+
+########################################
+# This function initializes the directory
+# used during end-to-end testing. This function
+# also creates the directory structure which
+# instructlab expects to see at the time of execution.
+# Arguments:
+#   None
+# Globals:
+#   DATA_HOME
+#   CONFIG_HOME
+#   STATE_HOME
+#   E2E_TEST_DIR
+#   HOME
+# Outputs:
+#   None
+########################################
+function init_e2e_tests() {
+    E2E_TEST_DIR=$(mktemp -d)
+    HOME="${E2E_TEST_DIR}"  # update the HOME directory used to resolve paths
+
+    CONFIG_HOME=$(python -c 'import platformdirs; print(platformdirs.user_config_dir())')
+    DATA_HOME=$(python -c 'import platformdirs; print(platformdirs.user_data_dir())')
+    STATE_HOME=$(python -c 'import platformdirs; print(platformdirs.user_state_dir())')
+    # ensure that our mock e2e dirs exist
+    for dir in "${CONFIG_HOME}" "${DATA_HOME}" "${STATE_HOME}"; do
+    	mkdir -p "${dir}"
+    done
+}
+
+
 
 step() {
     echo -e "$BOLD$* - $(date)$NC"
@@ -155,7 +194,7 @@ test_taxonomy() {
     fi
 
     step Verification
-    ilab taxonomy diff
+    ilab taxonomy diff "${DIFF_ARGS[@]}"
 }
 
 test_generate() {
@@ -319,5 +358,7 @@ while getopts "cmMfFghv" opt; do
     esac
 done
 
+init_e2e_tests
+trap 'rm -rf "${E2E_TEST_DIR}"' EXIT
 set_defaults
 test_exec

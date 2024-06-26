@@ -7,7 +7,7 @@ import os
 import shutil
 
 # Third Party
-# pylint: disable=ungrouped-imports
+# pylint: disable=no-name-in-module,ungrouped-imports
 from instructlab.training import (
     DeepSpeedOptions,
     LoraOptions,
@@ -18,6 +18,7 @@ import click
 
 # First Party
 from instructlab import clickext, utils
+from instructlab.configuration import DEFAULTS
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +37,7 @@ DS_OPTIONS = "train_args.deepspeed_options"
     config_sections=TRAIN_ARGS,
     required=True,  # default from config
     help="Base directory where data is stored.",
+    default=lambda: DEFAULTS.DATASETS_DIR,
 )
 @click.option(
     "--ckpt-output-dir",
@@ -43,6 +45,7 @@ DS_OPTIONS = "train_args.deepspeed_options"
     cls=clickext.ConfigOption,
     config_sections=TRAIN_ARGS,
     required=True,  # default from config
+    default=lambda: DEFAULTS.CHECKPOINTS_DIR,
     help="output directory to store checkpoints in during training",
 )
 @click.option(
@@ -51,6 +54,7 @@ DS_OPTIONS = "train_args.deepspeed_options"
     cls=clickext.ConfigOption,
     config_sections=TRAIN_ARGS,
     required=True,  # default from config
+    default=lambda: DEFAULTS.INTERNAL_DIR,
     help="output directory to store training data in",
 )
 @click.option(
@@ -82,7 +86,8 @@ DS_OPTIONS = "train_args.deepspeed_options"
     cls=clickext.ConfigOption,
     config_sections=TRAIN_ARGS,
     required=True,  # default from config
-    help="Base directory where model is stored.",
+    help="HuggingFace model repo path, in the format of <namespace>/<repo_name>.",
+    default=DEFAULTS.MODEL_REPO,
 )
 @click.option(
     "--iters",
@@ -302,7 +307,7 @@ DS_OPTIONS = "train_args.deepspeed_options"
 @utils.display_params
 def train(
     ctx,
-    data_path,
+    data_path: str,
     input_dir,
     skip_preprocessing,
     tokenizer_dir,
@@ -315,7 +320,7 @@ def train(
     device: str,
     four_bit_quant: bool,
     legacy,
-    **kwargs,  # pylint: disable=unused-argument
+    **kwargs,
 ):
     """
     Takes synthetic data generated locally with `ilab data generate` and the previous model and learns a new model using the MLX API.
@@ -328,13 +333,14 @@ def train(
     if four_bit_quant and device != "cuda":
         ctx.fail("'--4-bit-quant' option requires '--device=cuda'")
 
-    effective_data_dir = Path(data_path or "./taxonomy_data")
-    train_file = effective_data_dir / "train_gen.jsonl"
-    test_file = effective_data_dir / "test_gen.jsonl"
+    effective_data_dir = Path(DEFAULTS.DATASETS_DIR)
+    train_file = Path(effective_data_dir / "train_gen.jsonl")
+    test_file = Path(effective_data_dir / "test_gen.jsonl")
+    ckpt_output_dir = Path(kwargs["ckpt_output_dir"])
 
     # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
-    if data_path is None or data_path == "./taxonomy_data" or data_path == "":
-        data_path = effective_data_dir
+    if not data_path or data_path.strip() == DEFAULTS.DATASETS_DIR:
+        data_path = str(effective_data_dir)
         if not os.path.exists(input_dir):
             click.secho(
                 f"Could not read directory: {input_dir}",
@@ -352,13 +358,15 @@ def train(
             raise click.exceptions.Exit(1)
 
         # generated input files reverse sorted by modification time
-        def get_files(pattern):
+        def get_files(directory: str, pattern: str) -> list[str]:
             return sorted(
-                Path(input_dir).glob(pattern), key=os.path.getmtime, reverse=True
+                [str(p) for p in Path(directory).glob(pattern)],
+                key=os.path.getmtime,
+                reverse=True,
             )
 
-        train_files = get_files("train_*")
-        test_files = get_files("test_*")
+        train_files = get_files(input_dir, "test_*")
+        test_files = get_files(input_dir, "test_*")
 
         if not train_files or not test_files:
             click.secho(
@@ -399,6 +407,7 @@ def train(
         # NOTE we can skip this if we have a way ship MLX
         # PyTorch safetensors to MLX safetensors
         model_dir_local = model_path.replace("/", "-")
+        model_dir_local = f"{ckpt_output_dir}/{model_dir_local}"
         model_dir_mlx = f"{model_dir_local}-mlx"
         model_dir_mlx_quantized = f"{model_dir_local}-mlx-q"
 

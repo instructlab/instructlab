@@ -72,7 +72,7 @@ scripts/infra/cloud-instance.sh ec2 pip-install-with-nvidia
 scripts/infra/cloud-instance.sh ec2 ssh
 # Run commands on the instance through ssh
 scripts/infra/cloud-instance.sh ec2 ssh ls -la
-scripts/infra/cloud-instance.sh ec2 ssh "source instructlab/venv/bin/activate && ilab sysinfo"
+scripts/infra/cloud-instance.sh ec2 ssh "source instructlab/venv/bin/activate && ilab system sysinfo"
 # Sync your local git repo to the repo on the instance
 scripts/infra/cloud-instance.sh ec2 sync
 # Make changes in your local git without committing

@@ -11,7 +11,7 @@ from git import GitError
 
 # First Party
 from instructlab import lab
-from instructlab.configuration import read_config
+from instructlab.configuration import DEFAULTS, read_config
 
 
 class TestLabInit:
@@ -23,13 +23,14 @@ class TestLabInit:
     def test_init_noninteractive(self, mock_clone_from, cli_runner: CliRunner):
         result = cli_runner.invoke(lab.ilab, ["init", "--non-interactive"])
         assert result.exit_code == 0
-        assert "config.yaml" in os.listdir()
+        assert os.path.exists(DEFAULTS.CONFIG_FILE)
+        assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
         mock_clone_from.assert_called_once()
 
     def test_init_interactive(self, cli_runner: CliRunner):
         result = cli_runner.invoke(lab.ilab, ["init"], input="\nn")
         assert result.exit_code == 0
-        assert "config.yaml" in os.listdir()
+        assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
 
     @patch(
         "instructlab.config.init.Repo.clone_from",
@@ -45,36 +46,35 @@ class TestLabInit:
     def test_init_interactive_clone(self, mock_clone_from, cli_runner: CliRunner):
         result = cli_runner.invoke(lab.ilab, ["init"], input="\ny")
         assert result.exit_code == 0
-        assert "config.yaml" in os.listdir()
+        assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
         mock_clone_from.assert_called_once()
 
     def test_init_interactive_with_preexisting_nonempty_taxonomy(
         self, cli_runner: CliRunner
     ):
-        os.makedirs("taxonomy/contents")
+        os.makedirs(f"{DEFAULTS.TAXONOMY_DIR}/contents")
         result = cli_runner.invoke(lab.ilab, ["init"], input="\n")
         assert result.exit_code == 0
-        assert "config.yaml" in os.listdir()
-        assert "taxonomy" in os.listdir()
+        assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
+        assert "taxonomy" in os.listdir(DEFAULTS._data_dir)
 
     def test_init_interactive_with_preexisting_config(self, cli_runner: CliRunner):
-        # first run to prime the config.yaml in current directory
         result = cli_runner.invoke(lab.ilab, ["init"], input="non-default-taxonomy\nn")
         assert result.exit_code == 0
-        assert "config.yaml" in os.listdir()
-        config = read_config("config.yaml")
+        assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
+        config = read_config(DEFAULTS.CONFIG_FILE)
         assert config.generate.taxonomy_path == "non-default-taxonomy"
 
         # second invocation should ask if we want to overwrite - yes, and change taxonomy path
         result = cli_runner.invoke(lab.ilab, ["init"], input="y\ndifferent-taxonomy\nn")
         assert result.exit_code == 0
-        assert "config.yaml" in os.listdir()
-        config = read_config("config.yaml")
+        assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
+        config = read_config(DEFAULTS.CONFIG_FILE)
         assert config.generate.taxonomy_path == "different-taxonomy"
 
         # third invocation should again ask, but this time don't overwrite
         result = cli_runner.invoke(lab.ilab, ["init"], input="n")
         assert result.exit_code == 0
-        assert "config.yaml" in os.listdir()
-        config = read_config("config.yaml")
+        assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
+        config = read_config(DEFAULTS.CONFIG_FILE)
         assert config.generate.taxonomy_path == "different-taxonomy"

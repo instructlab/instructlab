@@ -9,8 +9,14 @@ from git import GitError, Repo
 import click
 
 # First Party
-from instructlab import configuration as config
 from instructlab import utils
+from instructlab.configuration import (
+    DEFAULTS,
+    ensure_storage_directories_exist,
+    get_default_config,
+    read_train_profile,
+    write_config,
+)
 
 
 @click.command()
@@ -23,26 +29,26 @@ from instructlab import utils
 @click.option(
     "--model-path",
     type=click.Path(),
-    default=config.DEFAULT_MODEL_PATH,
-    show_default=True,
+    default=lambda: DEFAULTS.DEFAULT_GGUF_MODEL,
+    show_default="The instructlab data files location per the user's system.",
     help="Path to the model used during generation.",
 )
 @click.option(
     "--taxonomy-base",
-    default=config.DEFAULT_TAXONOMY_BASE,
+    default=DEFAULTS.TAXONOMY_BASE,
     show_default=True,
     help="Base git-ref to use when listing/generating new taxonomy.",
 )
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
-    default=config.DEFAULT_TAXONOMY_PATH,
-    show_default=True,
-    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone.",
+    default=lambda: DEFAULTS.TAXONOMY_DIR,
+    show_default="The instructlab data files location per the user's system.",
+    help="Path to where the taxonomy should be cloned.",
 )
 @click.option(
     "--repository",
-    default=config.DEFAULT_TAXONOMY_REPO,
+    default=DEFAULTS.TAXONOMY_REPO,
     show_default=True,
     help="Taxonomy repository location.",
 )
@@ -56,7 +62,7 @@ from instructlab import utils
 @click.option("--train-profile", type=click.Path(), default=None)
 def init(
     interactive,
-    model_path,
+    model_path: str,
     taxonomy_path,
     taxonomy_base,
     repository,
@@ -64,11 +70,12 @@ def init(
     train_profile,
 ):
     """Initializes environment for InstructLab"""
+    ensure_storage_directories_exist()
     clone_taxonomy_repo = True
     if interactive:
-        if exists(config.DEFAULT_CONFIG):
+        if exists(DEFAULTS.CONFIG_FILE):
             overwrite = click.confirm(
-                f"Found {config.DEFAULT_CONFIG} in the current directory, do you still want to continue?"
+                f"Found {DEFAULTS.CONFIG_FILE} in the current directory, do you still want to continue?"
             )
             if not overwrite:
                 return
@@ -117,10 +124,10 @@ def init(
         model_path = utils.expand_path(
             click.prompt("Path to your model", default=model_path)
         )
-    click.echo(f"Generating `{config.DEFAULT_CONFIG}` in the current directory...")
-    cfg = config.get_default_config()
+    click.echo(f"Generating `{DEFAULTS.CONFIG_FILE}`...")
+    cfg = get_default_config()
     if train_profile is not None:
-        cfg.train = config.read_train_profile(train_profile)
+        cfg.train = read_train_profile(train_profile)
     cfg.chat.model = model_path
     cfg.generate.model = model_path
     cfg.serve.model_path = model_path
@@ -128,7 +135,7 @@ def init(
     cfg.generate.taxonomy_base = taxonomy_base
     cfg.evaluate.model = model_path
     cfg.evaluate.mt_bench_branch.taxonomy_path = taxonomy_path
-    config.write_config(cfg)
+    write_config(cfg)
 
     click.secho(
         "Initialization completed successfully, you're ready to start using `ilab`. Enjoy!",

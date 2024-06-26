@@ -18,6 +18,7 @@ from instructlab.training import (
 from pydantic import (
     BaseModel,
     ConfigDict,
+    Field,
     PositiveInt,
     StrictStr,
     ValidationError,
@@ -25,47 +26,138 @@ from pydantic import (
 )
 import click
 import httpx
+import platformdirs
 import yaml
 
 # Local
 from . import log
 
-DEFAULT_API_KEY = "no_api_key"
-DEFAULT_CONFIG = "config.yaml"
-# TODO: Consolidate --model and --model-path into one --model-path flag since we always need a path now
-DEFAULT_MODEL_OLD = "merlinite-7b-lab-Q4_K_M"
-DEFAULT_MODEL = "models/merlinite-7b-lab-Q4_K_M.gguf"
-DEFAULT_MODEL_PATH = "models/merlinite-7b-lab-Q4_K_M.gguf"
-DEFAULT_MODEL_REPO = "instructlab/merlinite-7b-lab"
-DEFAULT_JUDGE_MODEL_MT = "prometheus-eval/prometheus-8x7b-v2.0"
-DEFAULT_EVAL_PATH = "eval_data"
-DEFAULT_TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
-DEFAULT_TAXONOMY_PATH = "taxonomy"
-DEFAULT_TAXONOMY_BASE = "origin/main"
-MAX_CONTEXT_SIZE = 4096
-# TODO: these constants should be removed, they should not leak out
-DEFAULT_NUM_CPUS = 10
-DEFAULT_CHUNK_WORD_COUNT = 1000
-DEFAULT_NUM_INSTRUCTIONS = 100
-DEFAULT_PROMPT_FILE = "prompt.txt"
-DEFAULT_GENERATED_FILES_OUTPUT_DIR = "generated"
-DEFAULT_CONNECTION_TIMEOUT = httpx.Timeout(timeout=30.0)
-# use spawn start method, fork is not thread-safe
-DEFAULT_MULTIPROCESSING_START_METHOD = "spawn"
+ILAB_PACKAGE_NAME = "instructlab"
+CONFIG_FILENAME = "config.yaml"
 
-# When otherwise unknown, ilab uses this as the default family
-DEFAULT_MODEL_FAMILY = "merlinite"
+
+class STORAGE_DIR_NAMES:
+    ILAB = "instructlab"
+    DATASETS = "datasets"
+    CHECKPOINTS = "checkpoints"
+    MODELS = "models"
+    TAXONOMY = "taxonomy"
+    INTERNAL = (
+        "internal"  # for storing all ilab-internal files the user doesn't need to see
+    )
+    CHATLOGS = "chatlogs"
+
+
+class _InstructlabDefaults:
+    """
+    Class that defines the default paths used by ilab.
+    We define them this way so that they can be lazy-loaded and overridden by tests.
+    This way, they are defined when they are read instead of when the module is imported.
+    """
+
+    # define static defaults up here
+    API_KEY = "no_api_key"
+
+    # TODO: Consolidate --model and --model-path into one --model-path flag since we always need a path now
+    MODEL_NAME = "merlinite-7b-lab-Q4_K_M"
+    MERLINITE_GGUF_REPO = "instructlab/merlinite-7b-lab-GGUF"
+    GGUF_MODEL_NAME = "merlinite-7b-lab-Q4_K_M.gguf"
+    MODEL_REPO = "instructlab/granite-7b-lab"
+    JUDGE_MODEL_MT = "prometheus-eval/prometheus-8x7b-v2.0"
+    TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
+    TAXONOMY_BASE = "origin/main"
+    MAX_CONTEXT_SIZE = 4096
+    # TODO: these constants should be removed, they should not leak out
+    NUM_CPUS = 10
+    CHUNK_WORD_COUNT = 1000
+    NUM_INSTRUCTIONS = 100
+    CONNECTION_TIMEOUT = httpx.Timeout(timeout=30.0)
+    # use spawn start method, fork is not thread-safe
+    MULTIPROCESSING_START_METHOD = "spawn"
+
+    # When otherwise unknown, ilab uses this as the default family
+    MODEL_FAMILY = "merlinite"
+
+    def __init__(self):
+        self._reset()
+
+    def _reset(self):
+        """
+        Utility function which is mostly used for testing purposes to clear the cache.
+        Otherwise, all tests will used cached temporary directories and cause errors.
+        """
+        pd = platformdirs.PlatformDirs(appname=ILAB_PACKAGE_NAME)
+        self._cache_home = pd.user_cache_dir
+        self._config_dir = pd.user_config_dir
+        self._data_dir = pd.user_data_dir
+
+    @property
+    def CHECKPOINTS_DIR(self) -> str:
+        return path.join(self._cache_home, STORAGE_DIR_NAMES.CHECKPOINTS)
+
+    @property
+    def DATASETS_DIR(self) -> str:
+        return path.join(self._data_dir, STORAGE_DIR_NAMES.DATASETS)
+
+    @property
+    def CONFIG_FILE(self) -> str:
+        return path.join(self._config_dir, CONFIG_FILENAME)
+
+    @property
+    def MODELS_DIR(self) -> str:
+        return path.join(self._data_dir, STORAGE_DIR_NAMES.MODELS)
+
+    @property
+    def DEFAULT_MODEL(self) -> str:
+        return path.join(self.MODELS_DIR, self.MODEL_NAME)
+
+    @property
+    def DEFAULT_GGUF_MODEL(self) -> str:
+        return path.join(self.MODELS_DIR, self.GGUF_MODEL_NAME)
+
+    @property
+    def TAXONOMY_DIR(self) -> str:
+        return path.join(self._data_dir, STORAGE_DIR_NAMES.TAXONOMY)
+
+    @property
+    def CHATLOGS_DIR(self) -> str:
+        return path.join(self._data_dir, STORAGE_DIR_NAMES.CHATLOGS)
+
+    @property
+    def INTERNAL_DIR(self) -> str:
+        """
+        This directory is used for storing all misc. files that the user doesn't need to see.
+
+        For example, during training we output an intermediate dataset with the tokenized
+        instructions and the generated responses.
+        Usually this gets outputted into /dev/shm, however this may not be an option on every system,
+        so we would store it in here as a fall-back.
+        """
+        return path.join(self._data_dir, STORAGE_DIR_NAMES.INTERNAL)
+
+    @property
+    def PROMPT_FILE(self) -> str:
+        return path.join(self.INTERNAL_DIR, "prompt.txt")
+
+    @property
+    def SEED_FILE(self) -> str:
+        return path.join(self.INTERNAL_DIR, "seed_tasks.json")
+
+    @property
+    def EVAL_DATA_DIR(self) -> str:
+        return path.join(self.INTERNAL_DIR, "eval_data")
+
+
+DEFAULTS = _InstructlabDefaults()
+
 
 # Model families understood by ilab
-MODEL_FAMILIES = set(("merlinite", "mixtral"))
+MODEL_FAMILIES = {"merlinite", "mixtral"}
 
 # Map model names to their family
 MODEL_FAMILY_MAPPINGS = {
     "granite": "merlinite",
 }
-
-DEFAULT_CKPT_DIR = "checkpoints"
-DEFAULT_OUT_DIR = "train-output"
 
 
 class ConfigException(Exception):
@@ -109,16 +201,18 @@ class _chat(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     # required fields
-    model: StrictStr
+    model: str
 
     # additional fields with defaults
     vi_mode: bool = False
     visible_overflow: bool = True
     context: str = "default"
-    session: Optional[str] = None
-    logs_dir: str = "data/chatlogs"
+    session: typing.Optional[str] = None
+    logs_dir: str = Field(
+        default_factory=lambda: DEFAULTS.CHATLOGS_DIR
+    )  # use a lambda to avoid caching
     greedy_mode: bool = False
-    max_tokens: Optional[int] = None
+    max_tokens: typing.Optional[int] = None
 
 
 class _generate(BaseModel):
@@ -133,12 +227,12 @@ class _generate(BaseModel):
     taxonomy_base: StrictStr
 
     # additional fields with defaults
-    num_cpus: PositiveInt = DEFAULT_NUM_CPUS
-    chunk_word_count: PositiveInt = DEFAULT_CHUNK_WORD_COUNT
-    num_instructions: PositiveInt = DEFAULT_NUM_INSTRUCTIONS
-    output_dir: StrictStr = DEFAULT_GENERATED_FILES_OUTPUT_DIR
-    prompt_file: StrictStr = DEFAULT_PROMPT_FILE
-    seed_file: StrictStr = "seed_tasks.json"
+    num_cpus: PositiveInt = DEFAULTS.NUM_CPUS
+    chunk_word_count: PositiveInt = DEFAULTS.CHUNK_WORD_COUNT
+    num_instructions: PositiveInt = DEFAULTS.NUM_INSTRUCTIONS
+    output_dir: StrictStr = Field(default_factory=lambda: DEFAULTS.DATASETS_DIR)
+    prompt_file: StrictStr = Field(default_factory=lambda: DEFAULTS.PROMPT_FILE)
+    seed_file: StrictStr = Field(default_factory=lambda: DEFAULTS.SEED_FILE)
 
 
 class _serve_vllm(BaseModel):
@@ -245,14 +339,16 @@ class Config(BaseModel):
 def get_default_config() -> Config:
     """Generates default configuration for CLI"""
     return Config(
-        chat=_chat(model=DEFAULT_MODEL),
+        chat=_chat(
+            model=DEFAULTS.DEFAULT_MODEL,
+        ),
         generate=_generate(
-            model=DEFAULT_MODEL,
-            taxonomy_path=DEFAULT_TAXONOMY_PATH,
-            taxonomy_base=DEFAULT_TAXONOMY_BASE,
+            model=DEFAULTS.DEFAULT_MODEL,
+            taxonomy_path=DEFAULTS.TAXONOMY_DIR,
+            taxonomy_base=DEFAULTS.TAXONOMY_BASE,
         ),
         serve=_serve(
-            model_path=DEFAULT_MODEL_PATH,
+            model_path=DEFAULTS.DEFAULT_MODEL,
             llama_cpp=_serve_llama_cpp(
                 gpu_layers=-1,
                 max_ctx_size=4096,
@@ -264,10 +360,10 @@ def get_default_config() -> Config:
         ),
         train=_train(
             train_args=TrainingArgs(
-                model_path=DEFAULT_MODEL_REPO,
-                data_path="./taxonomy_data",
-                ckpt_output_dir=DEFAULT_CKPT_DIR,
-                data_output_dir=DEFAULT_OUT_DIR,
+                model_path=DEFAULTS.MODEL_REPO,
+                data_path=DEFAULTS.DATASETS_DIR,
+                ckpt_output_dir=DEFAULTS.CHECKPOINTS_DIR,
+                data_output_dir=DEFAULTS.INTERNAL_DIR,
                 max_seq_len=4096,
                 max_batch_len=10000,
                 num_epochs=10,
@@ -287,6 +383,7 @@ def get_default_config() -> Config:
                     cpu_offload_optimizer=False,
                     cpu_offload_optimizer_ratio=1,
                     cpu_offload_optimizer_pin_memory=False,
+                    save_samples=None,
                 ),
             ),
             torch_args=TorchrunArgs(
@@ -298,18 +395,18 @@ def get_default_config() -> Config:
             ),
         ),
         evaluate=_evaluate(
-            base_model=DEFAULT_MODEL_REPO,
+            base_model=DEFAULTS.MODEL_REPO,
             mt_bench=_mtbench(
-                judge_model=DEFAULT_JUDGE_MODEL_MT,
-                output_dir=DEFAULT_EVAL_PATH,
+                judge_model=DEFAULTS.JUDGE_MODEL_MT,
+                output_dir=DEFAULTS.EVAL_DATA_DIR,
                 max_workers=40,
             ),
             mmlu=_mmlu(
                 few_shots=2,
                 batch_size=5,
             ),
-            mt_bench_branch=_mtbenchbranch(taxonomy_path=DEFAULT_TAXONOMY_PATH),
-            mmlu_branch=_mmlubranch(sdg_path=DEFAULT_GENERATED_FILES_OUTPUT_DIR),
+            mt_bench_branch=_mtbenchbranch(taxonomy_path=DEFAULTS.TAXONOMY_DIR),
+            mmlu_branch=_mmlubranch(sdg_path=DEFAULTS.DATASETS_DIR),
         ),
     )
 
@@ -334,8 +431,11 @@ def read_train_profile(train_file):
         raise ConfigException(msg) from exc
 
 
-def read_config(config_file: str | os.PathLike[str] = DEFAULT_CONFIG) -> Config:
+def read_config(
+    config_file: str | os.PathLike[str] | None = None,
+) -> Config:
     """Reads configuration from disk."""
+    config_file = DEFAULTS.CONFIG_FILE if config_file is None else config_file
     try:
         with open(config_file, "r", encoding="utf-8") as yamlfile:
             content = yaml.safe_load(yamlfile)
@@ -360,8 +460,9 @@ def get_dict(cfg: Config) -> dict[str, typing.Any]:
     return cfg.model_dump()
 
 
-def write_config(cfg: Config, config_file: str = DEFAULT_CONFIG) -> None:
+def write_config(cfg: Config, config_file: typing.Optional[str] = None) -> None:
     """Writes configuration to a disk"""
+    config_file = DEFAULTS.CONFIG_FILE if config_file is None else config_file
     with open(config_file, "w", encoding="utf-8") as yamlfile:
         d = cfg.model_dump_json()
         loaded = yaml.load(d, Loader=yaml.SafeLoader)
@@ -382,7 +483,28 @@ def get_model_family(forced, model_path):
     guess = match(r"^\w*", path.basename(model_path)).group(0).lower()
     guess = MODEL_FAMILY_MAPPINGS.get(guess, guess)
 
-    return guess if guess in MODEL_FAMILIES else DEFAULT_MODEL_FAMILY
+    return guess if guess in MODEL_FAMILIES else DEFAULTS.MODEL_FAMILY
+
+
+def ensure_storage_directories_exist():
+    """
+    Ensures that the default directories used by ilab exist.
+    """
+    dirs_to_make = [
+        DEFAULTS._cache_home,
+        DEFAULTS._config_dir,
+        DEFAULTS._data_dir,
+        DEFAULTS.CHATLOGS_DIR,
+        DEFAULTS.CHECKPOINTS_DIR,
+        DEFAULTS.DATASETS_DIR,
+        DEFAULTS.EVAL_DATA_DIR,
+        DEFAULTS.INTERNAL_DIR,
+        DEFAULTS.MODELS_DIR,
+        DEFAULTS.TAXONOMY_DIR,
+    ]
+
+    for dirpath in dirs_to_make:
+        os.makedirs(dirpath, exist_ok=True)
 
 
 class Lab:

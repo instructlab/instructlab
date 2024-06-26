@@ -16,12 +16,12 @@ from instructlab import configuration as cfg
 from .config import config as config_group
 from .data import data as data_group
 from .model import model as model_group
-from .sysinfo import get_sysinfo
+from .system import system as system_group
 from .taxonomy import taxonomy as taxonomy_group
 
 # 'fork' is unsafe and incompatible with some hardware accelerators.
 # Python 3.14 will switch to 'spawn' on all platforms.
-multiprocessing.set_start_method(cfg.DEFAULT_MULTIPROCESSING_START_METHOD, force=True)
+multiprocessing.set_start_method(cfg.DEFAULTS.MULTIPROCESSING_START_METHOD, force=True)
 
 
 class ExpandAliasesGroup(click.Group):
@@ -76,8 +76,8 @@ aliases = {
     "--config",
     "config_file",
     type=click.Path(),
-    default=cfg.DEFAULT_CONFIG,
-    show_default=True,
+    default=lambda: cfg.DEFAULTS.CONFIG_FILE,
+    show_default="config in user config directory",
     help="Path to a configuration file.",
 )
 @click.version_option(package_name="instructlab")
@@ -95,10 +95,4 @@ ilab.add_command(model_group.model)
 ilab.add_command(taxonomy_group.taxonomy)
 ilab.add_command(data_group.data)
 ilab.add_command(config_group.config)
-
-
-@ilab.command
-def sysinfo():
-    """Print system information"""
-    for key, value in get_sysinfo().items():
-        print(f"{key}: {value}")
+ilab.add_command(system_group.system)

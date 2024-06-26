@@ -7,11 +7,8 @@ import logging
 import click
 
 # First Party
-from instructlab import configuration as config
 from instructlab import utils
-
-# Local
-from ..utils import http_client
+from instructlab.configuration import DEFAULTS
 
 logger = logging.getLogger(__name__)
 
@@ -19,48 +16,49 @@ logger = logging.getLogger(__name__)
 @click.command()
 @click.option(
     "--model",
-    default=config.DEFAULT_MODEL,
-    show_default=True,
+    default=lambda: DEFAULTS.DEFAULT_MODEL,
+    show_default="The default model used by the instructlab system, located in the data directory.",
     help="Name of the model used during generation.",
 )
 @click.option(
     "--num-cpus",
     type=click.INT,
     help="Number of processes to use.",
-    default=config.DEFAULT_NUM_CPUS,
+    default=DEFAULTS.NUM_CPUS,
     show_default=True,
 )
 @click.option(
     "--chunk-word-count",
     type=click.INT,
     help="Number of words to chunk the document",
-    default=config.DEFAULT_CHUNK_WORD_COUNT,
+    default=DEFAULTS.CHUNK_WORD_COUNT,
     show_default=True,
 )
 @click.option(
     "--num-instructions",
     type=click.INT,
     help="Number of instructions to generate.",
-    default=config.DEFAULT_NUM_INSTRUCTIONS,
+    default=DEFAULTS.NUM_INSTRUCTIONS,
     show_default=True,
 )
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
-    default=config.DEFAULT_TAXONOMY_PATH,
-    show_default=True,
-    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone or local file path.",
+    default=lambda: DEFAULTS.TAXONOMY_DIR,
+    show_default="The default taxonomy path used by instructlab, located in the data directory.",
+    help="Path to where the taxonomy is located.",
 )
 @click.option(
     "--taxonomy-base",
-    default=config.DEFAULT_TAXONOMY_BASE,
+    default=DEFAULTS.TAXONOMY_BASE,
     show_default=True,
     help="Base git-ref to use when generating new taxonomy.",
 )
 @click.option(
     "--output-dir",
     type=click.Path(),
-    default=config.DEFAULT_GENERATED_FILES_OUTPUT_DIR,
+    default=lambda: DEFAULTS.DATASETS_DIR,
+    show_default="The default output directory used by instructlab, located in the data directory.",
     help="Path to output generated files.",
 )
 @click.option(
@@ -83,7 +81,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--api-key",
     type=click.STRING,
-    default=config.DEFAULT_API_KEY,  # Note: do not expose default API key
+    default=DEFAULTS.API_KEY,  # Note: do not expose default API key
     help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
 )
 @click.option(
@@ -95,7 +93,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--server-ctx-size",
     type=click.INT,
-    default=config.MAX_CONTEXT_SIZE,
+    default=DEFAULTS.MAX_CONTEXT_SIZE,
     show_default=True,
     help="The context size is the maximum number of tokens the server will consider.",
 )
@@ -167,7 +165,10 @@ def generate(
     from instructlab.sdg.generate_data import generate_data
     from instructlab.sdg.utils import GenerateException
 
-    prompt_file_path = config.DEFAULT_PROMPT_FILE
+    # Local
+    from ..utils import http_client
+
+    prompt_file_path = DEFAULTS.PROMPT_FILE
     if ctx.obj is not None:
         prompt_file_path = ctx.obj.config.generate.prompt_file
 
