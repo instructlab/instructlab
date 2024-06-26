@@ -15,6 +15,7 @@ from instructlab import configuration as cfg
 # NOTE: Subcommands are using local imports to speed up startup time.
 from .config import config as config_group
 from .data import data as data_group
+from .debug import debug
 from .model import model as model_group
 from .sysinfo import get_sysinfo
 from .taxonomy import taxonomy as taxonomy_group
@@ -95,6 +96,7 @@ ilab.add_command(model_group.model)
 ilab.add_command(taxonomy_group.taxonomy)
 ilab.add_command(data_group.data)
 ilab.add_command(config_group.config)
+ilab.add_command(debug.debug)
 
 
 @ilab.command

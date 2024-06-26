@@ -29,8 +29,43 @@ import yaml
 # Local
 from . import log
 
+ILAB_DIR_NAME = (
+    "instructlab"  # the name of the TLD which will be used for the config & data dir
+)
+
+# ILAB_CONFIG_HOME = os.path.join(USER_HOME_DIR, ".config", ".ilab")
+ILAB_CONFIG_HOME = None
+ILAB_DATA_HOME = None
+
+# default to "$HOME/.config" per the XDG standards
+if not os.getenv("XDG_CONFIG_HOME"):
+    if not os.getenv("HOME"):
+        raise RuntimeError(
+            "The HOME directory does not exist. Please make sure it's set and run this again."
+        )
+    ILAB_CONFIG_HOME = os.path.expandvars(
+        os.path.join("${HOME}", ".config", ILAB_DIR_NAME)
+    )
+else:
+    ILAB_CONFIG_HOME = os.path.expandvars(
+        os.path.join("${XDG_CONFIG_HOME}", ILAB_DIR_NAME)
+    )
+
+
+# figure out what to use for the data directory
+if not os.getenv("XDG_DATA_HOME"):
+    if not os.getenv("HOME"):
+        raise RuntimeError(
+            "The HOME directory does not exist. Please make sure it's set and run this again."
+        )
+    ILAB_DATA_HOME = os.path.expandvars(
+        os.path.join("${HOME}", ".local", "share", ILAB_DIR_NAME)
+    )
+else:
+    ILAB_DATA_HOME = os.path.expandvars(os.path.join("${XDG_DATA_HOME}", ILAB_DIR_NAME))
+
 DEFAULT_API_KEY = "no_api_key"
-DEFAULT_CONFIG = "config.yaml"
+DEFAULT_CONFIG = os.path.join(ILAB_CONFIG_HOME, "config.yaml")
 # TODO: Consolidate --model and --model-path into one --model-path flag since we always need a path now
 DEFAULT_MODEL_OLD = "merlinite-7b-lab-Q4_K_M"
 DEFAULT_MODEL = "models/merlinite-7b-lab-Q4_K_M.gguf"
@@ -39,7 +74,7 @@ DEFAULT_MODEL_REPO = "instructlab/granite-7b-lab"
 DEFAULT_JUDGE_MODEL_MT = "prometheus-eval/prometheus-8x7b-v2.0"
 DEFAULT_EVAL_PATH = "eval_data"
 DEFAULT_TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
-DEFAULT_TAXONOMY_PATH = "taxonomy"
+DEFAULT_TAXONOMY_PATH = os.path.join(ILAB_DATA_HOME, "taxonomy")
 DEFAULT_TAXONOMY_BASE = "origin/main"
 MAX_CONTEXT_SIZE = 4096
 # TODO: these constants should be removed, they should not leak out
@@ -51,6 +86,7 @@ DEFAULT_GENERATED_FILES_OUTPUT_DIR = "generated"
 DEFAULT_CONNECTION_TIMEOUT = httpx.Timeout(timeout=30.0)
 # use spawn start method, fork is not thread-safe
 DEFAULT_MULTIPROCESSING_START_METHOD = "spawn"
+
 
 # When otherwise unknown, ilab uses this as the default family
 DEFAULT_MODEL_FAMILY = "merlinite"
@@ -381,6 +417,15 @@ def get_model_family(forced, model_path):
     return guess if guess in MODEL_FAMILIES else DEFAULT_MODEL_FAMILY
 
 
+def ensure_storage_directories_exist():
+    """
+    Ensures that the default directories used by ilab exist.
+    """
+    for env_path in [ILAB_CONFIG_HOME, ILAB_DATA_HOME]:
+        # TODO: use 777 for debug purposes, use 700 or 600 for production
+        os.makedirs(env_path, exist_ok=True, mode=0o777)
+
+
 class Lab:
     """Lab object holds high-level information about ilab CLI"""
 
@@ -388,10 +433,11 @@ class Lab:
         self.config = config_obj
 
 
-def init(ctx, config_file):
+def init(ctx, config_file: str):
+    print("tripped the init function")
     if (
-        ctx.invoked_subcommand not in {"config", "init", "sysinfo"}
-        and "--help" not in sys.argv[1:]
+        ctx.invoked_subcommand in {"config", "init", "sysinfo"}
+        or "--help" in sys.argv[1:]
     ):
         if config_file == "DEFAULT":
             config_obj = get_default_config()
@@ -419,17 +465,47 @@ def init(ctx, config_file):
             | config_dict["train"]["train_args"]["lora"]
             | config_dict["train"]["train_args"]["deepspeed_options"]
         )
-        config_dict["evaluate"] = (
-            config_dict["evaluate"]
-            | config_dict["evaluate"]["mmlu"]
-            | config_dict["evaluate"]["mmlu_branch"]
-            | config_dict["evaluate"]["mt_bench"]
-            | config_dict["evaluate"]["mt_bench_branch"]
-        )
-        # need to delete the individual sub-classes from the map
-        del config_dict["evaluate"]["mmlu"]
-        del config_dict["evaluate"]["mmlu_branch"]
-        del config_dict["evaluate"]["mt_bench"]
-        del config_dict["evaluate"]["mt_bench_branch"]
 
         ctx.default_map = config_dict
+
+    ensure_storage_directories_exist()
+    if config_file == "DEFAULT":
+        config_obj = get_default_config()
+    elif not os.path.isfile(config_file):
+        config_obj = None
+        ctx.fail(
+            f"`{config_file}` does not exists, please run `ilab init` "
+            "or point to a valid configuration file using `--config=<path>`."
+        )
+    else:
+        try:
+            config_obj = read_config(config_file)
+        except ConfigException as ex:
+            raise click.ClickException(str(ex))
+    # setup logging
+    log.configure_logging(log_level=config_obj.general.log_level.upper())
+    ctx.obj = Lab(config_obj)
+    # default_map holds a dictionary with default values for each command parameters
+    config_dict = get_dict(ctx.obj.config)
+    # since torch and train args are sep, they need to be combined into a single `train` entity for the default map
+    # this is because the flags for `ilab model train` will only be populated if the default map has a single `train` entry, not two.
+    config_dict["train"] = (
+        config_dict["train"]["train_args"]
+        | config_dict["train"]["torch_args"]
+        | config_dict["train"]["train_args"]["lora"]
+        | config_dict["train"]["train_args"]["deepspeed_options"]
+    )
+    config_dict["evaluate"] = (
+        config_dict["evaluate"]
+        | config_dict["evaluate"]["mmlu"]
+        | config_dict["evaluate"]["mmlu_branch"]
+        | config_dict["evaluate"]["mt_bench"]
+        | config_dict["evaluate"]["mt_bench_branch"]
+    )
+    # need to delete the individual sub-classes from the map
+    del config_dict["evaluate"]["mmlu"]
+    del config_dict["evaluate"]["mmlu_branch"]
+    del config_dict["evaluate"]["mt_bench"]
+    del config_dict["evaluate"]["mt_bench_branch"]
+    # default_map holds a dictionary with default values for each command parameters
+    ctx.default_map = get_dict(ctx.obj.config)
