@@ -1,3 +1,6 @@
+# Standard
+import os
+
 # Third Party
 from click_didyoumean import DYMGroup
 from instructlab.eval.evaluator import Evaluator
@@ -9,11 +12,11 @@ import click
 from instructlab import configuration as config
 
 BENCHMARK_TO_CLASS_MAP = {
-        "mmlu": MMLUEvaluator,
-        "mmlu_branch": MMLUBranchEvaluator,
-        "mt_bench": MTBenchEvaluator,
-        "mt_bench_branch": MTBenchBranchEvaluator,
-    }
+    "mmlu": MMLUEvaluator,
+    "mmlu_branch": MMLUBranchEvaluator,
+    "mt_bench": MTBenchEvaluator,
+    "mt_bench_branch": MTBenchBranchEvaluator,
+}
 
 
 def get_evaluator(
@@ -24,10 +27,8 @@ def get_evaluator(
     max_workers,
     taxonomy_path,
     branch,
-    tasks,
     few_shots,
     batch_size,
-    task,
     sdg_path,
 ) -> Evaluator:
     """takes in arguments from the CLI and uses 'benchmark' to validate other arguments
@@ -44,7 +45,8 @@ def get_evaluator(
             max_workers,
         ]
         if benchmark == "mt_bench_branch":
-            required_args.append(taxonomy_path, branch)
+            required_args.append(taxonomy_path)
+            required_args.append(branch)
         if any(required_args) is None:
             click.secho(
                 f"Benchmark {benchmark} requires the following args to be set: {required_args}",
@@ -62,15 +64,16 @@ def get_evaluator(
                     model_name,
                     judge_model_name,
                     taxonomy_path,
+                    branch,
                 )
 
     # ensure knowledge benchmarks have proper arguments if selected
     if benchmark in ["mmlu", "mmlu_branch"]:
-        required_args = [few_shots, batch_size]
-        if benchmark == "mmlu":
-            required_args.append(tasks)
-        elif benchmark == "mmlu_branch":
-            required_args.extend([task, sdg_path])
+        required_args = [model_name, few_shots, batch_size]
+        if benchmark == "mmlu_branch":
+            required_args.append(sdg_path)
+            required_args.append(taxonomy_path)
+            required_args.append(branch)
         if any(required_args) is None:
             click.secho(
                 f"Benchmark {benchmark} requires the following args to be set: {required_args}",
@@ -79,13 +82,85 @@ def get_evaluator(
             raise click.exceptions.Exit(1)
         else:
             evaluator_class = BENCHMARK_TO_CLASS_MAP[benchmark]
+
+            # TODO Make this more robust or wait till we are serving the model from instructlab
+            model_dir = os.path.join(os.getcwd(), "models")
+            model_path = os.path.join(model_dir, model_name)
+            # tasks = ["mmlu_abstract_algebra","mmlu_anatomy","mmlu_astronomy"]
+            tasks = [
+                "mmlu_abstract_algebra",
+                "mmlu_anatomy",
+                "mmlu_astronomy",
+                "mmlu_business_ethics",
+                "mmlu_clinical_knowledge",
+                "mmlu_college_biology",
+                "mmlu_college_chemistry",
+                "mmlu_college_computer_science",
+                "mmlu_college_mathematics",
+                "mmlu_college_medicine",
+                "mmlu_college_physics",
+                "mmlu_computer_security",
+                "mmlu_conceptual_physics",
+                "mmlu_econometrics",
+                "mmlu_electrical_engineering",
+                "mmlu_elementary_mathematics",
+                "mmlu_formal_logic",
+                "mmlu_global_facts",
+                "mmlu_high_school_biology",
+                "mmlu_high_school_chemistry",
+                "mmlu_high_school_computer_science",
+                "mmlu_high_school_european_history",
+                "mmlu_high_school_geography",
+                "mmlu_high_school_government_and_politics",
+                "mmlu_high_school_macroeconomics",
+                "mmlu_high_school_mathematics",
+                "mmlu_high_school_microeconomics",
+                "mmlu_high_school_physics",
+                "mmlu_high_school_psychology",
+                "mmlu_high_school_statistics",
+                "mmlu_high_school_us_history",
+                "mmlu_high_school_world_history",
+                "mmlu_human_aging",
+                "mmlu_human_sexuality",
+                "mmlu_humanities",
+                "mmlu_international_law",
+                "mmlu_jurisprudence",
+                "mmlu_logical_fallacies",
+                "mmlu_machine_learning",
+                "mmlu_management",
+                "mmlu_marketing",
+                "mmlu_medical_genetics",
+                "mmlu_miscellaneous",
+                "mmlu_moral_disputes",
+                "mmlu_moral_scenarios",
+                "mmlu_nutrition",
+                "mmlu_other",
+                "mmlu_philosophy",
+                "mmlu_prehistory",
+                "mmlu_professional_accounting",
+                "mmlu_professional_law",
+                "mmlu_professional_medicine",
+                "mmlu_professional_psychology",
+                "mmlu_public_relations",
+                "mmlu_security_studies",
+                "mmlu_social_sciences",
+                "mmlu_sociology",
+                "mmlu_stem",
+                "mmlu_us_foreign_policy",
+                "mmlu_virology",
+                "mmlu_world_religions",
+            ]
             if benchmark == "mmlu":
-                return evaluator_class(tasks, few_shots, batch_size)
+                return evaluator_class(
+                    model_path, tasks, "float16", few_shots, batch_size
+                )
             else:
-                return evaluator_class(sdg_path, task, few_shots, batch_size)
+                return evaluator_class(
+                    model_path, sdg_path, tasks, "float16", few_shots, batch_size
+                )
 
 
-@click.command(cls=DYMGroup)
+@click.command()
 @click.option(
     "--model-name",
     type=click.STRING,
@@ -94,7 +169,7 @@ def get_evaluator(
 @click.option(
     "--benchmark",
     type=click.Choice(list(BENCHMARK_TO_CLASS_MAP.keys())),
-    #case_sensitive=False,
+    # case_sensitive=False,
     help="Benchmarks to run during evaluation",
 )
 @click.option(
@@ -140,18 +215,6 @@ def get_evaluator(
     help="Number of GPUs. Needed for running mmlu or mmlu_branch.",
 )
 @click.option(
-    "--tasks",
-    type=click.STRING,
-    multiple=True,
-    help="List of tasks for mmlu to test the model with. Needed for running mmlu.",
-)
-@click.option(
-    "--task",
-    type=click.STRING,
-    multiple=True,
-    help="Group name that is shared by all the MMLU Branch tasks. Needed for running mmlu_branch.",
-)
-@click.option(
     "--sdg-path",
     type=click.Path(),
     multiple=True,
@@ -167,10 +230,8 @@ def evaluate(
     max_workers,
     taxonomy_path,
     branch,
-    tasks,
     few_shots,
     batch_size,
-    task,
     sdg_path,
 ):
     # get appropriate evaluator class from Eval lib
@@ -182,13 +243,39 @@ def evaluate(
         max_workers,
         taxonomy_path,
         branch,
-        tasks,
         few_shots,
         batch_size,
-        task,
         sdg_path,
     )
 
-    # execute given evaluator and capture results
-    results = evaluator.run()
-    print(results)
+    if benchmark == "mt_bench":
+        # TODO: Serve model
+        print("Generating answers...")
+        evaluator.gen_answers("http://localhost:8000/v1")
+
+        # TODO: Serve judge model
+        print("Evaluating answers...")
+        overall_score, qa_pairs, turn_scores = evaluator.judge_answers(
+            "http://localhost:8000/v1"
+        )
+        print(f"Overall Score: {overall_score}")
+        print(f"Turn 1 Score: {turn_scores[0]}")
+        print(f"Turn 2 Score: {turn_scores[1]}")
+        print(f"QA Pairs Length: {len(qa_pairs)}")
+
+    elif benchmark == "mt_bench_branch":
+        # TODO: Serve model
+        # TODO: Should taxonomy dir come from config instead?
+        print("Generating questions and reference answers from qna files...")
+        evaluator.gen_answers("http://localhost:8000/v1")
+
+        # TODO: Serve judge model
+        print("Evaluating answers...")
+        qa_pairs = evaluator.judge_answers("http://localhost:8000/v1")
+        print(f"qa_pairs length: {len(qa_pairs)}")
+
+    elif benchmark == "mmlu":
+        overall_score, individual_scores = evaluator.run()
+        print(f"Overall Score: {overall_score}")
+        print("Individual Scores:")
+        print(individual_scores)
