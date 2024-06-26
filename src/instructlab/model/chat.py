@@ -30,7 +30,7 @@ from instructlab import configuration as cfg
 # Local
 from ..utils import get_sysprompt, http_client
 
-global_logger = logging.getLogger(__name__)
+ilab_logger = logging.getLogger(__name__)
 
 HELP_MD = """
 Help / TL;DR
@@ -171,6 +171,7 @@ def chat(
     """Run a chat using the modified model"""
     # pylint: disable=import-outside-toplevel
     # First Party
+    # pylint: disable=import-outside-toplevel
     from instructlab.model.backends.llama_cpp import is_temp_server_running
 
     # TODO: this whole code block is replicated in generate.py. Refactor to a common function.
@@ -725,7 +726,7 @@ def chat_cli(
     # global CONTEXTS
     # CONTEXTS = config["contexts"]
     if context not in CONTEXTS:
-        global_logger.info(
+        ilab_logger.info(
             f"Context {context} not found in the config file. Using default."
         )
         context = "default"
@@ -775,7 +776,7 @@ def chat_cli(
         if not qq:
             print(f"{PROMPT_PREFIX}{question}")
         try:
-            ccb.start_prompt(global_logger, content=question, box=not qq)
+            ccb.start_prompt(ilab_logger, content=question, box=not qq)
         except ChatException as exc:
             raise ChatException(f"API issue found while executing chat: {exc}") from exc
         except (ChatQuitException, KeyboardInterrupt, EOFError):
@@ -791,7 +792,7 @@ def chat_cli(
     # Start chatting
     while True:
         try:
-            ccb.start_prompt(global_logger)
+            ccb.start_prompt(ilab_logger)
         except KeyboardInterrupt:
             continue
         except ChatException as exc:
