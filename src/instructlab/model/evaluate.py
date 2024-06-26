@@ -164,6 +164,7 @@ def get_evaluator(
 @click.command()
 @click.option(
     "--model-name",
+    default = config.DEFAULT_MODEL_REPO,
     type=click.STRING,
     help="Name of the model to be evaluated",
 )
@@ -175,6 +176,7 @@ def get_evaluator(
 )
 @click.option(
     "--judge-model-name",
+    default=config.DEFAULT_JUDGE_MODEL_MT,
     type=click.STRING,
     help="Name of the model to be used as a judge for running mt_bench or mt_bench_branch",
 )
