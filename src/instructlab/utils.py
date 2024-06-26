@@ -270,7 +270,7 @@ def _load_schema(path: "importlib.resources.abc.Traversable") -> "referencing.Re
             contents=contents, default_specification=DRAFT202012
         )
     except Exception as e:
-        raise NoSuchResource(ref=str(path)) from e
+        raise NoSuchResource(str(path)) from e
     return resource
 
 
