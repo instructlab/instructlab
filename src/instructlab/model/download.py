@@ -18,13 +18,13 @@ from instructlab import utils
 @click.command()
 @click.option(
     "--repository",
-    default=config.get_default_config().general.repository,
+    default=config.get_default_config().general.default_model_repo,
     show_default=True,
     help="Hugging Face repository of the model to download.",
 )
 @click.option(
     "--release",
-    default=config.get_default_config().general.repository_tag,
+    default=config.get_default_config().general.default_model_tag,
     show_default=True,
     help="The git revision of the model to download - e.g. a branch, tag, or commit hash.",
 )
