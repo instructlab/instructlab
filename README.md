@@ -83,7 +83,9 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 ## 📋 Requirements
 
-- **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora). We anticipate support for more operating systems in the future.
+- **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora). Note Linux
+ is not fully supported (testing a trained model does not currently work on Linux).
+  We anticipate support for more operating systems in the future.
 - C++ compiler
 - Python 3.10 or Python 3.11
 - Approximately 60GB disk space (entire process)
