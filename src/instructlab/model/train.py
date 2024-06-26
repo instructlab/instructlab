@@ -15,6 +15,9 @@ from instructlab.training import (
     TrainingArgs,
     run_training,
 )
+
+from instructlab.train.run_e2e_training import run_e2e_training
+
 import click
 
 # First Party
@@ -182,6 +185,11 @@ logger = logging.getLogger(__name__)
     default=False,
     help="if true, enables the legacy linux training codepath from release 0.17.0 and prior.",
 )
+@click.option(
+    "--e2e",
+    is_flag=True,
+    help="If True, ilab will run multi-phase training. e.g. TRAIN->EVAL->TRAIN->EVAL, emailing an administrator if an irrecoverable error occurs.",
+)
 @click.pass_context
 @utils.display_params
 def train(
@@ -262,8 +270,7 @@ def train(
         shutil.copy(test_files[0], test_file)
 
     # if macos, preserve that path
-    if utils.is_macos_with_m_chip():
-        # pylint: disable=import-outside-toplevel
+    if utils.is_macos_with_m_chip() and not e2e:
         # Local
         from ..mlx_explore.gguf_convert_to_mlx import load
         from ..mlx_explore.utils import fetch_tokenizer_from_hub
@@ -409,10 +416,19 @@ def train(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
+
         ds_args = DeepSpeedOptions(**params)
         lora_args = LoraOptions(**params)
         train_args = TrainingArgs(**params)
         torch_args = TorchrunArgs(**params)
         train_args.deepspeed_options = ds_args
         train_args.lora = lora_args
-        run_training(train_args=train_args, torch_args=torch_args)
+
+        if e2e:
+            # end-to-end training
+            # TODO: needs data for phase05, for phase10, and a stable definition of
+            #   where to write checkpoints between phases.
+            #   could be ckpt_dir/p05, ckpt_dir/p10 or something, with cleanup after.
+            run_e2e_training(ctx.params, train_args, torch_args)
+        else:
+            run_training(train_args=train_args, torch_args=torch_args)
