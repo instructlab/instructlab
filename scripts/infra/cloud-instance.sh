@@ -265,10 +265,10 @@ instance_user_home() {
 
 setup_rh_devenv() {
     local cloud_type=$1
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf install git gcc make pip python3 python3-devel -y
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf install git gcc make pip python3.11 python3.11-devel -y
     "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "sudo dnf install g++ -y || sudo dnf install gcc-c++"
     "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "if [ ! -d instructlab.git ]; then git clone --bare https://github.com/instructlab/instructlab.git && git clone instructlab.git && pushd instructlab && git remote add syncrepo ../instructlab.git; fi "
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && python3 -m venv --upgrade-deps venv"
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && python3.11 -m venv --upgrade-deps venv"
 }
 
 pip_install_with_nvidia() {
