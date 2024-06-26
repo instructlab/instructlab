@@ -194,8 +194,8 @@ class _mmlubranch(BaseModel):
     sdg_path: str
 
 class _evaluate(BaseModel):
-    model_name: str
-    branch: str
+    model_name: Optional[str] = None
+    branch: Optional[str] = None
     mmlu: _mmlu
     mmlu_branch: _mmlubranch
     mt: _mt
@@ -281,6 +281,23 @@ def get_default_config():
                 nproc_per_node=1,
                 rdzv_id=123,
                 rdzv_endpoint="127.0.0.1:12222",
+            ),
+        ),
+        evaluate=_evaluate(
+            mt=_mt(
+                judge_model=DEFAULT_JUDGE_MODEL_MT,
+                output_dir=DEFAULT_EVAL_PATH,
+                max_workers=40,
+            ),
+            mmlu=_mmlu(
+                few_shots=2,
+                batch_size=5,
+            ),
+            mt_branch=_mtbranch(
+                taxonomy_path="taxonomy"
+            ),
+            mmlu_branch=_mmlubranch(
+                sdg_path=DEFAULT_GENERATED_FILES_OUTPUT_DIR
             ),
         ),
     )
