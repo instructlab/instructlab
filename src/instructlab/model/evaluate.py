@@ -1,5 +1,7 @@
 # Standard
 import os
+import subprocess
+import time
 
 # Third Party
 from click_didyoumean import DYMGroup
@@ -20,9 +22,9 @@ BENCHMARK_TO_CLASS_MAP = {
 
 
 def get_evaluator(
-    model_name,
+    model_path,
     benchmark,
-    judge_model_name,
+    judge_model_path,
     output_dir,
     max_workers,
     taxonomy_path,
@@ -39,8 +41,8 @@ def get_evaluator(
     # ensure skills benchmarks have proper arguments if selected
     if benchmark in ["mt_bench", "mt_bench_branch"]:
         required_args = [
-            model_name,
-            judge_model_name,
+            model_path,
+            judge_model_path,
             output_dir,
             max_workers,
         ]
@@ -57,19 +59,19 @@ def get_evaluator(
             evaluator_class = BENCHMARK_TO_CLASS_MAP[benchmark]
             if benchmark == "mt_bench":
                 return evaluator_class(
-                    model_name, judge_model_name, output_dir, max_workers
+                    "test_model", "judge_model", output_dir, max_workers
                 )
             else:
                 return evaluator_class(
-                    model_name,
-                    judge_model_name,
+                    "test_model",
+                    "judge_model",
                     taxonomy_path,
                     branch,
                 )
 
     # ensure knowledge benchmarks have proper arguments if selected
     if benchmark in ["mmlu", "mmlu_branch"]:
-        required_args = [model_name, few_shots, batch_size]
+        required_args = [model_path, few_shots, batch_size]
         if benchmark == "mmlu_branch":
             required_args.append(sdg_path)
         if any(required_args) is None:
@@ -81,9 +83,6 @@ def get_evaluator(
         else:
             evaluator_class = BENCHMARK_TO_CLASS_MAP[benchmark]
 
-            # TODO Make this more robust or wait till we are serving the model from instructlab
-            model_dir = os.path.join(os.getcwd(), "models")
-            model_path = os.path.join(model_dir, model_name)
             if benchmark == "mmlu":
                 min_tasks = os.environ.get("INSTRUCTLAB_EVAL_MMLU_MIN_TASKS")
                 if min_tasks is not None:
@@ -163,9 +162,9 @@ def get_evaluator(
 
 @click.command()
 @click.option(
-    "--model-name",
-    type=click.STRING,
-    help="Name of the model to be evaluated",
+    "--model-path",
+    type=click.Path(),
+    help="Path of the model to be evaluated",
 )
 @click.option(
     "--benchmark",
@@ -174,9 +173,9 @@ def get_evaluator(
     help="Benchmarks to run during evaluation",
 )
 @click.option(
-    "--judge-model-name",
-    type=click.STRING,
-    help="Name of the model to be used as a judge for running mt_bench or mt_bench_branch",
+    "--judge-model-path",
+    type=click.Path(),
+    help="Path of the model to be used as a judge for running mt_bench or mt_bench_branch",
 )
 @click.option(
     "--output-dir",
@@ -216,9 +215,9 @@ def get_evaluator(
 @click.pass_context
 def evaluate(
     ctx,
-    model_name,
+    model_path,
     benchmark,
-    judge_model_name,
+    judge_model_path,
     output_dir,
     max_workers,
     taxonomy_path,
@@ -230,9 +229,9 @@ def evaluate(
     print(ctx.params)
     # get appropriate evaluator class from Eval lib
     evaluator = get_evaluator(
-        model_name,
+        model_path,
         benchmark,
-        judge_model_name,
+        judge_model_path,
         output_dir,
         max_workers,
         taxonomy_path,
@@ -243,30 +242,99 @@ def evaluate(
     )
 
     if benchmark == "mt_bench":
-        # TODO: Serve model
+        # TODO: Replace temp Popen hack with serving library calls.  Current library doesn't support server-model-name.
         print("Generating answers...")
-        evaluator.gen_answers("http://localhost:8000/v1")
+        try:
+            proc = subprocess.Popen(
+                [
+                    "python",
+                    "-m",
+                    "vllm.entrypoints.openai.api_server",
+                    "--model",
+                    model_path,
+                    "--tensor-parallel-size",
+                    "1",
+                    "--served-model-name",
+                    "test_model",
+                ]
+            )
+            time.sleep(60)
+            evaluator.gen_answers("http://localhost:8000/v1")
+        finally:
+            proc.terminate()
 
-        # TODO: Serve judge model
         print("Evaluating answers...")
-        overall_score, qa_pairs, turn_scores = evaluator.judge_answers(
-            "http://localhost:8000/v1"
-        )
-        print(f"Overall Score: {overall_score}")
-        print(f"Turn 1 Score: {turn_scores[0]}")
-        print(f"Turn 2 Score: {turn_scores[1]}")
-        print(f"QA Pairs Length: {len(qa_pairs)}")
+        try:
+            proc = subprocess.Popen(
+                [
+                    "python",
+                    "-m",
+                    "vllm.entrypoints.openai.api_server",
+                    "--model",
+                    judge_model_path,
+                    "--tensor-parallel-size",
+                    "1",
+                    "--served-model-name",
+                    "judge_model",
+                ]
+            )
+            time.sleep(60)
+            overall_score, qa_pairs, turn_scores = evaluator.judge_answers(
+                "http://localhost:8000/v1"
+            )
+            proc.terminate()
+            print(f"Overall Score: {overall_score}")
+            print(f"Turn 1 Score: {turn_scores[0]}")
+            print(f"Turn 2 Score: {turn_scores[1]}")
+            print(f"QA Pairs Length: {len(qa_pairs)}")
+        finally:
+            proc.terminate()
 
     elif benchmark == "mt_bench_branch":
-        # TODO: Serve model
+        # TODO: Replace temp Popen hack with serving library calls.  Current library doesn't support server-model-name.
         # TODO: Should taxonomy dir come from config instead?
+        # TODO: This really needs to compare two models and two branches to be useful
         print("Generating questions and reference answers from qna files...")
-        evaluator.gen_answers("http://localhost:8000/v1")
+        try:
+            proc = subprocess.Popen(
+                [
+                    "python",
+                    "-m",
+                    "vllm.entrypoints.openai.api_server",
+                    "--model",
+                    model_path,
+                    "--tensor-parallel-size",
+                    "1",
+                    "--served-model-name",
+                    "test_model",
+                ]
+            )
+            time.sleep(60)
+            evaluator.gen_answers("http://localhost:8000/v1")
+        finally:
+            proc.terminate()
 
         # TODO: Serve judge model
         print("Evaluating answers...")
-        qa_pairs = evaluator.judge_answers("http://localhost:8000/v1")
-        print(f"qa_pairs length: {len(qa_pairs)}")
+        try:
+            proc = subprocess.Popen(
+                [
+                    "python",
+                    "-m",
+                    "vllm.entrypoints.openai.api_server",
+                    "--model",
+                    judge_model_path,
+                    "--tensor-parallel-size",
+                    "1",
+                    "--served-model-name",
+                    "judge_model",
+                ]
+            )
+            time.sleep(60)
+            qa_pairs = evaluator.judge_answers("http://localhost:8000/v1")
+            print(f"qa_pairs length: {len(qa_pairs)}")
+        finally:
+            proc.terminate()
 
     elif benchmark == "mmlu":
         overall_score, individual_scores = evaluator.run()
@@ -275,6 +343,7 @@ def evaluate(
         print(individual_scores)
 
     elif benchmark == "mmlu_branch":
+        # TODO: This really needs to compare two models and two branches to be useful
         overall_score, individual_scores = evaluator.run()
         print(f"Overall Score: {overall_score}")
         print("Individual Scores:")
