@@ -164,7 +164,6 @@ def get_evaluator(
 @click.command()
 @click.option(
     "--model-name",
-    default = config.DEFAULT_MODEL_REPO,
     type=click.STRING,
     help="Name of the model to be evaluated",
 )
@@ -176,21 +175,17 @@ def get_evaluator(
 )
 @click.option(
     "--judge-model-name",
-    default=config.DEFAULT_JUDGE_MODEL_MT,
     type=click.STRING,
     help="Name of the model to be used as a judge for running mt_bench or mt_bench_branch",
 )
 @click.option(
     "--output-dir",
     type=click.Path(),
-    default=config.DEFAULT_EVAL_PATH,
     help="The directory to use for evaluation output from mt_bench or mt_bench_branch",
 )
 @click.option(
     "--max-workers",
     type=click.INT,
-    default=40,
-    show_default=True,
     help="Max parallel workers to run the evaluation with for mt_bench or mt_bench_branch",
 )
 @click.option(
@@ -206,15 +201,11 @@ def get_evaluator(
 @click.option(
     "--few-shots",
     type=click.INT,
-    default=2,
-    show_default=True,
     help="Number of examples. Needed for running mmlu or mmlu_branch.",
 )
 @click.option(
     "--batch-size",
     type=click.INT,
-    default=5,
-    show_default=True,
     help="Number of GPUs. Needed for running mmlu or mmlu_branch.",
 )
 @click.option(
@@ -237,6 +228,8 @@ def evaluate(
     batch_size,
     sdg_path,
 ):
+    
+    print(ctx.params)
     # get appropriate evaluator class from Eval lib
     evaluator = get_evaluator(
         model_name,
