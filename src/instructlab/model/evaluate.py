@@ -211,7 +211,6 @@ def get_evaluator(
 @click.option(
     "--sdg-path",
     type=click.Path(),
-    multiple=True,
     help="Path where all the MMLU Branch tasks are stored. Needed for running mmlu_branch.",
 )
 @click.pass_context
