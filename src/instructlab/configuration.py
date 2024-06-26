@@ -178,20 +178,25 @@ class _serve(BaseModel):
         """Returns server API URL, based on the configured host and port"""
         return get_api_base(self.host_port)
 
+
 class _mmlu(BaseModel):
     few_shots: int
     batch_size: int
+
 
 class _mt(BaseModel):
     judge_model: str
     output_dir: str
     max_workers: int
 
+
 class _mtbranch(BaseModel):
-    taxonomy_path: str    
+    taxonomy_path: str
+
 
 class _mmlubranch(BaseModel):
     sdg_path: str
+
 
 class _evaluate(BaseModel):
     model_name: Optional[str] = None
@@ -293,12 +298,8 @@ def get_default_config():
                 few_shots=2,
                 batch_size=5,
             ),
-            mt_branch=_mtbranch(
-                taxonomy_path="taxonomy"
-            ),
-            mmlu_branch=_mmlubranch(
-                sdg_path=DEFAULT_GENERATED_FILES_OUTPUT_DIR
-            ),
+            mt_branch=_mtbranch(taxonomy_path="taxonomy"),
+            mmlu_branch=_mmlubranch(sdg_path=DEFAULT_GENERATED_FILES_OUTPUT_DIR),
         ),
     )
 
@@ -420,9 +421,9 @@ def init(ctx, config_file):
             | config_dict["evaluate"]["mt_branch"]
         )
         # need to delete the individual sub-classes from the map
-        del(config_dict["evaluate"]["mmlu"])
-        del(config_dict["evaluate"]["mmlu_branch"])
-        del(config_dict["evaluate"]["mt"])
-        del(config_dict["evaluate"]["mt_branch"])
+        del config_dict["evaluate"]["mmlu"]
+        del config_dict["evaluate"]["mmlu_branch"]
+        del config_dict["evaluate"]["mt"]
+        del config_dict["evaluate"]["mt_branch"]
 
         ctx.default_map = config_dict
