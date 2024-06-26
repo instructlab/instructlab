@@ -2,9 +2,15 @@
 
 ### Features
 
+* Add [vLLM](https://github.com/vllm-project/vllm) backend to serve, chat and generate commands.
+* Add `--backend` flag to `ilab model serve` command to allow for specifying the backend to use
+   when serving a model. This is useful when you have multiple backends installed and want to
+   specify which one to use. Currently, the only supported backend are `llama-cpp` and `vllm`.
+
 ### Breaking Changes
 
-- `ilab model train`: The '--device' parameter no longer supports specifying a GPU index (e.g., 'cuda:0'). To use a specific GPU, set the visible GPU before running the train command.
+* `ilab`: **Deprecation of Python 3.9 support and withdrawal of Python 3.12 support** Due to changes to training requiring the usage of [GPTDolomite](https://github.com/instructlab/GPTDolomite), Python 3.9 is no longer supported and Python 3.12 support is currently withdrawn. If you are using either of these versions, you will need to start using either Python 3.10 or Python 3.11 to use this and subsequent versions of the CLI.
+* `ilab model train`: The '--device' parameter no longer supports specifying a GPU index (e.g., 'cuda:0'). To use a specific GPU, set the visible GPU before running the train command.
 
 ## v0.17
 

@@ -6,6 +6,7 @@ import datetime
 import json
 import logging
 import os
+import pathlib
 import sys
 import time
 
@@ -170,22 +171,63 @@ def chat(
     """Run a chat using the modified model"""
     # pylint: disable=C0415
     # First Party
-    from instructlab.model.backends.llama import ensure_server, is_temp_server_running
+    from instructlab.model.backends.llama_cpp import (
+        ensure_server,
+        is_temp_server_running,
+    )
 
+    # TODO: this whole code block is replicated in generate.py. Refactor to a common function.
+    backend_instance = None
     if endpoint_url:
         api_base = endpoint_url
-        server_process = None
-        server_queue = None
     else:
+        # First Party
+        from instructlab.model.backends import backends, llama_cpp, vllm
+
+        model_path = ctx.obj.config.serve.model_path
+        model_path = pathlib.Path(model_path)
+        backend = ctx.obj.config.serve.backend
         try:
-            server_process, api_base, server_queue = ensure_server(
-                ctx.obj.config.serve,
-                tls_insecure,
-                tls_client_cert,
-                tls_client_key,
-                tls_client_passwd,
-                model_family,
+            backend = backends.get(logger, model_path, backend)
+        except ValueError as e:
+            click.secho(f"Failed to determine backend: {e}", fg="red")
+            raise click.exceptions.Exit(1)
+
+        host = ctx.obj.config.serve.host_port.split(":")[0]
+        port = int(ctx.obj.config.serve.host_port.split(":")[1])
+
+        if backend == backends.LLAMA_CPP:
+            # Instantiate the llama server
+            backend_instance = llama_cpp.Server(
+                logger=logger,
+                api_base=ctx.obj.config.serve.api_base(),
+                model_path=model_path,
+                gpu_layers=ctx.obj.config.serve.gpu_layers,
+                max_ctx_size=ctx.obj.config.serve.max_ctx_size,
+                num_threads=None,  # exists only as a flag not a config
+                model_family=model_family,
+                host=host,
+                port=port,
             )
+
+        if backend == backends.VLLM:
+            # Instantiate the vllm server
+            backend_instance = vllm.Server(
+                logger=logger,
+                api_base=ctx.obj.config.serve.api_base(),
+                model_path=model_path,
+                model_family=model_family,
+                host=host,
+                port=port,
+            )
+
+        try:
+            # Run the llama server
+            backend_instance.run_detached(
+                tls_insecure, tls_client_cert, tls_client_key, tls_client_passwd
+            )
+            # api_base will be set by run_detached
+            api_base = backend_instance.api_base
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
             raise click.exceptions.Exit(1)
@@ -256,11 +298,8 @@ def chat(
         click.secho(f"Executing chat failed with: {exc}", fg="red")
         raise click.exceptions.Exit(1)
     finally:
-        if server_process and server_queue:
-            server_process.terminate()
-            server_process.join(timeout=30)
-            server_queue.close()
-            server_queue.join_thread()
+        if backend_instance is not None:
+            backend_instance.shutdown()
 
 
 class ChatException(Exception):

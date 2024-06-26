@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+# Dependencies for installing vLLM on CUDA
+
+# vLLM only supports Linux platform (including WSL)
+vllm>=0.5.0; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version >= '3.9' and python_version <= '3.11'
+
+# Most the dependencies below were taken from https://github.com/vllm-project/vllm/blob/main/requirements-cuda.txt
+vllm-flash-attn == 2.5.9 ; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version >= '3.9' and python_version <= '3.11'
+nvidia-ml-py3; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version >= '3.9' and python_version <= '3.11'
+xformers == 0.0.26.post1; sys_platform == 'linux' and platform_machine == 'x86_64' and python_version >= '3.9' and python_version <= '3.11'

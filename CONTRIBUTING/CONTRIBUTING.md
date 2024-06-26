@@ -64,7 +64,7 @@ Improvements to existing functionality are tracked as [GitHub issues using the U
 The following tools are required:
 
 - [`git`](https://git-scm.com)
-- [`python`](https://www.python.org) (v3.9+)
+- [`python`](https://www.python.org) (v3.10 or v3.11)
 - [`pip`](https://pypi.org/project/pip/) (v23.0+)
 - [`expect`](https://core.tcl-lang.org/expect/index) (for functional tests)
 - [`coreutils`](https://www.gnu.org/software/coreutils/) (for functional tests)

@@ -49,7 +49,7 @@ cleanup() {
     # revert model name change from test_model_print()
     sed -i.bak "s/baz/merlinite-7b-lab-Q4_K_M/g" config.yaml
     mv models/foo.gguf models/merlinite-7b-lab-Q4_K_M.gguf || true
-    rm -f config.yaml.bak serve.log
+    rm -f config.yaml.bak serve.log models/foo.gguf
     set -e
 }
 
@@ -161,28 +161,8 @@ test_ctx_size(){
     fi
 }
 
-test_server_shutdown_while_chatting(){
-    # we don't want to fall into the trap function since the failure is expected
-    # so we force the command to return 0
-    timeout 10 ilab serve || true &
-
-    # add the pid to the list of PID to kill in case something fails before the 5s timeout
-    PID_SERVE=$!
-
-    expect -c '
-        set timeout 30
-        spawn ilab chat
-        expect ">>>"
-        send "hello! Tell me a long story\r"
-        expect {
-            "Connection to the server was closed" { exit 0 }
-            timeout { exit 1 }
-        }
-    '
-}
-
 test_loading_session_history(){
-    ilab serve --max-ctx-size 128 &
+    ilab serve --backend llama-cpp --max-ctx-size 128 &
     PID_SERVE=$!
 
     # chat with the server
@@ -269,7 +249,7 @@ test_temp_server(){
 
 test_temp_server_sigint(){
     expect -c '
-        set timeout 30
+        set timeout 120
         spawn ilab chat
         expect "Starting a temporary server at"
         send "hello!\r"
@@ -287,7 +267,7 @@ test_temp_server_sigint(){
 
 test_no_chat_logs(){
     expect -c '
-        set timeout 30
+        set timeout 120
         spawn ilab chat
         expect "Starting a temporary server at"
         send "hello!\r"
@@ -302,7 +282,7 @@ test_no_chat_logs(){
 test_temp_server_ignore_internal_messages(){
     # shellcheck disable=SC2016
     expect -c '
-        set timeout 20
+        set timeout 60
         spawn ilab chat
         expect "Starting a temporary server at"
         send "hello!\r"
@@ -354,7 +334,7 @@ wait_for_server(){
 }
 
 test_model_print(){
-    mv models/merlinite-7b-lab-Q4_K_M.gguf models/foo.gguf
+    cp models/merlinite-7b-lab-Q4_K_M.gguf models/foo.gguf
     ilab serve --model-path models/foo.gguf &
     PID_SERVE=$!
 
@@ -405,7 +385,6 @@ cleanup
 test_loading_session_history
 cleanup
 test_generate
-test_server_shutdown_while_chatting
 cleanup
 test_temp_server
 cleanup

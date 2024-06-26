@@ -1,0 +1,20 @@
+train_args:
+  model_path: instructlab/granite-7b-lab
+  data_path: sample-data/train_all_pruned_SDG.jsonl
+  ckpt_output_dir: checkpoints
+  data_output_dir: output
+  max_seq_len: 4096
+  max_batch_len: 10000
+  num_epochs: 10
+  effective_batch_size: 3840
+  save_samples: 25000
+  learning_rate: 2e-6
+  warmup_steps: 800
+  is_padding_free: False
+  random_seed: 42
+torch_args:
+  node_rank: 0
+  nnodes: 1
+  nproc_per_node: 1
+  rdzv_id: 123
+  rdzv_endpoint: 127.0.0.1:12345

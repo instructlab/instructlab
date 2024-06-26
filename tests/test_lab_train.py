@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=R0801
 
 # Standard
 from pathlib import Path
@@ -95,7 +96,7 @@ class TestLabTrain:
             load_and_train_mock.assert_called_once()
             assert load_and_train_mock.call_args[1]["model"] is not None
             assert load_and_train_mock.call_args[1]["train"]
-            assert load_and_train_mock.call_args[1]["data"] == Path("./taxonomy_data")
+            assert load_and_train_mock.call_args[1]["data"] == Path("taxonomy_data")
             assert load_and_train_mock.call_args[1]["adapter_file"] is not None
             assert load_and_train_mock.call_args[1]["iters"] == 100
             assert load_and_train_mock.call_args[1]["save_every"] == 10
@@ -113,7 +114,7 @@ class TestLabTrain:
             assert not convert_between_mlx_and_pytorch_mock.call_args[1]["local"]
             assert len(convert_between_mlx_and_pytorch_mock.call_args[1]) == 4
             make_data_mock.assert_called_once()
-            assert make_data_mock.call_args[1]["data_dir"] == Path("./taxonomy_data")
+            assert make_data_mock.call_args[1]["data_dir"] == Path("taxonomy_data")
             assert len(make_data_mock.call_args[1]) == 1
             is_macos_with_m_chip_mock.assert_called_once()
 
@@ -159,7 +160,15 @@ class TestLabTrain:
         with runner.isolated_filesystem():
             result = runner.invoke(
                 lab.ilab,
-                ["--config=DEFAULT", "model", "train", "--input-dir", "invalid"],
+                [
+                    "--config=DEFAULT",
+                    "model",
+                    "train",
+                    "--legacy",
+                    "True",
+                    "--input-dir",
+                    "invalid",
+                ],
             )
             assert result.exception is not None
             assert "Could not read directory: invalid" in result.output
@@ -171,7 +180,15 @@ class TestLabTrain:
             os.mkdir(INPUT_DIR)  # Leave out the test and train files
             result = runner.invoke(
                 lab.ilab,
-                ["--config=DEFAULT", "model", "train", "--input-dir", INPUT_DIR],
+                [
+                    "--config=DEFAULT",
+                    "model",
+                    "train",
+                    "--legacy",
+                    "True",
+                    "--input-dir",
+                    INPUT_DIR,
+                ],
             )
             assert result.exception is not None
             assert (
@@ -192,7 +209,9 @@ class TestLabTrain:
                         "--config=DEFAULT",
                         "model",
                         "train",
-                        "--data-dir",
+                        "--legacy",
+                        "True",
+                        "--data-path",
                         "invalid",
                         "--input-dir",
                         INPUT_DIR,
@@ -219,7 +238,9 @@ class TestLabTrain:
                     "--config=DEFAULT",
                     "model",
                     "train",
-                    "--data-dir",
+                    "--legacy",
+                    "True",
+                    "--data-path",
                     "invalid",
                     "--input-dir",
                     INPUT_DIR,
@@ -290,13 +311,15 @@ class TestLabTrain:
                     "--config=DEFAULT",
                     "model",
                     "train",
+                    "--legacy",
+                    "True",
                     "--input-dir",
                     INPUT_DIR,
                     "--tokenizer-dir",
                     "tokenizer",
                     "--gguf-model-path",
                     "gguf_model",
-                    "--model-dir",
+                    "--model-path",
                     MODEL_DIR,
                 ],
             )
@@ -336,13 +359,15 @@ class TestLabTrain:
                     "--config=DEFAULT",
                     "model",
                     "train",
+                    "--legacy",
+                    "True",
                     "--input-dir",
                     INPUT_DIR,
                     "--tokenizer-dir",
                     "tokenizer",
                     "--gguf-model-path",
                     "gguf_model",
-                    "--model-dir",
+                    "--model-path",
                     MODEL_DIR,
                     "--local",
                 ],
@@ -373,7 +398,15 @@ class TestLabTrain:
             setup_linux_dir()
             result = runner.invoke(
                 lab.ilab,
-                ["--config=DEFAULT", "model", "train", "--input-dir", INPUT_DIR],
+                [
+                    "--config=DEFAULT",
+                    "model",
+                    "train",
+                    "--legacy",
+                    "True",
+                    "--input-dir",
+                    INPUT_DIR,
+                ],
             )
             assert result.exit_code == 0
             convert_llama_to_gguf_mock.assert_called_once()
@@ -390,7 +423,7 @@ class TestLabTrain:
             assert linux_train_mock.call_args[1]["test_file"] == Path(
                 "taxonomy_data/test_gen.jsonl"
             )
-            assert linux_train_mock.call_args[1]["num_epochs"] == 1
+            assert linux_train_mock.call_args[1]["num_epochs"] == 10
             assert linux_train_mock.call_args[1]["train_device"] is not None
             assert not linux_train_mock.call_args[1]["four_bit_quant"]
             assert len(linux_train_mock.call_args[1]) == 7
@@ -419,6 +452,8 @@ class TestLabTrain:
                     "--config=DEFAULT",
                     "model",
                     "train",
+                    "--legacy",
+                    "True",
                     "--input-dir",
                     INPUT_DIR,
                     "--num-epochs",

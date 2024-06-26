@@ -8,6 +8,12 @@ import os
 import sys
 
 # Third Party
+from instructlab.training import (
+    DeepSpeedOptions,
+    LoraOptions,
+    TorchrunArgs,
+    TrainingArgs,
+)
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -31,6 +37,7 @@ DEFAULT_MODEL_REPO = "instructlab/merlinite-7b-lab-GGUF"
 DEFAULT_MODEL_TAG = "main"
 DEFAULT_MODEL = "models/merlinite-7b-lab-Q4_K_M.gguf"
 DEFAULT_MODEL_PATH = "models/merlinite-7b-lab-Q4_K_M.gguf"
+DEFAULT_MODEL_REPO = "instructlab/granite-7b-lab"
 DEFAULT_TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
 DEFAULT_TAXONOMY_PATH = "taxonomy"
 DEFAULT_TAXONOMY_BASE = "origin/main"
@@ -55,6 +62,9 @@ MODEL_FAMILIES = set(("merlinite", "mixtral"))
 MODEL_FAMILY_MAPPINGS = {
     "granite": "merlinite",
 }
+
+DEFAULT_CKPT_DIR = "checkpoints"
+DEFAULT_OUT_DIR = "train-output"
 
 
 class ConfigException(Exception):
@@ -145,10 +155,16 @@ class _serve(BaseModel):
     host_port: StrictStr = "127.0.0.1:8000"
     gpu_layers: int = -1
     max_ctx_size: PositiveInt = 4096
+    backend: str = ""  # we don't set a default value here since it's auto-detected
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
         return get_api_base(self.host_port)
+
+
+class _train(BaseModel):
+    train_args: TrainingArgs
+    torch_args: TorchrunArgs
 
 
 class Config(BaseModel):
@@ -161,6 +177,9 @@ class Config(BaseModel):
 
     # additional fields with defaults
     general: _general = _general()
+
+    # train configuration
+    train: Optional[_train] = None
 
     # model configuration
     model_config = ConfigDict(extra="ignore")
@@ -176,7 +195,62 @@ def get_default_config():
             taxonomy_base=DEFAULT_TAXONOMY_BASE,
         ),
         serve=_serve(model_path=DEFAULT_MODEL_PATH),
+        train=_train(
+            train_args=TrainingArgs(
+                model_path=DEFAULT_MODEL_REPO,
+                data_path="./taxonomy_data",
+                ckpt_output_dir=DEFAULT_CKPT_DIR,
+                data_output_dir=DEFAULT_OUT_DIR,
+                max_seq_len=4096,
+                max_batch_len=10000,
+                num_epochs=10,
+                effective_batch_size=3840,
+                save_samples=250000,
+                learning_rate=2e-6,
+                warmup_steps=800,
+                is_padding_free=False,
+                random_seed=42,
+                lora=LoraOptions(
+                    rank=4,
+                    alpha=32,
+                    dropout=0.1,
+                    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+                ),
+                deepspeed_options=DeepSpeedOptions(
+                    cpu_offload_optimizer=False,
+                    cpu_offload_optimizer_ratio=1,
+                    cpu_offload_optimizer_pin_memory=False,
+                ),
+            ),
+            torch_args=TorchrunArgs(
+                node_rank=0,
+                nnodes=1,
+                nproc_per_node=1,
+                rdzv_id=123,
+                rdzv_endpoint="127.0.0.1:12222",
+            ),
+        ),
     )
+
+
+def read_train_profile(train_file):
+    try:
+        with open(train_file, "r", encoding="utf-8") as yamlfile:
+            content = yaml.safe_load(yamlfile)
+            return _train(**content)
+    except ValidationError as exc:
+        msg = f"{exc.error_count()} errors in {train_file}:\n"
+        for err in exc.errors():
+            msg += (
+                "- "
+                + err.get("type", "")
+                + " "
+                + "->".join(err.get("loc", ""))
+                + ": "
+                + err.get("msg", "").lower()
+                + "\n"
+            )
+        raise ConfigException(msg) from exc
 
 
 def read_config(config_file=DEFAULT_CONFIG):
@@ -208,7 +282,9 @@ def get_dict(cfg):
 def write_config(cfg, config_file=DEFAULT_CONFIG):
     """Writes configuration to a disk"""
     with open(config_file, "w", encoding="utf-8") as yamlfile:
-        yaml.safe_dump(get_dict(cfg), stream=yamlfile)
+        d = cfg.model_dump_json()
+        loaded = yaml.load(d, Loader=yaml.SafeLoader)
+        yaml.dump(loaded, stream=yamlfile)
 
 
 def get_api_base(host_port):
@@ -257,4 +333,13 @@ def init(ctx, config_file):
         log.configure_logging(log_level=config_obj.general.log_level.upper())
         ctx.obj = Lab(config_obj)
         # default_map holds a dictionary with default values for each command parameters
-        ctx.default_map = get_dict(ctx.obj.config)
+        training_dict = get_dict(ctx.obj.config)
+        # since torch and train args are sep, they need to be combined into a single `train` entity for the default map
+        # this is because the flags for `ilab model train` will only be populated if the default map has a single `train` entry, not two.
+        training_dict["train"] = (
+            training_dict["train"]["train_args"]
+            | training_dict["train"]["torch_args"]
+            | training_dict["train"]["train_args"]["lora"]
+            | training_dict["train"]["train_args"]["deepspeed_options"]
+        )
+        ctx.default_map = training_dict
