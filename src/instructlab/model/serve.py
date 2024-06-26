@@ -48,7 +48,7 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--backend",
-    type=click.Choice(backends.SUPPORTED_BACKENDS),
+    type=click.Choice(tuple(backends.SUPPORTED_BACKENDS)),
     help=(
         "The backend to use for serving the model.\n"
         "Automatically detected based on the model file properties.\n"
@@ -103,7 +103,7 @@ def serve(
 
     logger.info(f"Serving model '{model_path}' with {backend}")
 
-    backend_instance = None
+    backend_instance: backends.BackendServer
     if backend == backends.LLAMA_CPP:
         # Instantiate the llama server
         if gpu_layers is None:
@@ -122,8 +122,7 @@ def serve(
             max_ctx_size=max_ctx_size,
             num_threads=num_threads,
         )
-
-    if backend == backends.VLLM:
+    elif backend == backends.VLLM:
         # Instantiate the vllm server
         backend_instance = vllm.Server(
             logger=logger,
@@ -133,6 +132,9 @@ def serve(
             host=host,
             port=port,
         )
+    else:
+        click.secho(f"Unknown backend: {backend}", fg="red")
+        raise click.exceptions.Exit(1)
 
     try:
         # Run the llama server

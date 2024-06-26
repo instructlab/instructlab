@@ -5,7 +5,7 @@ from functools import cache, wraps
 from importlib import resources
 from importlib.abc import Traversable
 from pathlib import Path
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import Any, List, Mapping, Optional, TypedDict
 from urllib.parse import urlparse
 import copy
 import glob
@@ -16,10 +16,10 @@ import platform
 import re
 import subprocess
 import tempfile
-import typing
 
 # Third Party
 from git import Repo, exc
+from referencing import Resource
 import click
 import git
 import gitdb
@@ -28,10 +28,6 @@ import yaml
 
 # Local
 from . import common
-
-if typing.TYPE_CHECKING:
-    # Third Party
-    import referencing
 
 logger = logging.getLogger(__name__)
 
@@ -189,8 +185,14 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     return updated_taxonomy_files
 
 
+class SourceDict(TypedDict):
+    repo: str
+    commit: str
+    patterns: List[str]
+
+
 def get_documents(
-    source: Dict[str, Union[str, List[str]]],
+    source: SourceDict,
     skip_checkout: bool = False,
 ) -> List[str]:
     """
@@ -202,9 +204,9 @@ def get_documents(
     Returns:
          List[str]: List of document contents.
     """ ""
-    repo_url = source.get("repo")
-    commit_hash = source.get("commit")
-    file_patterns = source.get("patterns")
+    repo_url = source.get("repo", "")
+    commit_hash = source.get("commit", "")
+    file_patterns = source.get("patterns", [])
     with tempfile.TemporaryDirectory() as temp_dir:
         try:
             repo = git_clone_checkout(
@@ -251,7 +253,7 @@ def get_sysprompt(model=None):
 
 
 @cache
-def _load_schema(path: Traversable) -> "referencing.Resource":
+def _load_schema(path: Traversable) -> Resource:
     """Load the schema from the path into a Resource object.
 
     Args:
@@ -265,7 +267,6 @@ def _load_schema(path: Traversable) -> "referencing.Resource":
     """
     # pylint: disable=import-outside-toplevel
     # Third Party
-    from referencing import Resource
     from referencing.exceptions import NoSuchResource
     from referencing.jsonschema import DRAFT202012
 
@@ -275,7 +276,7 @@ def _load_schema(path: Traversable) -> "referencing.Resource":
             contents=contents, default_specification=DRAFT202012
         )
     except Exception as e:
-        raise NoSuchResource(ref=str(path)) from e
+        raise NoSuchResource(str(path)) from e
     return resource
 
 
@@ -295,7 +296,7 @@ def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
     # Third Party
     from jsonschema.protocols import Validator
     from jsonschema.validators import validator_for
-    from referencing import Registry, Resource
+    from referencing import Registry
     from referencing.exceptions import NoSuchResource
 
     errors = 0
@@ -304,7 +305,9 @@ def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
 
     def retrieve(uri: str) -> Resource:
         path = schemas_path.joinpath(uri)
-        return _load_schema(path)
+        # This mypy violation will be fixed in:
+        # https://github.com/instructlab/schema/pull/33
+        return _load_schema(path)  # type: ignore[arg-type]
 
     schema_name = taxonomy_path.parts[0]
     if schema_name not in TAXONOMY_FOLDERS:
@@ -318,7 +321,10 @@ def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
         schema = schema_resource.contents
         validator_cls = validator_for(schema)
         validator: Validator = validator_cls(
-            schema, registry=Registry(retrieve=retrieve)
+            # mypy doesn't understand attrs classes fields, see:
+            # https://github.com/python/mypy/issues/5406
+            schema,
+            registry=Registry(retrieve=retrieve),  # type: ignore[call-arg]
         )
 
         for validation_error in validator.iter_errors(contents):
@@ -345,14 +351,10 @@ def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
 
 
 def get_version(contents: Mapping) -> int:
-    version = contents.get("version", 1)
-    if not isinstance(version, int):
-        # schema validation will complain about the type
-        try:
-            version = int(version)
-        except ValueError:
-            version = 1  # fallback to version 1
-    return version
+    try:
+        return int(contents.get("version", 1))
+    except (ValueError, TypeError):
+        return 1  # fallback to version 1
 
 
 # pylint: disable=broad-exception-caught
@@ -360,31 +362,31 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
     seed_instruction_data = []
     warnings = 0
     errors = 0
-    file_path = Path(file_path).resolve()
+    file_path_p = Path(file_path).resolve()
     # file should end with ".yaml" explicitly
-    if file_path.suffix != ".yaml":
+    if file_path_p.suffix != ".yaml":
         logger.warning(
-            f"Skipping {file_path}! Use lowercase '.yaml' extension instead."
+            f"Skipping {file_path_p}! Use lowercase '.yaml' extension instead."
         )
         warnings += 1
         return None, warnings, errors
-    for i in range(len(file_path.parts) - 1, -1, -1):
-        if file_path.parts[i] in TAXONOMY_FOLDERS:
-            taxonomy_path = Path(*file_path.parts[i:])
+    for i in range(len(file_path_p.parts) - 1, -1, -1):
+        if file_path_p.parts[i] in TAXONOMY_FOLDERS:
+            taxonomy_path = Path(*file_path_p.parts[i:])
             break
     else:
-        taxonomy_path = file_path
+        taxonomy_path = file_path_p
     # read file if extension is correct
     try:
-        with open(file_path, "r", encoding="utf-8") as file:
+        with open(file_path_p, "r", encoding="utf-8") as file:
             contents = yaml.safe_load(file)
         if not contents:
-            logger.warning(f"Skipping {file_path} because it is empty!")
+            logger.warning(f"Skipping {file_path_p} because it is empty!")
             warnings += 1
             return None, warnings, errors
         if not isinstance(contents, Mapping):
             logger.error(
-                f"{file_path} is not valid. The top-level element is not an object with key-value pairs."
+                f"{file_path_p} is not valid. The top-level element is not an object with key-value pairs."
             )
             errors += 1
             return None, warnings, errors
@@ -401,7 +403,7 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
                         "parsable",
                         "-c",
                         yaml_rules,
-                        file_path,
+                        str(file_path_p),
                         "-s",
                     ]
                 else:
@@ -412,7 +414,7 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
                         "parsable",
                         "-d",
                         DEFAULT_YAML_RULES,
-                        file_path,
+                        str(file_path_p),
                         "-s",
                     ]
             else:
@@ -422,17 +424,17 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
                     "parsable",
                     "-d",
                     DEFAULT_YAML_RULES,
-                    file_path,
+                    str(file_path_p),
                     "-s",
                 ]
             try:
                 subprocess.check_output(yamllint_cmd, text=True)
-            except subprocess.SubprocessError as e:
-                lint_messages = [f"Problems found in file {file_path}"]
+            except subprocess.CalledProcessError as e:
+                lint_messages = [f"Problems found in file {file_path_p}"]
                 parsed_output = e.output.splitlines()
                 for p in parsed_output:
                     errors += 1
-                    delim = str(file_path) + ":"
+                    delim = str(file_path_p) + ":"
                     parsed_p = p.split(delim)[1]
                     lint_messages.append(parsed_p)
                 logger.error("\n".join(lint_messages))
@@ -451,7 +453,7 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
             documents = get_documents(source=documents)
             logger.debug("Content from git repo fetched")
 
-        for seed_example in contents.get("seed_examples"):
+        for seed_example in contents.get("seed_examples", []):
             question = seed_example.get("question")
             answer = seed_example.get("answer")
             context = seed_example.get("context", "")
@@ -467,7 +469,7 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
             )
     except Exception as e:
         errors += 1
-        raise TaxonomyReadingException(f"Exception {e} raised in {file_path}") from e
+        raise TaxonomyReadingException(f"Exception {e} raised in {file_path_p}") from e
 
     return seed_instruction_data, warnings, errors
 

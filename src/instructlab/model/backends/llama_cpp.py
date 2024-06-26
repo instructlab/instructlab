@@ -2,6 +2,7 @@
 
 # Standard
 from contextlib import redirect_stderr, redirect_stdout
+from typing import Optional
 import logging
 import multiprocessing
 import os
@@ -40,22 +41,22 @@ class Server(BackendServer):
         port: int,
         gpu_layers: int,
         max_ctx_size: int,
-        num_threads: int,
-        queue: multiprocessing.Queue = None,
+        num_threads: Optional[int],
     ):
         super().__init__(logger, model_path, api_base, host, port)
         self.model_family = model_family
         self.gpu_layers = gpu_layers
         self.max_ctx_size = max_ctx_size
         self.num_threads = num_threads
-        self.queue = queue
+        self.queue: Optional[multiprocessing.Queue] = None
+        self.process: multiprocessing.Process | None = None
 
     def run(self):
         """Start an OpenAI-compatible server with llama-cpp"""
         try:
             server(
                 server_logger=self.logger,
-                model_path=self.model_path.as_posix(),
+                model_path=self.model_path,
                 gpu_layers=self.gpu_layers,
                 max_ctx_size=self.max_ctx_size,
                 model_family=self.model_family,
@@ -66,7 +67,7 @@ class Server(BackendServer):
         except ServerException as exc:
             raise exc
 
-    def create_server_process(self, port: str) -> multiprocessing.Process:
+    def create_server_process(self, port: int) -> multiprocessing.Process:
         mpctx = multiprocessing.get_context(None)
         self.queue = mpctx.Queue()
         host_port = f"{self.host}:{self.port}"
@@ -78,7 +79,7 @@ class Server(BackendServer):
             target=server,
             kwargs={
                 "server_logger": server_logger,
-                "model_path": self.model_path.as_posix(),  # llamacpp expects a string not a Path
+                "model_path": self.model_path,
                 "gpu_layers": self.gpu_layers,
                 "max_ctx_size": self.max_ctx_size,
                 "model_family": self.model_family,
@@ -102,11 +103,11 @@ class Server(BackendServer):
                 queue=self.queue,
                 server_process_func=self.create_server_process,
             )
-            self.process = llama_cpp_server_process
-            self.api_base = api_base
-            return api_base
+            self.process = llama_cpp_server_process or self.process
+            self.api_base = api_base or self.api_base
         except ServerException as exc:
             raise exc
+        return self.api_base
 
     def shutdown(self):
         """Stop the server process and close the queue."""
@@ -132,7 +133,7 @@ def server(
     settings = Settings(
         host=host,
         port=port,
-        model=model_path,
+        model=model_path.as_posix(),
         n_ctx=max_ctx_size,
         n_gpu_layers=gpu_layers,
         verbose=server_logger.isEnabledFor(logging.DEBUG),
