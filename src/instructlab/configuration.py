@@ -150,6 +150,8 @@ class _serve_llama_cpp(BaseModel):
 
     gpu_layers: int = -1
     max_ctx_size: PositiveInt = 4096
+    # TODO rename this. It can't be model_family
+    llm_model_family: str = ""
 
 
 class _serve(BaseModel):
@@ -170,7 +172,6 @@ class _serve(BaseModel):
     # additional fields with defaults
     host_port: StrictStr = "127.0.0.1:8000"
     backend: str = ""  # we don't set a default value here since it's auto-detected
-    model_family: str = ""
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
@@ -214,6 +215,7 @@ def get_default_config():
             llama_cpp=_serve_llama_cpp(
                 gpu_layers=-1,
                 max_ctx_size=4096,
+                llm_model_family="",
             ),
             vllm=_serve_vllm(
                 vllm_args="",

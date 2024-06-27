@@ -12,6 +12,7 @@ import random
 import signal
 import socket
 import struct
+import subprocess
 import sys
 
 # Third Party
@@ -196,7 +197,7 @@ def get(logger: logging.Logger, model_path: pathlib.Path, backend: str) -> str:
 
 def ensure_server(
     logger: logging.Logger,
-    server_process_func: Callable[[str], multiprocessing.Process],
+    backend: str,
     api_base: str,
     tls_insecure: bool,
     tls_client_cert: Optional[str] = None,
@@ -205,7 +206,8 @@ def ensure_server(
     host="localhost",
     port=8000,
     queue=None,
-) -> Tuple[multiprocessing.Process, str]:
+    server_process_func=None,
+) -> Tuple[multiprocessing.Process, subprocess.Popen, str]:
     """Checks if server is running, if not starts one as a subprocess. Returns the server process
     and the URL where it's available."""
 
@@ -219,7 +221,7 @@ def ensure_server(
             tls_client_key=tls_client_key,
             tls_client_passwd=tls_client_passwd,
         )
-        return (None, None)
+        return (None, None, None)
         # pylint: enable=duplicate-code
     except ClientException:
         tried_ports = set()
@@ -249,41 +251,65 @@ def ensure_server(
         host_port = f"{host}:{port}"
         temp_api_base = get_api_base(host_port)
         logger.debug(f"Starting a temporary server at {temp_api_base}...")
+        llama_cpp_server_process = None
+        vllm_server_process = None
 
-        # server_process_func is a function! we invoke it here and pass the port that was determined
-        # in this ensure_server() function
-        server_process = server_process_func(port=port)
-        server_process.start()
+        if backend == VLLM:
+            # TODO: resolve how the hostname is getting passed around the class and this function
+            vllm_server_process = server_process_func(port=port)
+            count = 0
+            # TODO should this be configurable?
+            vllm_startup_timeout = 300
+            logger.debug(f"Starting up vllm on {temp_api_base}...")
+            while count < vllm_startup_timeout:
+                sleep(1)
+                try:
+                    list_models(
+                        api_base=temp_api_base,
+                        tls_insecure=tls_insecure,
+                        tls_client_cert=tls_client_cert,
+                        tls_client_key=tls_client_key,
+                        tls_client_passwd=tls_client_passwd,
+                    )
+                    logger.debug(f"model at {temp_api_base} served on vllm")
+                    break
+                except ClientException:
+                    count += 1
+        elif backend == LLAMA_CPP:
+            # server_process_func is a function! we invoke it here and pass the port that was determined
+            # in this ensure_server() function
+            llama_cpp_server_process = server_process_func(port=port)
+            llama_cpp_server_process.start()
 
-        # in case the server takes some time to fail we wait a bit
-        logger.debug("Waiting for the server to start...")
-        count = 0
-        while server_process.is_alive():
-            sleep(0.1)
-            try:
-                list_models(
-                    api_base=temp_api_base,
-                    tls_insecure=tls_insecure,
-                    tls_client_cert=tls_client_cert,
-                    tls_client_key=tls_client_key,
-                    tls_client_passwd=tls_client_passwd,
-                )
-                break
-            except ClientException:
-                pass
-            if count > 50:
-                logger.error("failed to reach the API server")
-                break
-            count += 1
+            # in case the server takes some time to fail we wait a bit
+            logger.debug("Waiting for the server to start...")
+            count = 0
+            while llama_cpp_server_process.is_alive():
+                sleep(0.1)
+                try:
+                    list_models(
+                        api_base=temp_api_base,
+                        tls_insecure=tls_insecure,
+                        tls_client_cert=tls_client_cert,
+                        tls_client_key=tls_client_key,
+                        tls_client_passwd=tls_client_passwd,
+                    )
+                    break
+                except ClientException:
+                    pass
+                if count > 50:
+                    logger.error("failed to reach the API server")
+                    break
+                count += 1
 
-        logger.debug("Server started.")
+            logger.debug("Server started.")
 
-        # if the queue is not empty it means the server failed to start
-        if queue is not None and not queue.empty():
-            # pylint: disable=raise-missing-from
-            raise queue.get()
+            # if the queue is not empty it means the server failed to start
+            if queue is not None and not queue.empty():
+                # pylint: disable=raise-missing-from
+                raise queue.get()
 
-        return (server_process, temp_api_base)
+        return (llama_cpp_server_process, vllm_server_process, temp_api_base)
 
 
 def can_bind_to_port(host, port):
@@ -336,7 +362,7 @@ def select_backend(logger: logging.Logger, serve_config: serve_config) -> Backen
             gpu_layers=serve_config.llama_cpp.gpu_layers,
             max_ctx_size=serve_config.llama_cpp.max_ctx_size,
             num_threads=None,  # exists only as a flag not a config
-            model_family=serve_config.model_family,
+            model_family=serve_config.llama_cpp.llm_model_family,
             host=host,
             port=port,
         )
@@ -347,7 +373,7 @@ def select_backend(logger: logging.Logger, serve_config: serve_config) -> Backen
             logger=logger,
             api_base=serve_config.api_base(),
             model_path=model_path,
-            model_family=serve_config.model_family,
+            vllm_args=serve_config.vllm.vllm_args,
             host=host,
             port=port,
         )

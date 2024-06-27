@@ -178,7 +178,7 @@ def chat(
         # First Party
         from instructlab.model.backends import backends
 
-        ctx.obj.config.serve.model_family = model_family
+        ctx.obj.config.serve.llama_cpp.llm_model_family = model_family
         backend_instance = backends.select_backend(logger, ctx.obj.config.serve)
 
         try:
@@ -239,6 +239,11 @@ def chat(
                     f"Failed to list models from {api_base}. Please check the API key and endpoint.",
                     fg="red",
                 )
+                # Right now is_temp_server() does not check if a subprocessed vllm is up
+                # shut it down just in case an exception is raised in the try
+                # TODO: revise is_temp_server to check if a vllm server is running
+                if backend_instance is not None:
+                    backend_instance.shutdown()
                 raise click.exceptions.Exit(1) from exc
 
     try:
