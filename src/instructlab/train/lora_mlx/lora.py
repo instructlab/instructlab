@@ -295,7 +295,11 @@ def load_and_train(
         model.load_weights(resume_adapter_file, strict=False)
 
     if train:
-        print("Training")
+        print("*********")
+        print("")
+        print("ᕙ(•̀‸•́‶)ᕗ  Training has started! ᕙ(•̀‸•́‶)ᕗ ")
+        print("")
+        print("*********")
         opt = optim.Adam(learning_rate=learning_rate)
 
         # Train model
