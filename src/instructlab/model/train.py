@@ -202,7 +202,7 @@ TORCH_DEVICE = TorchDeviceParam()
 )
 # below flags are invalid if lora == false
 @click.option("--rank", type=int, help="rank of update matricies")
-@click.option("--alpha", type=float, help="how influential/strong lora tune will be")
+@click.option("--alpha", type=int, help="how influential/strong lora tune will be")
 @click.option("--dropout", type=float, help="dropout for LoRA layers")
 @click.option("--target-modules", multiple=True, default=[], help="LoRA modules to use")
 @click.option(
