@@ -137,15 +137,20 @@ class _generate(BaseModel):
     prompt_file: StrictStr = DEFAULT_PROMPT_FILE
     seed_file: StrictStr = "seed_tasks.json"
 
+
 class _serve_vllm(BaseModel):
     """Class describing configuration of vllm serving backend."""
+
     # arguments to pass into vllm process
     vllm_args: str = ""
 
+
 class _serve_llama_cpp(BaseModel):
     """Class describing configuration of llama-cpp serving backend."""
+
     gpu_layers: int = -1
     max_ctx_size: PositiveInt = 4096
+
 
 class _serve(BaseModel):
     """Class describing configuration of the serve sub-command."""
@@ -204,7 +209,8 @@ def get_default_config():
             taxonomy_path=DEFAULT_TAXONOMY_PATH,
             taxonomy_base=DEFAULT_TAXONOMY_BASE,
         ),
-        serve=_serve(model_path=DEFAULT_MODEL_PATH, 
+        serve=_serve(
+            model_path=DEFAULT_MODEL_PATH,
             llama_cpp=_serve_llama_cpp(
                 gpu_layers=-1,
                 max_ctx_size=4096,
