@@ -181,6 +181,7 @@ def chat(
     if endpoint_url:
         api_base = endpoint_url
     else:
+        # First Party
         from instructlab.model.backends import backends
 
         ctx.obj.config.serve.model_family = model_family

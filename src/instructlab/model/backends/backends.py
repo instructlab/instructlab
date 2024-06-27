@@ -18,8 +18,8 @@ import uvicorn
 
 # Local
 from ...client import ClientException, list_models
-from ...configuration import get_api_base
 from ...configuration import _serve as serve_config
+from ...configuration import get_api_base
 
 LLAMA_CPP = "llama-cpp"
 VLLM = "vllm"
@@ -307,9 +307,12 @@ def get_uvicorn_config(app: uvicorn.Server, host: str, port: int) -> Config:
         timeout_keep_alive=0,  # prevent clients holding connections open (we only have 1)
     )
 
+
 def select_backend(logger: logging.Logger, serve_config: serve_config) -> BackendServer:
+    # Local
     from .llama_cpp import Server as llama_cpp_server
     from .vllm import Server as vllm_server
+
     backend_instance = None
     model_path = pathlib.Path(serve_config.model_path)
     backend_name = serve_config.backend
