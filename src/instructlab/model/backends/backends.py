@@ -63,15 +63,14 @@ class BackendServer(abc.ABC):
         api_base: str,
         host: str,
         port: int,
-        process: multiprocessing.Process = None,
-        **kwargs,  # pylint: disable=unused-argument
+        **kwargs,
     ) -> None:
         self.logger = logger
         self.model_path = model_path
         self.api_base = api_base
         self.host = host
         self.port = port
-        self.process = process
+        self.process = None
 
     @abc.abstractmethod
     def run(self):
