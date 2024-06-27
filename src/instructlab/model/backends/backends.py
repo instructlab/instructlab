@@ -307,7 +307,7 @@ def get_uvicorn_config(app: uvicorn.Server, host: str, port: int) -> Config:
         timeout_keep_alive=0,  # prevent clients holding connections open (we only have 1)
     )
 
-def select_backend(logger: logging.Logger, serve_config: serve_config, model_family: str) -> BackendServer:
+def select_backend(logger: logging.Logger, serve_config: serve_config) -> BackendServer:
     from .llama_cpp import Server as llama_cpp_server
     from .vllm import Server as vllm_server
     backend_instance = None
@@ -331,7 +331,7 @@ def select_backend(logger: logging.Logger, serve_config: serve_config, model_fam
             gpu_layers=serve_config.gpu_layers,
             max_ctx_size=serve_config.max_ctx_size,
             num_threads=None,  # exists only as a flag not a config
-            model_family=model_family,
+            model_family=serve_config.model_family,
             host=host,
             port=port,
         )
@@ -342,7 +342,7 @@ def select_backend(logger: logging.Logger, serve_config: serve_config, model_fam
             logger=logger,
             api_base=serve_config.api_base(),
             model_path=model_path,
-            model_family=model_family,
+            model_family=serve_config.model_family,
             host=host,
             port=port,
         )

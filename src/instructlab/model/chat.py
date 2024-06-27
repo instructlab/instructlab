@@ -183,7 +183,8 @@ def chat(
     else:
         from instructlab.model.backends import backends
 
-        backend_instance = backends.select_backend(logger, ctx.obj.config.serve, model_family)
+        ctx.obj.config.serve.model_family = model_family
+        backend_instance = backends.select_backend(logger, ctx.obj.config.serve)
 
         try:
             # Run the llama server

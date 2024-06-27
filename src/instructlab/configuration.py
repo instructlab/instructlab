@@ -152,6 +152,7 @@ class _serve(BaseModel):
     gpu_layers: int = -1
     max_ctx_size: PositiveInt = 4096
     backend: str = ""  # we don't set a default value here since it's auto-detected
+    model_family: str = None # if model family is not passed as a flag for chat or data gen it's value is None, setting None as a default keeps this consistent
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
