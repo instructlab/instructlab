@@ -141,7 +141,7 @@ tests: check-tox ## Run tox -e unit against code
 
 .PHONY: verify
 verify: check-tox ## Run linting and formatting checks via tox
-	tox p -e ruff,fastlint,spellcheck
+	tox p -e ruff,fastlint,spellcheck,mypy
 
 .PHONY: spellcheck
 spellcheck: .spellcheck.yml ## Spellcheck markdown files
