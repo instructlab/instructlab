@@ -152,6 +152,13 @@ test_train() {
     fi
 
     ilab model train "${TRAIN_ARGS[@]}"
+    # TODO Only cuda for now
+    TRAIN_ARGS=("--device=cuda" "--data-path=${SCRIPTDIR}/test-data/train_all_pruned_SDG.jsonl" "--quantize-data-type=nf4" "--4-bit-quant")
+    if [ "$GRANITE" -eq 1 ]; then
+        TRAIN_ARGS+=("--gguf-model-path models/granite-7b-lab-Q4_K_M.gguf")
+    fi
+
+    ilab model train "${TRAIN_ARGS[@]}"
 }
 
 test_convert() {
