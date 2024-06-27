@@ -41,9 +41,13 @@ class TestConfig:
 
         assert cfg.serve is not None
         assert cfg.serve.model_path == "models/merlinite-7b-lab-Q4_K_M.gguf"
-        assert cfg.serve.gpu_layers == -1
+        assert cfg.serve.model_family == ""
+        assert cfg.serve.llama_cpp is not None
+        assert cfg.serve.llama_cpp.gpu_layers == -1
+        assert cfg.serve.llama_cpp.max_ctx_size == 4096
+        assert cfg.serve.vllm is not None
+        assert cfg.serve.vllm.vllm_args == ""
         assert cfg.serve.host_port == "127.0.0.1:8000"
-        assert cfg.serve.max_ctx_size == 4096
         assert cfg.serve.backend == ""
 
     def test_default_config(self):
@@ -63,6 +67,11 @@ generate:
   taxonomy_path: taxonomy
 serve:
   model_path: models/merlinite-7b-lab-Q4_K_M.gguf
+  llama_cpp:
+    gpu_layers: -1
+    max_ctx_size: 4096
+  vllm:
+    vllm_args: ''
 """
             )
         cfg = config.read_config(config_path)
@@ -94,11 +103,18 @@ generate:
   taxonomy_path: taxonomy
   chunk_word_count: 1000
 serve:
-  gpu_layers: -1
-  host_port: 127.0.0.1:8000
-  max_ctx_size: 4096
-  model_path: models/merlinite-7b-lab-Q4_K_M.gguf
   backend: ''
+  host_port: 127.0.0.1:8000
+  llama_cpp:
+    gpu_layers: -1
+    max_ctx_size: 4096
+  model_family: ''
+  model_path: models/merlinite-7b-lab-Q4_K_M.gguf
+  llama_cpp:
+    gpu_layers: -1
+    max_ctx_size: 4096
+  vllm:
+    vllm_args: ''
 """
             )
         cfg = config.read_config(config_path)
@@ -118,6 +134,11 @@ generate:
   taxonomy_path: taxonomy
 serve:
   model_path: models/merlinite-7b-lab-Q4_K_M.gguf
+  llama_cpp:
+    gpu_layers: -1
+    max_ctx_size: 4096
+  vllm:
+    vllm_args: ''
 unexpected:
   field: value
 """

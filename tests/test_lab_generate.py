@@ -174,7 +174,7 @@ class TestLabGenerate:
                 cfg_file = "small_ctx_config.yaml"
                 smaller_ctx = 3072
                 config = get_default_config()
-                config.serve.max_ctx_size = smaller_ctx
+                config.serve.llama_cpp.max_ctx_size = smaller_ctx
                 write_config(config, config_file=cfg_file)
                 mt = MockTaxonomy(pathlib.Path("taxonomy"))
                 mt.create_untracked(
