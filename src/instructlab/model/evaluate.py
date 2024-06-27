@@ -99,77 +99,46 @@ def get_evaluator(
                 min_tasks = os.environ.get("INSTRUCTLAB_EVAL_MMLU_MIN_TASKS")
                 if min_tasks is not None:
                     tasks = ["mmlu_abstract_algebra", "mmlu_anatomy", "mmlu_astronomy"]
+                    evaluator = evaluator_class(
+                        model_path,
+                        tasks=tasks,
+                        few_shots=few_shots,
+                        batch_size=batch_size,
+                    )
                 else:
-                    tasks = [
-                        "mmlu_abstract_algebra",
-                        "mmlu_anatomy",
-                        "mmlu_astronomy",
-                        "mmlu_business_ethics",
-                        "mmlu_clinical_knowledge",
-                        "mmlu_college_biology",
-                        "mmlu_college_chemistry",
-                        "mmlu_college_computer_science",
-                        "mmlu_college_mathematics",
-                        "mmlu_college_medicine",
-                        "mmlu_college_physics",
-                        "mmlu_computer_security",
-                        "mmlu_conceptual_physics",
-                        "mmlu_econometrics",
-                        "mmlu_electrical_engineering",
-                        "mmlu_elementary_mathematics",
-                        "mmlu_formal_logic",
-                        "mmlu_global_facts",
-                        "mmlu_high_school_biology",
-                        "mmlu_high_school_chemistry",
-                        "mmlu_high_school_computer_science",
-                        "mmlu_high_school_european_history",
-                        "mmlu_high_school_geography",
-                        "mmlu_high_school_government_and_politics",
-                        "mmlu_high_school_macroeconomics",
-                        "mmlu_high_school_mathematics",
-                        "mmlu_high_school_microeconomics",
-                        "mmlu_high_school_physics",
-                        "mmlu_high_school_psychology",
-                        "mmlu_high_school_statistics",
-                        "mmlu_high_school_us_history",
-                        "mmlu_high_school_world_history",
-                        "mmlu_human_aging",
-                        "mmlu_human_sexuality",
-                        "mmlu_humanities",
-                        "mmlu_international_law",
-                        "mmlu_jurisprudence",
-                        "mmlu_logical_fallacies",
-                        "mmlu_machine_learning",
-                        "mmlu_management",
-                        "mmlu_marketing",
-                        "mmlu_medical_genetics",
-                        "mmlu_miscellaneous",
-                        "mmlu_moral_disputes",
-                        "mmlu_moral_scenarios",
-                        "mmlu_nutrition",
-                        "mmlu_other",
-                        "mmlu_philosophy",
-                        "mmlu_prehistory",
-                        "mmlu_professional_accounting",
-                        "mmlu_professional_law",
-                        "mmlu_professional_medicine",
-                        "mmlu_professional_psychology",
-                        "mmlu_public_relations",
-                        "mmlu_security_studies",
-                        "mmlu_social_sciences",
-                        "mmlu_sociology",
-                        "mmlu_stem",
-                        "mmlu_us_foreign_policy",
-                        "mmlu_virology",
-                        "mmlu_world_religions",
-                    ]
-                return evaluator_class(
-                    model_path, tasks, "float16", few_shots, batch_size
-                )
+                    evaluator = evaluator_class(
+                        model_path, few_shots=few_shots, batch_size=batch_size
+                    )
+                return evaluator
             else:
                 return evaluator_class(
-                    model_path, sdg_path, ["mmlu_pr"], "float16", few_shots, batch_size
+                    model_path,
+                    sdg_path,
+                    ["mmlu_pr"],
+                    few_shots=few_shots,
+                    batch_size=batch_size,
                 )
+
+
+def sortScore(pairing):
+    qna, delta = pairing
+    return delta
+
+
+def qa_pairs_to_qna_to_avg_scores(qa_pairs):
+    qna_to_scores = {}
+    for qa_pair in qa_pairs:
+        qna_file = qa_pair["qna_file"]
+        score = qa_pair["score"]
+        scores = qna_to_scores.get(qna_file)
+        if scores is None:
+            qna_to_scores[qna_file] = [score]
+        else:
+            scores.append(score)
+    qna_to_avg_scores = {}
+    for qna, scores in qna_to_scores.items():
+        qna_to_avg_scores[qna] = sum(scores) / len(scores)
+    return qna_to_avg_scores
 
 
 @click.command()
@@ -307,7 +276,6 @@ def evaluate(
             overall_score, qa_pairs, turn_scores = evaluator.judge_answers(
                 "http://localhost:8000/v1"
             )
-            proc.terminate()
             print(f"Overall Score: {overall_score}")
             print(f"Turn 1 Score: {turn_scores[0]}")
             print(f"Turn 2 Score: {turn_scores[1]}")
@@ -339,7 +307,9 @@ def evaluate(
             m_name = m_names[i]
             judge_model_name = judge_model_names[i]
 
-            print("Generating questions and reference answers from qna files...")
+            print(
+                f"Generating questions and reference answers from qna files for branch {branch}..."
+            )
             try:
                 proc = subprocess.Popen(
                     [
@@ -359,7 +329,7 @@ def evaluate(
             finally:
                 proc.terminate()
 
-            print("Evaluating answers...")
+            print(f"Evaluating answers for branch {branch}...")
             try:
                 proc = subprocess.Popen(
                     [
@@ -381,7 +351,54 @@ def evaluate(
             finally:
                 proc.terminate()
 
-            # TODO Compare qa_pairs across run
+        qa_pairs = qa_pairs_list[0]
+        base_qa_pairs = qa_pairs_list[1]
+
+        qna_to_avg_scores = qa_pairs_to_qna_to_avg_scores(qa_pairs)
+        base_qna_to_avg_scores = qa_pairs_to_qna_to_avg_scores(base_qa_pairs)
+
+        print("#BASE MODEL:")
+        print(base_model_path)
+        print("\n#MODEL:")
+        print(model_path)
+        print("\n")
+
+        improvements, regressions, no_changes, new_qnas = [], [], [], []
+        for qna, avg_score in qna_to_avg_scores.items():
+            base_avg_score = base_qna_to_avg_scores.get(qna)
+            if base_avg_score is not None:
+                if avg_score > base_avg_score:
+                    improvements.append((qna, round(avg_score - base_avg_score, 2)))
+                elif avg_score == base_avg_score:
+                    no_changes.append(qna)
+                else:
+                    regressions.append((qna, round(avg_score - base_avg_score, 2)))
+            else:
+                new_qnas.append((qna))
+
+        if len(improvements) > 0:
+            improvements.sort(key=sortScore, reverse=True)
+            print("\n##IMPROVEMENTS:")
+            for index, improvement in enumerate(improvements):
+                qna, delta = improvement
+                print(f"{index+1}. (+{delta}) {qna}")
+
+        if len(regressions) > 0:
+            regressions.sort(key=sortScore)
+            print("\n##REGRESSIONS:")
+            for index, regression in enumerate(regressions):
+                qna, delta = regression
+                print(f"{index+1}. ({delta}) {qna}")
+
+        if len(no_changes) > 0:
+            print("\n##NO CHANGE:")
+            for index, qna in enumerate(no_changes):
+                print(f"{index+1}. {qna}")
+
+        if len(new_qnas) > 0:
+            print("\n##NEW QNAs:")
+            for index, qna in enumerate(new_qnas):
+                print(f"{index+1}. {qna}")
 
     elif benchmark == "mmlu":
         overall_score, individual_scores = evaluator.run()
