@@ -18,6 +18,8 @@ on:
       - 'pyproject.toml'
       - 'requirements*.txt'
       - '.github/workflows/e2e.yml'
+      - 'scripts/basic-workflow-tests.sh'
+      - 'scripts/test-data/*'
   pull_request:
     branches:
       - "main"
@@ -27,6 +29,8 @@ on:
       - 'pyproject.toml'
       - 'requirements*.txt'
       - '.github/workflows/e2e.yml'
+      - 'scripts/basic-workflow-tests.sh'
+      - 'scripts/test-data/*'
 
 jobs:
   e2e:

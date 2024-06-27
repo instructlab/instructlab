@@ -108,14 +108,27 @@ test_chat() {
 test_taxonomy() {
     task Update the taxonomy
 
+    TESTNUM=$1
+    if [ "$TESTNUM" -ne 1 ] && [ "$TESTNUM" -ne 2 ] && [ "$TESTNUM" -ne 3 ]; then
+        echo "Invalid test number: $TESTNUM"
+        exit 1
+    fi
+
     test -d taxonomy || git clone https://github.com/instructlab/taxonomy || true
 
-    step Make new taxonomy
-    mkdir -p taxonomy/knowledge/sports/overview/softball
-
-    step Put new qna file into place
-    cp "$SCRIPTDIR"/test-data/basic-workflow-fixture-qna.yaml taxonomy/knowledge/sports/overview/softball/qna.yaml
-    head taxonomy/knowledge/sports/overview/softball/qna.yaml | grep --color '1st base'
+    step Update taxonomy with sample qna additions
+    if [ "$TESTNUM" -eq 1 ]; then
+        mkdir -p taxonomy/knowledge/sports/overview/e2e-softball
+        cp "$SCRIPTDIR"/test-data/e2e-qna-knowledge.yaml taxonomy/knowledge/sports/overview/e2e-softball/qna.yaml
+    elif [ "$TESTNUM" -eq 2 ]; then
+        rm -rf taxonomy/knowledge/sports/overview/e2e-softball
+        mkdir -p taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no
+        cp "$SCRIPTDIR"/test-data/e2e-qna-grounded-skill.yaml taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no/qna.yaml
+    elif [ "$TESTNUM" -eq 3 ]; then
+        rm -rf taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no
+        mkdir -p taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings
+        cp "$SCRIPTDIR"/test-data/e2e-qna-freeform-skill.yaml taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings/qna.yaml
+    fi
 
     step Verification
     ilab diff
@@ -157,7 +170,12 @@ test_exec() {
     PID=$!
 
     test_chat
-    test_taxonomy
+
+    test_taxonomy 1
+    test_generate
+    test_taxonomy 2
+    test_generate
+    test_taxonomy 3
     test_generate
 
     # Kill the serve process
