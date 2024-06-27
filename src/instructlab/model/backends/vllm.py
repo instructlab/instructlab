@@ -44,13 +44,12 @@ class Server(BackendServer):
         model_family: str,
         host: str,
         port: int,
-        process: multiprocessing.Process = None,
     ):
         super().__init__(logger, api_base, model_path, host, port)
         self.api_base = api_base
         self.model_path = model_path
         self.model_family = model_family
-        self.process = process
+        self.process = None
 
     def run(self):
         """Start an OpenAI-compatible server with vllm"""

@@ -60,7 +60,6 @@ class BackendServer(abc.ABC):
         api_base: str,
         host: str,
         port: int,
-        process: multiprocessing.Process = None,
         **kwargs,
     ) -> None:
         self.logger = logger
@@ -68,7 +67,7 @@ class BackendServer(abc.ABC):
         self.api_base = api_base
         self.host = host
         self.port = port
-        self.process = process
+        self.process = None
 
     @abc.abstractmethod
     def run(self):
