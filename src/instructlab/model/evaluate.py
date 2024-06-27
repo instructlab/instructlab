@@ -23,12 +23,14 @@ BENCHMARK_TO_CLASS_MAP = {
 
 def get_evaluator(
     model_path,
+    base_model_path,
     benchmark,
     judge_model_path,
     output_dir,
     max_workers,
     taxonomy_path,
     branch,
+    base_branch,
     few_shots,
     batch_size,
     sdg_path,
@@ -46,12 +48,21 @@ def get_evaluator(
             output_dir,
             max_workers,
         ]
+        required_arg_names = [
+            "model-path",
+            "judge-model-path",
+        ]
         if benchmark == "mt_bench_branch":
             required_args.append(taxonomy_path)
             required_args.append(branch)
-        if any(required_args) is None:
+            required_args.append(base_branch)
+            required_args.append(base_model_path)
+            required_arg_names.append("branch")
+            required_arg_names.append("base-branch")
+            required_arg_names.append("base-model-path")
+        if None in required_args:
             click.secho(
-                f"Benchmark {benchmark} requires the following args to be set: {required_args}",
+                f"Benchmark {benchmark} requires the following args to be set: {required_arg_names}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
@@ -72,11 +83,12 @@ def get_evaluator(
     # ensure knowledge benchmarks have proper arguments if selected
     if benchmark in ["mmlu", "mmlu_branch"]:
         required_args = [model_path, few_shots, batch_size]
+        required_arg_names = ["model-path"]
         if benchmark == "mmlu_branch":
             required_args.append(sdg_path)
-        if any(required_args) is None:
+        if None in required_args:
             click.secho(
-                f"Benchmark {benchmark} requires the following args to be set: {required_args}",
+                f"Benchmark {benchmark} requires the following args to be set: {required_arg_names}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
@@ -167,6 +179,11 @@ def get_evaluator(
     help="Path of the model to be evaluated",
 )
 @click.option(
+    "--base-model-path",
+    type=click.Path(),
+    help="Path of the model to compare to for mt_bench_branch and mmlu_branch",
+)
+@click.option(
     "--benchmark",
     type=click.Choice(list(BENCHMARK_TO_CLASS_MAP.keys())),
     # case_sensitive=False,
@@ -198,6 +215,11 @@ def get_evaluator(
     help="Branch of taxonomy repo to eval QNAs against model",
 )
 @click.option(
+    "--base-branch",
+    type=click.STRING,
+    help="Base branch of taxonomy repo to eval QNAs against model for mt_bench_branch",
+)
+@click.option(
     "--few-shots",
     type=click.INT,
     help="Number of examples. Needed for running mmlu or mmlu_branch.",
@@ -216,26 +238,29 @@ def get_evaluator(
 def evaluate(
     ctx,
     model_path,
+    base_model_path,
     benchmark,
     judge_model_path,
     output_dir,
     max_workers,
     taxonomy_path,
     branch,
+    base_branch,
     few_shots,
     batch_size,
     sdg_path,
 ):
-    print(ctx.params)
     # get appropriate evaluator class from Eval lib
     evaluator = get_evaluator(
         model_path,
+        base_model_path,
         benchmark,
         judge_model_path,
         output_dir,
         max_workers,
         taxonomy_path,
         branch,
+        base_branch,
         few_shots,
         batch_size,
         sdg_path,
@@ -292,49 +317,71 @@ def evaluate(
 
     elif benchmark == "mt_bench_branch":
         # TODO: Replace temp Popen hack with serving library calls.  Current library doesn't support server-model-name.
-        # TODO: Should taxonomy dir come from config instead?
-        # TODO: This really needs to compare two models and two branches to be useful
-        print("Generating questions and reference answers from qna files...")
-        try:
-            proc = subprocess.Popen(
-                [
-                    "python",
-                    "-m",
-                    "vllm.entrypoints.openai.api_server",
-                    "--model",
-                    model_path,
-                    "--tensor-parallel-size",
-                    "1",
-                    "--served-model-name",
-                    "test_model",
-                ]
-            )
-            time.sleep(60)
-            evaluator.gen_answers("http://localhost:8000/v1")
-        finally:
-            proc.terminate()
 
-        # TODO: Serve judge model
-        print("Evaluating answers...")
-        try:
-            proc = subprocess.Popen(
-                [
-                    "python",
-                    "-m",
-                    "vllm.entrypoints.openai.api_server",
-                    "--model",
-                    judge_model_path,
-                    "--tensor-parallel-size",
-                    "1",
-                    "--served-model-name",
-                    "judge_model",
-                ]
-            )
-            time.sleep(60)
-            qa_pairs = evaluator.judge_answers("http://localhost:8000/v1")
-            print(f"qa_pairs length: {len(qa_pairs)}")
-        finally:
-            proc.terminate()
+        evaluators = [
+            evaluator,
+            MTBenchBranchEvaluator(
+                "base_test_model",
+                "base_judge_model",
+                taxonomy_path,
+                base_branch,
+            ),
+        ]
+        branches = [branch, base_branch]
+        m_paths = [model_path, base_model_path]
+        m_names = ["test_model", "base_test_model"]
+        judge_model_names = ["judge_model", "base_judge_model"]
+        qa_pairs_list = []
+
+        for i, evaluator in enumerate(evaluators):
+            branch = branches[i]
+            m_path = m_paths[i]
+            m_name = m_names[i]
+            judge_model_name = judge_model_names[i]
+
+            print("Generating questions and reference answers from qna files...")
+            try:
+                proc = subprocess.Popen(
+                    [
+                        "python",
+                        "-m",
+                        "vllm.entrypoints.openai.api_server",
+                        "--model",
+                        m_path,
+                        "--tensor-parallel-size",
+                        "1",
+                        "--served-model-name",
+                        m_name,
+                    ]
+                )
+                time.sleep(60)
+                evaluator.gen_answers("http://localhost:8000/v1")
+            finally:
+                proc.terminate()
+
+            print("Evaluating answers...")
+            try:
+                proc = subprocess.Popen(
+                    [
+                        "python",
+                        "-m",
+                        "vllm.entrypoints.openai.api_server",
+                        "--model",
+                        judge_model_path,
+                        "--tensor-parallel-size",
+                        "1",
+                        "--served-model-name",
+                        judge_model_name,
+                    ]
+                )
+                time.sleep(60)
+                qa_pairs = evaluator.judge_answers("http://localhost:8000/v1")
+                print(f"QA Pairs Length: {len(qa_pairs)}")
+                qa_pairs_list.append(qa_pairs)
+            finally:
+                proc.terminate()
+
+            # TODO Compare qa_pairs across run
 
     elif benchmark == "mmlu":
         overall_score, individual_scores = evaluator.run()
