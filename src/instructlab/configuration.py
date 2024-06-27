@@ -199,6 +199,9 @@ class _mmlubranch(BaseModel):
 
 
 class _evaluate(BaseModel):
+    # model configuration
+    model_config = ConfigDict(extra="ignore", protected_namespaces=())
+
     model_name: Optional[str] = None
     branch: Optional[str] = None
     mmlu: _mmlu
