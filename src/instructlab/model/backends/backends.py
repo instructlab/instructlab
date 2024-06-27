@@ -330,8 +330,8 @@ def select_backend(logger: logging.Logger, serve_config: serve_config) -> Backen
             logger=logger,
             api_base=serve_config.api_base(),
             model_path=model_path,
-            gpu_layers=serve_config.gpu_layers,
-            max_ctx_size=serve_config.max_ctx_size,
+            gpu_layers=serve_config.llama_cpp.gpu_layers,
+            max_ctx_size=serve_config.llama_cpp.max_ctx_size,
             num_threads=None,  # exists only as a flag not a config
             model_family=serve_config.model_family,
             host=host,
