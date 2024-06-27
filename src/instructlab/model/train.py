@@ -8,6 +8,11 @@ import shutil
 
 # Third Party
 # pylint: disable=ungrouped-imports,no-name-in-module
+from instructlab.configuration import (
+    DEFAULT_CHECKPOINTS_DIR,
+    DEFAULT_DATASET_DIR,
+    DEFAULT_MODEL_PATH,
+)
 from instructlab.training import (
     DeepSpeedOptions,
     LoraOptions,
@@ -28,18 +33,18 @@ logger = logging.getLogger(__name__)
     "--data-path",
     type=click.Path(file_okay=True),
     help="Base directory where data is stored.",
-    default=None,
+    default=DEFAULT_CHECKPOINTS_DIR,
 )
 @click.option(
     "--ckpt-output-dir",
     type=click.Path(),
-    default="checkpoints",
+    default=DEFAULT_CHECKPOINTS_DIR,
     help="output directory to store checkpoints in during training",
 )
 @click.option(
     "--data-output-dir",
     type=click.Path(),
-    default="data",
+    default=DEFAULT_DATASET_DIR,
     help="output directory to store training data in",
 )
 @click.option(
@@ -67,7 +72,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--model-path",
     help="Base directory where model is stored.",
-    default="instructlab/merlinite-7b-lab",
+    default=DEFAULT_MODEL_PATH,
     show_default=True,
 )
 @click.option("--iters", help="Number of iterations to train LoRA.", default=100)
@@ -186,7 +191,7 @@ logger = logging.getLogger(__name__)
 @utils.display_params
 def train(
     ctx,
-    data_path,
+    data_path: str,
     input_dir,
     skip_preprocessing,
     tokenizer_dir,
@@ -217,7 +222,7 @@ def train(
     test_file = effective_data_dir / "test_gen.jsonl"
 
     # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
-    if data_path is None or data_path == "./taxonomy_data" or data_path == "":
+    if not data_path or data_path == "./taxonomy_data":
         data_path = effective_data_dir
         if not os.path.exists(input_dir):
             click.secho(

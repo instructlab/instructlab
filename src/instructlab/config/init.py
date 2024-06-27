@@ -56,7 +56,7 @@ from instructlab import utils
 @click.option("--train-profile", type=click.Path(), default=None)
 def init(
     interactive,
-    model_path,
+    model_path: str,
     taxonomy_path,
     taxonomy_base,
     repository,

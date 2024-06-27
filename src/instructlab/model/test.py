@@ -9,19 +9,20 @@ import click
 
 # First Party
 from instructlab import utils
+from instructlab.configuration import DEFAULT_MODEL_DIR, DEFAULT_TAXONOMY_PATH
 
 
 @click.command()
 @click.option(
     "--data-dir",
     help="Base directory where data is stored.",
-    default="./taxonomy_data",
+    default=DEFAULT_TAXONOMY_PATH,
     show_default=True,
 )
 @click.option(
     "--model-dir",
     help="Base directory where model is stored.",
-    default="instructlab-merlinite-7b-lab-mlx-q",
+    default=DEFAULT_MODEL_DIR,
     show_default=True,
 )
 @click.option(
@@ -33,7 +34,7 @@ from instructlab import utils
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 @utils.display_params
 # pylint: disable=function-redefined
-def test(data_dir, model_dir, adapter_file):
+def test(data_dir: str, model_dir: str, adapter_file: str):
     """Runs basic test to ensure model correctness"""
     # pylint: disable=C0415
     # Local

@@ -57,7 +57,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--output-dir",
     type=click.Path(),
-    default=config.DEFAULT_GENERATED_FILES_OUTPUT_DIR,
+    default=config.DEFAULT_DATASET_DIR,
     help="Path to output generated files.",
 )
 @click.option(
@@ -197,6 +197,7 @@ def generate(
         click.echo(
             f"Generating synthetic data using '{model}' model, taxonomy:'{taxonomy_path}' against {api_base} server"
         )
+        print(f"using output dir {output_dir}")
         generate_data(
             logger=logging.getLogger("instructlab.sdg"),  # TODO: remove
             api_base=api_base,

@@ -6,6 +6,7 @@ from re import match
 from typing import Optional
 import os
 import sys
+import typing
 
 # Third Party
 from instructlab.training import (
@@ -28,10 +29,17 @@ import yaml
 
 # Local
 from . import log
+from pydantic import BaseModel, Field
+import yaml
 
-ILAB_DIR_NAME = (
-    "instructlab"  # the name of the TLD which will be used for the config & data dir
-)
+
+class STORAGE_DIR_NAMES:
+    ILAB = "instructlab"
+    DATASETS = "datasets"
+    CHECKPOINTS = "checkpoints"
+    MODELS = "models"
+    TAXONOMY = "taxonomy"
+
 
 # ILAB_CONFIG_HOME = os.path.join(USER_HOME_DIR, ".config", ".ilab")
 ILAB_CONFIG_HOME = None
@@ -44,11 +52,11 @@ if not os.getenv("XDG_CONFIG_HOME"):
             "The HOME directory does not exist. Please make sure it's set and run this again."
         )
     ILAB_CONFIG_HOME = os.path.expandvars(
-        os.path.join("${HOME}", ".config", ILAB_DIR_NAME)
+        os.path.join("${HOME}", ".config", STORAGE_DIR_NAMES.ILAB)
     )
 else:
     ILAB_CONFIG_HOME = os.path.expandvars(
-        os.path.join("${XDG_CONFIG_HOME}", ILAB_DIR_NAME)
+        os.path.join("${XDG_CONFIG_HOME}", STORAGE_DIR_NAMES.ILAB)
     )
 
 
@@ -59,23 +67,28 @@ if not os.getenv("XDG_DATA_HOME"):
             "The HOME directory does not exist. Please make sure it's set and run this again."
         )
     ILAB_DATA_HOME = os.path.expandvars(
-        os.path.join("${HOME}", ".local", "share", ILAB_DIR_NAME)
+        os.path.join("${HOME}", ".local", "share", STORAGE_DIR_NAMES.ILAB)
     )
 else:
-    ILAB_DATA_HOME = os.path.expandvars(os.path.join("${XDG_DATA_HOME}", ILAB_DIR_NAME))
+    ILAB_DATA_HOME = os.path.expandvars(
+        os.path.join("${XDG_DATA_HOME}", STORAGE_DIR_NAMES.ILAB)
+    )
 
 DEFAULT_API_KEY = "no_api_key"
 DEFAULT_CONFIG = os.path.join(ILAB_CONFIG_HOME, "config.yaml")
 # TODO: Consolidate --model and --model-path into one --model-path flag since we always need a path now
 DEFAULT_MODEL_OLD = "merlinite-7b-lab-Q4_K_M"
 DEFAULT_MODEL = "models/merlinite-7b-lab-Q4_K_M.gguf"
-DEFAULT_MODEL_PATH = "models/merlinite-7b-lab-Q4_K_M.gguf"
+DEFAULT_MODEL_DIR = os.path.join(ILAB_DATA_HOME, STORAGE_DIR_NAMES.MODELS)
+DEFAULT_MODEL_PATH = os.path.join(DEFAULT_MODEL_DIR, "merlinite-7b-lab-Q4_K_M.gguf")
 DEFAULT_MODEL_REPO = "instructlab/granite-7b-lab"
 DEFAULT_JUDGE_MODEL_MT = "prometheus-eval/prometheus-8x7b-v2.0"
 DEFAULT_EVAL_PATH = "eval_data"
 DEFAULT_TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
-DEFAULT_TAXONOMY_PATH = os.path.join(ILAB_DATA_HOME, "taxonomy")
+DEFAULT_TAXONOMY_PATH = os.path.join(ILAB_DATA_HOME, STORAGE_DIR_NAMES.TAXONOMY)
 DEFAULT_TAXONOMY_BASE = "origin/main"
+DEFAULT_CHECKPOINTS_DIR = os.path.join(ILAB_DATA_HOME, STORAGE_DIR_NAMES.CHECKPOINTS)
+DEFAULT_DATASET_DIR = os.path.join(ILAB_DATA_HOME, STORAGE_DIR_NAMES.DATASETS)
 MAX_CONTEXT_SIZE = 4096
 # TODO: these constants should be removed, they should not leak out
 DEFAULT_NUM_CPUS = 10
@@ -144,16 +157,16 @@ class _chat(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     # required fields
-    model: StrictStr
+    model: str
 
     # additional fields with defaults
     vi_mode: bool = False
     visible_overflow: bool = True
     context: str = "default"
-    session: Optional[str] = None
+    session: typing.Optional[str] = None
     logs_dir: str = "data/chatlogs"
     greedy_mode: bool = False
-    max_tokens: Optional[int] = None
+    max_tokens: typing.Optional[int] = None
 
 
 class _generate(BaseModel):
@@ -421,9 +434,13 @@ def ensure_storage_directories_exist():
     """
     Ensures that the default directories used by ilab exist.
     """
-    for env_path in [ILAB_CONFIG_HOME, ILAB_DATA_HOME]:
-        # TODO: use 777 for debug purposes, use 700 or 600 for production
-        os.makedirs(env_path, exist_ok=True, mode=0o777)
+    os.makedirs(ILAB_CONFIG_HOME, exist_ok=True, mode=0o777)
+
+    for storage_dir in dir(STORAGE_DIR_NAMES):
+        if storage_dir.startswith("__"):
+            continue
+        dirpath = getattr(STORAGE_DIR_NAMES, storage_dir)
+        os.makedirs(os.path.join(ILAB_DATA_HOME, dirpath), exist_ok=True, mode=0o777)
 
 
 class Lab:
@@ -434,39 +451,9 @@ class Lab:
 
 
 def init(ctx, config_file: str):
-    print("tripped the init function")
-    if (
-        ctx.invoked_subcommand in {"config", "init", "sysinfo"}
-        or "--help" in sys.argv[1:]
-    ):
-        if config_file == "DEFAULT":
-            config_obj = get_default_config()
-        elif not os.path.isfile(config_file):
-            config_obj = None
-            ctx.fail(
-                f"`{config_file}` does not exists, please run `ilab config init` "
-                "or point to a valid configuration file using `--config=<path>`."
-            )
-        else:
-            try:
-                config_obj = read_config(config_file)
-            except ConfigException as ex:
-                raise click.ClickException(str(ex))
-        # setup logging
-        log.configure_logging(log_level=config_obj.general.log_level.upper())
-        ctx.obj = Lab(config_obj)
-        # default_map holds a dictionary with default values for each command parameters
-        config_dict = get_dict(ctx.obj.config)
-        # since torch and train args are sep, they need to be combined into a single `train` entity for the default map
-        # this is because the flags for `ilab model train` will only be populated if the default map has a single `train` entry, not two.
-        config_dict["train"] = (
-            config_dict["train"]["train_args"]
-            | config_dict["train"]["torch_args"]
-            | config_dict["train"]["train_args"]["lora"]
-            | config_dict["train"]["train_args"]["deepspeed_options"]
-        )
-
-        ctx.default_map = config_dict
+    if ctx.invoked_subcommand in ["init", "sysinfo"] or "--help" in sys.argv[1:]:
+        # do nothing
+        return
 
     ensure_storage_directories_exist()
     if config_file == "DEFAULT":

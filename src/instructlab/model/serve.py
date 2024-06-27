@@ -20,6 +20,8 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--model-path",
     type=click.Path(),
+    # TODO: change this to pull from the default value from the config:
+    # https://github.com/instructlab/instructlab/issues/1486
     default=config.DEFAULT_MODEL_PATH,
     show_default=True,
     help="Path to the model used during generation.",
