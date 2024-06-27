@@ -9,20 +9,25 @@ import click
 
 # First Party
 from instructlab import utils
-from instructlab.configuration import DEFAULT_MODEL_DIR, DEFAULT_TAXONOMY_PATH
+from instructlab.configuration import (
+    DEFAULT_CHECKPOINTS_DIR,
+    DEFAULT_INTERNAL_DIR,
+    DEFAULT_MODEL_DIR,
+    DEFAULT_TAXONOMY_PATH,
+)
 
 
 @click.command()
 @click.option(
     "--data-dir",
     help="Base directory where data is stored.",
-    default=DEFAULT_TAXONOMY_PATH,
+    default=DEFAULT_INTERNAL_DIR,
     show_default=True,
 )
 @click.option(
     "--model-dir",
     help="Base directory where model is stored.",
-    default=DEFAULT_MODEL_DIR,
+    default=DEFAULT_CHECKPOINTS_DIR,
     show_default=True,
 )
 @click.option(
@@ -72,7 +77,12 @@ def test(data_dir: str, model_dir: str, adapter_file: str):
         print("expected output:", example["assistant"])
 
         print("\n-----model output BEFORE training----:\n")
-        load_and_train(model=model_dir, no_adapter=True, max_tokens=100, prompt=prompt)
+        load_and_train(
+            model=model_dir,
+            no_adapter=True,
+            max_tokens=100,
+            prompt=prompt,
+        )
 
         if adapter_file_exists:
             print("\n-----model output AFTER training----:\n")

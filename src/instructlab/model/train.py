@@ -24,6 +24,12 @@ import click
 
 # First Party
 from instructlab import utils
+from instructlab.configuration import (
+    DEFAULT_CHECKPOINTS_DIR,
+    DEFAULT_DATASET_DIR,
+    DEFAULT_INTERNAL_DIR,
+    DEFAULT_MODEL_REPO,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +39,7 @@ logger = logging.getLogger(__name__)
     "--data-path",
     type=click.Path(file_okay=True),
     help="Base directory where data is stored.",
-    default=DEFAULT_CHECKPOINTS_DIR,
+    default=DEFAULT_DATASET_DIR,
 )
 @click.option(
     "--ckpt-output-dir",
@@ -44,7 +50,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--data-output-dir",
     type=click.Path(),
-    default=DEFAULT_DATASET_DIR,
+    default=DEFAULT_INTERNAL_DIR,
     help="output directory to store training data in",
 )
 @click.option(
@@ -71,8 +77,8 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--model-path",
-    help="Base directory where model is stored.",
-    default=DEFAULT_MODEL_PATH,
+    help="HuggingFace model repo path, in the format of <namespace>/<repo_name>.",
+    default=DEFAULT_MODEL_REPO,
     show_default=True,
 )
 @click.option("--iters", help="Number of iterations to train LoRA.", default=100)
@@ -204,7 +210,7 @@ def train(
     device: str,
     four_bit_quant: bool,
     legacy,
-    **kwargs,  # pylint: disable=unused-argument
+    **kwargs,
 ):
     """
     Takes synthetic data generated locally with `ilab data generate` and the previous model and learns a new model using the MLX API.
@@ -217,12 +223,13 @@ def train(
     if four_bit_quant and device != "cuda":
         ctx.fail("'--4-bit-quant' option requires '--device=cuda'")
 
-    effective_data_dir = Path(data_path or "./taxonomy_data")
-    train_file = effective_data_dir / "train_gen.jsonl"
-    test_file = effective_data_dir / "test_gen.jsonl"
+    effective_data_dir = Path(DEFAULT_INTERNAL_DIR)
+    train_file = Path(effective_data_dir / "train_gen.jsonl")
+    test_file = Path(effective_data_dir / "test_gen.jsonl")
+    ckpt_output_dir = Path(kwargs["ckpt_output_dir"])
 
     # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
-    if not data_path or data_path == "./taxonomy_data":
+    if not data_path or data_path == DEFAULT_DATASET_DIR:
         data_path = effective_data_dir
         if not os.path.exists(input_dir):
             click.secho(
@@ -241,13 +248,13 @@ def train(
             raise click.exceptions.Exit(1)
 
         # generated input files reverse sorted by modification time
-        def get_files(pattern):
+        def get_files(directory: str, pattern: str) -> list[str]:
             return sorted(
-                Path(input_dir).glob(pattern), key=os.path.getmtime, reverse=True
+                Path(directory).glob(pattern), key=os.path.getmtime, reverse=True
             )
 
-        train_files = get_files("train_*")
-        test_files = get_files("test_*")
+        train_files = get_files(input_dir, "test_*")
+        test_files = get_files(input_dir, "test_*")
 
         if not train_files or not test_files:
             click.secho(
@@ -289,6 +296,7 @@ def train(
         # NOTE we can skip this if we have a way ship MLX
         # PyTorch safetensors to MLX safetensors
         model_dir_local = model_path.replace("/", "-")
+        model_dir_local = f"{ckpt_output_dir}/{model_dir_local}"
         model_dir_mlx = f"{model_dir_local}-mlx"
         model_dir_mlx_quantized = f"{model_dir_local}-mlx-q"
 

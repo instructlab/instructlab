@@ -29,8 +29,6 @@ import yaml
 
 # Local
 from . import log
-from pydantic import BaseModel, Field
-import yaml
 
 
 class STORAGE_DIR_NAMES:
@@ -39,6 +37,9 @@ class STORAGE_DIR_NAMES:
     CHECKPOINTS = "checkpoints"
     MODELS = "models"
     TAXONOMY = "taxonomy"
+    INTERNAL = (
+        "internal"  # for storing all ilab-internal files the user doesn't need to see
+    )
 
 
 # ILAB_CONFIG_HOME = os.path.join(USER_HOME_DIR, ".config", ".ilab")
@@ -89,13 +90,18 @@ DEFAULT_TAXONOMY_PATH = os.path.join(ILAB_DATA_HOME, STORAGE_DIR_NAMES.TAXONOMY)
 DEFAULT_TAXONOMY_BASE = "origin/main"
 DEFAULT_CHECKPOINTS_DIR = os.path.join(ILAB_DATA_HOME, STORAGE_DIR_NAMES.CHECKPOINTS)
 DEFAULT_DATASET_DIR = os.path.join(ILAB_DATA_HOME, STORAGE_DIR_NAMES.DATASETS)
+DEFAULT_INTERNAL_DIR = os.path.join(ILAB_DATA_HOME, STORAGE_DIR_NAMES.INTERNAL)
 MAX_CONTEXT_SIZE = 4096
 # TODO: these constants should be removed, they should not leak out
 DEFAULT_NUM_CPUS = 10
 DEFAULT_CHUNK_WORD_COUNT = 1000
 DEFAULT_NUM_INSTRUCTIONS = 100
-DEFAULT_PROMPT_FILE = "prompt.txt"
-DEFAULT_GENERATED_FILES_OUTPUT_DIR = "generated"
+DEFAULT_PROMPT_FILE = os.path.join(
+    ILAB_DATA_HOME, STORAGE_DIR_NAMES.INTERNAL, "prompt.txt"
+)
+DEFAULT_GENERATED_FILES_OUTPUT_DIR = os.path.join(
+    ILAB_DATA_HOME, STORAGE_DIR_NAMES.DATASETS
+)
 DEFAULT_CONNECTION_TIMEOUT = httpx.Timeout(timeout=30.0)
 # use spawn start method, fork is not thread-safe
 DEFAULT_MULTIPROCESSING_START_METHOD = "spawn"
@@ -111,9 +117,6 @@ MODEL_FAMILIES = set(("merlinite", "mixtral"))
 MODEL_FAMILY_MAPPINGS = {
     "granite": "merlinite",
 }
-
-DEFAULT_CKPT_DIR = "checkpoints"
-DEFAULT_OUT_DIR = "train-output"
 
 
 class ConfigException(Exception):
@@ -310,9 +313,9 @@ def get_default_config():
         train=_train(
             train_args=TrainingArgs(
                 model_path=DEFAULT_MODEL_REPO,
-                data_path="./taxonomy_data",
-                ckpt_output_dir=DEFAULT_CKPT_DIR,
-                data_output_dir=DEFAULT_OUT_DIR,
+                data_path=DEFAULT_DATASET_DIR,
+                ckpt_output_dir=DEFAULT_CHECKPOINTS_DIR,
+                data_output_dir=DEFAULT_INTERNAL_DIR,
                 max_seq_len=4096,
                 max_batch_len=10000,
                 num_epochs=10,
@@ -436,11 +439,16 @@ def ensure_storage_directories_exist():
     """
     os.makedirs(ILAB_CONFIG_HOME, exist_ok=True, mode=0o777)
 
-    for storage_dir in dir(STORAGE_DIR_NAMES):
-        if storage_dir.startswith("__"):
-            continue
-        dirpath = getattr(STORAGE_DIR_NAMES, storage_dir)
-        os.makedirs(os.path.join(ILAB_DATA_HOME, dirpath), exist_ok=True, mode=0o777)
+    for storage_dir in [
+        STORAGE_DIR_NAMES.CHECKPOINTS,
+        STORAGE_DIR_NAMES.MODELS,
+        STORAGE_DIR_NAMES.DATASETS,
+        STORAGE_DIR_NAMES.TAXONOMY,
+        STORAGE_DIR_NAMES.INTERNAL,
+    ]:
+        os.makedirs(
+            os.path.join(ILAB_DATA_HOME, storage_dir), exist_ok=True, mode=0o777
+        )
 
 
 class Lab:

@@ -1,14 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
-import yaml
-
 # Third Party
 from click_didyoumean import DYMGroup
 import click
+import yaml
 
+# First Party
 from instructlab import utils
 
 # Local
 from .init import init
+from .show import show
 
 
 @click.group(cls=DYMGroup)
@@ -23,18 +24,4 @@ def config(ctx):
 
 
 config.add_command(init)
-
-
-@click.command()
-@click.pass_context
-@utils.display_params
-def show(
-    ctx,
-):
-    """Displays the current config as YAML"""
-    # TODO: make this use pretty colors like jq/yq
-    config_yaml = yaml.load(ctx.obj.config.model_dump_json(), Loader=yaml.FullLoader)
-    print(yaml.dump(config_yaml, indent=4))
-
-
 config.add_command(show)
