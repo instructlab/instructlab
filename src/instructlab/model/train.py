@@ -306,7 +306,7 @@ def train(
 
         if not train_files or not test_files:
             click.secho(
-                f"{input_dir} does not contain training or test files, did you run `ilab generate`?",
+                f"{input_dir} does not contain training or test files, did you run `ilab data generate`?",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
