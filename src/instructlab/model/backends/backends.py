@@ -19,6 +19,7 @@ import uvicorn
 # Local
 from ...client import ClientException, list_models
 from ...configuration import get_api_base
+from ...configuration import _serve as serve_config
 
 LLAMA_CPP = "llama-cpp"
 VLLM = "vllm"
@@ -306,3 +307,44 @@ def get_uvicorn_config(app: uvicorn.Server, host: str, port: int) -> Config:
         limit_concurrency=2,  # Make sure we only serve a single client at a time
         timeout_keep_alive=0,  # prevent clients holding connections open (we only have 1)
     )
+
+def select_backend(logger: logging.Logger, serve_config: serve_config, model_family: str) -> BackendServer:
+    from .llama_cpp import Server as llama_cpp_server
+    from .vllm import Server as vllm_server
+    backend_instance = None
+    model_path = pathlib.Path(serve_config.model_path)
+    backend_name = serve_config.backend
+    try:
+        backend = get(logger, model_path, backend_name)
+    except ValueError as e:
+        click.secho(f"Failed to determine backend: {e}", fg="red")
+        raise click.exceptions.Exit(1)
+
+    host = serve_config.host_port.split(":")[0]
+    port = int(serve_config.host_port.split(":")[1])
+
+    if backend == LLAMA_CPP:
+        # Instantiate the llama server
+        backend_instance = llama_cpp_server(
+            logger=logger,
+            api_base=serve_config.api_base(),
+            model_path=model_path,
+            gpu_layers=serve_config.gpu_layers,
+            max_ctx_size=serve_config.max_ctx_size,
+            num_threads=None,  # exists only as a flag not a config
+            model_family=model_family,
+            host=host,
+            port=port,
+        )
+
+    if backend == VLLM:
+        # Instantiate the vllm server
+        backend_instance = vllm_server(
+            logger=logger,
+            api_base=serve_config.api_base(),
+            model_path=model_path,
+            model_family=model_family,
+            host=host,
+            port=port,
+        )
+    return backend_instance
