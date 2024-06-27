@@ -1,0 +1,228 @@
+version: 2
+created_by: ae2015
+task_description: >
+    Given a context document and a user's question, determine whether you have
+    enough information to provide a yes-or-no answer to the user's question.
+seed_examples:
+- context: >
+    Document:
+
+    All regular employees except those on a leave of absence (LOA) must file Form XYZ.
+    If you are a regular employee on a LOA, you do not need to file the form. If you
+    are a supplemental employee (type B1, type B2, or type B3), your employee type
+    determines which form you must file, as follows:
+
+    * If you are a type B1 employee, you must follow the same rules that apply to the
+    regular employees.
+
+    * If you are a type B2 employee, the rules that apply to you are different from
+    those that apply to the regular employees. See Pub. 31416 to find out which forms
+    you should file.
+
+    * If you are a supplemental employee of neither type B1 nor type B2, you are a
+    type B3 employee. Different rules apply for each part of the year. For information
+    on type B3 employees, see Pub. 31416.
+  question: >
+    User asks the following question:
+
+    "I am a supplemental employee of type B1 on a LOA. Should I file Form XYZ?"
+
+    As the responding agent, do you have enough information to provide a yes-or-no answer
+    to the user's question? Answer Yes or No, then explain your answer.
+  answer: >
+    Yes, I have enough information to provide a yes-or-no answer to the user's question.
+    Specifically, the answer to the user's question is "no". Indeed, the user is a
+    supplemental employee of type B1 and is on a LOA. According to the document,
+    supplemental employees of type B1 must follow the same rules that apply to the
+    regular employees, and a regular employee on a LOA does not need to file Form XYZ.
+    Hence, the user does not need to file Form XYZ. I reached this conclusion using
+    only the information available in the document and in the user's question.
+
+- context: >
+    Document:
+
+    All regular employees except those on a leave of absence (LOA) must file Form XYZ.
+    If you are a regular employee on a LOA, you do not need to file the form. If you
+    are a supplemental employee (type B1, type B2, or type B3), your employee type
+    determines which form you must file, as follows:
+
+    * If you are a type B1 employee, you must follow the same rules that apply to the
+    regular employees.
+
+    * If you are a type B2 employee, the rules that apply to you are different from
+    those that apply to the regular employees. See Pub. 31416 to find out which forms
+    you should file.
+
+    * If you are a supplemental employee of neither type B1 nor type B2, you are a
+    type B3 employee. Different rules apply for each part of the year. For information
+    on type B3 employees, see Pub. 31416.
+  question: >
+    User asks the following question:
+
+    "I am a supplemental employee of type B1, not on a LOA. Should I file Form XYZ?"
+
+    As the responding agent, do you have enough information to provide a yes-or-no answer
+    to the user's question? Answer Yes or No, then explain your answer.
+  answer: >
+    Yes, I have enough information to provide a yes-or-no answer to the user's question.
+    Specifically, the answer to the user's question is "yes". Indeed, the user is a
+    supplemental employee of type B1 and is not on a LOA. According to the document,
+    supplemental employees of type B1 must follow the same rules that apply to the
+    regular employees, and all regular employees except those on a LOA must file
+    Form XYZ. Hence, the user must file Form XYZ. I reached this conclusion using only
+    the information available in the document and in the user's question.
+
+- context: >
+    Document:
+
+    The Helping Hands Program enables the employees of XYZ Technologies to support
+    nonprofit organizations within the communities where the employees live and work.
+    All active, regular employees of XYZ Technologies are eligible to participate in
+    the program. The following categories are ineligible to participate in the program:
+
+    * Retirees who no longer work at XYZ Technologies
+
+    * XYZ employees on a leave of absence
+
+    * Supplemental employees and contractors who are not regular XYZ employees
+
+    Please note that XYZ employees on a leave of absence can participate in the Helping
+    Hands Program once they return to an active status.
+  question: >
+    User asks the following question:
+
+    "I am an active, regular employee of XYZ Technologies. I am not on a leave of absence.
+    Can I participate in the Helping Hands Program?"
+
+    As the responding agent, do you have enough information to provide a yes-or-no answer
+    to the user's question? Answer Yes or No, then explain your answer.
+  answer: >
+    Yes, I have enough information to provide a yes-or-no answer to the user's question.
+    Specifically, the answer to the user's question is "yes". Indeed, the user is an
+    active, regular employee of XYZ Technologies. According to the document, all active,
+    regular employees of XYZ Technologies are eligible to participate in the Helping
+    Hands Program. The document excludes retirees, XYZ employees on a leave of absence,
+    and those who are not regular XYZ employees; however, the user is an active and
+    regular employee who is not on a leave of absence, so the exclusions do not apply.
+    Therefore, the user can participate in the Helping Hands Program. I reached this
+    conclusion using only the information available in the document and in the user's
+    question.
+
+- context: >
+    Document:
+
+    Applying for a driver's license is as easy as 1-2-3! You can apply for a driver's license
+    if you bring documents from each of the three sections below:
+
+    Section 1. Proof of Identity - one document is required from the list below:
+
+    * Unexpired passport
+
+    * Birth certificate
+
+    * Certificate of naturalization or citizenship
+
+    * Valid, unexpired Permanent Resident Card
+
+    Section 2. Proof of Social Security Number - one document is required from the list below:
+
+    * Social Security card
+
+    * W-2 form
+
+    * SSA-1099 form
+
+    * Paystub
+
+    Section 3. Proof of Residency - two different documents are required from the list below:
+
+    * Home utility bill
+
+    * Medical document
+
+    * Proof of car registration
+
+    * Proof of employment
+
+    * Proof of insurance
+
+    * Mortgage bill
+
+    * Lease agreement
+
+    * Tax return
+  question: >
+    User asks the following question:
+
+    "Can I apply for a driver's license if I bring my birth certificate, my W-2 form, and
+    my proof of car registration?"
+
+    As the responding agent, do you have enough information to provide a yes-or-no answer
+    to the user's question? Answer Yes or No, then explain your answer.
+  answer: >
+    Yes, I have enough information to provide a yes-or-no answer to the user's question.
+    Specifically, the answer to the user's question is "no". Indeed, the user wants to
+    bring a birth certificate, a W-2 form, and a proof of car registration. According to
+    the context document, to apply for a driver's license, the user must bring one proof
+    of Identity, one proof of Social Security Number, and two different proof of Residency
+    documents. A birth certificate is one proof of Identity, a W-2 form is one proof of
+    Social Security Number, and a proof of car registration is one proof of Residency
+    document. The user cannot apply for a driver's license without bringing a second proof
+    of Residency document. I reached this conclusion using only the information available
+    in the context document and in the user's question.
+
+- context: >
+    Document:
+
+    XYZ Corporation released three models of phones in 2024: Model MX, Model MY, and
+    Model MZ. Model MX is the budget-conscious choice, it has 6-inch screen, a single
+    rear camera, and 32 GB of storage. Model MY is the most portable choice, with a
+    5-inch screen, a dual rear camera, and 32 GB of storage. Model MZ is the luxury
+    choice, sporting a 7-inch screen, a dual rear camera, and 64 GB of storage.
+    These three models are the only ones available for sale in our store.
+  question: >
+    User asks the following question:
+
+    "Does your store sell a phone made by XYZ Corporation that has a 6-inch screen and
+    a dual rear camera?"
+
+    As the responding agent, do you have enough information to provide a yes-or-no answer
+    to the user's question? Answer Yes or No, then explain your answer.
+  answer: >
+    Yes, I have enough information to provide a yes-or-no answer to the user's question.
+    Specifically, the answer to the user's question is "no". Indeed, the user is looking
+    for a phone made by XYZ Corporation that has a 6-inch screen and a dual rear camera.
+    According to the document, our store sells only three models of phones made by
+    XYZ Corporation: Model MX, Model MY, and Model MZ. Only Model MX has a 6-inch screen,
+    but it has a single rear camera; models MY and MZ do not have a 6-inch screen. Hence,
+    our store does not sell a phone the user is looking for. I reached this conclusion
+    using only the information available in the document and in the user's question.
+
+- context: >
+    Document:
+
+    Solar System Overview
+
+    The solar system has one star, eight planets, five dwarf planets, at least 290 moons,
+    more than 1.3 million asteroids, and about 3,900 comets. It is located in an outer
+    spiral arm of the Milky Way galaxy called the Orion Arm, or Orion Spur. Our solar
+    system orbits the center of the galaxy at about 515,000 mph (828,000 kph). It takes
+    about 230 million years to complete one orbit around the galactic center.
+
+    We call it the solar system because it is made up of our star, the Sun, and everything
+    bound to it by gravity - the planets Mercury, Venus, Earth, Mars, Jupiter, Saturn,
+    Uranus, and Neptune; dwarf planets Pluto, Ceres, Makemake, Haumea, and Eris - along
+    with hundreds of moons; and millions of asteroids, comets, and meteoroids.
+  question: >
+    User asks the following question:
+
+    "Does the solar system have two stars?"
+
+    As the responding agent, do you have enough information to provide a yes-or-no answer
+    to the user's question? Answer Yes or No, then explain your answer.
+  answer: >
+    Yes, I have enough information to provide a yes-or-no answer to the user's question.
+    Specifically, the answer to the user's question is "no". According to the document,
+    the solar system has only one star - the Sun, not two stars. I reached this
+    conclusion using only the information available in the document and in the user's
+    question.
