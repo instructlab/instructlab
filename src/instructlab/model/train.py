@@ -442,7 +442,7 @@ def train(
         if e2e:
             # end-to-end training
             _validate_e2e_paths(e2e_data_dir, e2e_checkpoints_dir)
-            run_e2e_training(ctx.params, train_args, torch_args)
+            final_checkpoint = run_e2e_training(ctx.params, train_args, torch_args)
         else:
             run_training(train_args=train_args, torch_args=torch_args)
 
