@@ -360,14 +360,14 @@ def evaluate(
         branches = [branch, base_branch]
         m_paths = [model, base_model]
         m_names = ["test_model", "base_test_model"]
-        judge_models = ["judge_model", "base_judge_model"]
+        judge_model_names = ["judge_model", "base_judge_model"]
         qa_pairs_list = []
 
         for i, evaluator in enumerate(evaluators):
             branch = branches[i]
             m_path = m_paths[i]
             m_name = m_names[i]
-            judge_model = judge_models[i]
+            j_model_name = judge_model_names[i]
 
             print(
                 f"Generating questions and reference answers from qna files for branch {branch}..."
@@ -403,7 +403,7 @@ def evaluate(
                         "--tensor-parallel-size",
                         "1",
                         "--served-model-name",
-                        judge_model,
+                        j_model_name,
                     ]
                 )
                 time.sleep(60)
