@@ -8,7 +8,14 @@ import subprocess
 import sys
 
 # Local
-from .backends import VLLM, BackendServer, ensure_server
+from ...configuration import get_api_base
+from .backends import (
+    VLLM,
+    BackendServer,
+    ServerException,
+    ensure_server,
+    shutdown_process,
+)
 
 
 class Server(BackendServer):
@@ -41,11 +48,11 @@ class Server(BackendServer):
             while True:
                 sleep(1)
         except KeyboardInterrupt:
-            self.logger.info(f"VLLM server terminated by keyboard")
             self.shutdown()
-        # TODO is this second shutdown really needed?
-        finally:
+            self.logger.info(f"vLLM server terminated by keyboard")
+        except BaseException:
             self.shutdown()
+            self.logger.exception(f"vLLM server terminated")
 
     def create_server_process(self, port: str) -> subprocess.Popen:
         server_process = run_vllm(
@@ -78,12 +85,14 @@ class Server(BackendServer):
             self.api_base = api_base
         except ServerException as exc:
             raise exc
+        except SystemExit as exc:
+            raise exc
 
     def shutdown(self):
-        """Shutdown vllm server"""
+        """Shutdown vLLM server"""
         # Needed when a temporary server is started
         if self.process is not None:
-            self.process.terminate()
+            shutdown_process(self.process, 20)
 
 
 def run_vllm(
@@ -94,6 +103,20 @@ def run_vllm(
     vllm_args: str,
     background: bool,
 ) -> subprocess.Popen:
+    """
+    Start an OpenAI-compatible server with vLLM.
+
+    Args:
+        logger     (logging.Logger):  logger for info and debugging
+        host       (str):             host to run server on
+        port       (str):             port to run server on
+        model_path (Path):            The path to the model file.
+        vllm_args  (str):             Specific arguments to pass into vllm. Example: "--dtype auto --enable-lora",
+        background (bool):            Whether the stdout and stderr vLLM should be sent to /dev/null (True)
+                                      or stay in the foreground(False).
+    Returns:
+        vllm_process (subprocess.Popen): process of the vllm server
+    """
     vllm_process = None
     vllm_cmd = [sys.executable, "-m", "vllm.entrypoints.openai.api_server"]
 
@@ -108,18 +131,15 @@ def run_vllm(
 
     vllm_cmd.extend(vllm_args.split())
 
-    logger.debug(f"vllm serving command is: {vllm_cmd}")
-    try:
-        if background:
-            vllm_process = subprocess.Popen(
-                args=vllm_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE
-            )
-        else:
-            vllm_process = subprocess.Popen(args=vllm_cmd)
-    # TODO: Look further into error/exception handling here
-    except subprocess.CalledProcessError as err:
-        raise ServerException(
-            f"Vllm did not start properly. Exited with return code: {err.returncode}"
+    logger.debug(f"vLLM serving command is: {vllm_cmd}")
+    if background:
+        vllm_process = subprocess.Popen(
+            args=vllm_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
+    else:
+        vllm_process = subprocess.Popen(args=vllm_cmd)
+
+    api_base = get_api_base(f"{host}:{port}")
+    logger.info(f"vLLM starting up on pid {vllm_process.pid} at {api_base}")
 
     return vllm_process

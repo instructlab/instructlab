@@ -195,6 +195,25 @@ def get(logger: logging.Logger, model_path: pathlib.Path, backend: str) -> str:
     return backend
 
 
+def shutdown_process(process: subprocess.Popen, timeout: int) -> None:
+    """
+    Shuts down a process
+
+    Sends SIGTERM and then after a timeout if the process still is not terminated sends a SIGKILL
+
+    Args:
+        process (subprocess.Popen): process of the vllm server
+
+    Returns:
+        Nothing
+    """
+    process.terminate()
+    try:
+        process.wait(timeout)
+    except subprocess.TimeoutExpired as exc:
+        process.kill()
+
+
 def ensure_server(
     logger: logging.Logger,
     backend: str,
@@ -260,7 +279,6 @@ def ensure_server(
             count = 0
             # TODO should this be configurable?
             vllm_startup_timeout = 300
-            logger.debug(f"Starting up vllm on {temp_api_base}...")
             while count < vllm_startup_timeout:
                 sleep(1)
                 try:
@@ -271,10 +289,17 @@ def ensure_server(
                         tls_client_key=tls_client_key,
                         tls_client_passwd=tls_client_passwd,
                     )
-                    logger.debug(f"model at {temp_api_base} served on vllm")
+                    logger.debug(f"model at {temp_api_base} served on vLLM")
                     break
                 except ClientException:
                     count += 1
+
+            if count >= vllm_startup_timeout:
+                shutdown_process(vllm_server_process, 20)
+                raise ServerException(
+                    f"vLLM failed to start up in {vllm_startup_timeout} seconds"
+                )
+
         elif backend == LLAMA_CPP:
             # server_process_func is a function! we invoke it here and pass the port that was determined
             # in this ensure_server() function
