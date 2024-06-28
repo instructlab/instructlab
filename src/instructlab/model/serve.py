@@ -68,13 +68,9 @@ def serve(
     """Start a local server"""
 
     # First Party
-    from instructlab.model.backends import llama_cpp, vllm
+    from instructlab.model.backends import backends, llama_cpp, vllm
 
-    host = ctx.obj.config.serve.host_port.split(":")[0]
-    port = int(ctx.obj.config.serve.host_port.split(":")[1])
-
-    # First Party
-    from instructlab.model.backends import backends
+    host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
 
     model_path = pathlib.Path(model_path)
     try:

@@ -193,8 +193,7 @@ def chat(
             click.secho(f"Failed to determine backend: {e}", fg="red")
             raise click.exceptions.Exit(1)
 
-        host = ctx.obj.config.serve.host_port.split(":")[0]
-        port = int(ctx.obj.config.serve.host_port.split(":")[1])
+        host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
 
         if backend == backends.LLAMA_CPP:
             # Instantiate the llama server

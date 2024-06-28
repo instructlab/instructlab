@@ -4,6 +4,7 @@
 from functools import cache, wraps
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Union
+from urllib.parse import urlparse
 import copy
 import glob
 import json
@@ -635,3 +636,16 @@ def display_params(func):
         return func(*args, **kwargs)
 
     return wrapper
+
+
+def split_hostport(hostport: str) -> tuple[str, int]:
+    """Split server:port into server and port (IPv6 safe)"""
+    if "//" not in hostport:
+        # urlparse expects an URL-like input like '//host:port'
+        hostport = f"//{hostport}"
+    parsed = urlparse(hostport)
+    hostname = parsed.hostname
+    port = parsed.port
+    if not hostname or not port:
+        raise ValueError(f"Invalid host-port string: '{hostport}'")
+    return hostname, port
