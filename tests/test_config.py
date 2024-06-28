@@ -27,6 +27,7 @@ class TestConfig:
         assert cfg.chat.session is None
         assert cfg.chat.logs_dir == "data/chatlogs"
         assert not cfg.chat.greedy_mode
+        assert cfg.chat.connection_timeout == 30.0
 
         assert cfg.generate is not None
         assert cfg.generate.model == "models/merlinite-7b-lab-Q4_K_M.gguf"
@@ -45,6 +46,7 @@ class TestConfig:
         assert cfg.serve.host_port == "127.0.0.1:8000"
         assert cfg.serve.max_ctx_size == 4096
         assert cfg.serve.backend == ""
+        assert cfg.serve.connection_timeout == 30.0
 
     def test_default_config(self):
         cfg = config.get_default_config()
@@ -83,6 +85,7 @@ chat:
   session: null
   vi_mode: false
   visible_overflow: true
+  connection_timeout: 30.0
 generate:
   model: models/merlinite-7b-lab-Q4_K_M.gguf
   num_cpus: 10
@@ -99,6 +102,7 @@ serve:
   max_ctx_size: 4096
   model_path: models/merlinite-7b-lab-Q4_K_M.gguf
   backend: ''
+  connection_timeout: 30
 """
             )
         cfg = config.read_config(config_path)

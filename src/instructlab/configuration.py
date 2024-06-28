@@ -23,7 +23,6 @@ from pydantic import (
     field_validator,
 )
 import click
-import httpx
 import yaml
 
 # Local
@@ -46,7 +45,7 @@ DEFAULT_CHUNK_WORD_COUNT = 1000
 DEFAULT_NUM_INSTRUCTIONS = 100
 DEFAULT_PROMPT_FILE = "prompt.txt"
 DEFAULT_GENERATED_FILES_OUTPUT_DIR = "generated"
-DEFAULT_CONNECTION_TIMEOUT = httpx.Timeout(timeout=30.0)
+DEFAULT_CONNECTION_TIMEOUT = 30.0
 # use spawn start method, fork is not thread-safe
 DEFAULT_MULTIPROCESSING_START_METHOD = "spawn"
 
@@ -116,6 +115,7 @@ class _chat(BaseModel):
     logs_dir: str = "data/chatlogs"
     greedy_mode: bool = False
     max_tokens: Optional[int] = None
+    connection_timeout: float = DEFAULT_CONNECTION_TIMEOUT
 
 
 class _generate(BaseModel):
@@ -152,6 +152,7 @@ class _serve(BaseModel):
     gpu_layers: int = -1
     max_ctx_size: PositiveInt = 4096
     backend: str = ""  # we don't set a default value here since it's auto-detected
+    connection_timeout: float = DEFAULT_CONNECTION_TIMEOUT
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
