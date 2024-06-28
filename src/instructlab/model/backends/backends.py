@@ -19,6 +19,7 @@ import sys
 # Third Party
 from uvicorn import Config
 import click
+import fastapi
 import uvicorn
 
 # Local
@@ -354,7 +355,7 @@ def is_temp_server_running():
     return multiprocessing.current_process().name != "MainProcess"
 
 
-def get_uvicorn_config(app: uvicorn.Server, host: str, port: int) -> Config:
+def get_uvicorn_config(app: fastapi.FastAPI, host: str, port: int) -> Config:
     return Config(
         app,
         host=host,
