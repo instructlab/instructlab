@@ -226,7 +226,9 @@ def ensure_server(
     port=8000,
     queue=None,
     server_process_func=None,
-) -> Tuple[multiprocessing.Process, subprocess.Popen, str]:
+) -> Tuple[
+    Optional[multiprocessing.Process], Optional[subprocess.Popen], Optional[str]
+]:
     """Checks if server is running, if not starts one as a subprocess. Returns the server process
     and the URL where it's available."""
 
