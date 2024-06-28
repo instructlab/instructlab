@@ -85,7 +85,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
 fi
 
 # download the latest version of the ilab
-ilab download
+ilab model download
 
 # check that ilab serve is working
 test_bind_port(){

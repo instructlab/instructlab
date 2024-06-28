@@ -61,10 +61,10 @@ test_download() {
 
     if [ "$GRANITE" -eq 1 ]; then
         step Downloading the granite model
-        ilab download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf
+        ilab model download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf
     else
         step Downloading the default model
-        ilab download
+        ilab model download
     fi
 }
 
