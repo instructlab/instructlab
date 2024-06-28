@@ -125,6 +125,15 @@ logger = logging.getLogger(__name__)
     "--model-family",
     help="Force model family to use when picking a generation template",
 )
+@click.option(
+    "--pipeline",
+    type=click.Choice(["simple", "full"], case_sensitive=False),
+    default="simple",
+    # Hidden until instructlab-sdg releases a version with multiple pipelines
+    # For now only "simple" is supported in the latest release.
+    hidden=True,
+    help="Data generation pipeline to use. Available: simple, full. Note that 'full' requires a larger teacher model, Mixtral-8x7b.",
+)
 @click.pass_context
 @utils.display_params
 def generate(
@@ -147,6 +156,7 @@ def generate(
     tls_client_key,
     tls_client_passwd,
     model_family,
+    pipeline,
 ):
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=C0415
@@ -205,6 +215,7 @@ def generate(
             tls_client_cert=tls_client_cert,
             tls_client_key=tls_client_key,
             tls_client_passwd=tls_client_passwd,
+            pipeline=pipeline,
         )
     except GenerateException as exc:
         click.secho(
