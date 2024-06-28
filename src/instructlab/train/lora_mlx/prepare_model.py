@@ -6,7 +6,6 @@ import os
 # Third Party
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import fire
-import torch
 
 
 def convert_bin_to_safetensors(input_dir, output_dir):

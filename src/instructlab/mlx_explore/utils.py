@@ -2,12 +2,7 @@
 
 # Standard
 from pathlib import Path
-from typing import Generator
-import glob
-import json
-import logging
 import os
-import pathlib
 import sys
 
 # Third Party
@@ -24,7 +19,6 @@ sys.path.append(parent_directory)
 from huggingface_hub import snapshot_download
 from safetensors.torch import save_file
 import mlx.core as mx
-import mlx.nn as nn
 import transformers
 
 # First Party

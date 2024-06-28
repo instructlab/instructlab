@@ -2,7 +2,7 @@
 
 # Standard
 from os import listdir
-from os.path import basename, dirname, exists, splitext
+from os.path import dirname, exists
 
 # Third Party
 from git import GitError, Repo

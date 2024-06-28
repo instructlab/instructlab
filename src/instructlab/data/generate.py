@@ -156,7 +156,6 @@ def generate(
     from instructlab.sdg.utils import GenerateException
 
     # First Party
-    from instructlab.model.backends.llama_cpp import ensure_server
 
     prompt_file_path = config.DEFAULT_PROMPT_FILE
     if ctx.obj is not None:

@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from typing import Optional
 import datetime
 import json
 import logging
@@ -11,8 +10,6 @@ import sys
 import time
 
 # Third Party
-from huggingface_hub import hf_hub_download
-from huggingface_hub import logging as hf_logging
 from openai import OpenAI
 from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import FormattedText
@@ -172,7 +169,6 @@ def chat(
     # pylint: disable=C0415
     # First Party
     from instructlab.model.backends.llama_cpp import (
-        ensure_server,
         is_temp_server_running,
     )
 

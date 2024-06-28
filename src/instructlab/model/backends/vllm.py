@@ -2,27 +2,19 @@
 
 # Standard
 from contextlib import redirect_stderr, redirect_stdout
-from time import sleep
-from typing import Optional, Set
 import asyncio
 import logging
 import multiprocessing
 import os
 import pathlib
-import signal
-import subprocess
-import sys
 
 # Third Party
-from uvicorn import Config
 import fastapi
 
 # First Party
-from instructlab import client
 
 # Local
-from ...client import ClientException, list_models
-from ...configuration import get_api_base, get_model_family
+from ...configuration import get_model_family
 from .backends import (
     API_ROOT_WELCOME_MESSAGE,
     BackendServer,
