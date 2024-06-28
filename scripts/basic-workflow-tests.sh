@@ -151,7 +151,7 @@ test_train() {
         TRAIN_ARGS+=("--gguf-model-path models/granite-7b-lab-Q4_K_M.gguf")
     fi
 
-    ilab train "${TRAIN_ARGS[@]}"
+    ilab model train "${TRAIN_ARGS[@]}"
 }
 
 test_convert() {

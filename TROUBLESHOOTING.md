@@ -74,7 +74,7 @@ The data generation step is executed via the `ilab data generate` command, and i
 
 ### Training
 
-The training step is run with the `ilab train` command. This step trains the model on the synthetic data that was generated. The output of this step is a set of adapter files with the general format `adapters-xxx.npz`, where `xxx` is a number. These adapter files represent a snapshot of the model's trained state and are periodically written to disk.
+The training step is run with the `ilab model train` command. This step trains the model on the synthetic data that was generated. The output of this step is a set of adapter files with the general format `adapters-xxx.npz`, where `xxx` is a number. These adapter files represent a snapshot of the model's trained state and are periodically written to disk.
 
 #### Ways to train the model better
 
@@ -82,7 +82,7 @@ The training step is run with the `ilab train` command. This step trains the mod
 
    >**NOTE:** Diminishing returns might kick in around 300 or so iterations. Increasing the number of iterations comes at the cost of having to wait longer for the training to complete.
 
-2. Pick an adapter file with the lowest validation loss. The training process generates and persists an adapter file periodically. The terminal output will tell you the validation loss that each adapter is associated with. The frequency of adapter file generation will be controlled by `--save-every` flag. For example, `ilab train --save-every 10` outputs an adapter file every `10th` iteration.
+2. Pick an adapter file with the lowest validation loss. The training process generates and persists an adapter file periodically. The terminal output will tell you the validation loss that each adapter is associated with. The frequency of adapter file generation will be controlled by `--save-every` flag. For example, `ilab model train --save-every 10` outputs an adapter file every `10th` iteration.
 
 ## Additional resources
 

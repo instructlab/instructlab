@@ -5,7 +5,7 @@ responses, and used `ilab data generate` to synthesize those prompt/response pai
 into a new data set.
 
 If you have a Mac Silicon (M1 or newer), we _strongly_ recommend using
-`ilab train` locally, and only proceed here if you hit issues.
+`ilab model train` locally, and only proceed here if you hit issues.
 
 Also, there is active work being done to support Linux, so if you have
 access to a Linux machine with GPUs, that might also be a better option.

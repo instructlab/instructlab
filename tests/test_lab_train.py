@@ -69,7 +69,7 @@ def mock_convert_llama_to_gguf(model, pad_vocab):
 
 @pytest.mark.usefixtures("mock_mlx_package")
 class TestLabTrain:
-    """Test collection for `ilab train` command."""
+    """Test collection for `ilab model train` command."""
 
     @patch("instructlab.utils.is_macos_with_m_chip", return_value=True)
     @patch("instructlab.mlx_explore.gguf_convert_to_mlx.load")

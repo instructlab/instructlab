@@ -1,7 +1,7 @@
 # Putting `ilab` in a Container AND making it go fast
 
 Containerization of `ilab` allows for portability and ease of setup. With this,
-users can now run lab on OpenShift to test the speed of `ilab train` and `generate`
+users can now run lab on OpenShift to test the speed of `ilab model train` and `generate`
 using dedicated GPUs. This guide shows you how to put the `ilab` CLI, all of its
 dependencies, and your GPU into a container for an isolated and easily reproducible
 experience.
