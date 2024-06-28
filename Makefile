@@ -218,3 +218,8 @@ actionlint: ## Lint GitHub Action workflows
 		exit 1 ; \
 	fi
 	$(CMD_PREFIX) actionlint -color
+
+.PHONY: cli-ref ## Generate docs/cli_reference.md
+cli-ref:
+	$(ECHO_PREFIX) printf "  %-12s docs/cli_reference.md\n" "[AUTOGEN]"
+	$(CMD_PREFIX) scripts/cli_reference.py > docs/cli_reference.md
