@@ -185,7 +185,7 @@ class _mmlu(BaseModel):
 
 
 class _mtbench(BaseModel):
-    judge_model_name: str
+    judge_model: str
     output_dir: str
     max_workers: int
 
@@ -202,8 +202,8 @@ class _evaluate(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
 
-    model_name: Optional[str] = None
-    base_model_name: str
+    model: Optional[str] = None
+    base_model: str
     branch: Optional[str] = None
     base_branch: Optional[str] = None
     mmlu: _mmlu
@@ -294,9 +294,9 @@ def get_default_config():
             ),
         ),
         evaluate=_evaluate(
-            base_model_name=DEFAULT_MODEL_REPO,
+            base_model=DEFAULT_MODEL_REPO,
             mt_bench=_mtbench(
-                judge_model_name=DEFAULT_JUDGE_MODEL_MT,
+                judge_model=DEFAULT_JUDGE_MODEL_MT,
                 output_dir=DEFAULT_EVAL_PATH,
                 max_workers=40,
             ),

@@ -76,14 +76,14 @@ serve:
   vllm:
     vllm_args: ''
 evaluate:
-  base_model_name: instructlab/granite-7b-lab
+  base_model: instructlab/granite-7b-lab
   mmlu:
     few_shots: 2
     batch_size: 5
   mmlu_branch:
     sdg_path: /path/to/sdg
   mt_bench:
-    judge_model_name: prometheus
+    judge_model: prometheus
     output_dir: /dir/to/output
     max_workers: 5
   mt_bench_branch:
@@ -129,14 +129,14 @@ serve:
   vllm:
     vllm_args: ''
 evaluate:
-  base_model_name: instructlab/granite-7b-lab
+  base_model: instructlab/granite-7b-lab
   mmlu:
     few_shots: 2
     batch_size: 5
   mmlu_branch:
     sdg_path: /path/to/sdg
   mt_bench:
-    judge_model_name: prometheus
+    judge_model: prometheus
     output_dir: /dir/to/output
     max_workers: 5
   mt_bench_branch:
@@ -167,14 +167,14 @@ serve:
   vllm:
     vllm_args: ''
 evaluate:
-  base_model_name: instructlab/granite-7b-lab
+  base_model: instructlab/granite-7b-lab
   mmlu:
     few_shots: 2
     batch_size: 5
   mmlu_branch:
     sdg_path: /path/to/sdg
   mt_bench:
-    judge_model_name: prometheus
+    judge_model: prometheus
     output_dir: /dir/to/output
     max_workers: 5
   mt_bench_branch:
