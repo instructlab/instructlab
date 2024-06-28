@@ -238,7 +238,7 @@ TORCH_DEVICE = TorchDeviceParam()
 )
 @click.option(
     "--legacy",
-    type=bool,
+    is_flag=True,
     default=False,
     help="if true, enables the legacy linux training codepath from release 0.17.0 and prior.",
 )
