@@ -57,6 +57,7 @@ def get_evaluator(
             required_args.append(branch)
             required_args.append(base_branch)
             required_args.append(base_model_path)
+            required_arg_names.append("taxonomy-path")
             required_arg_names.append("branch")
             required_arg_names.append("base-branch")
             required_arg_names.append("base-model-path")
@@ -78,6 +79,8 @@ def get_evaluator(
                     "judge_model",
                     taxonomy_path,
                     branch,
+                    output_dir,
+                    max_workers,
                 )
 
     # ensure knowledge benchmarks have proper arguments if selected
@@ -323,7 +326,10 @@ def evaluate(
             print("\n### TURN ONE:")
             print(round(turn_scores[0], 2))
             print("\n### TURN TWO:")
-            print(round(turn_scores[1], 2))
+            turn2_score = turn_scores[1]
+            if type(turn2_score) == float:
+                turn2_score = round(turn2_score, 2)
+            print(turn2_score)
         finally:
             proc.terminate()
 
@@ -337,6 +343,8 @@ def evaluate(
                 "base_judge_model",
                 taxonomy_path,
                 base_branch,
+                output_dir,
+                max_workers,
             ),
         ]
         branches = [branch, base_branch]
