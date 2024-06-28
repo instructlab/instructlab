@@ -2,6 +2,7 @@
 
 # Standard
 from time import sleep
+from types import FrameType
 from typing import Optional, Tuple
 import abc
 import logging
@@ -49,8 +50,7 @@ class ServerException(Exception):
 class UvicornServer(uvicorn.Server):
     """Override uvicorn.Server to handle SIGINT."""
 
-    def handle_exit(self, sig, frame):
-        # type: (int, Optional[FrameType]) -> None
+    def handle_exit(self, sig: int, frame: Optional[FrameType]) -> None:
         if not is_temp_server_running() or sig != signal.SIGINT:
             super().handle_exit(sig=sig, frame=frame)
 
