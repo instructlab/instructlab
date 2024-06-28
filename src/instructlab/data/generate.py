@@ -2,7 +2,6 @@
 
 # Standard
 import logging
-import pathlib
 
 # Third Party
 import click

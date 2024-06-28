@@ -28,7 +28,7 @@ class Server(BackendServer):
         port: int,
         vllm_args: str = "",
     ):
-        super().__init__(logger, api_base, model_path, host, port)
+        super().__init__(logger, model_path, api_base, host, port)
         self.api_base = api_base
         self.model_path = model_path
         self.vllm_args = vllm_args
@@ -49,10 +49,11 @@ class Server(BackendServer):
                 sleep(1)
         except KeyboardInterrupt:
             self.shutdown()
-            self.logger.info(f"vLLM server terminated by keyboard")
+            self.logger.info("vLLM server terminated by keyboard")
+        # pylint: disable=broad-exception-caught
         except BaseException:
             self.shutdown()
-            self.logger.exception(f"vLLM server terminated")
+            self.logger.exception("vLLM server terminated")
 
     def create_server_process(self, port: str) -> subprocess.Popen:
         server_process = run_vllm(
@@ -121,13 +122,13 @@ def run_vllm(
     vllm_cmd = [sys.executable, "-m", "vllm.entrypoints.openai.api_server"]
 
     if "--host" not in vllm_args:
-        vllm_args += f" --host {host}"
+        vllm_args = f"{vllm_args} --host {host}"
 
     if "--port" not in vllm_args:
-        vllm_args += f" --port {port}"
+        vllm_args = f"{vllm_args} --port {port}"
 
     if "--model" not in vllm_args:
-        vllm_args += f" --model {model_path.as_posix()}"
+        vllm_args = f"{vllm_args} --model {model_path.as_posix()}"
 
     vllm_cmd.extend(vllm_args.split())
 
@@ -137,6 +138,7 @@ def run_vllm(
             args=vllm_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
         )
     else:
+        # pylint: disable=consider-using-with
         vllm_process = subprocess.Popen(args=vllm_cmd)
 
     api_base = get_api_base(f"{host}:{port}")

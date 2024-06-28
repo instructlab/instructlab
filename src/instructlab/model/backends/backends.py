@@ -2,7 +2,7 @@
 
 # Standard
 from time import sleep
-from typing import Callable, Optional, Tuple
+from typing import Optional, Tuple
 import abc
 import logging
 import mmap
@@ -17,6 +17,7 @@ import sys
 
 # Third Party
 from uvicorn import Config
+import click
 import uvicorn
 
 # Local
@@ -64,7 +65,6 @@ class BackendServer(abc.ABC):
         api_base: str,
         host: str,
         port: int,
-        **kwargs,
     ) -> None:
         self.logger = logger
         self.model_path = model_path
@@ -210,7 +210,7 @@ def shutdown_process(process: subprocess.Popen, timeout: int) -> None:
     process.terminate()
     try:
         process.wait(timeout)
-    except subprocess.TimeoutExpired as exc:
+    except subprocess.TimeoutExpired:
         process.kill()
 
 
@@ -296,6 +296,7 @@ def ensure_server(
 
             if count >= vllm_startup_timeout:
                 shutdown_process(vllm_server_process, 20)
+                # pylint: disable=raise-missing-from
                 raise ServerException(
                     f"vLLM failed to start up in {vllm_startup_timeout} seconds"
                 )
@@ -362,32 +363,33 @@ def get_uvicorn_config(app: uvicorn.Server, host: str, port: int) -> Config:
     )
 
 
-def select_backend(logger: logging.Logger, serve_config: serve_config) -> BackendServer:
+def select_backend(logger: logging.Logger, cfg: serve_config) -> BackendServer:
     # Local
+    # pylint: disable=import-outside-toplevel
     from .llama_cpp import Server as llama_cpp_server
     from .vllm import Server as vllm_server
 
     backend_instance = None
-    model_path = pathlib.Path(serve_config.model_path)
-    backend_name = serve_config.backend
+    model_path = pathlib.Path(cfg.model_path)
+    backend_name = cfg.backend
     try:
         backend = get(logger, model_path, backend_name)
     except ValueError as e:
         click.secho(f"Failed to determine backend: {e}", fg="red")
         raise click.exceptions.Exit(1)
 
-    host, port = split_hostport(serve_config.host_port)
+    host, port = split_hostport(cfg.host_port)
 
     if backend == LLAMA_CPP:
         # Instantiate the llama server
         backend_instance = llama_cpp_server(
             logger=logger,
-            api_base=serve_config.api_base(),
+            api_base=cfg.api_base(),
             model_path=model_path,
-            gpu_layers=serve_config.llama_cpp.gpu_layers,
-            max_ctx_size=serve_config.llama_cpp.max_ctx_size,
+            gpu_layers=cfg.llama_cpp.gpu_layers,
+            max_ctx_size=cfg.llama_cpp.max_ctx_size,
             num_threads=None,  # exists only as a flag not a config
-            model_family=serve_config.llama_cpp.llm_family,
+            model_family=cfg.llama_cpp.llm_family,
             host=host,
             port=port,
         )
@@ -396,9 +398,9 @@ def select_backend(logger: logging.Logger, serve_config: serve_config) -> Backen
         # Instantiate the vllm server
         backend_instance = vllm_server(
             logger=logger,
-            api_base=serve_config.api_base(),
+            api_base=cfg.api_base(),
             model_path=model_path,
-            vllm_args=serve_config.vllm.vllm_args,
+            vllm_args=cfg.vllm.vllm_args,
             host=host,
             port=port,
         )
