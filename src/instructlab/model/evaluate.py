@@ -4,14 +4,11 @@ import subprocess
 import time
 
 # Third Party
-from click_didyoumean import DYMGroup
 from instructlab.eval.evaluator import Evaluator
 from instructlab.eval.mmlu import MMLUBranchEvaluator, MMLUEvaluator
 from instructlab.eval.mt_bench import MTBenchBranchEvaluator, MTBenchEvaluator
 import click
 
-# First Party
-from instructlab import configuration as config
 
 BENCHMARK_TO_CLASS_MAP = {
     "mmlu": MMLUEvaluator,
@@ -126,23 +123,34 @@ def get_evaluator(
                 )
 
 
-def sort_score(pairing):
-    key, score = pairing
+def sort_score(pairing: tuple) -> float:
+    """ helper func for display_branch_eval_summary
+        takes a tuple pairing and returns just the score
+    """
+    _, score = pairing
     return score
 
 
-def display_models(model_path, base_model_path):
+def display_models(model_path, base_model_path) -> None:
+    """ prints the base model path and model path with a header
+    """
     print("## BASE MODEL")
     print(base_model_path)
     display_model(model_path)
 
 
-def display_model(model_path):
+def display_model(model_path) -> None:
+    """ helper func for display_models
+        prints the given model path with a header
+    """
     print("\n## MODEL")
     print(model_path)
 
 
-def display_branch_eval_summary(improvements, regressions, no_changes, new=None):
+def display_branch_eval_summary(improvements: list, regressions: list, no_changes: list, new: list = None):
+    """ takes in results lists from mt_bench_branch benchmark evaluation
+        prints out diff between the branches to the user
+    """
     if len(improvements) > 0:
         improvements.sort(key=sort_score, reverse=True)
         print("\n### IMPROVEMENTS:")
@@ -168,7 +176,10 @@ def display_branch_eval_summary(improvements, regressions, no_changes, new=None)
             print(f"{index+1}. {task}")
 
 
-def qa_pairs_to_qna_to_avg_scores(qa_pairs):
+def qa_pairs_to_qna_to_avg_scores(qa_pairs: list[dict]) -> dict:
+    """ takes in a list of qa_pair dicts
+        returns a dict of average scores per qna file
+    """
     qna_to_scores = {}
     for qa_pair in qa_pairs:
         qna_file = qa_pair["qna_file"]
@@ -279,7 +290,7 @@ def evaluate(
     )
 
     if benchmark == "mt_bench":
-        # TODO: Replace temp Popen hack with serving library calls.  Current library doesn't support server-model-name.
+        # TODO: Replace temp Popen hack with serving library calls. Current library doesn't support server-model-name.
         print("Generating answers...")
         try:
             proc = subprocess.Popen(
@@ -335,7 +346,6 @@ def evaluate(
 
     elif benchmark == "mt_bench_branch":
         # TODO: Replace temp Popen hack with serving library calls.  Current library doesn't support server-model-name.
-
         evaluators = [
             evaluator,
             MTBenchBranchEvaluator(
@@ -424,6 +434,7 @@ def evaluate(
             else:
                 new_qnas.append((qna))
 
+        # display summary of evaluation before exiting
         display_branch_eval_summary(improvements, regressions, no_changes, new_qnas)
 
     elif benchmark == "mmlu":
@@ -489,4 +500,5 @@ def evaluate(
             else:
                 no_changes.append(task)
 
+        # display summary of evaluation before exiting
         display_branch_eval_summary(improvements, regressions, no_changes)
