@@ -277,7 +277,7 @@ def ensure_server(
 
         if backend == VLLM:
             # TODO: resolve how the hostname is getting passed around the class and this function
-            vllm_server_process = server_process_func(port=port)
+            vllm_server_process = server_process_func(port)
             count = 0
             # TODO should this be configurable?
             vllm_startup_timeout = 300
@@ -306,7 +306,7 @@ def ensure_server(
         elif backend == LLAMA_CPP:
             # server_process_func is a function! we invoke it here and pass the port that was determined
             # in this ensure_server() function
-            llama_cpp_server_process = server_process_func(port=port)
+            llama_cpp_server_process = server_process_func(port)
             llama_cpp_server_process.start()
 
             # in case the server takes some time to fail we wait a bit
