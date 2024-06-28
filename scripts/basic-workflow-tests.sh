@@ -118,16 +118,16 @@ test_taxonomy() {
 
     step Update taxonomy with sample qna additions
     if [ "$TESTNUM" -eq 1 ]; then
-        mkdir -p taxonomy/knowledge/sports/overview/e2e-softball
-        cp "$SCRIPTDIR"/test-data/e2e-qna-knowledge.yaml taxonomy/knowledge/sports/overview/e2e-softball/qna.yaml
+        mkdir -p taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings
+        cp "$SCRIPTDIR"/test-data/e2e-qna-freeform-skill.yaml taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings/qna.yaml
     elif [ "$TESTNUM" -eq 2 ]; then
-        rm -rf taxonomy/knowledge/sports/overview/e2e-softball
+        rf -rf taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings
         mkdir -p taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no
         cp "$SCRIPTDIR"/test-data/e2e-qna-grounded-skill.yaml taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no/qna.yaml
     elif [ "$TESTNUM" -eq 3 ]; then
         rm -rf taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no
-        mkdir -p taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings
-        cp "$SCRIPTDIR"/test-data/e2e-qna-freeform-skill.yaml taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings/qna.yaml
+        mkdir -p taxonomy/knowledge/sports/overview/e2e-softball
+        cp "$SCRIPTDIR"/test-data/e2e-qna-knowledge.yaml taxonomy/knowledge/sports/overview/e2e-softball/qna.yaml
     fi
 
     step Verification
