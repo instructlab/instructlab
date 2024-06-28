@@ -90,7 +90,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 - Python 3.10 or Python 3.11
 - Approximately 60GB disk space (entire process)
 
-> **NOTE:** PyTorch 2.2.1 does not support `torch.compile` with Python 3.12. On Fedora 39+, install `python3.11-devel` and create the virtual env with `python3.11` if you wish to use PyTorch's JIT compiler.
+> **NOTE:** Python 3.12 is currently not supported, because some dependencies don't work on Python 3.12, yet.
 <!-- -->
 > **NOTE:** When installing the `ilab` CLI on macOS, you may have to run the `xcode select --install` command, installing the required packages previously listed.
 
@@ -98,16 +98,10 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 ### 🧰 Installing `ilab`
 
-1. When installing on Fedora Linux, install C++, Python 3.10+, and other necessary tools by running the following command:
+1. When installing on Fedora Linux, install C++, Python 3.10 or 3.11, and other necessary tools by running the following command:
 
    ```shell
-   sudo dnf install g++ gcc make pip python3 python3-devel python3-GitPython
-   ```
-
-   Optional: If `g++` is not found, try `gcc-c++` by running the following command:
-
-   ```shell
-   sudo dnf install gcc-c++ gcc make pip python3 python3-devel python3-GitPython
+   sudo dnf install gcc gcc-c++ make git python3.11 python3.11-devel
    ```
 
    If you are running on macOS, this installation is not necessary and you can begin your process with the following step.
@@ -135,7 +129,9 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       pip cache remove llama_cpp_python
-      pip install instructlab --extra-index-url=https://download.pytorch.org/whl/cpu
+      pip install instructlab \
+         --extra-index-url=https://download.pytorch.org/whl/cpu \
+         -C cmake.args="-DLLAMA_NATIVE=off"
       ```
 
       > **NOTE**: *Additional Build Argument for Intel Macs*
@@ -158,7 +154,8 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
          -C cmake.args="-DAMDGPU_TARGETS=all" \
          -C cmake.args="-DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang" \
          -C cmake.args="-DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++" \
-         -C cmake.args="-DCMAKE_PREFIX_PATH=/opt/rocm"
+         -C cmake.args="-DCMAKE_PREFIX_PATH=/opt/rocm" \
+         -C cmake.args="-DLLAMA_NATIVE=off"
       ```
 
       On Fedora 40+, use `-DCMAKE_C_COMPILER=clang-17` and `-DCMAKE_CXX_COMPILER=clang++-17`.
@@ -180,7 +177,9 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       pip cache remove llama_cpp_python
-      pip install instructlab -C cmake.args="-DLLAMA_CUDA=on"
+      pip install instructlab \
+         -C cmake.args="-DLLAMA_CUDA=on" \
+         -C cmake.args="-DLLAMA_NATIVE=off"
    ```
 
 4. From your `venv` environment, verify `ilab` is installed correctly, by running the `ilab` command.
