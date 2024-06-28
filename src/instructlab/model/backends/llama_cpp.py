@@ -54,7 +54,7 @@ class Server(BackendServer):
         try:
             server(
                 server_logger=self.logger,
-                model_path=self.model_path.as_posix(),
+                model_path=self.model_path,
                 gpu_layers=self.gpu_layers,
                 max_ctx_size=self.max_ctx_size,
                 model_family=self.model_family,
@@ -77,7 +77,7 @@ class Server(BackendServer):
             target=server,
             kwargs={
                 "server_logger": server_logger,
-                "model_path": self.model_path.as_posix(),  # llamacpp expects a string not a Path
+                "model_path": self.model_path,
                 "gpu_layers": self.gpu_layers,
                 "max_ctx_size": self.max_ctx_size,
                 "model_family": self.model_family,
@@ -137,7 +137,7 @@ def server(
     settings = Settings(
         host=host,
         port=port,
-        model=model_path,
+        model=model_path.as_posix(),
         n_ctx=max_ctx_size,
         n_gpu_layers=gpu_layers,
         verbose=server_logger.isEnabledFor(logging.DEBUG),
