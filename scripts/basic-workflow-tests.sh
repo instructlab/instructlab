@@ -102,7 +102,7 @@ test_chat() {
     if [ "$GRANITE" -eq 1 ]; then
         CHAT_ARGS+=("-m models/granite-7b-lab-Q4_K_M.gguf")
     fi
-    printf 'Say "Hello"\n' | ilab chat "${CHAT_ARGS[@]}" | grep --color 'Hello'
+    printf 'Say "Hello"\n' | ilab model chat "${CHAT_ARGS[@]}" | grep --color 'Hello'
 }
 
 test_taxonomy() {

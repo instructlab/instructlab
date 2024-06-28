@@ -21,7 +21,7 @@ done
 PID_SERVE=
 PID_CHAT=
 
-chat_shot="ilab chat -qq"
+chat_shot="ilab model chat -qq"
 
 cleanup() {
     set +e
@@ -124,13 +124,13 @@ test_ctx_size(){
     PID_SERVE=$!
 
     # Make sure the server has time to open the port
-    # if "ilab chat" tests it before its open then it will run its own server without --max-ctx-size 1
+    # if "ilab model chat" tests it before its open then it will run its own server without --max-ctx-size 1
     wait_for_server
 
-    # SHOULD SUCCEED: ilab chat will trim the SYS_PROMPT then take the second message
+    # SHOULD SUCCEED: ilab model chat will trim the SYS_PROMPT then take the second message
     ${chat_shot} "Hello"
 
-    # SHOULD FAIL: ilab chat will trim the SYS_PROMPT AND the second message, then raise an error
+    # SHOULD FAIL: ilab model chat will trim the SYS_PROMPT AND the second message, then raise an error
     # The errors from failures will be written into the serve log and chat log files
     ${chat_shot} "hello, I am a ci message that should not finish because I am too long for the context window, tell me about your day please?
     How many tokens could you take today. Could you tell me about the time you could only take twenty five tokens" &> "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" &
@@ -168,7 +168,7 @@ test_loading_session_history(){
     # chat with the server
     expect -c '
         set timeout 120
-        spawn ilab chat
+        spawn ilab model chat
         expect ">>>"
         send "this is a test! what are you? do not exceed ten words in your reply.\r"
         send "/s test_session_history\r"
@@ -188,7 +188,7 @@ test_loading_session_history(){
     fi
 
     expect -c '
-        spawn ilab chat -s test_session_history
+        spawn ilab model chat -s test_session_history
         expect {
             "this is a test! what are you? do not exceed ten words in your reply." { exit 0 }
             timeout { exit 1 }
@@ -239,7 +239,7 @@ EOF
 test_temp_server(){
     expect -c '
         set timeout 120
-        spawn ilab chat
+        spawn ilab model chat
         expect {
             "Starting a temporary server at" { exit 0 }
             timeout { exit 1 }
@@ -250,7 +250,7 @@ test_temp_server(){
 test_temp_server_sigint(){
     expect -c '
         set timeout 120
-        spawn ilab chat
+        spawn ilab model chat
         expect "Starting a temporary server at"
         send "hello!\r"
         sleep 5
@@ -268,7 +268,7 @@ test_temp_server_sigint(){
 test_no_chat_logs(){
     expect -c '
         set timeout 120
-        spawn ilab chat
+        spawn ilab model chat
         expect "Starting a temporary server at"
         send "hello!\r"
         sleep 1
@@ -283,7 +283,7 @@ test_temp_server_ignore_internal_messages(){
     # shellcheck disable=SC2016
     expect -c '
         set timeout 60
-        spawn ilab chat
+        spawn ilab model chat
         expect "Starting a temporary server at"
         send "hello!\r"
         sleep 5
@@ -297,7 +297,7 @@ test_temp_server_ignore_internal_messages(){
             default { set exp_result 0 }
         }
         if { $exp_result != 0 } {
-            puts stderr "Error: ilab chat command failed"
+            puts stderr "Error: ilab model chat command failed"
             exit 1
         }
     '
@@ -343,7 +343,7 @@ test_model_print(){
     # validate that we print the model from the server since it is different from the config
     # shellcheck disable=SC2154,SC1001,SC2016
     expect -c '
-        spawn ilab chat
+        spawn ilab model chat
         expect {
             -re "Welcome to InstructLab Chat w/ \\\u001b\\\[1mMODELS/FOO\\.GGUF" { exit 0 }
             eof { catch wait result; exit [lindex $result 3] }
@@ -354,7 +354,7 @@ test_model_print(){
     # validate that we fail on invalid model
     expect -c '
         set timeout 30
-        spawn ilab chat -m bar
+        spawn ilab model chat -m bar
         expect {
            "Executing chat failed with: Model bar is not served by the server. These are the served models: ['models/foo.gguf']" { exit 0 }
         }
@@ -364,7 +364,7 @@ test_model_print(){
     # by the server since it is different from the config.
     # shellcheck disable=SC2016
     expect -c '
-        spawn ilab chat
+        spawn ilab model chat
         expect {
             -re "Welcome to InstructLab Chat w/ \\\u001b\\\[1mMODELS/FOO\\.GGUF" { exit 0 }
             eof { catch wait result; exit [lindex $result 3] }
