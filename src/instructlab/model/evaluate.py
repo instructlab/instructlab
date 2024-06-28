@@ -16,6 +16,9 @@ BENCHMARK_TO_CLASS_MAP = {
     "mt_bench_branch": MTBenchBranchEvaluator,
 }
 
+# TODO: Remove after proper vLLM integration
+# pylint: disable=consider-using-with
+
 
 def get_evaluator(
     model,
@@ -45,8 +48,8 @@ def get_evaluator(
             max_workers,
         ]
         required_arg_names = [
-            "model-path",
-            "judge-model-name",
+            "model",
+            "judge-model",
         ]
         if benchmark == "mt_bench_branch":
             required_args.append(taxonomy_path)
@@ -56,7 +59,7 @@ def get_evaluator(
             required_arg_names.append("taxonomy-path")
             required_arg_names.append("branch")
             required_arg_names.append("base-branch")
-            required_arg_names.append("base-model-path")
+            required_arg_names.append("base-model")
         if None in required_args:
             click.secho(
                 f"Benchmark {benchmark} requires the following args to be set: {required_arg_names}",
@@ -78,12 +81,12 @@ def get_evaluator(
     # ensure knowledge benchmarks have proper arguments if selected
     if benchmark in ["mmlu", "mmlu_branch"]:
         required_args = [model, few_shots, batch_size]
-        required_arg_names = ["model-path"]
+        required_arg_names = ["model"]
         if benchmark == "mmlu_branch":
             required_args.append(sdg_path)
             required_args.append(base_model)
             required_arg_names.append("sdg-path")
-            required_arg_names.append("base-model-path")
+            required_arg_names.append("base-model")
         if None in required_args:
             click.secho(
                 f"Benchmark {benchmark} requires the following args to be set: {required_arg_names}",
@@ -139,7 +142,7 @@ def display_model(model) -> None:
 
 
 def display_branch_eval_summary(
-    improvements: list, regressions: list, no_changes: list, new: list = None
+    improvements: list, regressions: list, no_changes: list, new=None
 ):
     """takes in results lists from mt_bench_branch benchmark evaluation
     prints out diff between the branches to the user
@@ -252,7 +255,7 @@ def qa_pairs_to_qna_to_avg_scores(qa_pairs: list[dict]) -> dict:
 )
 @click.pass_context
 def evaluate(
-    ctx,
+    ctx,  # pylint: disable=unused-argument
     model,
     base_model,
     benchmark,
@@ -285,6 +288,7 @@ def evaluate(
     if benchmark == "mt_bench":
         # TODO: Replace temp Popen hack with serving library calls. Current library doesn't support server-model-name.
         print("Generating answers...")
+        proc = None
         try:
             proc = subprocess.Popen(
                 [
@@ -302,9 +306,11 @@ def evaluate(
             time.sleep(60)
             evaluator.gen_answers("http://localhost:8000/v1")
         finally:
-            proc.terminate()
+            if proc:
+                proc.terminate()
 
         print("Evaluating answers...")
+        proc = None
         try:
             proc = subprocess.Popen(
                 [
@@ -335,7 +341,8 @@ def evaluate(
                 turn2_score = round(turn2_score, 2)
             print(turn2_score)
         finally:
-            proc.terminate()
+            if proc:
+                proc.terminate()
 
     elif benchmark == "mt_bench_branch":
         # TODO: Replace temp Popen hack with serving library calls.  Current library doesn't support server-model-name.
