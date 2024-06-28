@@ -150,8 +150,7 @@ class _serve_llama_cpp(BaseModel):
 
     gpu_layers: int = -1
     max_ctx_size: PositiveInt = 4096
-    # TODO rename this. It can't be model_family
-    llm_model_family: str = ""
+    llm_family: str = ""
 
 
 class _serve(BaseModel):
@@ -215,7 +214,7 @@ def get_default_config():
             llama_cpp=_serve_llama_cpp(
                 gpu_layers=-1,
                 max_ctx_size=4096,
-                llm_model_family="",
+                llm_family="",
             ),
             vllm=_serve_vllm(
                 vllm_args="",

@@ -44,7 +44,7 @@ class TestConfig:
         assert cfg.serve.llama_cpp is not None
         assert cfg.serve.llama_cpp.gpu_layers == -1
         assert cfg.serve.llama_cpp.max_ctx_size == 4096
-        assert cfg.serve.llama_cpp.llm_model_family == ""
+        assert cfg.serve.llama_cpp.llm_family == ""
         assert cfg.serve.vllm is not None
         assert cfg.serve.vllm.vllm_args == ""
         assert cfg.serve.host_port == "127.0.0.1:8000"
@@ -70,7 +70,7 @@ serve:
   llama_cpp:
     gpu_layers: -1
     max_ctx_size: 4096
-    llm_model_family: ''
+    llm_family: ''
   vllm:
     vllm_args: ''
 """
@@ -109,7 +109,7 @@ serve:
   llama_cpp:
     gpu_layers: -1
     max_ctx_size: 4096
-    llm_model_family: ''
+    llm_family: ''
   model_path: models/merlinite-7b-lab-Q4_K_M.gguf
   vllm:
     vllm_args: ''
@@ -135,7 +135,7 @@ serve:
   llama_cpp:
     gpu_layers: -1
     max_ctx_size: 4096
-    llm_model_family: ''
+    llm_family: ''
   vllm:
     vllm_args: ''
 unexpected:

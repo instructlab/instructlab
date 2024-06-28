@@ -387,7 +387,7 @@ def select_backend(logger: logging.Logger, serve_config: serve_config) -> Backen
             gpu_layers=serve_config.llama_cpp.gpu_layers,
             max_ctx_size=serve_config.llama_cpp.max_ctx_size,
             num_threads=None,  # exists only as a flag not a config
-            model_family=serve_config.llama_cpp.llm_model_family,
+            model_family=serve_config.llama_cpp.llm_family,
             host=host,
             port=port,
         )
