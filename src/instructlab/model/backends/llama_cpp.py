@@ -163,13 +163,12 @@ def server(
                 eos_token = "</s>"
                 bos_token = "<s>"
     try:
-        llama_app._llama_proxy._current_model.chat_handler = (
-            llama_chat_format.Jinja2ChatFormatter(
+        for proxy in llama_app.get_llama_proxy():
+            proxy().chat_handler = llama_chat_format.Jinja2ChatFormatter(
                 template=template,
                 eos_token=eos_token,
                 bos_token=bos_token,
             ).to_chat_handler()
-        )
     # pylint: disable=broad-exception-caught
     except Exception as exc:
         if queue:
