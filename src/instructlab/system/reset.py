@@ -14,11 +14,10 @@ def delete_storage_dirs():
     shutil.rmtree(ILAB_CONFIG_HOME, ignore_errors=False)
     print(f"removing {ILAB_DATA_HOME}...")
     shutil.rmtree(ILAB_DATA_HOME)
-    print("done ✅")
 
 
 @click.command()
-@click.argument(
+@click.option(
     "--skip-verify",
     default=False,
     help="Whether or not to skip verification of data deletion.",
@@ -29,18 +28,19 @@ def reset(skip_verify: bool):
     if not skip_verify:
         alphabet = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789")
         random.shuffle(alphabet)
-        sequence = alphabet[:5]
+        sequence = "".join(alphabet[:5])
         click.echo(
             click.style("WARNING:", bold=True)
-            + "`ilab system reset` will purge all of your local `ilab` data. To proceed, please confirm by repeating the following string:"
+            + " `ilab system reset` will purge all of your local `ilab` data. To proceed, please confirm by repeating the following string:"
         )
         click.echo("> " + click.style(f"{sequence}", bold=True) + "\n")
-        user_entry: str = click.prompt("> ", type=click.STRING)
-        if user_entry.capitalize() != sequence:
+        user_entry: str = click.prompt("> ", type=click.STRING).upper()
+        if user_entry != sequence:
             click.secho(
-                f"Input sequence {user_entry.capitalize()} did not match {sequence}"
+                f"Input sequence {user_entry} did not match {sequence}, aborting."
             )
             return
+        print()  # add a newline
 
     # recursively removes the data at the config and share directories
     delete_storage_dirs()
