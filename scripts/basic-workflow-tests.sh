@@ -156,7 +156,7 @@ test_train() {
 
 test_convert() {
     task Converting the trained model and serving it
-    ilab convert
+    ilab model convert
 }
 
 test_exec() {
@@ -193,7 +193,7 @@ test_exec() {
     # The rest is TODO when we can make it work on our CI runner
 
     # When you run this --
-    #   `ilab convert` is only implemented for macOS with M-series chips for now
+    #   `ilab model convert` is only implemented for macOS with M-series chips for now
     #test_convert
 
     # TODO: chat with the new model
