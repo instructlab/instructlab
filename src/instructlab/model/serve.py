@@ -94,6 +94,7 @@ def serve(
 
     logger.info(f"Serving model '{model_path}' with {backend}")
 
+    backend_instance: backends.BackendServer
     if backend == backends.LLAMA_CPP:
         # Instantiate the llama server
         if gpu_layers is None:
