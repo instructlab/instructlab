@@ -22,13 +22,6 @@ logger = logging.getLogger(__name__)
     help="Name of the model used during generation.",
 )
 @click.option(
-    "--num-cpus",
-    type=click.INT,
-    help="Number of processes to use.",
-    default=config.DEFAULT_NUM_CPUS,
-    show_default=True,
-)
-@click.option(
     "--chunk-word-count",
     type=click.INT,
     help="Number of words to chunk the document",
@@ -124,7 +117,6 @@ logger = logging.getLogger(__name__)
 def generate(
     ctx,
     model,
-    num_cpus,
     num_instructions,
     taxonomy_path,
     taxonomy_base,
@@ -230,7 +222,6 @@ def generate(
             api_key=api_key,
             model_family=model_family,
             model_name=model,
-            num_cpus=num_cpus,
             num_instructions_to_generate=num_instructions,
             taxonomy=taxonomy_path,
             taxonomy_base=taxonomy_base,
