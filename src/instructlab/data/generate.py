@@ -136,11 +136,11 @@ def generate(
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=C0415
     # Third Party
-    from instructlab.sdg.generate_data import generate_data
     from instructlab.sdg.utils import GenerateException
 
     # First Party
     from instructlab.model.backends.llama_cpp import ensure_server
+    from .generate_data import generate_data
 
     backend_instance = None
     if endpoint_url:
@@ -213,7 +213,6 @@ def generate(
             f"Generating synthetic data using '{model}' model, taxonomy:'{taxonomy_path}' against {api_base} server"
         )
         generate_data(
-            logger=logging.getLogger("instructlab.sdg"),  # TODO: remove
             api_base=api_base,
             api_key=api_key,
             model_family=model_family,
