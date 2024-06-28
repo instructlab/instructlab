@@ -9,7 +9,6 @@ from instructlab.eval.mmlu import MMLUBranchEvaluator, MMLUEvaluator
 from instructlab.eval.mt_bench import MTBenchBranchEvaluator, MTBenchEvaluator
 import click
 
-
 BENCHMARK_TO_CLASS_MAP = {
     "mmlu": MMLUEvaluator,
     "mmlu_branch": MMLUBranchEvaluator,
@@ -64,21 +63,17 @@ def get_evaluator(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
-        else:
-            evaluator_class = BENCHMARK_TO_CLASS_MAP[benchmark]
-            if benchmark == "mt_bench":
-                return evaluator_class(
-                    "test_model", "judge_model", output_dir, max_workers
-                )
-            else:
-                return evaluator_class(
-                    "test_model",
-                    "judge_model",
-                    taxonomy_path,
-                    branch,
-                    output_dir,
-                    max_workers,
-                )
+        evaluator_class = BENCHMARK_TO_CLASS_MAP[benchmark]
+        if benchmark == "mt_bench":
+            return evaluator_class("test_model", "judge_model", output_dir, max_workers)
+        return evaluator_class(
+            "test_model",
+            "judge_model",
+            taxonomy_path,
+            branch,
+            output_dir,
+            max_workers,
+        )
 
     # ensure knowledge benchmarks have proper arguments if selected
     if benchmark in ["mmlu", "mmlu_branch"]:
@@ -95,61 +90,59 @@ def get_evaluator(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
-        else:
-            evaluator_class = BENCHMARK_TO_CLASS_MAP[benchmark]
-
-            if benchmark == "mmlu":
-                min_tasks = os.environ.get("INSTRUCTLAB_EVAL_MMLU_MIN_TASKS")
-                if min_tasks is not None:
-                    tasks = ["mmlu_abstract_algebra", "mmlu_anatomy", "mmlu_astronomy"]
-                    evaluator = evaluator_class(
-                        model,
-                        tasks=tasks,
-                        few_shots=few_shots,
-                        batch_size=batch_size,
-                    )
-                else:
-                    evaluator = evaluator_class(
-                        model, few_shots=few_shots, batch_size=batch_size
-                    )
-                return evaluator
-            else:
-                return evaluator_class(
+        evaluator_class = BENCHMARK_TO_CLASS_MAP[benchmark]
+        if benchmark == "mmlu":
+            min_tasks = os.environ.get("INSTRUCTLAB_EVAL_MMLU_MIN_TASKS")
+            if min_tasks is not None:
+                tasks = ["mmlu_abstract_algebra", "mmlu_anatomy", "mmlu_astronomy"]
+                evaluator = evaluator_class(
                     model,
-                    sdg_path,
-                    ["mmlu_pr"],
+                    tasks=tasks,
                     few_shots=few_shots,
                     batch_size=batch_size,
                 )
+            else:
+                evaluator = evaluator_class(
+                    model, few_shots=few_shots, batch_size=batch_size
+                )
+            return evaluator
+        return evaluator_class(
+            model,
+            sdg_path,
+            ["mmlu_pr"],
+            few_shots=few_shots,
+            batch_size=batch_size,
+        )
 
 
 def sort_score(pairing: tuple) -> float:
-    """ helper func for display_branch_eval_summary
-        takes a tuple pairing and returns just the score
+    """helper func for display_branch_eval_summary
+    takes a tuple pairing and returns just the score
     """
     _, score = pairing
     return score
 
 
 def display_models(model, base_model) -> None:
-    """ prints the base_model and model with a header
-    """
+    """prints the base_model and model with a header"""
     print("## BASE MODEL")
     print(base_model)
     display_model(model)
 
 
 def display_model(model) -> None:
-    """ helper func for display_models
-        prints the given model with a header
+    """helper func for display_models
+    prints the given model with a header
     """
     print("\n## MODEL")
     print(model)
 
 
-def display_branch_eval_summary(improvements: list, regressions: list, no_changes: list, new: list = None):
-    """ takes in results lists from mt_bench_branch benchmark evaluation
-        prints out diff between the branches to the user
+def display_branch_eval_summary(
+    improvements: list, regressions: list, no_changes: list, new: list = None
+):
+    """takes in results lists from mt_bench_branch benchmark evaluation
+    prints out diff between the branches to the user
     """
     if len(improvements) > 0:
         improvements.sort(key=sort_score, reverse=True)
@@ -173,12 +166,12 @@ def display_branch_eval_summary(improvements: list, regressions: list, no_change
     if new is not None and len(new) > 0:
         print("\n### NEW:")
         for index, qna in enumerate(new):
-            print(f"{index+1}. {task}")
+            print(f"{index+1}. {qna}")
 
 
 def qa_pairs_to_qna_to_avg_scores(qa_pairs: list[dict]) -> dict:
-    """ takes in a list of qa_pair dicts
-        returns a dict of average scores per qna file
+    """takes in a list of qa_pair dicts
+    returns a dict of average scores per qna file
     """
     qna_to_scores = {}
     for qa_pair in qa_pairs:
@@ -338,7 +331,7 @@ def evaluate(
             print(round(turn_scores[0], 2))
             print("\n### TURN TWO:")
             turn2_score = turn_scores[1]
-            if type(turn2_score) == float:
+            if isinstance(turn2_score, float):
                 turn2_score = round(turn2_score, 2)
             print(turn2_score)
         finally:
