@@ -22,13 +22,6 @@ logger = logging.getLogger(__name__)
     help="Name of the model used during generation.",
 )
 @click.option(
-    "--num-cpus",
-    type=click.INT,
-    help="Number of processes to use.",
-    default=config.DEFAULT_NUM_CPUS,
-    show_default=True,
-)
-@click.option(
     "--chunk-word-count",
     type=click.INT,
     help="Number of words to chunk the document",
@@ -60,13 +53,6 @@ logger = logging.getLogger(__name__)
     type=click.Path(),
     default=config.DEFAULT_GENERATED_FILES_OUTPUT_DIR,
     help="Path to output generated files.",
-)
-@click.option(
-    "--rouge-threshold",
-    type=click.FLOAT,
-    default=0.9,
-    show_default=True,
-    help="Threshold of (max) Rouge score to keep samples; 1.0 means accept all samples.",
 )
 @click.option(
     "--quiet",
@@ -131,12 +117,10 @@ logger = logging.getLogger(__name__)
 def generate(
     ctx,
     model,
-    num_cpus,
     num_instructions,
     taxonomy_path,
     taxonomy_base,
     output_dir,
-    rouge_threshold,
     quiet,
     endpoint_url,
     api_key,
@@ -152,15 +136,11 @@ def generate(
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=C0415
     # Third Party
-    from instructlab.sdg.generate_data import generate_data
     from instructlab.sdg.utils import GenerateException
 
     # First Party
     from instructlab.model.backends.llama_cpp import ensure_server
-
-    prompt_file_path = config.DEFAULT_PROMPT_FILE
-    if ctx.obj is not None:
-        prompt_file_path = ctx.obj.config.generate.prompt_file
+    from .generate_data import generate_data
 
     backend_instance = None
     if endpoint_url:
@@ -232,18 +212,14 @@ def generate(
             f"Generating synthetic data using '{model}' model, taxonomy:'{taxonomy_path}' against {api_base} server"
         )
         generate_data(
-            logger=logging.getLogger("instructlab.sdg"),  # TODO: remove
             api_base=api_base,
             api_key=api_key,
             model_family=model_family,
             model_name=model,
-            num_cpus=num_cpus,
             num_instructions_to_generate=num_instructions,
             taxonomy=taxonomy_path,
             taxonomy_base=taxonomy_base,
             output_dir=output_dir,
-            prompt_file_path=prompt_file_path,
-            rouge_threshold=rouge_threshold,
             console_output=not quiet,
             yaml_rules=yaml_rules,
             chunk_word_count=chunk_word_count,

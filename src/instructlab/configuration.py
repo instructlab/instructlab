@@ -41,10 +41,8 @@ DEFAULT_TAXONOMY_PATH = "taxonomy"
 DEFAULT_TAXONOMY_BASE = "origin/main"
 MAX_CONTEXT_SIZE = 4096
 # TODO: these constants should be removed, they should not leak out
-DEFAULT_NUM_CPUS = 10
 DEFAULT_CHUNK_WORD_COUNT = 1000
 DEFAULT_NUM_INSTRUCTIONS = 100
-DEFAULT_PROMPT_FILE = "prompt.txt"
 DEFAULT_GENERATED_FILES_OUTPUT_DIR = "generated"
 DEFAULT_CONNECTION_TIMEOUT = httpx.Timeout(timeout=30.0)
 # use spawn start method, fork is not thread-safe
@@ -130,11 +128,9 @@ class _generate(BaseModel):
     taxonomy_base: StrictStr
 
     # additional fields with defaults
-    num_cpus: PositiveInt = DEFAULT_NUM_CPUS
     chunk_word_count: PositiveInt = DEFAULT_CHUNK_WORD_COUNT
     num_instructions: PositiveInt = DEFAULT_NUM_INSTRUCTIONS
     output_dir: StrictStr = DEFAULT_GENERATED_FILES_OUTPUT_DIR
-    prompt_file: StrictStr = DEFAULT_PROMPT_FILE
     seed_file: StrictStr = "seed_tasks.json"
 
 
