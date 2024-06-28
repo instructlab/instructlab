@@ -42,38 +42,27 @@ class STORAGE_DIR_NAMES:
     )
 
 
-# ILAB_CONFIG_HOME = os.path.join(USER_HOME_DIR, ".config", ".ilab")
-ILAB_CONFIG_HOME = None
-ILAB_DATA_HOME = None
-
-# default to "$HOME/.config" per the XDG standards
-if not os.getenv("XDG_CONFIG_HOME"):
-    if not os.getenv("HOME"):
+def get_home_dir(*subdir: str) -> str:
+    home = os.getenv("HOME")
+    if not home:
         raise RuntimeError(
             "The HOME directory does not exist. Please make sure it's set and run this again."
         )
-    ILAB_CONFIG_HOME = os.path.expandvars(
-        os.path.join("${HOME}", ".config", STORAGE_DIR_NAMES.ILAB)
-    )
-else:
-    ILAB_CONFIG_HOME = os.path.expandvars(
-        os.path.join("${XDG_CONFIG_HOME}", STORAGE_DIR_NAMES.ILAB)
-    )
+    return os.path.join(home, *subdir)
 
 
-# figure out what to use for the data directory
-if not os.getenv("XDG_DATA_HOME"):
-    if not os.getenv("HOME"):
-        raise RuntimeError(
-            "The HOME directory does not exist. Please make sure it's set and run this again."
-        )
-    ILAB_DATA_HOME = os.path.expandvars(
-        os.path.join("${HOME}", ".local", "share", STORAGE_DIR_NAMES.ILAB)
-    )
-else:
-    ILAB_DATA_HOME = os.path.expandvars(
-        os.path.join("${XDG_DATA_HOME}", STORAGE_DIR_NAMES.ILAB)
-    )
+def get_home_env_path(env: str, suffix: str, *home_paths: str) -> str:
+    """Neatly formats the environment paths for the user home & storage directories"""
+    path = os.getenv(env) or get_home_dir(*home_paths)
+    return os.path.join(path, suffix)
+
+
+ILAB_CONFIG_HOME = get_home_env_path(
+    "XDG_CONFIG_HOME", STORAGE_DIR_NAMES.ILAB, ".config"
+)
+ILAB_DATA_HOME = get_home_env_path(
+    "XDG_DATA_HOME", STORAGE_DIR_NAMES.ILAB, ".local", "share"
+)
 
 DEFAULT_API_KEY = "no_api_key"
 DEFAULT_CONFIG = os.path.join(ILAB_CONFIG_HOME, "config.yaml")
@@ -105,7 +94,6 @@ DEFAULT_GENERATED_FILES_OUTPUT_DIR = os.path.join(
 DEFAULT_CONNECTION_TIMEOUT = httpx.Timeout(timeout=30.0)
 # use spawn start method, fork is not thread-safe
 DEFAULT_MULTIPROCESSING_START_METHOD = "spawn"
-
 
 # When otherwise unknown, ilab uses this as the default family
 DEFAULT_MODEL_FAMILY = "merlinite"
@@ -437,7 +425,7 @@ def ensure_storage_directories_exist():
     """
     Ensures that the default directories used by ilab exist.
     """
-    os.makedirs(ILAB_CONFIG_HOME, exist_ok=True, mode=0o777)
+    os.makedirs(ILAB_CONFIG_HOME, exist_ok=True, mode=0o755)
 
     for storage_dir in [
         STORAGE_DIR_NAMES.CHECKPOINTS,
@@ -447,7 +435,7 @@ def ensure_storage_directories_exist():
         STORAGE_DIR_NAMES.INTERNAL,
     ]:
         os.makedirs(
-            os.path.join(ILAB_DATA_HOME, storage_dir), exist_ok=True, mode=0o777
+            os.path.join(ILAB_DATA_HOME, storage_dir), exist_ok=True, mode=0o755
         )
 
 
@@ -503,4 +491,4 @@ def init(ctx, config_file: str):
     del config_dict["evaluate"]["mt_bench"]
     del config_dict["evaluate"]["mt_bench_branch"]
     # default_map holds a dictionary with default values for each command parameters
-    ctx.default_map = get_dict(ctx.obj.config)
+    ctx.default_map = training_dict
