@@ -319,11 +319,11 @@ def evaluate(
             print("# SKILL EVALUATION REPORT")
             display_model(model_path)
             print("\n### AVERAGE:")
-            print(f"{overall_score} (across {len(qa_pairs)})")
+            print(f"{round(overall_score, 2)} (across {len(qa_pairs)})")
             print("\n### TURN ONE:")
-            print(turn_scores[0])
+            print(round(turn_scores[0], 2))
             print("\n### TURN TWO:")
-            print(turn_scores[1])
+            print(round(turn_scores[1], 2))
         finally:
             proc.terminate()
 
@@ -424,7 +424,7 @@ def evaluate(
         print("# KNOWLEDGE EVALUATION REPORT")
         display_model(model_path)
         print("\n### AVERAGE:")
-        print(f"{overall_score} (across {len(individual_scores)})\n")
+        print(f"{round(overall_score, 2)} (across {len(individual_scores)})\n")
 
         print("### SCORES:")
         for task, score in individual_scores.items():
@@ -460,7 +460,7 @@ def evaluate(
         display_models(model_path, base_model_path)
 
         print("\n### AVERAGE:")
-        delta = overall_score - base_overall_score
+        delta = round(overall_score - base_overall_score, 2)
         if delta >= 0:
             delta_display = f"+{delta}"
         else:
