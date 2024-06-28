@@ -69,6 +69,8 @@ class Server(BackendServer):
     def run_detached(
         self, tls_insecure, tls_client_cert, tls_client_key, tls_client_passwd
     ):
+        if self.process is not None and self.api_base is not None:
+            return
         try:
             _, vllm_server_process, api_base = ensure_server(
                 logger=self.logger,
