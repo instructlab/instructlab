@@ -262,7 +262,7 @@ def train(
     **kargs,
 ):
     """
-    Takes synthetic data generated locally with `ilab generate` and the previous model and learns a new model using the MLX API.
+    Takes synthetic data generated locally with `ilab data generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
     if not input_dir:
@@ -306,13 +306,13 @@ def train(
 
         if not train_files or not test_files:
             click.secho(
-                f"{input_dir} does not contain training or test files, did you run `ilab generate`?",
+                f"{input_dir} does not contain training or test files, did you run `ilab data generate`?",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
         if len(train_files) > 1 or len(test_files) > 1:
             click.secho(
-                "Found multiple files from `ilab generate`. Using the most recent generation.",
+                "Found multiple files from `ilab data generate`. Using the most recent generation.",
                 fg="yellow",
             )
         # The first file is latest

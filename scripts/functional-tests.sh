@@ -21,7 +21,7 @@ done
 PID_SERVE=
 PID_CHAT=
 
-chat_shot="ilab chat -qq"
+chat_shot="ilab model chat -qq"
 
 cleanup() {
     set +e
@@ -63,8 +63,8 @@ ilab --version
 # print system information
 ilab sysinfo
 
-# pipe 3 carriage returns to ilab init to get past the prompts
-echo -e "\n\n\n" | ilab init
+# pipe 3 carriage returns to ilab config init to get past the prompts
+echo -e "\n\n\n" | ilab config init
 
 # Enable Debug in func tests
 sed -i.bak -e 's/log_level:.*/log_level: DEBUG/g;' config.yaml
@@ -85,21 +85,21 @@ if [[ "$(uname)" == "Darwin" ]]; then
 fi
 
 # download the latest version of the ilab
-ilab download
+ilab model download
 
-# check that ilab serve is working
+# check that ilab model serve is working
 test_bind_port(){
     expect -c '
     set timeout 60
-    spawn ilab serve
+    spawn ilab model serve
     expect {
         "http://127.0.0.1:8000/docs" { puts OK }
         default { exit 1 }
     }
 
-    # check that ilab serve is detecting the port is already in use
+    # check that ilab model serve is detecting the port is already in use
     # catch "error while attempting to bind on address ...."
-    spawn ilab serve
+    spawn ilab model serve
     expect {
         "error while attempting to bind on address " { puts OK }
         default { exit 1 }
@@ -108,9 +108,9 @@ test_bind_port(){
     # configure a different port
     exec sed -i.bak 's/8000/9999/g' config.yaml
 
-    # check that ilab serve is working on the new port
+    # check that ilab model serve is working on the new port
     # catch ERROR strings in the output
-    spawn ilab serve
+    spawn ilab model serve
     expect {
         "http://127.0.0.1:9999/docs" { puts OK }
         default { exit 1 }
@@ -120,17 +120,17 @@ test_bind_port(){
 
 test_ctx_size(){
     # A context size of 55 will allow a small message
-    ilab serve --max-ctx-size 25 &> "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" &
+    ilab model serve --max-ctx-size 25 &> "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" &
     PID_SERVE=$!
 
     # Make sure the server has time to open the port
-    # if "ilab chat" tests it before its open then it will run its own server without --max-ctx-size 1
+    # if "ilab model chat" tests it before its open then it will run its own server without --max-ctx-size 1
     wait_for_server
 
-    # SHOULD SUCCEED: ilab chat will trim the SYS_PROMPT then take the second message
+    # SHOULD SUCCEED: ilab model chat will trim the SYS_PROMPT then take the second message
     ${chat_shot} "Hello"
 
-    # SHOULD FAIL: ilab chat will trim the SYS_PROMPT AND the second message, then raise an error
+    # SHOULD FAIL: ilab model chat will trim the SYS_PROMPT AND the second message, then raise an error
     # The errors from failures will be written into the serve log and chat log files
     ${chat_shot} "hello, I am a ci message that should not finish because I am too long for the context window, tell me about your day please?
     How many tokens could you take today. Could you tell me about the time you could only take twenty five tokens" &> "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" &
@@ -162,13 +162,13 @@ test_ctx_size(){
 }
 
 test_loading_session_history(){
-    ilab serve --backend llama-cpp --max-ctx-size 128 &
+    ilab model serve --backend llama-cpp --max-ctx-size 128 &
     PID_SERVE=$!
 
     # chat with the server
     expect -c '
         set timeout 120
-        spawn ilab chat
+        spawn ilab model chat
         expect ">>>"
         send "this is a test! what are you? do not exceed ten words in your reply.\r"
         send "/s test_session_history\r"
@@ -188,7 +188,7 @@ test_loading_session_history(){
     fi
 
     expect -c '
-        spawn ilab chat -s test_session_history
+        spawn ilab model chat -s test_session_history
         expect {
             "this is a test! what are you? do not exceed ten words in your reply." { exit 0 }
             timeout { exit 1 }
@@ -223,8 +223,8 @@ EOF
     sed -i.bak -e 's/num_instructions:.*/num_instructions: 1/g' config.yaml
 
     # This should be finished in a minute or so but time it out incase it goes wrong
-    if ! timeout 20m ilab generate --taxonomy-path test_taxonomy/compositional_skills/simple_math.yaml; then
-        echo "Error: ilab generate command took more than 20 minutes and was cancelled"
+    if ! timeout 20m ilab data generate --taxonomy-path test_taxonomy/compositional_skills/simple_math.yaml; then
+        echo "Error: ilab data generate command took more than 20 minutes and was cancelled"
         exit 1
     fi
 
@@ -239,7 +239,7 @@ EOF
 test_temp_server(){
     expect -c '
         set timeout 120
-        spawn ilab chat
+        spawn ilab model chat
         expect {
             "Starting a temporary server at" { exit 0 }
             timeout { exit 1 }
@@ -250,7 +250,7 @@ test_temp_server(){
 test_temp_server_sigint(){
     expect -c '
         set timeout 120
-        spawn ilab chat
+        spawn ilab model chat
         expect "Starting a temporary server at"
         send "hello!\r"
         sleep 5
@@ -268,7 +268,7 @@ test_temp_server_sigint(){
 test_no_chat_logs(){
     expect -c '
         set timeout 120
-        spawn ilab chat
+        spawn ilab model chat
         expect "Starting a temporary server at"
         send "hello!\r"
         sleep 1
@@ -283,7 +283,7 @@ test_temp_server_ignore_internal_messages(){
     # shellcheck disable=SC2016
     expect -c '
         set timeout 60
-        spawn ilab chat
+        spawn ilab model chat
         expect "Starting a temporary server at"
         send "hello!\r"
         sleep 5
@@ -297,7 +297,7 @@ test_temp_server_ignore_internal_messages(){
             default { set exp_result 0 }
         }
         if { $exp_result != 0 } {
-            puts stderr "Error: ilab chat command failed"
+            puts stderr "Error: ilab model chat command failed"
             exit 1
         }
     '
@@ -305,7 +305,7 @@ test_temp_server_ignore_internal_messages(){
 
 test_server_welcome_message(){
     # test that the server welcome message is displayed
-    ilab serve --log-file serve.log &
+    ilab model serve --log-file serve.log &
     PID_SERVE=$!
 
     wait_for_server
@@ -335,7 +335,7 @@ wait_for_server(){
 
 test_model_print(){
     cp models/merlinite-7b-lab-Q4_K_M.gguf models/foo.gguf
-    ilab serve --model-path models/foo.gguf &
+    ilab model serve --model-path models/foo.gguf &
     PID_SERVE=$!
 
     wait_for_server
@@ -343,7 +343,7 @@ test_model_print(){
     # validate that we print the model from the server since it is different from the config
     # shellcheck disable=SC2154,SC1001,SC2016
     expect -c '
-        spawn ilab chat
+        spawn ilab model chat
         expect {
             -re "Welcome to InstructLab Chat w/ \\\u001b\\\[1mMODELS/FOO\\.GGUF" { exit 0 }
             eof { catch wait result; exit [lindex $result 3] }
@@ -354,7 +354,7 @@ test_model_print(){
     # validate that we fail on invalid model
     expect -c '
         set timeout 30
-        spawn ilab chat -m bar
+        spawn ilab model chat -m bar
         expect {
            "Executing chat failed with: Model bar is not served by the server. These are the served models: ['models/foo.gguf']" { exit 0 }
         }
@@ -364,7 +364,7 @@ test_model_print(){
     # by the server since it is different from the config.
     # shellcheck disable=SC2016
     expect -c '
-        spawn ilab chat
+        spawn ilab model chat
         expect {
             -re "Welcome to InstructLab Chat w/ \\\u001b\\\[1mMODELS/FOO\\.GGUF" { exit 0 }
             eof { catch wait result; exit [lindex $result 3] }

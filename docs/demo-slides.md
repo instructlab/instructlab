@@ -144,7 +144,7 @@ ls instructlab-merlinite-7b-lab-mlx-q
 Run old/new model on test data
 
 ```fish
-ilab test
+ilab model test
 ```
 
 ---

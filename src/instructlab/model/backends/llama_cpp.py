@@ -194,7 +194,7 @@ def server(
     s = UvicornServer(config)
 
     # If this is not the main process, this is the temp server process that ran in the background
-    # after `ilab chat` was executed.
+    # after `ilab model chat` was executed.
     # In this case, we want to redirect stdout to null to avoid cluttering the chat with messages
     # returned by the server.
     if is_temp_server_running():

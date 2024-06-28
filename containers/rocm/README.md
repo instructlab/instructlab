@@ -19,9 +19,9 @@ The container has all Python dependencies installed in a virtual env. The virtua
 
 To update InstructLab CLI to latest version: `pip install -e ~/path/to/instructlab/instructlab`
 
-`ilab generate` and `ilab chat` use the GPU automatically. `ilab train` needs
+`ilab data generate` and `ilab model chat` use the GPU automatically. `ilab model train` needs
 more powerful and recent GPU and therefore does not use GPU by default. To
-train on a GPU, run `ilab train --device cuda`.
+train on a GPU, run `ilab model train --device cuda`.
 
 ## Building for other GPU architectures
 

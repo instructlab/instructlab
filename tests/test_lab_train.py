@@ -69,7 +69,7 @@ def mock_convert_llama_to_gguf(model, pad_vocab):
 
 @pytest.mark.usefixtures("mock_mlx_package")
 class TestLabTrain:
-    """Test collection for `ilab train` command."""
+    """Test collection for `ilab model train` command."""
 
     @patch("instructlab.utils.is_macos_with_m_chip", return_value=True)
     @patch("instructlab.mlx_explore.gguf_convert_to_mlx.load")
@@ -192,7 +192,7 @@ class TestLabTrain:
             )
             assert result.exception is not None
             assert (
-                f"{INPUT_DIR} does not contain training or test files, did you run `ilab generate`?"
+                f"{INPUT_DIR} does not contain training or test files, did you run `ilab data generate`?"
                 in result.output
             )
             assert result.exit_code == 1

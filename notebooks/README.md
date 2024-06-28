@@ -1,11 +1,11 @@
 # Training
 
 You're now at the training phase. So far, you have handcrafted some prompts and
-responses, and used `ilab generate` to synthesize those prompt/response pairs
+responses, and used `ilab data generate` to synthesize those prompt/response pairs
 into a new data set.
 
 If you have a Mac Silicon (M1 or newer), we _strongly_ recommend using
-`ilab train` locally, and only proceed here if you hit issues.
+`ilab model train` locally, and only proceed here if you hit issues.
 
 Also, there is active work being done to support Linux, so if you have
 access to a Linux machine with GPUs, that might also be a better option.
@@ -34,7 +34,7 @@ Pre-requisites:
 
 [The notebook](./Training_a_LoRA_With_Instruct_Lab.ipynb) in this folder will walk you through:
 
-1. Uploading the output of `ilab generate` (a synthetic dataset created based on your hand-written prompts/responses).
+1. Uploading the output of `ilab data generate` (a synthetic dataset created based on your hand-written prompts/responses).
 2. Checking the base model before training
 3. Setting up and training a LoRA. A LoRA uses Parameter-Efficient Fine-Tuning (PEFT) methods to fine-tune a model on a small subset of the overall parameters, allowing you to conduct fine-tuning in a fraction of the time, on a fraction of the hardware required. The resultant model should be updated and better handle your queries than the base model.
 4. Inspecting the output model to make sure the LoRA training had the desired effect (i.e. the output has improved).

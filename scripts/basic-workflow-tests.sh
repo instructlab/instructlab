@@ -50,7 +50,7 @@ test_smoke() {
 
 test_init() {
     task Initializing ilab
-    [ -f config.yaml ] || ilab init --non-interactive
+    [ -f config.yaml ] || ilab config init --non-interactive
 
     step Checking config.yaml
     grep merlinite config.yaml
@@ -61,10 +61,10 @@ test_download() {
 
     if [ "$GRANITE" -eq 1 ]; then
         step Downloading the granite model
-        ilab download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf
+        ilab model download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf
     else
         step Downloading the default model
-        ilab download
+        ilab model download
     fi
 }
 
@@ -81,7 +81,7 @@ test_serve() {
     fi
 
     task Serve the model
-    ilab serve "${SERVE_ARGS[@]}" &
+    ilab model serve "${SERVE_ARGS[@]}" &
 
     ret=1
     for i in $(seq 1 10); do
@@ -102,7 +102,7 @@ test_chat() {
     if [ "$GRANITE" -eq 1 ]; then
         CHAT_ARGS+=("-m models/granite-7b-lab-Q4_K_M.gguf")
     fi
-    printf 'Say "Hello"\n' | ilab chat "${CHAT_ARGS[@]}" | grep --color 'Hello'
+    printf 'Say "Hello"\n' | ilab model chat "${CHAT_ARGS[@]}" | grep --color 'Hello'
 }
 
 test_taxonomy() {
@@ -131,7 +131,7 @@ test_taxonomy() {
     fi
 
     step Verification
-    ilab diff
+    ilab taxonomy diff
 }
 
 test_generate() {
@@ -139,7 +139,7 @@ test_generate() {
     if [ "$GRANITE" -eq 1 ]; then
         GENERATE_ARGS+=("--model ./models/granite-7b-lab-Q4_K_M.gguf")
     fi
-    ilab generate --num-instructions ${NUM_INSTRUCTIONS} "${GENERATE_ARGS[@]}"
+    ilab data generate --num-instructions ${NUM_INSTRUCTIONS} "${GENERATE_ARGS[@]}"
 }
 
 test_train() {
@@ -151,12 +151,12 @@ test_train() {
         TRAIN_ARGS+=("--gguf-model-path models/granite-7b-lab-Q4_K_M.gguf")
     fi
 
-    ilab train "${TRAIN_ARGS[@]}"
+    ilab model train "${TRAIN_ARGS[@]}"
 }
 
 test_convert() {
     task Converting the trained model and serving it
-    ilab convert
+    ilab model convert
 }
 
 test_exec() {
@@ -165,7 +165,7 @@ test_exec() {
     test_init
     test_download
 
-    # See below for cleanup, this runs an ilab serve in the background
+    # See below for cleanup, this runs an ilab model serve in the background
     test_serve
     PID=$!
 
@@ -179,8 +179,8 @@ test_exec() {
     test_generate
 
     # Kill the serve process
-    task Stopping the ilab serve
-    step Kill ilab serve $PID
+    task Stopping the ilab model serve
+    step Kill ilab model serve $PID
     kill $PID
 
     test_train
@@ -193,7 +193,7 @@ test_exec() {
     # The rest is TODO when we can make it work on our CI runner
 
     # When you run this --
-    #   `ilab convert` is only implemented for macOS with M-series chips for now
+    #   `ilab model convert` is only implemented for macOS with M-series chips for now
     #test_convert
 
     # TODO: chat with the new model
@@ -204,8 +204,8 @@ test_exec() {
     test_chat
 
     # Kill the serve process
-    task Stopping the ilab serve
-    step Kill ilab serve $PID
+    task Stopping the ilab model serve
+    step Kill ilab model serve $PID
     kill $PID
 }
 

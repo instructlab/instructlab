@@ -234,11 +234,11 @@ def chat(
         if not api_base:
             api_base = ctx.obj.config.serve.api_base()
 
-    # if only the chat is running (`ilab chat`) and the temp server is not, the chat interacts
-    # in server mode (`ilab serve` is running somewhere, or we are talking to another
+    # if only the chat is running (`ilab model chat`) and the temp server is not, the chat interacts
+    # in server mode (`ilab model serve` is running somewhere, or we are talking to another
     # OpenAI compatible endpoint).
     if not is_temp_server_running():
-        # Try to get the model name right if we know we're talking to a local `ilab serve`.
+        # Try to get the model name right if we know we're talking to a local `ilab model serve`.
         #
         # If the model from the CLI and the one in the config are the same, use the one from the
         # server if they are different else let's use what the user provided
@@ -732,7 +732,7 @@ def chat_cli(
     if not any(model == m for m in model_ids):
         if model == cfg.DEFAULT_MODEL_OLD:
             logger.info(
-                f"Model {model} is not a full path. Try running ilab init or edit your config to have the full model path for serving, chatting, and generation."
+                f"Model {model} is not a full path. Try running ilab config init or edit your config to have the full model path for serving, chatting, and generation."
             )
         raise ChatException(
             f"Model {model} is not served by the server. These are the served models: {model_ids}"
