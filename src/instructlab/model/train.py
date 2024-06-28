@@ -16,71 +16,11 @@ from instructlab.training import (
     run_training,
 )
 import click
-import torch
 
 # First Party
 from instructlab import utils
 
 logger = logging.getLogger(__name__)
-
-
-class TorchDeviceParam(click.ParamType):
-    """Parse and convert device string
-
-    Returns a torch.device object:
-    - type is one of 'cpu', 'cuda', 'hpu'
-    - index is None or device index (e.g. 0 for first GPU)
-    """
-
-    name = "deviceinfo"
-    supported_devices = {"cuda", "cpu", "hpu"}
-
-    def convert(self, value, param, ctx) -> "torch.device":
-        # pylint: disable=C0415
-        # Function local import, import torch can take more than a second
-        # Third Party
-        import torch
-
-        if not isinstance(value, torch.device):
-            try:
-                device = torch.device(value)
-            except RuntimeError as e:
-                self.fail(str(e), param, ctx)
-
-        if device.type not in self.supported_devices:
-            supported = ", ".join(repr(s) for s in sorted(self.supported_devices))
-            self.fail(
-                f"Unsupported device type '{device.type}'. Only devices "
-                f"types {supported}, and indexed device strings like 'cuda:0' "
-                "are supported for now.",
-                param,
-                ctx,
-            )
-
-        # Detect CUDA/ROCm device
-        if device.type == "cuda":
-            if not torch.cuda.is_available():
-                self.fail(
-                    f"{value}: Torch could not detect a compatible CUDA/ROCm device.",
-                    param,
-                    ctx,
-                )
-            # map unqualified 'cuda' to current device
-            if device.index is None:
-                device = torch.device(device.type, torch.cuda.current_device())
-
-        if device.type == "hpu":
-            click.secho(
-                "WARNING: HPU support is experimental, unstable, and not "
-                "optimized, yet.",
-                fg="red",
-                bold=True,
-            )
-
-        return device
-
-
-TORCH_DEVICE = TorchDeviceParam()
 
 
 @click.command()
