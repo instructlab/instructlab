@@ -192,7 +192,7 @@ class TestLabTrain:
             )
             assert result.exception is not None
             assert (
-                f"{INPUT_DIR} does not contain training or test files, did you run `ilab generate`?"
+                f"{INPUT_DIR} does not contain training or test files, did you run `ilab data generate`?"
                 in result.output
             )
             assert result.exit_code == 1

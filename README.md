@@ -216,7 +216,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       convert: model convert
       diff: taxonomy diff
       download: model download
-      generate: model generate
+      generate: data generate
       init: config init
       serve: model serve
       test: model test
@@ -449,7 +449,7 @@ Before following these instructions, ensure the existing model you are adding sk
    Use a non-default model (e.g. Mixtral-8x7B-Instruct-v0.1) to generate data, run the following command:
 
    ```shell
-   ilab generate --model models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
+   ilab data generate --model models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
    ```
 
    > **NOTE:** ⏳ This can take from 15 minutes to 1+ hours to complete, depending on your computing resources.
@@ -457,7 +457,7 @@ Before following these instructions, ensure the existing model you are adding sk
    *Example output of `ilab data generate`*
 
    ```shell
-   (venv) $ ilab generate
+   (venv) $ ilab data generate
    INFO 2024-02-29 19:09:48,804 lab.py:250 Generating model 'ggml-merlinite-7b-lab-Q4_K_M' using 10 CPUs,
    taxonomy: '/home/username/instructlab/taxonomy' and seed 'seed_tasks.json'
 

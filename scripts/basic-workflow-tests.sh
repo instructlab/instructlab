@@ -139,7 +139,7 @@ test_generate() {
     if [ "$GRANITE" -eq 1 ]; then
         GENERATE_ARGS+=("--model ./models/granite-7b-lab-Q4_K_M.gguf")
     fi
-    ilab generate --num-instructions ${NUM_INSTRUCTIONS} "${GENERATE_ARGS[@]}"
+    ilab data generate --num-instructions ${NUM_INSTRUCTIONS} "${GENERATE_ARGS[@]}"
 }
 
 test_train() {

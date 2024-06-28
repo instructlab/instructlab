@@ -177,7 +177,7 @@ def generate(
             # for compile time defines like `GGML_USE_CUDA`.
             click.secho(
                 "llama_cpp_python is built without hardware acceleration. "
-                "ilab generate will be very slow.",
+                "ilab data generate will be very slow.",
                 fg="red",
             )
         model_path = pathlib.Path(ctx.obj.config.serve.model_path)

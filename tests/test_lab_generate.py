@@ -25,7 +25,7 @@ from .testdata import testdata
 
 
 class TestLabGenerate:
-    """Test collection for `ilab generate` command."""
+    """Test collection for `ilab data generate` command."""
 
     @patch(
         "instructlab.sdg.generate_data.generate_data",
