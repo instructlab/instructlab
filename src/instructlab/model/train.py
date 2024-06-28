@@ -7,6 +7,7 @@ import os
 import shutil
 
 # Third Party
+# pylint: disable=ungrouped-imports
 from instructlab.training import (
     DeepSpeedOptions,
     LoraOptions,
@@ -198,7 +199,7 @@ def train(
     device: str,
     four_bit_quant: bool,
     legacy,
-    **kargs,
+    **kwargs,  # pylint: disable=unused-argument
 ):
     """
     Takes synthetic data generated locally with `ilab data generate` and the previous model and learns a new model using the MLX API.
@@ -262,6 +263,7 @@ def train(
 
     # if macos, preserve that path
     if utils.is_macos_with_m_chip():
+        # pylint: disable=import-outside-toplevel
         # Local
         from ..mlx_explore.gguf_convert_to_mlx import load
         from ..mlx_explore.utils import fetch_tokenizer_from_hub
@@ -329,6 +331,7 @@ def train(
             steps_per_eval=10,
         )
     elif legacy:
+        # pylint: disable=import-outside-toplevel
         # Local
         from ..llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
         from ..train.linux_train import linux_train

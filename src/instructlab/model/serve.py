@@ -66,7 +66,7 @@ def serve(
     backend,
 ):
     """Start a local server"""
-
+    # pylint: disable=import-outside-toplevel
     # First Party
     from instructlab.model.backends import backends, llama_cpp, vllm
 

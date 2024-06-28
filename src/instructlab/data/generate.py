@@ -155,8 +155,6 @@ def generate(
     from instructlab.sdg.generate_data import generate_data
     from instructlab.sdg.utils import GenerateException
 
-    # First Party
-
     prompt_file_path = config.DEFAULT_PROMPT_FILE
     if ctx.obj is not None:
         prompt_file_path = ctx.obj.config.generate.prompt_file
