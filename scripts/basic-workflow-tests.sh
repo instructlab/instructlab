@@ -121,7 +121,7 @@ test_taxonomy() {
         mkdir -p taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings
         cp "$SCRIPTDIR"/test-data/e2e-qna-freeform-skill.yaml taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings/qna.yaml
     elif [ "$TESTNUM" -eq 2 ]; then
-        rf -rf taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings
+        rm -rf taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings
         mkdir -p taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no
         cp "$SCRIPTDIR"/test-data/e2e-qna-grounded-skill.yaml taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no/qna.yaml
     elif [ "$TESTNUM" -eq 3 ]; then
