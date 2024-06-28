@@ -131,7 +131,7 @@ test_taxonomy() {
     fi
 
     step Verification
-    ilab diff
+    ilab taxonomy diff
 }
 
 test_generate() {

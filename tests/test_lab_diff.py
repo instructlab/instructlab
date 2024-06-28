@@ -22,7 +22,7 @@ rules:
 
 
 class TestLabDiff:
-    """Test collection for `ilab diff` command."""
+    """Test collection for `ilab taxonomy diff` command."""
 
     @pytest.fixture(autouse=True)
     def _init_taxonomy(self, taxonomy_dir):
