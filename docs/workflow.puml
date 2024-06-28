@@ -46,7 +46,7 @@ level 2              |   +---+----------------+                         |
                      |       |                  +----------+-------+    |
                      |       v                  |notebook test cYEL+--+ |
 level 3              |   +---+------------+     +---------+--------+  | |
-  tested generated   +---|ilab test       |---------------|-----------+-+ -=-run unit/smoke tests;
+  tested generated   +---|ilab model test       |---------------|-----------+-+ -=-run unit/smoke tests;
   samples via LoRA   |   +---+------------+               v             |      iterate if some test failed
                      |       |                  +---------+--------+    |
                      |       v optional         |download new model|    |

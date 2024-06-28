@@ -554,7 +554,7 @@ The model can also be downloaded and served locally.
 - Run the following command to test the model:
 
    ```shell
-   ilab test
+   ilab model test
    ```
 
    > **NOTE:** 🍎 This step is only implemented for macOS with M-series chips (for now)
