@@ -62,13 +62,6 @@ logger = logging.getLogger(__name__)
     help="Path to output generated files.",
 )
 @click.option(
-    "--rouge-threshold",
-    type=click.FLOAT,
-    default=0.9,
-    show_default=True,
-    help="Threshold of (max) Rouge score to keep samples; 1.0 means accept all samples.",
-)
-@click.option(
     "--quiet",
     is_flag=True,
     help="Suppress output of synthesized instructions.",
@@ -136,7 +129,6 @@ def generate(
     taxonomy_path,
     taxonomy_base,
     output_dir,
-    rouge_threshold,
     quiet,
     endpoint_url,
     api_key,
@@ -244,7 +236,6 @@ def generate(
             taxonomy_base=taxonomy_base,
             output_dir=output_dir,
             prompt_file_path=prompt_file_path,
-            rouge_threshold=rouge_threshold,
             console_output=not quiet,
             yaml_rules=yaml_rules,
             chunk_word_count=chunk_word_count,
