@@ -50,7 +50,7 @@ test_smoke() {
 
 test_init() {
     task Initializing ilab
-    [ -f config.yaml ] || ilab init --non-interactive
+    [ -f config.yaml ] || ilab config init --non-interactive
 
     step Checking config.yaml
     grep merlinite config.yaml

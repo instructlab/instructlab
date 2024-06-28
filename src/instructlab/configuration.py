@@ -317,7 +317,7 @@ def init(ctx, config_file):
         elif not os.path.isfile(config_file):
             config_obj = None
             ctx.fail(
-                f"`{config_file}` does not exists, please run `ilab init` "
+                f"`{config_file}` does not exists, please run `ilab config init` "
                 "or point to a valid configuration file using `--config=<path>`."
             )
         else:

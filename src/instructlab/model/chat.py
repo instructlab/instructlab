@@ -732,7 +732,7 @@ def chat_cli(
     if not any(model == m for m in model_ids):
         if model == cfg.DEFAULT_MODEL_OLD:
             logger.info(
-                f"Model {model} is not a full path. Try running ilab init or edit your config to have the full model path for serving, chatting, and generation."
+                f"Model {model} is not a full path. Try running ilab config init or edit your config to have the full model path for serving, chatting, and generation."
             )
         raise ChatException(
             f"Model {model} is not served by the server. These are the served models: {model_ids}"
