@@ -2,7 +2,7 @@
 
 # Standard
 from os import listdir
-from os.path import basename, dirname, exists, splitext
+from os.path import dirname, exists
 
 # Third Party
 from git import GitError, Repo
@@ -119,7 +119,7 @@ def init(
         )
     click.echo(f"Generating `{config.DEFAULT_CONFIG}` in the current directory...")
     cfg = config.get_default_config()
-    if train_profile != None:
+    if train_profile is not None:
         cfg.train = config.read_train_profile(train_profile)
     cfg.chat.model = model_path
     cfg.generate.model = model_path

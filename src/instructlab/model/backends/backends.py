@@ -5,11 +5,13 @@ from time import sleep
 from typing import Callable, Optional, Tuple
 import abc
 import logging
+import mmap
 import multiprocessing
 import pathlib
 import random
 import signal
 import socket
+import struct
 import sys
 
 # Third Party
@@ -60,7 +62,7 @@ class BackendServer(abc.ABC):
         host: str,
         port: int,
         process: multiprocessing.Process = None,
-        **kwargs,
+        **kwargs,  # pylint: disable=unused-argument
     ) -> None:
         self.logger = logger
         self.model_path = model_path
@@ -73,7 +75,10 @@ class BackendServer(abc.ABC):
     def run(self):
         """Run serving backend in foreground (ilab model serve)"""
 
-    def run_detached(self):
+    @abc.abstractmethod
+    def run_detached(
+        self, tls_insecure, tls_client_cert, tls_client_key, tls_client_passwd
+    ):
         """Run serving backend in background ('ilab model chat' when server is not running)"""
 
     @abc.abstractmethod
@@ -89,10 +94,7 @@ def is_model_gguf(model_path: pathlib.Path) -> bool:
     Returns:
         bool: True if the file is a GGUF file, False otherwise.
     """
-    # Standard
-    import mmap
-    import struct
-
+    # pylint: disable=import-outside-toplevel
     # Third Party
     from gguf.constants import GGUF_MAGIC
 
@@ -144,14 +146,14 @@ def determine_backend(model_path: pathlib.Path) -> str:
     try:
         is_gguf = is_model_gguf(model_path)
     except Exception as e:
-        raise ValueError(f"Failed to determine whether the model is a GGUF format: {e}")
+        raise ValueError(
+            f"Failed to determine whether the model is a GGUF format: {e}"
+        ) from e
 
     if is_gguf:
         return LLAMA_CPP
-    else:
-        raise ValueError(
-            f"The model file {model_path} is not a GGUF format. Unsupported."
-        )
+
+    raise ValueError(f"The model file {model_path} is not a GGUF format. Unsupported.")
 
 
 def get(logger: logging.Logger, model_path: pathlib.Path, backend: str) -> str:

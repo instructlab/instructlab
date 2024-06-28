@@ -4,14 +4,12 @@
 # Standard
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, Union
 
 # Third Party
 from huggingface_hub import snapshot_download
-from mlx.utils import tree_flatten, tree_unflatten
 import mlx.core as mx
 import mlx.nn as nn
-import numpy as np
 
 # Local
 from .utils import save_model

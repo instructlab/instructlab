@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from typing import Optional
 import datetime
 import json
 import logging
@@ -11,8 +10,6 @@ import sys
 import time
 
 # Third Party
-from huggingface_hub import hf_hub_download
-from huggingface_hub import logging as hf_logging
 from openai import OpenAI
 from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import FormattedText
@@ -27,7 +24,7 @@ import httpx
 import openai
 
 # First Party
-from instructlab import client
+from instructlab import client as ilabclient
 from instructlab import configuration as cfg
 from instructlab import utils
 
@@ -161,7 +158,7 @@ def chat(
     greedy_mode,
     max_tokens,
     endpoint_url,
-    api_key,
+    api_key,  # pylint: disable=unused-argument
     tls_insecure,
     tls_client_cert,
     tls_client_key,
@@ -171,10 +168,7 @@ def chat(
     """Run a chat using the modified model"""
     # pylint: disable=C0415
     # First Party
-    from instructlab.model.backends.llama_cpp import (
-        ensure_server,
-        is_temp_server_running,
-    )
+    from instructlab.model.backends.llama_cpp import is_temp_server_running
 
     # TODO: this whole code block is replicated in generate.py. Refactor to a common function.
     backend_instance = None
@@ -253,7 +247,7 @@ def chat(
             and api_base == ctx.obj.config.serve.api_base()
         ):
             try:
-                models = client.list_models(
+                models = ilabclient.list_models(
                     api_base=api_base,
                     tls_insecure=tls_insecure,
                     tls_client_cert=tls_client_cert,
@@ -273,7 +267,7 @@ def chat(
                     else model
                 )
 
-            except client.ClientException as exc:
+            except ilabclient.ClientException as exc:
                 click.secho(
                     f"Failed to list models from {api_base}. Please check the API key and endpoint.",
                     fg="red",
@@ -557,7 +551,12 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         message = {"role": role, "content": content}
         self.info["messages"].append(message)
 
-    def start_prompt(self, logger, content=None, box=True):
+    def start_prompt(
+        self,
+        logger,  # pylint: disable=redefined-outer-name
+        content=None,
+        box=True,
+    ):
         handlers = {
             "/q": self._handle_quit,
             "quit": self._handle_quit,

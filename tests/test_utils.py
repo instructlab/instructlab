@@ -5,6 +5,7 @@ from unittest.mock import Mock, patch
 
 # Third Party
 import git
+import pytest
 import yaml
 
 # First Party

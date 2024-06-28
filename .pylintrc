@@ -379,7 +379,10 @@ int-import-graph=
 known-standard-library=
 
 # Force import order to recognize a module as part of a third party library.
-known-third-party=enchant
+known-third-party=enchant,
+    instructlab.schema,
+    instructlab.sdg,
+    instructlab.training,
 
 # Couples of modules and preferred modules, separated by a comma.
 preferred-modules=
@@ -447,7 +450,8 @@ disable=raw-checker-failed,
         pointless-statement,
         wrong-import-order,
         line-too-long,
-        logging-fstring-interpolation,
+        logging-fstring-interpolation,  # FIXME
+        duplicate-code,
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option

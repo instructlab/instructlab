@@ -10,7 +10,7 @@ import click
 # First Party
 from instructlab import configuration as config
 from instructlab import log, utils
-from instructlab.model.backends.llama_cpp import ServerException, server
+from instructlab.model.backends.llama_cpp import ServerException
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ def serve(
     backend,
 ):
     """Start a local server"""
-
+    # pylint: disable=import-outside-toplevel
     # First Party
     from instructlab.model.backends import backends, llama_cpp, vllm
 

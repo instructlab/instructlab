@@ -2,27 +2,17 @@
 
 # Standard
 from contextlib import redirect_stderr, redirect_stdout
-from time import sleep
-from typing import Optional, Set
 import asyncio
 import logging
 import multiprocessing
 import os
 import pathlib
-import signal
-import subprocess
-import sys
 
 # Third Party
-from uvicorn import Config
 import fastapi
 
-# First Party
-from instructlab import client
-
 # Local
-from ...client import ClientException, list_models
-from ...configuration import get_api_base, get_model_family
+from ...configuration import get_model_family
 from .backends import (
     API_ROOT_WELCOME_MESSAGE,
     BackendServer,
@@ -117,13 +107,14 @@ def server(
     host="localhost",
     port=8000,
 ):
+    # pylint: disable=import-outside-toplevel,import-error
     # Third Party
     from vllm.engine.arg_utils import AsyncEngineArgs
     from vllm.engine.async_llm_engine import AsyncLLMEngine
+    from vllm.entrypoints.openai import api_server
     from vllm.entrypoints.openai.serving_chat import OpenAIServingChat
     from vllm.entrypoints.openai.serving_completion import OpenAIServingCompletion
     from vllm.usage.usage_lib import UsageContext
-    import vllm.entrypoints.openai.api_server as api_server
 
     app = fastapi.FastAPI()
 
@@ -141,14 +132,14 @@ def server(
 
     template = ""
     # TODO: find the equivalent in vllm for eos_token and bos_token
-    eos_token = "<|endoftext|>"
-    bos_token = ""
+    # eos_token = "<|endoftext|>"
+    # bos_token = ""
     for template_dict in templates:
         if template_dict["model"] == get_model_family(model_family, model_path):
             template = template_dict["template"]
-            if template_dict["model"] == "mixtral":
-                eos_token = "</s>"
-                bos_token = "<s>"
+            # if template_dict["model"] == "mixtral":
+            #     eos_token = "</s>"
+            #     bos_token = "<s>"
 
     api_server.openai_serving_chat = OpenAIServingChat(
         engine,
