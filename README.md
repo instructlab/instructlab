@@ -361,7 +361,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 - Serve a non-default model (e.g. Mixtral-8x7B-Instruct-v0.1):
 
    ```shell
-   ilab serve --model-path models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
+   ilab model serve --model-path models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
    ```
 
 - Once the model is served and ready, you'll see the following output:
@@ -481,7 +481,7 @@ Before following these instructions, ensure the existing model you are adding sk
    ```
 
    **Optional**: It is also possible to run the generate step against a different model via an
-   OpenAI-compatible API. For example, the one spawned by `ilab serve` or any remote or locally hosted LLM (e.g. via [`ollama`](https://ollama.com/), [`LM Studio`](https://lmstudio.ai), etc.). Run the following command:
+   OpenAI-compatible API. For example, the one spawned by `ilab model serve` or any remote or locally hosted LLM (e.g. via [`ollama`](https://ollama.com/), [`LM Studio`](https://lmstudio.ai), etc.). Run the following command:
 
    ```shell
    ilab data generate --endpoint-url http://localhost:8000/v1
@@ -569,7 +569,7 @@ The model can also be downloaded and served locally.
    - 🍎 This step is only implemented for macOS with M-series chips (for now).
 
    - Before serving the newly trained model you must convert it to work with
-   the `ilab` cli. The `ilab model convert` command converts the new model into quantized [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format which is required by the server to host the model in the `ilab serve` command.
+   the `ilab` cli. The `ilab model convert` command converts the new model into quantized [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format which is required by the server to host the model in the `ilab model serve` command.
 
 2. Convert the newly trained model by running the following command:
 

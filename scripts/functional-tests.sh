@@ -87,19 +87,19 @@ fi
 # download the latest version of the ilab
 ilab model download
 
-# check that ilab serve is working
+# check that ilab model serve is working
 test_bind_port(){
     expect -c '
     set timeout 60
-    spawn ilab serve
+    spawn ilab model serve
     expect {
         "http://127.0.0.1:8000/docs" { puts OK }
         default { exit 1 }
     }
 
-    # check that ilab serve is detecting the port is already in use
+    # check that ilab model serve is detecting the port is already in use
     # catch "error while attempting to bind on address ...."
-    spawn ilab serve
+    spawn ilab model serve
     expect {
         "error while attempting to bind on address " { puts OK }
         default { exit 1 }
@@ -108,9 +108,9 @@ test_bind_port(){
     # configure a different port
     exec sed -i.bak 's/8000/9999/g' config.yaml
 
-    # check that ilab serve is working on the new port
+    # check that ilab model serve is working on the new port
     # catch ERROR strings in the output
-    spawn ilab serve
+    spawn ilab model serve
     expect {
         "http://127.0.0.1:9999/docs" { puts OK }
         default { exit 1 }
@@ -120,7 +120,7 @@ test_bind_port(){
 
 test_ctx_size(){
     # A context size of 55 will allow a small message
-    ilab serve --max-ctx-size 25 &> "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" &
+    ilab model serve --max-ctx-size 25 &> "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" &
     PID_SERVE=$!
 
     # Make sure the server has time to open the port
@@ -162,7 +162,7 @@ test_ctx_size(){
 }
 
 test_loading_session_history(){
-    ilab serve --backend llama-cpp --max-ctx-size 128 &
+    ilab model serve --backend llama-cpp --max-ctx-size 128 &
     PID_SERVE=$!
 
     # chat with the server
@@ -305,7 +305,7 @@ test_temp_server_ignore_internal_messages(){
 
 test_server_welcome_message(){
     # test that the server welcome message is displayed
-    ilab serve --log-file serve.log &
+    ilab model serve --log-file serve.log &
     PID_SERVE=$!
 
     wait_for_server
@@ -335,7 +335,7 @@ wait_for_server(){
 
 test_model_print(){
     cp models/merlinite-7b-lab-Q4_K_M.gguf models/foo.gguf
-    ilab serve --model-path models/foo.gguf &
+    ilab model serve --model-path models/foo.gguf &
     PID_SERVE=$!
 
     wait_for_server

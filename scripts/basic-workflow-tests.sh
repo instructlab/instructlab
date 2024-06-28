@@ -81,7 +81,7 @@ test_serve() {
     fi
 
     task Serve the model
-    ilab serve "${SERVE_ARGS[@]}" &
+    ilab model serve "${SERVE_ARGS[@]}" &
 
     ret=1
     for i in $(seq 1 10); do
@@ -165,7 +165,7 @@ test_exec() {
     test_init
     test_download
 
-    # See below for cleanup, this runs an ilab serve in the background
+    # See below for cleanup, this runs an ilab model serve in the background
     test_serve
     PID=$!
 
@@ -179,8 +179,8 @@ test_exec() {
     test_generate
 
     # Kill the serve process
-    task Stopping the ilab serve
-    step Kill ilab serve $PID
+    task Stopping the ilab model serve
+    step Kill ilab model serve $PID
     kill $PID
 
     test_train
@@ -204,8 +204,8 @@ test_exec() {
     test_chat
 
     # Kill the serve process
-    task Stopping the ilab serve
-    step Kill ilab serve $PID
+    task Stopping the ilab model serve
+    step Kill ilab model serve $PID
     kill $PID
 }
 
