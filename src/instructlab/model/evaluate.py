@@ -86,6 +86,9 @@ def get_evaluator(
         required_arg_names = ["model-path"]
         if benchmark == "mmlu_branch":
             required_args.append(sdg_path)
+            required_args.append(base_model_path)
+            required_arg_names.append("sdg-path")
+            required_arg_names.append("base-model-path")
         if None in required_args:
             click.secho(
                 f"Benchmark {benchmark} requires the following args to be set: {required_arg_names}",
@@ -120,9 +123,46 @@ def get_evaluator(
                 )
 
 
-def sortScore(pairing):
-    qna, delta = pairing
-    return delta
+def sort_score(pairing):
+    key, score = pairing
+    return score
+
+
+def display_models(model_path, base_model_path):
+    print("## BASE MODEL")
+    print(base_model_path)
+    display_model(model_path)
+
+
+def display_model(model_path):
+    print("\n## MODEL")
+    print(model_path)
+
+
+def display_branch_eval_summary(improvements, regressions, no_changes, new=None):
+    if len(improvements) > 0:
+        improvements.sort(key=sort_score, reverse=True)
+        print("\n### IMPROVEMENTS:")
+        for index, improvement in enumerate(improvements):
+            task, delta = improvement
+            print(f"{index+1}. {task} (+{delta})")
+
+    if len(regressions) > 0:
+        regressions.sort(key=sort_score)
+        print("\n### REGRESSIONS:")
+        for index, regression in enumerate(regressions):
+            task, delta = regression
+            print(f"{index+1}. {task} ({delta})")
+
+    if len(no_changes) > 0:
+        print("\n### NO CHANGE:")
+        for index, task in enumerate(no_changes):
+            print(f"{index+1}. {task}")
+
+    if new is not None and len(new) > 0:
+        print("\n### NEW:")
+        for index, qna in enumerate(new):
+            print(f"{index+1}. {task}")
 
 
 def qa_pairs_to_qna_to_avg_scores(qa_pairs):
@@ -276,10 +316,14 @@ def evaluate(
             overall_score, qa_pairs, turn_scores = evaluator.judge_answers(
                 "http://localhost:8000/v1"
             )
-            print(f"Overall Score: {overall_score}")
-            print(f"Turn 1 Score: {turn_scores[0]}")
-            print(f"Turn 2 Score: {turn_scores[1]}")
-            print(f"QA Pairs Length: {len(qa_pairs)}")
+            print("# SKILL EVALUATION REPORT")
+            display_model(model_path)
+            print("\n### AVERAGE:")
+            print(f"{overall_score} (across {len(qa_pairs)})")
+            print("\n### TURN ONE:")
+            print(turn_scores[0])
+            print("\n### TURN TWO:")
+            print(turn_scores[1])
         finally:
             proc.terminate()
 
@@ -346,7 +390,6 @@ def evaluate(
                 )
                 time.sleep(60)
                 qa_pairs = evaluator.judge_answers("http://localhost:8000/v1")
-                print(f"QA Pairs Length: {len(qa_pairs)}")
                 qa_pairs_list.append(qa_pairs)
             finally:
                 proc.terminate()
@@ -357,11 +400,8 @@ def evaluate(
         qna_to_avg_scores = qa_pairs_to_qna_to_avg_scores(qa_pairs)
         base_qna_to_avg_scores = qa_pairs_to_qna_to_avg_scores(base_qa_pairs)
 
-        print("#BASE MODEL:")
-        print(base_model_path)
-        print("\n#MODEL:")
-        print(model_path)
-        print("\n")
+        print("# SKILL EVALUATION REPORT\n")
+        display_models(model_path, base_model_path)
 
         improvements, regressions, no_changes, new_qnas = [], [], [], []
         for qna, avg_score in qna_to_avg_scores.items():
@@ -376,39 +416,69 @@ def evaluate(
             else:
                 new_qnas.append((qna))
 
-        if len(improvements) > 0:
-            improvements.sort(key=sortScore, reverse=True)
-            print("\n##IMPROVEMENTS:")
-            for index, improvement in enumerate(improvements):
-                qna, delta = improvement
-                print(f"{index+1}. (+{delta}) {qna}")
-
-        if len(regressions) > 0:
-            regressions.sort(key=sortScore)
-            print("\n##REGRESSIONS:")
-            for index, regression in enumerate(regressions):
-                qna, delta = regression
-                print(f"{index+1}. ({delta}) {qna}")
-
-        if len(no_changes) > 0:
-            print("\n##NO CHANGE:")
-            for index, qna in enumerate(no_changes):
-                print(f"{index+1}. {qna}")
-
-        if len(new_qnas) > 0:
-            print("\n##NEW QNAs:")
-            for index, qna in enumerate(new_qnas):
-                print(f"{index+1}. {qna}")
+        display_branch_eval_summary(improvements, regressions, no_changes, new_qnas)
 
     elif benchmark == "mmlu":
         overall_score, individual_scores = evaluator.run()
-        print(f"Overall Score: {overall_score}")
-        print("Individual Scores:")
-        print(individual_scores)
+
+        print("# KNOWLEDGE EVALUATION REPORT")
+        display_model(model_path)
+        print("\n### AVERAGE:")
+        print(f"{overall_score} (across {len(individual_scores)})\n")
+
+        print("### SCORES:")
+        for task, score in individual_scores.items():
+            s = round(score["score"], 2)
+            print(f"{task} - {s}")
 
     elif benchmark == "mmlu_branch":
-        # TODO: This really needs to compare two models and two branches to be useful
-        overall_score, individual_scores = evaluator.run()
-        print(f"Overall Score: {overall_score}")
-        print("Individual Scores:")
-        print(individual_scores)
+        # TODO: Need to resolve the appropriate task list for the branches involved
+        evaluators = [
+            evaluator,
+            MMLUBranchEvaluator(
+                base_model_path,
+                sdg_path,
+                ["mmlu_pr"],
+                few_shots=few_shots,
+                batch_size=batch_size,
+            ),
+        ]
+        m_paths = [model_path, base_model_path]
+        overall_scores = []
+        individual_scores_list = []
+        for i, evaluator in enumerate(evaluators):
+            overall_score, individual_scores = evaluator.run()
+            overall_scores.append(overall_score)
+            individual_scores_list.append(individual_scores)
+
+        overall_score = overall_scores[0]
+        base_overall_score = overall_scores[1]
+        individual_scores = individual_scores_list[0]
+        base_individual_scores = individual_scores_list[1]
+
+        print("# KNOWLEDGE EVALUATION REPORT\n")
+        display_models(model_path, base_model_path)
+
+        print("\n### AVERAGE:")
+        delta = overall_score - base_overall_score
+        if delta >= 0:
+            delta_display = f"+{delta}"
+        else:
+            delta_display = delta
+
+        print(f"{delta_display} (across {len(individual_scores)})")
+
+        improvements, regressions, no_changes = [], [], []
+        for task, score in individual_scores.items():
+            base_score = base_individual_scores[task]
+            s = score["score"]
+            b_s = base_score["score"]
+            d = round(s - b_s, 2)
+            if s > b_s:
+                improvements.append((task, d))
+            elif b_s > s:
+                regressions.append((task, d))
+            else:
+                no_changes.append(task)
+
+        display_branch_eval_summary(improvements, regressions, no_changes)
