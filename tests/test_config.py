@@ -35,7 +35,6 @@ class TestConfig:
         assert cfg.generate.num_instructions == 100
         assert cfg.generate.chunk_word_count == 1000
         assert cfg.generate.output_dir == "generated"
-        assert cfg.generate.prompt_file == "prompt.txt"
         assert cfg.generate.seed_file == "seed_tasks.json"
 
         assert cfg.serve is not None
@@ -86,7 +85,6 @@ generate:
   model: models/merlinite-7b-lab-Q4_K_M.gguf
   num_instructions: 100
   output_dir: generated
-  prompt_file: prompt.txt
   seed_file: seed_tasks.json
   taxonomy_base: origin/main
   taxonomy_path: taxonomy

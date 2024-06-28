@@ -142,10 +142,6 @@ def generate(
     # First Party
     from instructlab.model.backends.llama_cpp import ensure_server
 
-    prompt_file_path = config.DEFAULT_PROMPT_FILE
-    if ctx.obj is not None:
-        prompt_file_path = ctx.obj.config.generate.prompt_file
-
     backend_instance = None
     if endpoint_url:
         api_base = endpoint_url
@@ -226,7 +222,6 @@ def generate(
             taxonomy=taxonomy_path,
             taxonomy_base=taxonomy_base,
             output_dir=output_dir,
-            prompt_file_path=prompt_file_path,
             console_output=not quiet,
             yaml_rules=yaml_rules,
             chunk_word_count=chunk_word_count,
