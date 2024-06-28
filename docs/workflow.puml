@@ -36,7 +36,7 @@ level 1                  +---+--------------+                           |
                      |       |                                          |
                      |       v                                          |
 level 2              |   +---+----------------+                         |
-  inspected the      +---|ilab data generate       |-------------------------+ -=-synthesize data;
+  inspected the      +---|ilab data generate  |-------------------------+ -=-synthesize data;
   generated samples  |   +---+----------------++other hardware          |      iterate by modifying examples
                      |       |mac or          |   +--------+----------+ |      if samples do not look good
                      |       vLinux           +-->|notebook train cYEL| |
@@ -46,7 +46,7 @@ level 2              |   +---+----------------+                         |
                      |       |                  +----------+-------+    |
                      |       v                  |notebook test cYEL+--+ |
 level 3              |   +---+------------+     +---------+--------+  | |
-  tested generated   +---|ilab model test       |---------------|-----------+-+ -=-run unit/smoke tests;
+  tested generated   +---|ilab model test |---------------|-----------+-+ -=-run unit/smoke tests;
   samples via LoRA   |   +---+------------+               v             |      iterate if some test failed
                      |       |                  +---------+--------+    |
                      |       v optional         |download new model|    |
