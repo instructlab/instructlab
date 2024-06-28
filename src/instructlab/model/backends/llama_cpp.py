@@ -2,6 +2,7 @@
 
 # Standard
 from contextlib import redirect_stderr, redirect_stdout
+from typing import Optional
 import logging
 import multiprocessing
 import os
@@ -40,14 +41,13 @@ class Server(BackendServer):
         gpu_layers: int,
         max_ctx_size: int,
         num_threads: int,
-        queue: multiprocessing.Queue = None,
     ):
         super().__init__(logger, model_path, api_base, host, port)
         self.model_family = model_family
         self.gpu_layers = gpu_layers
         self.max_ctx_size = max_ctx_size
         self.num_threads = num_threads
-        self.queue = queue
+        self.queue: Optional[multiprocessing.Queue] = None
 
     def run(self):
         """Start an OpenAI-compatible server with llama-cpp"""
