@@ -76,16 +76,17 @@ serve:
   vllm:
     vllm_args: ''
 evaluate:
+  base_model_name: instructlab/granite-7b-lab
   mmlu:
     few_shots: 2
     batch_size: 5
   mmlu_branch:
     sdg_path: /path/to/sdg
-  mt:
-    judge_model: prometheus
+  mt_bench:
+    judge_model_name: prometheus
     output_dir: /dir/to/output
     max_workers: 5
-  mt_branch:
+  mt_bench_branch:
     taxonomy_path: taxonomy
 """
             )
@@ -128,16 +129,17 @@ serve:
   vllm:
     vllm_args: ''
 evaluate:
+  base_model_name: instructlab/granite-7b-lab
   mmlu:
     few_shots: 2
     batch_size: 5
   mmlu_branch:
     sdg_path: /path/to/sdg
-  mt:
-    judge_model: prometheus
+  mt_bench:
+    judge_model_name: prometheus
     output_dir: /dir/to/output
     max_workers: 5
-  mt_branch:
+  mt_bench_branch:
     taxonomy_path: taxonomy
 """
             )
@@ -165,16 +167,17 @@ serve:
   vllm:
     vllm_args: ''
 evaluate:
+  base_model_name: instructlab/granite-7b-lab
   mmlu:
     few_shots: 2
     batch_size: 5
   mmlu_branch:
     sdg_path: /path/to/sdg
-  mt:
-    judge_model: prometheus
+  mt_bench:
+    judge_model_name: prometheus
     output_dir: /dir/to/output
     max_workers: 5
-  mt_branch:
+  mt_bench_branch:
     taxonomy_path: taxonomy
 unexpected:
   field: value

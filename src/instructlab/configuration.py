@@ -184,13 +184,13 @@ class _mmlu(BaseModel):
     batch_size: int
 
 
-class _mt(BaseModel):
-    judge_model: str
+class _mtbench(BaseModel):
+    judge_model_name: str
     output_dir: str
     max_workers: int
 
 
-class _mtbranch(BaseModel):
+class _mtbenchbranch(BaseModel):
     taxonomy_path: str
 
 
@@ -203,11 +203,13 @@ class _evaluate(BaseModel):
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
 
     model_name: Optional[str] = None
+    base_model_name: str
     branch: Optional[str] = None
+    base_branch: Optional[str] = None
     mmlu: _mmlu
     mmlu_branch: _mmlubranch
-    mt: _mt
-    mt_branch: _mtbranch
+    mt_bench: _mtbench
+    mt_bench_branch: _mtbenchbranch
 
 
 class _train(BaseModel):
@@ -292,8 +294,9 @@ def get_default_config():
             ),
         ),
         evaluate=_evaluate(
-            mt=_mt(
-                judge_model=DEFAULT_JUDGE_MODEL_MT,
+            base_model_name=DEFAULT_MODEL_REPO,
+            mt_bench=_mtbench(
+                judge_model_name=DEFAULT_JUDGE_MODEL_MT,
                 output_dir=DEFAULT_EVAL_PATH,
                 max_workers=40,
             ),
@@ -301,7 +304,7 @@ def get_default_config():
                 few_shots=2,
                 batch_size=5,
             ),
-            mt_branch=_mtbranch(taxonomy_path="taxonomy"),
+            mt_bench_branch=_mtbenchbranch(taxonomy_path=DEFAULT_TAXONOMY_PATH),
             mmlu_branch=_mmlubranch(sdg_path=DEFAULT_GENERATED_FILES_OUTPUT_DIR),
         ),
     )
@@ -420,13 +423,13 @@ def init(ctx, config_file):
             config_dict["evaluate"]
             | config_dict["evaluate"]["mmlu"]
             | config_dict["evaluate"]["mmlu_branch"]
-            | config_dict["evaluate"]["mt"]
-            | config_dict["evaluate"]["mt_branch"]
+            | config_dict["evaluate"]["mt_bench"]
+            | config_dict["evaluate"]["mt_bench_branch"]
         )
         # need to delete the individual sub-classes from the map
         del config_dict["evaluate"]["mmlu"]
         del config_dict["evaluate"]["mmlu_branch"]
-        del config_dict["evaluate"]["mt"]
-        del config_dict["evaluate"]["mt_branch"]
+        del config_dict["evaluate"]["mt_bench"]
+        del config_dict["evaluate"]["mt_bench_branch"]
 
         ctx.default_map = config_dict

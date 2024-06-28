@@ -20,9 +20,9 @@ BENCHMARK_TO_CLASS_MAP = {
 
 def get_evaluator(
     model_path,
-    base_model_path,
+    base_model_name,
     benchmark,
-    judge_model_path,
+    judge_model_name,
     output_dir,
     max_workers,
     taxonomy_path,
@@ -41,19 +41,19 @@ def get_evaluator(
     if benchmark in ["mt_bench", "mt_bench_branch"]:
         required_args = [
             model_path,
-            judge_model_path,
+            judge_model_name,
             output_dir,
             max_workers,
         ]
         required_arg_names = [
             "model-path",
-            "judge-model-path",
+            "judge-model-name",
         ]
         if benchmark == "mt_bench_branch":
             required_args.append(taxonomy_path)
             required_args.append(branch)
             required_args.append(base_branch)
-            required_args.append(base_model_path)
+            required_args.append(base_model_name)
             required_arg_names.append("taxonomy-path")
             required_arg_names.append("branch")
             required_arg_names.append("base-branch")
@@ -86,7 +86,7 @@ def get_evaluator(
         required_arg_names = ["model-path"]
         if benchmark == "mmlu_branch":
             required_args.append(sdg_path)
-            required_args.append(base_model_path)
+            required_args.append(base_model_name)
             required_arg_names.append("sdg-path")
             required_arg_names.append("base-model-path")
         if None in required_args:
@@ -131,11 +131,11 @@ def sort_score(pairing: tuple) -> float:
     return score
 
 
-def display_models(model_path, base_model_path) -> None:
+def display_models(model_path, base_model_name) -> None:
     """ prints the base model path and model path with a header
     """
     print("## BASE MODEL")
-    print(base_model_path)
+    print(base_model_name)
     display_model(model_path)
 
 
@@ -202,8 +202,8 @@ def qa_pairs_to_qna_to_avg_scores(qa_pairs: list[dict]) -> dict:
     help="Path of the model to be evaluated",
 )
 @click.option(
-    "--base-model-path",
-    type=click.Path(),
+    "--base-model-name",
+    type=click.STRING,
     help="Path of the model to compare to for mt_bench_branch and mmlu_branch",
 )
 @click.option(
@@ -213,9 +213,9 @@ def qa_pairs_to_qna_to_avg_scores(qa_pairs: list[dict]) -> dict:
     help="Benchmarks to run during evaluation",
 )
 @click.option(
-    "--judge-model-path",
-    type=click.Path(),
-    help="Path of the model to be used as a judge for running mt_bench or mt_bench_branch",
+    "--judge-model-name",
+    type=click.STRING,
+    help="Name of the model to be used as a judge for running mt_bench or mt_bench_branch",
 )
 @click.option(
     "--output-dir",
@@ -261,9 +261,9 @@ def qa_pairs_to_qna_to_avg_scores(qa_pairs: list[dict]) -> dict:
 def evaluate(
     ctx,
     model_path,
-    base_model_path,
+    base_model_name,
     benchmark,
-    judge_model_path,
+    judge_model_name,
     output_dir,
     max_workers,
     taxonomy_path,
@@ -276,9 +276,9 @@ def evaluate(
     # get appropriate evaluator class from Eval lib
     evaluator = get_evaluator(
         model_path,
-        base_model_path,
+        base_model_name,
         benchmark,
-        judge_model_path,
+        judge_model_name,
         output_dir,
         max_workers,
         taxonomy_path,
@@ -319,7 +319,7 @@ def evaluate(
                     "-m",
                     "vllm.entrypoints.openai.api_server",
                     "--model",
-                    judge_model_path,
+                    judge_model_name,
                     "--tensor-parallel-size",
                     "1",
                     "--served-model-name",
@@ -358,7 +358,7 @@ def evaluate(
             ),
         ]
         branches = [branch, base_branch]
-        m_paths = [model_path, base_model_path]
+        m_paths = [model_path, base_model_name]
         m_names = ["test_model", "base_test_model"]
         judge_model_names = ["judge_model", "base_judge_model"]
         qa_pairs_list = []
@@ -399,7 +399,7 @@ def evaluate(
                         "-m",
                         "vllm.entrypoints.openai.api_server",
                         "--model",
-                        judge_model_path,
+                        judge_model_name,
                         "--tensor-parallel-size",
                         "1",
                         "--served-model-name",
@@ -419,7 +419,7 @@ def evaluate(
         base_qna_to_avg_scores = qa_pairs_to_qna_to_avg_scores(base_qa_pairs)
 
         print("# SKILL EVALUATION REPORT\n")
-        display_models(model_path, base_model_path)
+        display_models(model_path, base_model_name)
 
         improvements, regressions, no_changes, new_qnas = [], [], [], []
         for qna, avg_score in qna_to_avg_scores.items():
@@ -455,14 +455,14 @@ def evaluate(
         evaluators = [
             evaluator,
             MMLUBranchEvaluator(
-                base_model_path,
+                base_model_name,
                 sdg_path,
                 ["mmlu_pr"],
                 few_shots=few_shots,
                 batch_size=batch_size,
             ),
         ]
-        m_paths = [model_path, base_model_path]
+        m_paths = [model_path, base_model_name]
         overall_scores = []
         individual_scores_list = []
         for i, evaluator in enumerate(evaluators):
@@ -476,7 +476,7 @@ def evaluate(
         base_individual_scores = individual_scores_list[1]
 
         print("# KNOWLEDGE EVALUATION REPORT\n")
-        display_models(model_path, base_model_path)
+        display_models(model_path, base_model_name)
 
         print("\n### AVERAGE:")
         delta = round(overall_score - base_overall_score, 2)
