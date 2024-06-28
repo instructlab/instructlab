@@ -52,7 +52,7 @@ The following are the steps for how Y-stream and Z-stream releases gets cut.
 1. Determine a commit on the main branch that will serve as the basis for the next release - most of the time this should be the latest commit.
 1. Create a new release branch in the format `release-vX.Y` off of the determined commit (will match `main` if the latest commit is chosen).
 1. Validate the release branch with an [E2E test](ci.md).
-1. Create a new release on GitHub targeting the release branch and using the latest Y-Stream tag as the previous release (e.g. `0.15.1` preceeds `0.16.0`).
+1. Create a new release on GitHub targeting the release branch and using the latest Y-Stream tag as the previous release (e.g. `0.15.1` precedes `0.16.0`).
 1. Move the `stable` tag to the new release (note this tag is set to be deprecated on September 1st, 2024 - users should use PyPi to install the latest "stable" release)
 1. Announce release via the following:
     - The `#announce` channel on Slack
@@ -63,7 +63,7 @@ The following are the steps for how Y-stream and Z-stream releases gets cut.
 
 1. Backport all relevant commits from `main` to the `release-vX.Y` branch - this can be done automatically with Mergify or manually if preferred. A backport using Mergify is done by adding a comment to the PR with the change merged to `main` with the contents `@Mergifyio backport <release-vX.Y>`.
 1. Validate the release branch with an [E2E test](ci.md).
-1. Create a new release on GitHub targeting the release branch and using the previous Z-Stream tag as the previous release (e.g. `0.15.0` preceeds `0.15.1`).
+1. Create a new release on GitHub targeting the release branch and using the previous Z-Stream tag as the previous release (e.g. `0.15.0` precedes `0.15.1`).
 1. Move the `stable` tag to the new release (note this tag is set to be deprecated on September 1st, 2024 - users should use PyPi to install the latest "stable" release)
 1. Announce release via the following:
     - The `#announce` channel on Slack
