@@ -46,10 +46,11 @@ jobs:
         lint:
           - name: "ruff"
             commands: |
-              tox -e ruff -- check
+              tox -e ruff
           - name: "pylint"
             commands: |
               echo "::add-matcher::.github/workflows/matchers/pylint.json"
+              tox -e fastlint
               tox -e lint
           - name: "mypy"
             commands: |
