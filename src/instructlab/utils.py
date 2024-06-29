@@ -258,7 +258,7 @@ def _load_schema(path: "importlib.resources.abc.Traversable") -> "referencing.Re
     Returns:
         Resource: A Resource containing the requested schema.
     """
-    # pylint: disable=C0415
+    # pylint: disable=import-outside-toplevel
     # Third Party
     from referencing import Resource
     from referencing.exceptions import NoSuchResource
@@ -287,7 +287,7 @@ def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
         int: The number of errors found during validation.
         Messages for each error have been logged.
     """
-    # pylint: disable=C0415
+    # pylint: disable=import-outside-toplevel
     # Standard
     from importlib import resources
 
