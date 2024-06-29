@@ -372,7 +372,6 @@ def select_backend(logger: logging.Logger, cfg: serve_config) -> BackendServer:
     from .llama_cpp import Server as llama_cpp_server
     from .vllm import Server as vllm_server
 
-    backend_instance = None
     model_path = pathlib.Path(cfg.model_path)
     backend_name = cfg.backend
     try:
@@ -385,7 +384,7 @@ def select_backend(logger: logging.Logger, cfg: serve_config) -> BackendServer:
 
     if backend == LLAMA_CPP:
         # Instantiate the llama server
-        backend_instance = llama_cpp_server(
+        return llama_cpp_server(
             logger=logger,
             api_base=cfg.api_base(),
             model_path=model_path,
@@ -396,10 +395,9 @@ def select_backend(logger: logging.Logger, cfg: serve_config) -> BackendServer:
             host=host,
             port=port,
         )
-
     if backend == VLLM:
         # Instantiate the vllm server
-        backend_instance = vllm_server(
+        return vllm_server(
             logger=logger,
             api_base=cfg.api_base(),
             model_path=model_path,
@@ -407,4 +405,5 @@ def select_backend(logger: logging.Logger, cfg: serve_config) -> BackendServer:
             host=host,
             port=port,
         )
-    return backend_instance
+    click.secho(f"Unknown backend: {backend}", fg="red")
+    raise click.exceptions.Exit(1)
