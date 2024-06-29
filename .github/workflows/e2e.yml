@@ -145,6 +145,8 @@ jobs:
           CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3 -m pip install --no-binary llama_cpp_python -c constraints.txt llama_cpp_python
           # needed for --4-bit-quant option to ilab model train
           python3 -m pip install bitsandbytes
+          python3 -m pip install packaging wheel
+          python3 -m pip install flash-attn --no-build-isolation
           python3 -m pip install .
 
       - name: Run e2e test

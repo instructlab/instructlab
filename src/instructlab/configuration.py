@@ -36,6 +36,7 @@ DEFAULT_MODEL_OLD = "merlinite-7b-lab-Q4_K_M"
 DEFAULT_MODEL = "models/merlinite-7b-lab-Q4_K_M.gguf"
 DEFAULT_MODEL_PATH = "models/merlinite-7b-lab-Q4_K_M.gguf"
 DEFAULT_MODEL_REPO = "instructlab/granite-7b-lab"
+MERLINITE_MODEL_REPO = "instructlab/merlinite-7b-lab"
 DEFAULT_JUDGE_MODEL_MT = "prometheus-eval/prometheus-8x7b-v2.0"
 DEFAULT_EVAL_PATH = "eval_data"
 DEFAULT_TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
@@ -260,7 +261,7 @@ def get_default_config():
         ),
         train=_train(
             train_args=TrainingArgs(
-                model_path=DEFAULT_MODEL_REPO,
+                model_path=MERLINITE_MODEL_REPO,
                 data_path="./taxonomy_data",
                 ckpt_output_dir=DEFAULT_CKPT_DIR,
                 data_output_dir=DEFAULT_OUT_DIR,
