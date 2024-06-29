@@ -40,7 +40,7 @@ class Server(BackendServer):
         port: int,
         gpu_layers: int,
         max_ctx_size: int,
-        num_threads: int,
+        num_threads: Optional[int],
     ):
         super().__init__(logger, model_path, api_base, host, port)
         self.model_family = model_family
