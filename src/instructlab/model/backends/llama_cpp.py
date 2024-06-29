@@ -17,6 +17,7 @@ import llama_cpp.server.app as llama_app
 from ...configuration import get_model_family
 from .backends import (
     API_ROOT_WELCOME_MESSAGE,
+    LLAMA_CPP,
     BackendServer,
     ServerException,
     UvicornServer,
@@ -93,9 +94,9 @@ class Server(BackendServer):
         self, tls_insecure, tls_client_cert, tls_client_key, tls_client_passwd
     ):
         try:
-            server_process, api_base = ensure_server(
+            llama_cpp_server_process, _, api_base = ensure_server(
                 logger=self.logger,
-                server_process_func=self.create_server_process,
+                backend=LLAMA_CPP,
                 api_base=self.api_base,
                 tls_insecure=tls_insecure,
                 tls_client_cert=tls_client_cert,
@@ -104,8 +105,9 @@ class Server(BackendServer):
                 host=self.host,
                 port=self.port,
                 queue=self.queue,
+                server_process_func=self.create_server_process,
             )
-            self.process = server_process
+            self.process = llama_cpp_server_process
             self.api_base = api_base
         except ServerException as exc:
             raise exc

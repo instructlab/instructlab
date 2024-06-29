@@ -5,7 +5,6 @@ import datetime
 import json
 import logging
 import os
-import pathlib
 import sys
 import time
 
@@ -176,43 +175,10 @@ def chat(
         api_base = endpoint_url
     else:
         # First Party
-        from instructlab.model.backends import backends, llama_cpp, vllm
+        from instructlab.model.backends import backends
 
-        model_path = ctx.obj.config.serve.model_path
-        model_path = pathlib.Path(model_path)
-        backend = ctx.obj.config.serve.backend
-        try:
-            backend = backends.get(logger, model_path, backend)
-        except ValueError as e:
-            click.secho(f"Failed to determine backend: {e}", fg="red")
-            raise click.exceptions.Exit(1)
-
-        host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
-
-        if backend == backends.LLAMA_CPP:
-            # Instantiate the llama server
-            backend_instance = llama_cpp.Server(
-                logger=logger,
-                api_base=ctx.obj.config.serve.api_base(),
-                model_path=model_path,
-                gpu_layers=ctx.obj.config.serve.gpu_layers,
-                max_ctx_size=ctx.obj.config.serve.max_ctx_size,
-                num_threads=None,  # exists only as a flag not a config
-                model_family=model_family,
-                host=host,
-                port=port,
-            )
-
-        if backend == backends.VLLM:
-            # Instantiate the vllm server
-            backend_instance = vllm.Server(
-                logger=logger,
-                api_base=ctx.obj.config.serve.api_base(),
-                model_path=model_path,
-                model_family=model_family,
-                host=host,
-                port=port,
-            )
+        ctx.obj.config.serve.llama_cpp.llm_family = model_family
+        backend_instance = backends.select_backend(logger, ctx.obj.config.serve)
 
         try:
             # Run the llama server
@@ -272,6 +238,11 @@ def chat(
                     f"Failed to list models from {api_base}. Please check the API key and endpoint.",
                     fg="red",
                 )
+                # Right now is_temp_server() does not check if a subprocessed vllm is up
+                # shut it down just in case an exception is raised in the try
+                # TODO: revise is_temp_server to check if a vllm server is running
+                if backend_instance is not None:
+                    backend_instance.shutdown()
                 raise click.exceptions.Exit(1) from exc
 
     try:

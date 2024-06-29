@@ -138,19 +138,38 @@ class _generate(BaseModel):
     seed_file: StrictStr = "seed_tasks.json"
 
 
+class _serve_vllm(BaseModel):
+    """Class describing configuration of vllm serving backend."""
+
+    # arguments to pass into vllm process
+    vllm_args: str = ""
+
+
+class _serve_llama_cpp(BaseModel):
+    """Class describing configuration of llama-cpp serving backend."""
+
+    gpu_layers: int = -1
+    max_ctx_size: PositiveInt = 4096
+    llm_family: str = ""
+
+
 class _serve(BaseModel):
     """Class describing configuration of the serve sub-command."""
 
     # model configuration
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
 
+    # vllm configuration
+    vllm: _serve_vllm
+
+    # llama-cpp configuration
+    llama_cpp: _serve_llama_cpp
+
     # required fields
     model_path: StrictStr
 
     # additional fields with defaults
     host_port: StrictStr = "127.0.0.1:8000"
-    gpu_layers: int = -1
-    max_ctx_size: PositiveInt = 4096
     backend: str = ""  # we don't set a default value here since it's auto-detected
 
     def api_base(self):
@@ -190,7 +209,17 @@ def get_default_config():
             taxonomy_path=DEFAULT_TAXONOMY_PATH,
             taxonomy_base=DEFAULT_TAXONOMY_BASE,
         ),
-        serve=_serve(model_path=DEFAULT_MODEL_PATH),
+        serve=_serve(
+            model_path=DEFAULT_MODEL_PATH,
+            llama_cpp=_serve_llama_cpp(
+                gpu_layers=-1,
+                max_ctx_size=4096,
+                llm_family="",
+            ),
+            vllm=_serve_vllm(
+                vllm_args="",
+            ),
+        ),
         train=_train(
             train_args=TrainingArgs(
                 model_path=DEFAULT_MODEL_REPO,

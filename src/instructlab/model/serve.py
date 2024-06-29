@@ -53,6 +53,11 @@ logger = logging.getLogger(__name__)
         "Supported: 'llama-cpp'."
     ),
 )
+@click.option(
+    "--vllm-args",
+    type=str,
+    help="Specific arguments to pass into vllm. The value passed into this flag must be surrounded by double quotes.\n Example: --vllm-args '--dtype auto --enable-lora'",
+)
 @click.pass_context
 @utils.display_params
 def serve(
@@ -64,6 +69,7 @@ def serve(
     model_family,
     log_file,
     backend,
+    vllm_args,
 ):
     """Start a local server"""
     # pylint: disable=import-outside-toplevel
@@ -91,6 +97,11 @@ def serve(
     backend_instance = None
     if backend == backends.LLAMA_CPP:
         # Instantiate the llama server
+        if gpu_layers is None:
+            gpu_layers = ctx.obj.config.serve.llama_cpp.gpu_layers
+        if max_ctx_size is None:
+            max_ctx_size = ctx.obj.config.serve.llama_cpp.max_ctx_size
+
         backend_instance = llama_cpp.Server(
             logger=logger,
             api_base=ctx.obj.config.serve.api_base(),
@@ -105,11 +116,14 @@ def serve(
 
     if backend == backends.VLLM:
         # Instantiate the vllm server
+        if vllm_args is None:
+            vllm_args = ""
+
         backend_instance = vllm.Server(
             logger=logger,
             api_base=ctx.obj.config.serve.api_base(),
             model_path=model_path,
-            model_family=model_family,
+            vllm_args=vllm_args,
             host=host,
             port=port,
         )
