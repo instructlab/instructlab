@@ -117,12 +117,22 @@ def _llama_cpp_info() -> typing.Dict[str, typing.Any]:
     }
 
 
+def _instructlab_info():
+    """InstructLab packages"""
+    # auto-detect all instructlab packages
+    pkgs = sorted(
+        (dist.name, dist.version)
+        for dist in importlib.metadata.distributions()
+        if dist.name.startswith("instructlab")
+    )
+    return {f"{name}.version": ver for name, ver in pkgs}
+
+
 def get_sysinfo() -> typing.Dict[str, typing.Any]:
     """Get system information"""
-    info = {
-        "instructlab.version": importlib.metadata.version("instructlab"),
-    }
+    info = {}
     info.update(_platform_info())
+    info.update(_instructlab_info())
     info.update(_torch_info())
     info.update(_torch_cuda_info())
     info.update(_torch_hpu_info())
