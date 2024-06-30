@@ -1,3 +1,6 @@
+# Standard
+import socket
+
 # Third Party
 import pytest
 
@@ -37,3 +40,11 @@ class TestValidateBackend:
         # Test with an invalid backend
         with pytest.raises(ValueError):
             backends.validate_backend("foo")
+
+
+def test_free_port():
+    host = "localhost"
+    port = backends.free_tcp_ipv4_port(host)
+    # check that port is bindable
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind((host, port))
