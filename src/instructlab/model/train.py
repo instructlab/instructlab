@@ -7,13 +7,12 @@ import os
 import shutil
 
 # Third Party
-# pylint: disable=ungrouped-imports,no-name-in-module
+# pylint: disable=ungrouped-imports
 from instructlab.training import (
     DeepSpeedOptions,
     LoraOptions,
     TorchrunArgs,
     TrainingArgs,
-    run_training,
 )
 import click
 
@@ -263,7 +262,6 @@ def train(
 
     # if macos, preserve that path
     if utils.is_macos_with_m_chip():
-        # pylint: disable=import-outside-toplevel
         # Local
         from ..mlx_explore.gguf_convert_to_mlx import load
         from ..mlx_explore.utils import fetch_tokenizer_from_hub
@@ -331,7 +329,6 @@ def train(
             steps_per_eval=10,
         )
     elif legacy:
-        # pylint: disable=import-outside-toplevel
         # Local
         from ..llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
         from ..train.linux_train import linux_train
@@ -399,7 +396,14 @@ def train(
         # checkpoint_dirs = training_results_dir.glob("checkpoint*")
         # shutil.rmtree(checkpoint_dirs[0])
     else:
-        # pull the training and torch args from the flags
+        # run_training is a dynamic attribute, pylint is not clever enough
+        # to detect it.
+        # Third Party
+        from instructlab.training import (  # pylint: disable=no-name-in-module
+            run_training,
+        )
+
+        # pull the trainrandom.randinting and torch args from the flags
         # the flags are populated from the config as a base.
         params = ctx.params
 

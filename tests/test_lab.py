@@ -2,6 +2,8 @@
 
 # Standard
 import re
+import subprocess
+import sys
 
 # Third Party
 import click
@@ -27,7 +29,6 @@ class TestConfig:
 
 
 def test_llamap_cpp_import():
-    # pylint: disable=import-outside-toplevel
     # Third Party
     import llama_cpp
 
@@ -42,3 +43,16 @@ def test_import_mlx():
     else:
         with pytest.raises(ModuleNotFoundError):
             __import__("mlx")
+
+
+def test_ilab_cli_imports():
+    # ensure that `ilab` CLI startup is not slowed down by heavy packages
+    unwanted = ["deepspeed", "llama_cpp", "torch", "vllm"]
+    code = ["import json, sys"]
+    for modname in unwanted:
+        # block unwanted imports
+        code.append(f"sys.modules['{modname}'] = None")
+    # import CLI last
+    code.append("import instructlab.lab")
+
+    subprocess.check_call([sys.executable, "-c", "; ".join(code)], text=True)
