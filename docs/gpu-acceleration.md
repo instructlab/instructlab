@@ -77,6 +77,7 @@ you are **not running** with the proprietary Nvidia drivers.
 
 ```shell
 # Check video driver
+sudo dnf install pciutils
 lspci -n -n -k | grep -A 2 -e VGA -e 3D
 ```
 
