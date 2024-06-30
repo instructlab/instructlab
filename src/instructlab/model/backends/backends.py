@@ -214,6 +214,32 @@ def shutdown_process(process: subprocess.Popen, timeout: int) -> None:
         process.kill()
 
 
+def new_port(logger, host):
+    tried_ports = set()
+    port = random.randint(1024, 65535)
+    logger.debug(f"Trying port {port}...")
+
+    # extract address provided in the config
+    while not can_bind_to_port(host, port):
+        logger.debug(f"Port {port} is not available.")
+        # add the port to the map so that we can avoid using the same one
+        tried_ports.add(port)
+        port = random.randint(1024, 65535)
+        while True:
+            # if all the ports have been tried, exit
+            if len(tried_ports) == 65535 - 1024:
+                # pylint: disable=raise-missing-from
+                raise SystemExit("No available ports to start the temporary server.")
+            if port in tried_ports:
+                logger.debug(f"Port {port} has already been tried.")
+                port = random.randint(1024, 65535)
+            else:
+                break
+    logger.debug(f"Port {port} is available.")
+
+    return port
+
+
 def ensure_server(
     logger: logging.Logger,
     backend: str,
@@ -243,32 +269,8 @@ def ensure_server(
         return (None, None, None)
         # pylint: enable=duplicate-code
     except ClientException:
-        tried_ports = set()
-        port = random.randint(1024, 65535)
-        logger.debug(f"Trying port {port}...")
-
-        # extract address provided in the config
-        while not can_bind_to_port(host, port):
-            logger.debug(f"Port {port} is not available.")
-            # add the port to the map so that we can avoid using the same one
-            tried_ports.add(port)
-            port = random.randint(1024, 65535)
-            while True:
-                # if all the ports have been tried, exit
-                if len(tried_ports) == 65535 - 1024:
-                    # pylint: disable=raise-missing-from
-                    raise SystemExit(
-                        "No available ports to start the temporary server."
-                    )
-                if port in tried_ports:
-                    logger.debug(f"Port {port} has already been tried.")
-                    port = random.randint(1024, 65535)
-                else:
-                    break
-        logger.debug(f"Port {port} is available.")
-
-        host_port = f"{host}:{port}"
-        temp_api_base = get_api_base(host_port)
+        port = new_port(logger, host)
+        temp_api_base = get_api_base(f"{host}:{port}")
         logger.debug(f"Starting a temporary server at {temp_api_base}...")
         llama_cpp_server_process = None
         vllm_server_process = None
