@@ -9,9 +9,11 @@ GitPython>=3.1.42
 # see https://github.com/instructlab/instructlab/issues/579
 # bitsandbytes; sys_platform=='linux' and platform_machine=='x86_64'
 httpx>=0.25.0
+instructlab-eval>=0.0.3
 instructlab-quantize>=0.1.0
 instructlab-schema>=0.2.0
 instructlab-sdg>=0.0.4
+instructlab-training>=0.0.3
 jsonschema>=4.21.1
 llama_cpp_python[server]==0.2.79
 mlx>=0.5.1,<0.6.0; sys_platform == 'darwin' and platform_machine == 'arm64'
@@ -43,4 +45,3 @@ wandb>=0.16.4
 # the below library should NOT be imported into any python files
 # it is for CLI usage ONLY
 yamllint>=1.35.1
-instructlab-training>=0.0.3

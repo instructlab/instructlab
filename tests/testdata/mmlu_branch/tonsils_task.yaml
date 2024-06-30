@@ -1,0 +1,6 @@
+dataset_kwargs:
+  data_files:
+    test: tests/testdata/mmlu_branch/tonsils.jsonl
+group: mmlu_pr
+include: _default_mmlu_pr_template_yaml
+task: tonsils

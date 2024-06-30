@@ -63,6 +63,7 @@ aliases = {
     "convert": {"group": model_group.model, "cmd": model_group.convert},
     "chat": {"group": model_group.model, "cmd": model_group.chat},
     "test": {"group": model_group.model, "cmd": model_group.test},
+    "evaluate": {"group": model_group.model, "cmd": model_group.evaluate},
     "init": {"group": config_group.config, "cmd": config_group.init},
     "download": {"group": model_group.model, "cmd": model_group.download},
     "diff": {"group": taxonomy_group.taxonomy, "cmd": taxonomy_group.diff},

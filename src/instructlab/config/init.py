@@ -126,6 +126,8 @@ def init(
     cfg.serve.model_path = model_path
     cfg.generate.taxonomy_path = taxonomy_path
     cfg.generate.taxonomy_base = taxonomy_base
+    cfg.evaluate.model = model_path
+    cfg.evaluate.mt_bench_branch.taxonomy_path = taxonomy_path
     config.write_config(cfg)
 
     click.secho(

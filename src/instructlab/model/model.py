@@ -8,6 +8,7 @@ import click
 from .chat import chat
 from .convert import convert
 from .download import download
+from .evaluate import evaluate
 from .serve import serve
 from .test import test
 from .train import train
@@ -31,3 +32,4 @@ model.add_command(convert)
 model.add_command(chat)
 model.add_command(test)
 model.add_command(download)
+model.add_command(evaluate)

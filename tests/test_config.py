@@ -50,6 +50,8 @@ class TestConfig:
         assert cfg.serve.host_port == "127.0.0.1:8000"
         assert cfg.serve.backend == ""
 
+        assert cfg.evaluate is not None
+
     def test_default_config(self):
         cfg = config.get_default_config()
         assert cfg is not None
@@ -73,6 +75,19 @@ serve:
     llm_family: ''
   vllm:
     vllm_args: ''
+evaluate:
+  base_model: instructlab/granite-7b-lab
+  mmlu:
+    few_shots: 2
+    batch_size: 5
+  mmlu_branch:
+    sdg_path: /path/to/sdg
+  mt_bench:
+    judge_model: prometheus
+    output_dir: /dir/to/output
+    max_workers: 5
+  mt_bench_branch:
+    taxonomy_path: taxonomy
 """
             )
         cfg = config.read_config(config_path)
@@ -113,6 +128,19 @@ serve:
   model_path: models/merlinite-7b-lab-Q4_K_M.gguf
   vllm:
     vllm_args: ''
+evaluate:
+  base_model: instructlab/granite-7b-lab
+  mmlu:
+    few_shots: 2
+    batch_size: 5
+  mmlu_branch:
+    sdg_path: /path/to/sdg
+  mt_bench:
+    judge_model: prometheus
+    output_dir: /dir/to/output
+    max_workers: 5
+  mt_bench_branch:
+    taxonomy_path: taxonomy
 """
             )
         cfg = config.read_config(config_path)
@@ -138,6 +166,19 @@ serve:
     llm_family: ''
   vllm:
     vllm_args: ''
+evaluate:
+  base_model: instructlab/granite-7b-lab
+  mmlu:
+    few_shots: 2
+    batch_size: 5
+  mmlu_branch:
+    sdg_path: /path/to/sdg
+  mt_bench:
+    judge_model: prometheus
+    output_dir: /dir/to/output
+    max_workers: 5
+  mt_bench_branch:
+    taxonomy_path: taxonomy
 unexpected:
   field: value
 """
@@ -155,10 +196,11 @@ unexpected:
             )
         with pytest.raises(
             config.ConfigException,
-            match=r"""3 errors in [\/\w-]+config.yaml:
+            match=r"""4 errors in [\/\w-]+config.yaml:
 - missing chat: field required
 - missing generate: field required
 - missing serve: field required
+- missing evaluate: field required
 """,
         ):
             config.read_config(config_path)
@@ -175,11 +217,12 @@ generate:
             )
         with pytest.raises(
             config.ConfigException,
-            match=r"""4 errors in [\/\w-]+config.yaml:
+            match=r"""5 errors in [\/\w-]+config.yaml:
 - missing chat: field required
 - missing generate->taxonomy_path: field required
 - missing generate->taxonomy_base: field required
 - missing serve: field required
+- missing evaluate: field required
 """,
         ):
             config.read_config(config_path)
