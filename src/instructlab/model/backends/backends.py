@@ -23,7 +23,7 @@ import httpx
 import uvicorn
 
 # Local
-from ...client import ClientException, list_models
+from ...client import ClientException, check_api_base, list_models
 from ...configuration import _serve as serve_config
 from ...configuration import get_api_base
 from ...utils import split_hostport
@@ -234,16 +234,10 @@ def ensure_server(
     """Checks if server is running, if not starts one as a subprocess. Returns the server process
     and the URL where it's available."""
 
-    try:
-        logger.info(f"Trying to connect to model server at {api_base}")
-        # pylint: disable=duplicate-code
-        list_models(
-            api_base=api_base,
-            http_client=http_client,
-        )
+    # pylint: disable=no-else-return
+    if check_api_base(api_base, http_client):
         return (None, None, api_base)
-        # pylint: enable=duplicate-code
-    except ClientException:
+    else:
         port = free_tcp_ipv4_port(host)
         logger.debug(f"Using available port {port} for temporary model serving.")
 
