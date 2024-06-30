@@ -112,7 +112,6 @@ known-local-folder = ["tuning"]
 [tool.mypy]
 disable_error_code = ["import-not-found", "import-untyped"]
 exclude = [
-  "^src/instructlab/model/evaluate\\.py$",
   # These are files that were copied from the original codebase.
   # We are trying to keep changes to a minimum.
   "^src/instructlab/llamacpp/llamacpp_convert_to_gguf\\.py$",

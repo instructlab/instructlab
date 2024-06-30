@@ -172,11 +172,11 @@ def display_branch_eval_summary(
             print(f"{index+1}. {qna}")
 
 
-def qa_pairs_to_qna_to_avg_scores(qa_pairs: list[dict]) -> dict:
+def qa_pairs_to_qna_to_avg_scores(qa_pairs: list[dict]) -> dict[str, float]:
     """takes in a list of qa_pair dicts
     returns a dict of average scores per qna file
     """
-    qna_to_scores = {}
+    qna_to_scores: dict[str, list[float]] = {}
     for qa_pair in qa_pairs:
         qna_file = qa_pair["qna_file"]
         score = qa_pair["score"]
