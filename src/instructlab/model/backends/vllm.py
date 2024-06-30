@@ -1,11 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from time import sleep
 import logging
+import os
 import pathlib
 import subprocess
 import sys
+import time
+import typing
 
 # Local
 from ...configuration import get_api_base
@@ -26,12 +28,13 @@ class Server(BackendServer):
         model_path: pathlib.Path,
         host: str,
         port: int,
-        vllm_args: str = "",
+        vllm_args: typing.Iterable[str] = (),
     ):
         super().__init__(logger, model_path, api_base, host, port)
         self.api_base = api_base
         self.model_path = model_path
-        self.vllm_args = vllm_args
+        self.vllm_args: list[str]
+        self.vllm_args = list(vllm_args) if vllm_args is not None else []
         self.process = None
 
     def run(self):
@@ -46,7 +49,7 @@ class Server(BackendServer):
 
         try:
             while True:
-                sleep(1)
+                time.sleep(1)
         except KeyboardInterrupt:
             self.shutdown()
             self.logger.info("vLLM server terminated by keyboard")
@@ -97,9 +100,9 @@ class Server(BackendServer):
 def run_vllm(
     logger: logging.Logger,
     host: str,
-    port: str,
+    port: int,
     model_path: pathlib.Path,
-    vllm_args: str,
+    vllm_args: list[str],
     background: bool,
 ) -> subprocess.Popen:
     """
@@ -108,9 +111,10 @@ def run_vllm(
     Args:
         logger     (logging.Logger):  logger for info and debugging
         host       (str):             host to run server on
-        port       (str):             port to run server on
+        port       (int):             port to run server on
         model_path (Path):            The path to the model file.
-        vllm_args  (str):             Specific arguments to pass into vllm. Example: "--dtype auto --enable-lora",
+        vllm_args  (list of str):     Specific arguments to pass into vllm.
+                                      Example: ["--dtype", "auto", "--enable-lora"]
         background (bool):            Whether the stdout and stderr vLLM should be sent to /dev/null (True)
                                       or stay in the foreground(False).
     Returns:
@@ -120,15 +124,15 @@ def run_vllm(
     vllm_cmd = [sys.executable, "-m", "vllm.entrypoints.openai.api_server"]
 
     if "--host" not in vllm_args:
-        vllm_args = f"{vllm_args} --host {host}"
+        vllm_cmd.extend(["--host", host])
 
     if "--port" not in vllm_args:
-        vllm_args = f"{vllm_args} --port {port}"
+        vllm_cmd.extend(["--port", str(port)])
 
     if "--model" not in vllm_args:
-        vllm_args = f"{vllm_args} --model {model_path.as_posix()}"
+        vllm_cmd.extend(["--model", os.fspath(model_path)])
 
-    vllm_cmd.extend(vllm_args.split())
+    vllm_cmd.extend(vllm_args)
 
     logger.debug(f"vLLM serving command is: {vllm_cmd}")
     if background:

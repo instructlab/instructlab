@@ -144,7 +144,7 @@ class _serve_vllm(BaseModel):
     """Class describing configuration of vllm serving backend."""
 
     # arguments to pass into vllm process
-    vllm_args: str = ""
+    vllm_args: list[str] | None = None
 
 
 class _serve_llama_cpp(BaseModel):
@@ -255,7 +255,7 @@ def get_default_config():
                 llm_family="",
             ),
             vllm=_serve_vllm(
-                vllm_args="",
+                vllm_args=[],
             ),
         ),
         train=_train(

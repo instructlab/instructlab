@@ -46,7 +46,7 @@ class TestConfig:
         assert cfg.serve.llama_cpp.max_ctx_size == 4096
         assert cfg.serve.llama_cpp.llm_family == ""
         assert cfg.serve.vllm is not None
-        assert cfg.serve.vllm.vllm_args == ""
+        assert cfg.serve.vllm.vllm_args == []
         assert cfg.serve.host_port == "127.0.0.1:8000"
         assert cfg.serve.backend == ""
 
@@ -74,7 +74,7 @@ serve:
     max_ctx_size: 4096
     llm_family: ''
   vllm:
-    vllm_args: ''
+    vllm_args: []
 evaluate:
   base_model: instructlab/granite-7b-lab
   mmlu:
@@ -127,7 +127,7 @@ serve:
     llm_family: ''
   model_path: models/merlinite-7b-lab-Q4_K_M.gguf
   vllm:
-    vllm_args: ''
+    vllm_args: []
 evaluate:
   base_model: instructlab/granite-7b-lab
   mmlu:
@@ -165,7 +165,7 @@ serve:
     max_ctx_size: 4096
     llm_family: ''
   vllm:
-    vllm_args: ''
+    vllm_args: []
 evaluate:
   base_model: instructlab/granite-7b-lab
   mmlu:
@@ -265,3 +265,50 @@ generate:
             model_path = os.path.join("models", f"{model_name}-7b-lab-Q4_K_M.gguf")
             with pytest.raises(config.ConfigException):
                 config.get_model_family(model_name, model_path)
+
+    def test_config_modified_settings(self):
+        config_path = self.tmpdir.join("config.yaml")
+        with open(config_path, "w", encoding="utf-8") as config_file:
+            config_file.write(
+                """\
+chat:
+  model: models/granite-7b-lab-Q4_K_M.gguf
+generate:
+  model: models/granite-7b-lab-Q4_K_M.gguf
+  taxonomy_base: upstream/main
+  taxonomy_path: mytaxonomy
+serve:
+  model_path: models/granite-7b-lab-Q4_K_M.gguf
+  llama_cpp:
+    gpu_layers: 1
+    max_ctx_size: 2048
+    llm_family: ''
+  vllm:
+    vllm_args:
+       - --dtype=auto
+       - --enable-lora
+evaluate:
+  base_model: instructlab/granite-7b-lab
+  mmlu:
+    few_shots: 2
+    batch_size: 5
+  mmlu_branch:
+    sdg_path: /path/to/sdg
+  mt_bench:
+    judge_model: prometheus
+    output_dir: /dir/to/output
+    max_workers: 5
+  mt_bench_branch:
+    taxonomy_path: taxonomy
+"""
+            )
+        cfg = config.read_config(config_path)
+        assert cfg is not None
+        assert cfg.chat.model == "models/granite-7b-lab-Q4_K_M.gguf"
+        assert cfg.generate.model == "models/granite-7b-lab-Q4_K_M.gguf"
+        assert cfg.serve.llama_cpp.gpu_layers == 1
+        assert cfg.serve.llama_cpp.max_ctx_size == 2048
+        assert cfg.serve.vllm.vllm_args == [
+            "--dtype=auto",
+            "--enable-lora",
+        ]
