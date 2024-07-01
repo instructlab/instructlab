@@ -12,13 +12,11 @@ from instructlab.training import (
     TrainingArgs,
     run_training,
 )
-
-import lm_eval
-from instructlab.eval.mmlu import MMLUEvaluator
+from instructlab.eval.mmlu import (
+    MMLUEvaluator,
+    MMLU_TASKS,
+)  # waiting on this to be available in the upstream
 from instructlab.eval.mt_bench import MTBenchEvaluator
-from instructlab.eval.constants import (
-    ALL_MMLU_TASKS,
-)  # TODO: this doesn't currently exist. implement this in the upstream.
 
 
 def _e2e_training_step(
@@ -47,7 +45,7 @@ def _e2e_training_step(
 def _mmlu(ckpt_path: str) -> float:
     evaluator = MMLUEvaluator(
         ckpt_path,
-        tasks=ALL_MMLU_TASKS,
+        tasks=MMLU_TASKS,
         few_shots=2,  # TODO need to know this param
         batch_size=torch.cuda.device_count(),  # TODO:  should we parameterize this now or wait until later?
     )

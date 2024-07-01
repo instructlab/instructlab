@@ -443,8 +443,25 @@ def train(
             # end-to-end training
             _validate_e2e_paths(e2e_data_dir, e2e_checkpoints_dir)
             final_checkpoint = run_e2e_training(ctx.params, train_args, torch_args)
+            print(f"E2E output best checkpoint: {final_checkpoint}")
         else:
             run_training(train_args=train_args, torch_args=torch_args)
+
+
+"""
+expect storage like:
+~/.local/var/instructlab/e2e
+    | phase5
+        | checkpoints
+        | eval
+        | data ?
+    | phase10
+        | checkpoints
+        | eval
+        | data ?
+        
+`ilab model train --e2e --model ibm-granite/granite-7b-lab --phase5_data ./phase5/train_data.jsonl --phase10_data ./phase10/train_data.jsonl --model-out ./new_model`
+"""
 
 
 def _validate_e2e_data_dir(data_path: str) -> None:
