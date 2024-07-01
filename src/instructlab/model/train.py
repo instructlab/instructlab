@@ -23,6 +23,8 @@ import click
 
 # First Party
 from instructlab import utils
+
+# pylint: disable=ungrouped-imports
 from instructlab.configuration import (
     DEFAULT_CHECKPOINTS_DIR,
     DEFAULT_DATASET_DIR,

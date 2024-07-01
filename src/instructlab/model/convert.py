@@ -14,7 +14,6 @@ import click
 
 # First Party
 from instructlab import utils
-from instructlab.configuration import DEFAULT_MODEL_DIR
 
 logger = logging.getLogger(__name__)
 

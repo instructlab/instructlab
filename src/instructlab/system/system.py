@@ -5,6 +5,7 @@ import logging
 from click_didyoumean import DYMGroup
 import click
 
+# Local
 from .reset import reset
 
 logger = logging.getLogger(__name__)
@@ -16,7 +17,6 @@ def system(ctx):
     """Command group for all system-related command calls"""
     ctx.obj = ctx.parent.obj
     ctx.default_map = ctx.parent.default_map
-
 
 
 system.add_command(reset)

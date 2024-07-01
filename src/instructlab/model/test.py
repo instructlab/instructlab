@@ -9,12 +9,7 @@ import click
 
 # First Party
 from instructlab import utils
-from instructlab.configuration import (
-    DEFAULT_CHECKPOINTS_DIR,
-    DEFAULT_INTERNAL_DIR,
-    DEFAULT_MODEL_DIR,
-    DEFAULT_TAXONOMY_PATH,
-)
+from instructlab.configuration import DEFAULT_CHECKPOINTS_DIR, DEFAULT_INTERNAL_DIR
 
 
 @click.command()

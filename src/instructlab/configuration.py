@@ -2,12 +2,12 @@
 
 # Standard
 from os import path
+from pathlib import Path
 from re import match
 from typing import Optional
 import os
 import sys
 import typing
-from pathlib import Path
 
 # Third Party
 from instructlab.training import (
@@ -54,8 +54,8 @@ def get_home_dir(*subdir: str) -> str:
 
 def get_home_env_path(env: str, suffix: str, *home_paths: str) -> str:
     """Neatly formats the environment paths for the user home & storage directories"""
-    path = os.getenv(env) or get_home_dir(*home_paths)
-    return os.path.join(path, suffix)
+    full_path = os.getenv(env) if os.getenv(env) else get_home_dir(*home_paths)
+    return os.path.join(full_path, suffix)
 
 
 ILAB_CONFIG_HOME = get_home_env_path(
@@ -460,7 +460,7 @@ def flatten_config_dict(
                 continue
             if k in new_dict:
                 raise RuntimeError(f"key collision when merging training dicts: {k}")
-            if type(v) is dict:
+            if isinstance(v, dict):
                 dicts_to_merge.append(v)
                 continue
             new_dict[k] = v

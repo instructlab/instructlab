@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from os.path import basename, dirname
+from os.path import basename
 import os
 
 # Third Party

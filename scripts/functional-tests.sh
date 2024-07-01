@@ -3,8 +3,19 @@
 
 set -ex
 
-export CONFIG_FILE="${HOME}/.config/instructlab/config.yaml"
-export DATA_DIR="${HOME}/.local/share/instructlab"
+export TEST_DIR
+TEST_DIR="$(pwd)/__test-files"
+export XDG_CONFIG_HOME="${TEST_DIR}/config"
+export XDG_DATA_HOME="${TEST_DIR}/data"
+
+
+export CONFIG_DIR="${XDG_CONFIG_HOME}/instructlab"
+export DATA_DIR="${XDG_DATA_HOME}/instructlab"
+export CONFIG_FILE="${CONFIG_DIR}/config.yaml"
+
+for dir in "${XDG_CONFIG_HOME}" "${XDG_DATA_HOME}" "${CONFIG_DIR}" "${DATA_DIR}"; do
+	mkdir -p "${dir}"
+done
 
 # build a prompt string that includes the time, source file, line number, and function name
 export PS4='+$(date +"%Y-%m-%d %T") ${BASH_VERSION}:${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
@@ -141,7 +152,7 @@ test_ctx_size(){
 
     # look for the context size error in the server logs
     if ! timeout 20 bash -c "
-        until grep -q 'exceed context window of' "${TEST_CTX_SIZE_LAB_SERVE_LOG_FILE}"; do
+        until grep -q 'exceed context window of' ${TEST_CTX_SIZE_LAB_SERVE_LOG_FILE}; do
         echo 'waiting for context size error'
         sleep 1
     done
@@ -153,7 +164,7 @@ test_ctx_size(){
 
     # look for the context size error in the chat logs
     if ! timeout 20 bash -c "
-        until grep -q 'Message too large for context size.' "${TEST_CTX_SIZE_LAB_CHAT_LOG_FILE}"; do
+        until grep -q 'Message too large for context size.' ${TEST_CTX_SIZE_LAB_CHAT_LOG_FILE}; do
         echo 'waiting for chat error'
         sleep 1
     done

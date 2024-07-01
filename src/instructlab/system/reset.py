@@ -1,8 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
-import click
-import shutil
+# Standard
 import random
+import shutil
 
+# Third Party
+import click
+
+# First Party
 from instructlab import utils
 from instructlab.configuration import ILAB_CONFIG_HOME, ILAB_DATA_HOME
 

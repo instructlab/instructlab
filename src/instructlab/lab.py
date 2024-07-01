@@ -17,8 +17,8 @@ from .config import config as config_group
 from .data import data as data_group
 from .model import model as model_group
 from .sysinfo import get_sysinfo
-from .taxonomy import taxonomy as taxonomy_group
 from .system import system
+from .taxonomy import taxonomy as taxonomy_group
 
 # 'fork' is unsafe and incompatible with some hardware accelerators.
 # Python 3.14 will switch to 'spawn' on all platforms.
