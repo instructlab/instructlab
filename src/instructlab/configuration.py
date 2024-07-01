@@ -54,7 +54,8 @@ def get_home_dir(*subdir: str) -> str:
 
 def get_home_env_path(env: str, suffix: str, *home_paths: str) -> str:
     """Neatly formats the environment paths for the user home & storage directories"""
-    full_path = os.getenv(env) if os.getenv(env) else get_home_dir(*home_paths)
+    home_path = os.getenv(env)
+    full_path = home_path if home_path else get_home_dir(*home_paths)
     return os.path.join(full_path, suffix)
 
 
@@ -442,8 +443,8 @@ def ensure_storage_directories_exist():
 
 
 def flatten_config_dict(
-    config: dict[str, any], ignore_keys: list[str]
-) -> dict[str, any]:
+    config: dict[str, typing.Any], ignore_keys: list[str]
+) -> dict[str, typing.Any]:
     """
     Given a dictionary with nested config objects, flatten it into a single dictionary.
     Ignore all of the keys provided in the ignore_keys list.
@@ -454,7 +455,7 @@ def flatten_config_dict(
     ]
     # HACK(osilkin): keep this implementation here so we can catch any errors in the future
     while 0 < len(dicts_to_merge):
-        active_dict: dict[str, any] = dicts_to_merge.pop()
+        active_dict: dict[str, typing.Any] = dicts_to_merge.pop()
         for k, v in active_dict.items():
             if k in ignore_keys:
                 continue
