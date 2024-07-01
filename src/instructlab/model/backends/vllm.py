@@ -9,6 +9,9 @@ import sys
 import time
 import typing
 
+# Third Party
+import httpx
+
 # Local
 from ...configuration import get_api_base
 from .backends import (
@@ -69,10 +72,7 @@ class Server(BackendServer):
         )
         return server_process
 
-    def run_detached(
-        self,
-        http_client,
-    ):
+    def run_detached(self, http_client: httpx.Client | None = None):
         try:
             _, vllm_server_process, api_base = ensure_server(
                 logger=self.logger,

@@ -11,6 +11,7 @@ import pathlib
 from llama_cpp import llama_chat_format
 from llama_cpp.server.app import create_app
 from llama_cpp.server.settings import Settings
+import httpx
 import llama_cpp.server.app as llama_app
 
 # Local
@@ -90,10 +91,7 @@ class Server(BackendServer):
 
         return server_process
 
-    def run_detached(
-        self,
-        http_client,
-    ):
+    def run_detached(self, http_client: httpx.Client | None = None):
         try:
             llama_cpp_server_process, _, api_base = ensure_server(
                 logger=self.logger,
