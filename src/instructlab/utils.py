@@ -5,6 +5,7 @@ from functools import cache, wraps
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Union
 from urllib.parse import urlparse
+from html.parser import HTMLParser
 import copy
 import glob
 import json
@@ -40,7 +41,23 @@ rules:
 class TaxonomyReadingException(Exception):
     """An exception raised during reading of the taxonomy."""
 
+class HTMLTagStripper(HTMLParser):
+    def reset(self):
+        super().reset()
+        self.clean_text = ''
+    def strip_html_tags(self, input:str) -> str:
+        """" Returns text without html tags for given text input 
+        
+        :param input: The input text to be processed
+        """""        
+        self.reset()
+        self.feed(input)
+        self.close()
+        return self.clean_text
 
+    def handle_data(self, data):
+        self.clean_text += data
+        
 def macos_requirement(echo_func, exit_exception):
     """Adds a check for MacOS before running a method.
 
@@ -448,8 +465,10 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
         tax_path = "->".join(taxonomy_path.parent.parts)
         task_description = contents.get("task_description")
         documents = contents.get("document")
-        if documents:
-            documents = get_documents(source=documents)
+        
+        if documents: 
+            tag_stripper = HTMLTagStripper()
+            documents = [tag_stripper.strip_html_tags(doc) for doc in get_documents(source=documents) ]
             logger.debug("Content from git repo fetched")
 
         for seed_example in contents.get("seed_examples"):
