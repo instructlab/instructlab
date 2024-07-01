@@ -37,14 +37,14 @@ cleanup() {
         printf "\e[31m=%.0s\e[0m" {1..80}
         printf "\n\n"
     fi
-    for pid in $PID_SERVE $PID_CHAT; do
-        if [ -n "$pid" ]; then
-            kill "$pid"
-            wait "$pid"
+    for pid in ${PID_SERVE} ${PID_CHAT}; do
+        if [ -n "${pid}" ]; then
+            kill "${pid}"
+            wait "${pid}"
         fi
     done
-    rm -f "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" \
-        "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" \
+    rm -f "${TEST_CTX_SIZE_LAB_SERVE_LOG_FILE}" \
+        "${TEST_CTX_SIZE_LAB_CHAT_LOG_FILE}" \
         test_session_history
     rm -rf test_taxonomy
     # revert port change from test_bind_port()
@@ -67,7 +67,7 @@ ilab --version
 ilab sysinfo
 
 # pipe 3 carriage returns to ilab config init to get past the prompts
-echo -e "\n\n\n" | ilab config init
+echo -e "\n\n\n" | ilab init
 
 # Enable Debug in func tests
 sed -i.bak -e 's/log_level:.*/log_level: DEBUG/g;' "${CONFIG_FILE}"
@@ -123,7 +123,7 @@ test_bind_port(){
 
 test_ctx_size(){
     # A context size of 55 will allow a small message
-    ilab model serve --max-ctx-size 25 &> "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" &
+    ilab model serve --max-ctx-size 25 &> "${TEST_CTX_SIZE_LAB_SERVE_LOG_FILE}" &
     PID_SERVE=$!
 
     # Make sure the server has time to open the port
@@ -141,25 +141,25 @@ test_ctx_size(){
 
     # look for the context size error in the server logs
     if ! timeout 20 bash -c "
-        until grep -q 'exceed context window of' $TEST_CTX_SIZE_LAB_SERVE_LOG_FILE; do
+        until grep -q 'exceed context window of' "${TEST_CTX_SIZE_LAB_SERVE_LOG_FILE}"; do
         echo 'waiting for context size error'
         sleep 1
     done
 "; then
         echo "context size error not found in server logs"
-        cat $TEST_CTX_SIZE_LAB_SERVE_LOG_FILE
+        cat "${TEST_CTX_SIZE_LAB_SERVE_LOG_FILE}"
         exit 1
     fi
 
     # look for the context size error in the chat logs
     if ! timeout 20 bash -c "
-        until grep -q 'Message too large for context size.' $TEST_CTX_SIZE_LAB_CHAT_LOG_FILE; do
+        until grep -q 'Message too large for context size.' "${TEST_CTX_SIZE_LAB_CHAT_LOG_FILE}"; do
         echo 'waiting for chat error'
         sleep 1
     done
 "; then
         echo "context size error not found in chat logs"
-        cat $TEST_CTX_SIZE_LAB_CHAT_LOG_FILE
+        cat "${TEST_CTX_SIZE_LAB_CHAT_LOG_FILE}"
         exit 1
     fi
 }
@@ -377,12 +377,13 @@ test_model_print(){
 }
 
 function test_config_show() {
+	echo -e "\n\n\n" | ilab init
 	# test that the model show command works
 	ilab config show | grep -i 'model_path'
 
 	# test that removing the config throws an error
 	rm -f "${CONFIG_FILE}" 
-	ilab config show | grep -i error
+	ilab config show 1>&2 |& grep -i error  # redirect STDERR into the pipe
 }
 
 ########
