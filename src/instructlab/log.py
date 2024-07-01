@@ -68,7 +68,7 @@ def configure_logging(
     stream = logging.StreamHandler()
     stream.setFormatter(CustomFormatter(fmt=fmt))
     root.addHandler(stream)
-    root.setLevel(log_level)
+    logging.getLogger("instructlab").setLevel(log_level)
 
     # Set logging level of OpenAI client and httpx library to ERROR to suppress INFO messages
     logging.getLogger("openai").setLevel(logging.ERROR)
