@@ -21,6 +21,7 @@ from pydantic import (
     StrictStr,
     ValidationError,
     field_validator,
+    model_validator,
 )
 import click
 import httpx
@@ -79,6 +80,7 @@ class _general(BaseModel):
 
     # additional fields with defaults
     log_level: StrictStr = "INFO"
+    debug_level: int = 0
 
     @field_validator("log_level")
     def validate_log_level(cls, v):
@@ -99,6 +101,13 @@ class _general(BaseModel):
                 f"'{v}' is not a valid log level name. valid levels: {valid_levels}"
             )
         return v.upper()
+
+    @model_validator(mode="after")
+    def after_debug_level(self):
+        # set debug level when log level is DEBUG
+        if self.log_level == "DEBUG" and self.debug_level == 0:
+            self.debug_level = 1
+        return self
 
 
 class _chat(BaseModel):
@@ -388,7 +397,7 @@ class Lab:
         self.config = config_obj
 
 
-def init(ctx, config_file):
+def init(ctx, config_file, debug_level: int = 0):
     if (
         ctx.invoked_subcommand not in {"config", "init", "sysinfo"}
         and "--help" not in sys.argv[1:]
@@ -406,8 +415,17 @@ def init(ctx, config_file):
                 config_obj = read_config(config_file)
             except ConfigException as ex:
                 raise click.ClickException(str(ex))
+
+        # debug level overrides config file
+        if debug_level > 0:
+            config_obj.general.log_level = "DEBUG"
+            config_obj.general.debug_level = debug_level
+
         # setup logging
-        log.configure_logging(log_level=config_obj.general.log_level.upper())
+        log.configure_logging(
+            log_level=config_obj.general.log_level,
+            debug_level=config_obj.general.debug_level,
+        )
         ctx.obj = Lab(config_obj)
         # default_map holds a dictionary with default values for each command parameters
         config_dict = get_dict(ctx.obj.config)

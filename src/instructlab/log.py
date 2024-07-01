@@ -55,6 +55,7 @@ def stdout_stderr_to_logger(logger, log_file):
 def configure_logging(
     *,
     log_level: str,
+    debug_level: int = 0,
     fmt: str = FORMAT,
 ) -> None:
     """Configure logging framework"""
@@ -68,8 +69,28 @@ def configure_logging(
     stream = logging.StreamHandler()
     stream.setFormatter(CustomFormatter(fmt=fmt))
     root.addHandler(stream)
-    root.setLevel(log_level)
 
-    # Set logging level of OpenAI client and httpx library to ERROR to suppress INFO messages
-    logging.getLogger("openai").setLevel(logging.ERROR)
-    logging.getLogger("httpx").setLevel(logging.ERROR)
+    instructlab_lgr = logging.getLogger("instructlab")
+    openai_lgr = logging.getLogger("openai")
+    httpx_lgr = logging.getLogger("httpx")
+
+    # reset loggers to inherit from root logger
+    for lgr in [instructlab_lgr, openai_lgr, httpx_lgr]:
+        lgr.setLevel(logging.NOTSET)
+
+    if log_level == "DEBUG":
+        if debug_level < 2:
+            # debug level 1 enables debugging for instructlab
+            # other loggers are set to INFO
+            root.setLevel(logging.INFO)
+            instructlab_lgr.setLevel(logging.DEBUG)
+        else:
+            root.setLevel(logging.DEBUG)
+    elif log_level in {"INFO", "WARN", "WARNING"}:
+        root.setLevel(log_level)
+        # Set logging level of OpenAI client and httpx library to ERROR to suppress INFO messages
+        openai_lgr.setLevel(logging.ERROR)
+        httpx_lgr.setLevel(logging.ERROR)
+    else:
+        # ERROR and higher
+        root.setLevel(log_level)

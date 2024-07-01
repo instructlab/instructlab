@@ -8,6 +8,8 @@
    specify which one to use. Currently, the only supported backend are `llama-cpp` and `vllm`.
 * Update `llama-cpp-python` to latest upstream release 0.2.79 to address poor
   results of synthetic data generation and local training.
+* The `ilab` command now accepts a `-v` / `--verbose` option to enable debug logging.
+  `ilab -vv` or `ilab --verbose --verbose` enables more verbose debug logging.
 
 ### Breaking Changes
 

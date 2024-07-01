@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+import logging
 import os
 
 # Third Party
@@ -8,6 +9,7 @@ import pytest
 
 # First Party
 from instructlab import configuration as config
+from instructlab.log import configure_logging
 
 
 class TestConfig:
@@ -18,6 +20,7 @@ class TestConfig:
     def _assert_defaults(self, cfg):
         assert cfg.general is not None
         assert cfg.general.log_level == "INFO"
+        assert cfg.general.debug_level == 0
 
         assert cfg.chat is not None
         assert cfg.chat.model == "models/merlinite-7b-lab-Q4_K_M.gguf"
@@ -243,6 +246,26 @@ generate:
         assert cfg.general.validate_log_level("ERROR") == "ERROR"
         assert cfg.general.validate_log_level("NOTSET") == "NOTSET"
 
+    def test_config_debug_level(self):
+        config_path = self.tmpdir.join("config.yaml")
+        with open(config_path, "w", encoding="utf-8") as config_file:
+            config_file.write(
+                """chat:
+  model: models/merlinite-7b-lab-Q4_K_M.gguf
+generate:
+  model: models/merlinite-7b-lab-Q4_K_M.gguf
+  taxonomy_base: origin/main
+  taxonomy_path: taxonomy
+serve:
+  model_path: models/merlinite-7b-lab-Q4_K_M.gguf
+general:
+  log_level: DEBUG
+"""
+            )
+        cfg = config.read_config(config_path)
+        assert cfg.general.log_level == "DEBUG"
+        assert cfg.general.debug_level == 1
+
     def test_get_model_family(self):
         good_cases = {
             # two known families
@@ -265,3 +288,19 @@ generate:
             model_path = os.path.join("models", f"{model_name}-7b-lab-Q4_K_M.gguf")
             with pytest.raises(config.ConfigException):
                 config.get_model_family(model_name, model_path)
+
+
+@pytest.mark.parametrize(
+    "log_level,debug_level,root,instructlab,openai",
+    [
+        ("INFO", 0, logging.INFO, logging.INFO, logging.ERROR),
+        ("DEBUG", 1, logging.INFO, logging.DEBUG, logging.INFO),
+        ("DEBUG", 2, logging.DEBUG, logging.DEBUG, logging.DEBUG),
+        ("ERROR", 0, logging.ERROR, logging.ERROR, logging.ERROR),
+    ],
+)
+def test_logging(log_level, debug_level, root, instructlab, openai):
+    configure_logging(log_level=log_level, debug_level=debug_level)
+    assert logging.getLogger("root").getEffectiveLevel() == root
+    assert logging.getLogger("instructlab").getEffectiveLevel() == instructlab
+    assert logging.getLogger("openai").getEffectiveLevel() == openai
