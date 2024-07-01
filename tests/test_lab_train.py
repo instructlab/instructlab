@@ -1,5 +1,5 @@
-# pylint: disable=R0801
 # SPDX-License-Identifier: Apache-2.0
+# # pylint: disable=R0801
 
 # Standard
 from pathlib import Path
