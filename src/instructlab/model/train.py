@@ -11,7 +11,6 @@ import shutil
 from instructlab.configuration import (
     DEFAULT_CHECKPOINTS_DIR,
     DEFAULT_DATASET_DIR,
-    DEFAULT_MODEL_PATH,
 )
 from instructlab.training import (
     DeepSpeedOptions,
