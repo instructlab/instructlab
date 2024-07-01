@@ -7,7 +7,7 @@ import os
 import shutil
 
 # Third Party
-# pylint: disable=ungrouped-imports
+# pylint: disable=ungrouped-imports,no-name-in-module
 from instructlab.training import (
     DeepSpeedOptions,
     LoraOptions,
