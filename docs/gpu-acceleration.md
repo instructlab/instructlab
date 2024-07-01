@@ -119,7 +119,7 @@ existing package: `--force-reinstall`. Your final
 command should look like this:
 
 ```shell
-# Veryify CUDA can be found in your PATH variable
+# Verify CUDA can be found in your PATH variable
 export CUDA_HOME=/usr/local/cuda
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64
 export PATH=$PATH:$CUDA_HOME/bin
@@ -130,6 +130,16 @@ pip install --force-reinstall llama_cpp_python==0.2.79 -C cmake.args="-DLLAMA_CU
 
 # Re-install InstructLab
 pip install instructlab/.
+```
+
+If you are running Fedora 40, you need to replace the `Recompile llama-cpp-python using CUDA` section above with the
+following until [CUDA](https://docs.nvidia.com/cuda/cuda-installation-guide-linux/#host-compiler-support-policy)
+supports GCC v14.1+.
+
+```shell
+# Recompile llama-cpp-python using CUDA
+sudo dnf install clang17
+CUDAHOSTCXX=$(which clang++-17) pip install --force-reinstall llama_cpp_python==0.2.79 -C cmake.args="-DLLAMA_CUDA=on"
 ```
 
 Proceed to the `Initialize` section of
