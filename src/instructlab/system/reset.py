@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
 import click
 import shutil
 import random
@@ -10,7 +11,7 @@ def delete_storage_dirs():
     """
     Deletes all of the data in the instructlab storage & config directories.
     """
-    print(f"removing {ILAB_CONFIG_HOME}...")
+    click.echo(f"removing {ILAB_CONFIG_HOME}...")
     shutil.rmtree(ILAB_CONFIG_HOME, ignore_errors=False)
     print(f"removing {ILAB_DATA_HOME}...")
     shutil.rmtree(ILAB_DATA_HOME)

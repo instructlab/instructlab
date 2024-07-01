@@ -7,6 +7,7 @@ from typing import Optional
 import os
 import sys
 import typing
+from pathlib import Path
 
 # Third Party
 from instructlab.training import (
@@ -43,7 +44,7 @@ class STORAGE_DIR_NAMES:
 
 
 def get_home_dir(*subdir: str) -> str:
-    home = os.getenv("HOME")
+    home = str(Path.home()) if Path.home() else os.getenv("HOME")
     if not home:
         raise RuntimeError(
             "The HOME directory does not exist. Please make sure it's set and run this again."
