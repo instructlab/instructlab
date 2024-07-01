@@ -10,6 +10,9 @@ import click
 from instructlab import configuration as config
 from instructlab import utils
 
+# Local
+from ..utils import http_client
+
 logger = logging.getLogger(__name__)
 
 
@@ -163,9 +166,6 @@ def generate(
     # Third Party
     from instructlab.sdg.generate_data import generate_data
     from instructlab.sdg.utils import GenerateException
-
-    # Local
-    from ..utils import http_client
 
     prompt_file_path = config.DEFAULT_PROMPT_FILE
     if ctx.obj is not None:
