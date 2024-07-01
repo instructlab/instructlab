@@ -3,6 +3,7 @@
 # Standard
 import logging
 import pathlib
+import typing
 
 # Third Party
 import click
@@ -56,7 +57,12 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--vllm-args",
     type=str,
-    help="Specific arguments to pass into vllm. The value passed into this flag must be surrounded by double quotes.\n Example: --vllm-args '--dtype auto --enable-lora'",
+    multiple=True,
+    help=(
+        "Specific arguments to pass into vllm. Each arg must be passed "
+        "separately and surrounded by quotes.\n"
+        " Example: --vllm-args='--dtype=auto' --vllm-args='--enable-lora'"
+    ),
 )
 @click.pass_context
 @utils.display_params
@@ -69,7 +75,7 @@ def serve(
     model_family,
     log_file,
     backend,
-    vllm_args,
+    vllm_args: typing.Iterable[str],
 ):
     """Start a local server"""
     # pylint: disable=import-outside-toplevel
@@ -116,9 +122,6 @@ def serve(
 
     if backend == backends.VLLM:
         # Instantiate the vllm server
-        if vllm_args is None:
-            vllm_args = ""
-
         backend_instance = vllm.Server(
             logger=logger,
             api_base=ctx.obj.config.serve.api_base(),
