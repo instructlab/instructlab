@@ -164,6 +164,9 @@ def generate(
     from instructlab.sdg.generate_data import generate_data
     from instructlab.sdg.utils import GenerateException
 
+    # Local
+    from ..utils import http_client
+
     prompt_file_path = config.DEFAULT_PROMPT_FILE
     if ctx.obj is not None:
         prompt_file_path = ctx.obj.config.generate.prompt_file
@@ -181,7 +184,7 @@ def generate(
         try:
             # Run the llama server
             backend_instance.run_detached(
-                tls_insecure, tls_client_cert, tls_client_key, tls_client_passwd
+                http_client(ctx.params),
             )
             # api_base will be set by run_detached
             api_base = backend_instance.api_base

@@ -158,10 +158,10 @@ def chat(
     max_tokens,
     endpoint_url,
     api_key,  # pylint: disable=unused-argument
-    tls_insecure,
-    tls_client_cert,
-    tls_client_key,
-    tls_client_passwd,
+    tls_insecure,  # pylint: disable=unused-argument
+    tls_client_cert,  # pylint: disable=unused-argument
+    tls_client_key,  # pylint: disable=unused-argument
+    tls_client_passwd,  # pylint: disable=unused-argument
     model_family,
 ):
     """Run a chat using the modified model"""
@@ -183,7 +183,7 @@ def chat(
         try:
             # Run the llama server
             backend_instance.run_detached(
-                tls_insecure, tls_client_cert, tls_client_key, tls_client_passwd
+                http_client(ctx.params),
             )
             # api_base will be set by run_detached
             api_base = backend_instance.api_base
@@ -215,10 +215,7 @@ def chat(
             try:
                 models = ilabclient.list_models(
                     api_base=api_base,
-                    tls_insecure=tls_insecure,
-                    tls_client_cert=tls_client_cert,
-                    tls_client_key=tls_client_key,
-                    tls_client_passwd=tls_client_passwd,
+                    http_client=http_client(ctx.params),
                 )
 
                 # Currently, we only present a single model so we can safely assume that the first model

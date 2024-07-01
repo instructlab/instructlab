@@ -67,19 +67,17 @@ class Server(BackendServer):
         return server_process
 
     def run_detached(
-        self, tls_insecure, tls_client_cert, tls_client_key, tls_client_passwd
+        self,
+        http_client,
     ):
         try:
             _, vllm_server_process, api_base = ensure_server(
                 logger=self.logger,
                 backend=VLLM,
                 api_base=self.api_base,
+                http_client=http_client,
                 host=self.host,
                 port=self.port,
-                tls_insecure=tls_insecure,
-                tls_client_cert=tls_client_cert,
-                tls_client_key=tls_client_key,
-                tls_client_passwd=tls_client_passwd,
                 server_process_func=self.create_server_process,
             )
             self.process = vllm_server_process
