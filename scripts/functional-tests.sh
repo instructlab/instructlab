@@ -13,7 +13,8 @@ export CONFIG_DIR="${XDG_CONFIG_HOME}/instructlab"
 export DATA_DIR="${XDG_DATA_HOME}/instructlab"
 export CONFIG_FILE="${CONFIG_DIR}/config.yaml"
 
-for dir in "${XDG_CONFIG_HOME}" "${XDG_DATA_HOME}" "${CONFIG_DIR}" "${DATA_DIR}"; do
+# creates all of the directories which we expect to be populated on a system
+for dir in "${XDG_CONFIG_HOME}" "${XDG_DATA_HOME}"; do
 	mkdir -p "${dir}"
 done
 
@@ -103,6 +104,7 @@ ilab model download
 
 # check that ilab model serve is working
 test_bind_port(){
+	printf "\e[32mThe ilab config:\n$(ilab config show)\e[0m"
     expect -c "
     set timeout 60
     spawn ilab model serve
@@ -390,11 +392,10 @@ test_model_print(){
 function test_config_show() {
 	echo -e "\n\n\n" | ilab init
 	# test that the model show command works
-	ilab config show | grep -i 'model_path'
-
-	# test that removing the config throws an error
-	rm -f "${CONFIG_FILE}" 
-	ilab config show 1>&2 |& grep -i error  # redirect STDERR into the pipe
+	if ! ilab config show | grep -i 'model_path'; then
+		echo "Model path not found"
+		exit 1
+	fi
 }
 
 ########

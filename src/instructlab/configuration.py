@@ -480,7 +480,6 @@ def init(ctx, config_file: str):
         # do nothing
         return
 
-    ensure_storage_directories_exist()
     if config_file == "DEFAULT":
         config_obj = get_default_config()
     elif not os.path.isfile(config_file):

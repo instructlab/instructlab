@@ -7,6 +7,7 @@ import os
 import shutil
 
 # Third Party
+# pylint: disable=no-name-in-module,ungrouped-imports
 from instructlab.training import (
     DeepSpeedOptions,
     LoraOptions,
@@ -19,7 +20,7 @@ import click
 # First Party
 from instructlab import utils
 
-# pylint: disable=ungrouped-imports,no-name-in-module
+# pylint: disable=ungrouped-imports
 from instructlab.configuration import (
     DEFAULT_CHECKPOINTS_DIR,
     DEFAULT_DATASET_DIR,
