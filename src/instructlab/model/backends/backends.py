@@ -8,7 +8,6 @@ import logging
 import mmap
 import multiprocessing
 import pathlib
-import random
 import signal
 import socket
 import struct
@@ -243,29 +242,8 @@ def ensure_server(
         return (None, None, None)
         # pylint: enable=duplicate-code
     except ClientException:
-        tried_ports = set()
-        port = random.randint(1024, 65535)
-        logger.debug(f"Trying port {port}...")
-
-        # extract address provided in the config
-        while not can_bind_to_port(host, port):
-            logger.debug(f"Port {port} is not available.")
-            # add the port to the map so that we can avoid using the same one
-            tried_ports.add(port)
-            port = random.randint(1024, 65535)
-            while True:
-                # if all the ports have been tried, exit
-                if len(tried_ports) == 65535 - 1024:
-                    # pylint: disable=raise-missing-from
-                    raise SystemExit(
-                        "No available ports to start the temporary server."
-                    )
-                if port in tried_ports:
-                    logger.debug(f"Port {port} has already been tried.")
-                    port = random.randint(1024, 65535)
-                else:
-                    break
-        logger.debug(f"Port {port} is available.")
+        port = free_tcp_ipv4_port(host)
+        logger.debug("Using %i", port)
 
         host_port = f"{host}:{port}"
         temp_api_base = get_api_base(host_port)
@@ -338,13 +316,17 @@ def ensure_server(
         return (llama_cpp_server_process, vllm_server_process, temp_api_base)
 
 
-def can_bind_to_port(host, port):
+def free_tcp_ipv4_port(host: str) -> int:
+    """Ask the OS for a random, ephemeral, and bindable TCP/IPv4 port
+
+    Note: The idea of finding a free port is bad design and subject to
+    race conditions. Instead vLLM and llama-cpp should accept port 0 and
+    have an API to return the actual listening port. Or they should be able
+    to use an existing socket like a systemd socket activation service.
+    """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        try:
-            s.bind((host, port))
-            return True
-        except socket.error:
-            return False
+        s.bind((host, 0))
+        return s.getsockname()[-1]
 
 
 def is_temp_server_running():
