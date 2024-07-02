@@ -10,6 +10,7 @@ import yaml
 
 # First Party
 from instructlab import utils
+from instructlab.utils import HTMLTagStripper
 
 
 class TestUtils:
@@ -57,3 +58,8 @@ def test_split_hostport(url, expected_host, expected_port):
 def test_split_hostport_err(url):
     with pytest.raises(ValueError):
         utils.split_hostport(url)
+
+
+def test_html_tag_stripper():
+    tag_stripper = HTMLTagStripper()
+    assert tag_stripper.strip_html_tags("<table><tr><td>abc") == "abc"
