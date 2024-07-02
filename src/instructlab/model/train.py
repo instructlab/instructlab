@@ -15,6 +15,9 @@ from instructlab.training import (
     TrainingArgs,
     run_training,
 )
+
+from instructlab.train.run_e2e_training import run_e2e_training
+
 import click
 
 # First Party
@@ -182,6 +185,23 @@ logger = logging.getLogger(__name__)
     default=False,
     help="if true, enables the legacy linux training codepath from release 0.17.0 and prior.",
 )
+@click.option(
+    "--e2e",
+    is_flag=True,
+    help="If True, ilab will run multi-phase training. e.g. TRAIN->EVAL->TRAIN->EVAL, emailing an administrator if an irrecoverable error occurs.",
+)
+@click.option(
+    "--e2e-data-dir",
+    type=click.Path(),
+    default="e2e_data",
+    help="Path to a special data directory, structured like `e2e_data/phase5/train.jsonl` and `e2e_data/phase10/train.jsonl`",
+)
+@click.option(
+    "--e2e-checkpoints-dir",
+    type=click.Path(),
+    default="e2e_checkpoints",
+    help="Path to a special model checkpoints directory, structured like `e2e_checkpoints/phase5` and `e2e_checkpoints/phase10`",
+)
 @click.pass_context
 @utils.display_params
 def train(
@@ -199,6 +219,9 @@ def train(
     device: str,
     four_bit_quant: bool,
     legacy,
+    e2e,
+    e2e_data_dir,
+    e2e_checkpoints_dir,
     **kwargs,  # pylint: disable=unused-argument
 ):
     """
@@ -262,8 +285,7 @@ def train(
         shutil.copy(test_files[0], test_file)
 
     # if macos, preserve that path
-    if utils.is_macos_with_m_chip():
-        # pylint: disable=import-outside-toplevel
+    if utils.is_macos_with_m_chip() and not e2e:
         # Local
         from ..mlx_explore.gguf_convert_to_mlx import load
         from ..mlx_explore.utils import fetch_tokenizer_from_hub
@@ -409,10 +431,108 @@ def train(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
+
         ds_args = DeepSpeedOptions(**params)
         lora_args = LoraOptions(**params)
         train_args = TrainingArgs(**params)
         torch_args = TorchrunArgs(**params)
         train_args.deepspeed_options = ds_args
         train_args.lora = lora_args
-        run_training(train_args=train_args, torch_args=torch_args)
+
+        if e2e:
+            # end-to-end training
+            _validate_e2e_paths(e2e_data_dir, e2e_checkpoints_dir)
+            final_checkpoint = run_e2e_training(ctx.params, train_args, torch_args)
+            print(f"E2E output best checkpoint: {final_checkpoint}")
+        else:
+            run_training(train_args=train_args, torch_args=torch_args)
+
+
+"""
+expect storage like:
+~/.local/var/instructlab/e2e
+    | phase5
+        | checkpoints
+        | eval
+        | data ?
+    | phase10
+        | checkpoints
+        | eval
+        | data ?
+        
+`ilab model train --e2e --model ibm-granite/granite-7b-lab --phase5_data ./phase5/train_data.jsonl --phase10_data ./phase10/train_data.jsonl --model-out ./new_model`
+"""
+
+
+def _validate_e2e_data_dir(data_path: str) -> None:
+    """Checks for existence of both data files for e2e run.
+
+    Args:
+        data_path: Top-level directory of e2e data directory.
+
+    Returns:
+        Nothing. Raises exception if requisite files don't exist.
+
+    Raises:
+        click.exceptions.Exit
+    """
+
+    data_abs_path = os.path.abspath(data_path)
+    p5_data = os.path.join(data_abs_path, "phase5", "train.jsonl")
+    p10_data = os.path.join(data_abs_path, "phase10", "train.jsonl")
+
+    if not (os.path.isfile(p5_data) and os.path.isfile(p10_data)):
+        click.secho(
+            f"Error finding end-to-end data files. Please make sure you're passing the TOP LEVEL directory of your e2e_data directory,\
+                and that all sub-directories are in their proper locations.\
+                \nReceived: {data_abs_path}",
+            fg="red",
+        )
+        raise click.exceptions.Exit(1)
+
+
+def _validate_e2e_checkpoint_dir(checkpoint_dir: str) -> None:
+    """Checks for existence of checkpoint cache directories for e2e.
+
+    Args:
+        checkpoint_dir: Top-level directory of e2e checkpoints directory.
+
+    Returns:
+        Nothing. Raises exception if requisite directories don't exist.
+
+    Raises:
+        click.exceptions.Exit
+    """
+
+    ckpt_abs_path = os.path.abspath(checkpoint_dir)
+    p5_ckpt_dir = os.path.join(os.path.abspath(ckpt_abs_path), "phase5")
+    p10_ckpt_dir = os.path.join(os.path.abspath(ckpt_abs_path), "phase10")
+
+    # TODO (jkunstle): do we want to support some degree of "Oh, these dirs have checkpoints
+    #   do you want us to clean them up for you?"
+    if not (os.path.isdir(p5_ckpt_dir) and os.path.isdir(p10_ckpt_dir)):
+        click.secho(
+            f"Error finding end-to-end checkpoint cache directory. Please make sure you're passing the TOP LEVEL directory of \
+                your e2e_checkpoints directory, and that all sub-directories are in their proper locations. \
+                \nReceived: {ckpt_abs_path}",
+            fg="red",
+        )
+        raise click.exceptions.Exit(1)
+
+
+def _validate_e2e_paths(data_path: str, checkpoint_path: str) -> None:
+    """A rough smoke-test for the expected layout of data and checkpoint directories.
+
+    Args:
+        data_path: Top-level directory of e2e data directory.
+        checkpoint_path: Top-level directory of e2e checkpoints directory.
+
+    Returns:
+        Nothing. Raises exception if requisite files/directories don't exist.
+
+    Raises:
+        click.exceptions.Exit
+    """
+
+    _validate_e2e_data_dir(data_path)
+    _validate_e2e_checkpoint_dir(checkpoint_path)
