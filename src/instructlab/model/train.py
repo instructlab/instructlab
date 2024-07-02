@@ -18,7 +18,7 @@ from instructlab.training import (
 import click
 
 # First Party
-from instructlab import utils
+from instructlab import utils  # pylint: disable=ungrouped-imports
 
 logger = logging.getLogger(__name__)
 
@@ -265,6 +265,7 @@ def train(
     if utils.is_macos_with_m_chip():
         # pylint: disable=import-outside-toplevel
         # Local
+        # pylint: disable=import-outside-toplevel
         from ..mlx_explore.gguf_convert_to_mlx import load
         from ..mlx_explore.utils import fetch_tokenizer_from_hub
         from ..train.lora_mlx.convert import convert_between_mlx_and_pytorch
@@ -333,6 +334,7 @@ def train(
     elif legacy:
         # pylint: disable=import-outside-toplevel
         # Local
+        # pylint: disable=import-outside-toplevel
         from ..llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
         from ..train.linux_train import linux_train
 

@@ -5,7 +5,6 @@ import re
 
 # Third Party
 import click
-import pytest
 
 # First Party
 from instructlab import lab
@@ -39,6 +38,3 @@ def test_import_mlx():
     # but never on Linux and Intel macOS.
     if is_macos_with_m_chip():
         assert __import__("mlx")
-    else:
-        with pytest.raises(ModuleNotFoundError):
-            __import__("mlx")

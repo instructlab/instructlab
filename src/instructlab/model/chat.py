@@ -30,7 +30,7 @@ from instructlab import utils
 # Local
 from ..utils import get_sysprompt, http_client
 
-logger = logging.getLogger(__name__)
+ilab_logger = logging.getLogger(__name__)
 
 HELP_MD = """
 Help / TL;DR
@@ -165,8 +165,9 @@ def chat(
     model_family,
 ):
     """Run a chat using the modified model"""
-    # pylint: disable=C0415
+
     # First Party
+    # pylint: disable=import-outside-toplevel
     from instructlab.model.backends.llama_cpp import is_temp_server_running
 
     # TODO: this whole code block is replicated in generate.py. Refactor to a common function.
@@ -178,7 +179,7 @@ def chat(
         from instructlab.model.backends import backends
 
         ctx.obj.config.serve.llama_cpp.llm_family = model_family
-        backend_instance = backends.select_backend(logger, ctx.obj.config.serve)
+        backend_instance = backends.select_backend(ilab_logger, ctx.obj.config.serve)
 
         try:
             # Run the llama server
@@ -242,6 +243,8 @@ def chat(
                     backend_instance.shutdown()
                 raise click.exceptions.Exit(1) from exc
 
+    if not ctx.params["api_key"]:
+        ctx.params["api_key"] = api_key
     try:
         chat_cli(
             ctx,
@@ -697,7 +700,7 @@ def chat_cli(
         model_ids.append(m.id)
     if not any(model == m for m in model_ids):
         if model == cfg.DEFAULT_MODEL_OLD:
-            logger.info(
+            ilab_logger.info(
                 f"Model {model} is not a full path. Try running ilab config init or edit your config to have the full model path for serving, chatting, and generation."
             )
         raise ChatException(
@@ -711,7 +714,9 @@ def chat_cli(
     # global CONTEXTS
     # CONTEXTS = config["contexts"]
     if context not in CONTEXTS:
-        logger.info(f"Context {context} not found in the config file. Using default.")
+        ilab_logger.info(
+            f"Context {context} not found in the config file. Using default."
+        )
         context = "default"
     loaded["name"] = context
     loaded["messages"] = [{"role": "system", "content": CONTEXTS[context]}]
@@ -759,7 +764,7 @@ def chat_cli(
         if not qq:
             print(f"{PROMPT_PREFIX}{question}")
         try:
-            ccb.start_prompt(logger, content=question, box=not qq)
+            ccb.start_prompt(ilab_logger, content=question, box=not qq)
         except ChatException as exc:
             raise ChatException(f"API issue found while executing chat: {exc}") from exc
         except (ChatQuitException, KeyboardInterrupt, EOFError):
@@ -775,7 +780,7 @@ def chat_cli(
     # Start chatting
     while True:
         try:
-            ccb.start_prompt(logger)
+            ccb.start_prompt(ilab_logger)
         except KeyboardInterrupt:
             continue
         except ChatException as exc:

@@ -30,10 +30,17 @@ from instructlab import utils
     default="auto",
     show_default=True,
 )
+@click.option(
+    "--max-tokens",
+    help="Maximum tokens to be generated during test.",
+    default=100,
+    type=int,
+    show_default=True,
+)
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 @utils.display_params
 # pylint: disable=function-redefined
-def test(data_dir, model_dir, adapter_file):
+def test(data_dir, model_dir, adapter_file, max_tokens):
     """Runs basic test to ensure model correctness"""
     # pylint: disable=C0415
     # Local
@@ -71,13 +78,15 @@ def test(data_dir, model_dir, adapter_file):
         print("expected output:", example["assistant"])
 
         print("\n-----model output BEFORE training----:\n")
-        load_and_train(model=model_dir, no_adapter=True, max_tokens=100, prompt=prompt)
+        load_and_train(
+            model=model_dir, no_adapter=True, max_tokens=max_tokens, prompt=prompt
+        )
 
         if adapter_file_exists:
             print("\n-----model output AFTER training----:\n")
             load_and_train(
                 model=model_dir,
                 adapter_file=adapter_file,
-                max_tokens=100,
+                max_tokens=max_tokens,
                 prompt=prompt,
             )

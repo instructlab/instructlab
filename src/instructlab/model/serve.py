@@ -11,7 +11,7 @@ import click
 # First Party
 from instructlab import configuration as config
 from instructlab import log, utils
-from instructlab.model.backends.llama_cpp import ServerException
+from instructlab.model.backends import backends, llama_cpp, vllm
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,6 @@ def serve(
     """Start a local server"""
     # pylint: disable=import-outside-toplevel
     # First Party
-    from instructlab.model.backends import backends, llama_cpp, vllm
 
     host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
 
@@ -135,6 +134,6 @@ def serve(
         # Run the llama server
         backend_instance.run()
 
-    except ServerException as exc:
+    except llama_cpp.ServerException as exc:
         click.secho(f"Error creating server: {exc}", fg="red")
         raise click.exceptions.Exit(1)
