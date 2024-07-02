@@ -409,6 +409,9 @@ def train(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
+        # temp fix to get CI passing, there are multiple options in the train class w/ the same name
+        if params["save_samples"] is None:
+            params["save_samples"] = 250000
         ds_args = DeepSpeedOptions(**params)
         lora_args = LoraOptions(**params)
         train_args = TrainingArgs(**params)
