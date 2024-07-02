@@ -8,6 +8,6 @@ pylint>=2.16.2,<4.0
 pylint-pydantic
 pytest
 pytest-asyncio
-pytest-cov
+pytest-cov[toml]
 pytest-html
 tox>=4.4.2,<5
