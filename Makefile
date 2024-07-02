@@ -136,12 +136,16 @@ toolbox-rm: check-toolbox ## Stop and remove toolbox container
 ##@ Development
 
 .PHONY: tests
-tests: check-tox ## Run tox -e unit against code
-	tox -e py3-unit
+tests: check-tox ## Run unit and type checks
+	tox -e py3-unit,mypy
 
 .PHONY: verify
 verify: check-tox ## Run linting and formatting checks via tox
-	tox p -e ruff,fastlint,spellcheck,mypy
+	tox p -m fastverify
+
+.PHONY: fix
+fix: check-tox ## Fix formatting and linting violation with Ruff
+	tox -e fix
 
 .PHONY: spellcheck
 spellcheck: .spellcheck.yml ## Spellcheck markdown files
