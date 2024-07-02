@@ -80,6 +80,7 @@ Miniforge
 Mixtral
 mlx
 MLX
+mmlu
 MPS
 nb
 Nvidia

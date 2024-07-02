@@ -8,6 +8,9 @@
    specify which one to use. Currently, the only supported backend are `llama-cpp` and `vllm`.
 * Update `llama-cpp-python` to latest upstream release 0.2.79 to address poor
   results of synthetic data generation and local training.
+* Adding `ilab model evaluate` which uses the new backend serving functionality.  Evaluate offers
+   two standard benchmarks (mt-bench and mmlu) as well as two variations (mt-bench-branch and
+   mmlu-branch) which are integrated with the ilab workflow to evaluate new skills and knowledge.
 
 ### Breaking Changes
 
