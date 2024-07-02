@@ -9,6 +9,7 @@ import click
 
 # First Party
 from instructlab import clickext
+from instructlab import client as ilabclient
 from instructlab.configuration import DEFAULTS
 
 # Local
@@ -22,7 +23,7 @@ logger = logging.getLogger(__name__)
     "--model",
     default=lambda: DEFAULTS.DEFAULT_MODEL,
     show_default="The default model used by the instructlab system, located in the data directory.",
-    help="Name of the model used during generation.",
+    help="Name of the model used during generation. Note '--model' is used to select model rather than serve model.",
 )
 @click.option(
     "--num-cpus",
@@ -196,6 +197,7 @@ def generate(
             click.secho(f"Failed to start server: {exc}", fg="red")
             raise click.exceptions.Exit(1)
     try:
+        ilabclient.check_model(model, api_base, endpoint_url, http_client(ctx.params))
         click.echo(
             f"Generating synthetic data using '{model}' model, taxonomy:'{taxonomy_path}' against {api_base} server"
         )
@@ -222,7 +224,7 @@ def generate(
             tls_client_passwd=tls_client_passwd,
             pipeline=pipeline,
         )
-    except GenerateException as exc:
+    except (GenerateException, ilabclient.ModelCheckException) as exc:
         click.secho(
             f"Generating dataset failed with the following error: {exc}",
             fg="red",

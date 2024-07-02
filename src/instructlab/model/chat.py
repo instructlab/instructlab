@@ -73,7 +73,7 @@ PROMPT_PREFIX = ">>> "
     "--model",
     cls=clickext.ConfigOption,
     required=True,  # default from config
-    help="Model name to print in chat process",
+    help="Name of the model used during chat. Note '--model' is used to select model rather than serve model.",
 )
 @click.option(
     "-c",
@@ -241,6 +241,7 @@ def chat(
                 raise click.exceptions.Exit(1) from exc
 
     try:
+        ilabclient.check_model(model, api_base, endpoint_url, http_client(ctx.params))
         chat_cli(
             ctx,
             api_base=api_base,
@@ -253,7 +254,7 @@ def chat(
             greedy_mode=greedy_mode,
             max_tokens=max_tokens,
         )
-    except ChatException as exc:
+    except (ChatException, ilabclient.ModelCheckException) as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
         raise click.exceptions.Exit(1)
     finally:
@@ -685,23 +686,6 @@ def chat_cli(
         timeout=cfg.DEFAULTS.CONNECTION_TIMEOUT,
         http_client=http_client(ctx.params),
     )
-    # ensure the model specified exists on the server. with backends like vllm, this is crucial.
-    try:
-        model_list = client.models.list().data
-    except openai.OpenAIError as exc:
-        raise ChatException(f"Is the server running? {exc}") from exc
-    model_ids = []
-    for m in model_list:
-        model_ids.append(m.id)
-    if not any(model == m for m in model_ids):
-        if model == cfg.DEFAULTS.MODEL_NAME:
-            logger.info(
-                f"Model {model} is not a full path. Try running ilab config init or edit your config to have the full model path for serving, chatting, and generation."
-            )
-        raise ChatException(
-            f"Model {model} is not served by the server. These are the served models: {model_ids}"
-        )
-
     # Load context/session
     loaded = {}
 
