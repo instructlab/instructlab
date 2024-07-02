@@ -11,6 +11,8 @@
 * Adding `ilab model evaluate` which uses the new backend serving functionality.  Evaluate offers
    two standard benchmarks (mt-bench and mmlu) as well as two variations (mt-bench-branch and
    mmlu-branch) which are integrated with the ilab workflow to evaluate new skills and knowledge.
+   Includes --gpus option for specifying number of gpus to utilize when serving models for
+   evaluation (currently applicable for vLLM only).
 
 ### Breaking Changes
 

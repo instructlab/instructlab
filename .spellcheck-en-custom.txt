@@ -108,7 +108,7 @@ env
 eval
 frontend
 gpu
-gpu
+gpus
 habana
 habana
 hipBLAS
