@@ -1,7 +1,8 @@
 # Dependencies for Intel Gaudi / Habana Labs HPU devices
 #
 
-optimum-habana>=1.11.1
+optimum>=1.20.0
+optimum-habana>=1.12.0
 # Habana Labs 1.16.1 has NumPy 1.23.5
 numpy>=1.23.5,<2.0.0
 # Habana Labs 1.16.1 has PyTorch 2.2.2a0+gitb5d0b9b
