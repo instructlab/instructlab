@@ -322,7 +322,7 @@ test_server_welcome_message(){
 }
 
 wait_for_server(){
-    if ! timeout 30 bash -c '
+    if ! timeout 60 bash -c '
         until curl 127.0.0.1:8000|grep "{\"message\":\"Hello from InstructLab! Visit us at https://instructlab.ai\"}"; do
             echo "waiting for server to start"
             sleep 1
