@@ -81,19 +81,8 @@ test_serve() {
     fi
 
     task Serve the model
-    ilab model serve "${SERVE_ARGS[@]}" &
-
-    ret=1
-    for i in $(seq 1 10); do
-        sleep 5
-    	step "$i"/10: Waiting for model to start
-        if curl -sS http://localhost:8000/docs > /dev/null; then
-            ret=0
-            break
-        fi
-    done
-
-    return $ret
+    ilab model serve "${SERVE_ARGS[@]}" &> serve.log &
+    wait_for_server
 }
 
 test_chat() {
@@ -208,6 +197,20 @@ test_exec() {
     task Stopping the ilab model serve
     step Kill ilab model serve $PID
     kill $PID
+}
+
+wait_for_server(){
+    if ! timeout 120 bash -c '
+        until curl -sS http://localhost:8000/docs &> /dev/null; do
+            echo "waiting for server to start"
+            sleep 1
+        done
+    '; then
+        echo "server did not start"
+        cat serve.log || true
+        exit 1
+    fi
+    echo "server started"
 }
 
 usage() {
