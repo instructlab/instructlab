@@ -68,7 +68,7 @@ include = [
 ignore = ["W002"]
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 # same as black's default line length
 line-length = 88
 
@@ -76,6 +76,8 @@ line-length = 88
 # Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
 unfixable = []
+# modern type annotations
+extend-safe-fixes = ["UP006", "UP007"]
 
 # Fixers will be enabled gradually.
 select = [
@@ -110,39 +112,51 @@ from-first = true
 known-local-folder = ["tuning"]
 
 [tool.mypy]
-disable_error_code = ["import-not-found", "import-untyped"]
+mypy_path = ["src"]
+packages = ["instructlab", "tests"]
+disable_error_code = []
+# TODO: tighten MyPy checks by enabling these checks over time.
+check_untyped_defs = false
+disallow_incomplete_defs = false
+disallow_untyped_defs = false
+warn_return_any = true
+# honor excludes by not following there through imports
+follow_imports = "silent"
 exclude = [
-  "^src/instructlab/model/chat\\.py$",
-  "^src/instructlab/model/convert\\.py$",
-  "^src/instructlab/model/download\\.py$",
-  "^src/instructlab/model/test\\.py$",
-  "^src/instructlab/model/serve\\.py$",
-  "^src/instructlab/model/list\\.py$",
-  "^src/instructlab/model/model\\.py$",
-  "^src/instructlab/model/train\\.py$",
-  "^src/instructlab/model/evaluate\\.py$",
-  "^src/instructlab/config/config\\.py$",
-  "^src/instructlab/config/init\\.py$",
-  "^src/instructlab/data/data\\.py$",
-  "^src/instructlab/data/generate\\.py$",
-  "^src/instructlab/data/generator/generate_data\\.py$",
-  "^src/instructlab/data/generator/utils\\.py$",
-  "^src/instructlab/taxonomy/taxonomy\\.py$",
-  "^src/instructlab/taxonomy/diff\\.py$",
   "^src/instructlab/llamacpp/llamacpp_convert_to_gguf\\.py$",
   "^src/instructlab/mlx_explore/gguf_convert_to_mlx\\.py$",
   "^src/instructlab/mlx_explore/utils\\.py$",
+  "^src/instructlab/model/backends/backends\\.py$",
+  "^src/instructlab/model/backends/llama_cpp\\.py$",
+  "^src/instructlab/model/backends/vllm\\.py$",
+  "^src/instructlab/model/evaluate\\.py$",
+  "^src/instructlab/model/serve\\.py$",
   "^src/instructlab/train/lora_mlx/lora\\.py$",
   "^src/instructlab/train/lora_mlx/models/llama\\.py$",
   "^src/instructlab/train/lora_mlx/models/mixtral\\.py$",
   "^src/instructlab/train/lora_mlx/models/models\\.py$",
   "^src/instructlab/utils\\.py$",
-  "^src/instructlab/model/backends/llama_cpp\\.py$",
-  "^src/instructlab/model/backends/vllm\\.py$",
-  "^src/instructlab/model/backends/backends\\.py$",
 ]
-# honor excludes by not following there through imports
-follow_imports = "silent"
+
+[[tool.mypy.overrides]]
+# packages without typing annotations, without stubs, or not available.
+module = [
+  "click_didyoumean",
+  "datasets",
+  "fire",
+  "gitdb",
+  "habana_frameworks.torch",
+  "huggingface_hub.*",
+  "instructlab.eval.*",
+  "instructlab_quantize",
+  "instructlab.training",
+  "mlx.*",
+  "optimum.habana.*",
+  "sentencepiece",
+  "trl",
+  "transformers",
+]
+ignore_missing_imports = true
 
 [tool.coverage.run]
 branch = false
