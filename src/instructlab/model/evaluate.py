@@ -203,6 +203,7 @@ def launch_server(
     model,
     model_name,
     max_workers,
+    gpus,
 ) -> tuple:
     # pylint: disable=import-outside-toplevel
     # First Party
@@ -212,6 +213,10 @@ def launch_server(
         ctx.obj.config.serve.backend = backends.VLLM
     if ctx.obj.config.serve.backend == backends.VLLM:
         ctx.obj.config.serve.vllm.vllm_args.extend(["--served-model-name", model_name])
+        if gpus:
+            ctx.obj.config.serve.vllm.vllm_args.extend(
+                ["--tensor-parallel-size", str(gpus)]
+            )
     elif ctx.obj.config.serve.backend == backends.LLAMA_CPP:
         # mt_bench requires a larger context size
         ctx.obj.config.serve.llama_cpp.max_ctx_size = 5120
@@ -296,6 +301,11 @@ def launch_server(
     help="Path where all the MMLU Branch tasks are stored. Needed for running mmlu_branch.",
 )
 @click.option(
+    "--gpus",
+    type=click.INT,
+    help="Number of GPUs to consume for evaluation",
+)
+@click.option(
     "--tls-insecure",
     is_flag=True,
     help="Disable TLS verification for model serving.",
@@ -335,6 +345,7 @@ def evaluate(
     few_shots,
     batch_size,
     sdg_path,
+    gpus,
     tls_insecure,  # pylint: disable=unused-argument
     tls_client_cert,  # pylint: disable=unused-argument
     tls_client_key,  # pylint: disable=unused-argument
@@ -365,6 +376,7 @@ def evaluate(
                 model,
                 TEST_MODEL_NAME,
                 max_workers,
+                gpus,
             )
             evaluator.gen_answers(api_base)
         finally:
@@ -378,6 +390,7 @@ def evaluate(
                 judge_model,
                 JUDGE_MODEL_NAME,
                 max_workers,
+                gpus,
             )
             overall_score, qa_pairs, turn_scores = evaluator.judge_answers(api_base)
         finally:
@@ -428,6 +441,7 @@ def evaluate(
                     m_path,
                     m_name,
                     max_workers,
+                    gpus,
                 )
                 evaluator.gen_answers(api_base)
             finally:
@@ -441,6 +455,7 @@ def evaluate(
                 judge_model,
                 JUDGE_MODEL_NAME,
                 max_workers,
+                gpus,
             )
             for i, evaluator in enumerate(evaluators):
                 branch = branches[i]
