@@ -1,28 +1,33 @@
 # Standard
+import enum
 import logging
 import os
+import typing
 
 # Third Party
-from instructlab.eval.evaluator import Evaluator
-from instructlab.eval.mmlu import MMLUBranchEvaluator, MMLUEvaluator
-from instructlab.eval.mt_bench import MTBenchBranchEvaluator, MTBenchEvaluator
 import click
 
 # Local
 from ..utils import http_client
 
+if typing.TYPE_CHECKING:
+    # Third Party
+    from instructlab.eval.evaluator import Evaluator
+
 logger = logging.getLogger(__name__)
 
-BENCHMARK_TO_CLASS_MAP = {
-    "mmlu": MMLUEvaluator,
-    "mmlu_branch": MMLUBranchEvaluator,
-    "mt_bench": MTBenchEvaluator,
-    "mt_bench_branch": MTBenchBranchEvaluator,
-}
 
 JUDGE_MODEL_NAME = "judge_model"
 TEST_MODEL_NAME = "test_model"
 BASE_TEST_MODEL_NAME = "base_test_model"
+
+
+# Python 3.10 does not have StrEnum
+class Benchmark(str, enum.Enum):
+    MMLU = "mmlu"
+    MMLU_BRANCH = "mmlu_branch"
+    MT_BENCH = "mt_bench"
+    MT_BENCH_BRANCH = "mt_bench_branch"
 
 
 def get_evaluator(
@@ -38,14 +43,24 @@ def get_evaluator(
     few_shots,
     batch_size,
     sdg_path,
-) -> Evaluator:
+) -> "Evaluator":
     """takes in arguments from the CLI and uses 'benchmark' to validate other arguments
     if all needed configuration is present, returns the appropriate Evaluator class for the benchmark
     otherwise raises an exception for the missing values
     """
+    # Third Party
+    from instructlab.eval.mmlu import MMLUBranchEvaluator, MMLUEvaluator
+    from instructlab.eval.mt_bench import MTBenchBranchEvaluator, MTBenchEvaluator
+
+    benchmark_map = {
+        Benchmark.MMLU: MMLUEvaluator,
+        Benchmark.MMLU_BRANCH: MMLUBranchEvaluator,
+        Benchmark.MT_BENCH: MTBenchEvaluator,
+        Benchmark.MT_BENCH_BRANCH: MTBenchBranchEvaluator,
+    }
 
     # ensure skills benchmarks have proper arguments if selected
-    if benchmark in ["mt_bench", "mt_bench_branch"]:
+    if benchmark in {Benchmark.MT_BENCH, Benchmark.MT_BENCH_BRANCH}:
         required_args = [
             model,
             judge_model,
@@ -56,7 +71,7 @@ def get_evaluator(
             "model",
             "judge-model",
         ]
-        if benchmark == "mt_bench_branch":
+        if benchmark == Benchmark.MT_BENCH_BRANCH:
             required_args.append(taxonomy_path)
             required_args.append(branch)
             required_args.append(base_branch)
@@ -71,8 +86,8 @@ def get_evaluator(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
-        evaluator_class = BENCHMARK_TO_CLASS_MAP[benchmark]
-        if benchmark == "mt_bench":
+        evaluator_class = benchmark_map[benchmark]
+        if benchmark == Benchmark.MT_BENCH:
             return evaluator_class(
                 TEST_MODEL_NAME, JUDGE_MODEL_NAME, output_dir, max_workers
             )
@@ -86,10 +101,10 @@ def get_evaluator(
         )
 
     # ensure knowledge benchmarks have proper arguments if selected
-    if benchmark in ["mmlu", "mmlu_branch"]:
+    if benchmark in [Benchmark.MMLU, Benchmark.MMLU_BRANCH]:
         required_args = [model, few_shots, batch_size]
         required_arg_names = ["model"]
-        if benchmark == "mmlu_branch":
+        if benchmark == Benchmark.MMLU_BRANCH:
             required_args.append(sdg_path)
             required_args.append(base_model)
             required_arg_names.append("sdg-path")
@@ -100,8 +115,8 @@ def get_evaluator(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
-        evaluator_class = BENCHMARK_TO_CLASS_MAP[benchmark]
-        if benchmark == "mmlu":
+        evaluator_class = benchmark_map[benchmark]
+        if benchmark == Benchmark.MMLU:
             min_tasks = os.environ.get("INSTRUCTLAB_EVAL_MMLU_MIN_TASKS")
             if min_tasks is not None:
                 tasks = ["mmlu_abstract_algebra", "mmlu_anatomy", "mmlu_astronomy"]
@@ -246,8 +261,7 @@ def launch_server(
 )
 @click.option(
     "--benchmark",
-    type=click.Choice(list(BENCHMARK_TO_CLASS_MAP.keys())),
-    # case_sensitive=False,
+    type=click.Choice([m.value for m in Benchmark.__members__.values()]),
     help="Benchmarks to run during evaluation",
 )
 @click.option(
@@ -356,7 +370,7 @@ def evaluate(
         sdg_path,
     )
 
-    if benchmark == "mt_bench":
+    if benchmark == Benchmark.MT_BENCH:
         print("Generating answers...")
         server = None
         try:
@@ -396,7 +410,10 @@ def evaluate(
             turn2_score = round(turn2_score, 2)
         print(turn2_score)
 
-    elif benchmark == "mt_bench_branch":
+    elif benchmark == Benchmark.MT_BENCH_BRANCH:
+        # Third Party
+        from instructlab.eval.mt_bench import MTBenchBranchEvaluator
+
         evaluators = [
             evaluator,
             MTBenchBranchEvaluator(
@@ -476,7 +493,7 @@ def evaluate(
         # display summary of evaluation before exiting
         display_branch_eval_summary(improvements, regressions, no_changes, new_qnas)
 
-    elif benchmark == "mmlu":
+    elif benchmark == Benchmark.MMLU:
         overall_score, individual_scores = evaluator.run()
 
         print("# KNOWLEDGE EVALUATION REPORT")
@@ -489,7 +506,10 @@ def evaluate(
             s = round(score["score"], 2)
             print(f"{task} - {s}")
 
-    elif benchmark == "mmlu_branch":
+    elif benchmark == Benchmark.MMLU_BRANCH:
+        # Third Party
+        from instructlab.eval.mmlu import MMLUBranchEvaluator
+
         evaluators = [
             evaluator,
             MMLUBranchEvaluator(

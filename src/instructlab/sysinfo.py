@@ -27,7 +27,6 @@ def _platform_info() -> typing.Dict[str, typing.Any]:
 
 def _torch_info() -> typing.Dict[str, typing.Any]:
     """Torch capabilities and devices"""
-    # pylint: disable=import-outside-toplevel
     # Third Party
     import torch
 
@@ -45,7 +44,6 @@ def _torch_info() -> typing.Dict[str, typing.Any]:
 
 def _torch_cuda_info() -> typing.Dict[str, typing.Any]:
     """Torch Nvidia CUDA / AMD ROCm devices"""
-    # pylint: disable=import-outside-toplevel
     # Third Party
     import torch
 
@@ -71,7 +69,6 @@ def _torch_cuda_info() -> typing.Dict[str, typing.Any]:
 
 def _torch_hpu_info() -> typing.Dict[str, typing.Any]:
     """Intel Gaudi (HPU) devices"""
-    # pylint: disable=import-outside-toplevel
     # Third Party
     import torch
 
@@ -107,7 +104,6 @@ def _torch_hpu_info() -> typing.Dict[str, typing.Any]:
 
 def _llama_cpp_info() -> typing.Dict[str, typing.Any]:
     """llama-cpp-python capabilities"""
-    # pylint: disable=import-outside-toplevel
     # Third Party
     import llama_cpp
 
