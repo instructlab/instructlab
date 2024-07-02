@@ -48,7 +48,7 @@ class TestConfig:
         assert cfg.serve.vllm is not None
         assert cfg.serve.vllm.vllm_args == []
         assert cfg.serve.host_port == "127.0.0.1:8000"
-        assert cfg.serve.backend == ""
+        assert cfg.serve.backend is None
 
         assert cfg.evaluate is not None
 
@@ -119,7 +119,7 @@ generate:
   taxonomy_path: taxonomy
   chunk_word_count: 1000
 serve:
-  backend: ''
+  backend: null
   host_port: 127.0.0.1:8000
   llama_cpp:
     gpu_layers: -1
