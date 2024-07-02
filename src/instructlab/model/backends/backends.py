@@ -25,8 +25,6 @@ from ...configuration import _serve as serve_config
 from ...configuration import get_api_base
 from ...utils import split_hostport
 
-LLAMA_CPP = "llama-cpp"
-VLLM = "vllm"
 SUPPORTED_BACKENDS = frozenset({LLAMA_CPP, VLLM})
 API_ROOT_WELCOME_MESSAGE = "Hello from InstructLab! Visit us at https://instructlab.ai"
 templates = [

@@ -80,6 +80,7 @@ def serve(
     """Start a local server"""
     # First Party
     from instructlab.model.backends import backends, llama_cpp, vllm
+    import instructlab.configuration as cfg
 
     host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
 
@@ -100,7 +101,7 @@ def serve(
     logger.info(f"Serving model '{model_path}' with {backend}")
 
     backend_instance = None
-    if backend == backends.LLAMA_CPP:
+    if backend == cfg.LLAMA_CPP:
         # Instantiate the llama server
         if gpu_layers is None:
             gpu_layers = ctx.obj.config.serve.llama_cpp.gpu_layers
@@ -119,7 +120,7 @@ def serve(
             num_threads=num_threads,
         )
 
-    if backend == backends.VLLM:
+    if backend == cfg.VLLM:
         # Instantiate the vllm server
         backend_instance = vllm.Server(
             logger=logger,

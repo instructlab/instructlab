@@ -222,12 +222,13 @@ def launch_server(
     # pylint: disable=import-outside-toplevel
     # First Party
     from instructlab.model.backends import backends
+    import instructlab.configuration as cfg
 
     if not ctx.obj.config.serve.backend:
-        ctx.obj.config.serve.backend = backends.VLLM
-    if ctx.obj.config.serve.backend == backends.VLLM:
+        ctx.obj.config.serve.backend = cfg.VLLM
+    if ctx.obj.config.serve.backend == cfg.VLLM:
         ctx.obj.config.serve.vllm.vllm_args.extend(["--served-model-name", model_name])
-    elif ctx.obj.config.serve.backend == backends.LLAMA_CPP:
+    elif ctx.obj.config.serve.backend == cfg.LLAMA_CPP:
         # mt_bench requires a larger context size
         ctx.obj.config.serve.llama_cpp.max_ctx_size = 5120
         # llama-cpp fails fast on too many incoming requests and returns errors to client
@@ -235,7 +236,7 @@ def launch_server(
 
     ctx.obj.config.serve.model_path = model
 
-    backend_instance = backends.select_backend(logger, ctx.obj.config.serve)
+    backend_instance = cfg.select_backend(logger, ctx.obj.config.serve)
     try:
         # http_client is handling tls params
         backend_instance.run_detached(http_client(ctx.params))
