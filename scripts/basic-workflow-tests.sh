@@ -147,7 +147,7 @@ test_train() {
     task Train the model
 
     # TODO Only cuda for now
-    TRAIN_ARGS=("--legacy=True" "--device=cuda")
+    TRAIN_ARGS=("--legacy" "--device=cuda")
     if [ "$FULLTRAIN" -eq 0 ]; then
         TRAIN_ARGS+=("--4-bit-quant")
     fi
@@ -156,6 +156,19 @@ test_train() {
     fi
 
     ilab model train "${TRAIN_ARGS[@]}"
+
+    if [ "$FULLTRAIN" -eq 1 ]; then
+
+        # TODO Only cuda for now
+        TRAIN_ARGS=("--device=cuda" "--model-path=instructlab/granite-7b-lab" "--data-path=${SCRIPTDIR}/test-data/train_all_pruned_SDG.jsonl" "--quantize-data-type=nf4" "--4-bit-quant")
+        if [ "$GRANITE" -eq 1 ]; then
+            TRAIN_ARGS+=("--gguf-model-path models/granite-7b-lab-Q4_K_M.gguf")
+        fi
+
+        ilab model train "${TRAIN_ARGS[@]}"
+
+    fi
+
 }
 
 test_convert() {
