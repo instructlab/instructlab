@@ -2,19 +2,14 @@
 import os
 import subprocess
 import time
+import typing
 
 # Third Party
-from instructlab.eval.evaluator import Evaluator
-from instructlab.eval.mmlu import MMLUBranchEvaluator, MMLUEvaluator
-from instructlab.eval.mt_bench import MTBenchBranchEvaluator, MTBenchEvaluator
 import click
 
-BENCHMARK_TO_CLASS_MAP = {
-    "mmlu": MMLUEvaluator,
-    "mmlu_branch": MMLUBranchEvaluator,
-    "mt_bench": MTBenchEvaluator,
-    "mt_bench_branch": MTBenchBranchEvaluator,
-}
+if typing.TYPE_CHECKING:
+    # Third Party
+    from instructlab.eval.evaluator import Evaluator
 
 # TODO: Remove after proper vLLM integration
 # pylint: disable=consider-using-with
@@ -23,7 +18,7 @@ BENCHMARK_TO_CLASS_MAP = {
 def get_evaluator(
     model,
     base_model,
-    benchmark,
+    benchmark: str,
     judge_model,
     output_dir,
     max_workers,
@@ -33,11 +28,22 @@ def get_evaluator(
     few_shots,
     batch_size,
     sdg_path,
-) -> Evaluator:
+) -> "Evaluator":
     """takes in arguments from the CLI and uses 'benchmark' to validate other arguments
     if all needed configuration is present, returns the appropriate Evaluator class for the benchmark
     otherwise raises an exception for the missing values
     """
+    # Third Party
+    from instructlab.eval.mmlu import MMLUBranchEvaluator, MMLUEvaluator
+    from instructlab.eval.mt_bench import MTBenchBranchEvaluator, MTBenchEvaluator
+
+    benchmark_map = {
+        "mmlu": MMLUEvaluator,
+        "mmlu_branch": MMLUBranchEvaluator,
+        "mt_bench": MTBenchEvaluator,
+        "mt_bench_branch": MTBenchBranchEvaluator,
+    }
+    evaluator_class = benchmark_map[benchmark]
 
     # ensure skills benchmarks have proper arguments if selected
     if benchmark in ["mt_bench", "mt_bench_branch"]:
@@ -66,7 +72,6 @@ def get_evaluator(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
-        evaluator_class = BENCHMARK_TO_CLASS_MAP[benchmark]
         if benchmark == "mt_bench":
             return evaluator_class("test_model", "judge_model", output_dir, max_workers)
         return evaluator_class(
@@ -93,7 +98,6 @@ def get_evaluator(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
-        evaluator_class = BENCHMARK_TO_CLASS_MAP[benchmark]
         if benchmark == "mmlu":
             min_tasks = os.environ.get("INSTRUCTLAB_EVAL_MMLU_MIN_TASKS")
             if min_tasks is not None:
@@ -204,8 +208,7 @@ def qa_pairs_to_qna_to_avg_scores(qa_pairs: list[dict]) -> dict:
 )
 @click.option(
     "--benchmark",
-    type=click.Choice(list(BENCHMARK_TO_CLASS_MAP.keys())),
-    # case_sensitive=False,
+    type=click.Choice(["mmlu", "mmly_branch", "mt_branch", "mt_bench_branch"]),
     help="Benchmarks to run during evaluation",
 )
 @click.option(
@@ -345,6 +348,9 @@ def evaluate(
                 proc.terminate()
 
     elif benchmark == "mt_bench_branch":
+        # Third Party
+        from instructlab.eval.mt_bench import MTBenchBranchEvaluator
+
         # TODO: Replace temp Popen hack with serving library calls.  Current library doesn't support server-model-name.
         evaluators = [
             evaluator,
@@ -451,6 +457,9 @@ def evaluate(
             print(f"{task} - {s}")
 
     elif benchmark == "mmlu_branch":
+        # Third Party
+        from instructlab.eval.mmlu import MMLUBranchEvaluator
+
         # TODO: Need to resolve the appropriate task list for the branches involved
         evaluators = [
             evaluator,

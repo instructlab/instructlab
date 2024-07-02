@@ -93,7 +93,6 @@ def is_model_gguf(model_path: pathlib.Path) -> bool:
     Returns:
         bool: True if the file is a GGUF file, False otherwise.
     """
-    # pylint: disable=import-outside-toplevel
     # Third Party
     from gguf.constants import GGUF_MAGIC
 
@@ -333,7 +332,6 @@ def get_uvicorn_config(app: uvicorn.Server, host: str, port: int) -> Config:
 
 def select_backend(logger: logging.Logger, cfg: serve_config) -> BackendServer:
     # Local
-    # pylint: disable=import-outside-toplevel
     from .llama_cpp import Server as llama_cpp_server
     from .vllm import Server as vllm_server
 
