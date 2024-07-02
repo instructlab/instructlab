@@ -23,13 +23,21 @@ BOLD='\033[1m'
 NC='\033[0m' # No Color
 
 SCRIPTDIR=$(dirname "$0")
+E2E_TEST_DIR="$(pwd)/__e2e_test"
+export XDG_CONFIG_HOME="${E2E_TEST_DIR}/.config"
+export XDG_DATA_HOME="${E2E_TEST_DIR}/.local/share"
+
+# ensure that our mock e2e dirs exist
+for dir in "${XDG_CONFIG_HOME}" "${XDG_DATA_HOME}"; do
+	mkdir -p "${dir}"
+done
 
 step() {
-    echo -e "$BOLD$* - $(date)$NC"
+    echo -e "${BOLD}${*} - $(date)${NC}"
 }
 
 task() {
-    echo -e "$BOLD------------------------------------------------------$NC"
+    echo -e "${BOLD}------------------------------------------------------$NC"
     step "$@"
 }
 
@@ -59,7 +67,7 @@ test_init() {
 test_download() {
     task Download the model
 
-    if [ "$GRANITE" -eq 1 ]; then
+    if [ "${GRANITE}" -eq 1 ]; then
         step Downloading the granite model
         ilab model download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf
     else
@@ -70,7 +78,7 @@ test_download() {
 
 test_serve() {
     # Accepts an argument of the model, or default here
-    if [ "$GRANITE" -eq 1 ]; then
+    if [ "${GRANITE}" -eq 1 ]; then
         model="${1:-./models/granite-7b-lab-Q4_K_M.gguf}"
     else
         model="${1:-}"
@@ -99,7 +107,7 @@ test_serve() {
 test_chat() {
     task Chat with the model
     CHAT_ARGS=()
-    if [ "$GRANITE" -eq 1 ]; then
+    if [ "${GRANITE}" -eq 1 ]; then
         CHAT_ARGS+=("-m models/granite-7b-lab-Q4_K_M.gguf")
     fi
     printf 'Say "Hello"\n' | ilab model chat "${CHAT_ARGS[@]}" | grep --color 'Hello'
@@ -109,25 +117,25 @@ test_taxonomy() {
     task Update the taxonomy
 
     TESTNUM=$1
-    if [ "$TESTNUM" -ne 1 ] && [ "$TESTNUM" -ne 2 ] && [ "$TESTNUM" -ne 3 ]; then
-        echo "Invalid test number: $TESTNUM"
+    if [ "${TESTNUM}" -ne 1 ] && [ "${TESTNUM}" -ne 2 ] && [ "${TESTNUM}" -ne 3 ]; then
+        echo "Invalid test number: ${TESTNUM}"
         exit 1
     fi
 
     test -d taxonomy || git clone https://github.com/instructlab/taxonomy || true
 
     step Update taxonomy with sample qna additions
-    if [ "$TESTNUM" -eq 1 ]; then
+    if [ "${TESTNUM}" -eq 1 ]; then
         mkdir -p taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings
-        cp "$SCRIPTDIR"/test-data/e2e-qna-freeform-skill.yaml taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings/qna.yaml
-    elif [ "$TESTNUM" -eq 2 ]; then
+        cp "${SCRIPTDIR}"/test-data/e2e-qna-freeform-skill.yaml taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings/qna.yaml
+    elif [ "${TESTNUM}" -eq 2 ]; then
         rm -rf taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings
         mkdir -p taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no
-        cp "$SCRIPTDIR"/test-data/e2e-qna-grounded-skill.yaml taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no/qna.yaml
-    elif [ "$TESTNUM" -eq 3 ]; then
+        cp "${SCRIPTDIR}"/test-data/e2e-qna-grounded-skill.yaml taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no/qna.yaml
+    elif [ "${TESTNUM}" -eq 3 ]; then
         rm -rf taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no
         mkdir -p taxonomy/knowledge/sports/overview/e2e-softball
-        cp "$SCRIPTDIR"/test-data/e2e-qna-knowledge.yaml taxonomy/knowledge/sports/overview/e2e-softball/qna.yaml
+        cp "${SCRIPTDIR}"/test-data/e2e-qna-knowledge.yaml taxonomy/knowledge/sports/overview/e2e-softball/qna.yaml
     fi
 
     step Verification
@@ -136,7 +144,7 @@ test_taxonomy() {
 
 test_generate() {
     task Generate synthetic data
-    if [ "$GRANITE" -eq 1 ]; then
+    if [ "${GRANITE}" -eq 1 ]; then
         GENERATE_ARGS+=("--model ./models/granite-7b-lab-Q4_K_M.gguf")
     fi
     ilab data generate --num-instructions ${NUM_INSTRUCTIONS} "${GENERATE_ARGS[@]}"

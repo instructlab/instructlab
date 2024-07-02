@@ -57,7 +57,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--output-dir",
     type=click.Path(),
-    default=config.DEFAULT_GENERATED_FILES_OUTPUT_DIR,
+    default=config.DEFAULT_DATASET_DIR,
     help="Path to output generated files.",
 )
 @click.option(

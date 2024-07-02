@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
     "--taxonomy-path",
     type=click.Path(),
     help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone or local file path.",
+    default=config.DEFAULT_TAXONOMY_PATH,
 )
 @click.option(
     "--taxonomy-base",

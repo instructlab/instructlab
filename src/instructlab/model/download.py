@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from os.path import basename, dirname
+from os.path import basename
 import os
 
 # Third Party
@@ -36,7 +36,7 @@ from instructlab import utils
 )
 @click.option(
     "--model-dir",
-    default=dirname(config.DEFAULT_MODEL_PATH),
+    default=config.DEFAULT_MODEL_DIR,
     show_default=True,
     help="The local directory to download the model files into.",
 )

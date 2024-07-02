@@ -17,6 +17,7 @@ from .config import config as config_group
 from .data import data as data_group
 from .model import model as model_group
 from .sysinfo import get_sysinfo
+from .system import system
 from .taxonomy import taxonomy as taxonomy_group
 
 # 'fork' is unsafe and incompatible with some hardware accelerators.
@@ -95,6 +96,7 @@ ilab.add_command(model_group.model)
 ilab.add_command(taxonomy_group.taxonomy)
 ilab.add_command(data_group.data)
 ilab.add_command(config_group.config)
+ilab.add_command(system.system)
 
 
 @ilab.command

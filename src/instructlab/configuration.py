@@ -2,10 +2,12 @@
 
 # Standard
 from os import path
+from pathlib import Path
 from re import match
 from typing import Optional
 import os
 import sys
+import typing
 
 # Third Party
 from instructlab.training import (
@@ -29,25 +31,68 @@ import yaml
 # Local
 from . import log
 
+
+class STORAGE_DIR_NAMES:
+    ILAB = "instructlab"
+    DATASETS = "datasets"
+    CHECKPOINTS = "checkpoints"
+    MODELS = "models"
+    TAXONOMY = "taxonomy"
+    INTERNAL = (
+        "internal"  # for storing all ilab-internal files the user doesn't need to see
+    )
+
+
+def get_home_dir(*subdir: str) -> str:
+    home = str(Path.home()) if Path.home() else os.getenv("HOME")
+    if not home:
+        raise RuntimeError(
+            "The HOME directory does not exist. Please make sure it's set and run this again."
+        )
+    return os.path.join(home, *subdir)
+
+
+def get_home_env_path(env: str, suffix: str, *home_paths: str) -> str:
+    """Neatly formats the environment paths for the user home & storage directories"""
+    home_path = os.getenv(env)
+    full_path = home_path if home_path else get_home_dir(*home_paths)
+    return os.path.join(full_path, suffix)
+
+
+ILAB_CONFIG_HOME = get_home_env_path(
+    "XDG_CONFIG_HOME", STORAGE_DIR_NAMES.ILAB, ".config"
+)
+ILAB_DATA_HOME = get_home_env_path(
+    "XDG_DATA_HOME", STORAGE_DIR_NAMES.ILAB, ".local", "share"
+)
+
 DEFAULT_API_KEY = "no_api_key"
-DEFAULT_CONFIG = "config.yaml"
+DEFAULT_CONFIG = os.path.join(ILAB_CONFIG_HOME, "config.yaml")
 # TODO: Consolidate --model and --model-path into one --model-path flag since we always need a path now
 DEFAULT_MODEL_OLD = "merlinite-7b-lab-Q4_K_M"
 DEFAULT_MODEL = "models/merlinite-7b-lab-Q4_K_M.gguf"
-DEFAULT_MODEL_PATH = "models/merlinite-7b-lab-Q4_K_M.gguf"
+DEFAULT_MODEL_DIR = os.path.join(ILAB_DATA_HOME, STORAGE_DIR_NAMES.MODELS)
+DEFAULT_MODEL_PATH = os.path.join(DEFAULT_MODEL_DIR, "merlinite-7b-lab-Q4_K_M.gguf")
 DEFAULT_MODEL_REPO = "instructlab/granite-7b-lab"
 DEFAULT_JUDGE_MODEL_MT = "prometheus-eval/prometheus-8x7b-v2.0"
 DEFAULT_EVAL_PATH = "eval_data"
 DEFAULT_TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
-DEFAULT_TAXONOMY_PATH = "taxonomy"
+DEFAULT_TAXONOMY_PATH = os.path.join(ILAB_DATA_HOME, STORAGE_DIR_NAMES.TAXONOMY)
 DEFAULT_TAXONOMY_BASE = "origin/main"
+DEFAULT_CHECKPOINTS_DIR = os.path.join(ILAB_DATA_HOME, STORAGE_DIR_NAMES.CHECKPOINTS)
+DEFAULT_DATASET_DIR = os.path.join(ILAB_DATA_HOME, STORAGE_DIR_NAMES.DATASETS)
+DEFAULT_INTERNAL_DIR = os.path.join(ILAB_DATA_HOME, STORAGE_DIR_NAMES.INTERNAL)
 MAX_CONTEXT_SIZE = 4096
 # TODO: these constants should be removed, they should not leak out
 DEFAULT_NUM_CPUS = 10
 DEFAULT_CHUNK_WORD_COUNT = 1000
 DEFAULT_NUM_INSTRUCTIONS = 100
-DEFAULT_PROMPT_FILE = "prompt.txt"
-DEFAULT_GENERATED_FILES_OUTPUT_DIR = "generated"
+DEFAULT_PROMPT_FILE = os.path.join(
+    ILAB_DATA_HOME, STORAGE_DIR_NAMES.INTERNAL, "prompt.txt"
+)
+DEFAULT_GENERATED_FILES_OUTPUT_DIR = os.path.join(
+    ILAB_DATA_HOME, STORAGE_DIR_NAMES.DATASETS
+)
 DEFAULT_CONNECTION_TIMEOUT = httpx.Timeout(timeout=30.0)
 # use spawn start method, fork is not thread-safe
 DEFAULT_MULTIPROCESSING_START_METHOD = "spawn"
@@ -62,9 +107,6 @@ MODEL_FAMILIES = set(("merlinite", "mixtral"))
 MODEL_FAMILY_MAPPINGS = {
     "granite": "merlinite",
 }
-
-DEFAULT_CKPT_DIR = "checkpoints"
-DEFAULT_OUT_DIR = "train-output"
 
 
 class ConfigException(Exception):
@@ -108,16 +150,16 @@ class _chat(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     # required fields
-    model: StrictStr
+    model: str
 
     # additional fields with defaults
     vi_mode: bool = False
     visible_overflow: bool = True
     context: str = "default"
-    session: Optional[str] = None
+    session: typing.Optional[str] = None
     logs_dir: str = "data/chatlogs"
     greedy_mode: bool = False
-    max_tokens: Optional[int] = None
+    max_tokens: typing.Optional[int] = None
 
 
 class _generate(BaseModel):
@@ -261,9 +303,9 @@ def get_default_config():
         train=_train(
             train_args=TrainingArgs(
                 model_path=DEFAULT_MODEL_REPO,
-                data_path="./taxonomy_data",
-                ckpt_output_dir=DEFAULT_CKPT_DIR,
-                data_output_dir=DEFAULT_OUT_DIR,
+                data_path=DEFAULT_DATASET_DIR,
+                ckpt_output_dir=DEFAULT_CHECKPOINTS_DIR,
+                data_output_dir=DEFAULT_INTERNAL_DIR,
                 max_seq_len=4096,
                 max_batch_len=10000,
                 num_epochs=10,
@@ -283,6 +325,7 @@ def get_default_config():
                     cpu_offload_optimizer=False,
                     cpu_offload_optimizer_ratio=1,
                     cpu_offload_optimizer_pin_memory=False,
+                    save_samples=None,
                 ),
             ),
             torch_args=TorchrunArgs(
@@ -381,6 +424,50 @@ def get_model_family(forced, model_path):
     return guess if guess in MODEL_FAMILIES else DEFAULT_MODEL_FAMILY
 
 
+def ensure_storage_directories_exist():
+    """
+    Ensures that the default directories used by ilab exist.
+    """
+    os.makedirs(ILAB_CONFIG_HOME, exist_ok=True, mode=0o755)
+
+    for storage_dir in [
+        STORAGE_DIR_NAMES.CHECKPOINTS,
+        STORAGE_DIR_NAMES.MODELS,
+        STORAGE_DIR_NAMES.DATASETS,
+        STORAGE_DIR_NAMES.TAXONOMY,
+        STORAGE_DIR_NAMES.INTERNAL,
+    ]:
+        os.makedirs(
+            os.path.join(ILAB_DATA_HOME, storage_dir), exist_ok=True, mode=0o755
+        )
+
+
+def flatten_config_dict(
+    config: dict[str, typing.Any], ignore_keys: list[str]
+) -> dict[str, typing.Any]:
+    """
+    Given a dictionary with nested config objects, flatten it into a single dictionary.
+    Ignore all of the keys provided in the ignore_keys list.
+    """
+    new_dict = {}
+    dicts_to_merge = [
+        config,
+    ]
+    # HACK(osilkin): keep this implementation here so we can catch any errors in the future
+    while 0 < len(dicts_to_merge):
+        active_dict: dict[str, typing.Any] = dicts_to_merge.pop()
+        for k, v in active_dict.items():
+            if k in ignore_keys:
+                continue
+            if k in new_dict:
+                raise RuntimeError(f"key collision when merging training dicts: {k}")
+            if isinstance(v, dict):
+                dicts_to_merge.append(v)
+                continue
+            new_dict[k] = v
+    return new_dict
+
+
 class Lab:
     """Lab object holds high-level information about ilab CLI"""
 
@@ -388,48 +475,46 @@ class Lab:
         self.config = config_obj
 
 
-def init(ctx, config_file):
-    if (
-        ctx.invoked_subcommand not in {"config", "init", "sysinfo"}
-        and "--help" not in sys.argv[1:]
-    ):
-        if config_file == "DEFAULT":
-            config_obj = get_default_config()
-        elif not os.path.isfile(config_file):
-            config_obj = None
-            ctx.fail(
-                f"`{config_file}` does not exists, please run `ilab config init` "
-                "or point to a valid configuration file using `--config=<path>`."
-            )
-        else:
-            try:
-                config_obj = read_config(config_file)
-            except ConfigException as ex:
-                raise click.ClickException(str(ex))
-        # setup logging
-        log.configure_logging(log_level=config_obj.general.log_level.upper())
-        ctx.obj = Lab(config_obj)
-        # default_map holds a dictionary with default values for each command parameters
-        config_dict = get_dict(ctx.obj.config)
-        # since torch and train args are sep, they need to be combined into a single `train` entity for the default map
-        # this is because the flags for `ilab model train` will only be populated if the default map has a single `train` entry, not two.
-        config_dict["train"] = (
-            config_dict["train"]["train_args"]
-            | config_dict["train"]["torch_args"]
-            | config_dict["train"]["train_args"]["lora"]
-            | config_dict["train"]["train_args"]["deepspeed_options"]
-        )
-        config_dict["evaluate"] = (
-            config_dict["evaluate"]
-            | config_dict["evaluate"]["mmlu"]
-            | config_dict["evaluate"]["mmlu_branch"]
-            | config_dict["evaluate"]["mt_bench"]
-            | config_dict["evaluate"]["mt_bench_branch"]
-        )
-        # need to delete the individual sub-classes from the map
-        del config_dict["evaluate"]["mmlu"]
-        del config_dict["evaluate"]["mmlu_branch"]
-        del config_dict["evaluate"]["mt_bench"]
-        del config_dict["evaluate"]["mt_bench_branch"]
+def init(ctx, config_file: str):
+    if ctx.invoked_subcommand in ["init", "sysinfo"] or "--help" in sys.argv[1:]:
+        # do nothing
+        return
 
-        ctx.default_map = config_dict
+    if config_file == "DEFAULT":
+        config_obj = get_default_config()
+    elif not os.path.isfile(config_file):
+        config_obj = None
+        ctx.fail(
+            f"`{config_file}` does not exists, please run `ilab init` "
+            "or point to a valid configuration file using `--config=<path>`."
+        )
+    else:
+        try:
+            config_obj = read_config(config_file)
+        except ConfigException as ex:
+            raise click.ClickException(str(ex))
+    # setup logging
+    log.configure_logging(log_level=config_obj.general.log_level.upper())
+    ctx.obj = Lab(config_obj)
+    # default_map holds a dictionary with default values for each command parameters
+    config_dict = get_dict(ctx.obj.config)
+    # since torch and train args are sep, they need to be combined into a single `train` entity for the default map
+    # this is because the flags for `ilab model train` will only be populated if the default map has a single `train` entry, not two.
+
+    # XXX(osilkin): the following block of code is to hack around conflicting keys
+    #               being merged and erasing each other
+    #               issue: https://github.com/instructlab/instructlab/issues/1523
+    save_samples_hf = config_dict["train"]["train_args"]["save_samples"]
+    save_samples_ds = config_dict["train"]["train_args"]["deepspeed_options"][
+        "save_samples"
+    ]
+    new_training_dict = flatten_config_dict(config_dict["train"], ["save_samples"])
+    new_training_dict["save_samples"] = save_samples_hf
+    new_training_dict["save_samples_ds"] = save_samples_ds
+    config_dict["train"] = new_training_dict
+
+    new_eval_dict = flatten_config_dict(config_dict["evaluate"], [])
+    config_dict["evaluate"] = new_eval_dict
+
+    # default_map holds a dictionary with default values for each command parameters
+    ctx.default_map = config_dict

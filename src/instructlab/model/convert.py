@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--model-dir",
     help="Base directory where model is stored.",
-    default="instructlab-merlinite-7b-lab-mlx-q",
     show_default=True,
+    required=True,
 )
 @click.option("--adapter-file", help="LoRA adapter to fuse.", default=None)
 @click.option(
@@ -64,6 +64,8 @@ def convert(
     from ..llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
     from ..train.lora_mlx.convert import convert_between_mlx_and_pytorch
     from ..train.lora_mlx.fuse import fine_tune
+
+    model_dir = os.path.expandvars(os.path.expanduser(model_dir))
 
     # compute model name from model-dir if not supplied
     if model_name is None:

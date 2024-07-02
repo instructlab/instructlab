@@ -9,19 +9,20 @@ import click
 
 # First Party
 from instructlab import utils
+from instructlab.configuration import DEFAULT_CHECKPOINTS_DIR, DEFAULT_INTERNAL_DIR
 
 
 @click.command()
 @click.option(
     "--data-dir",
     help="Base directory where data is stored.",
-    default="./taxonomy_data",
+    default=DEFAULT_INTERNAL_DIR,
     show_default=True,
 )
 @click.option(
     "--model-dir",
     help="Base directory where model is stored.",
-    default="instructlab-merlinite-7b-lab-mlx-q",
+    default=DEFAULT_CHECKPOINTS_DIR,
     show_default=True,
 )
 @click.option(
@@ -33,7 +34,7 @@ from instructlab import utils
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 @utils.display_params
 # pylint: disable=function-redefined
-def test(data_dir, model_dir, adapter_file):
+def test(data_dir: str, model_dir: str, adapter_file: str):
     """Runs basic test to ensure model correctness"""
     # pylint: disable=C0415
     # Local
@@ -71,7 +72,12 @@ def test(data_dir, model_dir, adapter_file):
         print("expected output:", example["assistant"])
 
         print("\n-----model output BEFORE training----:\n")
-        load_and_train(model=model_dir, no_adapter=True, max_tokens=100, prompt=prompt)
+        load_and_train(
+            model=model_dir,
+            no_adapter=True,
+            max_tokens=100,
+            prompt=prompt,
+        )
 
         if adapter_file_exists:
             print("\n-----model output AFTER training----:\n")

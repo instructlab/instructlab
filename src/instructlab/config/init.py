@@ -56,7 +56,7 @@ from instructlab import utils
 @click.option("--train-profile", type=click.Path(), default=None)
 def init(
     interactive,
-    model_path,
+    model_path: str,
     taxonomy_path,
     taxonomy_base,
     repository,
@@ -64,6 +64,7 @@ def init(
     train_profile,
 ):
     """Initializes environment for InstructLab"""
+    config.ensure_storage_directories_exist()
     clone_taxonomy_repo = True
     if interactive:
         if exists(config.DEFAULT_CONFIG):

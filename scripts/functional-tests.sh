@@ -3,10 +3,25 @@
 
 set -ex
 
+export TEST_DIR
+TEST_DIR="$(pwd)/__test-files"
+export XDG_CONFIG_HOME="${TEST_DIR}/config"
+export XDG_DATA_HOME="${TEST_DIR}/data"
+
+
+export CONFIG_DIR="${XDG_CONFIG_HOME}/instructlab"
+export DATA_DIR="${XDG_DATA_HOME}/instructlab"
+export CONFIG_FILE="${CONFIG_DIR}/config.yaml"
+
+# creates all of the directories which we expect to be populated on a system
+for dir in "${XDG_CONFIG_HOME}" "${XDG_DATA_HOME}"; do
+	mkdir -p "${dir}"
+done
+
 # build a prompt string that includes the time, source file, line number, and function name
 export PS4='+$(date +"%Y-%m-%d %T") ${BASH_VERSION}:${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
-pip install .
+# pip install .
 
 export TEST_CTX_SIZE_LAB_SERVE_LOG_FILE=test_ctx_size_lab_serve.log
 export TEST_CTX_SIZE_LAB_CHAT_LOG_FILE=test_ctx_size_lab_chat.log
@@ -34,28 +49,28 @@ cleanup() {
         printf "\e[31m=%.0s\e[0m" {1..80}
         printf "\n\n"
     fi
-    for pid in $PID_SERVE $PID_CHAT; do
-        if [ -n "$pid" ]; then
-            kill "$pid"
-            wait "$pid"
+    for pid in ${PID_SERVE} ${PID_CHAT}; do
+        if [ -n "${pid}" ]; then
+            kill "${pid}"
+            wait "${pid}"
         fi
     done
-    rm -f "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" \
-        "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" \
+    rm -f "${TEST_CTX_SIZE_LAB_SERVE_LOG_FILE}" \
+        "${TEST_CTX_SIZE_LAB_CHAT_LOG_FILE}" \
         test_session_history
     rm -rf test_taxonomy
     # revert port change from test_bind_port()
-    sed -i.bak 's/9999/8000/g' config.yaml
+    sed -i.bak 's/9999/8000/g' "${CONFIG_FILE}"
     # revert model name change from test_model_print()
-    sed -i.bak "s/baz/merlinite-7b-lab-Q4_K_M/g" config.yaml
-    mv models/foo.gguf models/merlinite-7b-lab-Q4_K_M.gguf || true
-    rm -f config.yaml.bak serve.log models/foo.gguf
+    sed -i.bak "s/baz/merlinite-7b-lab-Q4_K_M/g" "${CONFIG_FILE}"
+    mv "${DATA_DIR}/models/foo.gguf" "${DATA_DIR}/models/merlinite-7b-lab-Q4_K_M.gguf" || true
+    rm -f "${CONFIG_FILE}.bak" serve.log "${DATA_DIR}/models/foo.gguf"
     set -e
 }
 
 trap 'cleanup "$?"' EXIT QUIT INT TERM
 
-rm -f config.yaml
+rm -f "${CONFIG_FILE}"
 
 # print version
 ilab --version
@@ -64,10 +79,10 @@ ilab --version
 ilab sysinfo
 
 # pipe 3 carriage returns to ilab config init to get past the prompts
-echo -e "\n\n\n" | ilab config init
+echo -e "\n\n\n" | ilab init
 
 # Enable Debug in func tests
-sed -i.bak -e 's/log_level:.*/log_level: DEBUG/g;' config.yaml
+sed -i.bak -e 's/log_level:.*/log_level: DEBUG/g;' "${CONFIG_FILE}"
 
 # It looks like GitHub action MacOS runner does not have graphics
 # so we need to disable the GPU layers if we are running in GitHub actions
@@ -77,7 +92,7 @@ if [[ "$(uname)" == "Darwin" ]]; then
             echo "Metal GPU detected"
         else
             echo "No Metal GPU detected"
-            sed -i.bak -e 's/gpu_layers: -1/gpu_layers: 0/g;' config.yaml
+            sed -i.bak -e 's/gpu_layers: -1/gpu_layers: 0/g;' "${CONFIG_FILE}"
         fi
     else
         echo "system_profiler not found, cannot determine GPU"
@@ -89,11 +104,12 @@ ilab model download
 
 # check that ilab model serve is working
 test_bind_port(){
-    expect -c '
+	printf "\e[32mThe ilab config:\n$(ilab config show)\e[0m"
+    expect -c "
     set timeout 60
     spawn ilab model serve
     expect {
-        "http://127.0.0.1:8000/docs" { puts OK }
+        'http://127.0.0.1:8000/docs' { puts OK }
         default { exit 1 }
     }
 
@@ -101,26 +117,26 @@ test_bind_port(){
     # catch "error while attempting to bind on address ...."
     spawn ilab model serve
     expect {
-        "error while attempting to bind on address " { puts OK }
+        'error while attempting to bind on address ' { puts OK }
         default { exit 1 }
     }
 
     # configure a different port
-    exec sed -i.bak 's/8000/9999/g' config.yaml
+    exec sed -i.bak 's/8000/9999/g' ${CONFIG_FILE}
 
     # check that ilab model serve is working on the new port
     # catch ERROR strings in the output
     spawn ilab model serve
     expect {
-        "http://127.0.0.1:9999/docs" { puts OK }
+        'http://127.0.0.1:9999/docs' { puts OK }
         default { exit 1 }
     }
-'
+"
 }
 
 test_ctx_size(){
     # A context size of 55 will allow a small message
-    ilab model serve --max-ctx-size 25 &> "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" &
+    ilab model serve --max-ctx-size 25 &> "${TEST_CTX_SIZE_LAB_SERVE_LOG_FILE}" &
     PID_SERVE=$!
 
     # Make sure the server has time to open the port
@@ -138,25 +154,25 @@ test_ctx_size(){
 
     # look for the context size error in the server logs
     if ! timeout 20 bash -c "
-        until grep -q 'exceed context window of' $TEST_CTX_SIZE_LAB_SERVE_LOG_FILE; do
+        until grep -q 'exceed context window of' ${TEST_CTX_SIZE_LAB_SERVE_LOG_FILE}; do
         echo 'waiting for context size error'
         sleep 1
     done
 "; then
         echo "context size error not found in server logs"
-        cat $TEST_CTX_SIZE_LAB_SERVE_LOG_FILE
+        cat "${TEST_CTX_SIZE_LAB_SERVE_LOG_FILE}"
         exit 1
     fi
 
     # look for the context size error in the chat logs
     if ! timeout 20 bash -c "
-        until grep -q 'Message too large for context size.' $TEST_CTX_SIZE_LAB_CHAT_LOG_FILE; do
+        until grep -q 'Message too large for context size.' ${TEST_CTX_SIZE_LAB_CHAT_LOG_FILE}; do
         echo 'waiting for chat error'
         sleep 1
     done
 "; then
         echo "context size error not found in chat logs"
-        cat $TEST_CTX_SIZE_LAB_CHAT_LOG_FILE
+        cat "${TEST_CTX_SIZE_LAB_CHAT_LOG_FILE}"
         exit 1
     fi
 }
@@ -220,7 +236,7 @@ seed_examples:
 task_description: "simple maths"
 EOF
 
-    sed -i.bak -e 's/num_instructions:.*/num_instructions: 1/g' config.yaml
+    sed -i.bak -e 's/num_instructions:.*/num_instructions: 1/g' "${CONFIG_FILE}"
 
     # This should be finished in a minute or so but time it out incase it goes wrong
     if ! timeout 20m ilab data generate --taxonomy-path test_taxonomy/compositional_skills/simple_math.yaml; then
@@ -334,7 +350,7 @@ wait_for_server(){
 }
 
 test_model_print(){
-    cp models/merlinite-7b-lab-Q4_K_M.gguf models/foo.gguf
+    cp ~/.local/share/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf ~/.local/share/instructlab/models/foo.gguf
     ilab model serve --model-path models/foo.gguf &
     PID_SERVE=$!
 
@@ -371,13 +387,23 @@ test_model_print(){
             timeout { exit 1 }
         }
     '
+}
 
+function test_config_show() {
+	echo -e "\n\n\n" | ilab init
+	# test that the model show command works
+	if ! ilab config show | grep -i 'model_path'; then
+		echo "Model path not found"
+		exit 1
+	fi
 }
 
 ########
 # MAIN #
 ########
 # call cleanup in-between each test so they can run without conflicting with the server/chat process
+test_config_show
+cleanup
 test_bind_port
 cleanup
 test_ctx_size

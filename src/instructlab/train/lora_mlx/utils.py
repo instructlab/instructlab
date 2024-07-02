@@ -161,7 +161,7 @@ def save_model(save_dir: str, weights, tokenizer, config):
 def load(path_or_hf_repo: str):
     # If the path exists, it will try to load model form it
     # otherwise download and cache from the hf_repo and cache
-    model_path = Path(path_or_hf_repo)
+    model_path = Path(os.path.expandvars(os.path.expanduser(path_or_hf_repo)))
     if not model_path.exists():
         model_path = Path(
             snapshot_download(
