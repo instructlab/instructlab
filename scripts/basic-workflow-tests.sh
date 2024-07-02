@@ -17,6 +17,7 @@ GENERATE_ARGS=()
 TRAIN_ARGS=()
 CI=0
 GRANITE=0
+FULLTRAIN=0
 
 export GREP_COLORS='mt=1;33'
 BOLD='\033[1m'
@@ -146,7 +147,10 @@ test_train() {
     task Train the model
 
     # TODO Only cuda for now
-    TRAIN_ARGS=("--legacy" "--device=cuda" "--4-bit-quant")
+    TRAIN_ARGS=("--legacy" "--device=cuda")
+    if [ "$FULLTRAIN" -eq 0 ]; then
+        TRAIN_ARGS+=("--4-bit-quant")
+    fi
     if [ "$GRANITE" -eq 1 ]; then
         TRAIN_ARGS+=("--gguf-model-path models/granite-7b-lab-Q4_K_M.gguf")
     fi
@@ -213,6 +217,7 @@ usage() {
     echo "Usage: $0 [-m] [-h]"
     echo "  -m  Run minimal configuration (run quicker when you have no GPU)"
     echo "  -c  Run in CI mode (explicitly skip steps we know will fail in linux CI)"
+    echo "  -f  Run the fullsize training instead of --4-bit-quant"
     echo "  -g  Use the granite model"
     echo "  -h  Show this help text"
 
@@ -220,7 +225,7 @@ usage() {
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "cmgh" opt; do
+while getopts "cmfgh" opt; do
     case $opt in
         c)
             CI=1
@@ -229,6 +234,10 @@ while getopts "cmgh" opt; do
         m)
             MINIMAL=1
             step "Running minimal configuration."
+            ;;
+        f)
+            FULLTRAIN=1
+            step "Running fullsize training."
             ;;
         g)
             GRANITE=1
