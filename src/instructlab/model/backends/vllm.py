@@ -73,6 +73,8 @@ class Server(BackendServer):
         self,
         http_client,
     ):
+        if self.process is not None and self.api_base is not None:
+            return
         try:
             _, vllm_server_process, api_base = ensure_server(
                 logger=self.logger,
