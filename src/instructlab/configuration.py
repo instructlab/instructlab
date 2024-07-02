@@ -33,6 +33,8 @@ DEFAULT_API_KEY = "no_api_key"
 DEFAULT_CONFIG = "config.yaml"
 # TODO: Consolidate --model and --model-path into one --model-path flag since we always need a path now
 DEFAULT_MODEL_OLD = "merlinite-7b-lab-Q4_K_M"
+DEFAULT_MODEL_REPO = "instructlab/merlinite-7b-lab-GGUF"
+DEFAULT_MODEL_TAG = "main"
 DEFAULT_MODEL = "models/merlinite-7b-lab-Q4_K_M.gguf"
 DEFAULT_MODEL_PATH = "models/merlinite-7b-lab-Q4_K_M.gguf"
 DEFAULT_MODEL_REPO = "instructlab/granite-7b-lab"
@@ -79,6 +81,8 @@ class _general(BaseModel):
 
     # additional fields with defaults
     log_level: StrictStr = "INFO"
+    default_model_repo: StrictStr = DEFAULT_MODEL_REPO
+    default_model_tag: StrictStr = DEFAULT_MODEL_TAG
 
     @field_validator("log_level")
     def validate_log_level(cls, v):
