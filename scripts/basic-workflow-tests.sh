@@ -13,7 +13,7 @@ set -euf
 
 MINIMAL=0
 NUM_INSTRUCTIONS=5
-GENERATE_ARGS=()
+GENERATE_ARGS=("--num-cpus" "$(nproc)")
 TRAIN_ARGS=()
 CI=0
 GRANITE=0
@@ -38,8 +38,8 @@ set_defaults() {
         return
     fi
 
+    # Minimal settings to run in less time
     NUM_INSTRUCTIONS=1
-    GENERATE_ARGS+=("--num-cpus" "$(nproc)")
     TRAIN_ARGS+=("--num-epochs" "1")
 }
 
