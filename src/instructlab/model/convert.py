@@ -56,7 +56,7 @@ def convert(
     model_name,
 ):
     """Converts model to GGUF"""
-    # pylint: disable=C0415
+    # pylint: disable=import-outside-toplevel
     # Third Party
     from instructlab_quantize import run_quantize  # pylint: disable=import-error
 

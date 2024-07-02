@@ -77,6 +77,7 @@ serve:
     vllm_args: []
 evaluate:
   base_model: instructlab/granite-7b-lab
+  gpus: 1
   mmlu:
     few_shots: 2
     batch_size: 5
@@ -130,6 +131,7 @@ serve:
     vllm_args: []
 evaluate:
   base_model: instructlab/granite-7b-lab
+  gpus: 1
   mmlu:
     few_shots: 2
     batch_size: 5
@@ -168,6 +170,7 @@ serve:
     vllm_args: []
 evaluate:
   base_model: instructlab/granite-7b-lab
+  gpus: 1
   mmlu:
     few_shots: 2
     batch_size: 5
@@ -289,6 +292,7 @@ serve:
        - --enable-lora
 evaluate:
   base_model: instructlab/granite-7b-lab
+  gpus: 1
   mmlu:
     few_shots: 2
     batch_size: 5
