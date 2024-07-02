@@ -64,6 +64,20 @@ logger = logging.getLogger(__name__)
         " Example: --vllm-args='--dtype=auto' --vllm-args='--enable-lora'"
     ),
 )
+@click.option(
+    "--host",
+    type=str,
+    default="127.0.0.1",
+    show_default=True,
+    help="The host address to bind to.",
+)
+@click.option(
+    "--port",
+    type=click.INT,
+    default=8000,
+    show_default=True,
+    help="The port number to bind to.",
+)
 @click.pass_context
 @utils.display_params
 def serve(
@@ -81,8 +95,6 @@ def serve(
     # pylint: disable=import-outside-toplevel
     # First Party
     from instructlab.model.backends import backends, llama_cpp, vllm
-
-    host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
 
     model_path = pathlib.Path(model_path)
     try:
