@@ -220,6 +220,7 @@ def ensure_server(
     port=8000,
     queue=None,
     server_process_func=None,
+    model_path=None,
 ) -> Tuple[multiprocessing.Process, subprocess.Popen, str]:
     """Checks if server is running, if not starts one as a subprocess. Returns the server process
     and the URL where it's available."""
@@ -227,11 +228,15 @@ def ensure_server(
     try:
         logger.debug(f"Trying to connect to {api_base}...")
         # pylint: disable=duplicate-code
-        list_models(
+        ml = list_models(
             api_base=api_base,
             http_client=http_client,
         )
-        return (None, None, None)
+        if model_path and model_path not in (m.id for m in ml.data):
+            print(f"model {model_path} not found")
+            raise ClientException(f"model {model_path} not found")
+        return (None, None, api_base)
+
         # pylint: enable=duplicate-code
     except ClientException:
         port = free_tcp_ipv4_port(host)
@@ -331,14 +336,16 @@ def get_uvicorn_config(app: uvicorn.Server, host: str, port: int) -> Config:
     )
 
 
-def select_backend(logger: logging.Logger, cfg: serve_config) -> BackendServer:
+def select_backend(
+    logger: logging.Logger, cfg: serve_config, model_path: pathlib.Path | None = None
+) -> BackendServer:
     # Local
     # pylint: disable=import-outside-toplevel
     from .llama_cpp import Server as llama_cpp_server
     from .vllm import Server as vllm_server
 
     backend_instance = None
-    model_path = pathlib.Path(cfg.model_path)
+    model_path = pathlib.Path(model_path or cfg.model_path)
     backend_name = cfg.backend
     try:
         backend = get(logger, model_path, backend_name)
