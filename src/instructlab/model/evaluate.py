@@ -1,4 +1,8 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# pylint: disable=ungrouped-imports
 # Standard
+from copy import copy
 import enum
 import logging
 import os
@@ -9,6 +13,7 @@ import click
 
 # First Party
 from instructlab import clickext
+from instructlab.model.backends import backends
 
 # Local
 from ..utils import display_params, http_client
@@ -235,36 +240,46 @@ def launch_server(
     model_name,
     max_workers,
     gpus,
+    backend,
 ) -> tuple:
     # pylint: disable=import-outside-toplevel
     # First Party
-    from instructlab.model.backends import backends
 
-    if not ctx.obj.config.serve.backend:
-        ctx.obj.config.serve.backend = backends.VLLM
-    if ctx.obj.config.serve.backend == backends.VLLM:
-        ctx.obj.config.serve.vllm.vllm_args.extend(["--served-model-name", model_name])
+    # we shouldn't be in the business of editing a user's cfg.
+    # with eval, this is tricky since there are a few things we want to help them out with if they do not exist.
+    # if the user did not set a backend, or model_path, set that for them. Everything else needs to be in the cfg. or in the cmd as flag overrides.
+    eval_serve = copy(ctx.obj.config.serve)
+    if backend is None:
+        eval_serve.backend = backends.VLLM
+    if backend == backends.VLLM:
+        eval_serve.vllm.vllm_args.extend(["--served-model-name", model_name])
         if gpus:
             # Don't override from vllm_args
-            if "--tensor-parallel-size" not in ctx.obj.config.serve.vllm.vllm_args:
-                ctx.obj.config.serve.vllm.vllm_args.extend(
+            if "--tensor-parallel-size" not in eval_serve.vllm.vllm_args:
+                eval_serve.vllm.vllm_args.extend(
                     ["--tensor-parallel-size", str(gpus)]
                 )
             else:
                 click.echo(
                     "Ignoring --gpus with --tensor-parallel-size configured in serve vllm_args"
                 )
-    elif ctx.obj.config.serve.backend == backends.LLAMA_CPP:
-        # mt_bench requires a larger context size
-        ctx.obj.config.serve.llama_cpp.max_ctx_size = 5120
+    if backend == backends.LLAMA_CPP:
+        if ctx.obj.config.serve.llama_cpp.max_ctx_size < 5120:
+            eval_serve.llama_cpp.max_ctx_size = 5120
+            logging.debug(
+                "Evaluate requires a context size of >= 5120, ignoring serve configuration for max_ctx_size"
+            )
         # llama-cpp fails fast on too many incoming requests and returns errors to client
-        ctx.obj.config.evaluate.mt_bench.max_workers = min(max_workers, 16)
+        if max_workers > 16:
+            logging.warning(
+                "When using llama-cpp, we recommend setting max_workers to a maximum of 16"
+            )
         if gpus:
             logging.debug("Ignoring --gpus option for llama-cpp serving")
 
-    ctx.obj.config.serve.model_path = model
+    eval_serve.model_path = model
 
-    backend_instance = backends.select_backend(ctx.obj.config.serve)
+    backend_instance = backends.select_backend(eval_serve)
     try:
         # http_client is handling tls params
         api_base = backend_instance.run_detached(http_client(ctx.params))
@@ -366,6 +381,11 @@ def launch_server(
     help="Indicates whether to merge system and user message for mt_bench and mt_bench_branch (required for Mistral based judges)",
 )
 @click.option(
+    "--backend",
+    type=click.Choice([backends.VLLM, backends.LLAMA_CPP]),
+    help="Serving backend to use for evaluation. Options are vllm and llama-cpp.",
+)
+@click.option(
     "--tls-insecure",
     is_flag=True,
     help="Disable TLS verification for model serving.",
@@ -408,6 +428,7 @@ def evaluate(
     sdg_path,
     gpus,
     merge_system_user_message,
+    backend,
     tls_insecure,  # pylint: disable=unused-argument
     tls_client_cert,  # pylint: disable=unused-argument
     tls_client_key,  # pylint: disable=unused-argument
@@ -440,6 +461,7 @@ def evaluate(
                 TEST_MODEL_NAME,
                 max_workers,
                 gpus,
+                backend,
             )
             evaluator.gen_answers(api_base)
         finally:
@@ -454,6 +476,7 @@ def evaluate(
                 JUDGE_MODEL_NAME,
                 max_workers,
                 gpus,
+                backend,
             )
             # TODO: Change back to standard tuple handling after version bump in eval library
             judgment = evaluator.judge_answers(api_base)
@@ -517,6 +540,7 @@ def evaluate(
                     m_name,
                     max_workers,
                     gpus,
+                    backend,
                 )
                 evaluator.gen_answers(api_base)
             finally:
@@ -531,6 +555,7 @@ def evaluate(
                 JUDGE_MODEL_NAME,
                 max_workers,
                 gpus,
+                backend,
             )
             for i, evaluator in enumerate(evaluators):
                 branch = branches[i]
