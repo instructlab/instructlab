@@ -419,4 +419,12 @@ def train(
         torch_args = TorchrunArgs(**params)
         train_args.deepspeed_options = ds_args
         train_args.lora = lora_args
-        run_training(train_args=train_args, torch_args=torch_args)
+        try:
+            run_training(train_args=train_args, torch_args=torch_args)
+        # unsure what types of exceptions training library returns, this will catch all for now
+        except Exception as exc:
+            click.secho(
+                f"Error while executing training library {exc}",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
