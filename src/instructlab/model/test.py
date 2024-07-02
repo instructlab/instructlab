@@ -35,7 +35,7 @@ from instructlab import utils
 # pylint: disable=function-redefined
 def test(data_dir, model_dir, adapter_file):
     """Runs basic test to ensure model correctness"""
-    # pylint: disable=C0415
+    # pylint: disable=import-outside-toplevel
     # Local
     from ..train.lora_mlx.lora import load_and_train
 

@@ -159,7 +159,7 @@ def generate(
     pipeline,
 ):
     """Generates synthetic data to enhance your example data"""
-    # pylint: disable=C0415
+    # pylint: disable=import-outside-toplevel
     # Third Party
     from instructlab.sdg.generate_data import generate_data
     from instructlab.sdg.utils import GenerateException
