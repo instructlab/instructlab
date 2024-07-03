@@ -11,6 +11,7 @@ import click
 # First Party
 from instructlab import configuration as config
 from instructlab import log, utils
+from instructlab.model.backends import backends
 from instructlab.model.backends.backends import ServerException
 
 logger = logging.getLogger(__name__)
@@ -47,11 +48,10 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--backend",
-    type=click.STRING,  # purposely not using click.Choice to allow for auto-detection
+    type=click.Choice(backends.SUPPORTED_BACKENDS),
     help=(
-        "The backend to use for serving the model."
-        "Automatically detected based on the model file properties."
-        "Supported: 'llama-cpp'."
+        "The backend to use for serving the model.\n"
+        "Automatically detected based on the model file properties.\n"
     ),
 )
 @click.option(
@@ -79,7 +79,7 @@ def serve(
 ):
     """Start a local server"""
     # First Party
-    from instructlab.model.backends import backends, llama_cpp, vllm
+    from instructlab.model.backends import llama_cpp, vllm
 
     host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
 
