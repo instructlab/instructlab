@@ -12,6 +12,7 @@ import typing
 # Third Party
 from click.testing import CliRunner
 import click
+import pytest
 
 # First Party
 from instructlab import lab
