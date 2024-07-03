@@ -26,6 +26,8 @@ import click
 import httpx
 import yaml
 
+LLAMA_CPP = "llama-cpp"
+VLLM = "vllm"
 # Local
 from . import log
 
@@ -171,8 +173,9 @@ class _serve(BaseModel):
     model_path: StrictStr
 
     # additional fields with defaults
-    host_port: StrictStr = "127.0.0.1:8000"
-    backend: str = ""  # we don't set a default value here since it's auto-detected
+    host_port: StrictStr
+
+    backend: str
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
@@ -249,6 +252,8 @@ def get_default_config():
         ),
         serve=_serve(
             model_path=DEFAULT_MODEL_PATH,
+            host_port="127.0.0.1:8000",
+            backend=LLAMA_CPP,
             llama_cpp=_serve_llama_cpp(
                 gpu_layers=-1,
                 max_ctx_size=4096,
