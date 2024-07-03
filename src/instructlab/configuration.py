@@ -73,10 +73,10 @@ class _InstructlabDefaults:
     # TODO: these constants should be removed, they should not leak out
     NUM_CPUS = 10
     CHUNK_WORD_COUNT = 1000
-    NUM_INSTRUCTIONS = 100
     CONNECTION_TIMEOUT = httpx.Timeout(timeout=30.0)
     # use spawn start method, fork is not thread-safe
     MULTIPROCESSING_START_METHOD = "spawn"
+    SDG_SCALE_FACTOR = 30
 
     # When otherwise unknown, ilab uses this as the default family
     MODEL_FAMILY = "merlinite"
@@ -256,7 +256,13 @@ class _generate(BaseModel):
     # additional fields with defaults
     num_cpus: PositiveInt = DEFAULTS.NUM_CPUS
     chunk_word_count: PositiveInt = DEFAULTS.CHUNK_WORD_COUNT
-    num_instructions: PositiveInt = DEFAULTS.NUM_INSTRUCTIONS
+    # DEPRECATED: see sdg_scale_factor instead
+    # Left in place so that we can still detect and give a warning if its
+    # specified in an old configuraiton file.
+    num_instructions: Optional[int] = Field(
+        default=-1, deprecated="see 'sdg_scale_factor' instead", exclude=True
+    )
+    sdg_scale_factor: Optional[PositiveInt] = DEFAULTS.SDG_SCALE_FACTOR
     output_dir: StrictStr = Field(default_factory=lambda: DEFAULTS.DATASETS_DIR)
     prompt_file: StrictStr = Field(default_factory=lambda: DEFAULTS.PROMPT_FILE)
     seed_file: StrictStr = Field(default_factory=lambda: DEFAULTS.SEED_FILE)
