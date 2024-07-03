@@ -184,7 +184,7 @@ def serve(
         # Run the backend server
         backend_instance.run()
 
-    except llama_cpp.ServerException as exc:
+    except ServerException as exc:
         click.secho(f"Error creating server: {exc}", fg="red")
         raise click.exceptions.Exit(1)
 
