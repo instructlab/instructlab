@@ -15,7 +15,6 @@ MINIMAL=0
 NUM_INSTRUCTIONS=5
 GENERATE_ARGS=("--num-cpus" "$(nproc)")
 TRAIN_ARGS=()
-CI=0
 GRANITE=0
 FULLTRAIN=0
 
@@ -78,7 +77,7 @@ test_serve() {
     fi
     SERVE_ARGS=()
     if [ -n "$model" ]; then
-        SERVE_ARGS+=("--model-path ${model}")
+        SERVE_ARGS+=("--model-path" "${model}")
     fi
 
     task Serve the model
@@ -189,22 +188,20 @@ test_exec() {
 
     test_train
 
-    if [ "$CI" -eq 1 ]; then
-        # This is what we expect to work in our CI runner so far
+    if [ "$FULLTRAIN" -eq 0 ]; then
+        # When we run training with --4-bit-quant, we can't convert the result to a gguf
+        # https://github.com/instructlab/instructlab/issues/579
+        # so we skip trying to test the result
         return
     fi
-
-    # The rest is TODO when we can make it work on our CI runner
 
     # When you run this --
     #   `ilab model convert` is only implemented for macOS with M-series chips for now
     #test_convert
 
-    # TODO: chat with the new model
-    test_serve /tmp/somemodelthatispretrained.gguf
+    test_serve models/ggml-model-f16.gguf
     PID=$!
 
-    # TODO: Ask a qestion about softball
     test_chat
 
     # Kill the serve process
@@ -216,7 +213,6 @@ test_exec() {
 usage() {
     echo "Usage: $0 [-m] [-h]"
     echo "  -m  Run minimal configuration (run quicker when you have no GPU)"
-    echo "  -c  Run in CI mode (explicitly skip steps we know will fail in linux CI)"
     echo "  -f  Run the fullsize training instead of --4-bit-quant"
     echo "  -g  Use the granite model"
     echo "  -h  Show this help text"
@@ -228,8 +224,7 @@ task "Configuring ..."
 while getopts "cmfgh" opt; do
     case $opt in
         c)
-            CI=1
-            step "Running in CI mode."
+            # old option, don't fail if it's specified
             ;;
         m)
             MINIMAL=1
