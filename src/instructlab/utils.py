@@ -2,6 +2,8 @@
 
 # Standard
 from functools import cache, wraps
+from importlib import resources
+from importlib.abc import Traversable
 from pathlib import Path
 from typing import Any, Dict, List, Mapping, Optional, Union
 from urllib.parse import urlparse
@@ -14,6 +16,7 @@ import platform
 import re
 import subprocess
 import tempfile
+import typing
 
 # Third Party
 from git import Repo, exc
@@ -25,6 +28,10 @@ import yaml
 
 # Local
 from . import common
+
+if typing.TYPE_CHECKING:
+    # Third Party
+    import referencing
 
 logger = logging.getLogger(__name__)
 
@@ -131,9 +138,7 @@ TAXONOMY_FOLDERS: List[str] = ["compositional_skills", "knowledge"]
 
 def istaxonomyfile(fn):
     path = Path(fn)
-    if path.suffix == ".yaml" and path.parts[0] in TAXONOMY_FOLDERS:
-        return True
-    return False
+    return path.suffix == ".yaml" and path.parts[0] in TAXONOMY_FOLDERS
 
 
 def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
@@ -246,7 +251,7 @@ def get_sysprompt(model=None):
 
 
 @cache
-def _load_schema(path: "importlib.resources.abc.Traversable") -> "referencing.Resource":
+def _load_schema(path: Traversable) -> "referencing.Resource":
     """Load the schema from the path into a Resource object.
 
     Args:
@@ -287,22 +292,17 @@ def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
         int: The number of errors found during validation.
         Messages for each error have been logged.
     """
-    # pylint: disable=import-outside-toplevel
-    # Standard
-    from importlib import resources
-
     # Third Party
     from jsonschema.protocols import Validator
     from jsonschema.validators import validator_for
     from referencing import Registry, Resource
     from referencing.exceptions import NoSuchResource
-    from referencing.typing import URI
 
     errors = 0
     version = get_version(contents)
     schemas_path = resources.files("instructlab.schema").joinpath(f"v{version}")
 
-    def retrieve(uri: URI) -> Resource:
+    def retrieve(uri: str) -> Resource:
         path = schemas_path.joinpath(uri)
         return _load_schema(path)
 

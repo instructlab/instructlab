@@ -68,7 +68,7 @@ include = [
 ignore = ["W002"]
 
 [tool.ruff]
-target-version = "py39"
+target-version = "py310"
 # same as black's default line length
 line-length = 88
 
@@ -79,21 +79,30 @@ unfixable = []
 
 # Fixers will be enabled gradually.
 select = [
-  # "B",  # flake8-bugbear
-  # "E",  # pycodestyle
-  # "F",  # Pyflakes
+  "B", # flake8-bugbear
+  "E", # pycodestyle
+  "F", # Pyflakes
   "Q", # flake8-quotes
   # Ruff does not support isort's import_headings feature, yet.
-  # "I",  # isort
+  # "I",   # isort
   # "UP",  # pyupgrade
-  # "SIM",  # flake8-simplify
+  "SIM", # flake8-simplify
   "TID", # flake8-tidy-imports
 ]
 ignore = [
+  "B904", # TODO: "raise from err" or "raise from None"
   # some embedded strings are longer than 88 characters
   "E501",   # line too long
+  "SIM108", # Use ternary operator
+  "SIM102", # Use a single if instead of nested if
   "TID252", # Prefer absolute imports over relative imports from parent modules
 ]
+
+[tool.ruff.lint.per-file-ignores]
+# vendored files, maintained externally
+"src/instructlab/llamacpp/llamacpp_convert_to_gguf.py" = ["ALL"]
+"src/instructlab/mlx_explore/**" = ["ALL"]
+"src/instructlab/train/lora_mlx/**" = ["ALL"]
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api]
 "yamllint".msg = "yamllint is for CLI usage only."

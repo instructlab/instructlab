@@ -45,7 +45,7 @@ try:
     # pylint: disable=import-error
     # Third Party
     from habana_frameworks.torch import core as htcore
-    from habana_frameworks.torch import hpu as hpu
+    from habana_frameworks.torch import hpu
 
     # Habana implementations of SFT Trainer
     # https://huggingface.co/docs/optimum/habana/index
@@ -64,6 +64,7 @@ except ImportError:
 
 
 class StoppingCriteriaSub(StoppingCriteria):
+    # pylint: disable=unused-argument
     def __init__(self, stops=(), encounters=1, *, device: torch.device):
         super().__init__()
         self.device = device
@@ -309,11 +310,11 @@ def linux_train(
 
     print("LINUX_TRAIN.PY: GETTING THE ATTENTION LAYERS")
     # Print information about the attention modules
-    for i, layer in enumerate(attention_layers):
+    for layer in attention_layers:
         for par in list(layer.named_parameters()):
             mod = par[0]
             if isinstance(mod, str):
-                mod.split(".")[0]
+                mod = mod.split(".")[0]
         break
 
     print("LINUX_TRAIN.PY: CONFIGURING LoRA")
@@ -421,7 +422,9 @@ def linux_train(
 
     print("LINUX_TRAIN.PY: RUNNING INFERENCE ON THE OUTPUT MODEL")
 
-    for i, (d, assistant_old) in enumerate(zip(test_dataset, assistant_old_lst)):
+    for i, (d, assistant_old) in enumerate(
+        zip(test_dataset, assistant_old_lst, strict=False)
+    ):
         output = model_generate(d["user"], **generate_kwargs)
         assistant_new = output.split(response_template.strip())[-1].strip()
         assistant_expected = d["assistant"]
