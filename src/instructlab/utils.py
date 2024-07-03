@@ -378,7 +378,7 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
         taxonomy_path = file_path_p
     # read file if extension is correct
     try:
-        with open(file_path_p, "r", encoding="utf-8") as file:
+        with file_path_p.open(encoding="utf-8") as file:
             contents = yaml.safe_load(file)
         if not contents:
             logger.warning(f"Skipping {file_path_p} because it is empty!")
