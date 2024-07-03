@@ -17,6 +17,7 @@ import sys
 # Third Party
 from uvicorn import Config
 import click
+import httpx
 import uvicorn
 
 # Local
@@ -77,7 +78,7 @@ class BackendServer(abc.ABC):
         """Run serving backend in foreground (ilab model serve)"""
 
     @abc.abstractmethod
-    def run_detached(self, http_client):
+    def run_detached(self, http_client: httpx.Client | None = None) -> str:
         """Run serving backend in background ('ilab model chat' when server is not running)"""
 
     @abc.abstractmethod
@@ -230,7 +231,7 @@ def ensure_server(
             api_base=api_base,
             http_client=http_client,
         )
-        return (None, None, None)
+        return (None, None, api_base)
         # pylint: enable=duplicate-code
     except ClientException:
         port = free_tcp_ipv4_port(host)

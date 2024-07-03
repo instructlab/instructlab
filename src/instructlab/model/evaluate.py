@@ -238,13 +238,10 @@ def launch_server(
     backend_instance = backends.select_backend(logger, ctx.obj.config.serve)
     try:
         # http_client is handling tls params
-        backend_instance.run_detached(http_client(ctx.params))
-        api_base = backend_instance.api_base
+        api_base = backend_instance.run_detached(http_client(ctx.params))
     except Exception as exc:
         click.secho(f"Failed to start server: {exc}", fg="red")
         raise click.exceptions.Exit(1)
-    if not api_base:
-        api_base = ctx.obj.config.serve.api_base()
     return backend_instance, api_base
 
 
