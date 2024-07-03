@@ -93,6 +93,10 @@ def serve(
     # Redirect server stdout and stderr to the logger
     log.stdout_stderr_to_logger(logger, log_file)
 
+    if gpu_layers is None:
+        gpu_layers = ctx.obj.config.serve.llama_cpp.gpu_layers
+    if max_ctx_size is None:
+        max_ctx_size = ctx.obj.config.serve.llama_cpp.max_ctx_size
     logger.info(
         f"Using model '{model_path}' with {gpu_layers} gpu-layers and {max_ctx_size} max context size."
     )
