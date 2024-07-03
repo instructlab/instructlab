@@ -128,7 +128,7 @@ jobs:
       - name: Run e2e test
         run: |
           . venv/bin/activate
-          ./scripts/basic-workflow-tests.sh -cmf
+          ./scripts/basic-workflow-tests.sh -cemf
 
       - name: Add comment to PR if the workflow failed
         if: failure() && steps.check_pr.outputs.is_pr == 'true'
