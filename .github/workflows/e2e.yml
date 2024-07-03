@@ -32,6 +32,10 @@ on:
       - 'scripts/basic-workflow-tests.sh'
       - 'scripts/test-data/*'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   e2e:
     runs-on: ubuntu-gpu
