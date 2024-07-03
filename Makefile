@@ -155,12 +155,15 @@ spellcheck: .spellcheck.yml ## Spellcheck markdown files
 spellcheck-sort: .spellcheck-en-custom.txt ## Sort spellcheck directory
 	sort -d -o $< $<
 
-.PHONY: man
-man: check-tox
-	tox -e docs
-
 .PHONY: docs
-docs: man ## Run tox -e docs against code
+docs: check-tox  ## Generate Sphinx docs and man pages
+	tox -e docs
+	@echo
+	@echo "Sphinx: docs/build/html/index.html"
+	@echo "man pages: man/"
+
+.PHONY: man
+man: docs
 
 #
 # If you want to see the full commands, run:

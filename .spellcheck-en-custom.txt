@@ -48,6 +48,7 @@ gpu
 habana
 Habana
 hipBLAS
+Heimes
 HPU
 ibmcloud
 ilab
