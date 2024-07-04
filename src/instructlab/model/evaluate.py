@@ -156,11 +156,16 @@ def display_models(model, base_model) -> None:
 
 
 def display_model(model) -> None:
-    """helper func for display_models
-    prints the given model with a header
-    """
+    """prints the given model with a header"""
     print("\n## MODEL")
     print(model)
+
+
+def display_error_rate(error_rate) -> None:
+    """prints the error rate with a header"""
+    if error_rate > 0:
+        print("\n### ERROR RATE:")
+        print(round(error_rate, 2))
 
 
 def display_branch_eval_summary(
@@ -390,7 +395,14 @@ def evaluate(
                 JUDGE_MODEL_NAME,
                 max_workers,
             )
-            overall_score, qa_pairs, turn_scores = evaluator.judge_answers(api_base)
+            # TODO: Change back to standard tuple handling after version bump in eval library
+            judgment = evaluator.judge_answers(api_base)
+            overall_score = judgment[0]
+            qa_pairs = judgment[1]
+            turn_scores = judgment[2]
+            error_rate = 0
+            if len(judgment) > 3:
+                error_rate = judgment[3]
         finally:
             if server is not None:
                 server.shutdown()
@@ -406,6 +418,7 @@ def evaluate(
         if isinstance(turn2_score, float):
             turn2_score = round(turn2_score, 2)
         print(turn2_score)
+        display_error_rate(error_rate)
 
     elif benchmark == Benchmark.MT_BENCH_BRANCH:
         # Third Party
@@ -425,7 +438,7 @@ def evaluate(
         branches = [branch, base_branch]
         m_paths = [model, base_model]
         m_names = [TEST_MODEL_NAME, BASE_TEST_MODEL_NAME]
-        qa_pairs_list = []
+        qa_pairs_and_errors = []
         server = None
 
         for i, evaluator in enumerate(evaluators):
@@ -459,14 +472,21 @@ def evaluate(
             for i, evaluator in enumerate(evaluators):
                 branch = branches[i]
                 print(f"Evaluating answers for branch {branch}...")
-                qa_pairs = evaluator.judge_answers(api_base)
-                qa_pairs_list.append(qa_pairs)
+                judgment = evaluator.judge_answers(api_base)
+                # TODO: Change back to standard tuple handling after version bump in eval library
+                error_rate = 0
+                if isinstance(judgment, tuple):
+                    qa_pairs = judgment[0]
+                    error_rate = judgment[1]
+                else:
+                    qa_pairs = judgment
+                qa_pairs_and_errors.append((qa_pairs, error_rate))
         finally:
             if server is not None:
                 server.shutdown()
 
-        qa_pairs = qa_pairs_list[0]
-        base_qa_pairs = qa_pairs_list[1]
+        qa_pairs, error_rate = qa_pairs_and_errors[0]
+        base_qa_pairs, base_error_rate = qa_pairs_and_errors[1]
 
         qna_to_avg_scores = qa_pairs_to_qna_to_avg_scores(qa_pairs)
         base_qna_to_avg_scores = qa_pairs_to_qna_to_avg_scores(base_qa_pairs)
@@ -489,6 +509,7 @@ def evaluate(
 
         # display summary of evaluation before exiting
         display_branch_eval_summary(improvements, regressions, no_changes, new_qnas)
+        display_error_rate((error_rate + base_error_rate) / 2)
 
     elif benchmark == Benchmark.MMLU:
         overall_score, individual_scores = evaluator.run()
