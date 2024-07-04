@@ -12,12 +12,14 @@ set -euf
 # workflow, run through step by step at a shell prompt by a user.
 
 MINIMAL=0
+MIXTRAL=0
 NUM_INSTRUCTIONS=5
 GENERATE_ARGS=("--num-cpus" "$(nproc)")
 TRAIN_ARGS=()
 GRANITE=0
 FULLTRAIN=0
 BACKEND="llama-cpp"
+HF_TOKEN=${HF_TOKEN:-}
 
 export GREP_COLORS='mt=1;33'
 BOLD='\033[1m'
@@ -42,6 +44,21 @@ set_defaults() {
     # Minimal settings to run in less time
     NUM_INSTRUCTIONS=1
     TRAIN_ARGS+=("--num-epochs" "1")
+
+    if [ "${GRANITE}" -eq 1 ] && [ "${MIXTRAL}" -eq 1 ]; then
+        echo "ERROR: Can not specify -g and -M at the same time."
+        exit 1
+    fi
+
+    if [ "${MIXTRAL}" -eq 1 ] && [ "${BACKEND}" = "vllm" ]; then
+        echo "ERROR: Can not specify -M and -v at the same time."
+        exit 1
+    fi
+
+    if [ "${MIXTRAL}" -eq 1 ] && [ -z "${HF_TOKEN}" ]; then
+        echo "ERROR: Must specify HF_TOKEN env var to download mixtral."
+        exit 1
+    fi
 }
 
 test_smoke() {
@@ -54,7 +71,9 @@ test_init() {
     [ -f config.yaml ] || ilab config init --non-interactive
 
     step Checking config.yaml
-    grep merlinite config.yaml
+    if [ "${MIXTRAL}" -eq 1 ]; then
+        sed -i -e 's/models\/merlinite.*/models\/mixtral-8x7b-instruct-v0\.1\.Q4_K_M\.gguf/' config.yaml
+    fi
 }
 
 test_download() {
@@ -66,6 +85,9 @@ test_download() {
     elif [ "$BACKEND" = "vllm" ]; then
         step Downloading the model for vLLM
         ilab download --repository instructlab/merlinite-7b-lab
+    elif [ "$MIXTRAL" -eq 1 ]; then
+        step Downloading the mixtral model
+        ilab model download --repository TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF --filename mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf --hf-token "${HF_TOKEN}"
     else
         step Downloading the default model
         ilab model download
@@ -75,7 +97,9 @@ test_download() {
 test_serve() {
     # Accepts an argument of the model, or default here
     if [ "$GRANITE" -eq 1 ]; then
-        model="${1:-./models/granite-7b-lab-Q4_K_M.gguf}"
+        model="${1:-models/granite-7b-lab-Q4_K_M.gguf}"
+    elif [ "${MIXTRAL}" -eq 1 ]; then
+        model="${1:-models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf}"
     else
         model="${1:-}"
     fi
@@ -96,9 +120,11 @@ test_chat() {
     task Chat with the model
     CHAT_ARGS=()
     if [ "$GRANITE" -eq 1 ]; then
-        CHAT_ARGS+=("-m models/granite-7b-lab-Q4_K_M.gguf")
+        CHAT_ARGS+=("-m" "models/granite-7b-lab-Q4_K_M.gguf")
+    elif [ "$MIXTRAL" -eq 1 ]; then
+        CHAT_ARGS+=("-m" "models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf" "--model-family" "mixtral")
     fi
-    printf 'Say "Hello"\n' | ilab model chat "${CHAT_ARGS[@]}" | grep --color 'Hello'
+    printf 'Say "Hello" and nothing else\n' | ilab model chat -qq "${CHAT_ARGS[@]}"
 }
 
 test_taxonomy() {
@@ -133,9 +159,10 @@ test_taxonomy() {
 test_generate() {
     task Generate synthetic data
     if [ "$GRANITE" -eq 1 ]; then
-        GENERATE_ARGS+=("--model ./models/granite-7b-lab-Q4_K_M.gguf")
-    fi
-    if [ "$BACKEND" = "vllm" ]; then
+        GENERATE_ARGS+=("--model" "models/granite-7b-lab-Q4_K_M.gguf")
+    elif [ "$MIXTRAL" -eq 1 ]; then
+        GENERATE_ARGS+=("--model" "models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf")
+    elif [ "$BACKEND" = "vllm" ]; then
         GENERATE_ARGS+=("--model ./models/instructlab/merlinite-7b-lab")
     fi
     ilab data generate --num-instructions ${NUM_INSTRUCTIONS} "${GENERATE_ARGS[@]}"
@@ -229,13 +256,14 @@ usage() {
     echo "  -f  Run the fullsize training instead of --4-bit-quant"
     echo "  -g  Use the granite model"
     echo "  -v  Use the vLLM backend for serving"
+    echo "  -M  Use the mixtral model (4-bit quantized)"
     echo "  -h  Show this help text"
 
 }
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "cmfghv" opt; do
+while getopts "cmMfghv" opt; do
     case $opt in
         c)
             # old option, don't fail if it's specified
@@ -243,6 +271,10 @@ while getopts "cmfghv" opt; do
         m)
             MINIMAL=1
             step "Running minimal configuration."
+            ;;
+        M)
+            MIXTRAL=1
+            step "Using mixtral model (4-bit quantized)."
             ;;
         f)
             FULLTRAIN=1
