@@ -26,6 +26,7 @@ import openai
 from instructlab import client as ilabclient
 from instructlab import configuration as cfg
 from instructlab import utils
+from instructlab.clickext import ConfigOption
 
 # Local
 from ..utils import get_sysprompt, http_client
@@ -71,15 +72,13 @@ PROMPT_PREFIX = ">>> "
 @click.option(
     "-m",
     "--model",
-    default=cfg.DEFAULT_MODEL,
-    show_default=True,
+    cls=ConfigOption,
     help="Model name to print in chat process",
 )
 @click.option(
     "-c",
     "--context",
-    default="default",
-    show_default=True,
+    cls=ConfigOption,
     help="Name of system context in config file.",
 )
 @click.option(
@@ -97,11 +96,13 @@ PROMPT_PREFIX = ">>> "
 @click.option(
     "-gm",
     "--greedy-mode",
+    cls=ConfigOption,
     is_flag=True,
     help="Use model greedy decoding. Useful for debugging and reproducing errors.",
 )
 @click.option(
     "--max-tokens",
+    cls=ConfigOption,
     type=click.INT,
     help="Set a maximum number of tokens to request from the model endpoint.",
 )

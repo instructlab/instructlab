@@ -6,6 +6,7 @@ from re import match
 from typing import Optional
 import os
 import sys
+import typing
 
 # Third Party
 from instructlab.training import (
@@ -240,7 +241,7 @@ class Config(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 
-def get_default_config():
+def get_default_config() -> Config:
     """Generates default configuration for CLI"""
     return Config(
         chat=_chat(model=DEFAULT_MODEL),
@@ -312,6 +313,33 @@ def get_default_config():
     )
 
 
+def get_default_map(config: Config) -> dict[str, typing.Any]:
+    """Get default map for Click"""
+    # default_map holds a dictionary with default values for each command parameters
+    config_dict = get_dict(config)
+    # since torch and train args are sep, they need to be combined into a single `train` entity for the default map
+    # this is because the flags for `ilab model train` will only be populated if the default map has a single `train` entry, not two.
+    config_dict["train"] = (
+        config_dict["train"]["train_args"]
+        | config_dict["train"]["torch_args"]
+        | config_dict["train"]["train_args"]["lora"]
+        | config_dict["train"]["train_args"]["deepspeed_options"]
+    )
+    config_dict["evaluate"] = (
+        config_dict["evaluate"]
+        | config_dict["evaluate"]["mmlu"]
+        | config_dict["evaluate"]["mmlu_branch"]
+        | config_dict["evaluate"]["mt_bench"]
+        | config_dict["evaluate"]["mt_bench_branch"]
+    )
+    # need to delete the individual sub-classes from the map
+    del config_dict["evaluate"]["mmlu"]
+    del config_dict["evaluate"]["mmlu_branch"]
+    del config_dict["evaluate"]["mt_bench"]
+    del config_dict["evaluate"]["mt_bench_branch"]
+    return config_dict
+
+
 def read_train_profile(train_file):
     try:
         with open(train_file, "r", encoding="utf-8") as yamlfile:
@@ -332,7 +360,7 @@ def read_train_profile(train_file):
         raise ConfigException(msg) from exc
 
 
-def read_config(config_file=DEFAULT_CONFIG):
+def read_config(config_file: str | os.PathLike[str] = DEFAULT_CONFIG) -> Config:
     """Reads configuration from disk."""
     try:
         with open(config_file, "r", encoding="utf-8") as yamlfile:
@@ -345,7 +373,7 @@ def read_config(config_file=DEFAULT_CONFIG):
                 "- "
                 + err.get("type", "")
                 + " "
-                + "->".join(err.get("loc", ""))
+                + "->".join(err.get("loc", ""))  # type: ignore
                 + ": "
                 + err.get("msg", "").lower()
                 + "\n"
@@ -353,12 +381,12 @@ def read_config(config_file=DEFAULT_CONFIG):
         raise ConfigException(msg) from exc
 
 
-def get_dict(cfg):
+def get_dict(cfg: Config) -> dict[str, typing.Any]:
     """Returns configuration as a dictionary"""
     return cfg.model_dump()
 
 
-def write_config(cfg, config_file=DEFAULT_CONFIG):
+def write_config(cfg: Config, config_file: str = DEFAULT_CONFIG) -> None:
     """Writes configuration to a disk"""
     with open(config_file, "w", encoding="utf-8") as yamlfile:
         d = cfg.model_dump_json()
@@ -366,7 +394,7 @@ def write_config(cfg, config_file=DEFAULT_CONFIG):
         yaml.dump(loaded, stream=yamlfile)
 
 
-def get_api_base(host_port):
+def get_api_base(host_port: str) -> str:
     """Returns server API URL, based on the provided host_port"""
     return f"http://{host_port}/v1"
 
@@ -392,9 +420,11 @@ class Lab:
 
 def init(ctx, config_file):
     if (
-        ctx.invoked_subcommand not in {"config", "init", "sysinfo"}
-        and "--help" not in sys.argv[1:]
+        ctx.invoked_subcommand in {"config", "init", "sysinfo"}
+        or "--help" in sys.argv[1:]
     ):
+        config_obj = get_default_config()
+    else:
         if config_file == "DEFAULT":
             config_obj = get_default_config()
         elif not os.path.isfile(config_file):
@@ -408,30 +438,8 @@ def init(ctx, config_file):
                 config_obj = read_config(config_file)
             except ConfigException as ex:
                 raise click.ClickException(str(ex))
-        # setup logging
-        log.configure_logging(log_level=config_obj.general.log_level.upper())
-        ctx.obj = Lab(config_obj)
-        # default_map holds a dictionary with default values for each command parameters
-        config_dict = get_dict(ctx.obj.config)
-        # since torch and train args are sep, they need to be combined into a single `train` entity for the default map
-        # this is because the flags for `ilab model train` will only be populated if the default map has a single `train` entry, not two.
-        config_dict["train"] = (
-            config_dict["train"]["train_args"]
-            | config_dict["train"]["torch_args"]
-            | config_dict["train"]["train_args"]["lora"]
-            | config_dict["train"]["train_args"]["deepspeed_options"]
-        )
-        config_dict["evaluate"] = (
-            config_dict["evaluate"]
-            | config_dict["evaluate"]["mmlu"]
-            | config_dict["evaluate"]["mmlu_branch"]
-            | config_dict["evaluate"]["mt_bench"]
-            | config_dict["evaluate"]["mt_bench_branch"]
-        )
-        # need to delete the individual sub-classes from the map
-        del config_dict["evaluate"]["mmlu"]
-        del config_dict["evaluate"]["mmlu_branch"]
-        del config_dict["evaluate"]["mt_bench"]
-        del config_dict["evaluate"]["mt_bench_branch"]
 
-        ctx.default_map = config_dict
+    # setup logging
+    log.configure_logging(log_level=config_obj.general.log_level.upper())
+    ctx.obj = Lab(config_obj)
+    ctx.default_map = get_default_map(ctx.obj.config)
