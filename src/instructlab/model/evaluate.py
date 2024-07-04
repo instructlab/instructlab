@@ -520,7 +520,7 @@ def evaluate(
         m_paths = [model, base_model]
         overall_scores = []
         individual_scores_list = []
-        for i, evaluator in enumerate(evaluators):
+        for evaluator in evaluators:
             overall_score, individual_scores = evaluator.run()
             overall_scores.append(overall_score)
             individual_scores_list.append(individual_scores)

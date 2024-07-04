@@ -2,7 +2,7 @@
 
 # Standard
 from time import sleep
-from typing import Optional, Tuple
+from typing import Tuple
 import abc
 import logging
 import mmap

@@ -374,7 +374,7 @@ def get_api_base(host_port):
 def get_model_family(forced, model_path):
     forced = MODEL_FAMILY_MAPPINGS.get(forced, forced)
     if forced and forced.lower() not in MODEL_FAMILIES:
-        raise ConfigException("Unknown model family: %s" % forced)
+        raise ConfigException(f"Unknown model family: {forced}")
 
     # Try to guess the model family based on the model's filename
     guess = match(r"^\w*", path.basename(model_path)).group(0).lower()

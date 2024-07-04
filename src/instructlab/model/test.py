@@ -47,8 +47,8 @@ def test(data_dir, model_dir, adapter_file):
     adapter_file_exists = adapter_file and os.path.exists(adapter_file)
     if adapter_file and not adapter_file_exists:
         print(
-            "NOTE: Adapter file does not exist. Testing behavior before training only. - %s"
-            % adapter_file
+            "NOTE: Adapter file does not exist. Testing behavior before "
+            f"training only. - {adapter_file}"
         )
 
     # Load the JSON Lines file
