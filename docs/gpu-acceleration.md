@@ -160,7 +160,7 @@ sudo usermod -a -G render,video $LOGNAME
 
 #### ROCm container
 
-The most convenient approach is the [ROCm toolbox container](../containers/rocm/README.md). The container comes with PyTorch, llama-cpp, and other dependencies pre-installed and ready-to-use.
+The most convenient approach is the [ROCm toolbox container](amd-rocm.md). The container comes with PyTorch, llama-cpp, and other dependencies pre-installed and ready-to-use.
 
 #### Manual installation
 

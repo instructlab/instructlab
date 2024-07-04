@@ -118,7 +118,7 @@ jobs:
       - name: Test Workflow Complete
         run: echo "Test Workflow Complete"
 
-  man:
+  docs:
     runs-on: ubuntu-latest
     steps:
       - name: "Harden Runner"
@@ -147,7 +147,7 @@ jobs:
 
       - name: Run tox docs target (expect failure since tox is not present)
         run: |
-          make man
+          make docs
         continue-on-error: true
 
       - name: Run tox docs target
@@ -170,7 +170,7 @@ jobs:
 
       - name: Run tox docs target
         run: |
-          make man
+          make docs
 
       - name: Check that man pages were generated
         uses: andstor/file-existence-action@076e0072799f4942c8bc574a82233e1e4d13e9d6 # v3.0.0
