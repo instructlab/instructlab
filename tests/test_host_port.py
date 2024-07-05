@@ -3,37 +3,21 @@
 
 from click.testing import CliRunner
 from instructlab import lab
+import pytest
 
-
-class TestServe:
-    def test_serve_with_defaults(self):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(lab.ilab, ["model", "serve"])
-            assert result.exit_code == 0
-            assert "127.0.0.1" in result.output
-            assert "8000" in result.output 
-
-    def test_serve_with_custom_host_and_port(self):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(lab.ilab, ["model", "serve", "--host", "192.168.1.1", "--port", "8080"])
-            assert result.exit_code == 0
-            assert "192.168.1.1" in result.output
-            assert "8080" in result.output 
-
-    def test_serve_with_custom_host(self):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(lab.ilab, ["model", "serve", "--host", "192.168.1.2"])
-            assert result.exit_code == 0
-            assert "192.168.1.2" in result.output
-            assert "8000" in result.output 
-
-    def test_serve_with_custom_port(self):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(lab.ilab, ["model", "serve", "--port", "9090"])
-            assert result.exit_code == 0
-            assert "127.0.0.1" in result.output
-            assert "9090" in result.output
+@pytest.mark.parametrize(
+    "args, expected_host, expected_port",
+    [
+        (["model", "serve"], "127.0.0.1", "8000"),
+        (["model", "serve", "--host-port", "192.168.1.1:8080"], "192.168.1.1", "8080"),
+        (["model", "serve", "--host-port", "192.168.1.2:8000"], "192.168.1.2", "8000"),
+        (["model", "serve", "--host-port", "127.0.0.1:9090"], "127.0.0.1", "9090"),
+    ],
+)
+def test_serve(args, expected_host, expected_port):
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        result = runner.invoke(lab.ilab, args)
+        assert result.exit_code == 0
+        assert expected_host in result.output
+        assert expected_port in result.output
