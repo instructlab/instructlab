@@ -1,0 +1,181 @@
+# SPDX-License-Identifier: Apache-2.0
+
+name: E2E (Custom)
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_or_branch:
+        description: 'pull request number or branch name'
+        required: true
+        default: 'main'
+      instance_type:
+        description: 'EC2 instance type'
+        required: true
+        default: 'g6.2xlarge'
+      e2e_script_args:
+        description: 'Arguments to pass to the e2e script (basic-workflow-tests.sh)'
+        required: true
+        default: '-m'
+      ilab_install_target:
+        description: 'pip install target for instructlab, e.g. . or .[vllm]'
+        required: true
+        default: '.'
+
+jobs:
+  start-runner:
+    name: Start external EC2 runner
+    runs-on: ubuntu-latest
+    outputs:
+      label: ${{ steps.start-ec2-runner.outputs.label }}
+      ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Start EC2 runner
+        id: start-ec2-runner
+        uses: machulav/ec2-github-runner@fcfb31a5760dad1314a64a0e172b78ec6fc8a17e # v2.3.6
+        with:
+          mode: start
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          ec2-image-id: ami-00c51d9c1374eda97
+          ec2-instance-type: ${{ github.event.inputs.instance_type }}
+          subnet-id: subnet-02d230cffd9385bd4
+          security-group-id: sg-06300447c4a5fbef3
+          iam-role-name: instructlab-ci-runner
+          aws-resource-tags: >
+            [
+              {"Key": "Name", "Value": "instructlab-ci-github-runner"},
+              {"Key": "GitHubRepository", "Value": "${{ github.repository }}"},
+              {"Key": "GitHubWorkflow", "Value": "${{ github.workflow }}"},
+              {"Key": "GitHubRunID", "Value": "${{ github.run_id }}"}
+            ]
+
+  e2e:
+    name: E2E Test
+    needs: start-runner
+    runs-on: ${{ needs.start-runner.outputs.label }}
+
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+        with:
+          fetch-depth: 0
+
+      - name: Determine if pr_or_branch is a PR number
+        id: check_pr
+        run: |
+          if [[ "${{ github.event.inputs.pr_or_branch }}" =~ ^[0-9]+$ ]]; then
+            echo "is_pr=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_pr=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check if gh cli is installed
+        id: gh_cli
+        run: |
+          if command -v gh &> /dev/null ; then
+            echo "gh_cli_installed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "gh_cli_installed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install gh CLI
+        if: steps.gh_cli.outputs.gh_cli_installed == 'false'
+        run: |
+          sudo dnf install 'dnf-command(config-manager)' -y
+          sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
+          sudo dnf install gh --repo gh-cli -y
+
+      - name: test gh CLI
+        run: |
+          gh --version
+
+      - name: set default repo
+        run: |
+          gh repo set-default ${{ github.server_url }}/${{ github.repository }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add comment to PR
+        if: steps.check_pr.outputs.is_pr == 'true'
+        run: |
+          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "${{ github.workflow }} (instance-type: ${{ github.event.inputs.instance_type }}, e2e_script_args: ${{ github.event.inputs.e2e_script_args }}) workflow launched on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Fetch and checkout PR
+        if: steps.check_pr.outputs.is_pr == 'true'
+        run: |
+          gh pr checkout ${{ github.event.inputs.pr_or_branch }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Checkout branch
+        if: steps.check_pr.outputs.is_pr == 'false'
+        run: |
+          git checkout ${{ github.event.inputs.pr_or_branch }}
+
+      - name: Install Packages
+        run: |
+          cat /etc/os-release
+          sudo dnf install -y gcc gcc-c++ make git python3.11 python3.11-devel
+
+      - name: Install ilab
+        run: |
+          export PATH="/home/ec2-user/.local/bin:/usr/local/cuda/bin:$PATH"
+          python3.11 -m venv --upgrade-deps venv
+          . venv/bin/activate
+          sed 's/\[.*\]//' requirements.txt > constraints.txt
+          python3.11 -m pip cache remove llama_cpp_python
+          CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3.11 -m pip install --force-reinstall --no-binary llama_cpp_python -c constraints.txt llama_cpp_python
+          python3.11 -m pip install bitsandbytes
+          python3.11 -m pip install ${{ github.event.inputs.ilab_install_target }}
+
+      - name: Run e2e test
+        run: |
+          . venv/bin/activate
+          ./scripts/basic-workflow-tests.sh ${{ github.event.inputs.e2e_script_args }}
+
+      - name: Add comment to PR if the workflow failed
+        if: failure() && steps.check_pr.outputs.is_pr == 'true'
+        run: |
+          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "e2e workflow failed on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), please investigate."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add comment to PR if the workflow succeeded
+        if: success() && steps.check_pr.outputs.is_pr == 'true'
+        run: |
+          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "e2e workflow succeeded on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), congrats!"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  stop-runner:
+    name: Stop external EC2 runner
+    needs:
+      - start-runner
+      - e2e
+    runs-on: ubuntu-latest
+    if: ${{ always() }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Stop EC2 runner
+        uses: machulav/ec2-github-runner@v2
+        with:
+          mode: stop
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          label: ${{ needs.start-runner.outputs.label }}
+          ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
