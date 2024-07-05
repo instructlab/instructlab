@@ -401,32 +401,56 @@ def get_model_family(forced, model_path):
 class Lab:
     """Lab object holds high-level information about ilab CLI"""
 
-    def __init__(self, config_obj: Config):
+    def __init__(
+        self,
+        config_obj: Config,
+        config_file: str | os.PathLike[str] | None,
+        error_msg: str | None,
+    ) -> None:
         self.config = config_obj
+        self.config_file = config_file
+        self.error_msg = error_msg
+
+    def ensure_config(self, ctx: click.Context) -> None:
+        """Ensure that a config was loaded
+
+        The init() function does not have access to the name of 2nd level
+        subcommands. It only sees "config" for the nested subcommand
+        `ilab config init`. First level subcommand functions call this
+        method when they need a config for one of their subcommands.
+        """
+        if self.config is None:
+            ctx.fail(self.error_msg)
 
 
-def init(ctx, config_file):
-    if (
-        ctx.invoked_subcommand in {"config", "init", "sysinfo"}
-        or "--help" in sys.argv[1:]
-    ):
+def init(ctx: click.Context, config_file: str | os.PathLike[str]) -> None:
+    config_obj: Config
+    error_msg: str | None = None
+    if config_file == "DEFAULT":
         config_obj = get_default_config()
-    else:
-        if config_file == "DEFAULT":
+    elif os.path.isfile(config_file):
+        try:
+            config_obj = read_config(config_file)
+        except ConfigException as e:
+            # delayed, so ilab config init can override a broken config.
             config_obj = get_default_config()
-        elif not os.path.isfile(config_file):
-            config_obj = None
-            ctx.fail(
-                f"`{config_file}` does not exists, please run `ilab config init` "
-                "or point to a valid configuration file using `--config=<path>`."
-            )
-        else:
-            try:
-                config_obj = read_config(config_file)
-            except ConfigException as ex:
-                raise click.ClickException(str(ex))
+            error_msg = str(e)
+    else:
+        config_obj = get_default_config()
+        error_msg = (
+            f"`{config_file}` does not exists or is not a readable file.\n"
+            "Please run `ilab config init` or point to a valid configuration "
+            "file using `--config=<path>`."
+        )
 
-    # setup logging
-    log.configure_logging(log_level=config_obj.general.log_level.upper())
-    ctx.obj = Lab(config_obj)
-    ctx.default_map = get_default_map(ctx.obj.config)
+    # special case: --help should always work
+    if config_obj is None and "--help" in sys.argv[1:]:
+        config_obj = get_default_config()
+        error_msg = None
+
+    ctx.obj = Lab(config_obj, config_file, error_msg)
+    if config_obj is not None:
+        ctx.default_map = get_default_map(config_obj)
+        log.configure_logging(log_level=config_obj.general.log_level.upper())
+    else:
+        ctx.default_map = None
