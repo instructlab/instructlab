@@ -258,7 +258,6 @@ def ensure_server(
     http_client=None,
     host="localhost",
     port=8000,
-    queue=None,
     background=True,
     server_process_func=None,
 ) -> Tuple[
@@ -275,7 +274,6 @@ def ensure_server(
 
     host_port = f"{host}:{port}"
     temp_api_base = get_api_base(host_port)
-    llama_cpp_server_process = None
     vllm_server_process = None
 
     if backend == VLLM:
@@ -309,34 +307,7 @@ def ensure_server(
                 # pylint: disable=raise-missing-from
                 raise ServerException(f"vLLM failed to start up in {duration} seconds")
             sleep(2)
-
-    elif backend == LLAMA_CPP:
-        # server_process_func is a function! we invoke it here and pass the port that was determined
-        # in this ensure_server() function
-        llama_cpp_server_process = server_process_func(port)
-        llama_cpp_server_process.start()
-        logger.debug(f"Starting a temporary llama.cpp server at {temp_api_base}")
-
-        # in case the server takes some time to fail we wait a bit
-        logger.debug("Waiting for the server to start...")
-        count = 0
-        while llama_cpp_server_process.is_alive():
-            sleep(0.1)
-            if check_api_base(temp_api_base, http_client):
-                break
-            if count > 50:
-                logger.error("failed to reach the API server")
-                break
-            count += 1
-
-        logger.debug("Server started.")
-
-        # if the queue is not empty it means the server failed to start
-        if queue is not None and not queue.empty():
-            # pylint: disable=raise-missing-from
-            raise queue.get()
-
-    return (llama_cpp_server_process, vllm_server_process, temp_api_base)
+    return (None, vllm_server_process, temp_api_base)
 
 
 def free_tcp_ipv4_port(host: str) -> int:
