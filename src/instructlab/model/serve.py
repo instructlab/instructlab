@@ -144,7 +144,7 @@ def serve(
         raise click.exceptions.Exit(1)
 
     try:
-        # Run the llama server
+        # Run the backend server
         backend_instance.run()
 
     except ServerException as exc:

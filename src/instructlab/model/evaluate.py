@@ -241,6 +241,7 @@ def launch_server(
     max_workers,
     gpus,
     backend,
+    enable_serving_output,
 ) -> tuple:
     # pylint: disable=import-outside-toplevel
     # First Party
@@ -277,7 +278,9 @@ def launch_server(
     backend_instance = backends.select_backend(eval_serve, backend)
     try:
         # http_client is handling tls params
-        api_base = backend_instance.run_detached(http_client(ctx.params))
+        api_base = backend_instance.run_detached(
+            http_client(ctx.params), background=enable_serving_output
+        )
     except Exception as exc:
         click.secho(f"Failed to start server: {exc}", fg="red")
         raise click.exceptions.Exit(1)
@@ -405,6 +408,11 @@ def launch_server(
     default="",
     help="TLS client certificate password for model serving.",
 )
+@click.option(
+    "--enable-serving-output",
+    is_flag=True,
+    help="Print serving engine logs.",
+)
 @click.pass_context
 @display_params
 def evaluate(
@@ -428,6 +436,7 @@ def evaluate(
     tls_client_cert,  # pylint: disable=unused-argument
     tls_client_key,  # pylint: disable=unused-argument
     tls_client_passwd,  # pylint: disable=unused-argument
+    enable_serving_output,
 ):
     # get appropriate evaluator class from Eval lib
     evaluator = get_evaluator(
@@ -461,6 +470,7 @@ def evaluate(
                     max_workers,
                     gpus,
                     backend,
+                    enable_serving_output,
                 )
                 evaluator.gen_answers(api_base)
             finally:
@@ -476,6 +486,7 @@ def evaluate(
                     max_workers,
                     gpus,
                     backend,
+                    enable_serving_output,
                 )
                 overall_score, qa_pairs, turn_scores, error_rate = (
                     evaluator.judge_answers(api_base)
@@ -535,6 +546,7 @@ def evaluate(
                         max_workers,
                         gpus,
                         backend,
+                        enable_serving_output,
                     )
                     evaluator.gen_answers(api_base)
                 finally:
@@ -550,6 +562,7 @@ def evaluate(
                     max_workers,
                     gpus,
                     backend,
+                    enable_serving_output,
                 )
                 for i, evaluator in enumerate(evaluators):
                     branch = branches[i]
