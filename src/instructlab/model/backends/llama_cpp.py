@@ -2,6 +2,7 @@
 
 # Standard
 from contextlib import redirect_stderr, redirect_stdout
+from time import sleep
 from typing import Optional
 import logging
 import multiprocessing
@@ -16,6 +17,7 @@ import httpx
 import llama_cpp.server.app as llama_app
 
 # Local
+from ...client import ClientException, list_models
 from ...configuration import get_model_family
 from .backends import (
     API_ROOT_WELCOME_MESSAGE,
@@ -93,18 +95,49 @@ class Server(BackendServer):
 
     def run_detached(self, http_client: httpx.Client | None = None) -> str:
         try:
-            llama_cpp_server_process, _, api_base = ensure_server(
+            # TODO: replace ensure_server() with future check_api_base()
+            self.process, _, temp_api_base = ensure_server(
                 logger=self.logger,
                 backend=LLAMA_CPP,
                 api_base=self.api_base,
                 http_client=http_client,
                 host=self.host,
                 port=self.port,
-                queue=self.queue,
                 server_process_func=self.create_server_process,
             )
-            self.process = llama_cpp_server_process or self.process
-            self.api_base = api_base or self.api_base
+            # TODO: replace this conditional with future check_api_base()
+            if temp_api_base == self.api_base:
+                return self.api_base
+            # start new server
+            self.api_base = temp_api_base
+            self.logger.debug(f"Starting a temporary server at {self.api_base}...")
+            # in this ensure_server() function
+            self.process = self.create_server_process(self.port)
+            self.process.start()
+
+            # in case the server takes some time to fail we wait a bit
+            self.logger.debug("Waiting for the server to start...")
+            count = 0
+            while self.process.is_alive():
+                sleep(0.1)
+                try:
+                    # TODO: replace list_models() with future check_api_base()
+                    list_models(api_base=self.api_base, http_client=http_client)
+                    break
+                except ClientException:
+                    pass
+                if count > 50:
+                    self.logger.error("failed to reach the API server")
+                    break
+                count += 1
+
+            self.logger.debug("Server started.")
+
+            # if the queue is not empty it means the server failed to start
+            if self.queue is not None and not self.queue.empty():
+                # pylint: disable=raise-missing-from
+                raise self.queue.get()
+
         except ServerException as exc:
             raise exc
         return self.api_base
