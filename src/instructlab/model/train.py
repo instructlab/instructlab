@@ -23,10 +23,7 @@ from instructlab.configuration import DEFAULTS
 logger = logging.getLogger(__name__)
 
 
-TORCHRUN_ARGS = "torch_args"
-TRAIN_ARGS = "train_args"
-LORA_OPTIONS = "train_args.lora"
-DS_OPTIONS = "train_args.deepspeed_options"
+ADDITIONAL_ARGUMENTS = "additional_arguments"
 
 
 @click.command()
@@ -34,7 +31,6 @@ DS_OPTIONS = "train_args.deepspeed_options"
     "--data-path",
     type=click.Path(file_okay=True),
     cls=clickext.ConfigOption,
-    config_sections=TRAIN_ARGS,
     required=True,  # default from config
     help="Base directory where data is stored.",
     default=lambda: DEFAULTS.DATASETS_DIR,
@@ -43,7 +39,6 @@ DS_OPTIONS = "train_args.deepspeed_options"
     "--ckpt-output-dir",
     type=click.Path(),
     cls=clickext.ConfigOption,
-    config_sections=TRAIN_ARGS,
     required=True,  # default from config
     default=lambda: DEFAULTS.CHECKPOINTS_DIR,
     help="output directory to store checkpoints in during training",
@@ -52,7 +47,6 @@ DS_OPTIONS = "train_args.deepspeed_options"
     "--data-output-dir",
     type=click.Path(),
     cls=clickext.ConfigOption,
-    config_sections=TRAIN_ARGS,
     required=True,  # default from config
     default=lambda: DEFAULTS.INTERNAL_DIR,
     help="output directory to store training data in",
@@ -84,7 +78,6 @@ DS_OPTIONS = "train_args.deepspeed_options"
     "--model-path",
     type=click.Path(),
     cls=clickext.ConfigOption,
-    config_sections=TRAIN_ARGS,
     required=True,  # default from config
     help="HuggingFace model repo path, in the format of <namespace>/<repo_name>.",
     default=DEFAULTS.MODEL_REPO,
@@ -109,7 +102,6 @@ DS_OPTIONS = "train_args.deepspeed_options"
     "--num-epochs",
     type=click.INT,
     cls=clickext.ConfigOption,
-    config_sections=TRAIN_ARGS,
     required=True,  # default from config
     help="The number of times the training data is passed through the training algorithm. Please note that this value is used on Linux platforms only.",
 )
@@ -141,7 +133,6 @@ DS_OPTIONS = "train_args.deepspeed_options"
     "--max-seq-len",
     type=int,
     cls=clickext.ConfigOption,
-    config_sections=TRAIN_ARGS,
     required=True,  # default from config
     help="maximum length, in tokens, of a single sample.",
 )
@@ -149,7 +140,6 @@ DS_OPTIONS = "train_args.deepspeed_options"
     "--max-batch-len",
     type=int,
     cls=clickext.ConfigOption,
-    config_sections=TRAIN_ARGS,
     required=True,  # default from config
     help="maximum overall length of samples processed in a given batch.",
 )
@@ -157,7 +147,6 @@ DS_OPTIONS = "train_args.deepspeed_options"
     "--effective-batch-size",
     type=int,
     cls=clickext.ConfigOption,
-    config_sections=TRAIN_ARGS,
     required=True,  # default from config
     help="total batch size across all GPUs",
 )
@@ -165,7 +154,6 @@ DS_OPTIONS = "train_args.deepspeed_options"
     "--save-samples",
     type=int,
     cls=clickext.ConfigOption,
-    config_sections=TRAIN_ARGS,
     required=True,  # default from config
     help="The number of samples processed in between checkpoints.",
 )
@@ -173,7 +161,6 @@ DS_OPTIONS = "train_args.deepspeed_options"
     "--learning-rate",
     type=float,
     cls=clickext.ConfigOption,
-    config_sections=TRAIN_ARGS,
     required=True,  # default from config
     help="learning rate for training",
 )
@@ -181,75 +168,68 @@ DS_OPTIONS = "train_args.deepspeed_options"
     "--warmup-steps",
     type=int,
     cls=clickext.ConfigOption,
-    config_sections=TRAIN_ARGS,
+    config_sections=ADDITIONAL_ARGUMENTS,
     required=True,  # default from config
     help="warmup steps for training",
 )
 @click.option(
-    "--cpu-offload-optimizer",
+    "--deepspeed-cpu-offload-optimizer",
     type=bool,
     cls=clickext.ConfigOption,
-    config_sections=DS_OPTIONS,
     required=True,  # default from config
     # config_section="deepspeed_options",
     help="if true enables optimizer offload",
 )
 @click.option(
-    "--cpu-offload-optimizer-ratio",
+    "--deepspeed-cpu-offload-optimizer-ratio",
     type=float,
     cls=clickext.ConfigOption,
-    config_sections=DS_OPTIONS,
     required=True,  # default from config
     # config_section="deepspeed_options",
     help="cpu offload optimizer ratio",
 )
 @click.option(
-    "--cpu-offload-optimizer-pin-memory",
+    "--deepspeed-cpu-offload-optimizer-pin-memory",
     type=bool,
     cls=clickext.ConfigOption,
-    config_sections=DS_OPTIONS,
     required=True,  # default from config
     # config_section="deepspeed_options",
     help="if true pin memory when using cpu optimizer",
 )
 # below flags are invalid if lora == false
 @click.option(
-    "--rank",
+    "--lora-rank",
     type=int,
     cls=clickext.ConfigOption,
-    config_sections=LORA_OPTIONS,
     required=True,  # default from config
     # config_section="lora",
     help="rank of update matricies",
 )
 @click.option(
-    "--alpha",
+    "--lora-alpha",
     type=int,
     cls=clickext.ConfigOption,
-    config_sections=LORA_OPTIONS,
     required=True,  # default from config
     # config_section="lora",
     help="how influential/strong lora tune will be",
 )
 @click.option(
-    "--dropout",
+    "--lora-dropout",
     type=float,
     cls=clickext.ConfigOption,
-    config_sections=LORA_OPTIONS,
     required=True,  # default from config
     # config_section="lora",
     help="dropout for LoRA layers",
 )
 @click.option(
-    "--target-modules",
+    "--lora-target-modules",
     cls=clickext.ConfigOption,
-    config_sections=LORA_OPTIONS,
     multiple=True,
     default=[],
     help="LoRA modules to use",
 )
 @click.option(
-    "--quantize-data-type",
+    "--lora-quantize-data-type",
     type=str,
     default=None,
     help="quantization data type to use when training a LoRA.",
@@ -262,6 +242,8 @@ DS_OPTIONS = "train_args.deepspeed_options"
 @click.option(
     "--gpus",
     "nproc_per_node",
+    cls=clickext.ConfigOption,
+    config_section=ADDITIONAL_ARGUMENTS,
     type=int,
     help="this is the number of GPUs to use. This is a torch specific arg and must be called nproc-per-node",
 )
@@ -269,7 +251,7 @@ DS_OPTIONS = "train_args.deepspeed_options"
     "--nnodes",
     type=int,
     cls=clickext.ConfigOption,
-    config_sections=TORCHRUN_ARGS,
+    config_sections=ADDITIONAL_ARGUMENTS,
     required=True,  # default from config
     help="number of machines in the training pool.",
 )
@@ -277,7 +259,7 @@ DS_OPTIONS = "train_args.deepspeed_options"
     "--node-rank",
     type=int,
     cls=clickext.ConfigOption,
-    config_sections=TORCHRUN_ARGS,
+    config_sections=ADDITIONAL_ARGUMENTS,
     required=True,  # default from config
     help="the rank of this machine in the training group.",
 )
@@ -285,7 +267,7 @@ DS_OPTIONS = "train_args.deepspeed_options"
     "--rdzv-id",
     type=int,
     cls=clickext.ConfigOption,
-    config_sections=TORCHRUN_ARGS,
+    config_sections=ADDITIONAL_ARGUMENTS,
     required=True,  # default from config
     help="this is the training group ID. So, if there are multiple matching endpoints, only the machines with matching IDs can connect.",
 )
@@ -293,7 +275,7 @@ DS_OPTIONS = "train_args.deepspeed_options"
     "--rdzv-endpoint",
     type=str,
     cls=clickext.ConfigOption,
-    config_sections=TORCHRUN_ARGS,
+    config_sections=ADDITIONAL_ARGUMENTS,
     required=True,  # default from config
     help="this is the rendezvous endpoint which other torchrun jobs will join on.",
 )

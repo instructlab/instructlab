@@ -68,6 +68,9 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--vllm-args",
+    "vllm_additional_args",
+    cls=clickext.ConfigOption,
+    config_sections="vllm",
     type=str,
     multiple=True,
     help=(
@@ -75,6 +78,40 @@ logger = logging.getLogger(__name__)
         "separately and surrounded by quotes.\n"
         " Example: --vllm-args='--dtype=auto' --vllm-args='--enable-lora'"
     ),
+)
+@click.option(
+    "--served-model-name",
+    type=str,
+    cls=clickext.ConfigOption,
+    config_sections="vllm"
+)
+@click.option(
+    "--device",
+    type=click.Choice(["cpu", "cuda", "hpu"]),
+    show_default=True,
+    default="cpu",
+    help=(
+        "PyTorch device for serving. Use 'cuda' "
+        "for NVidia CUDA / AMD ROCm GPU, to use specific GPU, set visible GPU before run train command."
+    ),
+)
+@click.option(
+    "--max-model-len",
+    type=int,
+    cls=clickext.ConfigOption,
+    config_sections="vllm",
+)
+@click.option(
+    "--tensor-parallel-size",
+    type=int,
+    cls=clickext.ConfigOption,
+    config_sections="vllm",
+)
+@click.option(
+    "--max-parallel-loading-workers",
+    type=int,
+    cls=clickext.ConfigOption,
+    config_sections="vllm"
 )
 @click.pass_context
 @utils.display_params
@@ -87,7 +124,12 @@ def serve(
     model_family,
     log_file: pathlib.Path | None,
     backend: str | None,
-    vllm_args: typing.Iterable[str],
+    vllm_additional_args: typing.Iterable[str],
+    served_model_name: str,
+    device: str,
+    max_model_len,
+    tensor_parallel_size,
+    max_parallel_loading_workers
 ) -> None:
     """Start a local server"""
     # First Party
@@ -132,7 +174,7 @@ def serve(
         backend_instance = vllm.Server(
             api_base=ctx.obj.config.serve.api_base(),
             model_path=model_path,
-            vllm_args=vllm_args,
+            vllm_args=,
             host=host,
             port=port,
         )

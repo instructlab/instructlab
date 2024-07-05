@@ -239,7 +239,15 @@ class _serve_vllm(BaseModel):
     """Class describing configuration of vllm serving backend."""
 
     # arguments to pass into vllm process
-    vllm_args: list[str] | None = None
+
+    served_model_name: str
+    device: str
+    max_model_len: int
+    tensor_parallel_size: int
+    max_parallel_loading_workers: int
+
+    
+    vllm_additional_args: {str} | None = None
 
 
 class _serve_llama_cpp(BaseModel):
@@ -270,6 +278,9 @@ class _serve(BaseModel):
     backend: Optional[str] = (
         None  # we don't set a default value here since it's auto-detected
     )
+
+    additional_args: {str}
+
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
@@ -311,8 +322,34 @@ class _evaluate(BaseModel):
 
 
 class _train(BaseModel):
-    train_args: TrainingArgs
-    torch_args: TorchrunArgs
+    # model configuration
+    model_config = ConfigDict(extra="ignore", protected_namespaces=())
+
+    model_path: str
+
+    data_path: str
+    ckpt_output_dir: str
+    data_output_dir: str
+
+    max_seq_len: int
+    max_batch_len: int
+    num_epochs: int
+    effective_batch_size: int
+    save_samples: int
+    learning_rate: int
+
+    deepspeed_cpu_offload: bool
+    deepspeed_cpu_offload_optimizer_ratio: int
+    deepspeed_cpu_offload_optimizer_pin_memory: bool
+
+    lora_rank: int
+    lora_alpha: int
+    lora_dropout: float
+    lora_target_modules: list[str]
+    lora_quantize_dtype: str
+
+    additional_args: {str}
+
 
 
 class Config(BaseModel):
