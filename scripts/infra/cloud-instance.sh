@@ -267,13 +267,16 @@ setup_rh_devenv() {
     local cloud_type=$1
     "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf install git gcc make pip python3.11 python3.11-devel -y
     "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "sudo dnf install g++ -y || sudo dnf install gcc-c++"
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "if [ ! -d instructlab.git ]; then git clone --bare https://github.com/instructlab/instructlab.git && git clone instructlab.git && pushd instructlab && git remote add syncrepo ../instructlab.git; fi "
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "if [ ! -d instructlab.git ]; then git clone --bare https://github.com/instructlab/instructlab.git && git clone instructlab.git && pushd instructlab && git remote add syncrepo ../instructlab.git; fi"
     "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && python3.11 -m venv --upgrade-deps venv"
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf update -y
+    echo "You'll need to reboot before installing gpu drivers (${BASH_SOURCE[0]} ${cloud_type} ssh sudo reboot)"
 }
 
 pip_install_with_nvidia() {
     local cloud_type=$1
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && source venv/bin/activate && pip cache remove llama_cpp_python && pip install -e . -C cmake.args='-DLLAMA_CUBLAS=on' && ilab"
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && source venv/bin/activate && pip cache remove llama_cpp_python && pip install -e . -C cmake.args='-DLLAMA_CUBLAS=on'"
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && source venv/bin/activate && pip install -r requirements-vllm-cuda.txt && ilab"
 }
 
 pip_install_with_amd() {
@@ -291,11 +294,13 @@ install_rh_nvidia_drivers() {
     local cloud_type=$1
     "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "sudo dnf install kernel-devel-\$(uname -r) kernel-headers-\$(uname -r) -y"
     "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm -y
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf clean expire-cache
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf module install nvidia-driver:latest-dkms -y
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf install cuda-toolkit nvidia-gds libnccl-devel libcudnn8 nvidia-driver-NVML nvidia-driver-cuda-libs -y
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf update -y
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf install https://developer.download.nvidia.com/compute/cuda/12.4.0/local_installers/cuda-repo-rhel9-12-4-local-12.4.0_550.54.14-1.x86_64.rpm -y
+    # Pinning to 12-4 to work with targetted versions of pytorch and vllm
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf install cuda-12-4 nvidia-gds-12-4 -y
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo -y
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf install libcudnn8 libnccl-2.21.5-1+cuda12.4 libnccl-devel-2.21.5-1+cuda12.4 libnccl-static-2.21.5-1+cuda12.4 -y
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "echo \"export PATH=/usr/local/cuda/bin:\\\$PATH\" >> ~/.bashrc"
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "echo \"export LD_LIBRARY_PATH=/usr/local/cuda/lib64:\\\$LD_LIBRARY_PATH\" >> ~/.bashrc"
     echo "You'll need to reboot for these changes to take effect (${BASH_SOURCE[0]} ${cloud_type} ssh sudo reboot)"
 }
 
@@ -339,7 +344,7 @@ handle_help_and_instance_name_opts() {
 }
 
 show_usage() {
-    echo "Usage: ./cloud-instance.sh <cloud-type> <command> [options]
+    echo "Usage: ${BASH_SOURCE[0]} <cloud-type> <command> [options]
 
 Cloud Types
 
