@@ -22,18 +22,19 @@ from .backends import (
     shutdown_process,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class Server(BackendServer):
     def __init__(
         self,
-        logger: logging.Logger,
         api_base: str,
         model_path: pathlib.Path,
         host: str,
         port: int,
         vllm_args: typing.Iterable[str] | None = (),
     ):
-        super().__init__(logger, model_path, api_base, host, port)
+        super().__init__(model_path, api_base, host, port)
         self.api_base = api_base
         self.model_path = model_path
         self.vllm_args: list[str]
@@ -42,7 +43,6 @@ class Server(BackendServer):
 
     def run(self):
         self.process = run_vllm(
-            self.logger,
             self.host,
             self.port,
             self.model_path,
@@ -63,7 +63,6 @@ class Server(BackendServer):
 
     def create_server_process(self, port: int) -> subprocess.Popen:
         server_process = run_vllm(
-            self.logger,
             self.host,
             port,
             self.model_path,
@@ -75,7 +74,6 @@ class Server(BackendServer):
     def run_detached(self, http_client: httpx.Client | None = None) -> str:
         try:
             _, vllm_server_process, api_base = ensure_server(
-                logger=self.logger,
                 backend=VLLM,
                 api_base=self.api_base,
                 http_client=http_client,
@@ -99,7 +97,6 @@ class Server(BackendServer):
 
 
 def run_vllm(
-    logger: logging.Logger,
     host: str,
     port: int,
     model_path: pathlib.Path,
@@ -110,7 +107,6 @@ def run_vllm(
     Start an OpenAI-compatible server with vLLM.
 
     Args:
-        logger     (logging.Logger):  logger for info and debugging
         host       (str):             host to run server on
         port       (int):             port to run server on
         model_path (Path):            The path to the model file.

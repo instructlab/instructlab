@@ -85,7 +85,7 @@ def serve(
 
     model_path = pathlib.Path(model_path)
     try:
-        backend = backends.get(logger, model_path, backend)
+        backend = backends.get(model_path, backend)
     except (ValueError, AttributeError) as e:
         click.secho(f"Failed to determine backend: {e}", fg="red")
         raise click.exceptions.Exit(1)
@@ -112,7 +112,6 @@ def serve(
             max_ctx_size = ctx.obj.config.serve.llama_cpp.max_ctx_size
 
         backend_instance = llama_cpp.Server(
-            logger=logger,
             api_base=ctx.obj.config.serve.api_base(),
             model_path=model_path,
             model_family=model_family,
@@ -125,7 +124,6 @@ def serve(
     elif backend == backends.VLLM:
         # Instantiate the vllm server
         backend_instance = vllm.Server(
-            logger=logger,
             api_base=ctx.obj.config.serve.api_base(),
             model_path=model_path,
             vllm_args=vllm_args,

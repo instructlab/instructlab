@@ -242,7 +242,7 @@ def launch_server(
 
     ctx.obj.config.serve.model_path = model
 
-    backend_instance = backends.select_backend(logger, ctx.obj.config.serve)
+    backend_instance = backends.select_backend(ctx.obj.config.serve)
     try:
         # http_client is handling tls params
         api_base = backend_instance.run_detached(http_client(ctx.params))
