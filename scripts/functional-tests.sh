@@ -374,10 +374,37 @@ test_model_print(){
 
 }
 
+test_config_value_isset() {
+    VALUE=$1
+    SECTION=$2
+    PROPERTY=$3
+    CONFIG_FILE=$4
+    echo "Check configuration value '$VALUE' in property '$PROPERTY' of section '$SECTION' of '$CONFIG_FILE'"
+
+    PROPERTY_VALUE=$(yq ".$SECTION.$PROPERTY" "$CONFIG_FILE" | xargs)
+    if [[ $PROPERTY_VALUE != *"$VALUE"* ]]; then
+      echo "'$VALUE' not set in property '$PROPERTY_VALUE' of the '$SECTION' section of configuration '$CONFIG_FILE'"
+      exit 1
+    else
+      echo "Value '$VALUE' is set"
+    fi
+}
+
+test_config_model_defaults(){
+    test_config_value_isset "merlinite" "chat" "model" "config.yaml"
+    test_config_value_isset "merlinite" "evaluate" "model" "config.yaml"
+    test_config_value_isset "merlinite" "evaluate" "base_model" "config.yaml"
+    test_config_value_isset "merlinite" "generate" "model" "config.yaml"
+    test_config_value_isset "merlinite" "serve" "model_path" "config.yaml"
+    test_config_value_isset "merlinite" "train.train_args" "model_path" "config.yaml"
+}
+
 ########
 # MAIN #
 ########
 # call cleanup in-between each test so they can run without conflicting with the server/chat process
+test_config_model_defaults
+cleanup
 test_bind_port
 cleanup
 test_ctx_size
