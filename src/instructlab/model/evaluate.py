@@ -245,9 +245,6 @@ def launch_server(
     # pylint: disable=import-outside-toplevel
     # First Party
 
-    # we shouldn't be in the business of editing a user's cfg.
-    # with eval, this is tricky since there are a few things we want to help them out with if they do not exist.
-    # if the user did not set a backend, or model_path, set that for them. Everything else needs to be in the cfg. or in the cmd as flag overrides.
     eval_serve = copy(ctx.obj.config.serve)
     if backend is None:
         eval_serve.backend = backends.VLLM
@@ -256,9 +253,7 @@ def launch_server(
         if gpus:
             # Don't override from vllm_args
             if "--tensor-parallel-size" not in eval_serve.vllm.vllm_args:
-                eval_serve.vllm.vllm_args.extend(
-                    ["--tensor-parallel-size", str(gpus)]
-                )
+                eval_serve.vllm.vllm_args.extend(["--tensor-parallel-size", str(gpus)])
             else:
                 click.echo(
                     "Ignoring --gpus with --tensor-parallel-size configured in serve vllm_args"
@@ -279,7 +274,7 @@ def launch_server(
 
     eval_serve.model_path = model
 
-    backend_instance = backends.select_backend(eval_serve)
+    backend_instance = backends.select_backend(eval_serve, backend)
     try:
         # http_client is handling tls params
         api_base = backend_instance.run_detached(http_client(ctx.params))
@@ -382,7 +377,7 @@ def launch_server(
 )
 @click.option(
     "--backend",
-    type=click.Choice([backends.VLLM, backends.LLAMA_CPP]),
+    type=click.Choice(tuple(backends.SUPPORTED_BACKENDS)),
     help="Serving backend to use for evaluation. Options are vllm and llama-cpp.",
 )
 @click.option(
