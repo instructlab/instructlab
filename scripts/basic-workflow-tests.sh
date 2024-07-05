@@ -17,6 +17,7 @@ GENERATE_ARGS=("--num-cpus" "$(nproc)")
 TRAIN_ARGS=()
 GRANITE=0
 FULLTRAIN=0
+BACKEND="llama-cpp"
 
 export GREP_COLORS='mt=1;33'
 BOLD='\033[1m'
@@ -62,6 +63,9 @@ test_download() {
     if [ "$GRANITE" -eq 1 ]; then
         step Downloading the granite model
         ilab model download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf
+    elif [ "$BACKEND" = "vllm" ]; then
+        step Downloading the model for vLLM
+        ilab download --repository instructlab/merlinite-7b-lab
     else
         step Downloading the default model
         ilab model download
@@ -79,21 +83,13 @@ test_serve() {
     if [ -n "$model" ]; then
         SERVE_ARGS+=("--model-path" "${model}")
     fi
+    if [ "$BACKEND" = "vllm" ]; then
+        SERVE_ARGS+=("--model-path" "./models/instructlab/merlinite-7b-lab")
+    fi
 
     task Serve the model
-    ilab model serve "${SERVE_ARGS[@]}" &
-
-    ret=1
-    for i in $(seq 1 10); do
-        sleep 5
-    	step "$i"/10: Waiting for model to start
-        if curl -sS http://localhost:8000/docs > /dev/null; then
-            ret=0
-            break
-        fi
-    done
-
-    return $ret
+    ilab model serve "${SERVE_ARGS[@]}" &> serve.log &
+    wait_for_server
 }
 
 test_chat() {
@@ -138,6 +134,9 @@ test_generate() {
     task Generate synthetic data
     if [ "$GRANITE" -eq 1 ]; then
         GENERATE_ARGS+=("--model ./models/granite-7b-lab-Q4_K_M.gguf")
+    fi
+    if [ "$BACKEND" = "vllm" ]; then
+        GENERATE_ARGS+=("--model ./models/instructlab/merlinite-7b-lab")
     fi
     ilab data generate --num-instructions ${NUM_INSTRUCTIONS} "${GENERATE_ARGS[@]}"
 }
@@ -210,18 +209,33 @@ test_exec() {
     kill $PID
 }
 
+wait_for_server(){
+    if ! timeout 120 bash -c '
+        until curl -sS http://localhost:8000/docs &> /dev/null; do
+            echo "waiting for server to start"
+            sleep 1
+        done
+    '; then
+        echo "server did not start"
+        cat serve.log || true
+        exit 1
+    fi
+    echo "server started"
+}
+
 usage() {
     echo "Usage: $0 [-m] [-h]"
     echo "  -m  Run minimal configuration (run quicker when you have no GPU)"
     echo "  -f  Run the fullsize training instead of --4-bit-quant"
     echo "  -g  Use the granite model"
+    echo "  -v  Use the vLLM backend for serving"
     echo "  -h  Show this help text"
 
 }
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "cmfgh" opt; do
+while getopts "cmfghv" opt; do
     case $opt in
         c)
             # old option, don't fail if it's specified
@@ -241,6 +255,10 @@ while getopts "cmfgh" opt; do
         h)
             usage
             exit 0
+            ;;
+        v)
+            BACKEND=vllm
+            step "Running with vLLM backend."
             ;;
         \?)
             echo "Invalid option: -$OPTARG" >&2
