@@ -21,7 +21,7 @@ mlx>=0.5.1,<0.6.0; sys_platform == 'darwin' and platform_machine == 'arm64'
 # versions of some dependencies. Use '3.10' as an indicator.
 # Habana installer has NumPy 1.23.5
 numpy>=1.23.5,<2.0.0 ; python_version == '3.10'
-numpy>=1.26.4,<2.0.0 ; python_version != '3.10'
+numpy>=1.26.4,<2.0.0 ; python_version >= '3.11'
 openai>=1.13.3
 peft>=0.9.0
 platformdirs>=4.2
@@ -35,13 +35,15 @@ sentencepiece>=0.2.0
 # "old" version required for vLLM on CUDA to build
 tokenizers>=0.11.1
 toml>=0.10.2
-# Intel Gaudi 1.16.1 has torch 2.2.0a0+git8964477 with oneMKL
-torch>=2.3.0a0,<3.0.0 ; python_version == '3.10'
-torch>=2.3.0,<3.0.0 ; python_version != '3.10'
+# Habana Labs 1.16.2 has PyTorch 2.2.2a0+gitxxx pre-release
+torch>=2.2.2a0,<3.0.0 ; python_version == '3.10'
+torch>=2.3.0,<3.0.0 ; python_version >= '3.11'
 tqdm>=4.66.2
-# 'optimum' for Intel Gaudi needs transformers <4.39.0,>=4.38.0
-transformers>=4.41.2
-trl>=0.9.4
+# 'optimum' for Intel Gaudi needs transformers <4.41.0,>=4.40.0
+transformers>=4.40.0 ; python_version == '3.10'
+transformers>=4.41.2 ; python_version >= '3.11'
+trl>=0.7.11 ; python_version == '3.10'
+trl>=0.9.4 ; python_version >= '3.11'
 wandb>=0.16.4
 # the below library should NOT be imported into any python files
 # it is for CLI usage ONLY

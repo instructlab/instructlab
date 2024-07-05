@@ -8,7 +8,7 @@
 
 - RHEL 9 on `x86_64` (tested with RHEL 9.3 and patched installer)
 - Intel Gaudi 2 device
-- [Habana Labs](https://docs.habana.ai/en/latest/index.html) software stack (tested with 1.15.1, 1.16.0, 1.16.1)
+- [Habana Labs](https://docs.habana.ai/en/latest/index.html) software stack (tested with 1.16.2)
 - software from Habana Vault for [RHEL](https://vault.habana.ai/ui/native/rhel) and [PyTorch](https://vault.habana.ai/ui/native/gaudi-pt-modules)
 - software [HabanaAI GitHub](https://github.com/HabanaAI/) org like [optimum-habana](https://github.com/HabanaAI/optimum-habana-fork) fork
 

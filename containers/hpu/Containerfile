@@ -1,4 +1,4 @@
-ARG HABANA_VERSION=1.16.1
+ARG HABANA_VERSION=1.16.2
 ARG BASEIMAGE=vault.habana.ai/gaudi-docker/${HABANA_VERSION}/rhel9.2/habanalabs/pytorch-installer-2.2.2
 
 FROM ${BASEIMAGE} AS runtime
