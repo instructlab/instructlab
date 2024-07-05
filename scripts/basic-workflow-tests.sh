@@ -243,7 +243,7 @@ while getopts "cmfgh" opt; do
             exit 0
             ;;
         \?)
-            echo "Invalid option: -$OPTARG" >&2
+            echo "Invalid option: -$opt" >&2
             usage
             exit 1
             ;;
