@@ -8,8 +8,17 @@ You'll need to setup the respective cloud CLI before using [cloud-instance.sh](c
 
 ### AWS
 
-- [aws](https://aws.amazon.com/cli/) (the AWS CLI)
+- You can ensure you have all the necessary local system packages with `local-setup.sh` (see example below)
+  - This includes [aws](https://aws.amazon.com/cli/) (the AWS CLI)
 - A keypair created within AWS. Config defaults to `whoami` for key name.
+
+```bash
+# Ensure proper system packages are installed if your local system is Red Hat-based
+# If you are running a different OS you'll need to install these packages manually
+./local-setup.sh rh ensure-aws-system-pkgs
+# If you are using SAML auth with the AWS CLI, you can install packages for that with the '-s` flag
+./local-setup.sh rh ensure-aws-system-pkgs -s
+```
 
 ### IBM
 
