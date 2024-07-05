@@ -261,6 +261,7 @@ def launch_server(
 @click.option(
     "--benchmark",
     type=click.Choice([m.value for m in Benchmark.__members__.values()]),
+    required=True,
     help="Benchmarks to run during evaluation",
 )
 @click.option(
