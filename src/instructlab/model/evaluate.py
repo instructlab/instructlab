@@ -7,6 +7,9 @@ import typing
 # Third Party
 import click
 
+# First Party
+from instructlab import clickext
+
 # Local
 from ..utils import display_params, http_client
 
@@ -256,11 +259,14 @@ def launch_server(
 @click.option(
     "--model",
     type=click.STRING,
+    cls=clickext.ConfigOption,
     help="Model to be evaluated - can be a local path or the name of a Hugging Face repository",
 )
 @click.option(
     "--base-model",
     type=click.STRING,
+    cls=clickext.ConfigOption,
+    required=True,  # default from config
     help="Base model to compare with 'model' for mt_bench_branch and mmlu_branch - can be a local path or the name of a Hugging Face repository",
 )
 @click.option(
@@ -292,11 +298,13 @@ def launch_server(
 @click.option(
     "--branch",
     type=click.STRING,
+    cls=clickext.ConfigOption,
     help="Branch of taxonomy repo to eval QNAs against model",
 )
 @click.option(
     "--base-branch",
     type=click.STRING,
+    cls=clickext.ConfigOption,
     help="Base branch of taxonomy repo to eval QNAs against model for mt_bench_branch",
 )
 @click.option(

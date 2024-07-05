@@ -25,12 +25,18 @@ class ConfigOption(click.Option):
     """
 
     def __init__(
-        self, *args: typing.Any, config_section: str | None = None, **kwargs: typing.Any
+        self,
+        *args: typing.Any,
+        config_sections: str | None = None,
+        **kwargs: typing.Any,
     ) -> None:
         super().__init__(*args, **kwargs)
         if self.show_default:
             raise ValueError("show_default must be False")
-        self.config_section: str | None = config_section
+        if config_sections:
+            self.config_sections = tuple(config_sections.split("."))
+        else:
+            self.config_sections = ()
 
     def get_help_record(self, ctx: click.Context) -> tuple[str, str] | None:
         result = super().get_help_record(ctx)
@@ -42,17 +48,19 @@ class ConfigOption(click.Option):
         # get default from default_map
         cmd = ctx.command.name
         name = self.name
+        if self.config_sections:
+            config_name = f"{cmd}.{'.'.join(self.config_sections)}.{name}"
+        else:
+            config_name = f"{cmd}.{name}"
+
         if typing.TYPE_CHECKING:
             assert name is not None
-        if self.config_section is None:
-            if self.name not in ctx.default_map:
-                raise ValueError(f"{cmd}.{name} not in default_map {ctx.default_map}")
-        else:
-            section = ctx.default_map.get(self.config_section, {})
-            if self.name not in section:
-                raise ValueError(
-                    f"{cmd}.{self.config_section}.{name} not in default_map {ctx.default_map}"
-                )
+
+        section = ctx.default_map
+        for secname in self.config_sections:
+            section = section.get(secname, {})
+        if self.name not in section:
+            raise ValueError(f"{config_name} not in default_map {ctx.default_map}")
 
         # create help extra
         default_value = self.get_default(ctx)
@@ -62,11 +70,6 @@ class ConfigOption(click.Option):
             default_string = ", ".join(str(d) for d in default_value)
         else:
             default_string = str(default_value)
-
-        if self.config_section is None:
-            config_name = f"{cmd}.{name}"
-        else:
-            config_name = f"{cmd}.{self.config_section}.{name}"
 
         default_msg = f"default: {default_string}; config: '{config_name}'"
 
@@ -86,11 +89,15 @@ class ConfigOption(click.Option):
         Used so "serve" option "gpu_layers" looks up its default in
         "serve.llama_cpp.gpu_layers" instead of "serve.gpu_layers".
         """
-        if self.config_section is None:
+        if not self.config_sections:
             # no config subsection
             return super().get_default(ctx, call=call)
         if ctx.default_map is not None:
-            section = ctx.default_map.get(self.config_section, {})
+            section = ctx.default_map
+            for secname in self.config_sections:
+                section = section.get(secname, {})
+            if typing.TYPE_CHECKING:
+                assert self.name
             value = section.get(self.name)
             if call and callable(value):
                 return value()

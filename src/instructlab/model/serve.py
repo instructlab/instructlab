@@ -19,16 +19,16 @@ logger = logging.getLogger(__name__)
 @click.command()
 @click.option(
     "--model-path",
-    cls=clickext.ConfigOption,
     type=click.Path(path_type=pathlib.Path),
+    cls=clickext.ConfigOption,
     required=True,  # default from config
     help="Path to the model used during generation.",
 )
 @click.option(
     "--gpu-layers",
-    cls=clickext.ConfigOption,
-    config_section="llama_cpp",
     type=click.INT,
+    cls=clickext.ConfigOption,
+    config_sections="llama_cpp",
     required=True,  # default from config
     help="The number of layers to put on the GPU. -1 moves all layers. The rest will be on the CPU.",
 )
@@ -40,9 +40,9 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--max-ctx-size",
-    cls=clickext.ConfigOption,
-    config_section="llama_cpp",
     type=click.INT,
+    cls=clickext.ConfigOption,
+    config_sections="llama_cpp",
     help="The context size is the maximum number of tokens considered by the model, for both the prompt and response. Defaults to 4096.",
 )
 @click.option(

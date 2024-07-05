@@ -17,28 +17,40 @@ from instructlab.training import (
 import click
 
 # First Party
-from instructlab import utils
+from instructlab import clickext, utils
 
 logger = logging.getLogger(__name__)
+
+
+TORCHRUN_ARGS = "torch_args"
+TRAIN_ARGS = "train_args"
+LORA_OPTIONS = "train_args.lora"
+DS_OPTIONS = "train_args.deepspeed_options"
 
 
 @click.command()
 @click.option(
     "--data-path",
     type=click.Path(file_okay=True),
+    cls=clickext.ConfigOption,
+    config_sections=TRAIN_ARGS,
+    required=True,  # default from config
     help="Base directory where data is stored.",
-    default=None,
 )
 @click.option(
     "--ckpt-output-dir",
     type=click.Path(),
-    default="checkpoints",
+    cls=clickext.ConfigOption,
+    config_sections=TRAIN_ARGS,
+    required=True,  # default from config
     help="output directory to store checkpoints in during training",
 )
 @click.option(
     "--data-output-dir",
     type=click.Path(),
-    default="data",
+    cls=clickext.ConfigOption,
+    config_sections=TRAIN_ARGS,
+    required=True,  # default from config
     help="output directory to store training data in",
 )
 @click.option(
@@ -59,17 +71,24 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--tokenizer-dir",
+    type=click.Path(),
     help="Base directory where tokenizer is stored.",
     default=None,
     show_default=True,
 )
 @click.option(
     "--model-path",
+    type=click.Path(),
+    cls=clickext.ConfigOption,
+    config_sections=TRAIN_ARGS,
+    required=True,  # default from config
     help="Base directory where model is stored.",
-    default="instructlab/merlinite-7b-lab",
-    show_default=True,
 )
-@click.option("--iters", help="Number of iterations to train LoRA.", default=100)
+@click.option(
+    "--iters",
+    help="Number of iterations to train LoRA.",
+    default=100,
+)
 @click.option(
     "--local",
     is_flag=True,
@@ -84,8 +103,9 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--num-epochs",
     type=click.INT,
-    default=1,  # TODO: change this to a more reasonable default
-    show_default=True,
+    cls=clickext.ConfigOption,
+    config_sections=TRAIN_ARGS,
+    required=True,  # default from config
     help="The number of times the training data is passed through the training algorithm. Please note that this value is used on Linux platforms only.",
 )
 @click.option(
@@ -113,37 +133,116 @@ logger = logging.getLogger(__name__)
     ),
 )
 @click.option(
-    "--max-seq-len", type=int, help="maximum length, in tokens, of a single sample."
+    "--max-seq-len",
+    type=int,
+    cls=clickext.ConfigOption,
+    config_sections=TRAIN_ARGS,
+    required=True,  # default from config
+    help="maximum length, in tokens, of a single sample.",
 )
 @click.option(
     "--max-batch-len",
     type=int,
+    cls=clickext.ConfigOption,
+    config_sections=TRAIN_ARGS,
+    required=True,  # default from config
     help="maximum overall length of samples processed in a given batch.",
 )
 @click.option(
-    "--effective-batch-size", type=int, help="total batch size across all GPUs"
+    "--effective-batch-size",
+    type=int,
+    cls=clickext.ConfigOption,
+    config_sections=TRAIN_ARGS,
+    required=True,  # default from config
+    help="total batch size across all GPUs",
 )
 @click.option(
     "--save-samples",
     type=int,
+    cls=clickext.ConfigOption,
+    config_sections=TRAIN_ARGS,
+    required=True,  # default from config
     help="The number of samples processed in between checkpoints.",
 )
-@click.option("--learning-rate", type=float, help="learning rate for training")
-@click.option("--warmup-steps", type=int, help="warmup steps for training")
 @click.option(
-    "--cpu-offload-optimizer", type=bool, help="if true enables optimizer offload"
+    "--learning-rate",
+    type=float,
+    cls=clickext.ConfigOption,
+    config_sections=TRAIN_ARGS,
+    required=True,  # default from config
+    help="learning rate for training",
 )
-@click.option("--cpu-offload-ratio", type=float, help="cpu offload optimizer ratio")
+@click.option(
+    "--warmup-steps",
+    type=int,
+    cls=clickext.ConfigOption,
+    config_sections=TRAIN_ARGS,
+    required=True,  # default from config
+    help="warmup steps for training",
+)
+@click.option(
+    "--cpu-offload-optimizer",
+    type=bool,
+    cls=clickext.ConfigOption,
+    config_sections=DS_OPTIONS,
+    required=True,  # default from config
+    # config_section="deepspeed_options",
+    help="if true enables optimizer offload",
+)
+@click.option(
+    "--cpu-offload-optimizer-ratio",
+    type=float,
+    cls=clickext.ConfigOption,
+    config_sections=DS_OPTIONS,
+    required=True,  # default from config
+    # config_section="deepspeed_options",
+    help="cpu offload optimizer ratio",
+)
 @click.option(
     "--cpu-offload-optimizer-pin-memory",
     type=bool,
+    cls=clickext.ConfigOption,
+    config_sections=DS_OPTIONS,
+    required=True,  # default from config
+    # config_section="deepspeed_options",
     help="if true pin memory when using cpu optimizer",
 )
 # below flags are invalid if lora == false
-@click.option("--rank", type=int, help="rank of update matricies")
-@click.option("--alpha", type=int, help="how influential/strong lora tune will be")
-@click.option("--dropout", type=float, help="dropout for LoRA layers")
-@click.option("--target-modules", multiple=True, default=[], help="LoRA modules to use")
+@click.option(
+    "--rank",
+    type=int,
+    cls=clickext.ConfigOption,
+    config_sections=LORA_OPTIONS,
+    required=True,  # default from config
+    # config_section="lora",
+    help="rank of update matricies",
+)
+@click.option(
+    "--alpha",
+    type=int,
+    cls=clickext.ConfigOption,
+    config_sections=LORA_OPTIONS,
+    required=True,  # default from config
+    # config_section="lora",
+    help="how influential/strong lora tune will be",
+)
+@click.option(
+    "--dropout",
+    type=float,
+    cls=clickext.ConfigOption,
+    config_sections=LORA_OPTIONS,
+    required=True,  # default from config
+    # config_section="lora",
+    help="dropout for LoRA layers",
+)
+@click.option(
+    "--target-modules",
+    cls=clickext.ConfigOption,
+    config_sections=LORA_OPTIONS,
+    multiple=True,
+    default=[],
+    help="LoRA modules to use",
+)
 @click.option(
     "--quantize-data-type",
     type=str,
@@ -161,18 +260,36 @@ logger = logging.getLogger(__name__)
     type=int,
     help="this is the number of GPUs to use. This is a torch specific arg and must be called nproc-per-node",
 )
-@click.option("--nnodes", type=int, help="number of machines in the training pool.")
 @click.option(
-    "--node-rank", type=int, help="the rank of this machine in the training group."
+    "--nnodes",
+    type=int,
+    cls=clickext.ConfigOption,
+    config_sections=TORCHRUN_ARGS,
+    required=True,  # default from config
+    help="number of machines in the training pool.",
+)
+@click.option(
+    "--node-rank",
+    type=int,
+    cls=clickext.ConfigOption,
+    config_sections=TORCHRUN_ARGS,
+    required=True,  # default from config
+    help="the rank of this machine in the training group.",
 )
 @click.option(
     "--rdzv-id",
     type=int,
+    cls=clickext.ConfigOption,
+    config_sections=TORCHRUN_ARGS,
+    required=True,  # default from config
     help="this is the training group ID. So, if there are multiple matching endpoints, only the machines with matching IDs can connect.",
 )
 @click.option(
     "--rdzv-endpoint",
     type=str,
+    cls=clickext.ConfigOption,
+    config_sections=TORCHRUN_ARGS,
+    required=True,  # default from config
     help="this is the rendezvous endpoint which other torchrun jobs will join on.",
 )
 @click.option(

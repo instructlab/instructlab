@@ -23,10 +23,10 @@ import httpx
 import openai
 
 # First Party
+from instructlab import clickext
 from instructlab import client as ilabclient
 from instructlab import configuration as cfg
 from instructlab import utils
-from instructlab.clickext import ConfigOption
 
 # Local
 from ..utils import get_sysprompt, http_client
@@ -72,19 +72,22 @@ PROMPT_PREFIX = ">>> "
 @click.option(
     "-m",
     "--model",
-    cls=ConfigOption,
+    cls=clickext.ConfigOption,
+    required=True,  # default from config
     help="Model name to print in chat process",
 )
 @click.option(
     "-c",
     "--context",
-    cls=ConfigOption,
+    cls=clickext.ConfigOption,
+    required=True,  # default from config
     help="Name of system context in config file.",
 )
 @click.option(
     "-s",
     "--session",
     type=click.File("r"),
+    cls=clickext.ConfigOption,
     help="Filepath of a dialog session file.",
 )
 @click.option(
@@ -96,14 +99,15 @@ PROMPT_PREFIX = ">>> "
 @click.option(
     "-gm",
     "--greedy-mode",
-    cls=ConfigOption,
     is_flag=True,
+    cls=clickext.ConfigOption,
+    required=True,  # default from config
     help="Use model greedy decoding. Useful for debugging and reproducing errors.",
 )
 @click.option(
     "--max-tokens",
-    cls=ConfigOption,
     type=click.INT,
+    cls=clickext.ConfigOption,
     help="Set a maximum number of tokens to request from the model endpoint.",
 )
 @click.option(
