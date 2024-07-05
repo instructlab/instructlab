@@ -162,7 +162,8 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
    #### Install with Apple Metal on M1/M2/M3 Macs
 
-      > **NOTE**: Make sure your system Python build is `Mach-O 64-bit executable arm64` by using `file -b $(command -v python)`.
+      > **NOTE**: Make sure your system Python build is `Mach-O 64-bit executable arm64` by using `file -b $(command -v python)`. Validate this after installing instructlab using pip.
+      
 
       ```shell
       python3 -m venv --upgrade-deps venv
