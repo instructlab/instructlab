@@ -132,19 +132,15 @@ warn_return_any = true
 # honor excludes by not following there through imports
 follow_imports = "silent"
 exclude = [
+  # These are files that were copied from the original codebase.
+  # We are trying to keep changes to a minimum.
   "^src/instructlab/llamacpp/llamacpp_convert_to_gguf\\.py$",
   "^src/instructlab/mlx_explore/gguf_convert_to_mlx\\.py$",
   "^src/instructlab/mlx_explore/utils\\.py$",
-  "^src/instructlab/model/backends/backends\\.py$",
-  "^src/instructlab/model/backends/llama_cpp\\.py$",
-  "^src/instructlab/model/backends/vllm\\.py$",
-  "^src/instructlab/model/evaluate\\.py$",
-  "^src/instructlab/model/serve\\.py$",
   "^src/instructlab/train/lora_mlx/lora\\.py$",
   "^src/instructlab/train/lora_mlx/models/llama\\.py$",
   "^src/instructlab/train/lora_mlx/models/mixtral\\.py$",
   "^src/instructlab/train/lora_mlx/models/models\\.py$",
-  "^src/instructlab/utils\\.py$",
 ]
 
 [[tool.mypy.overrides]]

@@ -2,7 +2,8 @@
 
 # Standard
 from time import sleep
-from typing import Tuple
+from types import FrameType
+from typing import Optional, Tuple
 import abc
 import logging
 import mmap
@@ -17,6 +18,7 @@ import sys
 # Third Party
 from uvicorn import Config
 import click
+import fastapi
 import httpx
 import uvicorn
 
@@ -49,8 +51,7 @@ class ServerException(Exception):
 class UvicornServer(uvicorn.Server):
     """Override uvicorn.Server to handle SIGINT."""
 
-    def handle_exit(self, sig, frame):
-        # type: (int, Optional[FrameType]) -> None
+    def handle_exit(self, sig: int, frame: Optional[FrameType]) -> None:
         if not is_temp_server_running() or sig != signal.SIGINT:
             super().handle_exit(sig=sig, frame=frame)
 
@@ -71,7 +72,6 @@ class BackendServer(abc.ABC):
         self.api_base = api_base
         self.host = host
         self.port = port
-        self.process = None
 
     @abc.abstractmethod
     def run(self):
@@ -105,7 +105,7 @@ def is_model_gguf(model_path: pathlib.Path) -> bool:
         first_four_bytes = mmapped_file.read(4)
 
         # Convert the first four bytes to an integer
-        first_four_bytes_int = struct.unpack("<I", first_four_bytes)[0]
+        first_four_bytes_int = int(struct.unpack("<I", first_four_bytes)[0])
 
         # Close the memory-mapped file
         mmapped_file.close()
@@ -140,7 +140,7 @@ def determine_backend(model_path: pathlib.Path) -> str:
     raise ValueError(f"The model file {model_path} is not a GGUF format. Unsupported.")
 
 
-def get(logger: logging.Logger, model_path: pathlib.Path, backend: str) -> str:
+def get(logger: logging.Logger, model_path: pathlib.Path, backend: str | None) -> str:
     """
     Get the backend to use based on the model file properties.
     Args:
@@ -204,7 +204,9 @@ def ensure_server(
     port=8000,
     queue=None,
     server_process_func=None,
-) -> Tuple[multiprocessing.Process, subprocess.Popen, str]:
+) -> Tuple[
+    Optional[multiprocessing.Process], Optional[subprocess.Popen], Optional[str]
+]:
     """Checks if server is running, if not starts one as a subprocess. Returns the server process
     and the URL where it's available."""
 
@@ -229,7 +231,7 @@ def ensure_server(
 
         if backend == VLLM:
             # TODO: resolve how the hostname is getting passed around the class and this function
-            vllm_server_process = server_process_func(port=port)
+            vllm_server_process = server_process_func(port)
             count = 0
             # TODO should this be configurable?
             vllm_startup_timeout = 300
@@ -255,7 +257,7 @@ def ensure_server(
         elif backend == LLAMA_CPP:
             # server_process_func is a function! we invoke it here and pass the port that was determined
             # in this ensure_server() function
-            llama_cpp_server_process = server_process_func(port=port)
+            llama_cpp_server_process = server_process_func(port)
             llama_cpp_server_process.start()
 
             # in case the server takes some time to fail we wait a bit
@@ -296,7 +298,7 @@ def free_tcp_ipv4_port(host: str) -> int:
     """
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host, 0))
-        return s.getsockname()[-1]
+        return int(s.getsockname()[-1])
 
 
 def is_temp_server_running():
@@ -304,7 +306,7 @@ def is_temp_server_running():
     return multiprocessing.current_process().name != "MainProcess"
 
 
-def get_uvicorn_config(app: uvicorn.Server, host: str, port: int) -> Config:
+def get_uvicorn_config(app: fastapi.FastAPI, host: str, port: int) -> Config:
     return Config(
         app,
         host=host,
@@ -320,7 +322,6 @@ def select_backend(logger: logging.Logger, cfg: serve_config) -> BackendServer:
     from .llama_cpp import Server as llama_cpp_server
     from .vllm import Server as vllm_server
 
-    backend_instance = None
     model_path = pathlib.Path(cfg.model_path)
     backend_name = cfg.backend
     try:
@@ -333,7 +334,7 @@ def select_backend(logger: logging.Logger, cfg: serve_config) -> BackendServer:
 
     if backend == LLAMA_CPP:
         # Instantiate the llama server
-        backend_instance = llama_cpp_server(
+        return llama_cpp_server(
             logger=logger,
             api_base=cfg.api_base(),
             model_path=model_path,
@@ -344,10 +345,9 @@ def select_backend(logger: logging.Logger, cfg: serve_config) -> BackendServer:
             host=host,
             port=port,
         )
-
     if backend == VLLM:
         # Instantiate the vllm server
-        backend_instance = vllm_server(
+        return vllm_server(
             logger=logger,
             api_base=cfg.api_base(),
             model_path=model_path,
@@ -355,4 +355,5 @@ def select_backend(logger: logging.Logger, cfg: serve_config) -> BackendServer:
             host=host,
             port=port,
         )
-    return backend_instance
+    click.secho(f"Unknown backend: {backend}", fg="red")
+    raise click.exceptions.Exit(1)

@@ -45,3 +45,4 @@ wandb>=0.16.4
 # the below library should NOT be imported into any python files
 # it is for CLI usage ONLY
 yamllint>=1.35.1
+referencing>=0.35.0

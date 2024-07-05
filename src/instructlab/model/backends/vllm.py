@@ -31,14 +31,14 @@ class Server(BackendServer):
         model_path: pathlib.Path,
         host: str,
         port: int,
-        vllm_args: typing.Iterable[str] = (),
+        vllm_args: typing.Iterable[str] | None = (),
     ):
         super().__init__(logger, model_path, api_base, host, port)
         self.api_base = api_base
         self.model_path = model_path
         self.vllm_args: list[str]
         self.vllm_args = list(vllm_args) if vllm_args is not None else []
-        self.process = None
+        self.process: subprocess.Popen | None = None
 
     def run(self):
         self.process = run_vllm(
@@ -61,7 +61,7 @@ class Server(BackendServer):
             self.shutdown()
             self.logger.exception("vLLM server terminated")
 
-    def create_server_process(self, port: str) -> subprocess.Popen:
+    def create_server_process(self, port: int) -> subprocess.Popen:
         server_process = run_vllm(
             self.logger,
             self.host,
@@ -83,13 +83,13 @@ class Server(BackendServer):
                 port=self.port,
                 server_process_func=self.create_server_process,
             )
-            self.process = vllm_server_process
-            self.api_base = api_base
-            return api_base
+            self.process = vllm_server_process or self.process
+            self.api_base = api_base or self.api_base
         except ServerException as exc:
             raise exc
         except SystemExit as exc:
             raise exc
+        return self.api_base
 
     def shutdown(self):
         """Shutdown vLLM server"""

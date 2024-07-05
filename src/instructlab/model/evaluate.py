@@ -140,12 +140,11 @@ def get_evaluator(
         )
 
 
-def sort_score(pairing: tuple) -> float:
+def sort_score(pairing: tuple[str, float]) -> float:
     """helper func for display_branch_eval_summary
     takes a tuple pairing and returns just the score
     """
-    _, score = pairing
-    return score
+    return pairing[1]
 
 
 def display_models(model, base_model) -> None:
@@ -164,7 +163,10 @@ def display_model(model) -> None:
 
 
 def display_branch_eval_summary(
-    improvements: list, regressions: list, no_changes: list, new=None
+    improvements: list[tuple[str, float]],
+    regressions: list[tuple[str, float]],
+    no_changes: list[str],
+    new=None,
 ):
     """takes in results lists from mt_bench_branch benchmark evaluation
     prints out diff between the branches to the user
@@ -194,11 +196,11 @@ def display_branch_eval_summary(
             print(f"{index+1}. {qna}")
 
 
-def qa_pairs_to_qna_to_avg_scores(qa_pairs: list[dict]) -> dict:
+def qa_pairs_to_qna_to_avg_scores(qa_pairs: list[dict]) -> dict[str, float]:
     """takes in a list of qa_pair dicts
     returns a dict of average scores per qna file
     """
-    qna_to_scores = {}
+    qna_to_scores: dict[str, list[float]] = {}
     for qa_pair in qa_pairs:
         qna_file = qa_pair["qna_file"]
         score = qa_pair["score"]
