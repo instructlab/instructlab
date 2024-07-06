@@ -20,6 +20,7 @@ GRANITE=0
 FULLTRAIN=0
 BACKEND="llama-cpp"
 HF_TOKEN=${HF_TOKEN:-}
+SDG_PIPELINE="simple"
 
 export GREP_COLORS='mt=1;33'
 BOLD='\033[1m'
@@ -165,6 +166,9 @@ test_generate() {
     elif [ "$BACKEND" = "vllm" ]; then
         GENERATE_ARGS+=("--model ./models/instructlab/merlinite-7b-lab")
     fi
+    if [ "$SDG_PIPELINE" = "full" ]; then
+        GENERATE_ARGS+=("--pipeline" "full")
+    fi
     ilab data generate --num-instructions ${NUM_INSTRUCTIONS} "${GENERATE_ARGS[@]}"
 }
 
@@ -254,16 +258,16 @@ usage() {
     echo "Usage: $0 [-m] [-h]"
     echo "  -m  Run minimal configuration (run quicker when you have no GPU)"
     echo "  -f  Run the fullsize training instead of --4-bit-quant"
+    echo "  -F  Use the 'full' SDG pipeline instead of the default 'simple' pipeline"
     echo "  -g  Use the granite model"
     echo "  -v  Use the vLLM backend for serving"
     echo "  -M  Use the mixtral model (4-bit quantized)"
     echo "  -h  Show this help text"
-
 }
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "cmMfghv" opt; do
+while getopts "cmMfFghv" opt; do
     case $opt in
         c)
             # old option, don't fail if it's specified
@@ -279,6 +283,10 @@ while getopts "cmMfghv" opt; do
         f)
             FULLTRAIN=1
             step "Running fullsize training."
+            ;;
+        F)
+            SDG_PIPELINE="full"
+            step "Using full SDG pipeline."
             ;;
         g)
             GRANITE=1
