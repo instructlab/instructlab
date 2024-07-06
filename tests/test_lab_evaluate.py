@@ -84,18 +84,7 @@ def setup_taxonomy(taxonomy_path):
     repo.index.commit("initial commit")
 
 
-@patch(
-    "instructlab.model.evaluate.launch_server",
-    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
-)
-@patch("instructlab.eval.mt_bench.MTBenchEvaluator.gen_answers")
-@patch(
-    "instructlab.eval.mt_bench.MTBenchEvaluator.judge_answers",
-    return_value=(1.5001, [{}, {}], [1.002, 2]),
-)
-def test_evaluate_mt_bench(
-    judge_answers_mock, gen_answers_mock, launch_server_mock, cli_runner
-):
+def run_mt_bench(cli_runner, error_rate):
     result = cli_runner.invoke(
         lab.ilab,
         [
@@ -110,9 +99,6 @@ def test_evaluate_mt_bench(
             "models/instructlab/merlinite-7b-lab",
         ],
     )
-    judge_answers_mock.assert_called_once()
-    gen_answers_mock.assert_called_once()
-    assert launch_server_mock.call_count == 2
     assert result.exit_code == 0
     expected = textwrap.dedent(
         """\
@@ -133,21 +119,18 @@ def test_evaluate_mt_bench(
         2
         """
     )
+    if error_rate > 0:
+        expected += textwrap.dedent(
+            f"""\
+
+            ### ERROR RATE:
+            {round(error_rate, 2)}
+            """
+        )
     assert result.output == expected
 
 
-@patch(
-    "instructlab.model.evaluate.launch_server",
-    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
-)
-@patch("instructlab.eval.mt_bench.MTBenchBranchEvaluator.gen_answers")
-@patch(
-    "instructlab.eval.mt_bench.MTBenchBranchEvaluator.judge_answers",
-    side_effect=[gen_qa_pairs(True), gen_qa_pairs(False)],
-)
-def test_evaluate_mt_bench_branch(
-    judge_answers_mock, gen_answers_mock, launch_server_mock, cli_runner
-):
+def run_mt_bench_branch(cli_runner, error_rate):
     result = cli_runner.invoke(
         lab.ilab,
         [
@@ -170,9 +153,6 @@ def test_evaluate_mt_bench_branch(
             "taxonomy",
         ],
     )
-    assert judge_answers_mock.call_count == 2
-    assert gen_answers_mock.call_count == 2
-    assert launch_server_mock.call_count == 3
     assert result.exit_code == 0
     expected = textwrap.dedent(
         """\
@@ -203,7 +183,73 @@ def test_evaluate_mt_bench_branch(
         1. category6/qna.yaml
         """
     )
+    if error_rate > 0:
+        expected += textwrap.dedent(
+            f"""\
+
+            ### ERROR RATE:
+            {round(error_rate, 2)}
+            """
+        )
     assert result.output == expected
+
+
+@patch(
+    "instructlab.model.evaluate.launch_server",
+    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
+)
+@patch("instructlab.eval.mt_bench.MTBenchEvaluator.gen_answers")
+@patch(
+    "instructlab.eval.mt_bench.MTBenchEvaluator.judge_answers",
+    side_effect=(
+        (1.5001, [{}, {}], [1.002, 2], 0),
+        (1.5001, [{}, {}], [1.002, 2], 0.768),
+    ),
+)
+def test_evaluate_mt_bench(
+    judge_answers_mock,
+    gen_answers_mock,
+    launch_server_mock,
+    cli_runner: CliRunner,
+):
+    run_mt_bench(cli_runner, 0)
+    judge_answers_mock.assert_called_once()
+    gen_answers_mock.assert_called_once()
+    assert launch_server_mock.call_count == 2
+    run_mt_bench(cli_runner, 0.768)
+    assert judge_answers_mock.call_count == 2
+    assert gen_answers_mock.call_count == 2
+    assert launch_server_mock.call_count == 4
+
+
+@patch(
+    "instructlab.model.evaluate.launch_server",
+    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
+)
+@patch("instructlab.eval.mt_bench.MTBenchBranchEvaluator.gen_answers")
+@patch(
+    "instructlab.eval.mt_bench.MTBenchBranchEvaluator.judge_answers",
+    side_effect=[
+        (gen_qa_pairs(True), 0),
+        (gen_qa_pairs(False), 0),
+        (gen_qa_pairs(True), 0.4567),
+        (gen_qa_pairs(False), 0.4567),
+    ],
+)
+def test_evaluate_mt_bench_branch(
+    judge_answers_mock,
+    gen_answers_mock,
+    launch_server_mock,
+    cli_runner: CliRunner,
+):
+    run_mt_bench_branch(cli_runner, 0)
+    assert judge_answers_mock.call_count == 2
+    assert gen_answers_mock.call_count == 2
+    assert launch_server_mock.call_count == 3
+    run_mt_bench_branch(cli_runner, 0.4567)
+    assert judge_answers_mock.call_count == 4
+    assert gen_answers_mock.call_count == 4
+    assert launch_server_mock.call_count == 6
 
 
 @patch(

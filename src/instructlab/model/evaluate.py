@@ -477,14 +477,9 @@ def evaluate(
                     gpus,
                     backend,
                 )
-                # TODO: Change back to standard tuple handling after version bump in eval library
-                judgment = evaluator.judge_answers(api_base)
-                overall_score = judgment[0]
-                qa_pairs = judgment[1]
-                turn_scores = judgment[2]
-                error_rate = 0
-                if len(judgment) > 3:
-                    error_rate = judgment[3]
+                overall_score, qa_pairs, turn_scores, error_rate = (
+                    evaluator.judge_answers(api_base)
+                )
             finally:
                 if server is not None:
                     server.shutdown()
@@ -559,14 +554,7 @@ def evaluate(
                 for i, evaluator in enumerate(evaluators):
                     branch = branches[i]
                     print(f"Evaluating answers for branch {branch}...")
-                    judgment = evaluator.judge_answers(api_base)
-                    # TODO: Change back to standard tuple handling after version bump in eval library
-                    error_rate = 0
-                    if isinstance(judgment, tuple):
-                        qa_pairs = judgment[0]
-                        error_rate = judgment[1]
-                    else:
-                        qa_pairs = judgment
+                    qa_pairs, error_rate = evaluator.judge_answers(api_base)
                     qa_pairs_and_errors.append((qa_pairs, error_rate))
             finally:
                 if server is not None:
