@@ -63,6 +63,7 @@ class TestConfig:
         assert cfg.serve.vllm.vllm_args == []
         assert cfg.serve.host_port == "127.0.0.1:8000"
         assert cfg.serve.backend is None
+        assert cfg.serve.chat_template is None
 
     def _assert_model_defaults(self, cfg):
         package_name = "instructlab"
@@ -184,6 +185,7 @@ generate:
   taxonomy_path: mytaxonomy
 serve:
   model_path: models/granite-7b-lab-Q4_K_M.gguf
+  chat_template: tokenizer
   llama_cpp:
     gpu_layers: 1
     max_ctx_size: 2048
@@ -216,6 +218,7 @@ general:
         assert cfg.generate.model == "models/granite-7b-lab-Q4_K_M.gguf"
         assert cfg.serve.llama_cpp.gpu_layers == 1
         assert cfg.serve.llama_cpp.max_ctx_size == 2048
+        assert cfg.serve.chat_template == "tokenizer"
         assert cfg.serve.vllm.vllm_args == [
             "--dtype=auto",
             "--enable-lora",

@@ -152,6 +152,7 @@ subdirectory
 tatsu
 th
 tl
+tokenizer
 tox
 triagers
 unquantized

@@ -2,31 +2,34 @@
 
 # Standard
 from contextlib import redirect_stderr, redirect_stdout
-from typing import Optional
+from typing import Optional, cast
 import logging
 import multiprocessing
 import os
 import pathlib
 
 # Third Party
-from llama_cpp import llama_chat_format
+from llama_cpp import llama_chat_format, llama_token_get_text
 from llama_cpp.server.app import create_app
+from llama_cpp.server.model import LlamaProxy
 from llama_cpp.server.settings import Settings
 import httpx
 import llama_cpp.server.app as llama_app
 
 # Local
-from ...configuration import get_model_family
 from .backends import (
     API_ROOT_WELCOME_MESSAGE,
+    CHAT_TEMPLATE_AUTO,
+    CHAT_TEMPLATE_TOKENIZER,
     LLAMA_CPP,
     BackendServer,
     ServerException,
     UvicornServer,
     ensure_server,
+    get_model_template,
     get_uvicorn_config,
     is_temp_server_running,
-    templates,
+    verify_template_exists,
 )
 
 logger = logging.getLogger(__name__)
@@ -37,6 +40,7 @@ class Server(BackendServer):
         self,
         model_path: pathlib.Path,
         model_family: str,
+        chat_template: str,
         api_base: str,
         host: str,
         port: int,
@@ -44,8 +48,7 @@ class Server(BackendServer):
         max_ctx_size: int,
         num_threads: Optional[int],
     ):
-        super().__init__(model_path, api_base, host, port)
-        self.model_family = model_family
+        super().__init__(model_family, model_path, chat_template, api_base, host, port)
         self.gpu_layers = gpu_layers
         self.max_ctx_size = max_ctx_size
         self.num_threads = num_threads
@@ -57,6 +60,7 @@ class Server(BackendServer):
         try:
             server(
                 model_path=self.model_path,
+                chat_template=self.chat_template,
                 gpu_layers=self.gpu_layers,
                 max_ctx_size=self.max_ctx_size,
                 model_family=self.model_family,
@@ -75,6 +79,7 @@ class Server(BackendServer):
             target=server,
             kwargs={
                 "model_path": self.model_path,
+                "chat_template": self.chat_template,
                 "gpu_layers": self.gpu_layers,
                 "max_ctx_size": self.max_ctx_size,
                 "model_family": self.model_family,
@@ -107,6 +112,9 @@ class Server(BackendServer):
 
     def shutdown(self):
         """Stop the server process and close the queue."""
+
+        super().shutdown()
+
         if self.process and self.queue:
             self.process.terminate()
             self.process.join(timeout=30)
@@ -116,13 +124,14 @@ class Server(BackendServer):
 
 def server(
     model_path: pathlib.Path,
+    chat_template: str,
     gpu_layers: int,
     max_ctx_size: int,
     model_family: str,
     threads=None,
     host: str = "localhost",
     port: int = 8000,
-    queue=None,
+    queue: Optional[multiprocessing.Queue] = None,
 ):
     """Start OpenAI-compatible server"""
     settings = Settings(
@@ -149,30 +158,8 @@ def server(
             return
         raise ServerException(f"failed creating the server application: {exc}") from exc
 
-    template = ""
-    eos_token = "<|endoftext|>"
-    bos_token = ""
-    for template_dict in templates:
-        if template_dict["model"] == get_model_family(model_family, model_path):
-            template = template_dict["template"]
-            if template_dict["model"] == "mixtral":
-                eos_token = "</s>"
-                bos_token = "<s>"
-    try:
-        for proxy in llama_app.get_llama_proxy():
-            proxy().chat_handler = llama_chat_format.Jinja2ChatFormatter(
-                template=template,
-                eos_token=eos_token,
-                bos_token=bos_token,
-            ).to_chat_handler()
-    # pylint: disable=broad-exception-caught
-    except Exception as exc:
-        if queue:
-            queue.put(exc)
-            queue.close()
-            queue.join_thread()
-            return
-        raise ServerException(f"failed creating the server application: {exc}") from exc
+    # Update chat template if necessary
+    augment_chat_template(chat_template, model_family, model_path, queue)
 
     logger.info("Starting server process, press CTRL+C to shutdown server...")
     logger.info(
@@ -205,3 +192,76 @@ def server(
     if queue:
         queue.close()
         queue.join_thread()
+
+
+def augment_chat_template(
+    chat_template: str,
+    model_family: str,
+    model_path: pathlib.Path,
+    queue: Optional[multiprocessing.Queue],
+):
+    # chat template takes the format ('auto' | 'tokenizer' | a filesystem path to a file)
+    if chat_template == CHAT_TEMPLATE_TOKENIZER:
+        # llama_cpp_python calculates from the tokenizer config on load, so
+        # nothing to do
+        return
+
+    try:
+        if chat_template == CHAT_TEMPLATE_AUTO:
+            # Currently "auto" maps to replacing with ilab stored templates
+            template, eos_token, bos_token = get_model_template(
+                model_family, model_path
+            )
+        else:
+            # In this case, the template is a path to a file; attempt to load it
+            template = load_template(chat_template)
+            eos_token = None
+            bos_token = None
+
+        logger.info("Replacing chat template:\n %s", template)
+
+        for proxy in llama_app.get_llama_proxy():
+            proxy().chat_handler = llama_chat_format.Jinja2ChatFormatter(
+                template=template,
+                # Use the model defined eos and bos if either is not
+                # defined (when a custom template is used)
+                eos_token=resolve_token_eos(eos_token, proxy),
+                bos_token=resolve_token_bos(bos_token, proxy),
+            ).to_chat_handler()
+    # pylint: disable=broad-exception-caught
+    except Exception as exc:
+        if queue:
+            queue.put(exc)
+            queue.close()
+            queue.join_thread()
+            return
+        raise ServerException(f"failed creating the server application: {exc}") from exc
+
+
+def resolve_token_eos(eos_token: Optional[str], proxy: LlamaProxy) -> str:
+    if eos_token is not None:
+        return eos_token
+
+    return resolve_token(proxy, proxy().token_eos())
+
+
+def resolve_token_bos(bos_token: Optional[str], proxy: LlamaProxy) -> str:
+    if bos_token is not None:
+        return bos_token
+
+    return resolve_token(proxy, proxy().token_bos())
+
+
+def resolve_token(proxy: LlamaProxy, token: int) -> str:
+    result = llama_token_get_text(proxy().model, token).decode("utf-8")
+    return cast(str, result)
+
+
+def load_template(template_path: str) -> str:
+    path = pathlib.Path(template_path)
+    verify_template_exists(path)
+
+    try:
+        return path.read_text(encoding="utf-8")
+    except Exception as e:
+        raise IOError("Error reading chat template file contents: {}".format(e)) from e

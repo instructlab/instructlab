@@ -268,6 +268,7 @@ class _generate(BaseModel):
 class _serve_vllm(BaseModel):
     """Class describing configuration of vllm serving backend."""
 
+    llm_family: str = ""
     # arguments to pass into vllm process
     vllm_args: list[str] | None = None
 
@@ -294,9 +295,9 @@ class _serve(BaseModel):
 
     # required fields
     model_path: StrictStr
-
     # additional fields with defaults
     host_port: StrictStr = "127.0.0.1:8000"
+    chat_template: Optional[str] = None
     backend: Optional[str] = (
         None  # we don't set a default value here since it's auto-detected
     )
@@ -408,6 +409,7 @@ def get_default_config() -> Config:
                 llm_family="",
             ),
             vllm=_serve_vllm(
+                llm_family="",
                 vllm_args=[],
             ),
         ),

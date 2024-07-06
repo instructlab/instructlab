@@ -3,6 +3,8 @@
 
 set -ex
 
+# shellcheck disable=SC2155
+export SCRIPTDIR=$(dirname "$0")
 # build a prompt string that includes the time, source file, line number, and function name
 export PS4='+$(date +"%Y-%m-%d %T") ${BASH_VERSION}:${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
@@ -491,6 +493,47 @@ test_model_print(){
     expect -c "${expect_script}"
 }
 
+test_server_template_value(){
+    export template_value="$1"
+    export expected_result="$2"
+    # shellcheck disable=SC2016
+    expect -c '
+        set template_value $env(template_value)
+        set expected_result $env(expected_result)
+        set timeout 10
+        spawn ilab model serve --chat-template $template_value
+        set actual_result 0
+        expect {
+            "Replacing chat template" {
+                set actual_result 1
+                expect {
+                    "test provided custom template" {
+                       set actual_result 3
+                     }
+                     "Starting server process" {
+                     }
+                }
+            }
+            "Starting server process" {
+                set actual_result 2
+            }
+        }
+        send \x03
+        if { $actual_result != $expected_result } {
+            puts stderr "Error: ilab model serve with --chat-template command failed"
+            exit 1
+        }
+    '
+}
+
+test_server_chat_template() {
+    test_server_template_value "auto" 1
+    cleanup
+    test_server_template_value tokenizer 2
+    cleanup
+    test_server_template_value "$SCRIPTDIR/test-data/mock-template.txt" 3
+}
+
 ########
 # MAIN #
 ########
@@ -514,6 +557,8 @@ cleanup
 test_no_chat_logs
 cleanup
 test_temp_server_ignore_internal_messages
+cleanup
+test_server_chat_template
 cleanup
 test_server_welcome_message
 cleanup

@@ -5,6 +5,7 @@ from time import sleep
 from types import FrameType
 from typing import Optional, Tuple
 import abc
+import contextlib
 import logging
 import mmap
 import multiprocessing
@@ -14,6 +15,7 @@ import socket
 import struct
 import subprocess
 import sys
+import typing
 
 # Third Party
 from uvicorn import Config
@@ -25,7 +27,7 @@ import uvicorn
 # Local
 from ...client import ClientException, check_api_base, list_models
 from ...configuration import _serve as serve_config
-from ...configuration import get_api_base
+from ...configuration import get_api_base, get_model_family
 from ...utils import split_hostport
 
 logger = logging.getLogger(__name__)
@@ -34,6 +36,8 @@ LLAMA_CPP = "llama-cpp"
 VLLM = "vllm"
 SUPPORTED_BACKENDS = frozenset({LLAMA_CPP, VLLM})
 API_ROOT_WELCOME_MESSAGE = "Hello from InstructLab! Visit us at https://instructlab.ai"
+CHAT_TEMPLATE_AUTO = "auto"
+CHAT_TEMPLATE_TOKENIZER = "tokenizer"
 templates = [
     {
         "model": "merlinite",
@@ -44,6 +48,10 @@ templates = [
         "template": "{{ bos_token }}\n{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '[INST] ' + message['content'] + ' [/INST]' }}\n{% elif message['role'] == 'assistant' %}\n{{ message['content'] + eos_token}}\n{% endif %}\n{% endfor %}",
     },
 ]
+
+
+class Closeable(typing.Protocol):
+    def close(self) -> None: ...
 
 
 class ServerException(Exception):
@@ -63,15 +71,20 @@ class BackendServer(abc.ABC):
 
     def __init__(
         self,
+        model_family: str,
         model_path: pathlib.Path,
+        chat_template: str,
         api_base: str,
         host: str,
         port: int,
     ) -> None:
+        self.model_family = model_family
         self.model_path = model_path
+        self.chat_template = chat_template if chat_template else CHAT_TEMPLATE_AUTO
         self.api_base = api_base
         self.host = host
         self.port = port
+        self.resources: list[Closeable] = []
 
     @abc.abstractmethod
     def run(self):
@@ -83,9 +96,19 @@ class BackendServer(abc.ABC):
     ) -> str:
         """Run serving backend in background ('ilab model chat' when server is not running)"""
 
-    @abc.abstractmethod
     def shutdown(self):
         """Shutdown serving backend"""
+
+        safe_close_all(self.resources)
+
+    def register_resources(self, resources: typing.Iterable[Closeable]) -> None:
+        self.resources.extend(resources)
+
+
+def safe_close_all(resources: typing.Iterable[Closeable]):
+    for resource in resources:
+        with contextlib.suppress(Exception):
+            resource.close()
 
 
 def is_model_gguf(model_path: pathlib.Path) -> bool:
@@ -333,6 +356,23 @@ def is_temp_server_running():
     return multiprocessing.current_process().name != "MainProcess"
 
 
+def get_model_template(
+    model_family: str, model_path: pathlib.Path
+) -> Tuple[str, str, str]:
+    eos_token = "<|endoftext|>"
+    bos_token = ""
+    template = ""
+    resolved_family = get_model_family(model_family, model_path)
+    for template_dict in templates:
+        if template_dict["model"] == resolved_family:
+            template = template_dict["template"]
+            if template_dict["model"] == "mixtral":
+                eos_token = "</s>"
+                bos_token = "<s>"
+
+    return template, eos_token, bos_token
+
+
 def get_uvicorn_config(app: fastapi.FastAPI, host: str, port: int) -> Config:
     return Config(
         app,
@@ -362,12 +402,16 @@ def select_backend(
         raise click.exceptions.Exit(1)
 
     host, port = split_hostport(cfg.host_port)
+    chat_template = cfg.chat_template
+    if not chat_template:
+        chat_template = CHAT_TEMPLATE_AUTO
 
     if backend == LLAMA_CPP:
         # Instantiate the llama server
         return llama_cpp_server(
             api_base=cfg.api_base(),
             model_path=model_path,
+            chat_template=chat_template,
             gpu_layers=cfg.llama_cpp.gpu_layers,
             max_ctx_size=cfg.llama_cpp.max_ctx_size,
             num_threads=None,  # exists only as a flag not a config
@@ -379,10 +423,22 @@ def select_backend(
         # Instantiate the vllm server
         return vllm_server(
             api_base=cfg.api_base(),
+            model_family=cfg.vllm.llm_family,
             model_path=model_path,
+            chat_template=chat_template,
             vllm_args=cfg.vllm.vllm_args,
             host=host,
             port=port,
         )
     click.secho(f"Unknown backend: {backend}", fg="red")
     raise click.exceptions.Exit(1)
+
+
+def verify_template_exists(path):
+    if not path.exists():
+        raise FileNotFoundError("Chat template file does not exist: {}".format(path))
+
+    if not path.is_file():
+        raise IsADirectoryError(
+            "Chat templates paths must point to a file: {}".format(path)
+        )
