@@ -261,7 +261,7 @@ while getopts "cmfghv" opt; do
             step "Running with vLLM backend."
             ;;
         \?)
-            echo "Invalid option: -$OPTARG" >&2
+            echo "Invalid option: -$opt" >&2
             usage
             exit 1
             ;;
