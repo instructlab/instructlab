@@ -446,93 +446,18 @@ def evaluate(
         merge_system_user_message,
     )
 
-    if benchmark == Benchmark.MT_BENCH:
-        print("Generating answers...")
-        server = None
-        try:
-            server, api_base = launch_server(
-                ctx,
-                model,
-                TEST_MODEL_NAME,
-                max_workers,
-                gpus,
-                backend,
-            )
-            evaluator.gen_answers(api_base)
-        finally:
-            if server is not None:
-                server.shutdown()
+    # Third Party
+    from instructlab.eval.exceptions import EvalError
 
-        print("Evaluating answers...")
-        try:
-            server, api_base = launch_server(
-                ctx,
-                judge_model,
-                JUDGE_MODEL_NAME,
-                max_workers,
-                gpus,
-                backend,
-            )
-            # TODO: Change back to standard tuple handling after version bump in eval library
-            judgment = evaluator.judge_answers(api_base)
-            overall_score = judgment[0]
-            qa_pairs = judgment[1]
-            turn_scores = judgment[2]
-            error_rate = 0
-            if len(judgment) > 3:
-                error_rate = judgment[3]
-        finally:
-            if server is not None:
-                server.shutdown()
-
-        print("# SKILL EVALUATION REPORT")
-        display_model(model)
-        print("\n### AVERAGE:")
-        print(f"{round(overall_score, 2)} (across {len(qa_pairs)})")
-        print("\n### TURN ONE:")
-        print(round(turn_scores[0], 2))
-        print("\n### TURN TWO:")
-        turn2_score = turn_scores[1]
-        if isinstance(turn2_score, float):
-            turn2_score = round(turn2_score, 2)
-        print(turn2_score)
-        display_error_rate(error_rate)
-
-    elif benchmark == Benchmark.MT_BENCH_BRANCH:
-        # Third Party
-        from instructlab.eval.mt_bench import MTBenchBranchEvaluator
-
-        evaluators = [
-            evaluator,
-            MTBenchBranchEvaluator(
-                BASE_TEST_MODEL_NAME,
-                JUDGE_MODEL_NAME,
-                taxonomy_path,
-                base_branch,
-                output_dir,
-                max_workers,
-                merge_system_user_message=merge_system_user_message,
-            ),
-        ]
-        branches = [branch, base_branch]
-        m_paths = [model, base_model]
-        m_names = [TEST_MODEL_NAME, BASE_TEST_MODEL_NAME]
-        qa_pairs_and_errors = []
-        server = None
-
-        for i, evaluator in enumerate(evaluators):
-            branch = branches[i]
-            m_path = m_paths[i]
-            m_name = m_names[i]
-
-            print(
-                f"Generating questions and reference answers from qna files for branch {branch}..."
-            )
+    try:
+        if benchmark == Benchmark.MT_BENCH:
+            print("Generating answers...")
+            server = None
             try:
                 server, api_base = launch_server(
                     ctx,
-                    m_path,
-                    m_name,
+                    model,
+                    TEST_MODEL_NAME,
                     max_workers,
                     gpus,
                     backend,
@@ -542,122 +467,204 @@ def evaluate(
                 if server is not None:
                     server.shutdown()
 
-        try:
-            # Share the judge model server for the two model evaluations
-            server, api_base = launch_server(
-                ctx,
-                judge_model,
-                JUDGE_MODEL_NAME,
-                max_workers,
-                gpus,
-                backend,
-            )
+            print("Evaluating answers...")
+            try:
+                server, api_base = launch_server(
+                    ctx,
+                    judge_model,
+                    JUDGE_MODEL_NAME,
+                    max_workers,
+                    gpus,
+                    backend,
+                )
+                # TODO: Change back to standard tuple handling after version bump in eval library
+                judgment = evaluator.judge_answers(api_base)
+                overall_score = judgment[0]
+                qa_pairs = judgment[1]
+                turn_scores = judgment[2]
+                error_rate = 0
+                if len(judgment) > 3:
+                    error_rate = judgment[3]
+            finally:
+                if server is not None:
+                    server.shutdown()
+
+            print("# SKILL EVALUATION REPORT")
+            display_model(model)
+            print("\n### AVERAGE:")
+            print(f"{round(overall_score, 2)} (across {len(qa_pairs)})")
+            print("\n### TURN ONE:")
+            print(round(turn_scores[0], 2))
+            print("\n### TURN TWO:")
+            turn2_score = turn_scores[1]
+            if isinstance(turn2_score, float):
+                turn2_score = round(turn2_score, 2)
+            print(turn2_score)
+            display_error_rate(error_rate)
+
+        elif benchmark == Benchmark.MT_BENCH_BRANCH:
+            # Third Party
+            from instructlab.eval.mt_bench import MTBenchBranchEvaluator
+
+            evaluators = [
+                evaluator,
+                MTBenchBranchEvaluator(
+                    BASE_TEST_MODEL_NAME,
+                    JUDGE_MODEL_NAME,
+                    taxonomy_path,
+                    base_branch,
+                    output_dir,
+                    max_workers,
+                    merge_system_user_message=merge_system_user_message,
+                ),
+            ]
+            branches = [branch, base_branch]
+            m_paths = [model, base_model]
+            m_names = [TEST_MODEL_NAME, BASE_TEST_MODEL_NAME]
+            qa_pairs_and_errors = []
+            server = None
+
             for i, evaluator in enumerate(evaluators):
                 branch = branches[i]
-                print(f"Evaluating answers for branch {branch}...")
-                judgment = evaluator.judge_answers(api_base)
-                # TODO: Change back to standard tuple handling after version bump in eval library
-                error_rate = 0
-                if isinstance(judgment, tuple):
-                    qa_pairs = judgment[0]
-                    error_rate = judgment[1]
+                m_path = m_paths[i]
+                m_name = m_names[i]
+
+                print(
+                    f"Generating questions and reference answers from qna files for branch {branch}..."
+                )
+                try:
+                    server, api_base = launch_server(
+                        ctx,
+                        m_path,
+                        m_name,
+                        max_workers,
+                        gpus,
+                        backend,
+                    )
+                    evaluator.gen_answers(api_base)
+                finally:
+                    if server is not None:
+                        server.shutdown()
+
+            try:
+                # Share the judge model server for the two model evaluations
+                server, api_base = launch_server(
+                    ctx,
+                    judge_model,
+                    JUDGE_MODEL_NAME,
+                    max_workers,
+                    gpus,
+                    backend,
+                )
+                for i, evaluator in enumerate(evaluators):
+                    branch = branches[i]
+                    print(f"Evaluating answers for branch {branch}...")
+                    judgment = evaluator.judge_answers(api_base)
+                    # TODO: Change back to standard tuple handling after version bump in eval library
+                    error_rate = 0
+                    if isinstance(judgment, tuple):
+                        qa_pairs = judgment[0]
+                        error_rate = judgment[1]
+                    else:
+                        qa_pairs = judgment
+                    qa_pairs_and_errors.append((qa_pairs, error_rate))
+            finally:
+                if server is not None:
+                    server.shutdown()
+
+            qa_pairs, error_rate = qa_pairs_and_errors[0]
+            base_qa_pairs, base_error_rate = qa_pairs_and_errors[1]
+
+            qna_to_avg_scores = qa_pairs_to_qna_to_avg_scores(qa_pairs)
+            base_qna_to_avg_scores = qa_pairs_to_qna_to_avg_scores(base_qa_pairs)
+
+            print("# SKILL EVALUATION REPORT\n")
+            display_models(model, base_model)
+
+            improvements, regressions, no_changes, new_qnas = [], [], [], []
+            for qna, avg_score in qna_to_avg_scores.items():
+                base_avg_score = base_qna_to_avg_scores.get(qna)
+                if base_avg_score is not None:
+                    if avg_score > base_avg_score:
+                        improvements.append((qna, round(avg_score - base_avg_score, 2)))
+                    elif avg_score == base_avg_score:
+                        no_changes.append(qna)
+                    else:
+                        regressions.append((qna, round(avg_score - base_avg_score, 2)))
                 else:
-                    qa_pairs = judgment
-                qa_pairs_and_errors.append((qa_pairs, error_rate))
-        finally:
-            if server is not None:
-                server.shutdown()
+                    new_qnas.append((qna))
 
-        qa_pairs, error_rate = qa_pairs_and_errors[0]
-        base_qa_pairs, base_error_rate = qa_pairs_and_errors[1]
+            # display summary of evaluation before exiting
+            display_branch_eval_summary(improvements, regressions, no_changes, new_qnas)
+            display_error_rate((error_rate + base_error_rate) / 2)
 
-        qna_to_avg_scores = qa_pairs_to_qna_to_avg_scores(qa_pairs)
-        base_qna_to_avg_scores = qa_pairs_to_qna_to_avg_scores(base_qa_pairs)
-
-        print("# SKILL EVALUATION REPORT\n")
-        display_models(model, base_model)
-
-        improvements, regressions, no_changes, new_qnas = [], [], [], []
-        for qna, avg_score in qna_to_avg_scores.items():
-            base_avg_score = base_qna_to_avg_scores.get(qna)
-            if base_avg_score is not None:
-                if avg_score > base_avg_score:
-                    improvements.append((qna, round(avg_score - base_avg_score, 2)))
-                elif avg_score == base_avg_score:
-                    no_changes.append(qna)
-                else:
-                    regressions.append((qna, round(avg_score - base_avg_score, 2)))
-            else:
-                new_qnas.append((qna))
-
-        # display summary of evaluation before exiting
-        display_branch_eval_summary(improvements, regressions, no_changes, new_qnas)
-        display_error_rate((error_rate + base_error_rate) / 2)
-
-    elif benchmark == Benchmark.MMLU:
-        overall_score, individual_scores = evaluator.run()
-
-        print("# KNOWLEDGE EVALUATION REPORT")
-        display_model(model)
-        print("\n### AVERAGE:")
-        print(f"{round(overall_score, 2)} (across {len(individual_scores)})\n")
-
-        print("### SCORES:")
-        for task, score in individual_scores.items():
-            s = round(score["score"], 2)
-            print(f"{task} - {s}")
-
-    elif benchmark == Benchmark.MMLU_BRANCH:
-        # Third Party
-        from instructlab.eval.mmlu import MMLUBranchEvaluator
-
-        evaluators = [
-            evaluator,
-            MMLUBranchEvaluator(
-                base_model,
-                tasks_dir,
-                ["mmlu_pr"],
-                few_shots=few_shots,
-                batch_size=batch_size,
-            ),
-        ]
-        m_paths = [model, base_model]
-        overall_scores = []
-        individual_scores_list = []
-        for evaluator in evaluators:
+        elif benchmark == Benchmark.MMLU:
             overall_score, individual_scores = evaluator.run()
-            overall_scores.append(overall_score)
-            individual_scores_list.append(individual_scores)
 
-        overall_score = overall_scores[0]
-        base_overall_score = overall_scores[1]
-        individual_scores = individual_scores_list[0]
-        base_individual_scores = individual_scores_list[1]
+            print("# KNOWLEDGE EVALUATION REPORT")
+            display_model(model)
+            print("\n### AVERAGE:")
+            print(f"{round(overall_score, 2)} (across {len(individual_scores)})\n")
 
-        print("# KNOWLEDGE EVALUATION REPORT\n")
-        display_models(model, base_model)
+            print("### SCORES:")
+            for task, score in individual_scores.items():
+                s = round(score["score"], 2)
+                print(f"{task} - {s}")
 
-        print("\n### AVERAGE:")
-        delta = round(overall_score - base_overall_score, 2)
-        if delta >= 0:
-            delta_display = f"+{delta}"
-        else:
-            delta_display = delta
+        elif benchmark == Benchmark.MMLU_BRANCH:
+            # Third Party
+            from instructlab.eval.mmlu import MMLUBranchEvaluator
 
-        print(f"{delta_display} (across {len(individual_scores)})")
+            evaluators = [
+                evaluator,
+                MMLUBranchEvaluator(
+                    base_model,
+                    tasks_dir,
+                    ["mmlu_pr"],
+                    few_shots=few_shots,
+                    batch_size=batch_size,
+                ),
+            ]
+            m_paths = [model, base_model]
+            overall_scores = []
+            individual_scores_list = []
+            for evaluator in evaluators:
+                overall_score, individual_scores = evaluator.run()
+                overall_scores.append(overall_score)
+                individual_scores_list.append(individual_scores)
 
-        improvements, regressions, no_changes = [], [], []
-        for task, score in individual_scores.items():
-            base_score = base_individual_scores[task]
-            s = score["score"]
-            b_s = base_score["score"]
-            d = round(s - b_s, 2)
-            if s > b_s:
-                improvements.append((task, d))
-            elif b_s > s:
-                regressions.append((task, d))
+            overall_score = overall_scores[0]
+            base_overall_score = overall_scores[1]
+            individual_scores = individual_scores_list[0]
+            base_individual_scores = individual_scores_list[1]
+
+            print("# KNOWLEDGE EVALUATION REPORT\n")
+            display_models(model, base_model)
+
+            print("\n### AVERAGE:")
+            delta = round(overall_score - base_overall_score, 2)
+            if delta >= 0:
+                delta_display = f"+{delta}"
             else:
-                no_changes.append(task)
+                delta_display = delta
 
-        # display summary of evaluation before exiting
-        display_branch_eval_summary(improvements, regressions, no_changes)
+            print(f"{delta_display} (across {len(individual_scores)})")
+
+            improvements, regressions, no_changes = [], [], []
+            for task, score in individual_scores.items():
+                base_score = base_individual_scores[task]
+                s = score["score"]
+                b_s = base_score["score"]
+                d = round(s - b_s, 2)
+                if s > b_s:
+                    improvements.append((task, d))
+                elif b_s > s:
+                    regressions.append((task, d))
+                else:
+                    no_changes.append(task)
+
+            # display summary of evaluation before exiting
+            display_branch_eval_summary(improvements, regressions, no_changes)
+    except EvalError as ee:
+        print(ee.message)
+        raise click.exceptions.Exit(1)
