@@ -122,8 +122,8 @@ test_taxonomy() {
         cp "$SCRIPTDIR"/test-data/e2e-qna-grounded-skill.yaml taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no/qna.yaml
     elif [ "$TESTNUM" -eq 3 ]; then
         rm -rf taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no
-        mkdir -p taxonomy/knowledge/sports/overview/e2e-softball
-        cp "$SCRIPTDIR"/test-data/e2e-qna-knowledge.yaml taxonomy/knowledge/sports/overview/e2e-softball/qna.yaml
+        mkdir -p taxonomy/knowledge/tonsils/overview/e2e-tonsils
+        cp "$SCRIPTDIR"/test-data/e2e-qna-knowledge.yaml taxonomy/knowledge/tonsils/overview/e2e-tonsils/qna.yaml
     fi
 
     step Verification
