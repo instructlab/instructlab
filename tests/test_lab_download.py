@@ -17,38 +17,30 @@ class TestLabDownload:
     # When using `import X`, you should use `X.Y` to patch.
     # https://docs.python.org/3/library/unittest.mock.html#where-to-patch?
     @patch("instructlab.model.download.hf_hub_download")
-    def test_download(self, mock_hf_hub_download):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(
-                lab.ilab,
-                [
-                    "--config=DEFAULT",
-                    "model",
-                    "download",
-                ],
-            )
-            assert (
-                result.exit_code == 0
-            ), "command finished with an unexpected exit code"
-            mock_hf_hub_download.assert_called_once()
+    def test_download(self, mock_hf_hub_download, cli_runner: CliRunner):
+        result = cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "model",
+                "download",
+            ],
+        )
+        assert result.exit_code == 0, "command finished with an unexpected exit code"
+        mock_hf_hub_download.assert_called_once()
 
     @patch(
         "instructlab.model.download.hf_hub_download",
         MagicMock(side_effect=HfHubHTTPError("Could not reach hugging face server")),
     )
-    def test_download_error(self):
-        runner = CliRunner()
-        with runner.isolated_filesystem():
-            result = runner.invoke(
-                lab.ilab,
-                [
-                    "--config=DEFAULT",
-                    "model",
-                    "download",
-                ],
-            )
-            assert (
-                result.exit_code == 1
-            ), "command finished with an unexpected exit code"
-            assert "Could not reach hugging face server" in result.output
+    def test_download_error(self, cli_runner: CliRunner):
+        result = cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "model",
+                "download",
+            ],
+        )
+        assert result.exit_code == 1, "command finished with an unexpected exit code"
+        assert "Could not reach hugging face server" in result.output

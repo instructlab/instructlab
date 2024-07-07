@@ -1,7 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
+# pylint: disable=redefined-outer-name
 
 # Standard
 from unittest import mock
+import os
+import pathlib
 import sys
 import typing
 
@@ -11,6 +14,8 @@ import pytest
 
 # Local
 from .taxonomy import MockTaxonomy
+
+TESTS_PATH = pathlib.Path(__file__).parent.absolute()
 
 
 @pytest.fixture
@@ -36,8 +41,35 @@ def mock_mlx_package():
 
 
 @pytest.fixture
-def cli_runner() -> typing.Generator[CliRunner, None, None]:
-    """Click CLI runner"""
+def tmp_path_home(tmp_path: pathlib.Path) -> typing.Generator[pathlib.Path, None, None]:
+    """Reset $HOME to tmp_path and unset $XDG_*
+
+    Yields `tmp_path` fixture path.
+    """
+    with mock.patch.dict(os.environ):
+        os.environ["HOME"] = str(tmp_path)
+        for key in list(os.environ):
+            if key.startswith("XDG_"):
+                os.environ.pop(key)
+        yield tmp_path
+
+
+@pytest.fixture
+def cli_runner(
+    tmp_path_home: pathlib.Path,
+) -> typing.Generator[CliRunner, None, None]:
+    """Click CLI runner
+
+    Run click's CliRunner with file system isolation (chdir), $HOME reset,
+    and $XDG_* unset. Yields runner instance with its temp dir inside
+    `tmp_path` fixture path.
+    """
     runner = CliRunner()
-    with runner.isolated_filesystem():
+    with runner.isolated_filesystem(temp_dir=tmp_path_home):
         yield runner
+
+
+@pytest.fixture
+def testdata_path() -> typing.Generator[pathlib.Path, None, None]:
+    """Path to local test data directory"""
+    yield TESTS_PATH / "testdata"
