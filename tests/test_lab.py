@@ -56,3 +56,36 @@ def test_ilab_cli_imports():
     code.append("import instructlab.lab")
 
     subprocess.check_call([sys.executable, "-c", "; ".join(code)], text=True)
+
+
+@pytest.mark.parametrize(
+    "first,second",
+    [
+        # split first and second level for nicer pytest output
+        (None, None),
+        ("config", None),
+        ("config", "init"),
+        ("model", None),
+        ("model", "chat"),
+        ("model", "convert"),
+        ("model", "download"),
+        ("model", "evaluate"),
+        ("model", "serve"),
+        ("model", "test"),
+        ("model", "train"),
+        ("data", None),
+        ("data", "generate"),
+        ("sysinfo", None),
+        ("taxonomy", None),
+        ("taxonomy", "diff"),
+    ],
+)
+def test_ilab_cli_help(first: str | None, second: str | None, cli_runner):
+    cmd = ["--config", "DEFAULT"]
+    if first is not None:
+        cmd.append(first)
+    if second is not None:
+        cmd.append(second)
+    cmd.append("--help")
+    result = cli_runner.invoke(lab.ilab, cmd)
+    assert result.exit_code == 0, result.stdout

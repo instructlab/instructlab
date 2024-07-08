@@ -22,6 +22,7 @@ def model(ctx):
 
     If this is your first time running ilab, it's best to start with `ilab config init` to create the environment.
     """
+    ctx.parent.obj.ensure_config(ctx)
     ctx.obj = ctx.parent.obj
     ctx.default_map = ctx.parent.default_map
 

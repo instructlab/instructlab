@@ -7,6 +7,9 @@ import typing
 # Third Party
 import click
 
+# First Party
+from instructlab import clickext
+
 # Local
 from ..utils import display_params, http_client
 
@@ -269,11 +272,14 @@ def launch_server(
 @click.option(
     "--model",
     type=click.STRING,
+    cls=clickext.ConfigOption,
     help="Model to be evaluated - can be a local path or the name of a Hugging Face repository",
 )
 @click.option(
     "--base-model",
     type=click.STRING,
+    cls=clickext.ConfigOption,
+    required=True,  # default from config
     help="Base model to compare with 'model' for mt_bench_branch and mmlu_branch - can be a local path or the name of a Hugging Face repository",
 )
 @click.option(
@@ -285,46 +291,62 @@ def launch_server(
 @click.option(
     "--judge-model",
     type=click.STRING,
+    cls=clickext.ConfigOption,
+    config_sections="mt_bench",
     help="Model to be used as a judge for running mt_bench or mt_bench_branch - can be a local path or the name of a Hugging Face repository",
 )
 @click.option(
     "--output-dir",
     type=click.Path(),
+    cls=clickext.ConfigOption,
+    config_sections="mt_bench",
     help="The directory to use for evaluation output from mt_bench or mt_bench_branch",
 )
 @click.option(
     "--max-workers",
     type=click.INT,
+    cls=clickext.ConfigOption,
+    config_sections="mt_bench",
     help="Max parallel workers to run the evaluation with for mt_bench or mt_bench_branch",
 )
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
+    cls=clickext.ConfigOption,
+    config_sections="mt_bench_branch",
     help="Taxonomy git repo path for running mt_bench_branch",
 )
 @click.option(
     "--branch",
     type=click.STRING,
+    cls=clickext.ConfigOption,
     help="Branch of taxonomy repo to eval QNAs against model",
 )
 @click.option(
     "--base-branch",
     type=click.STRING,
+    cls=clickext.ConfigOption,
     help="Base branch of taxonomy repo to eval QNAs against model for mt_bench_branch",
 )
 @click.option(
     "--few-shots",
     type=click.INT,
+    cls=clickext.ConfigOption,
+    config_sections="mmlu",
     help="Number of examples. Needed for running mmlu or mmlu_branch.",
 )
 @click.option(
     "--batch-size",
     type=click.INT,
+    cls=clickext.ConfigOption,
+    config_sections="mmlu",
     help="Number of GPUs. Needed for running mmlu or mmlu_branch.",
 )
 @click.option(
     "--sdg-path",
     type=click.Path(),
+    cls=clickext.ConfigOption,
+    config_sections="mmlu_branch",
     help="Path where all the MMLU Branch tasks are stored. Needed for running mmlu_branch.",
 )
 @click.option(

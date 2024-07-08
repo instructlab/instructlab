@@ -3,8 +3,10 @@
 # Standard
 from unittest import mock
 import sys
+import typing
 
 # Third Party
+from click.testing import CliRunner
 import pytest
 
 # Local
@@ -31,3 +33,11 @@ def mock_mlx_package():
     }
     with mock.patch.dict(sys.modules, mlx_modules):
         yield
+
+
+@pytest.fixture
+def cli_runner() -> typing.Generator[CliRunner, None, None]:
+    """Click CLI runner"""
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        yield runner
