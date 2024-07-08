@@ -56,16 +56,17 @@ The project currently supports the usage of the following runners for the E2E jo
 | [`e2e.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e.yml) | GitHub | N/A | 1 x NVIDIA Tesla T4 w/ 16 GB VRAM | Ubuntu |
 | [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | AWS | [`g4dn.2xlarge`](https://aws.amazon.com/ec2/instance-types/g4/) | 1 x NVIDIA Tesla T4 w/ 16 GB VRAM | CentOS Stream 9 |
 | [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | AWS |[`g5.2xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | 1 x NVIDIA A10G w/ 24 GB VRAM | CentOS Stream 9 |
+| [`e2e-nvidia-a10g-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x4.yml) | AWS |[`g5.12xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | 4 x NVIDIA A10G w/ 24 GB VRAM (98 GB) | CentOS Stream 9 |
 
 ### E2E Test Matrix
 
-| Area | Feature | [`e2e.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e.yml) | [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) |
+| Area | Feature | [`e2e.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e.yml) | [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | [`e2e-nvidia-a10g-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x4.yml) |
 | --- | --- | --- | --- | --- |
-| **Serving**  | llama-cpp                |✅|✅|✅|
-|              | vllm                     |❌|❌|❌|
-| **Generate** | simple                   |✅|✅|✅|
-|              | full                     |❌|❌|❌|
-| **Training** | legacy+Linux             |❌|❌|✅|
-|              | legacy+Linux+4-bit-quant |✅|✅|❌|
-|              | training-lib             |❌|❌|❌|
-| **Eval**     | eval                     |❌|❌|❌|
+| **Serving**  | llama-cpp                |✅|✅|✅|✅|
+|              | vllm                     |❌|❌|❌|❌|
+| **Generate** | simple                   |✅|✅|✅|❌|
+|              | full                     |❌|❌|❌|✅|
+| **Training** | legacy+Linux             |❌|❌|✅|❌|
+|              | legacy+Linux+4-bit-quant |✅|✅|❌|❌|
+|              | training-lib             |❌|❌|❌|❌|
+| **Eval**     | eval                     |❌|❌|❌|❌|
