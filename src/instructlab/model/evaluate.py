@@ -225,6 +225,7 @@ def launch_server(
     model,
     model_name,
     max_workers,
+    gpus,
 ) -> tuple:
     # pylint: disable=import-outside-toplevel
     # First Party
@@ -234,11 +235,23 @@ def launch_server(
         ctx.obj.config.serve.backend = backends.VLLM
     if ctx.obj.config.serve.backend == backends.VLLM:
         ctx.obj.config.serve.vllm.vllm_args.extend(["--served-model-name", model_name])
+        if gpus:
+            # Don't override from vllm_args
+            if "--tensor-parallel-size" not in ctx.obj.config.serve.vllm.vllm_args:
+                ctx.obj.config.serve.vllm.vllm_args.extend(
+                    ["--tensor-parallel-size", str(gpus)]
+                )
+            else:
+                click.echo(
+                    "Ignoring --gpus with --tensor-parallel-size configured in serve vllm_args"
+                )
     elif ctx.obj.config.serve.backend == backends.LLAMA_CPP:
         # mt_bench requires a larger context size
         ctx.obj.config.serve.llama_cpp.max_ctx_size = 5120
         # llama-cpp fails fast on too many incoming requests and returns errors to client
         ctx.obj.config.evaluate.mt_bench.max_workers = min(max_workers, 16)
+        if gpus:
+            logging.debug("Ignoring --gpus option for llama-cpp serving")
 
     ctx.obj.config.serve.model_path = model
 
@@ -315,6 +328,11 @@ def launch_server(
     help="Path where all the MMLU Branch tasks are stored. Needed for running mmlu_branch.",
 )
 @click.option(
+    "--gpus",
+    type=click.INT,
+    help="Number of GPUs to utilize for evaluation (not applicable to llama-cpp)",
+)
+@click.option(
     "--tls-insecure",
     is_flag=True,
     help="Disable TLS verification for model serving.",
@@ -355,6 +373,7 @@ def evaluate(
     few_shots,
     batch_size,
     sdg_path,
+    gpus,
     tls_insecure,  # pylint: disable=unused-argument
     tls_client_cert,  # pylint: disable=unused-argument
     tls_client_key,  # pylint: disable=unused-argument
@@ -385,6 +404,7 @@ def evaluate(
                 model,
                 TEST_MODEL_NAME,
                 max_workers,
+                gpus,
             )
             evaluator.gen_answers(api_base)
         finally:
@@ -398,6 +418,7 @@ def evaluate(
                 judge_model,
                 JUDGE_MODEL_NAME,
                 max_workers,
+                gpus,
             )
             # TODO: Change back to standard tuple handling after version bump in eval library
             judgment = evaluator.judge_answers(api_base)
@@ -459,6 +480,7 @@ def evaluate(
                     m_path,
                     m_name,
                     max_workers,
+                    gpus,
                 )
                 evaluator.gen_answers(api_base)
             finally:
@@ -472,6 +494,7 @@ def evaluate(
                 judge_model,
                 JUDGE_MODEL_NAME,
                 max_workers,
+                gpus,
             )
             for i, evaluator in enumerate(evaluators):
                 branch = branches[i]
