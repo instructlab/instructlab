@@ -21,6 +21,7 @@ FULLTRAIN=0
 BACKEND="llama-cpp"
 HF_TOKEN=${HF_TOKEN:-}
 SDG_PIPELINE="simple"
+SKIP_TRAIN=${SKIP_TRAIN:-0}
 
 export GREP_COLORS='mt=1;33'
 BOLD='\033[1m'
@@ -215,6 +216,16 @@ test_exec() {
     task Stopping the ilab model serve
     step Kill ilab model serve $PID
     kill $PID
+
+    if [ "$SKIP_TRAIN" -eq 1 ]; then
+        # TODO - Drop this later.
+        # This is only a temporary measure while we bootstrap different CI workflows.
+        # There are some larger environments where it only makes sense to test the new
+        # training workflow using the training library, but that is not yet integrated
+        # here. Skip training for those environments for now.
+        task Halting prior to running training "(SKIP_TRAIN=1)"
+        return
+    fi
 
     test_train
 
