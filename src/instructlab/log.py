@@ -70,6 +70,10 @@ def configure_logging(
     root.addHandler(stream)
     root.setLevel(log_level)
 
+    if log_level == "DEBUG":
+        # silence noisy modules
+        logging.getLogger("httpcore").setLevel(logging.INFO)
+        logging.getLogger("markdown_it").setLevel(logging.INFO)
     # Set logging level of OpenAI client and httpx library to ERROR to suppress INFO messages
     logging.getLogger("openai").setLevel(logging.ERROR)
     logging.getLogger("httpx").setLevel(logging.ERROR)
