@@ -313,20 +313,6 @@ def get_default_config() -> Config:
     )
 
 
-def get_default_map(config: Config) -> dict[str, typing.Any]:
-    """Get default map for Click"""
-    # default_map holds a dictionary with default values for each command parameters
-    config_dict = get_dict(config)
-    config_dict["evaluate"] = (
-        config_dict["evaluate"]
-        | config_dict["evaluate"].pop("mmlu")
-        | config_dict["evaluate"].pop("mmlu_branch")
-        | config_dict["evaluate"].pop("mt_bench")
-        | config_dict["evaluate"].pop("mt_bench_branch")
-    )
-    return config_dict
-
-
 def read_train_profile(train_file):
     try:
         with open(train_file, "r", encoding="utf-8") as yamlfile:
@@ -450,7 +436,7 @@ def init(ctx: click.Context, config_file: str | os.PathLike[str]) -> None:
 
     ctx.obj = Lab(config_obj, config_file, error_msg)
     if config_obj is not None:
-        ctx.default_map = get_default_map(config_obj)
+        ctx.default_map = get_dict(config_obj)
         log.configure_logging(log_level=config_obj.general.log_level.upper())
     else:
         ctx.default_map = None
