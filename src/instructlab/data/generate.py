@@ -7,8 +7,11 @@ import logging
 import click
 
 # First Party
-from instructlab import utils
+from instructlab import clickext
 from instructlab.configuration import DEFAULTS
+
+# Local
+from ..utils import http_client
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +139,7 @@ logger = logging.getLogger(__name__)
     help="Data generation pipeline to use. Available: simple, full. Note that 'full' requires a larger teacher model, Mixtral-8x7b.",
 )
 @click.pass_context
-@utils.display_params
+@clickext.display_params
 def generate(
     ctx,
     model,
@@ -164,9 +167,6 @@ def generate(
     # Third Party
     from instructlab.sdg.generate_data import generate_data
     from instructlab.sdg.utils import GenerateException
-
-    # Local
-    from ..utils import http_client
 
     prompt_file_path = DEFAULTS.PROMPT_FILE
     if ctx.obj is not None:

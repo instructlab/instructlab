@@ -308,7 +308,7 @@ DS_OPTIONS = "train_args.deepspeed_options"
     help="if true, enables the legacy linux training codepath from release 0.17.0 and prior.",
 )
 @click.pass_context
-@utils.display_params
+@clickext.display_params
 def train(
     ctx,
     data_path: str,

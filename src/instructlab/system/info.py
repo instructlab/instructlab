@@ -9,6 +9,9 @@ import typing
 # Third Party
 import click
 
+# First Party
+from instructlab import clickext
+
 
 def _platform_info() -> typing.Dict[str, typing.Any]:
     """Platform and machine information"""
@@ -140,6 +143,7 @@ def get_sysinfo() -> typing.Dict[str, typing.Any]:
 
 
 @click.command()
+@clickext.display_params
 def info():
     """Print system information"""
     for key, value in get_sysinfo().items():

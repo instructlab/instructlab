@@ -16,7 +16,7 @@ from instructlab import clickext
 from instructlab.model.backends import backends
 
 # Local
-from ..utils import display_params, http_client
+from ..utils import http_client
 
 if typing.TYPE_CHECKING:
     # Third Party
@@ -406,7 +406,7 @@ def launch_server(
     help="TLS client certificate password for model serving.",
 )
 @click.pass_context
-@display_params
+@clickext.display_params
 def evaluate(
     ctx,
     model,

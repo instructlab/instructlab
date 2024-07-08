@@ -530,29 +530,6 @@ def http_client(params):
     )
 
 
-def display_params(func):
-    """Display command parameters."""
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            if (logger.isEnabledFor(logging.DEBUG)) and (
-                ("quiet" not in kwargs) or (not kwargs["quiet"])
-            ):
-                print("===================using parameters ========================")
-                max_param_length = max(len(param) for param in kwargs)
-                for param_name, param_value in kwargs.items():
-                    print(
-                        f"{param_name}{' ' * (max_param_length - len(param_name)):s}: {param_value}"
-                    )
-                print("============================================================")
-        except Exception:
-            pass
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
 def split_hostport(hostport: str) -> tuple[str, int]:
     """Split server:port into server and port (IPv6 safe)"""
     if "//" not in hostport:

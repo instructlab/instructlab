@@ -26,7 +26,6 @@ import openai
 from instructlab import clickext
 from instructlab import client as ilabclient
 from instructlab import configuration as cfg
-from instructlab import utils
 
 # Local
 from ..utils import get_sysprompt, http_client
@@ -151,7 +150,7 @@ PROMPT_PREFIX = ">>> "
     help="Force model family to use when picking a chat template",
 )
 @click.pass_context
-@utils.display_params
+@clickext.display_params
 def chat(
     ctx,
     question,
