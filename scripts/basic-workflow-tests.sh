@@ -145,7 +145,7 @@ test_train() {
     task Train the model
 
     # TODO Only cuda for now
-    TRAIN_ARGS=("--legacy" "--device=cuda")
+    TRAIN_ARGS+=("--legacy" "--device=cuda")
     if [ "$FULLTRAIN" -eq 0 ]; then
         TRAIN_ARGS+=("--4-bit-quant")
     fi
