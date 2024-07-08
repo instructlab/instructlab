@@ -1,12 +1,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+from copy import deepcopy
 from pathlib import Path
 import logging
 import os
 import shutil
+import typing
 
 # Third Party
+from click import Context
+
 # pylint: disable=ungrouped-imports
 from instructlab.training import (
     DeepSpeedOptions,
@@ -20,6 +24,76 @@ import click
 from instructlab import utils
 
 logger = logging.getLogger(__name__)
+
+
+def map_args_and_final_to_training(
+    defaults: typing.MutableMapping[str, typing.Any],
+    overrides: typing.MutableMapping[str, typing.Any],
+) -> TrainingArgs:
+    """
+    Map the default training arguments to the user provided arguments.
+
+    """
+    # create and override the final with the user provided values
+    # pylint: disable=locally-disabled, unnecessary-comprehension # we want to copy the
+    final = deepcopy(defaults)
+    for k, v in overrides.items():
+        final[k] = v
+
+    training_args = TrainingArgs(
+        data_output_dir=final["data_output_dir"],
+        max_seq_len=final["max_seq_len"],
+        max_batch_len=final["max_batch_len"],
+        num_epochs=final["num_epochs"],
+        effective_batch_size=final["effective_batch_size"],
+        save_samples=final["save_samples"],
+        learning_rate=final["learning_rate"],
+        warmup_steps=final["warmup_steps"],
+        is_padding_free=final["is_padding_free"],
+        random_seed=final["random_seed"],
+        mock_data=final["mock_data"],
+        mock_data_len=final["mock_data_len"],
+        disable_flash_attn=final["disable_flash_attn"],
+    )
+
+    if final.get("deepspeed_options") is not None:
+        # technically deepspeed options is always present but we shouldn't assume anything
+        training_args.deepspeed_options = DeepSpeedOptions(
+            cpu_offload_optimizer=final["cpu_offload_optimizer"],
+            cpu_offload_optimizer_ratio=final["cpu_offload_optimizer_ratio"],
+            cpu_offload_optimizer_pin_memory=final["cpu_offload_optimizer_pin_memory"],
+            save_samples=final["save_samples_ds"],
+        )
+
+    if final.get("lora") is not None:
+        training_args.lora = LoraOptions(
+            rank=final["rank"],
+            alpha=final["alpha"],
+            dropout=final["dropout"],
+            target_modules=final["target_modules"],
+            quantize_data_type=final["quantize_data_type"],
+        )
+
+    return training_args
+
+
+def map_args_and_final_to_torchrun(
+    defaults: typing.MutableMapping[str, typing.Any],
+    overrides: typing.MutableMapping[str, typing.Any],
+) -> TorchrunArgs:
+    """
+    Constructs a `TorchrunArgs` object using the provided defaults and overrides.
+    """
+    final = deepcopy(defaults)
+    for k, v in overrides.items():
+        final[k] = v
+    return TorchrunArgs(
+        nproc_per_node=final["nproc_per_node"],
+        nnodes=final["nnodes"],
+        node_rank=final["node_rank"],
+        rdzv_id=final["rdzv_id"],
+        rdzv_endpoint=final["rdzv_endpoint"],
+    )
 
 
 @click.command()
@@ -184,7 +258,7 @@ logger = logging.getLogger(__name__)
 @click.pass_context
 @utils.display_params
 def train(
-    ctx,
+    ctx: Context,
     data_path,
     input_dir,
     skip_preprocessing,
@@ -204,6 +278,8 @@ def train(
     Takes synthetic data generated locally with `ilab data generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
+    print(ctx.params)
+    print(ctx.default_map)
     if not input_dir:
         # By default, generate output-dir is used as train input-dir
         input_dir = ctx.obj.config.generate.output_dir
@@ -403,22 +479,23 @@ def train(
             run_training,
         )
 
-        # pull the trainrandom.randinting and torch args from the flags
-        # the flags are populated from the config as a base.
-        params = ctx.params
-
         if os.path.isdir(data_path):
             click.secho(
                 f"Data path cannot be a directory. It must be a path to a valid jsonl file. Value given: {data_path}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
-        ds_args = DeepSpeedOptions(**params)
-        lora_args = LoraOptions(**params)
-        train_args = TrainingArgs(**params)
-        torch_args = TorchrunArgs(**params)
-        train_args.deepspeed_options = ds_args
-        train_args.lora = lora_args
+
+        assert (
+            ctx.default_map is not None
+        ), "default mapping in context object cannot be None"
+        assert ctx.params is not None, "params in context object cannot be None"
+        train_args = map_args_and_final_to_training(
+            defaults=ctx.default_map, overrides=ctx.params
+        )
+        torch_args = map_args_and_final_to_torchrun(
+            defaults=ctx.default_map, overrides=ctx.params
+        )
         try:
             run_training(train_args=train_args, torch_args=torch_args)
         # unsure what types of exceptions training library returns, this will catch all for now

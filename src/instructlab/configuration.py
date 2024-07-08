@@ -6,6 +6,7 @@ from re import match
 from typing import Optional
 import os
 import sys
+import typing
 
 # Third Party
 from instructlab.training import (
@@ -240,6 +241,32 @@ class Config(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 
+def flatten_config_dict(
+    config: dict[str, typing.Any], ignore_keys: list[str]
+) -> dict[str, typing.Any]:
+    """
+    Given a dictionary with nested config objects, flatten it into a single dictionary.
+    Ignore all of the keys provided in the ignore_keys list.
+    """
+    new_dict = {}
+    dicts_to_merge = [
+        config,
+    ]
+    # HACK(osilkin): keep this implementation here so we can catch any errors in the future
+    while 0 < len(dicts_to_merge):  # noqa: SIM300 // this is more readable for mathematical comparison
+        active_dict: dict[str, typing.Any] = dicts_to_merge.pop()
+        for k, v in active_dict.items():
+            if k in ignore_keys:
+                continue
+            if k in new_dict:
+                raise RuntimeError(f"key collision when merging training dicts: {k}")
+            if isinstance(v, dict):
+                dicts_to_merge.append(v)
+                continue
+            new_dict[k] = v
+    return new_dict
+
+
 def get_default_config():
     """Generates default configuration for CLI"""
     return Config(
@@ -415,23 +442,17 @@ def init(ctx, config_file):
         config_dict = get_dict(ctx.obj.config)
         # since torch and train args are sep, they need to be combined into a single `train` entity for the default map
         # this is because the flags for `ilab model train` will only be populated if the default map has a single `train` entry, not two.
-        config_dict["train"] = (
-            config_dict["train"]["train_args"]
-            | config_dict["train"]["torch_args"]
-            | config_dict["train"]["train_args"]["lora"]
-            | config_dict["train"]["train_args"]["deepspeed_options"]
-        )
-        config_dict["evaluate"] = (
-            config_dict["evaluate"]
-            | config_dict["evaluate"]["mmlu"]
-            | config_dict["evaluate"]["mmlu_branch"]
-            | config_dict["evaluate"]["mt_bench"]
-            | config_dict["evaluate"]["mt_bench_branch"]
-        )
-        # need to delete the individual sub-classes from the map
-        del config_dict["evaluate"]["mmlu"]
-        del config_dict["evaluate"]["mmlu_branch"]
-        del config_dict["evaluate"]["mt_bench"]
-        del config_dict["evaluate"]["mt_bench_branch"]
+
+        save_samples_hf = config_dict["train"]["train_args"]["save_samples"]
+        save_samples_ds = config_dict["train"]["train_args"]["deepspeed_options"][
+            "save_samples"
+        ]
+        new_training_dict = flatten_config_dict(config_dict["train"], ["save_samples"])
+        new_training_dict["save_samples"] = save_samples_hf
+        new_training_dict["save_samples_ds"] = save_samples_ds
+        config_dict["train"] = new_training_dict
+
+        new_eval_dict = flatten_config_dict(config_dict["evaluate"], [])
+        config_dict["evaluate"] = new_eval_dict
 
         ctx.default_map = config_dict
