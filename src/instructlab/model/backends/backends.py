@@ -28,6 +28,8 @@ from ...configuration import _serve as serve_config
 from ...configuration import get_api_base
 from ...utils import split_hostport
 
+logger = logging.getLogger(__name__)
+
 LLAMA_CPP = "llama-cpp"
 VLLM = "vllm"
 SUPPORTED_BACKENDS = frozenset({LLAMA_CPP, VLLM})
@@ -61,13 +63,11 @@ class BackendServer(abc.ABC):
 
     def __init__(
         self,
-        logger: logging.Logger,
         model_path: pathlib.Path,
         api_base: str,
         host: str,
         port: int,
     ) -> None:
-        self.logger = logger
         self.model_path = model_path
         self.api_base = api_base
         self.host = host
@@ -140,11 +140,10 @@ def determine_backend(model_path: pathlib.Path) -> str:
     raise ValueError(f"The model file {model_path} is not a GGUF format. Unsupported.")
 
 
-def get(logger: logging.Logger, model_path: pathlib.Path, backend: str | None) -> str:
+def get(model_path: pathlib.Path, backend: str | None) -> str:
     """
     Get the backend to use based on the model file properties.
     Args:
-        logger (Logger): The logger to use.
         model_path (Path): The path to the model file.
         backend (str): The backend that might have been pass to the CLI or set in config file.
     Returns:
@@ -196,7 +195,6 @@ def shutdown_process(process: subprocess.Popen, timeout: int) -> None:
 
 
 def ensure_server(
-    logger: logging.Logger,
     backend: str,
     api_base: str,
     http_client=None,
@@ -317,7 +315,7 @@ def get_uvicorn_config(app: fastapi.FastAPI, host: str, port: int) -> Config:
     )
 
 
-def select_backend(logger: logging.Logger, cfg: serve_config) -> BackendServer:
+def select_backend(cfg: serve_config) -> BackendServer:
     # Local
     from .llama_cpp import Server as llama_cpp_server
     from .vllm import Server as vllm_server
@@ -325,7 +323,7 @@ def select_backend(logger: logging.Logger, cfg: serve_config) -> BackendServer:
     model_path = pathlib.Path(cfg.model_path)
     backend_name = cfg.backend
     try:
-        backend = get(logger, model_path, backend_name)
+        backend = get(model_path, backend_name)
     except ValueError as e:
         click.secho(f"Failed to determine backend: {e}", fg="red")
         raise click.exceptions.Exit(1)
@@ -335,7 +333,6 @@ def select_backend(logger: logging.Logger, cfg: serve_config) -> BackendServer:
     if backend == LLAMA_CPP:
         # Instantiate the llama server
         return llama_cpp_server(
-            logger=logger,
             api_base=cfg.api_base(),
             model_path=model_path,
             gpu_layers=cfg.llama_cpp.gpu_layers,
@@ -348,7 +345,6 @@ def select_backend(logger: logging.Logger, cfg: serve_config) -> BackendServer:
     if backend == VLLM:
         # Instantiate the vllm server
         return vllm_server(
-            logger=logger,
             api_base=cfg.api_base(),
             model_path=model_path,
             vllm_args=cfg.vllm.vllm_args,

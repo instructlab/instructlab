@@ -29,11 +29,12 @@ from .backends import (
     templates,
 )
 
+logger = logging.getLogger(__name__)
+
 
 class Server(BackendServer):
     def __init__(
         self,
-        logger: logging.Logger,
         model_path: pathlib.Path,
         model_family: str,
         api_base: str,
@@ -43,7 +44,7 @@ class Server(BackendServer):
         max_ctx_size: int,
         num_threads: Optional[int],
     ):
-        super().__init__(logger, model_path, api_base, host, port)
+        super().__init__(model_path, api_base, host, port)
         self.model_family = model_family
         self.gpu_layers = gpu_layers
         self.max_ctx_size = max_ctx_size
@@ -55,7 +56,6 @@ class Server(BackendServer):
         """Start an OpenAI-compatible server with llama-cpp"""
         try:
             server(
-                server_logger=self.logger,
                 model_path=self.model_path,
                 gpu_layers=self.gpu_layers,
                 max_ctx_size=self.max_ctx_size,
@@ -70,15 +70,10 @@ class Server(BackendServer):
     def create_server_process(self, port: int) -> multiprocessing.Process:
         mpctx = multiprocessing.get_context(None)
         self.queue = mpctx.Queue()
-        host_port = f"{self.host}:{self.port}"
-        # create a temporary, throw-away logger
-        server_logger = logging.getLogger(host_port)
-        server_logger.setLevel(logging.FATAL)
 
         server_process = mpctx.Process(
             target=server,
             kwargs={
-                "server_logger": server_logger,
                 "model_path": self.model_path,
                 "gpu_layers": self.gpu_layers,
                 "max_ctx_size": self.max_ctx_size,
@@ -94,7 +89,6 @@ class Server(BackendServer):
     def run_detached(self, http_client: httpx.Client | None = None) -> str:
         try:
             llama_cpp_server_process, _, api_base = ensure_server(
-                logger=self.logger,
                 backend=LLAMA_CPP,
                 api_base=self.api_base,
                 http_client=http_client,
@@ -119,7 +113,6 @@ class Server(BackendServer):
 
 
 def server(
-    server_logger: logging.Logger,
     model_path: pathlib.Path,
     gpu_layers: int,
     max_ctx_size: int,
@@ -136,7 +129,7 @@ def server(
         model=model_path.as_posix(),
         n_ctx=max_ctx_size,
         n_gpu_layers=gpu_layers,
-        verbose=server_logger.isEnabledFor(logging.DEBUG),
+        verbose=logger.isEnabledFor(logging.DEBUG),
     )
     if threads is not None:
         settings.n_threads = threads
@@ -179,8 +172,8 @@ def server(
             return
         raise ServerException(f"failed creating the server application: {exc}") from exc
 
-    server_logger.info("Starting server process, press CTRL+C to shutdown server...")
-    server_logger.info(
+    logger.info("Starting server process, press CTRL+C to shutdown server...")
+    logger.info(
         f"After application startup complete see http://{host}:{port}/docs for API."
     )
 
