@@ -46,6 +46,7 @@ def get_evaluator(
     few_shots,
     batch_size,
     sdg_path,
+    merge_system_user_message,
 ) -> "Evaluator":
     """takes in arguments from the CLI and uses 'benchmark' to validate other arguments
     if all needed configuration is present, returns the appropriate Evaluator class for the benchmark
@@ -92,7 +93,11 @@ def get_evaluator(
         evaluator_class = benchmark_map[benchmark]
         if benchmark == Benchmark.MT_BENCH:
             return evaluator_class(
-                TEST_MODEL_NAME, JUDGE_MODEL_NAME, output_dir, max_workers
+                TEST_MODEL_NAME,
+                JUDGE_MODEL_NAME,
+                output_dir,
+                max_workers,
+                merge_system_user_message=merge_system_user_message,
             )
         return evaluator_class(
             TEST_MODEL_NAME,
@@ -101,6 +106,7 @@ def get_evaluator(
             branch,
             output_dir,
             max_workers,
+            merge_system_user_message=merge_system_user_message,
         )
 
     # ensure knowledge benchmarks have proper arguments if selected
@@ -355,6 +361,11 @@ def launch_server(
     help="Number of GPUs to utilize for evaluation (not applicable to llama-cpp)",
 )
 @click.option(
+    "--merge-system-user-message",
+    is_flag=True,
+    help="Indicates whether to merge system and user message for mt_bench and mt_bench_branch (required for Mistral based judges)",
+)
+@click.option(
     "--tls-insecure",
     is_flag=True,
     help="Disable TLS verification for model serving.",
@@ -396,6 +407,7 @@ def evaluate(
     batch_size,
     sdg_path,
     gpus,
+    merge_system_user_message,
     tls_insecure,  # pylint: disable=unused-argument
     tls_client_cert,  # pylint: disable=unused-argument
     tls_client_key,  # pylint: disable=unused-argument
@@ -415,6 +427,7 @@ def evaluate(
         few_shots,
         batch_size,
         sdg_path,
+        merge_system_user_message,
     )
 
     if benchmark == Benchmark.MT_BENCH:
@@ -480,6 +493,7 @@ def evaluate(
                 base_branch,
                 output_dir,
                 max_workers,
+                merge_system_user_message=merge_system_user_message,
             ),
         ]
         branches = [branch, base_branch]
