@@ -602,8 +602,9 @@ def init(ctx: click.Context, config_file: str | os.PathLike[str]) -> None:
         # subtly get the additional args per cfg section
         # if any are missing, add in sane defaults
         train_additional = ctx.default_map["train"]["additional_args"]
-        serve_vllm_additional = ctx.default_map["serve"]["vllm"]["vllm_additional_args"]
+        serve_additional = ctx.default_map["serve"]["additional_args"]
         ctx.default_map["train"]["additional_args"] = finish_additional_train_args(train_additional)
+        ctx.default_map["serve"]["additional_args"] = finish_additional_serve_args(serve_additional)
         print(ctx.default_map)
         log.configure_logging(log_level=config_obj.general.log_level.upper())
     else:
@@ -655,5 +656,15 @@ def finish_additional_train_args(current_additional):
 
     return current_additional
 
-def finish_additional_serve_vllm_args(current_additional):
-    print()
+def finish_additional_serve_args(current_additional):
+    additional_args_and_defaults = {
+        "vllm_background": False,
+        "startup_timeout": 300,
+        "shutdown_timeout": 60,
+    }
+
+    for key in additional_args_and_defaults:
+        if key not in current_additional:
+            current_additional[key] = additional_args_and_defaults[key]
+
+    return current_additional

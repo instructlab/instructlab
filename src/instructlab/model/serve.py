@@ -105,6 +105,17 @@ logger = logging.getLogger(__name__)
     cls=clickext.ConfigOption,
 )
 @click.option(
+    "--vllm-background",
+    cls=clickext.ConfigOption,
+    config_sections="additional_args",
+    type=bool,
+)
+@click.option(
+    "--startup-timeout",
+    cls=clickext.ConfigOption,
+    config_sections="additional_args"
+)
+@click.option(
     "--vllm-args",
     "vllm_additional_args",
     cls=clickext.ConfigOption,
