@@ -7,6 +7,7 @@ from unittest.mock import patch
 import os
 import platform
 import sys
+import typing
 
 # Third Party
 from click.testing import CliRunner
@@ -14,6 +15,7 @@ import pytest
 
 # First Party
 from instructlab import lab
+from instructlab.configuration import DEFAULTS
 from instructlab.train import linux_train
 
 INPUT_DIR = "test_generated"
@@ -29,32 +31,35 @@ MODEL_DIR = "model"
 ENCODING = "UTF-8"
 
 
-def setup_input_dir():
-    os.mkdir(INPUT_DIR)
-    for f_path in ["/train_1.jsonl", "/test_1.jsonl"]:
-        with open(INPUT_DIR + f_path, "w", encoding=ENCODING):
+def setup_input_dir(root: typing.Optional[str] = None):
+    input_dir = root if root else INPUT_DIR
+    os.makedirs(input_dir)
+    for f_path in ["train_1.jsonl", "test_1.jsonl"]:
+        print(f"Creating {os.path.join(input_dir, f_path)}")
+        with open(os.path.join(input_dir, f_path), "w", encoding=ENCODING):
             pass
 
 
 def setup_linux_dir():
     os.makedirs(CHECKPOINT_DIR)
     for f_path in [
-        "/added_tokens.json",
-        "/special_tokens_map.json",
-        "/tokenizer.json",
-        "/tokenizer.model",
-        "/tokenizer_config.json",
+        "added_tokens.json",
+        "special_tokens_map.json",
+        "tokenizer.json",
+        "tokenizer.model",
+        "tokenizer_config.json",
     ]:
-        with open(CHECKPOINT_DIR + f_path, "w", encoding=ENCODING) as f:
+        with open(os.path.join(CHECKPOINT_DIR, f_path), "w", encoding=ENCODING) as f:
             f.write("{}")
     os.makedirs(MERGED_MODEL_DIR)
-    for f_path in ["/config.json", "/generation_config.json", "/1.safetensors"]:
-        with open(MERGED_MODEL_DIR + f_path, "w", encoding=ENCODING) as f:
+    for f_path in ["config.json", "generation_config.json", "1.safetensors"]:
+        with open(os.path.join(MERGED_MODEL_DIR, f_path), "w", encoding=ENCODING) as f:
             f.write("{}")
 
 
-def setup_load():
-    os.makedirs(MODEL_DIR)
+def setup_load(root: typing.Optional[str] = None):
+    model_dir = os.path.join(root, MODEL_DIR) if root else MODEL_DIR
+    os.makedirs(model_dir)
 
 
 def is_arm_mac():
@@ -95,7 +100,7 @@ class TestLabTrain:
         load_and_train_mock.assert_called_once()
         assert load_and_train_mock.call_args[1]["model"] is not None
         assert load_and_train_mock.call_args[1]["train"]
-        assert load_and_train_mock.call_args[1]["data"] == Path("taxonomy_data")
+        assert load_and_train_mock.call_args[1]["data"] == DEFAULTS.DATASETS_DIR
         assert load_and_train_mock.call_args[1]["adapter_file"] is not None
         assert load_and_train_mock.call_args[1]["iters"] == 100
         assert load_and_train_mock.call_args[1]["save_every"] == 10
@@ -108,7 +113,7 @@ class TestLabTrain:
         assert not convert_between_mlx_and_pytorch_mock.call_args[1]["local"]
         assert len(convert_between_mlx_and_pytorch_mock.call_args[1]) == 4
         make_data_mock.assert_called_once()
-        assert make_data_mock.call_args[1]["data_dir"] == Path("taxonomy_data")
+        assert make_data_mock.call_args[1]["data_dir"] == DEFAULTS.DATASETS_DIR
         assert len(make_data_mock.call_args[1]) == 1
         is_macos_with_m_chip_mock.assert_called_once()
 
@@ -209,7 +214,7 @@ class TestLabTrain:
         side_effect=FileNotFoundError(),
     )
     def test_invalid_data_dir_synthetic(
-        self, make_data_mock, is_macos_with_m_chip_mock, cli_runner
+        self, make_data_mock, is_macos_with_m_chip_mock, cli_runner: CliRunner
     ):
         os.mkdir(INPUT_DIR)  # Leave out the test and train files
         result = cli_runner.invoke(
@@ -280,8 +285,8 @@ class TestLabTrain:
         is_macos_with_m_chip_mock,
         cli_runner: CliRunner,
     ):
-        setup_input_dir()
-        setup_load()
+        setup_input_dir(DEFAULTS.DATASETS_DIR)
+        setup_load(DEFAULTS.CHECKPOINTS_DIR)
         result = cli_runner.invoke(
             lab.ilab,
             [
@@ -290,7 +295,7 @@ class TestLabTrain:
                 "train",
                 "--legacy",
                 "--input-dir",
-                INPUT_DIR,
+                DEFAULTS.DATASETS_DIR,
                 "--tokenizer-dir",
                 "tokenizer",
                 "--gguf-model-path",
@@ -326,8 +331,8 @@ class TestLabTrain:
         is_macos_with_m_chip_mock,
         cli_runner: CliRunner,
     ):
-        setup_input_dir()
-        setup_load()
+        setup_input_dir(DEFAULTS.DATASETS_DIR)
+        setup_load(DEFAULTS.CHECKPOINTS_DIR)
         result = cli_runner.invoke(
             lab.ilab,
             [
@@ -336,7 +341,7 @@ class TestLabTrain:
                 "train",
                 "--legacy",
                 "--input-dir",
-                INPUT_DIR,
+                DEFAULTS.DATASETS_DIR,
                 "--tokenizer-dir",
                 "tokenizer",
                 "--gguf-model-path",
@@ -346,6 +351,7 @@ class TestLabTrain:
                 "--local",
             ],
         )
+        print(result.output)
         assert result.exit_code == 0
         load_mock.assert_called_once()
         load_and_train_mock.assert_called_once()
@@ -390,10 +396,10 @@ class TestLabTrain:
         linux_train_mock.assert_called_once()
         print(linux_train_mock.call_args[1])
         assert linux_train_mock.call_args[1]["train_file"] == Path(
-            "taxonomy_data/train_gen.jsonl"
+            os.path.join(DEFAULTS.DATASETS_DIR, "train_gen.jsonl")
         )
         assert linux_train_mock.call_args[1]["test_file"] == Path(
-            "taxonomy_data/test_gen.jsonl"
+            os.path.join(DEFAULTS.DATASETS_DIR, "test_gen.jsonl")
         )
         assert linux_train_mock.call_args[1]["num_epochs"] == 10
         assert linux_train_mock.call_args[1]["train_device"] is not None

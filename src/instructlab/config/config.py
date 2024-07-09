@@ -1,11 +1,11 @@
 # SPDX-License-Identifier: Apache-2.0
-
 # Third Party
 from click_didyoumean import DYMGroup
 import click
 
 # Local
 from .init import init
+from .show import show
 
 
 @click.group(cls=DYMGroup)
@@ -22,3 +22,4 @@ def config(ctx):
 
 
 config.add_command(init)
+config.add_command(show)

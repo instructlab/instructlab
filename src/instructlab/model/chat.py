@@ -118,7 +118,7 @@ PROMPT_PREFIX = ">>> "
 @click.option(
     "--api-key",
     type=click.STRING,
-    default=cfg.DEFAULT_API_KEY,  # Note: do not expose default API key
+    default=cfg.DEFAULTS.API_KEY,  # Note: do not expose default API key
     help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
 )
 @click.option(
@@ -207,8 +207,8 @@ def chat(
         # from the config is the same as the default value, then the user didn't provide a value
         # we then compare it with the value from the server to see if it's different
         if (
-            model == cfg.DEFAULT_MODEL
-            and ctx.obj.config.chat.model == cfg.DEFAULT_MODEL
+            model == cfg.DEFAULTS.DEFAULT_MODEL
+            and ctx.obj.config.chat.model == cfg.DEFAULTS.DEFAULT_MODEL
             and api_base == ctx.obj.config.serve.api_base()
         ):
             try:
@@ -683,7 +683,7 @@ def chat_cli(
     client = OpenAI(
         base_url=api_base,
         api_key=ctx.params["api_key"],
-        timeout=cfg.DEFAULT_CONNECTION_TIMEOUT,
+        timeout=cfg.DEFAULTS.CONNECTION_TIMEOUT,
         http_client=http_client(ctx.params),
     )
     # ensure the model specified exists on the server. with backends like vllm, this is crucial.
@@ -695,7 +695,7 @@ def chat_cli(
     for m in model_list:
         model_ids.append(m.id)
     if not any(model == m for m in model_ids):
-        if model == cfg.DEFAULT_MODEL_OLD:
+        if model == cfg.DEFAULTS.MODEL_NAME:
             logger.info(
                 f"Model {model} is not a full path. Try running ilab config init or edit your config to have the full model path for serving, chatting, and generation."
             )

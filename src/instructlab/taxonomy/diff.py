@@ -10,8 +10,8 @@ import click
 import yaml
 
 # First Party
-from instructlab import configuration as config
 from instructlab import utils
+from instructlab.configuration import DEFAULTS
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,9 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
-    help=f"Path to {config.DEFAULT_TAXONOMY_REPO} clone or local file path.",
+    help="Path to where the taxonomy is stored locally.",
+    default=lambda: DEFAULTS.TAXONOMY_DIR,
+    show_default="Default taxonomy location in the instructlab data directory.",
 )
 @click.option(
     "--taxonomy-base",

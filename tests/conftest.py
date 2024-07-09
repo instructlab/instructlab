@@ -12,6 +12,9 @@ import typing
 from click.testing import CliRunner
 import pytest
 
+# First Party
+from instructlab.configuration import DEFAULTS
+
 # Local
 from .taxonomy import MockTaxonomy
 
@@ -51,6 +54,8 @@ def tmp_path_home(tmp_path: pathlib.Path) -> typing.Generator[pathlib.Path, None
         for key in list(os.environ):
             if key.startswith("XDG_"):
                 os.environ.pop(key)
+
+        DEFAULTS._reset()  # resets the config defaults to use the new $HOME
         yield tmp_path
 
 

@@ -24,6 +24,7 @@ numpy>=1.23.5,<2.0.0 ; python_version == '3.10'
 numpy>=1.26.4,<2.0.0 ; python_version != '3.10'
 openai>=1.13.3
 peft>=0.9.0
+platformdirs>=4.2
 prompt-toolkit>=3.0.38
 pydantic>=2.7.4
 pydantic_yaml>=1.2.0
