@@ -69,7 +69,6 @@ The following tools are required:
 - [`expect`](https://core.tcl-lang.org/expect/index) (for functional tests)
 - [`coreutils`](https://www.gnu.org/software/coreutils/) (for functional tests)
 - [`bash`](https://www.gnu.org/software/bash/) (v5+, for functional tests)
-- [`yq`](https://github.com/mikefarah/yq) (v4.44+, for functional tests)
 
 You can setup your dev environment using [`tox`](https://tox.wiki/en/latest/), an environment orchestrator which allows for setting up environments for and invoking builds, unit tests, formatting, linting, etc. Install tox with:
 
