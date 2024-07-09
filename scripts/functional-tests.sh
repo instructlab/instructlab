@@ -314,7 +314,7 @@ test_temp_server(){
         set timeout 120
         spawn ilab model chat
         expect {
-            "Starting a temporary server at" { exit 0 }
+            "Trying to connect to model server at" { exit 0 }
             timeout { exit 1 }
         }
     '
@@ -324,7 +324,7 @@ test_temp_server_sigint(){
     expect -c '
         set timeout 120
         spawn ilab model chat
-        expect "Starting a temporary server at"
+        expect "Trying to connect to model server at"
         send "hello!\r"
         sleep 5
         send "\003"
@@ -342,7 +342,7 @@ test_no_chat_logs(){
     expect -c '
         set timeout 120
         spawn ilab model chat
-        expect "Starting a temporary server at"
+        expect "Trying to connect to model server at"
         send "hello!\r"
         sleep 1
         expect {
