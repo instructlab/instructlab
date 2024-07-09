@@ -22,6 +22,7 @@ BACKEND="llama-cpp"
 HF_TOKEN=${HF_TOKEN:-}
 SDG_PIPELINE="simple"
 SKIP_TRAIN=${SKIP_TRAIN:-0}
+EVAL=0
 
 export GREP_COLORS='mt=1;33'
 BOLD='\033[1m'
@@ -93,6 +94,10 @@ test_download() {
     else
         step Downloading the default model
         ilab model download
+    fi
+
+    if [ "$EVAL" -eq 1 ]; then
+        step Downloading a model to use with evaluation
         ilab model download --repository instructlab/granite-7b-lab
     fi
 }
