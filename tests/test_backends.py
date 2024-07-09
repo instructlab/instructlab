@@ -1,6 +1,8 @@
 # Standard
 from unittest import mock
 from unittest.mock import patch
+import json
+import os
 import pathlib
 import socket
 import sys
@@ -13,6 +15,27 @@ import pytest
 from instructlab import lab
 from instructlab.model.backends import backends
 from instructlab.model.backends.vllm import build_vllm_cmd
+
+
+# helper function to create dummy valid and invalid safetensor model directories
+def create_safetensors_model_files(safetensors_model_path: pathlib.Path, valid: bool):
+    test_json_dict = {"a": 1, "b": 2}
+    json_object = json.dumps(test_json_dict, indent=4)
+
+    for file in ["config.json", "tokenizer.json", "tokenizer_config.json"]:
+        os.makedirs(os.path.dirname(safetensors_model_path / file), exist_ok=True)
+        with open(safetensors_model_path / file, "a+", encoding="UTF-8") as f:
+            f.write(json_object)
+
+    with open(
+        safetensors_model_path / "model.safetensors", "a+", encoding="UTF-8"
+    ) as f:
+        f.write("")
+    if valid:
+        with open(
+            safetensors_model_path / "tokenizer.model", "a+", encoding="UTF-8"
+        ) as f:
+            f.write("")
 
 
 def test_free_port():
@@ -49,33 +72,68 @@ def test_get_backend_auto_detection_success_gguf(
     m_is_model_gguf.assert_called_once_with(tmp_gguf)
 
 
-# this test fails because the model_path is a directory but the platform is not linux
-@patch("sys.platform", "darwin")
-def test_get_backend_auto_detection_failure_vllm_dir_but_not_linux(
-    tmp_path: pathlib.Path,
+# this tests both cases where a valid and invalid safetensors model directory is supplied
+@pytest.mark.parametrize(
+    "safetensors_dir,expected",
+    [
+        (
+            "valid_safetensors_model_dir",
+            True,
+        ),
+        (
+            "invalid_safetensors_model_dir",
+            False,
+        ),
+    ],
+)
+def test_is_model_safetensors_valid(
+    safetensors_dir: str, expected: bool, tmp_path: pathlib.Path
 ):
-    with pytest.raises(ValueError) as exc_info:
-        backends.get(tmp_path, None)
-    assert "Cannot determine which backend to use" in str(exc_info.value)
+    safetensors_model_path = tmp_path / safetensors_dir
+    create_safetensors_model_files(safetensors_model_path, expected)
+
+    val = backends.is_model_safetensors(safetensors_model_path)
+    assert val == expected
 
 
-# this test succeeds because the model_path is a directory and the platform is linux so vllm is
+# this test succeeds because the model_path is a valid safetensors directory and the platform is linux so vllm is
 # picked
 @patch("sys.platform", "linux")
-def test_get_backend_auto_detection_success_vllm_dir(tmp_path: pathlib.Path):
-    backend = backends.get(tmp_path, None)
-    assert backend == "vllm"
+@pytest.mark.parametrize(
+    "safetensors_dir,expected",
+    [
+        (
+            "valid_safetensors_model_dir",
+            "vllm",
+        ),
+    ],
+)
+def test_get_backend_auto_detection_success_vllm_dir(
+    safetensors_dir: str, expected: str, tmp_path: pathlib.Path
+):
+    safetensors_model_path = tmp_path / safetensors_dir
+    create_safetensors_model_files(safetensors_model_path, True)
+
+    backend = backends.get(safetensors_model_path, None)
+    assert backend == expected
 
 
 # this test fails because the OS is darwin and a directory is passed, only works on Linux
 @patch("sys.platform", "darwin")
-def test_get_backend_auto_detection_failed_vllm_dir_darwin(tmp_path: pathlib.Path):
+@pytest.mark.parametrize(
+    "safetensors_dir",
+    [
+        ("valid_safetensors_model_dir"),
+    ],
+)
+def test_get_backend_auto_detection_failed_vllm_dir_darwin(
+    safetensors_dir: str, tmp_path: pathlib.Path
+):
     with pytest.raises(ValueError) as exc_info:
-        backends.get(tmp_path, None)
-    assert (
-        "Model is a directory containing huggingface safetensors files but the system is not Linux."
-        in str(exc_info.value)
-    )
+        safetensors_model_path = tmp_path / safetensors_dir
+        create_safetensors_model_files(safetensors_model_path, True)
+        backends.get(safetensors_model_path, None)
+    assert "Cannot determine which backend to use" in str(exc_info.value)
 
 
 # this test succeeds even if the auto-detection picked a different backend, we continue with what
