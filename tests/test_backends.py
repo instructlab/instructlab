@@ -1,12 +1,15 @@
 # Standard
+from unittest import mock
 from unittest.mock import patch
 import pathlib
 import socket
 
 # Third Party
+from click.testing import CliRunner
 import pytest
 
 # First Party
+from instructlab import lab
 from instructlab.model.backends import backends
 
 
@@ -83,3 +86,66 @@ def test_get_forced_backend_fails_autodetection(m_determine_backend):
     backend = backends.get("", "llama-cpp")
     assert backend == "llama-cpp"
     m_determine_backend.assert_called_once()
+
+
+@mock.patch("instructlab.model.backends.vllm.Server")
+@mock.patch("instructlab.model.backends.backends.get", return_value=backends.VLLM)
+def test_ilab_vllm_args(
+    m_backends_get: mock.Mock,
+    m_server: mock.Mock,
+    tmp_path: pathlib.Path,
+    cli_runner: CliRunner,
+):
+    cmd = [
+        "--config",
+        "DEFAULT",
+        "model",
+        "serve",
+        "--model-path",
+        str(tmp_path),
+        "--backend",
+        backends.VLLM,
+        "--",
+        "--enable_lora",
+    ]
+    result = cli_runner.invoke(lab.ilab, cmd)
+    assert result.exit_code == 0, result.stdout
+    m_backends_get.assert_called_once_with(tmp_path, backends.VLLM)
+    m_server.assert_called_once_with(
+        api_base="http://127.0.0.1:8000/v1",
+        model_path=tmp_path,
+        vllm_args=["--enable_lora"],
+        host="127.0.0.1",
+        port=8000,
+    )
+
+
+@mock.patch("instructlab.model.backends.llama_cpp.Server")
+@mock.patch("instructlab.model.backends.backends.get", return_value=backends.LLAMA_CPP)
+def test_ilab_llama_cpp_args(
+    m_backends_get: mock.Mock, m_server: mock.Mock, cli_runner: CliRunner
+):
+    gguf = pathlib.Path("test.gguf")
+    cmd = [
+        "--config",
+        "DEFAULT",
+        "model",
+        "serve",
+        "--model-path",
+        str(gguf),
+        "--backend",
+        backends.LLAMA_CPP,
+    ]
+    result = cli_runner.invoke(lab.ilab, cmd)
+    assert result.exit_code == 0, result.stdout
+    m_backends_get.assert_called_once_with(gguf, backends.LLAMA_CPP)
+    m_server.assert_called_once_with(
+        api_base="http://127.0.0.1:8000/v1",
+        model_path=gguf,
+        model_family=None,
+        host="127.0.0.1",
+        port=8000,
+        gpu_layers=-1,
+        max_ctx_size=4096,
+        num_threads=None,
+    )
