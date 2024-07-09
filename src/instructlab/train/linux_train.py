@@ -33,6 +33,9 @@ from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 import click
 import torch
 
+# First Party
+from instructlab.utils import ensure_legacy_dataset
+
 # Local
 from ..model.chat import CONTEXTS
 
@@ -222,6 +225,12 @@ def linux_train(
     )
 
     test_dataset = load_dataset("json", data_files=os.fspath(test_file), split="train")
+    try:
+        train_dataset = ensure_legacy_dataset(train_dataset)
+        test_dataset = ensure_legacy_dataset(test_dataset)
+    except ValueError:
+        ctx.fail("failed to run training, dataset appears to be empty")
+
     train_dataset.to_pandas().head()
 
     # https://huggingface.co/docs/transformers/en/model_doc/auto#transformers.AutoTokenizer.from_pretrained

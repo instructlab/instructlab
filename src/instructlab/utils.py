@@ -44,6 +44,37 @@ class TaxonomyReadingException(Exception):
     """An exception raised during reading of the taxonomy."""
 
 
+class Message(TypedDict):
+    """
+    Represents a message within an AI conversation.
+    """
+
+    content: str
+    role: str  # one of: 'user', 'assistant', or 'system'
+
+
+class MessageSample(TypedDict):
+    """
+    Represents a sample datapoint for a dataset using the HuggingFace messages format.
+    """
+
+    messages: List[Message]
+    group: str
+    dataset: str
+    metadata: str
+
+
+class LegacyMessageSample(TypedDict):
+    """
+    Represents a legacy message sample within an AI conversation.
+    This is what is currently used by the legacy training methods such as Linux training and MacOS training.
+    """
+
+    system: str
+    user: str
+    assistant: str
+
+
 def macos_requirement(echo_func, exit_exception):
     """Adds a check for MacOS before running a method.
 
@@ -564,3 +595,53 @@ def split_hostport(hostport: str) -> tuple[str, int]:
     if not hostname or not port:
         raise ValueError(f"Invalid host-port string: '{hostport}'")
     return hostname, port
+
+
+def convert_messages_to_legacy_dataset(
+    dataset: List[MessageSample],
+) -> List[LegacyMessageSample]:
+    """
+    Converts the new HuggingFace messages dataset format to the legacy format.
+
+    **Note**: The legacy dataset format assumes only a turn of 1. All extra turns will be dropped.
+    This means that we only look at the first 3 messages, and everything afterwards will be ignored.
+    """
+    converted_dataset: List[LegacyMessageSample] = []
+    for dp in dataset:
+        # in new dataset, the roles of a message will be determined.
+        if len(dp["messages"]) < 3:
+            raise ValueError(
+                "Dataset cannot be missing messages from roles. Please make sure that a message from each role is present."
+            )
+
+        converted: LegacyMessageSample = {  # type: ignore
+            m["role"]: m["content"] for m in dp["messages"][:3]
+        }
+        converted_dataset.append(converted)
+    return converted_dataset
+
+
+def is_messages_dataset(
+    dataset: List[MessageSample] | List[LegacyMessageSample],
+) -> bool:
+    """
+    Indicates whether or not the provided dataset is using the newer "messages" format
+    or the legacy format used by the old linux training script.
+    """
+    if len(dataset) == 0:
+        raise ValueError("dataset is empty")
+
+    return bool("messages" in dataset[0])
+
+
+def ensure_legacy_dataset(
+    dataset: List[MessageSample] | List[LegacyMessageSample],
+) -> List[LegacyMessageSample]:
+    """
+    Given a dataset that's either in the HF messages format or the legacy ilab train format,
+    ensure that the returned dataset is always in the legacy ilab train format.
+    """
+    if not is_messages_dataset(dataset):
+        return dataset  # type: ignore
+
+    return convert_messages_to_legacy_dataset(dataset)  # type: ignore
