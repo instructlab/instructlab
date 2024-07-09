@@ -16,11 +16,7 @@ class TestConfig:
         self.tmpdir = tmpdir
 
     def _assert_defaults(self, cfg):
-        assert cfg.general is not None
-        assert cfg.general.log_level == "INFO"
-
         assert cfg.chat is not None
-        assert cfg.chat.model == "models/merlinite-7b-lab-Q4_K_M.gguf"
         assert not cfg.chat.vi_mode
         assert cfg.chat.visible_overflow
         assert cfg.chat.context == "default"
@@ -28,8 +24,12 @@ class TestConfig:
         assert cfg.chat.logs_dir == "data/chatlogs"
         assert not cfg.chat.greedy_mode
 
+        assert cfg.evaluate is not None
+
+        assert cfg.general is not None
+        assert cfg.general.log_level == "INFO"
+
         assert cfg.generate is not None
-        assert cfg.generate.model == "models/merlinite-7b-lab-Q4_K_M.gguf"
         assert cfg.generate.taxonomy_path == "taxonomy"
         assert cfg.generate.taxonomy_base == "origin/main"
         assert cfg.generate.num_cpus == 10
@@ -40,7 +40,6 @@ class TestConfig:
         assert cfg.generate.seed_file == "seed_tasks.json"
 
         assert cfg.serve is not None
-        assert cfg.serve.model_path == "models/merlinite-7b-lab-Q4_K_M.gguf"
         assert cfg.serve.llama_cpp is not None
         assert cfg.serve.llama_cpp.gpu_layers == -1
         assert cfg.serve.llama_cpp.max_ctx_size == 4096
@@ -50,12 +49,29 @@ class TestConfig:
         assert cfg.serve.host_port == "127.0.0.1:8000"
         assert cfg.serve.backend is None
 
+    def _assert_model_defaults(self, cfg):
+        assert cfg.chat is not None
+        assert cfg.chat.model == "models/merlinite-7b-lab-Q4_K_M.gguf"
+
         assert cfg.evaluate is not None
+        assert cfg.evaluate.base_model == "instructlab/merlinite-7b-lab"
+        assert cfg.evaluate.model is None
+
+        assert cfg.generate is not None
+        assert cfg.generate.model == "models/merlinite-7b-lab-Q4_K_M.gguf"
+
+        assert cfg.serve is not None
+        assert cfg.serve.model_path == "models/merlinite-7b-lab-Q4_K_M.gguf"
+
+        assert cfg.train is not None
+        assert cfg.train.train_args is not None
+        assert cfg.train.train_args.model_path == "instructlab/merlinite-7b-lab"
 
     def test_default_config(self):
         cfg = config.get_default_config()
         assert cfg is not None
         self._assert_defaults(cfg)
+        self._assert_model_defaults(cfg)
 
     def test_minimal_config(self):
         config_path = self.tmpdir.join("config.yaml")

@@ -132,7 +132,7 @@ We use [pre-commit](https://pre-commit.com/) to enforce coding style using [`bla
 You can invoke formatting with:
 
 ```shell
-tox -e fmt
+tox -e ruff
 ```
 
 In addition, we use [`pylint`](https://www.pylint.org) to perform static code analysis of the code.
