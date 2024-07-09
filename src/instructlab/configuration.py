@@ -296,7 +296,7 @@ class _serve(BaseModel):
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
-        return get_api_base(self.host_port)
+        return get_api_base(self.host, self.port)
 
 
 class _mmlu(BaseModel):
@@ -508,9 +508,9 @@ def write_config(cfg: Config, config_file: typing.Optional[str] = None) -> None:
         yaml.dump(loaded, stream=yamlfile)
 
 
-def get_api_base(host_port: str) -> str:
+def get_api_base(host: str, port: str) -> str:
     """Returns server API URL, based on the provided host_port"""
-    return f"http://{host_port}/v1"
+    return f"http://{host}:{port}/v1"
 
 
 def get_model_family(forced, model_path):

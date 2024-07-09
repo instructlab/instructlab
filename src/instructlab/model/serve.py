@@ -141,7 +141,8 @@ def serve(
     # First Party
     from instructlab.model.backends import llama_cpp, vllm
 
-    host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
+    
+   # host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
     try:
         backend = backends.get(model_path, backend)
     except (ValueError, AttributeError) as e:

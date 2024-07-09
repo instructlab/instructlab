@@ -160,7 +160,7 @@ def run_vllm(
         # pylint: disable=consider-using-with
         vllm_process = subprocess.Popen(args=vllm_cmd)
 
-    api_base = get_api_base(f"{host}:{port}")
+    api_base = get_api_base(host, port)
     logger.info(f"vLLM starting up on pid {vllm_process.pid} at {api_base}")
 
     return vllm_process

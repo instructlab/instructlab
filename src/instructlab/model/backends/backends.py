@@ -221,8 +221,8 @@ def ensure_server(
         port = free_tcp_ipv4_port(host)
         logger.debug("Using %i", port)
 
-        host_port = f"{host}:{port}"
-        temp_api_base = get_api_base(host_port)
+       # host_port = f"{host}:{port}"
+        temp_api_base = get_api_base(host, port)
         logger.debug(f"Starting a temporary server at {temp_api_base}...")
         llama_cpp_server_process = None
         vllm_server_process = None
@@ -328,7 +328,8 @@ def select_backend(cfg: serve_config) -> BackendServer:
         click.secho(f"Failed to determine backend: {e}", fg="red")
         raise click.exceptions.Exit(1)
 
-    host, port = split_hostport(cfg.host_port)
+    host = cfg.host
+    port = cfg.port
 
     if backend == LLAMA_CPP:
         # Instantiate the llama server
