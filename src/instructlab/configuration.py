@@ -425,7 +425,7 @@ def init(ctx: click.Context, config_file: str | os.PathLike[str]) -> None:
     else:
         config_obj = get_default_config()
         error_msg = (
-            f"`{config_file}` does not exists or is not a readable file.\n"
+            f"`{config_file}` does not exist or is not a readable file.\n"
             "Please run `ilab config init` or point to a valid configuration "
             "file using `--config=<path>`."
         )
