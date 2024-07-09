@@ -9,12 +9,6 @@ import sys
 import typing
 
 # Third Party
-from instructlab.training import (
-    DeepSpeedOptions,
-    LoraOptions,
-    TorchrunArgs,
-    TrainingArgs,
-)
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -246,7 +240,7 @@ class _serve_vllm(BaseModel):
 
     tensor_parallel_size: int
 
-    max_parallel_loading_workers: int
+    max_parallel_loading_workers: Optional[int] = 0
 
     # arguments to pass into vllm process
     vllm_additional_args: {str} | None = None
@@ -279,7 +273,7 @@ class _serve(BaseModel):
     host: str
 
     port: str
-    
+
     # host_port: StrictStr = "127.0.0.1:8000"
     backend: Optional[str] = (
         None  # we don't set a default value here since it's auto-detected
@@ -342,7 +336,6 @@ class _train(BaseModel):
     num_epochs: int
     effective_batch_size: int
     save_samples: int
-    learning_rate: int
 
     deepspeed_cpu_offload: bool
     deepspeed_cpu_offload_optimizer_ratio: int
@@ -391,51 +384,41 @@ def get_default_config() -> Config:
             taxonomy_base=DEFAULTS.TAXONOMY_BASE,
         ),
         serve=_serve(
-            model_path=DEFAULTS.DEFAULT_MODEL,
+            model_path=DEFAULTS.MODEL_NAME,
+            host="127.0.0.1",
+            port="8000",
             llama_cpp=_serve_llama_cpp(
                 gpu_layers=-1,
                 max_ctx_size=4096,
                 llm_family="",
             ),
             vllm=_serve_vllm(
+                served_model_name=DEFAULTS.DEFAULT_MODEL,
+                device="cpu",
+                max_model_len=4096,
+                tensor_parallel_size=1,
                 vllm_args=[],
             ),
+            additional_args={},
         ),
         train=_train(
-            train_args=TrainingArgs(
-                model_path=DEFAULTS.MODEL_REPO,
-                data_path=DEFAULTS.DATASETS_DIR,
-                ckpt_output_dir=DEFAULTS.CHECKPOINTS_DIR,
-                data_output_dir=DEFAULTS.INTERNAL_DIR,
-                max_seq_len=4096,
-                max_batch_len=10000,
-                num_epochs=10,
-                effective_batch_size=3840,
-                save_samples=250000,
-                learning_rate=2e-6,
-                warmup_steps=800,
-                is_padding_free=False,
-                random_seed=42,
-                lora=LoraOptions(
-                    rank=4,
-                    alpha=32,
-                    dropout=0.1,
-                    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-                ),
-                deepspeed_options=DeepSpeedOptions(
-                    cpu_offload_optimizer=False,
-                    cpu_offload_optimizer_ratio=1,
-                    cpu_offload_optimizer_pin_memory=False,
-                    save_samples=None,
-                ),
-            ),
-            torch_args=TorchrunArgs(
-                node_rank=0,
-                nnodes=1,
-                nproc_per_node=1,
-                rdzv_id=123,
-                rdzv_endpoint="127.0.0.1:12222",
-            ),
+            model_path=DEFAULTS.MODEL_REPO,
+            data_path="./taxonomy_data",
+            ckpt_output_dir=DEFAULTS.CHECKPOINTS_DIR,
+            data_output_dir=DEFAULTS.DATASETS_DIR,
+            max_seq_len=4096,
+            max_batch_len=10000,
+            num_epochs=10,
+            effective_batch_size=3840,
+            save_samples=250000,
+            lora_rank=4,
+            lora_alpha=32,
+            lora_dropout=0.1,
+            lora_target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+            deepspeed_cpu_offload_optimizer=False,
+            deepspeed_cpu_offload_optimizer_ratio=1,
+            deepspeed_cpu_offload_optimizer_pin_memory=False,
+            additional_args={},
         ),
         evaluate=_evaluate(
             base_model=DEFAULTS.MODEL_REPO,
