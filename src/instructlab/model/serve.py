@@ -18,13 +18,6 @@ logger = logging.getLogger(__name__)
 
 @click.command()
 @click.option(
-    "--model-path",
-    type=click.Path(path_type=pathlib.Path),
-    cls=clickext.ConfigOption,
-    required=True,  # default from config
-    help="Path to the model used during generation.",
-)
-@click.option(
     "--gpu-layers",
     type=click.INT,
     cls=clickext.ConfigOption,
@@ -68,11 +61,10 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--model-path",
-    "model_path",
+ #   "model_path",
     "served_model_name",
     type=str,
     cls=clickext.ConfigOption,
-    config_sections="vllm"
 )
 @click.option(
     "--device",

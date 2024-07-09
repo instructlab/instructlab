@@ -24,7 +24,7 @@ from instructlab.configuration import map_train_to_library
 logger = logging.getLogger(__name__)
 
 
-ADDITIONAL_ARGUMENTS = "additional_arguments"
+ADDITIONAL_ARGUMENTS = "additional_args"
 
 
 @click.command()
@@ -162,6 +162,7 @@ ADDITIONAL_ARGUMENTS = "additional_arguments"
     "--learning-rate",
     type=float,
     cls=clickext.ConfigOption,
+    config_sections=ADDITIONAL_ARGUMENTS,
     required=True,  # default from config
     help="learning rate for training",
 )
@@ -230,13 +231,15 @@ ADDITIONAL_ARGUMENTS = "additional_arguments"
     help="LoRA modules to use",
 )
 @click.option(
-    "--lora-quantize-data-type",
+    "--lora-quantize-dtype",
     type=str,
     default=None,
     help="quantization data type to use when training a LoRA.",
 )
 @click.option(
     "--is-padding-free",
+    cls=clickext.ConfigOption,
+    config_sections=ADDITIONAL_ARGUMENTS,
     type=bool,
     help="whether or not we are training a padding free transformer.",
 )
@@ -244,7 +247,7 @@ ADDITIONAL_ARGUMENTS = "additional_arguments"
     "--gpus",
     "nproc_per_node",
     cls=clickext.ConfigOption,
-    config_section=ADDITIONAL_ARGUMENTS,
+    config_sections=ADDITIONAL_ARGUMENTS,
     type=int,
     help="this is the number of GPUs to use. This is a torch specific arg and must be called nproc-per-node",
 )
