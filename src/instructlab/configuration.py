@@ -9,6 +9,13 @@ import sys
 import typing
 
 # Third Party
+# pylint: disable=ungrouped-imports
+from instructlab.training import (
+    DeepSpeedOptions,
+    LoraOptions,
+    TorchrunArgs,
+    TrainingArgs,
+)
 from pydantic import (
     BaseModel,
     ConfigDict,
@@ -589,3 +596,27 @@ def init(ctx: click.Context, config_file: str | os.PathLike[str]) -> None:
         log.configure_logging(log_level=config_obj.general.log_level.upper())
     else:
         ctx.default_map = None
+
+def map_train_to_library(params):
+    # first do a lazy unwrap into the respective options
+    train_args = TrainingArgs(**params)
+    torch_args = TorchrunArgs(**params)
+
+    ds_args = DeepSpeedOptions(
+        cpu_offload_optimizer = params["deepspeed_cpu_offload"],
+        cpu_offload_optimizer_ratio = params["deepspeed_cpu_offload_optimizer_ratio"],
+        cpu_offload_optimizer_pin_memory = params["deepspeed_cpu_offload_optimizer_pin_memory"]
+    )
+
+    lora_args = LoraOptions(
+        rank = params["lora_rank"],
+        alpha = params["lora_alpha"],
+        dropout = params["lora_dropout"],
+        target_modules = params["lora_target_modules"],
+        quantize_data_type = params["lora_quantize_data_type"],
+    )
+
+    train_args.deepspeed_options = ds_args
+    train_args.lora = lora_args
+
+    return train_args, torch_args
