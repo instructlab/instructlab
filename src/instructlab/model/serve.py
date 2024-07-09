@@ -67,20 +67,9 @@ logger = logging.getLogger(__name__)
     ),
 )
 @click.option(
-    "--vllm-args",
-    "vllm_additional_args",
-    cls=clickext.ConfigOption,
-    config_sections="vllm",
-    type=str,
-    multiple=True,
-    help=(
-        "Specific arguments to pass into vllm. Each arg must be passed "
-        "separately and surrounded by quotes.\n"
-        " Example: --vllm-args='--dtype=auto' --vllm-args='--enable-lora'"
-    ),
-)
-@click.option(
-    "--served-model-name",
+    "--model-path",
+    "model_path",
+    "served_model_name",
     type=str,
     cls=clickext.ConfigOption,
     config_sections="vllm"
@@ -113,23 +102,48 @@ logger = logging.getLogger(__name__)
     cls=clickext.ConfigOption,
     config_sections="vllm"
 )
+@click.option(
+    "--host",
+    type=int,
+    cls=clickext.ConfigOption,
+)
+@click.option(
+    "--port",
+    type=int,
+    cls=clickext.ConfigOption,
+)
+@click.option(
+    "--vllm-args",
+    "vllm_additional_args",
+    cls=clickext.ConfigOption,
+    config_sections="vllm",
+    type=str,
+    multiple=True,
+    help=(
+        "Specific arguments to pass into vllm. Each arg must be passed "
+        "separately and surrounded by quotes.\n"
+        " Example: --vllm-args='--dtype=auto' --vllm-args='--enable-lora'"
+    ),
+)
 @click.pass_context
 @utils.display_params
 def serve(
     ctx: click.Context,
-    model_path: pathlib.Path,
     gpu_layers: int,
     num_threads: int | None,
     max_ctx_size: int,
     model_family,
     log_file: pathlib.Path | None,
     backend: str | None,
-    vllm_additional_args: typing.Iterable[str],
+    model_path: str,
     served_model_name: str,
     device: str,
     max_model_len,
     tensor_parallel_size,
-    max_parallel_loading_workers
+    max_parallel_loading_workers,
+    host,
+    port,
+    vllm_additional_args: typing.Iterable[str],
 ) -> None:
     """Start a local server"""
     # First Party
@@ -174,7 +188,12 @@ def serve(
         backend_instance = vllm.Server(
             api_base=ctx.obj.config.serve.api_base(),
             model_path=model_path,
-            vllm_args=,
+            served_model_name=served_model_name,
+            device=device,
+            max_model_len=max_model_len,
+            tensor_parallel_size=tensor_parallel_size,
+            max_parallel_loading_workers=max_parallel_loading_workers,
+            vllm_args=vllm_additional_args,
             host=host,
             port=port,
         )

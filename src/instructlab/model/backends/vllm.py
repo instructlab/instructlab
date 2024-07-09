@@ -30,6 +30,11 @@ class Server(BackendServer):
         self,
         api_base: str,
         model_path: pathlib.Path,
+        served_model_name: str,
+        device: str,
+        max_model_len: int,
+        tensor_parallel_size: int,
+        max_parllel_loading_workers: int,
         host: str,
         port: int,
         vllm_args: typing.Iterable[str] | None = (),
@@ -46,6 +51,11 @@ class Server(BackendServer):
             self.host,
             self.port,
             self.model_path,
+            self.served_model_name,
+            self.device,
+            self.max_model_len,
+            self.tensor_parallel_size,
+            self.max_parallel_loading_workers,
             self.vllm_args,
             background=False,
         )
@@ -100,6 +110,11 @@ def run_vllm(
     host: str,
     port: int,
     model_path: pathlib.Path,
+    served_model_name: str,
+    device: str,
+    max_model_len: int,
+    tensor_parallel_size: int,
+    max_parallel_loading_workers: int,
     vllm_args: list[str],
     background: bool,
 ) -> subprocess.Popen:
@@ -120,11 +135,16 @@ def run_vllm(
     vllm_process = None
     vllm_cmd = [sys.executable, "-m", "vllm.entrypoints.openai.api_server"]
 
-    if "--host" not in vllm_args:
-        vllm_cmd.extend(["--host", host])
 
-    if "--port" not in vllm_args:
-        vllm_cmd.extend(["--port", str(port)])
+    # TODO: there should really be a better way to do this, and there probably is
+    vllm_cmd.extend(["--host", host])
+    vllm_cmd.extend(["--port", str(port)])
+    vllm_cmd.extend(["--served-model-name", served_model_name])
+    vllm_cmd.extend("--max-model-len", str(max_model_len))
+    vllm_cmd.extend("--device", device)
+    vllm_cmd.extend("--tensor-parallel-size", str(tensor_parallel_size))
+    vllm_cmd.extend("--max-parallel-loading-workers", str(max_parallel_loading_workers))
+
 
     if "--model" not in vllm_args:
         vllm_cmd.extend(["--model", os.fspath(model_path)])

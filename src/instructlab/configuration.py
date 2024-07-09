@@ -238,15 +238,17 @@ class _generate(BaseModel):
 class _serve_vllm(BaseModel):
     """Class describing configuration of vllm serving backend."""
 
-    # arguments to pass into vllm process
-
     served_model_name: str
+
     device: str
+
     max_model_len: int
+
     tensor_parallel_size: int
+
     max_parallel_loading_workers: int
 
-    
+    # arguments to pass into vllm process
     vllm_additional_args: {str} | None = None
 
 
@@ -274,7 +276,11 @@ class _serve(BaseModel):
     model_path: StrictStr
 
     # additional fields with defaults
-    host_port: StrictStr = "127.0.0.1:8000"
+    host: str
+
+    port: str
+    
+    # host_port: StrictStr = "127.0.0.1:8000"
     backend: Optional[str] = (
         None  # we don't set a default value here since it's auto-detected
     )
