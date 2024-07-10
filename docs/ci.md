@@ -69,4 +69,4 @@ The project currently supports the usage of the following runners for the E2E jo
 | **Training** | legacy+Linux             |❌|❌|✅|❌|
 |              | legacy+Linux+4-bit-quant |✅|✅|❌|❌|
 |              | training-lib             |❌|❌|❌|❌|
-| **Eval**     | eval                     |❌|❌|❌|❌|
+| **Eval**     | eval                     |❌|❌|✅|❌|

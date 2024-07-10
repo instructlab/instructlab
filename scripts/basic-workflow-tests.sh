@@ -23,6 +23,7 @@ BACKEND="llama-cpp"
 HF_TOKEN=${HF_TOKEN:-}
 SDG_PIPELINE="simple"
 SKIP_TRAIN=${SKIP_TRAIN:-0}
+EVAL=0
 
 export GREP_COLORS='mt=1;33'
 BOLD='\033[1m'
@@ -133,6 +134,11 @@ test_download() {
         step Downloading the default model
         ilab model download
     fi
+
+    if [ "$EVAL" -eq 1 ]; then
+        step Downloading a model to use with evaluation
+        ilab model download --repository instructlab/granite-7b-lab
+    fi
 }
 
 test_serve() {
@@ -232,6 +238,16 @@ test_convert() {
     ilab model convert
 }
 
+test_evaluate() {
+    task Evaluate the model
+
+    if [ "$EVAL" -eq 1 ]; then
+      export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true
+      export HF_DATASETS_TRUST_REMOTE_CODE=true
+      ilab model evaluate --model models/instructlab/granite-7b-lab --benchmark mmlu
+    fi
+}
+
 test_exec() {
     # The list of actual tests to run through in workflow order
     test_smoke
@@ -288,6 +304,9 @@ test_exec() {
     task Stopping the ilab model serve
     step Kill ilab model serve $PID
     kill $PID
+
+    task Evaluating the output of ilab model train
+    test_evaluate
 }
 
 wait_for_server(){
@@ -307,6 +326,7 @@ wait_for_server(){
 usage() {
     echo "Usage: $0 [-m] [-h]"
     echo "  -m  Run minimal configuration (run quicker when you have no GPU)"
+    echo "  -e  Run model evaluation"
     echo "  -f  Run the fullsize training instead of --4-bit-quant"
     echo "  -F  Use the 'full' SDG pipeline instead of the default 'simple' pipeline"
     echo "  -g  Use the granite model"
@@ -317,10 +337,14 @@ usage() {
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "cmMfFghv" opt; do
+while getopts "cemMfFghv" opt; do
     case $opt in
         c)
             # old option, don't fail if it's specified
+            ;;
+        e)
+            EVAL=1
+            step "Run model evaluation."
             ;;
         m)
             MINIMAL=1
