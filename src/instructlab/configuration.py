@@ -253,7 +253,7 @@ class _serve_vllm(BaseModel):
     max_parallel_loading_workers: Optional[int] = 0
 
     # arguments to pass into vllm process
-    vllm_additional_args: dict[str, str]
+    vllm_additional_args: list[str] | None = None
 
 
 class _serve_llama_cpp(BaseModel):
@@ -409,7 +409,7 @@ def get_default_config() -> Config:
                 device="cpu",
                 max_model_len=4096,
                 tensor_parallel_size=1,
-                vllm_additional_args={},
+                vllm_additional_args=[],
             ),
             additional_args={},
         ),
