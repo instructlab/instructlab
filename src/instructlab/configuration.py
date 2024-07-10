@@ -258,6 +258,7 @@ class _serve_vllm(BaseModel):
 
 class _serve_llama_cpp(BaseModel):
     """Class describing configuration of llama-cpp serving backend."""
+
     # model configuration
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
 
@@ -292,7 +293,6 @@ class _serve(BaseModel):
     )
 
     additional_args: dict[str, str]
-
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
@@ -360,7 +360,6 @@ class _train(BaseModel):
     lora_quantize_dtype: str
 
     additional_args: dict[str, str]
-
 
 
 class Config(BaseModel):
@@ -603,11 +602,16 @@ def init(ctx: click.Context, config_file: str | os.PathLike[str]) -> None:
         # if any are missing, add in sane defaults
         train_additional = ctx.default_map["train"]["additional_args"]
         serve_additional = ctx.default_map["serve"]["additional_args"]
-        ctx.default_map["train"]["additional_args"] = finish_additional_train_args(train_additional)
-        ctx.default_map["serve"]["additional_args"] = finish_additional_serve_args(serve_additional)
+        ctx.default_map["train"]["additional_args"] = finish_additional_train_args(
+            train_additional
+        )
+        ctx.default_map["serve"]["additional_args"] = finish_additional_serve_args(
+            serve_additional
+        )
         log.configure_logging(log_level=config_obj.general.log_level.upper())
     else:
         ctx.default_map = None
+
 
 def map_train_to_library(params):
     # first do a lazy unwrap into the respective options
@@ -615,17 +619,19 @@ def map_train_to_library(params):
     torch_args = TorchrunArgs(**params)
 
     ds_args = DeepSpeedOptions(
-        cpu_offload_optimizer = params["deepspeed_cpu_offload_optimizer"],
-        cpu_offload_optimizer_ratio = params["deepspeed_cpu_offload_optimizer_ratio"],
-        cpu_offload_optimizer_pin_memory = params["deepspeed_cpu_offload_optimizer_pin_memory"]
+        cpu_offload_optimizer=params["deepspeed_cpu_offload_optimizer"],
+        cpu_offload_optimizer_ratio=params["deepspeed_cpu_offload_optimizer_ratio"],
+        cpu_offload_optimizer_pin_memory=params[
+            "deepspeed_cpu_offload_optimizer_pin_memory"
+        ],
     )
 
     lora_args = LoraOptions(
-        rank = params["lora_rank"],
-        alpha = params["lora_alpha"],
-        dropout = params["lora_dropout"],
-        target_modules = params["lora_target_modules"],
-        quantize_data_type = params["lora_quantize_dtype"],
+        rank=params["lora_rank"],
+        alpha=params["lora_alpha"],
+        dropout=params["lora_dropout"],
+        target_modules=params["lora_target_modules"],
+        quantize_data_type=params["lora_quantize_dtype"],
     )
 
     train_args.deepspeed_options = ds_args
@@ -634,9 +640,7 @@ def map_train_to_library(params):
     return train_args, torch_args
 
 
-
 def finish_additional_train_args(current_additional):
-
     additional_args_and_defaults = {
         "learning_rate": 2e-6,
         "warmup_steps": 1000,
@@ -647,13 +651,13 @@ def finish_additional_train_args(current_additional):
         "rdzv_id": 123,
         "rdzv_endpoint": "127.0.0.1:12222",
         "is_padding_free": False,
-
     }
     for key in additional_args_and_defaults:
         if key not in current_additional:
             current_additional[key] = additional_args_and_defaults[key]
 
     return current_additional
+
 
 def finish_additional_serve_args(current_additional):
     additional_args_and_defaults = {

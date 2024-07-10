@@ -43,7 +43,9 @@ class Server(BackendServer):
         self.api_base = api_base
         self.model_path = model_path
         self.vllm_additional_args: list[str]
-        self.vllm_additional_args = list(vllm_additional_args) if vllm_additional_args is not None else []
+        self.vllm_additional_args = (
+            list(vllm_additional_args) if vllm_additional_args is not None else []
+        )
         self.served_model_name = served_model_name
         self.device = device
         self.tensor_parallel_size = tensor_parallel_size
@@ -147,7 +149,6 @@ def run_vllm(
     vllm_process = None
     vllm_cmd = [sys.executable, "-m", "vllm.entrypoints.openai.api_server"]
 
-
     # TODO: there should really be a better way to do this, and there probably is
     vllm_cmd.extend(["--host", host])
     vllm_cmd.extend(["--port", str(port)])
@@ -155,8 +156,9 @@ def run_vllm(
     vllm_cmd.extend(["--max-model-len", str(max_model_len)])
     vllm_cmd.extend(["--device", device])
     vllm_cmd.extend(["--tensor-parallel-size", str(tensor_parallel_size)])
-    vllm_cmd.extend(["--max-parallel-loading-workers", str(max_parallel_loading_workers)])
-
+    vllm_cmd.extend(
+        ["--max-parallel-loading-workers", str(max_parallel_loading_workers)]
+    )
 
     if "--model" not in vllm_additional_args:
         vllm_cmd.extend(["--model", os.fspath(model_path)])

@@ -26,7 +26,6 @@ import uvicorn
 from ...client import ClientException, list_models
 from ...configuration import _serve as serve_config
 from ...configuration import get_api_base
-from ...utils import split_hostport
 
 logger = logging.getLogger(__name__)
 
@@ -221,7 +220,7 @@ def ensure_server(
         port = free_tcp_ipv4_port(host)
         logger.debug("Using %i", port)
 
-       # host_port = f"{host}:{port}"
+        # host_port = f"{host}:{port}"
         temp_api_base = get_api_base(host, str(port))
         logger.debug(f"Starting a temporary server at {temp_api_base}...")
         llama_cpp_server_process = None

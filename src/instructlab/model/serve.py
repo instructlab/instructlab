@@ -61,8 +61,8 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--model-path",
- #   "model_path",
- #   "served_model_name",
+    #   "model_path",
+    #   "served_model_name",
     type=str,
     cls=clickext.ConfigOption,
 )
@@ -92,7 +92,7 @@ logger = logging.getLogger(__name__)
     "--max-parallel-loading-workers",
     type=int,
     cls=clickext.ConfigOption,
-    config_sections="vllm"
+    config_sections="vllm",
 )
 @click.option(
     "--host",
@@ -111,9 +111,7 @@ logger = logging.getLogger(__name__)
     type=bool,
 )
 @click.option(
-    "--startup-timeout",
-    cls=clickext.ConfigOption,
-    config_sections="additional_args"
+    "--startup-timeout", cls=clickext.ConfigOption, config_sections="additional_args"
 )
 @click.option(
     "--vllm-args",
@@ -152,8 +150,7 @@ def serve(
     # First Party
     from instructlab.model.backends import llama_cpp, vllm
 
-    
-   # host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
+    # host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
     try:
         backend = backends.get(model_path, backend)
     except (ValueError, AttributeError) as e:
