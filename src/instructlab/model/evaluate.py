@@ -237,16 +237,16 @@ def launch_server(
     if not ctx.obj.config.serve.backend:
         ctx.obj.config.serve.backend = backends.VLLM
     if ctx.obj.config.serve.backend == backends.VLLM:
-        ctx.obj.config.serve.vllm.vllm_args.extend(["--served-model-name", model_name])
+        ctx.obj.config.serve.vllm.vllm_additional_args.extend(["--served-model-name", model_name])
         if gpus:
-            # Don't override from vllm_args
-            if "--tensor-parallel-size" not in ctx.obj.config.serve.vllm.vllm_args:
-                ctx.obj.config.serve.vllm.vllm_args.extend(
+            # Don't override from vllm_additional_args
+            if "--tensor-parallel-size" not in ctx.obj.config.serve.vllm.vllm_additional_args:
+                ctx.obj.config.serve.vllm.vllm_additional_args.extend(
                     ["--tensor-parallel-size", str(gpus)]
                 )
             else:
                 click.echo(
-                    "Ignoring --gpus with --tensor-parallel-size configured in serve vllm_args"
+                    "Ignoring --gpus with --tensor-parallel-size configured in serve vllm_additional_args"
                 )
     elif ctx.obj.config.serve.backend == backends.LLAMA_CPP:
         # mt_bench requires a larger context size

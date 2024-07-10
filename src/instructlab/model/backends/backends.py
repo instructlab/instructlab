@@ -348,7 +348,7 @@ def select_backend(cfg: serve_config) -> BackendServer:
         return vllm_server(
             api_base=cfg.api_base(),
             model_path=model_path,
-            vllm_args=cfg.vllm.vllm_args,
+            vllm_additional_args=cfg.vllm.vllm_additional_args,
             host=host,
             port=port,
         )

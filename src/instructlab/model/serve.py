@@ -197,7 +197,7 @@ def serve(
             max_model_len=max_model_len,
             tensor_parallel_size=tensor_parallel_size,
             max_parallel_loading_workers=max_parallel_loading_workers,
-            vllm_args=vllm_additional_args,
+            vllm_additional_args=vllm_additional_args,
             host=host,
             port=port,
         )

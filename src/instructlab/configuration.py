@@ -605,7 +605,6 @@ def init(ctx: click.Context, config_file: str | os.PathLike[str]) -> None:
         serve_additional = ctx.default_map["serve"]["additional_args"]
         ctx.default_map["train"]["additional_args"] = finish_additional_train_args(train_additional)
         ctx.default_map["serve"]["additional_args"] = finish_additional_serve_args(serve_additional)
-        print(ctx.default_map)
         log.configure_logging(log_level=config_obj.general.log_level.upper())
     else:
         ctx.default_map = None

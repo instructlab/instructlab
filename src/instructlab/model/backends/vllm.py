@@ -37,13 +37,13 @@ class Server(BackendServer):
         max_parllel_loading_workers: int,
         host: str,
         port: int,
-        vllm_args: typing.Iterable[str] | None = (),
+        vllm_additional_args: typing.Iterable[str] | None = (),
     ):
         super().__init__(model_path, api_base, host, port)
         self.api_base = api_base
         self.model_path = model_path
-        self.vllm_args: list[str]
-        self.vllm_args = list(vllm_args) if vllm_args is not None else []
+        self.vllm_additional_args: list[str]
+        self.vllm_additional_args = list(vllm_additional_args) if vllm_additional_args is not None else []
         self.process: subprocess.Popen | None = None
 
     def run(self):
@@ -56,7 +56,7 @@ class Server(BackendServer):
             self.max_model_len,
             self.tensor_parallel_size,
             self.max_parallel_loading_workers,
-            self.vllm_args,
+            self.vllm_additional_args,
             background=False,
         )
 
@@ -76,7 +76,7 @@ class Server(BackendServer):
             self.host,
             port,
             self.model_path,
-            self.vllm_args,
+            self.vllm_additional_args,
             background=True,
         )
         return server_process
@@ -115,7 +115,7 @@ def run_vllm(
     max_model_len: int,
     tensor_parallel_size: int,
     max_parallel_loading_workers: int,
-    vllm_args: list[str],
+    vllm_additional_args: list[str],
     background: bool,
 ) -> subprocess.Popen:
     """
@@ -125,7 +125,7 @@ def run_vllm(
         host       (str):             host to run server on
         port       (int):             port to run server on
         model_path (Path):            The path to the model file.
-        vllm_args  (list of str):     Specific arguments to pass into vllm.
+        vllm_additional_args  (list of str):     Specific arguments to pass into vllm.
                                       Example: ["--dtype", "auto", "--enable-lora"]
         background (bool):            Whether the stdout and stderr vLLM should be sent to /dev/null (True)
                                       or stay in the foreground(False).
@@ -146,10 +146,10 @@ def run_vllm(
     vllm_cmd.extend("--max-parallel-loading-workers", str(max_parallel_loading_workers))
 
 
-    if "--model" not in vllm_args:
+    if "--model" not in vllm_additional_args:
         vllm_cmd.extend(["--model", os.fspath(model_path)])
 
-    vllm_cmd.extend(vllm_args)
+    vllm_cmd.extend(vllm_additional_args)
 
     logger.debug(f"vLLM serving command is: {vllm_cmd}")
     if background:

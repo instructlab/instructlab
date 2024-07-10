@@ -62,8 +62,13 @@ class TestConfig:
         assert cfg.serve.llama_cpp.max_ctx_size == 4096
         assert cfg.serve.llama_cpp.llm_family == ""
         assert cfg.serve.vllm is not None
-        assert cfg.serve.vllm.vllm_args == []
-        assert cfg.serve.host_port == "127.0.0.1:8000"
+        assert cfg.serve.vllm.vllm_additional_args == []
+        assert cfg.serve.vllm.served_model_name == "models/merlinite-7b-lab-Q4_K_M.gguf"
+        assert cfg.serve.vllm.device == "cpu"
+        assert cfg.serve.vllm.max_model_len == 4096
+        assert cfg.serve.vllm.tensor_parallel_size == 1
+        assert cfg.serve.host == "127.0.0.1"
+        assert cfg.serve.port == "8000"
         assert cfg.serve.backend is None
 
     def _assert_model_defaults(self, cfg):
@@ -93,6 +98,142 @@ class TestConfig:
         assert cfg is not None
         self._assert_defaults(cfg)
         self._assert_model_defaults(cfg)
+
+    def test_minimal_config(self):
+        config_path = self.tmpdir.join("config.yaml")
+        with open(config_path, "w", encoding="utf-8") as config_file:
+            config_file.write(
+                """chat:
+  model: models/merlinite-7b-lab-Q4_K_M.gguf
+generate:
+  model: models/merlinite-7b-lab-Q4_K_M.gguf
+  taxonomy_base: origin/main
+  taxonomy_path: taxonomy
+serve:
+  model_path: models/merlinite-7b-lab-Q4_K_M.gguf
+  llama_cpp:
+    gpu_layers: -1
+    max_ctx_size: 4096
+    llm_family: ''
+  vllm:
+    vllm_additional_args: []
+evaluate:
+  base_model: instructlab/granite-7b-lab
+  gpus: 1
+  mmlu:
+    few_shots: 2
+    batch_size: 5
+  mmlu_branch:
+    sdg_path: /path/to/sdg
+  mt_bench:
+    judge_model: prometheus
+    output_dir: /dir/to/output
+    max_workers: 5
+  mt_bench_branch:
+    taxonomy_path: taxonomy
+"""
+            )
+        cfg = config.read_config(config_path)
+        assert cfg is not None
+        self._assert_defaults(cfg)
+
+    def test_full_config(self):
+        config_path = self.tmpdir.join("config.yaml")
+        with open(config_path, "w", encoding="utf-8") as config_file:
+            config_file.write(
+                """general:
+  log_level: INFO
+chat:
+  context: default
+  greedy_mode: false
+  logs_dir: data/chatlogs
+  model: models/merlinite-7b-lab-Q4_K_M.gguf
+  session: null
+  vi_mode: false
+  visible_overflow: true
+generate:
+  model: models/merlinite-7b-lab-Q4_K_M.gguf
+  num_cpus: 10
+  num_instructions: 100
+  output_dir: generated
+  prompt_file: prompt.txt
+  seed_file: seed_tasks.json
+  taxonomy_base: origin/main
+  taxonomy_path: taxonomy
+  chunk_word_count: 1000
+serve:
+  backend: null
+  host: 127.0.0.1
+  port: 8000
+  llama_cpp:
+    gpu_layers: -1
+    max_ctx_size: 4096
+    llm_family: ''
+  model_path: models/merlinite-7b-lab-Q4_K_M.gguf
+  vllm:
+    served_model_name: models/merlinite-7b-lab-Q4_K_M.gguf
+    device: cpu
+    max_model_len: 4096
+    vllm_additional_args: []
+evaluate:
+  base_model: instructlab/granite-7b-lab
+  gpus: 1
+  mmlu:
+    few_shots: 2
+    batch_size: 5
+  mmlu_branch:
+    sdg_path: /path/to/sdg
+  mt_bench:
+    judge_model: prometheus
+    output_dir: /dir/to/output
+    max_workers: 5
+  mt_bench_branch:
+    taxonomy_path: taxonomy
+"""
+            )
+        cfg = config.read_config(config_path)
+        assert cfg is not None
+        self._assert_defaults(cfg)
+
+    def test_config_unexpected_fields(self):
+        print(dir(self.tmpdir))
+        config_path = self.tmpdir.join("config.yaml")
+        with open(config_path, "w", encoding="utf-8") as config_file:
+            config_file.write(
+                """chat:
+  model: models/merlinite-7b-lab-Q4_K_M.gguf
+generate:
+  model: models/merlinite-7b-lab-Q4_K_M.gguf
+  taxonomy_base: origin/main
+  taxonomy_path: taxonomy
+serve:
+  model_path: models/merlinite-7b-lab-Q4_K_M.gguf
+  llama_cpp:
+    gpu_layers: -1
+    max_ctx_size: 4096
+    llm_family: ''
+  vllm:
+    vllm_additional_args: []
+evaluate:
+  base_model: instructlab/granite-7b-lab
+  gpus: 1
+  mmlu:
+    few_shots: 2
+    batch_size: 5
+  mmlu_branch:
+    sdg_path: /path/to/sdg
+  mt_bench:
+    judge_model: prometheus
+    output_dir: /dir/to/output
+    max_workers: 5
+  mt_bench_branch:
+    taxonomy_path: taxonomy
+unexpected:
+  field: value
+"""
+            )
+        cfg = config.read_config(config_path)
+        self._assert_defaults(cfg)
 
     def test_config_missing_required_field_groups(self):
         config_path = self.tmpdir.join("config.yaml")
@@ -192,7 +333,7 @@ serve:
     max_ctx_size: 2048
     llm_family: ''
   vllm:
-    vllm_args:
+    vllm_additional_args:
        - --dtype=auto
        - --enable-lora
 evaluate:
@@ -217,7 +358,7 @@ evaluate:
         assert cfg.generate.model == "models/granite-7b-lab-Q4_K_M.gguf"
         assert cfg.serve.llama_cpp.gpu_layers == 1
         assert cfg.serve.llama_cpp.max_ctx_size == 2048
-        assert cfg.serve.vllm.vllm_args == [
+        assert cfg.serve.vllm.vllm_additional_args == [
             "--dtype=auto",
             "--enable-lora",
         ]
