@@ -63,7 +63,7 @@ class TestConfig:
         assert cfg.serve.llama_cpp.llm_family == ""
         assert cfg.serve.vllm is not None
         assert cfg.serve.vllm.vllm_additional_args == []
-        assert cfg.serve.vllm.served_model_name == "models/merlinite-7b-lab-Q4_K_M.gguf"
+        assert cfg.serve.vllm.served_model_name == default_model
         assert cfg.serve.vllm.device == "cpu"
         assert cfg.serve.vllm.max_model_len == 4096
         assert cfg.serve.vllm.tensor_parallel_size == 1
@@ -90,8 +90,7 @@ class TestConfig:
         assert cfg.serve.model_path == default_model
 
         assert cfg.train is not None
-        assert cfg.train.train_args is not None
-        assert cfg.train.train_args.model_path == "instructlab/granite-7b-lab"
+        assert cfg.train.model_path == "instructlab/granite-7b-lab"
 
     def test_default_config(self, cli_runner):  # pylint: disable=unused-argument
         cfg = config.get_default_config()

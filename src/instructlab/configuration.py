@@ -395,7 +395,7 @@ def get_default_config() -> Config:
             taxonomy_base=DEFAULTS.TAXONOMY_BASE,
         ),
         serve=_serve(
-            model_path=DEFAULTS.MODEL_NAME,
+            model_path=DEFAULTS.DEFAULT_MODEL,
             host="127.0.0.1",
             port=8000,
             llama_cpp=_serve_llama_cpp(
@@ -414,9 +414,9 @@ def get_default_config() -> Config:
         ),
         train=_train(
             model_path=DEFAULTS.MODEL_REPO,
-            data_path="./taxonomy_data",
+            data_path=DEFAULTS.DATASETS_DIR,
             ckpt_output_dir=DEFAULTS.CHECKPOINTS_DIR,
-            data_output_dir=DEFAULTS.DATASETS_DIR,
+            data_output_dir=DEFAULTS.INTERNAL_DIR,
             max_seq_len=4096,
             max_batch_len=10000,
             num_epochs=10,

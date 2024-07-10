@@ -12,8 +12,7 @@ import click
 
 # First Party
 from instructlab import clickext, utils
-from instructlab.configuration import DEFAULTS
-from instructlab.configuration import map_train_to_library
+from instructlab.configuration import DEFAULTS, map_train_to_library
 
 logger = logging.getLogger(__name__)
 
