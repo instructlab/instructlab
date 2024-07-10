@@ -12,7 +12,8 @@
    two standard benchmarks (mt-bench and mmlu) as well as two variations (mt-bench-branch and
    mmlu-branch) which are integrated with the ilab workflow to evaluate new skills and knowledge.
    Includes --gpus option for specifying number of gpus to utilize when serving models for
-   evaluation (currently applicable for vLLM only).
+   evaluation (currently applicable for vLLM only).  Also includes --merge-system-user-message
+   flag to enable Mistral based judge models.
 
 ### Breaking Changes
 
