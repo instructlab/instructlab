@@ -114,7 +114,7 @@ test_init() {
 
     step Checking config.yaml
     if [ "${MIXTRAL}" -eq 1 ]; then
-        sed -i -e 's/models\/merlinite.*/models\/mixtral-8x7b-instruct-v0\.1\.Q4_K_M\.gguf/' "${CONFIG_HOME}/instructlab/config.yaml"
+        sed -i -e 's|merlinite.*|mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf|' "${CONFIG_HOME}/instructlab/config.yaml"
     fi
 }
 
@@ -144,9 +144,9 @@ test_download() {
 test_serve() {
     # Accepts an argument of the model, or default here
     if [ "$GRANITE" -eq 1 ]; then
-        model="${1:-models/granite-7b-lab-Q4_K_M.gguf}"
+        model="${1:-${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf}"
     elif [ "${MIXTRAL}" -eq 1 ]; then
-        model="${1:-models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf}"
+        model="${1:-${DATA_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf}"
     else
         model="${1:-}"
     fi
@@ -155,7 +155,7 @@ test_serve() {
         SERVE_ARGS+=("--model-path" "${model}")
     fi
     if [ "$BACKEND" = "vllm" ]; then
-        SERVE_ARGS+=("--model-path" "./models/instructlab/merlinite-7b-lab")
+        SERVE_ARGS+=("--model-path" "${DATA_HOME}/instructlab/models/instructlab/merlinite-7b-lab")
     fi
 
     task Serve the model
@@ -167,9 +167,9 @@ test_chat() {
     task Chat with the model
     CHAT_ARGS=()
     if [ "$GRANITE" -eq 1 ]; then
-        CHAT_ARGS+=("-m" "models/granite-7b-lab-Q4_K_M.gguf")
+        CHAT_ARGS+=("-m" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
     elif [ "$MIXTRAL" -eq 1 ]; then
-        CHAT_ARGS+=("-m" "models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf" "--model-family" "mixtral")
+        CHAT_ARGS+=("-m" "${DATA_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf" "--model-family" "mixtral")
     fi
     printf 'Say "Hello" and nothing else\n' | ilab model chat -qq "${CHAT_ARGS[@]}"
 }
@@ -206,11 +206,11 @@ test_taxonomy() {
 test_generate() {
     task Generate synthetic data
     if [ "$GRANITE" -eq 1 ]; then
-        GENERATE_ARGS+=("--model" "models/granite-7b-lab-Q4_K_M.gguf")
+        GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
     elif [ "$MIXTRAL" -eq 1 ]; then
-        GENERATE_ARGS+=("--model" "models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf")
+        GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf")
     elif [ "$BACKEND" = "vllm" ]; then
-        GENERATE_ARGS+=("--model ./models/instructlab/merlinite-7b-lab")
+        GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/instructlab/merlinite-7b-lab")
     fi
     if [ "$SDG_PIPELINE" = "full" ]; then
         GENERATE_ARGS+=("--pipeline" "full")
@@ -227,7 +227,7 @@ test_train() {
         TRAIN_ARGS+=("--4-bit-quant")
     fi
     if [ "$GRANITE" -eq 1 ]; then
-        TRAIN_ARGS+=("--gguf-model-path models/granite-7b-lab-Q4_K_M.gguf")
+        TRAIN_ARGS+=("--gguf-model-path" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
     fi
 
     ilab model train "${TRAIN_ARGS[@]}"
@@ -244,7 +244,7 @@ test_evaluate() {
     if [ "$EVAL" -eq 1 ]; then
       export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true
       export HF_DATASETS_TRUST_REMOTE_CODE=true
-      ilab model evaluate --model models/instructlab/granite-7b-lab --benchmark mmlu
+      ilab model evaluate --model "${DATA_HOME}/instructlab/models/instructlab/granite-7b-lab" --benchmark mmlu
     fi
 }
 
@@ -295,7 +295,7 @@ test_exec() {
     #   `ilab model convert` is only implemented for macOS with M-series chips for now
     #test_convert
 
-    test_serve models/ggml-model-f16.gguf
+    test_serve "${DATA_HOME}/instructlab/models/ggml-model-f16.gguf"
     PID=$!
 
     test_chat
