@@ -130,7 +130,6 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           . venv/bin/activate
-          cd instructlab
           # TODO Add training once training with the training lib is supported in e2e
           SKIP_TRAIN=1 ./scripts/basic-workflow-tests.sh -cmFM
 
