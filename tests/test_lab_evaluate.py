@@ -473,3 +473,24 @@ def test_invalid_branch_mt_bench_branch(launch_server_mock, cli_runner: CliRunne
     launch_server_mock.assert_called_once()
     assert "Invalid git branch" in result.output
     assert result.exit_code != 0
+
+
+def test_invalid_tasks_dir(cli_runner: CliRunner):
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "mmlu_branch",
+            "--model",
+            "models/instructlab/granite-7b-lab",
+            "--base-model",
+            "models/instructlab/granite-7b-lab",
+            "--tasks-dir",
+            "invalid",
+        ],
+    )
+    assert "Tasks dir not found:" in result.output
+    assert result.exit_code != 0
