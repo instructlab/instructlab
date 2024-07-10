@@ -114,7 +114,7 @@ test_init() {
 
     step Checking config.yaml
     if [ "${MIXTRAL}" -eq 1 ]; then
-        sed -i -e 's/models\/merlinite.*/models\/mixtral-8x7b-instruct-v0\.1\.Q4_K_M\.gguf/' "${CONFIG_HOME}/config.yaml"
+        sed -i -e 's/models\/merlinite.*/models\/mixtral-8x7b-instruct-v0\.1\.Q4_K_M\.gguf/' "${CONFIG_HOME}/instructlab/config.yaml"
     fi
 }
 
