@@ -143,7 +143,7 @@ CUDAHOSTCXX=$(which clang++-17) pip install --force-reinstall llama_cpp_python==
 ```
 
 Proceed to the `Initialize` section of
-the [CLI README](https://github.com/instructlab/instructlab?tab=readme-ov-file#%EF%B8%8F-initialize-lab),
+the [CLI README](https://github.com/instructlab/instructlab?tab=readme-ov-file#%EF%B8%8F-initialize-ilab),
 and use the `nvtop` utility to validate GPU utilization when interacting
 with `ilab model chat` or `ilab data generate`
 
