@@ -66,7 +66,7 @@ class BackendServer(abc.ABC):
         model_path: pathlib.Path,
         api_base: str,
         host: str,
-        port: int,
+        port: str,
     ) -> None:
         self.model_path = model_path
         self.api_base = api_base
@@ -222,7 +222,7 @@ def ensure_server(
         logger.debug("Using %i", port)
 
        # host_port = f"{host}:{port}"
-        temp_api_base = get_api_base(host, port)
+        temp_api_base = get_api_base(host, str(port))
         logger.debug(f"Starting a temporary server at {temp_api_base}...")
         llama_cpp_server_process = None
         vllm_server_process = None
@@ -349,8 +349,13 @@ def select_backend(cfg: serve_config) -> BackendServer:
             api_base=cfg.api_base(),
             model_path=model_path,
             vllm_additional_args=cfg.vllm.vllm_additional_args,
+            device=cfg.vllm.device,
             host=host,
             port=port,
+            served_model_name=cfg.vllm.served_model_name,
+            tensor_parallel_size=cfg.vllm.tensor_parallel_size,
+            max_parallel_loading_workers=cfg.vllm.max_parallel_loading_workers,
+            max_model_len=cfg.vllm.max_model_len,
         )
     click.secho(f"Unknown backend: {backend}", fg="red")
     raise click.exceptions.Exit(1)

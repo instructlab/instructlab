@@ -138,7 +138,7 @@ def serve(
     model_family,
     log_file: pathlib.Path | None,
     backend: str | None,
-    model_path: str,
+    model_path: pathlib.Path,
     served_model_name: str,
     device: str,
     max_model_len,

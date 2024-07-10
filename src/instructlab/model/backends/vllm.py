@@ -31,12 +31,12 @@ class Server(BackendServer):
         api_base: str,
         model_path: pathlib.Path,
         served_model_name: str,
-        device: str,
         max_model_len: int,
         tensor_parallel_size: int,
-        max_parllel_loading_workers: int,
+        max_parallel_loading_workers: int | None,
         host: str,
-        port: int,
+        port: str,
+        device: str,
         vllm_additional_args: typing.Iterable[str] | None = (),
     ):
         super().__init__(model_path, api_base, host, port)
@@ -44,7 +44,14 @@ class Server(BackendServer):
         self.model_path = model_path
         self.vllm_additional_args: list[str]
         self.vllm_additional_args = list(vllm_additional_args) if vllm_additional_args is not None else []
+        self.served_model_name = served_model_name
+        self.device = device
+        self.tensor_parallel_size = tensor_parallel_size
+        self.max_parallel_loading_workers = max_parallel_loading_workers
+        self.max_model_len = max_model_len
         self.process: subprocess.Popen | None = None
+        self.host = host
+        self.port = port
 
     def run(self):
         self.process = run_vllm(
@@ -71,11 +78,16 @@ class Server(BackendServer):
             self.shutdown()
             self.logger.exception("vLLM server terminated")
 
-    def create_server_process(self, port: int) -> subprocess.Popen:
+    def create_server_process(self, port: str) -> subprocess.Popen:
         server_process = run_vllm(
             self.host,
             port,
             self.model_path,
+            self.served_model_name,
+            self.device,
+            self.max_model_len,
+            self.tensor_parallel_size,
+            self.max_parallel_loading_workers,
             self.vllm_additional_args,
             background=True,
         )
@@ -108,13 +120,13 @@ class Server(BackendServer):
 
 def run_vllm(
     host: str,
-    port: int,
+    port: str,
     model_path: pathlib.Path,
     served_model_name: str,
     device: str,
     max_model_len: int,
     tensor_parallel_size: int,
-    max_parallel_loading_workers: int,
+    max_parallel_loading_workers: int | None,
     vllm_additional_args: list[str],
     background: bool,
 ) -> subprocess.Popen:
@@ -123,7 +135,7 @@ def run_vllm(
 
     Args:
         host       (str):             host to run server on
-        port       (int):             port to run server on
+        port       (str):             port to run server on
         model_path (Path):            The path to the model file.
         vllm_additional_args  (list of str):     Specific arguments to pass into vllm.
                                       Example: ["--dtype", "auto", "--enable-lora"]
@@ -138,12 +150,12 @@ def run_vllm(
 
     # TODO: there should really be a better way to do this, and there probably is
     vllm_cmd.extend(["--host", host])
-    vllm_cmd.extend(["--port", str(port)])
+    vllm_cmd.extend(["--port", port])
     vllm_cmd.extend(["--served-model-name", served_model_name])
-    vllm_cmd.extend("--max-model-len", str(max_model_len))
-    vllm_cmd.extend("--device", device)
-    vllm_cmd.extend("--tensor-parallel-size", str(tensor_parallel_size))
-    vllm_cmd.extend("--max-parallel-loading-workers", str(max_parallel_loading_workers))
+    vllm_cmd.extend(["--max-model-len", str(max_model_len)])
+    vllm_cmd.extend(["--device", device])
+    vllm_cmd.extend(["--tensor-parallel-size", str(tensor_parallel_size)])
+    vllm_cmd.extend(["--max-parallel-loading-workers", str(max_parallel_loading_workers)])
 
 
     if "--model" not in vllm_additional_args:
