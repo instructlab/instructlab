@@ -123,6 +123,13 @@ logger = logging.getLogger(__name__)
     help="TLS client certificate password.",
 )
 @click.option(
+    "--tls-ca-bundle",
+    type=click.Path(),
+    default="",
+    show_default=True,
+    help="Path to the TLS CA Bundle to use.",
+)
+@click.option(
     "--model-family",
     help="Force model family to use when picking a generation template",
 )
@@ -156,6 +163,7 @@ def generate(
     tls_client_cert,
     tls_client_key,
     tls_client_passwd,
+    tls_ca_bundle,
     model_family,
     pipeline,
 ):
@@ -213,6 +221,7 @@ def generate(
             tls_client_cert=tls_client_cert,
             tls_client_key=tls_client_key,
             tls_client_passwd=tls_client_passwd,
+            tls_ca_bundle=tls_ca_bundle,
             pipeline=pipeline,
         )
     except GenerateException as exc:
