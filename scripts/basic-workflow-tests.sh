@@ -110,7 +110,7 @@ test_smoke() {
 
 test_init() {
     task Initializing ilab
-    [ -f config.yaml ] || ilab config init --non-interactive
+    ilab config init --non-interactive
 
     step Checking config.yaml
     if [ "${MIXTRAL}" -eq 1 ]; then
