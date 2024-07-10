@@ -9,6 +9,7 @@ import sys
 import typing
 
 # Third Party
+# pylint: disable=ungrouped-imports
 from instructlab.training import (
     DeepSpeedOptions,
     LoraOptions,
@@ -238,12 +239,28 @@ class _generate(BaseModel):
 class _serve_vllm(BaseModel):
     """Class describing configuration of vllm serving backend."""
 
+    # model configuration
+    model_config = ConfigDict(extra="ignore", protected_namespaces=())
+
+    served_model_name: str
+
+    device: str
+
+    max_model_len: int
+
+    tensor_parallel_size: int
+
+    max_parallel_loading_workers: Optional[int] = 0
+
     # arguments to pass into vllm process
-    vllm_args: list[str] | None = None
+    vllm_additional_args: list[str] | None = None
 
 
 class _serve_llama_cpp(BaseModel):
     """Class describing configuration of llama-cpp serving backend."""
+
+    # model configuration
+    model_config = ConfigDict(extra="ignore", protected_namespaces=())
 
     gpu_layers: int = -1
     max_ctx_size: PositiveInt = 4096
@@ -266,14 +283,20 @@ class _serve(BaseModel):
     model_path: StrictStr
 
     # additional fields with defaults
-    host_port: StrictStr = "127.0.0.1:8000"
+    host: str
+
+    port: int
+
+    # host_port: StrictStr = "127.0.0.1:8000"
     backend: Optional[str] = (
         None  # we don't set a default value here since it's auto-detected
     )
 
+    additional_args: dict[str, str]
+
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
-        return get_api_base(self.host_port)
+        return get_api_base(self.host, str(self.port))
 
 
 class _mmlu(BaseModel):
@@ -311,8 +334,32 @@ class _evaluate(BaseModel):
 
 
 class _train(BaseModel):
-    train_args: TrainingArgs
-    torch_args: TorchrunArgs
+    # model configuration
+    model_config = ConfigDict(extra="ignore", protected_namespaces=())
+
+    model_path: str
+
+    data_path: str
+    ckpt_output_dir: str
+    data_output_dir: str
+
+    max_seq_len: int
+    max_batch_len: int
+    num_epochs: int
+    effective_batch_size: int
+    save_samples: int
+
+    deepspeed_cpu_offload_optimizer: bool
+    deepspeed_cpu_offload_optimizer_ratio: int
+    deepspeed_cpu_offload_optimizer_pin_memory: bool
+
+    lora_rank: int
+    lora_alpha: int
+    lora_dropout: float
+    lora_target_modules: list[str]
+    lora_quantize_dtype: str
+
+    additional_args: dict[str, str]
 
 
 class Config(BaseModel):
@@ -349,50 +396,41 @@ def get_default_config() -> Config:
         ),
         serve=_serve(
             model_path=DEFAULTS.DEFAULT_MODEL,
+            host="127.0.0.1",
+            port=8000,
             llama_cpp=_serve_llama_cpp(
                 gpu_layers=-1,
                 max_ctx_size=4096,
                 llm_family="",
             ),
             vllm=_serve_vllm(
-                vllm_args=[],
+                served_model_name=DEFAULTS.DEFAULT_MODEL,
+                device="cpu",
+                max_model_len=4096,
+                tensor_parallel_size=1,
+                vllm_additional_args=[],
             ),
+            additional_args={},
         ),
         train=_train(
-            train_args=TrainingArgs(
-                model_path=DEFAULTS.MODEL_REPO,
-                data_path=DEFAULTS.DATASETS_DIR,
-                ckpt_output_dir=DEFAULTS.CHECKPOINTS_DIR,
-                data_output_dir=DEFAULTS.INTERNAL_DIR,
-                max_seq_len=4096,
-                max_batch_len=10000,
-                num_epochs=10,
-                effective_batch_size=3840,
-                save_samples=250000,
-                learning_rate=2e-6,
-                warmup_steps=800,
-                is_padding_free=False,
-                random_seed=42,
-                lora=LoraOptions(
-                    rank=4,
-                    alpha=32,
-                    dropout=0.1,
-                    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-                ),
-                deepspeed_options=DeepSpeedOptions(
-                    cpu_offload_optimizer=False,
-                    cpu_offload_optimizer_ratio=1,
-                    cpu_offload_optimizer_pin_memory=False,
-                    save_samples=None,
-                ),
-            ),
-            torch_args=TorchrunArgs(
-                node_rank=0,
-                nnodes=1,
-                nproc_per_node=1,
-                rdzv_id=123,
-                rdzv_endpoint="127.0.0.1:12222",
-            ),
+            model_path=DEFAULTS.MODEL_REPO,
+            data_path=DEFAULTS.DATASETS_DIR,
+            ckpt_output_dir=DEFAULTS.CHECKPOINTS_DIR,
+            data_output_dir=DEFAULTS.INTERNAL_DIR,
+            max_seq_len=4096,
+            max_batch_len=10000,
+            num_epochs=10,
+            effective_batch_size=3840,
+            save_samples=250000,
+            lora_quantize_dtype="nf4",
+            lora_rank=4,
+            lora_alpha=32,
+            lora_dropout=0.1,
+            lora_target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
+            deepspeed_cpu_offload_optimizer=False,
+            deepspeed_cpu_offload_optimizer_ratio=1,
+            deepspeed_cpu_offload_optimizer_pin_memory=False,
+            additional_args={},
         ),
         evaluate=_evaluate(
             base_model=DEFAULTS.MODEL_REPO,
@@ -469,9 +507,9 @@ def write_config(cfg: Config, config_file: typing.Optional[str] = None) -> None:
         yaml.dump(loaded, stream=yamlfile)
 
 
-def get_api_base(host_port: str) -> str:
+def get_api_base(host: str, port: str) -> str:
     """Returns server API URL, based on the provided host_port"""
-    return f"http://{host_port}/v1"
+    return f"http://{host}:{port}/v1"
 
 
 def get_model_family(forced, model_path):
@@ -560,6 +598,76 @@ def init(ctx: click.Context, config_file: str | os.PathLike[str]) -> None:
     ctx.obj = Lab(config_obj, config_file, error_msg)
     if config_obj is not None:
         ctx.default_map = get_dict(config_obj)
+        # subtly get the additional args per cfg section
+        # if any are missing, add in sane defaults
+        train_additional = ctx.default_map["train"]["additional_args"]
+        serve_additional = ctx.default_map["serve"]["additional_args"]
+        ctx.default_map["train"]["additional_args"] = finish_additional_train_args(
+            train_additional
+        )
+        ctx.default_map["serve"]["additional_args"] = finish_additional_serve_args(
+            serve_additional
+        )
         log.configure_logging(log_level=config_obj.general.log_level.upper())
     else:
         ctx.default_map = None
+
+
+def map_train_to_library(params):
+    # first do a lazy unwrap into the respective options
+    train_args = TrainingArgs(**params)
+    torch_args = TorchrunArgs(**params)
+
+    ds_args = DeepSpeedOptions(
+        cpu_offload_optimizer=params["deepspeed_cpu_offload_optimizer"],
+        cpu_offload_optimizer_ratio=params["deepspeed_cpu_offload_optimizer_ratio"],
+        cpu_offload_optimizer_pin_memory=params[
+            "deepspeed_cpu_offload_optimizer_pin_memory"
+        ],
+    )
+
+    lora_args = LoraOptions(
+        rank=params["lora_rank"],
+        alpha=params["lora_alpha"],
+        dropout=params["lora_dropout"],
+        target_modules=params["lora_target_modules"],
+        quantize_data_type=params["lora_quantize_dtype"],
+    )
+
+    train_args.deepspeed_options = ds_args
+    train_args.lora = lora_args
+
+    return train_args, torch_args
+
+
+def finish_additional_train_args(current_additional):
+    additional_args_and_defaults = {
+        "learning_rate": 2e-6,
+        "warmup_steps": 1000,
+        "random_seed": 42,
+        "node_rank": 0,
+        "nnodes": 1,
+        "nproc_per_node": 1,
+        "rdzv_id": 123,
+        "rdzv_endpoint": "127.0.0.1:12222",
+        "is_padding_free": False,
+    }
+    for key, val in additional_args_and_defaults.items():
+        if key not in current_additional:
+            current_additional[key] = val
+
+    return current_additional
+
+
+def finish_additional_serve_args(current_additional):
+    additional_args_and_defaults = {
+        "vllm_background": False,
+        "startup_timeout": 300,
+        "shutdown_timeout": 60,
+    }
+
+    for key, val in additional_args_and_defaults.items():
+        if key not in current_additional:
+            current_additional[key] = val
+
+    return current_additional

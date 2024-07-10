@@ -82,7 +82,7 @@ logger = logging.getLogger(__name__)
     "--api-key",
     type=click.STRING,
     default=DEFAULTS.API_KEY,  # Note: do not expose default API key
-    help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
+    help="API key for API endpoint. [default: config.API_KEY]",
 )
 @click.option(
     "--yaml-rules",

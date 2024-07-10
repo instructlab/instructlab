@@ -18,13 +18,6 @@ logger = logging.getLogger(__name__)
 
 @click.command()
 @click.option(
-    "--model-path",
-    type=click.Path(path_type=pathlib.Path),
-    cls=clickext.ConfigOption,
-    required=True,  # default from config
-    help="Path to the model used during generation.",
-)
-@click.option(
     "--gpu-layers",
     type=click.INT,
     cls=clickext.ConfigOption,
@@ -67,7 +60,64 @@ logger = logging.getLogger(__name__)
     ),
 )
 @click.option(
+    "--model-path",
+    #   "model_path",
+    #   "served_model_name",
+    type=str,
+    cls=clickext.ConfigOption,
+)
+@click.option(
+    "--device",
+    type=click.Choice(["cpu", "cuda", "hpu"]),
+    show_default=True,
+    default="cpu",
+    help=(
+        "PyTorch device for serving. Use 'cuda' "
+        "for NVidia CUDA / AMD ROCm GPU, to use specific GPU, set visible GPU before run train command."
+    ),
+)
+@click.option(
+    "--max-model-len",
+    type=int,
+    cls=clickext.ConfigOption,
+    config_sections="vllm",
+)
+@click.option(
+    "--tensor-parallel-size",
+    type=int,
+    cls=clickext.ConfigOption,
+    config_sections="vllm",
+)
+@click.option(
+    "--max-parallel-loading-workers",
+    type=int,
+    cls=clickext.ConfigOption,
+    config_sections="vllm",
+)
+@click.option(
+    "--host",
+    type=str,
+    cls=clickext.ConfigOption,
+)
+@click.option(
+    "--port",
+    type=int,
+    cls=clickext.ConfigOption,
+)
+@click.option(
+    "--vllm-background",
+    cls=clickext.ConfigOption,
+    config_sections="additional_args",
+    type=bool,
+)
+@click.option(
+    "--startup-timeout", cls=clickext.ConfigOption, config_sections="additional_args"
+)
+@click.option(
     "--vllm-args",
+    "vllm_additional_args",
+    cls=clickext.ConfigOption,
+    config_sections="vllm",
     type=str,
     multiple=True,
     help=(
@@ -80,20 +130,27 @@ logger = logging.getLogger(__name__)
 @utils.display_params
 def serve(
     ctx: click.Context,
-    model_path: pathlib.Path,
     gpu_layers: int,
     num_threads: int | None,
     max_ctx_size: int,
     model_family,
     log_file: pathlib.Path | None,
     backend: str | None,
-    vllm_args: typing.Iterable[str],
+    model_path: pathlib.Path,
+    served_model_name: str,
+    device: str,
+    max_model_len,
+    tensor_parallel_size,
+    max_parallel_loading_workers,
+    host,
+    port,
+    vllm_additional_args: typing.Iterable[str],
 ) -> None:
     """Start a local server"""
     # First Party
     from instructlab.model.backends import llama_cpp, vllm
 
-    host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
+    # host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
     try:
         backend = backends.get(model_path, backend)
     except (ValueError, AttributeError) as e:
@@ -132,7 +189,12 @@ def serve(
         backend_instance = vllm.Server(
             api_base=ctx.obj.config.serve.api_base(),
             model_path=model_path,
-            vllm_args=vllm_args,
+            served_model_name=served_model_name,
+            device=device,
+            max_model_len=max_model_len,
+            tensor_parallel_size=tensor_parallel_size,
+            max_parallel_loading_workers=max_parallel_loading_workers,
+            vllm_additional_args=vllm_additional_args,
             host=host,
             port=port,
         )

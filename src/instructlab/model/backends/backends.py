@@ -26,7 +26,6 @@ import uvicorn
 from ...client import ClientException, list_models
 from ...configuration import _serve as serve_config
 from ...configuration import get_api_base
-from ...utils import split_hostport
 
 logger = logging.getLogger(__name__)
 
@@ -221,8 +220,8 @@ def ensure_server(
         port = free_tcp_ipv4_port(host)
         logger.debug("Using %i", port)
 
-        host_port = f"{host}:{port}"
-        temp_api_base = get_api_base(host_port)
+        # host_port = f"{host}:{port}"
+        temp_api_base = get_api_base(host, str(port))
         logger.debug(f"Starting a temporary server at {temp_api_base}...")
         llama_cpp_server_process = None
         vllm_server_process = None
@@ -328,7 +327,8 @@ def select_backend(cfg: serve_config) -> BackendServer:
         click.secho(f"Failed to determine backend: {e}", fg="red")
         raise click.exceptions.Exit(1)
 
-    host, port = split_hostport(cfg.host_port)
+    host = cfg.host
+    port = cfg.port
 
     if backend == LLAMA_CPP:
         # Instantiate the llama server
@@ -347,9 +347,14 @@ def select_backend(cfg: serve_config) -> BackendServer:
         return vllm_server(
             api_base=cfg.api_base(),
             model_path=model_path,
-            vllm_args=cfg.vllm.vllm_args,
+            vllm_additional_args=cfg.vllm.vllm_additional_args,
+            device=cfg.vllm.device,
             host=host,
             port=port,
+            served_model_name=cfg.vllm.served_model_name,
+            tensor_parallel_size=cfg.vllm.tensor_parallel_size,
+            max_parallel_loading_workers=cfg.vllm.max_parallel_loading_workers,
+            max_model_len=cfg.vllm.max_model_len,
         )
     click.secho(f"Unknown backend: {backend}", fg="red")
     raise click.exceptions.Exit(1)
