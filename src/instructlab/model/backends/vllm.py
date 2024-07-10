@@ -30,12 +30,12 @@ class Server(BackendServer):
         self,
         api_base: str,
         model_path: pathlib.Path,
+        host: str,
+        port: int,
         served_model_name: str,
         max_model_len: int,
         tensor_parallel_size: int,
         max_parallel_loading_workers: int | None,
-        host: str,
-        port: int,
         device: str,
         vllm_additional_args: typing.Iterable[str] | None = (),
     ):
@@ -52,8 +52,6 @@ class Server(BackendServer):
         self.max_parallel_loading_workers = max_parallel_loading_workers
         self.max_model_len = max_model_len
         self.process: subprocess.Popen | None = None
-        self.host = host
-        self.port = port
 
     def run(self):
         self.process = run_vllm(

@@ -45,8 +45,6 @@ class Server(BackendServer):
         num_threads: Optional[int],
     ):
         super().__init__(model_path, api_base, host, port)
-        self.host = host
-        self.port = port
         self.model_family = model_family
         self.gpu_layers = gpu_layers
         self.max_ctx_size = max_ctx_size

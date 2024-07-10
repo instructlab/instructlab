@@ -652,9 +652,9 @@ def finish_additional_train_args(current_additional):
         "rdzv_endpoint": "127.0.0.1:12222",
         "is_padding_free": False,
     }
-    for key in additional_args_and_defaults:
+    for key, val in additional_args_and_defaults.items():
         if key not in current_additional:
-            current_additional[key] = additional_args_and_defaults[key]
+            current_additional[key] = val
 
     return current_additional
 
@@ -666,8 +666,8 @@ def finish_additional_serve_args(current_additional):
         "shutdown_timeout": 60,
     }
 
-    for key in additional_args_and_defaults:
+    for key, val in additional_args_and_defaults.items():
         if key not in current_additional:
-            current_additional[key] = additional_args_and_defaults[key]
+            current_additional[key] = val
 
     return current_additional

@@ -96,7 +96,7 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--host",
-    type=int,
+    type=str,
     cls=clickext.ConfigOption,
 )
 @click.option(
