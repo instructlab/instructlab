@@ -62,7 +62,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--model-path",
  #   "model_path",
-    "served_model_name",
+ #   "served_model_name",
     type=str,
     cls=clickext.ConfigOption,
 )

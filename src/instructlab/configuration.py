@@ -284,7 +284,7 @@ class _serve(BaseModel):
     # additional fields with defaults
     host: str
 
-    port: str
+    port: int
 
     # host_port: StrictStr = "127.0.0.1:8000"
     backend: Optional[str] = (
@@ -296,7 +296,7 @@ class _serve(BaseModel):
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
-        return get_api_base(self.host, self.port)
+        return get_api_base(self.host, str(self.port))
 
 
 class _mmlu(BaseModel):
@@ -398,7 +398,7 @@ def get_default_config() -> Config:
         serve=_serve(
             model_path=DEFAULTS.MODEL_NAME,
             host="127.0.0.1",
-            port="8000",
+            port=8000,
             llama_cpp=_serve_llama_cpp(
                 gpu_layers=-1,
                 max_ctx_size=4096,

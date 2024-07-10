@@ -39,7 +39,7 @@ class Server(BackendServer):
         model_family: str,
         api_base: str,
         host: str,
-        port: str,
+        port: int,
         gpu_layers: int,
         max_ctx_size: int,
         num_threads: Optional[int],

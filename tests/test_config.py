@@ -68,7 +68,7 @@ class TestConfig:
         assert cfg.serve.vllm.max_model_len == 4096
         assert cfg.serve.vllm.tensor_parallel_size == 1
         assert cfg.serve.host == "127.0.0.1"
-        assert cfg.serve.port == "8000"
+        assert cfg.serve.port == 8000
         assert cfg.serve.backend is None
 
     def _assert_model_defaults(self, cfg):
@@ -110,13 +110,20 @@ generate:
   taxonomy_base: origin/main
   taxonomy_path: taxonomy
 serve:
+  host: 127.0.0.1
+  port: 8000
   model_path: models/merlinite-7b-lab-Q4_K_M.gguf
   llama_cpp:
     gpu_layers: -1
     max_ctx_size: 4096
     llm_family: ''
   vllm:
+    served_model_name: models/merlinite-7b-lab-Q4_K_M.gguf
+    device: cpu
+    max_model_len: 4096
+    tensor_parallel_size: 1
     vllm_additional_args: []
+  additional_args: {}
 evaluate:
   base_model: instructlab/granite-7b-lab
   gpus: 1
@@ -171,10 +178,12 @@ serve:
     llm_family: ''
   model_path: models/merlinite-7b-lab-Q4_K_M.gguf
   vllm:
+    tensor_parallel_size: 1
     served_model_name: models/merlinite-7b-lab-Q4_K_M.gguf
     device: cpu
     max_model_len: 4096
     vllm_additional_args: []
+  additional_args: {}
 evaluate:
   base_model: instructlab/granite-7b-lab
   gpus: 1
@@ -207,13 +216,20 @@ generate:
   taxonomy_base: origin/main
   taxonomy_path: taxonomy
 serve:
+  host: 127.0.0.1
+  port: 8000
   model_path: models/merlinite-7b-lab-Q4_K_M.gguf
   llama_cpp:
     gpu_layers: -1
     max_ctx_size: 4096
     llm_family: ''
   vllm:
+    served_model_name: models/merlinite-7b-lab-Q4_K_M.gguf
+    device: cpu
+    max_model_len: 4096
+    tensor_parallel_size: 1
     vllm_additional_args: []
+  additional_args: {}
 evaluate:
   base_model: instructlab/granite-7b-lab
   gpus: 1
@@ -327,15 +343,22 @@ generate:
   taxonomy_base: upstream/main
   taxonomy_path: mytaxonomy
 serve:
+  host: 127.0.0.1
+  port: 8000
   model_path: models/granite-7b-lab-Q4_K_M.gguf
   llama_cpp:
     gpu_layers: 1
     max_ctx_size: 2048
     llm_family: ''
   vllm:
+    served_model_name: models-granite-7b-lab-Q4_K_M.gguf
+    device: cpu
+    max_model_len: 4096
+    tensor_parallel_size: 1
     vllm_additional_args:
        - --dtype=auto
        - --enable-lora
+  additional_args: {}
 evaluate:
   base_model: instructlab/granite-7b-lab
   gpus: 1

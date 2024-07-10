@@ -66,7 +66,7 @@ class BackendServer(abc.ABC):
         model_path: pathlib.Path,
         api_base: str,
         host: str,
-        port: str,
+        port: int,
     ) -> None:
         self.model_path = model_path
         self.api_base = api_base

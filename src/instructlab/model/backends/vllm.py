@@ -35,7 +35,7 @@ class Server(BackendServer):
         tensor_parallel_size: int,
         max_parallel_loading_workers: int | None,
         host: str,
-        port: str,
+        port: int,
         device: str,
         vllm_additional_args: typing.Iterable[str] | None = (),
     ):
@@ -78,7 +78,7 @@ class Server(BackendServer):
             self.shutdown()
             self.logger.exception("vLLM server terminated")
 
-    def create_server_process(self, port: str) -> subprocess.Popen:
+    def create_server_process(self, port: int) -> subprocess.Popen:
         server_process = run_vllm(
             self.host,
             port,
@@ -120,7 +120,7 @@ class Server(BackendServer):
 
 def run_vllm(
     host: str,
-    port: str,
+    port: int,
     model_path: pathlib.Path,
     served_model_name: str,
     device: str,
@@ -150,7 +150,7 @@ def run_vllm(
 
     # TODO: there should really be a better way to do this, and there probably is
     vllm_cmd.extend(["--host", host])
-    vllm_cmd.extend(["--port", port])
+    vllm_cmd.extend(["--port", str(port)])
     vllm_cmd.extend(["--served-model-name", served_model_name])
     vllm_cmd.extend(["--max-model-len", str(max_model_len)])
     vllm_cmd.extend(["--device", device])
@@ -172,7 +172,7 @@ def run_vllm(
         # pylint: disable=consider-using-with
         vllm_process = subprocess.Popen(args=vllm_cmd)
 
-    api_base = get_api_base(host, port)
+    api_base = get_api_base(host, str(port))
     logger.info(f"vLLM starting up on pid {vllm_process.pid} at {api_base}")
 
     return vllm_process
