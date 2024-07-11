@@ -209,7 +209,7 @@ def ensure_server(
     and the URL where it's available."""
 
     try:
-        logger.debug(f"Trying to connect to {api_base}...")
+        logger.info(f"Trying to connect to model server at {api_base}")
         # pylint: disable=duplicate-code
         list_models(
             api_base=api_base,
@@ -219,31 +219,34 @@ def ensure_server(
         # pylint: enable=duplicate-code
     except ClientException:
         port = free_tcp_ipv4_port(host)
-        logger.debug("Using %i", port)
+        logger.debug(f"Using available port {port} for temporary model serving.")
 
         host_port = f"{host}:{port}"
         temp_api_base = get_api_base(host_port)
-        logger.debug(f"Starting a temporary server at {temp_api_base}...")
         llama_cpp_server_process = None
         vllm_server_process = None
 
         if backend == VLLM:
             # TODO: resolve how the hostname is getting passed around the class and this function
             vllm_server_process = server_process_func(port)
+            logger.info(f"Starting a temporary vLLM server at {temp_api_base}")
             count = 0
             # TODO should this be configurable?
-            vllm_startup_timeout = 300
+            vllm_startup_timeout = 60
             while count < vllm_startup_timeout:
-                sleep(1)
                 try:
                     list_models(
                         api_base=temp_api_base,
                         http_client=http_client,
                     )
-                    logger.debug(f"model at {temp_api_base} served on vLLM")
+                    logger.info(f"vLLM engine successfully started at {temp_api_base}")
                     break
                 except ClientException:
                     count += 1
+                    logger.info(
+                        f"Waiting for the vLLM server to start at {temp_api_base}, this might take a moment... Retries: {count}/{vllm_startup_timeout}"
+                    )
+                    sleep(5)
 
             if count >= vllm_startup_timeout:
                 shutdown_process(vllm_server_process, 20)
@@ -257,6 +260,7 @@ def ensure_server(
             # in this ensure_server() function
             llama_cpp_server_process = server_process_func(port)
             llama_cpp_server_process.start()
+            logger.debug(f"Starting a temporary llama.cpp server at {temp_api_base}")
 
             # in case the server takes some time to fail we wait a bit
             logger.debug("Waiting for the server to start...")
