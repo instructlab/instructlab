@@ -58,29 +58,44 @@ def test_ilab_cli_imports():
     subprocess.check_call([sys.executable, "-c", "; ".join(code)], text=True)
 
 
-@pytest.mark.parametrize(
-    "first,second",
-    [
-        # split first and second level for nicer pytest output
-        (None, None),
-        ("config", None),
-        ("config", "init"),
-        ("config", "show"),
-        ("model", None),
-        ("model", "chat"),
-        ("model", "convert"),
-        ("model", "download"),
-        ("model", "evaluate"),
-        ("model", "serve"),
-        ("model", "test"),
-        ("model", "train"),
-        ("data", None),
-        ("data", "generate"),
-        ("system", "sysinfo"),
-        ("taxonomy", None),
-        ("taxonomy", "diff"),
-    ],
-)
+subcommands = [
+    # split first and second level for nicer pytest output
+    # first, second, extra args
+    (None, None, ()),
+    ("config", None, ()),
+    ("config", "init", ()),
+    ("config", "show", ()),
+    ("model", None, ()),
+    ("model", "chat", ()),
+    ("model", "convert", ()),
+    ("model", "download", ()),
+    ("model", "evaluate", ("--benchmark", "mmlu")),
+    ("model", "serve", ()),
+    ("model", "test", ()),
+    ("model", "train", ()),
+    ("data", None, ()),
+    ("data", "generate", ()),
+    ("system", None, ()),
+    ("system", "info", ()),
+    ("taxonomy", None, ()),
+    ("taxonomy", "diff", ()),
+]
+
+aliases = [
+    "serve",
+    "train",
+    "chat",
+    "test",
+    "evaluate",
+    "init",
+    "download",
+    "diff",
+    "generate",
+    "sysinfo",
+]
+
+
+@pytest.mark.parametrize("first,second", [sc[:2] for sc in subcommands])
 def test_ilab_cli_help(first: str | None, second: str | None, cli_runner):
     cmd = ["--config", "DEFAULT"]
     if first is not None:
@@ -90,3 +105,11 @@ def test_ilab_cli_help(first: str | None, second: str | None, cli_runner):
     cmd.append("--help")
     result = cli_runner.invoke(lab.ilab, cmd)
     assert result.exit_code == 0, result.stdout
+
+
+@pytest.mark.parametrize("alias", aliases)
+def test_ilab_cli_deprecated_help(alias: str, cli_runner):
+    cmd = ["--config", "DEFAULT", alias, "--help"]
+    result = cli_runner.invoke(lab.ilab, cmd)
+    assert result.exit_code == 0, result.stdout
+    assert "this will be deprecated in a future release" in result.stdout

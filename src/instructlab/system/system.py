@@ -7,7 +7,7 @@ from click_didyoumean import DYMGroup
 import click
 
 # Local
-from .sysinfo import sysinfo
+from .info import info
 
 logger = logging.getLogger(__name__)
 
@@ -20,4 +20,4 @@ def system(ctx):
     ctx.default_map = ctx.parent.default_map
 
 
-system.add_command(sysinfo)
+system.add_command(info)

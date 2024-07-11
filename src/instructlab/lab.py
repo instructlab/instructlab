@@ -34,7 +34,7 @@ class ExpandAliasesGroup(click.Group):
             cmd = self.aliases[cmd_name]["cmd"]
             group = self.aliases[cmd_name]["group"].name
             c = self.aliases[cmd_name]["cmd"].name
-            print(
+            click.echo(
                 f"You are using an aliased command, this will be deprecated in a future release. Please consider using `ilab {group} {c}` instead"
             )
             return cmd
@@ -68,6 +68,7 @@ aliases = {
     "download": {"group": model_group.model, "cmd": model_group.download},
     "diff": {"group": taxonomy_group.taxonomy, "cmd": taxonomy_group.diff},
     "generate": {"group": data_group.data, "cmd": data_group.generate},
+    "sysinfo": {"group": system_group.system, "cmd": system_group.info},
 }
 
 
