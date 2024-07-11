@@ -12,11 +12,6 @@ from instructlab import configuration as config
 
 
 class TestConfig:
-    @pytest.fixture(autouse=True)
-    def _init_tmpdir(self, tmpdir):
-        os.environ["HOME"] = str(tmpdir)
-        self.tmpdir = tmpdir
-
     def _assert_defaults(self, cfg: config.Config):
         # redefine defaults here instead of relyin on those in configuration.DEFAULTS
         # to catch any errors if we are doing things incorrectly over there
@@ -94,8 +89,8 @@ class TestConfig:
         self._assert_defaults(cfg)
         self._assert_model_defaults(cfg)
 
-    def test_config_missing_required_field_groups(self):
-        config_path = self.tmpdir.join("config.yaml")
+    def test_config_missing_required_field_groups(self, tmp_path_home):
+        config_path = tmp_path_home / "config.yaml"
         with open(config_path, "w", encoding="utf-8") as config_file:
             config_file.write(
                 """general:
@@ -113,8 +108,8 @@ class TestConfig:
         ):
             config.read_config(config_path)
 
-    def test_config_missing_required_fields(self):
-        config_path = self.tmpdir.join("config.yaml")
+    def test_config_missing_required_fields(self, tmp_path_home):
+        config_path = tmp_path_home / "config.yaml"
         with open(config_path, "w", encoding="utf-8") as config_file:
             config_file.write(
                 """general:
@@ -174,8 +169,8 @@ generate:
             with pytest.raises(config.ConfigException):
                 config.get_model_family(model_name, model_path)
 
-    def test_config_modified_settings(self):
-        config_path = self.tmpdir.join("config.yaml")
+    def test_config_modified_settings(self, tmp_path_home):
+        config_path = tmp_path_home / "config.yaml"
         with open(config_path, "w", encoding="utf-8") as config_file:
             config_file.write(
                 """\
