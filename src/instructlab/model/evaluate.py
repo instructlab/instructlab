@@ -50,6 +50,7 @@ def get_evaluator(
     batch_size,
     tasks_dir,
     merge_system_user_message,
+    device: str,
 ) -> "Evaluator":
     """takes in arguments from the CLI and uses 'benchmark' to validate other arguments
     if all needed configuration is present, returns the appropriate Evaluator class for the benchmark
@@ -498,6 +499,11 @@ def launch_server(
     is_flag=True,
     help="Print serving engine logs.",
 )
+@click.option(
+    "--device",
+    type=click.Choice(["cpu", "cuda", "mps", "auto"]),
+    cls=clickext.ConfigOption,
+)
 @click.pass_context
 @clickext.display_params
 def evaluate(
@@ -518,6 +524,7 @@ def evaluate(
     merge_system_user_message,
     backend,
     judge_backend,
+    device: str,
     tls_insecure,  # pylint: disable=unused-argument
     tls_client_cert,  # pylint: disable=unused-argument
     tls_client_key,  # pylint: disable=unused-argument
@@ -544,6 +551,7 @@ def evaluate(
         batch_size,
         tasks_dir,
         merge_system_user_message,
+        device: str,
     )
 
     # Third Party

@@ -333,6 +333,11 @@ class _evaluate(BaseModel):
     gpus: Optional[int] = Field(
         default=None, description="Number of GPUs to use for running evaluation."
     )
+    device: str = Field(
+        default="auto",
+        description="PyTorch device (e.g. `cpu`, `cuda`, or `mps`) for running models.",
+        pattern="cpu|cuda|mps|auto"
+    )
     mmlu: _mmlu = Field(
         default_factory=_mmlu,
         description="MMLU benchmarking settings",
