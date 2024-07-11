@@ -50,7 +50,7 @@ def get_evaluator(
     base_branch,
     few_shots,
     batch_size,
-    sdg_path,
+    tasks_dir,
     merge_system_user_message,
 ) -> "Evaluator":
     """takes in arguments from the CLI and uses 'benchmark' to validate other arguments
@@ -119,9 +119,9 @@ def get_evaluator(
         required_args = [model, few_shots, batch_size]
         required_arg_names = ["model"]
         if benchmark == Benchmark.MMLU_BRANCH:
-            required_args.append(sdg_path)
+            required_args.append(tasks_dir)
             required_args.append(base_model)
-            required_arg_names.append("sdg-path")
+            required_arg_names.append("tasks-dir")
             required_arg_names.append("base-model")
         if None in required_args:
             click.secho(
@@ -147,7 +147,7 @@ def get_evaluator(
             return evaluator
         return evaluator_class(
             model,
-            sdg_path,
+            tasks_dir,
             ["mmlu_pr"],
             few_shots=few_shots,
             batch_size=batch_size,
@@ -359,7 +359,7 @@ def launch_server(
     help="Number of GPUs. Needed for running mmlu or mmlu_branch.",
 )
 @click.option(
-    "--sdg-path",
+    "--tasks-dir",
     type=click.Path(),
     cls=clickext.ConfigOption,
     config_sections="mmlu_branch",
@@ -420,7 +420,7 @@ def evaluate(
     base_branch,
     few_shots,
     batch_size,
-    sdg_path,
+    tasks_dir,
     gpus,
     merge_system_user_message,
     backend,
@@ -442,7 +442,7 @@ def evaluate(
         base_branch,
         few_shots,
         batch_size,
-        sdg_path,
+        tasks_dir,
         merge_system_user_message,
     )
 
@@ -615,7 +615,7 @@ def evaluate(
             evaluator,
             MMLUBranchEvaluator(
                 base_model,
-                sdg_path,
+                tasks_dir,
                 ["mmlu_pr"],
                 few_shots=few_shots,
                 batch_size=batch_size,

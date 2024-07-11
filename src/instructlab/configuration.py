@@ -301,7 +301,7 @@ class _mtbenchbranch(BaseModel):
 
 
 class _mmlubranch(BaseModel):
-    sdg_path: str
+    tasks_dir: str
 
 
 class _evaluate(BaseModel):
@@ -415,7 +415,7 @@ def get_default_config() -> Config:
                 batch_size=5,
             ),
             mt_bench_branch=_mtbenchbranch(taxonomy_path=DEFAULTS.TAXONOMY_DIR),
-            mmlu_branch=_mmlubranch(sdg_path=DEFAULTS.DATASETS_DIR),
+            mmlu_branch=_mmlubranch(tasks_dir=DEFAULTS.DATASETS_DIR),
         ),
     )
 
