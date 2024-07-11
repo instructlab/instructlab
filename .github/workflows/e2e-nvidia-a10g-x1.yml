@@ -58,6 +58,7 @@ jobs:
       - name: Determine if pr_or_branch is a PR number
         id: check_pr
         run: |
+          nvidia-smi
           if [[ "${{ github.event.inputs.pr_or_branch }}" =~ ^[0-9]+$ ]]; then
             echo "is_pr=true" >> "$GITHUB_OUTPUT"
           else
@@ -116,18 +117,43 @@ jobs:
 
       - name: Install ilab
         run: |
-          export PATH="/home/ec2-user/.local/bin:/usr/local/cuda/bin:$PATH"
-          python3.11 -m venv --upgrade-deps venv
+          export CUDA_HOME="/usr/local/cuda"
+          export LD_LIBRRY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64"
+          export PATH="$PATH:$CUDA_HOME/bin"
+          python3.11 -m venv venv
           . venv/bin/activate
+          nvidia-smi
           sed 's/\[.*\]//' requirements.txt > constraints.txt
           python3.11 -m pip cache remove llama_cpp_python
           CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3.11 -m pip install --force-reinstall --no-binary llama_cpp_python -c constraints.txt llama_cpp_python
           python3.11 -m pip install bitsandbytes
+
+          # TODO This should be added to instructlab-training
+          python3.11 -m pip install packaging wheel
+
+          python3.11 -m pip install instructlab-training[cuda]
+
           python3.11 -m pip install .
 
       - name: Run e2e test
         run: |
+          nvidia-smi
+          # This env variable is used on GPUs with less vRAM. It only allows cuda to alloc small chunks of vRAM at a time, usually helping to avoid OOM errors.
+          # This is not a good solution for production code, as setting ENV variables for users isn't best practice. However, it is a helpful manual workaround.
+          export PYTORCH_CUDA_ALLOC_CONF=garbage_collection_threshold:0.6,max_split_size_mb:128
           . venv/bin/activate
+          # TODO: for some reason we need to reinstall DS in order to get fused adam support
+          # This means we need to manually rm and re-install a bunch of packages. Investigate why this is.
+          python3.11 -m pip uninstall -y deepspeed
+
+          python3.11 -m pip cache purge
+
+          DS_BUILD_CPU_ADAM=1 BUILD_UTILS=1 python3.11 -m pip install deepspeed
+
+          nvidia-smi
+
+          python3.11 -m pip show nvidia-nccl-cu12
+          
           ./scripts/basic-workflow-tests.sh -cemf
 
       - name: Add comment to PR if the workflow failed

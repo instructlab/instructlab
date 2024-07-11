@@ -110,8 +110,14 @@ test_smoke() {
 
 test_init() {
     task Initializing ilab
-    ilab config init --non-interactive
 
+    if [ "$FULLTRAIN" -eq 1 ]; then
+        # TODO Only cuda for now
+        step Setting train-profile for GPU accelerated training
+        ilab config init --non-interactive --train-profile="${SCRIPTDIR}/test-data/train-profile-a10.yaml"
+    else
+        ilab config init --non-interactive
+    fi
     step Checking config.yaml
     if [ "${MIXTRAL}" -eq 1 ]; then
         sed -i -e 's|merlinite.*|mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf|' "${CONFIG_HOME}/instructlab/config.yaml"
@@ -231,6 +237,18 @@ test_train() {
     fi
 
     ilab model train "${TRAIN_ARGS[@]}"
+
+    if [ "$FULLTRAIN" -eq 1 ]; then
+
+        # TODO Only cuda for now
+        # the train profile specified in test_init overrides the majority of TRAIN_ARGS, including things like num_epochs. While it looks like much of those settings are being lost, they just have different values here.
+        TRAIN_ARGS=("--device=cuda" "--model-path=instructlab/granite-7b-lab" "--data-path=${SCRIPTDIR}/test-data/train_all_pruned_SDG.jsonl" "--quantize-data-type=nf4" "--4-bit-quant")
+        if [ "$GRANITE" -eq 1 ]; then
+            TRAIN_ARGS+=("--gguf-model-path" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
+        fi
+
+        ilab model train "${TRAIN_ARGS[@]}"
+    fi
 }
 
 test_convert() {
