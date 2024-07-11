@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+from enum import Enum
 from functools import cache, wraps
 from importlib import resources
 from importlib.abc import Traversable
@@ -44,13 +45,23 @@ class TaxonomyReadingException(Exception):
     """An exception raised during reading of the taxonomy."""
 
 
+class MessageRole(Enum):
+    """
+    Defines the known roles used in message samples.
+    """
+
+    SYSTEM = "system"
+    USER = "user"
+    ASSISTANT = "assistant"
+
+
 class Message(TypedDict):
     """
     Represents a message within an AI conversation.
     """
 
     content: str
-    role: str  # one of: 'user', 'assistant', or 'system'
+    role: MessageRole
 
 
 class MessageSample(TypedDict):

@@ -4,6 +4,7 @@
 # Standard
 from pathlib import Path
 from unittest.mock import patch
+import json
 import os
 import platform
 import sys
@@ -17,6 +18,7 @@ import pytest
 from instructlab import lab
 from instructlab.configuration import DEFAULTS
 from instructlab.train import linux_train
+from instructlab.utils import MessageRole, MessageSample
 
 INPUT_DIR = "test_generated"
 TRAINING_RESULTS_DIR = "training_results"
@@ -207,6 +209,87 @@ class TestLabTrain:
             assert result.exception is not None
             assert "Could not read from data directory" in result.output
             assert result.exit_code == 1
+
+    @patch("instructlab.utils.is_macos_with_m_chip", return_value=False)
+    @patch.object(linux_train, "linux_train", return_value=Path("training_results"))
+    @patch(
+        "instructlab.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf",
+        side_effect=mock_convert_llama_to_gguf,
+    )
+    def test_legacy_train_with_messages(
+        self,
+        convert_llama_to_gguf_mock,
+        linux_train_mock,
+        is_macos_with_m_chip_mock,
+        cli_runner: CliRunner,
+    ):
+        setup_linux_dir()
+        setup_input_dir(DEFAULTS.DATASETS_DIR)
+        # write the dataset out somewhere
+        new_dataset: typing.List[MessageSample] = [
+            {
+                "messages": [
+                    {
+                        "role": MessageRole.SYSTEM.value,
+                        "content": "You are a friendly assistant",
+                    },
+                    {"role": MessageRole.USER.value, "content": "What is 2 + 2?"},
+                    {"role": MessageRole.ASSISTANT.value, "content": "2 + 2 = 4"},
+                ],
+                "group": " test",
+                "dataset": "test-dataset",
+                "metadata": "test",
+            }
+        ]
+        dataset_contents = ""
+        for line in new_dataset:
+            json_str = json.dumps(line)
+            dataset_contents += json_str + "\n"
+
+        with open(
+            os.path.join(DEFAULTS.DATASETS_DIR, "test_dataset.jsonl"),
+            mode="w",
+            encoding=ENCODING,
+        ) as outfile:
+            outfile.write(dataset_contents)
+        with open(
+            os.path.join(DEFAULTS.DATASETS_DIR, "train_dataset.jsonl"),
+            mode="w",
+            encoding=ENCODING,
+        ) as outfile:
+            outfile.write(dataset_contents)
+        result = cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "model",
+                "train",
+                "--legacy",
+                "--input-dir",
+                DEFAULTS.DATASETS_DIR,
+            ],
+        )
+        assert result.exit_code == 0
+        convert_llama_to_gguf_mock.assert_called_once()
+        assert convert_llama_to_gguf_mock.call_args[1]["model"] == Path(
+            "training_results/final"
+        )
+        assert convert_llama_to_gguf_mock.call_args[1]["pad_vocab"] is True
+        assert len(convert_llama_to_gguf_mock.call_args[1]) == 2
+        linux_train_mock.assert_called_once()
+        print(linux_train_mock.call_args[1])
+        assert linux_train_mock.call_args[1]["train_file"] == Path(
+            os.path.join(DEFAULTS.DATASETS_DIR, "train_gen.jsonl")
+        )
+        assert linux_train_mock.call_args[1]["test_file"] == Path(
+            os.path.join(DEFAULTS.DATASETS_DIR, "test_gen.jsonl")
+        )
+        assert linux_train_mock.call_args[1]["num_epochs"] == 10
+        assert linux_train_mock.call_args[1]["train_device"] is not None
+        assert not linux_train_mock.call_args[1]["four_bit_quant"]
+        assert len(linux_train_mock.call_args[1]) == 7
+        is_macos_with_m_chip_mock.assert_called_once()
+        assert not os.path.isfile(LINUX_GGUF_FILE)
 
     @patch("instructlab.utils.is_macos_with_m_chip", return_value=True)
     @patch(
