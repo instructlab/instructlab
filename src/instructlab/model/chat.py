@@ -9,7 +9,6 @@ import sys
 import time
 
 # Third Party
-from openai import OpenAI
 from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import FormattedText
 from prompt_toolkit.history import FileHistory
@@ -24,11 +23,11 @@ import openai
 
 # First Party
 from instructlab import clickext
-from instructlab import client as ilabclient
 from instructlab import configuration as cfg
+from instructlab import utils
 
 # Local
-from ..utils import get_sysprompt, http_client
+from ..utils import get_sysprompt
 
 logger = logging.getLogger(__name__)
 
@@ -120,31 +119,7 @@ PROMPT_PREFIX = ">>> "
     default=cfg.DEFAULTS.API_KEY,  # Note: do not expose default API key
     help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
 )
-@click.option(
-    "--tls-insecure",
-    is_flag=True,
-    help="Disable TLS verification.",
-)
-@click.option(
-    "--tls-client-cert",
-    type=click.Path(),
-    default="",
-    show_default=True,
-    help="Path to the TLS client certificate to use.",
-)
-@click.option(
-    "--tls-client-key",
-    type=click.Path(),
-    default="",
-    show_default=True,
-    help="Path to the TLS client key to use.",
-)
-@click.option(
-    "--tls-client-passwd",
-    type=click.STRING,
-    default="",
-    help="TLS client certificate password.",
-)
+@utils.endpoint_tls_options
 @click.option(
     "--model-family",
     help="Force model family to use when picking a chat template",
@@ -161,17 +136,26 @@ def chat(
     greedy_mode,
     max_tokens,
     endpoint_url,
-    api_key,  # pylint: disable=unused-argument
-    tls_insecure,  # pylint: disable=unused-argument
-    tls_client_cert,  # pylint: disable=unused-argument
-    tls_client_key,  # pylint: disable=unused-argument
-    tls_client_passwd,  # pylint: disable=unused-argument
+    api_key,
+    ca_certfile: str | None,
+    client_certfile: str | None,
+    client_keyfile: str | None,
+    client_password: str | None,
+    verify_cert: bool,
     model_family,
 ):
     """Run a chat using the modified model"""
     # pylint: disable=import-outside-toplevel
     # First Party
     from instructlab.model.backends.llama_cpp import is_temp_server_running
+
+    http_client = utils.httpx_client(
+        ca_certfile=ca_certfile,
+        client_certfile=client_certfile,
+        client_keyfile=client_keyfile,
+        client_password=client_password,
+        verify_cert=verify_cert,
+    )
 
     # TODO: this whole code block is replicated in generate.py. Refactor to a common function.
     backend_instance = None
@@ -186,10 +170,17 @@ def chat(
 
         try:
             # Run the llama server
-            api_base = backend_instance.run_detached(http_client(ctx.params))
+            api_base = backend_instance.run_detached(http_client)
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
             raise click.exceptions.Exit(1)
+
+    openai_client = openai.OpenAI(
+        base_url=api_base,
+        api_key=api_key,
+        timeout=cfg.DEFAULTS.CONNECTION_TIMEOUT,
+        http_client=http_client,
+    )
 
     # if only the chat is running (`ilab model chat`) and the temp server is not, the chat interacts
     # in server mode (`ilab model serve` is running somewhere, or we are talking to another
@@ -217,10 +208,7 @@ def chat(
                 "No model was provided by the user as a CLI argument or in the config, will use the model from the server"
             )
             try:
-                models = ilabclient.list_models(
-                    api_base=api_base,
-                    http_client=http_client(ctx.params),
-                )
+                models = openai_client.models.list()
 
                 # Currently, we only present a single model so we can safely assume that the first model
                 server_model = models.data[0].id if models is not None else None
@@ -234,9 +222,9 @@ def chat(
                     else model
                 )
                 logger.debug(f"Using model from server {model}")
-            except ilabclient.ClientException as exc:
+            except openai.OpenAIError as exc:
                 click.secho(
-                    f"Failed to list models from {api_base}. Please check the API key and endpoint.",
+                    f"Failed to list models from {api_base}. Please check the API key and endpoint: {exc}",
                     fg="red",
                 )
                 # Right now is_temp_server() does not check if a subprocessed vllm is up
@@ -248,8 +236,7 @@ def chat(
 
     try:
         chat_cli(
-            ctx,
-            api_base=api_base,
+            client=openai_client,
             config=ctx.obj.config.chat,
             question=question,
             model=model,
@@ -673,8 +660,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
 
 def chat_cli(
-    ctx,
-    api_base,
+    client: openai.OpenAI,
     config,
     question,
     model,
@@ -684,13 +670,6 @@ def chat_cli(
     greedy_mode,
     max_tokens,
 ):
-    """Starts a CLI-based chat with the server"""
-    client = OpenAI(
-        base_url=api_base,
-        api_key=ctx.params["api_key"],
-        timeout=cfg.DEFAULTS.CONNECTION_TIMEOUT,
-        http_client=http_client(ctx.params),
-    )
     # ensure the model specified exists on the server. with backends like vllm, this is crucial.
     try:
         model_list = client.models.list().data

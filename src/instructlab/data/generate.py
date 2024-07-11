@@ -5,13 +5,11 @@ import logging
 
 # Third Party
 import click
+import openai
 
 # First Party
-from instructlab import clickext
+from instructlab import clickext, utils
 from instructlab.configuration import DEFAULTS
-
-# Local
-from ..utils import http_client
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +91,7 @@ logger = logging.getLogger(__name__)
     default=DEFAULTS.API_KEY,  # Note: do not expose default API key
     help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
 )
+@utils.endpoint_tls_options
 @click.option(
     "--yaml-rules",
     type=click.Path(),
@@ -105,31 +104,6 @@ logger = logging.getLogger(__name__)
     default=DEFAULTS.MAX_CONTEXT_SIZE,
     show_default=True,
     help="The context size is the maximum number of tokens the server will consider.",
-)
-@click.option(
-    "--tls-insecure",
-    is_flag=True,
-    help="Disable TLS verification.",
-)
-@click.option(
-    "--tls-client-cert",
-    type=click.Path(),
-    default="",
-    show_default=True,
-    help="Path to the TLS client certificate to use.",
-)
-@click.option(
-    "--tls-client-key",
-    type=click.Path(),
-    default="",
-    show_default=True,
-    help="Path to the TLS client key to use.",
-)
-@click.option(
-    "--tls-client-passwd",
-    type=click.STRING,
-    default="",
-    help="TLS client certificate password.",
 )
 @click.option(
     "--model-family",
@@ -164,13 +138,14 @@ def generate(
     quiet,
     endpoint_url,
     api_key,
+    ca_certfile: str | None,
+    client_certfile: str | None,
+    client_keyfile: str | None,
+    client_password: str | None,
+    verify_cert: bool,
     yaml_rules,
     chunk_word_count,
     server_ctx_size,
-    tls_insecure,
-    tls_client_cert,
-    tls_client_key,
-    tls_client_passwd,
     model_family,
     pipeline,
     enable_serving_output,
@@ -186,6 +161,14 @@ def generate(
             "The --num-instructions flag is deprecated. Please use --sdg-scale-factor instead.",
             fg="yellow",
         )
+
+    http_client = utils.httpx_client(
+        ca_certfile=ca_certfile,
+        client_certfile=client_certfile,
+        client_keyfile=client_keyfile,
+        client_password=client_password,
+        verify_cert=verify_cert,
+    )
 
     prompt_file_path = DEFAULTS.PROMPT_FILE
 
@@ -205,19 +188,24 @@ def generate(
         try:
             # Run the backend server
             api_base = backend_instance.run_detached(
-                http_client(ctx.params), background=not enable_serving_output
+                http_client, background=not enable_serving_output
             )
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
             raise click.exceptions.Exit(1)
+
+    openai_client = openai.OpenAI(
+        base_url=api_base,
+        api_key=api_key,
+        http_client=http_client,
+    )
+
     try:
         click.echo(
             f"Generating synthetic data using '{model}' model, taxonomy:'{taxonomy_path}' against {api_base} server"
         )
         generate_data(
-            logger=logging.getLogger("instructlab.sdg"),  # TODO: remove
-            api_base=api_base,
-            api_key=api_key,
+            openai_client=openai_client,
             model_family=model_family,
             model_name=model,
             num_cpus=num_cpus,
@@ -231,10 +219,6 @@ def generate(
             yaml_rules=yaml_rules,
             chunk_word_count=chunk_word_count,
             server_ctx_size=server_ctx_size,
-            tls_insecure=tls_insecure,
-            tls_client_cert=tls_client_cert,
-            tls_client_key=tls_client_key,
-            tls_client_passwd=tls_client_passwd,
             pipeline=pipeline,
         )
     except GenerateException as exc:

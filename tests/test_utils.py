@@ -4,6 +4,7 @@
 from unittest.mock import Mock, patch
 
 # Third Party
+import click
 import git
 import pytest
 import yaml
@@ -56,3 +57,31 @@ def test_split_hostport(url, expected_host, expected_port):
 def test_split_hostport_err(url):
     with pytest.raises(ValueError):
         utils.split_hostport(url)
+
+
+@patch("httpx.Client", autospec=True)
+def test_httpx_client(m_client: Mock):
+    client = utils.httpx_client(
+        ca_certfile="ca.pem",
+        client_certfile="client.pem",
+        client_keyfile="client.key",
+        client_password="secret",
+        verify_cert=True,
+    )
+    m_client.assert_called_with(
+        cert=("client.pem", "client.key", "secret"), verify="ca.pem"
+    )
+    # returns the expected instance
+    assert client == m_client()
+
+    client = utils.httpx_client(
+        ca_certfile="ca.pem",
+    )
+    m_client.assert_called_with(cert=None, verify="ca.pem")
+    assert client == m_client()
+
+    with pytest.raises(click.ClickException):
+        utils.httpx_client(
+            ca_certfile="ca.pem",
+            verify_cert=False,
+        )

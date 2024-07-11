@@ -527,19 +527,90 @@ def validate_taxonomy(_logger, taxonomy, taxonomy_base, yaml_rules):
             )
 
 
-def get_ssl_cert_config(tls_client_cert, tls_client_key, tls_client_passwd):
-    if tls_client_cert:
-        return tls_client_cert, tls_client_key, tls_client_passwd
-
-
-def http_client(params):
-    return httpx.Client(
-        cert=get_ssl_cert_config(
-            params.get("tls_client_cert", None),
-            params.get("tls_client_key", None),
-            params.get("tls_client_passwd", None),
+def endpoint_tls_options(f):
+    """Add TLS options for endpoints"""
+    options = [
+        # TLS parameters are not exposed as function arguments. Instead they
+        # are directly read from `ctx.params`
+        click.option(
+            "--endpoint-ca-cert",
+            "ca_certfile",
+            type=click.Path(),
+            help="Path to a CA cert bundle file for OpenAI endpoint.",
         ),
-        verify=not params.get("tls_insecure", True),
+        click.option(
+            "--endpoint-insecure",
+            "verify_cert",
+            is_flag=True,
+            # flag is translated to "verify_cert" parameter with reverse values
+            default=True,
+            flag_value=False,
+            help="Disable TLS verification.",
+        ),
+        click.option(
+            "--endpoint-client-cert",
+            "client_certfile",
+            type=click.Path(),
+            help=(
+                "Path to a client cert file for mutual TLS authentication "
+                "for OpenAI endpoint."
+            ),
+        ),
+        click.option(
+            "--endpoint-client-key",
+            "client_keyfile",
+            type=click.Path(),
+            help=(
+                "Path to the client cert's private key file. Can be "
+                "omitted if the client cert file contains the private key."
+            ),
+        ),
+        click.option(
+            "--endpoint-client-passwd",
+            "client_password",
+            type=click.STRING,
+            help="Password for encrypted client cert private key.",
+        ),
+    ]
+    for option in reversed(options):
+        f = option(f)
+    return f
+
+
+def httpx_client(
+    *,
+    ca_certfile: str | None = None,
+    client_certfile: str | None = None,
+    client_keyfile: str | None = None,
+    client_password: str | None = None,
+    verify_cert: bool = True,
+) -> httpx.Client:
+    """Create httpx Client
+
+    See `endpoint_tls_options`
+    """
+    if client_certfile is not None:
+        cert = (
+            client_certfile,
+            client_keyfile,
+            client_password,
+        )
+    else:
+        cert = None
+
+    verify: str | bool
+    if ca_certfile is not None:
+        if not verify_cert:
+            raise click.ClickException(
+                "--endpoint-ca-cert and --enable-insecure are mutually exclusive"
+            )
+        verify = ca_certfile
+    else:
+        verify = verify_cert
+
+    return httpx.Client(
+        cert=cert,
+        verify=verify,
     )
 
 

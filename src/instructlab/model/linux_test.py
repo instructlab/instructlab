@@ -13,10 +13,10 @@ from openai import OpenAI, Stream
 import click
 
 # First Party
+from instructlab import utils
 from instructlab.configuration import DEFAULTS
 
 # Local
-from ..utils import get_sysprompt, http_client
 from .backends import backends
 
 logger = logging.getLogger(__name__)
@@ -29,7 +29,7 @@ def response(client, user: str, create_params: dict):
     resp = client.chat.completions.create(
         **create_params,
         messages=[
-            {"role": "system", "content": get_sysprompt()},
+            {"role": "system", "content": utils.get_sysprompt()},
             {"role": "user", "content": user},
         ],
     )
@@ -59,7 +59,8 @@ def test_model(ctx, res, ds, model: Path, create_params: dict):
             ctx.obj.config.serve, model_path=model
         )
         try:
-            api_base = backend_instance.run_detached(http_client(ctx.params))
+            http_client = utils.httpx_client()
+            api_base = backend_instance.run_detached(http_client)
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
             raise click.exceptions.Exit(1)

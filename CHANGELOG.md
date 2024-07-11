@@ -44,6 +44,9 @@
 * The `generate` section of the config now has a `teacher` section. This section configures the
   teacher model when it is automatically served in the background. This new section has the same
   values as the `serve` section of the config.
+* `ilab data generate`, `ilab model chat`, and `ilab model evaluate` now
+   accept a `--endpoint-ca-cert` parameter to use custom CA certificates with
+   a custom OpenAI endpoint.
 
 ### Breaking Changes
 
@@ -65,6 +68,10 @@
 * The `--num-instructions` option to `ilab data generate` has been deprecated.
   See `--sdg-scale-factor` for an updated option providing similar
   functionality.
+* The `--tls-*` parameters of `ilab data generate`, `ilab model chat`, and
+  `ilab model evaluate` have been renamed to `--endpoint-insecure`,
+  `--endpoint-client-cert`, `--endpoint-client-key`, and
+  `--endpoint-client-passwd`.
 
 ## v0.17
 

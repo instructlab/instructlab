@@ -12,13 +12,11 @@ import typing
 
 # Third Party
 import click
+import httpx
 
 # First Party
-from instructlab import clickext
+from instructlab import clickext, utils
 from instructlab.model.backends import backends
-
-# Local
-from ..utils import http_client
 
 if typing.TYPE_CHECKING:
     # Third Party
@@ -259,6 +257,7 @@ def qa_pairs_to_qna_to_avg_scores(qa_pairs: list[dict]) -> dict[str, float]:
 
 
 def launch_server(
+    *,
     ctx: click.Context,
     model: str,
     model_name: str,
@@ -266,6 +265,7 @@ def launch_server(
     gpus: int,
     backend: str | None,
     enable_serving_output: bool,
+    http_client: httpx.Client,
 ) -> tuple:
     eval_serve = deepcopy(ctx.obj.config.serve)
     if backend is None:
@@ -322,7 +322,7 @@ def launch_server(
     try:
         # http_client is handling tls params
         api_base = backend_instance.run_detached(
-            http_client(ctx.params), background=not enable_serving_output
+            http_client, background=not enable_serving_output
         )
     except Exception as exc:
         click.secho(f"Failed to start server: {exc}", fg="red")
@@ -432,39 +432,15 @@ def launch_server(
     help="Serving backend to use for the judge model for during mt_bench or mt_bench_branch evaluation. Options are vllm and llama-cpp.",
 )
 @click.option(
-    "--tls-insecure",
-    is_flag=True,
-    help="Disable TLS verification for model serving.",
-)
-@click.option(
-    "--tls-client-cert",
-    type=click.Path(),
-    default="",
-    show_default=True,
-    help="Path to the TLS client certificate to use for model serving.",
-)
-@click.option(
-    "--tls-client-key",
-    type=click.Path(),
-    default="",
-    show_default=True,
-    help="Path to the TLS client key to use for model serving.",
-)
-@click.option(
-    "--tls-client-passwd",
-    type=click.STRING,
-    default="",
-    help="TLS client certificate password for model serving.",
-)
-@click.option(
     "--enable-serving-output",
     is_flag=True,
     help="Print serving engine logs.",
 )
+@utils.endpoint_tls_options
 @click.pass_context
 @clickext.display_params
 def evaluate(
-    ctx,
+    ctx: click.Context,
     model,
     base_model,
     benchmark,
@@ -481,12 +457,20 @@ def evaluate(
     merge_system_user_message,
     backend,
     judge_backend,
-    tls_insecure,  # pylint: disable=unused-argument
-    tls_client_cert,  # pylint: disable=unused-argument
-    tls_client_key,  # pylint: disable=unused-argument
-    tls_client_passwd,  # pylint: disable=unused-argument
     enable_serving_output,
+    ca_certfile: str | None,
+    client_certfile: str | None,
+    client_keyfile: str | None,
+    client_password: str | None,
+    verify_cert: bool,
 ):
+    http_client = utils.httpx_client(
+        ca_certfile=ca_certfile,
+        client_certfile=client_certfile,
+        client_keyfile=client_keyfile,
+        client_password=client_password,
+        verify_cert=verify_cert,
+    )
     # get appropriate evaluator class from Eval lib
     evaluator = get_evaluator(
         model,
@@ -513,13 +497,14 @@ def evaluate(
             server = None
             try:
                 server, api_base = launch_server(
-                    ctx,
-                    model,
-                    TEST_MODEL_NAME,
-                    max_workers,
-                    gpus,
-                    backend,
-                    enable_serving_output,
+                    ctx=ctx,
+                    model=model,
+                    model_name=TEST_MODEL_NAME,
+                    max_workers=max_workers,
+                    gpus=gpus,
+                    backend=backend,
+                    enable_serving_output=enable_serving_output,
+                    http_client=http_client,
                 )
                 evaluator.gen_answers(api_base)
             finally:
@@ -529,13 +514,14 @@ def evaluate(
             print("Evaluating answers...")
             try:
                 server, api_base = launch_server(
-                    ctx,
-                    judge_model,
-                    JUDGE_MODEL_NAME,
-                    max_workers,
-                    gpus,
-                    judge_backend,
-                    enable_serving_output,
+                    ctx=ctx,
+                    model=judge_model,
+                    model_name=JUDGE_MODEL_NAME,
+                    max_workers=max_workers,
+                    gpus=gpus,
+                    backend=judge_backend,
+                    enable_serving_output=enable_serving_output,
+                    http_client=http_client,
                 )
                 overall_score, qa_pairs, turn_scores, error_rate = (
                     evaluator.judge_answers(api_base)
@@ -589,13 +575,14 @@ def evaluate(
                 )
                 try:
                     server, api_base = launch_server(
-                        ctx,
-                        m_path,
-                        m_name,
-                        max_workers,
-                        gpus,
-                        backend,
-                        enable_serving_output,
+                        ctx=ctx,
+                        model=m_path,
+                        model_name=m_name,
+                        max_workers=max_workers,
+                        gpus=gpus,
+                        backend=backend,
+                        enable_serving_output=enable_serving_output,
+                        http_client=http_client,
                     )
                     evaluator.gen_answers(api_base)
                 finally:
@@ -605,13 +592,14 @@ def evaluate(
             try:
                 # Share the judge model server for the two model evaluations
                 server, api_base = launch_server(
-                    ctx,
-                    judge_model,
-                    JUDGE_MODEL_NAME,
-                    max_workers,
-                    gpus,
-                    judge_backend,
-                    enable_serving_output,
+                    ctx=ctx,
+                    model=judge_model,
+                    model_name=JUDGE_MODEL_NAME,
+                    max_workers=max_workers,
+                    gpus=gpus,
+                    backend=judge_backend,
+                    enable_serving_output=enable_serving_output,
+                    http_client=http_client,
                 )
                 for i, evaluator in enumerate(evaluators):
                     branch = branches[i]
