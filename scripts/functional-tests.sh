@@ -310,6 +310,27 @@ EOF
     fi
 }
 
+test_model_train() {
+    # TODO: call `ilab model train`
+    if [[ "$(uname)" == Linux ]]; then
+        # real `ilab model train` on Linux produces models/ggml-model-f16.gguf
+        # fake gml-model-f16.gguf the same as merlinite-7b-lab-Q4_K_M.gguf
+        test -f "${ILAB_DATA_DIR}/models/ggml-model-f16.gguf" || \
+            ln -s merlinite-7b-lab-Q4_K_M.gguf "${ILAB_DATA_DIR}/models/ggml-model-f16.gguf"
+    fi
+}
+
+test_model_test() {
+    if [[ "$(uname)" == Linux ]]; then
+        echo Using the latest of:
+        ls -ltr "${ILAB_DATA_DIR}"/datasets/test_*
+        timeout 20m ilab model test > model_test.out
+        cat model_test.out
+        grep -q '### what is 1+1' model_test.out
+        grep -q 'merlinite-7b-lab-Q4_K_M.gguf: The sum of 1 and 1 is indeed 2' model_test.out
+    fi
+}
+
 test_temp_server(){
     expect -c '
         set timeout 120
@@ -481,6 +502,10 @@ cleanup
 test_loading_session_history
 cleanup
 test_generate
+cleanup
+test_model_train
+cleanup
+test_model_test
 cleanup
 test_temp_server
 cleanup

@@ -522,11 +522,11 @@ def get_ssl_cert_config(tls_client_cert, tls_client_key, tls_client_passwd):
 def http_client(params):
     return httpx.Client(
         cert=get_ssl_cert_config(
-            params["tls_client_cert"],
-            params["tls_client_key"],
-            params["tls_client_passwd"],
+            params.get("tls_client_cert", None),
+            params.get("tls_client_key", None),
+            params.get("tls_client_passwd", None),
         ),
-        verify=not params["tls_insecure"],
+        verify=not params.get("tls_insecure", True),
     )
 
 
