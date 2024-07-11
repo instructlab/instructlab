@@ -369,7 +369,7 @@ def train(
                 reverse=True,
             )
 
-        train_files = get_files(input_dir, "test_*")
+        train_files = get_files(input_dir, "train_*")
         test_files = get_files(input_dir, "test_*")
 
         if not train_files or not test_files:
