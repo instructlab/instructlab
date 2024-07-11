@@ -126,6 +126,7 @@ def test_ilab_llama_cpp_args(
     m_backends_get: mock.Mock, m_server: mock.Mock, cli_runner: CliRunner
 ):
     gguf = pathlib.Path("test.gguf")
+    gguf.touch()
     cmd = [
         "--config",
         "DEFAULT",

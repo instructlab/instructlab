@@ -70,7 +70,7 @@ ADDITIONAL_ARGUMENTS = "additional_args"
 )
 @click.option(
     "--model-path",
-    type=click.Path(),
+    type=utils.Pathlib(),
     cls=clickext.ConfigOption,
     required=True,  # default from config
     help="HuggingFace model repo path, in the format of <namespace>/<repo_name>.",

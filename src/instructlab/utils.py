@@ -12,10 +12,12 @@ import glob
 import json
 import logging
 import os
+import pathlib
 import platform
 import re
 import subprocess
 import tempfile
+import typing
 
 # Third Party
 from git import Repo, exc
@@ -42,6 +44,56 @@ rules:
 
 class TaxonomyReadingException(Exception):
     """An exception raised during reading of the taxonomy."""
+
+
+class Pathlib(click.Path):
+    """click.Path variant with extra features
+
+    - always returns a pathlib.Path
+    - allows to check for non-empty directory
+    """
+
+    def __init__(
+        self,
+        exists: bool = False,
+        file_okay: bool = True,
+        dir_okay: bool = True,
+        writable: bool = False,
+        resolve_path: bool = False,
+        executable: bool = False,
+        dir_notempty: bool = False,
+    ) -> None:
+        super().__init__(
+            exists=exists,
+            file_okay=file_okay,
+            dir_okay=dir_okay,
+            writable=writable,
+            readable=True,
+            resolve_path=resolve_path,
+            allow_dash=False,
+            path_type=pathlib.Path,
+            executable=executable,
+        )
+        self.dir_notempty = dir_notempty
+
+    def to_info_dict(self) -> dict[str, typing.Any]:
+        info_dict = super().to_info_dict()
+        info_dict["dir_notempty"] = self.dir_notempty
+        return info_dict
+
+    def convert(
+        self,
+        value: str | os.PathLike[str],
+        param: click.Parameter | None,
+        ctx: click.Context | None,
+    ) -> pathlib.Path:
+        result: pathlib.Path = super().convert(value, param, ctx)
+        if self.exists and self.dir_notempty and result.is_dir():
+            try:
+                next(os.scandir(result))
+            except StopIteration:
+                self.fail("Empty directory")
+        return result
 
 
 def macos_requirement(echo_func, exit_exception):

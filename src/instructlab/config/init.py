@@ -28,7 +28,7 @@ from instructlab.configuration import (
 )
 @click.option(
     "--model-path",
-    type=click.Path(),
+    type=click.Path(),  # we don't use utils.Pathlib() here, since this is a requested path to download a model, so the files are not guaranteed to exist yet
     default=lambda: DEFAULTS.DEFAULT_GGUF_MODEL,
     show_default="The instructlab data files location per the user's system.",
     help="Path to the model used during generation.",
