@@ -256,12 +256,16 @@ DS_OPTIONS = "train_args.deepspeed_options"
 )
 @click.option(
     "--is-padding-free",
+    cls=clickext.ConfigOption,
+    config_sections=TRAIN_ARGS,
     type=bool,
     help="whether or not we are training a padding free transformer.",
 )
 @click.option(
     "--gpus",
     "nproc_per_node",
+    cls=clickext.ConfigOption,
+    config_sections=TORCHRUN_ARGS,
     type=int,
     help="this is the number of GPUs to use. This is a torch specific arg and must be called nproc-per-node",
 )
