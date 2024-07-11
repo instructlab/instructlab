@@ -144,6 +144,11 @@ test_download() {
         step Downloading the default merlinite .gguf model as the teacher
         ilab model download --repository instructlab/merlinite-7b-lab-GGUF --filename merlinite-7b-lab-Q4_K_M.gguf
     fi
+
+    if [ "$EVAL" -eq 1 ]; then
+        step Downloading merlinite .safetensors model to use in evaluation
+        ilab model download --repository instructlab/merlinite-7b-lab
+    fi
 }
 
 test_serve() {
@@ -269,12 +274,36 @@ test_convert() {
 }
 
 test_evaluate() {
+    local MODEL_PATH="${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab"
+    # Temporarily using merlinite as the base model to confirm the workflow executes correctly 
+    local BASE_MODEL_PATH="${CACHE_HOME}/instructlab/models/instructlab/merlinite-7b-lab"
     task Evaluate the model
 
     if [ "$EVAL" -eq 1 ]; then
       export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true
       export HF_DATASETS_TRUST_REMOTE_CODE=true
-      ilab model evaluate --model "${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab" --benchmark mmlu
+      task Running MMLU
+      ilab model evaluate --model "${MODEL_PATH}" --benchmark mmlu
+      task Running MMLU_BRANCH
+      ilab model evaluate --model "${MODEL_PATH}" --benchmark mmlu_branch --tasks-dir tests/testdata/mmlu_branch/ --base-model "${BASE_MODEL_PATH}"
+
+      export INSTRUCTLAB_EVAL_FIRST_N_QUESTIONS=5
+      task Running MT_Bench
+      ilab model evaluate --model "${MODEL_PATH}" --judge-model "${MODEL_PATH}" --enable-serving-output --benchmark mt_bench
+      task Running MT_Bench_Branch
+      cd "${DATA_HOME}/instructlab/taxonomy"
+      git branch rc
+      cd "${DATA_HOME}/instructlab"
+      GPUS=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
+      ilab model evaluate \
+      --model "${MODEL_PATH}" \
+      --judge-model "${MODEL_PATH}" \
+      --branch rc --base-branch main \
+      --base-model "${BASE_MODEL_PATH}" \
+      --gpus "${GPUS}" \
+      --enable-serving-output \
+      --benchmark mt_bench_branch \
+      --taxonomy-path "${DATA_HOME}/instructlab/taxonomy"
     fi
 }
 
@@ -329,11 +358,11 @@ test_exec() {
         # When you run this --
         #   `ilab model convert` is only implemented for macOS with M-series chips for now
         #test_convert
-
+    
         test_serve trained "${DATA_HOME}/instructlab/checkpoints/model.gguf"
         PID=$!
 
-        test_chat
+       test_chat
 
         # Kill the serve process
         task Stopping the ilab model serve for trained model
