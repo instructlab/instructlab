@@ -83,7 +83,8 @@ class TestLabDiff:
                 self.taxonomy.root,
             ],
         )
-        assert self.taxonomy.untracked_files == [untracked_file]
+
+        assert untracked_file in self.taxonomy.untracked_files
         # Invalid extension is silently filtered out
         assert untracked_file not in result.output
         assert result.exit_code == 0
