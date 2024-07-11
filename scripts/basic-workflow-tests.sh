@@ -143,8 +143,9 @@ test_download() {
     fi
 
     if [ "$EVAL" -eq 1 ]; then
-        step Downloading a model to use with evaluation
+        step Downloading models to use with evaluation
         ilab model download --repository instructlab/granite-7b-lab
+        ilab model download --repository instructlab/merlinite-7b-lab
     fi
 }
 
@@ -256,12 +257,33 @@ test_convert() {
 }
 
 test_evaluate() {
+    local MODEL_PATH="${DATA_HOME}/instructlab/models/instructlab/granite-7b-lab"
+    # Temporarily using merlinite as the base model to confirm the workflow executes correctly 
+    local BASE_MODEL_PATH="${DATA_HOME}/instructlab/models/instructlab/merlinite-7b-lab"
     task Evaluate the model
 
     if [ "$EVAL" -eq 1 ]; then
       export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true
       export HF_DATASETS_TRUST_REMOTE_CODE=true
-      ilab model evaluate --model "${DATA_HOME}/instructlab/models/instructlab/granite-7b-lab" --benchmark mmlu
+      task Running MMLU
+      ilab model evaluate --model "${MODEL_PATH}" --benchmark mmlu
+      task Running MMLU_BRANCH
+      ilab model evaluate --model "${MODEL_PATH}" --benchmark mmlu_branch --tasks-dir tests/testdata/mmlu_branch/ --base-model "${BASE_MODEL_PATH}"
+      export INSTRUCTLAB_EVAL_FIRST_N_QUESTIONS=5
+      task Running MT_Bench
+      ilab model evaluate --model "${MODEL_PATH}" --judge-model "${MODEL_PATH}" --enable-serving-output --benchmark mt_bench
+      cd "${DATA_HOME}/instructlab/taxonomy"
+      git branch rc
+      cd "${DATA_HOME}/instructlab"
+      task Running MT_Bench_Branch
+      ilab model evaluate \
+      --model "${MODEL_PATH}" \
+      --judge-model "${MODEL_PATH}" \
+      --branch rc --base-branch main \
+      --base-model "${BASE_MODEL_PATH}" \
+      --enable-serving-output \
+      --benchmark mt_bench_branch \
+      --taxonomy-path "${DATA_HOME}/instructlab/taxonomy"
     fi
 }
 
