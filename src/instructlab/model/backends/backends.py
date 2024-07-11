@@ -113,20 +113,35 @@ def is_model_gguf(model_path: pathlib.Path) -> bool:
         return first_four_bytes_int == GGUF_MAGIC
 
 
-def determine_backend(model_path: pathlib.Path) -> str:
+def determine_backend(model_path: pathlib.Path) -> Tuple[str, str]:
     """
     Determine the backend to use based on the model file properties.
     Args:
         model_path (Path): The path to the model file.
     Returns:
-        str: The backend to use.
+        Tuple[str, str]: A tuple containing two strings:
+                        - The backend to use.
+                        - The reason why the backend was selected.
     """
+
+    if model_path.is_dir():
+        if sys.platform != "linux":
+            raise ValueError(
+                "Model is a directory containing huggingface safetensors files but the system is not Linux. "
+                "Using a directory with safetensors file will activate the vLLM serving backend, vLLM is only supported on Linux. "
+                "If you want to run the model on a different system (e.g. macOS), please use a GGUF file."
+            )
+        # If the model is a directory, it's a VLLM model - it's kinda weak, but it's a start
+        if sys.platform == "linux":
+            logger.debug(
+                f"Model is a directory and system is Linux, using {VLLM} backend."
+            )
+            return (
+                VLLM,
+                "model path is a directory containing huggingface safetensors files and running on Linux.",
+            )
+
     # Check if the model is a GGUF file
-
-    # If the model is a directory, it's a VLLM model - it's kinda weak, but it's a start
-    if model_path.is_dir() and sys.platform == "linux":
-        return VLLM
-
     try:
         is_gguf = is_model_gguf(model_path)
     except Exception as e:
@@ -135,9 +150,14 @@ def determine_backend(model_path: pathlib.Path) -> str:
         ) from e
 
     if is_gguf:
-        return LLAMA_CPP
+        logger.debug(f"Model is a GGUF file, using {LLAMA_CPP} backend.")
+        return LLAMA_CPP, "model is a GGUF file."
 
-    raise ValueError(f"The model file {model_path} is not a GGUF format. Unsupported.")
+    raise ValueError(
+        f"The model file {model_path} is not a GGUF format nor a directory containing huggingface safetensors files. Cannot determine which backend to use. \n"
+        f"Please use a GGUF file for {LLAMA_CPP} or a directory containing huggingface safetensors files for {VLLM}. \n"
+        "Note that vLLM is only supported on Linux."
+    )
 
 
 def get(model_path: pathlib.Path, backend: str | None) -> str:
@@ -151,7 +171,12 @@ def get(model_path: pathlib.Path, backend: str | None) -> str:
     """
     # Check if the model is a GGUF file
     logger.debug(f"Auto-detecting backend for model {model_path}")
-    auto_detected_backend = determine_backend(model_path)
+    try:
+        auto_detected_backend, auto_detected_backend_reason = determine_backend(
+            model_path
+        )
+    except ValueError as e:
+        raise ValueError(f"Cannot determine which backend to use: {e}") from e
 
     logger.debug(f"Auto-detected backend: {auto_detected_backend}")
     # When the backend is not set using the --backend flag, determine the backend automatically
@@ -165,12 +190,13 @@ def get(model_path: pathlib.Path, backend: str | None) -> str:
     # If the backend was set using the --backend flag, validate it.
     else:
         logger.debug(f"Validating '{backend}' backend")
-        # TODO: keep this code logic and implement a `--force` flag to override the auto-detected backend
         # If the backend was set explicitly, but we detected the model should use a different backend, raise an error
-        # if backend != auto_detected_backend:
-        #     raise ValueError(
-        #         f"The backend '{backend}' was set explicitly, but the model was detected as '{auto_detected_backend}'."
-        #     )
+        if backend != auto_detected_backend:
+            logger.warning(
+                f"The serving backend '{backend}' was configured explicitly, but the provided model is not compatible with it. "
+                f"The model was detected as '{auto_detected_backend}, reason: {auto_detected_backend_reason}'.\n"
+                "The backend startup sequence will continue with the configured backend but might fail."
+            )
 
     return backend
 
