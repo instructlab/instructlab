@@ -12,20 +12,20 @@ import click
 
 def _platform_info() -> typing.Dict[str, typing.Any]:
     """Platform and machine information"""
-    info = {
+    d = {
         "sys.version": sys.version,
         "sys.platform": sys.platform,
         "os.name": os.name,
         "platform.release": platform.release(),
         "platform.machine": platform.machine(),
     }
-    if sys.version_info >= (3, 10) and sys.platform == "linux":
+    if sys.platform == "linux":
         os_release = platform.freedesktop_os_release()
         for key in ["ID", "VERSION_ID", "PRETTY_NAME"]:
             value = os_release.get(key)
             if value:
-                info[f"os-release.{key}"] = value
-    return info
+                d[f"os-release.{key}"] = value
+    return d
 
 
 def _torch_info() -> typing.Dict[str, typing.Any]:
@@ -53,7 +53,7 @@ def _torch_cuda_info() -> typing.Dict[str, typing.Any]:
     if not torch.cuda.is_available():
         return {}
 
-    info = {
+    d = {
         "torch.cuda.bf16": torch.cuda.is_bf16_supported(),
         "torch.cuda.current": torch.cuda.current_device(),
     }
@@ -62,12 +62,12 @@ def _torch_cuda_info() -> typing.Dict[str, typing.Any]:
         device = torch.device("cuda", idx)
         free, total = torch.cuda.mem_get_info(device)
         capmax, capmin = torch.cuda.get_device_capability(device)
-        info[f"torch.cuda.{idx}.name"] = torch.cuda.get_device_name(device)
-        info[f"torch.cuda.{idx}.free"] = f"{(free / 1024**3):.1f}"
-        info[f"torch.cuda.{idx}.total"] = f"{(total / 1024**3):.1f}"
-        info[f"torch.cuda.{idx}.capability"] = f"{capmax}.{capmin}"
+        d[f"torch.cuda.{idx}.name"] = torch.cuda.get_device_name(device)
+        d[f"torch.cuda.{idx}.free"] = f"{(free / 1024**3):.1f}"
+        d[f"torch.cuda.{idx}.total"] = f"{(total / 1024**3):.1f}"
+        d[f"torch.cuda.{idx}.capability"] = f"{capmax}.{capmin}"
 
-    return info
+    return d
 
 
 def _torch_hpu_info() -> typing.Dict[str, typing.Any]:
@@ -81,7 +81,7 @@ def _torch_hpu_info() -> typing.Dict[str, typing.Any]:
     except ImportError:
         return {}
 
-    info = {
+    d = {
         # 'habana_frameworks' has package name 'habana_torch_plugin'
         "habana_torch_plugin.version": importlib.metadata.version(
             "habana_torch_plugin"
@@ -89,20 +89,20 @@ def _torch_hpu_info() -> typing.Dict[str, typing.Any]:
         "torch.hpu.is_available": hpu.is_available(),
     }
 
-    if not info["torch.hpu.is_available"]:
-        return info
+    if not d["torch.hpu.is_available"]:
+        return d
 
-    info["torch.hpu.device_count"] = hpu.device_count()
+    d["torch.hpu.device_count"] = hpu.device_count()
     for idx in range(hpu.device_count()):
         device = torch.device("hpu", idx)
-        info[f"torch.hpu.{idx}.name"] = hpu.get_device_name(device)
-        info[f"torch.hpu.{idx}.capability"] = hpu.get_device_capability(device)
+        d[f"torch.hpu.{idx}.name"] = hpu.get_device_name(device)
+        d[f"torch.hpu.{idx}.capability"] = hpu.get_device_capability(device)
         prop: str = hpu.get_device_properties(device)
-        info[f"torch.hpu.{idx}.properties"] = prop.strip("()")
+        d[f"torch.hpu.{idx}.properties"] = prop.strip("()")
     for key, value in sorted(os.environ.items()):
         if key.startswith(("PT_", "HABANA", "LOG_LEVEL_", "ENABLE_CONSOLE")):
-            info[f"env.{key}"] = value
-    return info
+            d[f"env.{key}"] = value
+    return d
 
 
 def _llama_cpp_info() -> typing.Dict[str, typing.Any]:
@@ -129,18 +129,18 @@ def _instructlab_info():
 
 def get_sysinfo() -> typing.Dict[str, typing.Any]:
     """Get system information"""
-    info = {}
-    info.update(_platform_info())
-    info.update(_instructlab_info())
-    info.update(_torch_info())
-    info.update(_torch_cuda_info())
-    info.update(_torch_hpu_info())
-    info.update(_llama_cpp_info())
-    return info
+    d = {}
+    d.update(_platform_info())
+    d.update(_instructlab_info())
+    d.update(_torch_info())
+    d.update(_torch_cuda_info())
+    d.update(_torch_hpu_info())
+    d.update(_llama_cpp_info())
+    return d
 
 
 @click.command()
-def sysinfo():
+def info():
     """Print system information"""
     for key, value in get_sysinfo().items():
         print(f"{key}: {value}")

@@ -130,7 +130,7 @@ rm -f "${ILAB_CONFIG_FILE}"
 ilab --version
 
 # print system information
-ilab system sysinfo
+ilab system info
 
 # pipe 3 carriage returns to ilab config init to get past the prompts
 echo -e "\n\n\n" | ilab init
