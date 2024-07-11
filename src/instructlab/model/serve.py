@@ -3,7 +3,6 @@
 # Standard
 import logging
 import pathlib
-import typing
 
 # Third Party
 import click
@@ -16,7 +15,9 @@ from instructlab.model.backends.backends import ServerException
 logger = logging.getLogger(__name__)
 
 
-@click.command()
+@click.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+)
 @click.option(
     "--model-path",
     type=click.Path(path_type=pathlib.Path),
@@ -66,16 +67,6 @@ logger = logging.getLogger(__name__)
         "Automatically detected based on the model file properties.\n"
     ),
 )
-@click.option(
-    "--vllm-args",
-    type=str,
-    multiple=True,
-    help=(
-        "Specific arguments to pass into vllm. Each arg must be passed "
-        "separately and surrounded by quotes.\n"
-        " Example: --vllm-args='--dtype=auto' --vllm-args='--enable-lora'"
-    ),
-)
 @click.pass_context
 @utils.display_params
 def serve(
@@ -87,9 +78,17 @@ def serve(
     model_family,
     log_file: pathlib.Path | None,
     backend: str | None,
-    vllm_args: typing.Iterable[str],
 ) -> None:
-    """Start a local server"""
+    """Start a local server
+
+    The vLLM backend accepts additional parameters in the form of extra
+    arguments after "--" separator:
+
+      $ ilab model serve ... --backend=vllm -- --dtype=auto --enable-lora
+
+    vLLm parameters are documented at
+    https://docs.vllm.ai/en/stable/serving/openai_compatible_server.html
+    """
     # First Party
     from instructlab.model.backends import llama_cpp, vllm
 
@@ -111,12 +110,8 @@ def serve(
 
     backend_instance: backends.BackendServer
     if backend == backends.LLAMA_CPP:
-        # Instantiate the llama server
-        if gpu_layers is None:
-            gpu_layers = ctx.obj.config.serve.llama_cpp.gpu_layers
-        if max_ctx_size is None:
-            max_ctx_size = ctx.obj.config.serve.llama_cpp.max_ctx_size
-
+        if ctx.args:
+            ctx.fail(f"Unsupported extra arguments: {', '.join(ctx.args)}")
         backend_instance = llama_cpp.Server(
             api_base=ctx.obj.config.serve.api_base(),
             model_path=model_path,
@@ -129,6 +124,14 @@ def serve(
         )
     elif backend == backends.VLLM:
         # Instantiate the vllm server
+        if ctx.args:
+            # extra click arguments after "--"
+            vllm_args = ctx.args
+        elif ctx.obj.config.serve.vllm.vllm_args:
+            vllm_args = ctx.obj.config.serve.vllm.vllm_args
+        else:
+            vllm_args = []
+
         backend_instance = vllm.Server(
             api_base=ctx.obj.config.serve.api_base(),
             model_path=model_path,
