@@ -133,7 +133,7 @@ test_download() {
         ilab model download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf
     elif [ "$BACKEND" = "vllm" ]; then
         step Downloading the model for vLLM
-        ilab download --repository instructlab/merlinite-7b-lab
+        ilab model download --repository instructlab/merlinite-7b-lab
     elif [ "$MIXTRAL" -eq 1 ]; then
         step Downloading the mixtral model
         ilab model download --repository TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF --filename mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf --hf-token "${HF_TOKEN}"
