@@ -68,10 +68,10 @@ The project currently supports the usage of the following runners for the E2E jo
 |              | full                     |⎯|⎯|⎯|✅|
 | **Training** | legacy+Linux             |⎯|⎯|✅|⎯|
 |              | legacy+Linux+4-bit-quant |✅|✅|⎯|⎯|
-|              | training-lib             |⎯|⎯|✅|❌|
-| **Eval**     | eval                     |⎯|⎯|✅|❌️|
+|              | training-lib             |⎯|⎯|✅(*1)|❌|
+| **Eval**     | eval                     |⎯|⎯|✅(*2)|❌️|
 
-Notes not reflected in the matrix:
+Points of clarification (*):
 
-* The `training-lib` testing is not testing using the output of the Generate step. <https://github.com/instructlab/instructlab/issues/1655>
-* The `eval` testing is not evaluating the output of the Training step. <https://github.com/instructlab/instructlab/issues/1540>
+1. The `training-lib` testing is not testing using the output of the Generate step. <https://github.com/instructlab/instructlab/issues/1655>
+2. The `eval` testing is not evaluating the output of the Training step. <https://github.com/instructlab/instructlab/issues/1540>
