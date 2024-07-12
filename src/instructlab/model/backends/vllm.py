@@ -32,11 +32,13 @@ class Server(BackendServer):
         model_path: pathlib.Path,
         host: str,
         port: int,
+        background: bool = False,
         vllm_args: typing.Iterable[str] | None = (),
     ):
         super().__init__(model_path, api_base, host, port)
         self.api_base = api_base
         self.model_path = model_path
+        self.background = background
         self.vllm_args: list[str]
         self.vllm_args = list(vllm_args) if vllm_args is not None else []
         self.process: subprocess.Popen | None = None
@@ -47,7 +49,7 @@ class Server(BackendServer):
             self.port,
             self.model_path,
             self.vllm_args,
-            background=False,
+            self.background,
         )
 
         try:
@@ -55,23 +57,25 @@ class Server(BackendServer):
                 time.sleep(1)
         except KeyboardInterrupt:
             self.shutdown()
-            self.logger.info("vLLM server terminated by keyboard")
+            logger.info("vLLM server terminated by keyboard")
         # pylint: disable=broad-exception-caught
         except BaseException:
             self.shutdown()
-            self.logger.exception("vLLM server terminated")
+            logger.exception("vLLM server terminated")
 
-    def create_server_process(self, port: int) -> subprocess.Popen:
+    def create_server_process(self, port: int, background: bool) -> subprocess.Popen:
         server_process = run_vllm(
             self.host,
             port,
             self.model_path,
             self.vllm_args,
-            background=True,
+            background=background,
         )
         return server_process
 
-    def run_detached(self, http_client: httpx.Client | None = None) -> str:
+    def run_detached(
+        self, http_client: httpx.Client | None = None, background: bool = True
+    ) -> str:
         try:
             _, vllm_server_process, api_base = ensure_server(
                 backend=VLLM,
@@ -79,6 +83,7 @@ class Server(BackendServer):
                 http_client=http_client,
                 host=self.host,
                 port=self.port,
+                background=background,
                 server_process_func=self.create_server_process,
             )
             self.process = vllm_server_process or self.process

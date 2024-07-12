@@ -86,7 +86,9 @@ class Server(BackendServer):
 
         return server_process
 
-    def run_detached(self, http_client: httpx.Client | None = None) -> str:
+    def run_detached(
+        self, http_client: httpx.Client | None = None, background: bool = True
+    ) -> str:
         try:
             llama_cpp_server_process, _, api_base = ensure_server(
                 backend=LLAMA_CPP,

@@ -78,7 +78,9 @@ class BackendServer(abc.ABC):
         """Run serving backend in foreground (ilab model serve)"""
 
     @abc.abstractmethod
-    def run_detached(self, http_client: httpx.Client | None = None) -> str:
+    def run_detached(
+        self, http_client: httpx.Client | None = None, background: bool = True
+    ) -> str:
         """Run serving backend in background ('ilab model chat' when server is not running)"""
 
     @abc.abstractmethod
@@ -227,6 +229,7 @@ def ensure_server(
     host="localhost",
     port=8000,
     queue=None,
+    background=True,
     server_process_func=None,
 ) -> Tuple[
     Optional[multiprocessing.Process], Optional[subprocess.Popen], Optional[str]
@@ -248,7 +251,7 @@ def ensure_server(
 
         if backend == VLLM:
             # TODO: resolve how the hostname is getting passed around the class and this function
-            vllm_server_process = server_process_func(port)
+            vllm_server_process = server_process_func(port, background)
             logger.info(f"Starting a temporary vLLM server at {temp_api_base}")
             count = 0
             # TODO should this be configurable?
