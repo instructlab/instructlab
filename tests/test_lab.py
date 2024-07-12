@@ -1,11 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+import json
 import re
 import subprocess
 import sys
+import typing
 
 # Third Party
+from click.testing import CliRunner
 import click
 import pytest
 
@@ -67,7 +70,7 @@ subcommands = [
     ("config", "show", ()),
     ("model", None, ()),
     ("model", "chat", ()),
-    ("model", "convert", ()),
+    ("model", "convert", ("--model-dir", "test")),
     ("model", "download", ()),
     ("model", "evaluate", ("--benchmark", "mmlu")),
     ("model", "serve", ()),
@@ -84,6 +87,7 @@ subcommands = [
 aliases = [
     "serve",
     "train",
+    "convert",
     "chat",
     "test",
     "evaluate",
@@ -113,3 +117,39 @@ def test_ilab_cli_deprecated_help(alias: str, cli_runner):
     result = cli_runner.invoke(lab.ilab, cmd)
     assert result.exit_code == 0, result.stdout
     assert "this will be deprecated in a future release" in result.stdout
+
+
+@pytest.mark.parametrize(
+    "first,second,extra",
+    # only second level subcommands have a --debug-params option
+    [sc for sc in subcommands if sc[1] is not None],
+)
+def test_ilab_cli_debug_params(
+    first: str, second: str, extra: typing.Sequence[str], cli_runner: CliRunner
+):
+    cmd = ["--config", "DEFAULT", first, second]
+    cmd.extend(extra)
+
+    result = cli_runner.invoke(lab.ilab, cmd + ["--debug-params"])
+    assert result.exit_code == 0, result.stdout
+
+    result = cli_runner.invoke(lab.ilab, cmd + ["--debug-params-json"])
+    assert result.exit_code == 0, result.stdout
+    j = json.loads(result.stdout)
+    assert isinstance(j, dict)
+
+
+def test_ilab_commands_tested():
+    ilab_commands = {None: set([""])}
+    for primary, group in lab.ilab.commands.items():
+        sub = ilab_commands.setdefault(primary, set())
+        sub.add("")
+        sub.update(group.commands)
+
+    tested = {None: set([""])}
+    for primary, secondary, _ in subcommands:
+        sub = tested.setdefault(primary, set())
+        sub.add(secondary or "")
+
+    assert ilab_commands == tested
+    assert set(lab.aliases) == set(aliases)

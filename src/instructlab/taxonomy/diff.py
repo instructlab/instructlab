@@ -10,7 +10,7 @@ import click
 import yaml
 
 # First Party
-from instructlab import utils
+from instructlab import clickext
 from instructlab.configuration import DEFAULTS
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
     help="Suppress all output. Call returns 0 if check passes, 1 otherwise.",
 )
 @click.pass_context
-@utils.display_params
+@clickext.display_params
 def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
     """
     Lists taxonomy files that have changed since <taxonomy-base>

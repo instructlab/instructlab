@@ -10,7 +10,7 @@ import os
 import click
 
 # First Party
-from instructlab import utils
+from instructlab import clickext, utils
 from instructlab.configuration import DEFAULTS
 
 logger = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ logger = logging.getLogger(__name__)
     help="Force model family to use when picking a generation template",
 )
 @click.pass_context
-@utils.display_params
+@clickext.display_params
 # pylint: disable=function-redefined
 def test(
     ctx,

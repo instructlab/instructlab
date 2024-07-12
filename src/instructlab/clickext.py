@@ -2,10 +2,17 @@
 """Click extensions for InstructLab"""
 
 # Standard
+import functools
+import json
+import logging
+import os
+import sys
 import typing
 
 # Third Party
 import click
+
+logger = logging.getLogger(__name__)
 
 
 class ConfigOption(click.Option):
@@ -103,3 +110,104 @@ class ConfigOption(click.Option):
                 return value()
             return value
         return None
+
+
+def _get_param_info(
+    ctx: click.Context, **kwargs: dict
+) -> typing.Generator[tuple[str, typing.Any, str, str], None, None]:
+    """Get click parameter information
+
+    Returns name, value, type name, and parameter source
+    """
+    for key, value in kwargs.items():
+        src = ctx.get_parameter_source(key)
+        param_src: str = src.name.lower() if src is not None else "unknown"
+        type_name: str
+        if value is None:
+            type_name = "None"
+        else:
+            type_: type = type(value)
+            type_name = type_.__name__
+            mod_name: str | None = getattr(type_, "__module__", None)
+            if mod_name and mod_name != "builtins":
+                type_name = f"{mod_name}.{type_name}"
+        yield key, value, type_name, param_src
+    # additional args
+    if ctx.args:
+        yield "args", ctx.args, "list", "args"
+
+
+class _ParamEncoder(json.JSONEncoder):
+    """Custom encoder for additional parameter types"""
+
+    def default(self, o: typing.Any) -> typing.Any:
+        if isinstance(o, os.PathLike):
+            return os.fsdecode(o)
+        return super().default(o)
+
+
+def display_params(f: typing.Callable) -> typing.Callable:
+    """Display command parameters decorator
+
+    The function decorator adds two hidden parameters to a click Command.
+
+    - `--debug-params` dumps parameter info for humans and exits immediately.
+    - `--display-param-json` dumps parameter info as JSON and exits immediately.
+
+    When DEBUG logging is enabled, it also dumps parameter information for
+    humans, but does not exit immediately. The output contains parameter
+    name, value, value type (as qualified dotted string), and the source of
+    the value (commandline, environment, default, default_map, args,
+    unknown).
+    """
+
+    @functools.wraps(f)
+    def wrapper(*args: typing.Any, **kwargs: typing.Any) -> typing.Any:
+        # some callbacks don't need ctx
+        ctx: click.Context | None = kwargs.get("ctx")
+        if ctx is None:
+            ctx = click.get_current_context()
+        display: str = kwargs.pop("_debug_params")
+
+        # also display params when debug logging is enabled
+        if (
+            display is None
+            and logger.isEnabledFor(logging.DEBUG)
+            and not kwargs.get("quiet", False)
+        ):
+            display = "logger"
+
+        if kwargs and display in {"logger", "human"}:
+            pad = min(max(len(name) for name in kwargs), 24)
+            print("Parameters:")
+            for name, value, typ, src in _get_param_info(ctx, **kwargs):
+                print(f"  {name:>{pad}}: {value!r:<8} \t[type: {typ}, src: {src}]")
+        elif display == "json":
+            params = {
+                name: (value, type_name, param_src)
+                for name, value, type_name, param_src in _get_param_info(ctx, **kwargs)
+            }
+            json.dump({"params": params}, sys.stdout, cls=_ParamEncoder)
+
+        # --debug-params* exit
+        if display in {"json", "human"}:
+            ctx.exit()
+
+        return f(*args, **kwargs)
+
+    human_option = click.option(
+        "--debug-params",
+        "_debug_params",
+        flag_value="human",
+        hidden=True,
+        help="display parameter info and exit.",
+    )
+    json_option = click.option(
+        "--debug-params-json",
+        "_debug_params",
+        flag_value="json",
+        hidden=True,
+        help="display parameter as JSON and exit.",
+    )
+
+    return human_option(json_option(wrapper))

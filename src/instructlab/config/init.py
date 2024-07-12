@@ -9,7 +9,7 @@ from git import GitError, Repo
 import click
 
 # First Party
-from instructlab import utils
+from instructlab import clickext, utils
 from instructlab.configuration import (
     DEFAULTS,
     ensure_storage_directories_exist,
@@ -60,6 +60,7 @@ from instructlab.configuration import (
     "using the same taxonomy repository. ",
 )
 @click.option("--train-profile", type=click.Path(), default=None)
+@clickext.display_params
 def init(
     interactive,
     model_path: str,

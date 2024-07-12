@@ -4,15 +4,15 @@ import click
 import yaml
 
 # First Party
-from instructlab import utils
+from instructlab import clickext
 
 
 @click.command()
 @click.pass_context
-@utils.display_params
+@clickext.display_params
 def show(
-    ctx,
-):
+    ctx: click.Context,
+) -> None:
     """Displays the current config as YAML"""
     # TODO: make this use pretty colors like jq/yq
     try:
@@ -21,4 +21,5 @@ def show(
         )
     except yaml.YAMLError as e:
         click.secho(f"Error loading config as YAML: {e}", fg="red")
+        ctx.abort()
     click.echo(yaml.dump(config_yaml, indent=4))

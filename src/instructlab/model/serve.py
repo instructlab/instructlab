@@ -68,7 +68,7 @@ logger = logging.getLogger(__name__)
     ),
 )
 @click.pass_context
-@utils.display_params
+@clickext.display_params
 def serve(
     ctx: click.Context,
     model_path: pathlib.Path,

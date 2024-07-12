@@ -10,7 +10,7 @@ from huggingface_hub import snapshot_download
 import click
 
 # First Party
-from instructlab import utils
+from instructlab import clickext
 from instructlab.configuration import DEFAULTS
 
 
@@ -46,7 +46,7 @@ from instructlab.configuration import DEFAULTS
     help="User access token for connecting to the Hugging Face Hub.",
 )
 @click.pass_context
-@utils.display_params
+@clickext.display_params
 def download(ctx, repository, release, filename, model_dir, hf_token):
     """Download the model(s) to train"""
     click.echo(f"Downloading model from {repository}@{release} to {model_dir}...")
