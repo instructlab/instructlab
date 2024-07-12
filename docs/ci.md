@@ -60,13 +60,13 @@ The project currently supports the usage of the following runners for the E2E jo
 
 ### E2E Test Matrix
 
-| Area | Feature | [`e2e.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e.yml) | [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | [`e2e-nvidia-a10g-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x4.yml) |
-| --- | --- | --- | --- | --- |
-| **Serving**  | llama-cpp                |✅|✅|✅|✅|
-|              | vllm                     |❌|❌|❌|❌|
-| **Generate** | simple                   |✅|✅|✅|❌|
-|              | full                     |❌|❌|❌|✅|
-| **Training** | legacy+Linux             |❌|❌|✅|❌|
-|              | legacy+Linux+4-bit-quant |✅|✅|❌|❌|
-|              | training-lib             |❌|❌|❌|❌|
-| **Eval**     | eval                     |❌|❌|✅|❌|
+| Area | Feature | [`e2e.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e.yml) | [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | [`e2e-nvidia-a10g-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x4.yml) | High fidelity target (target combo once pieces work together) |
+| --- | --- | --- | --- | --- | --- | --- |
+| **Serving**  | llama-cpp                |✅|✅|✅|✅|❌|
+|              | vllm                     |❌|❌|❌|❌|✅|
+| **Generate** | simple                   |✅|✅|✅|❌|❌|
+|              | full                     |❌|❌|❌|✅|✅|
+| **Training** | legacy+Linux             |❌|❌|✅|❌|❌|
+|              | legacy+Linux+4-bit-quant |✅|✅|❌|❌|❌|
+|              | training-lib             |❌|❌|❌|❌|✅|
+| **Eval**     | eval                     |❌|❌|✅|❌|✅|
