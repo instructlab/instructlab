@@ -203,11 +203,12 @@ def get(model_path: pathlib.Path, backend: str | None) -> str:
     return backend
 
 
+# TODO: This is only used by vLLM but should move to vllm.py
 def shutdown_process(process: subprocess.Popen, timeout: int) -> None:
     """
     Shuts down a process
 
-    Sends SIGTERM and then after a timeout if the process still is not terminated sends a SIGKILL
+    Sends SIGINT and then after a timeout if the process still is not terminated sends a SIGKILL
 
     Args:
         process (subprocess.Popen): process of the vllm server
@@ -215,7 +216,8 @@ def shutdown_process(process: subprocess.Popen, timeout: int) -> None:
     Returns:
         Nothing
     """
-    process.terminate()
+    # vLLM responds to SIGINT by shutting down gracefully and reaping the children
+    process.send_signal(signal.SIGINT)
     try:
         process.wait(timeout)
     except subprocess.TimeoutExpired:
