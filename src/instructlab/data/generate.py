@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 @click.command()
 @click.option(
     "--model",
-    default=lambda: DEFAULTS.DEFAULT_MODEL,
+    default=DEFAULTS.DEFAULT_MODEL,
     show_default="The default model used by the instructlab system, located in the data directory.",
     help="Name of the model used during generation.",
 )
@@ -47,7 +47,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
-    default=lambda: DEFAULTS.TAXONOMY_DIR,
+    default=DEFAULTS.TAXONOMY_DIR,
     show_default="The default taxonomy path used by instructlab, located in the data directory.",
     help="Path to where the taxonomy is located.",
 )
@@ -60,7 +60,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--output-dir",
     type=click.Path(),
-    default=lambda: DEFAULTS.DATASETS_DIR,
+    default=DEFAULTS.DATASETS_DIR,
     show_default="The default output directory used by instructlab, located in the data directory.",
     help="Path to output generated files.",
 )

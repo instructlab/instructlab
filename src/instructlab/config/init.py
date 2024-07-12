@@ -29,7 +29,7 @@ from instructlab.configuration import (
 @click.option(
     "--model-path",
     type=click.Path(),
-    default=lambda: DEFAULTS.DEFAULT_GGUF_MODEL,
+    default=DEFAULTS.DEFAULT_GGUF_MODEL,
     show_default="The instructlab data files location per the user's system.",
     help="Path to the model used during generation.",
 )
@@ -42,7 +42,7 @@ from instructlab.configuration import (
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
-    default=lambda: DEFAULTS.TAXONOMY_DIR,
+    default=DEFAULTS.TAXONOMY_DIR,
     show_default="The instructlab data files location per the user's system.",
     help="Path to where the taxonomy should be cloned.",
 )

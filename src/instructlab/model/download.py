@@ -35,7 +35,7 @@ from instructlab.configuration import DEFAULTS
 )
 @click.option(
     "--model-dir",
-    default=lambda: DEFAULTS.MODELS_DIR,
+    default=DEFAULTS.MODELS_DIR,
     show_default="The default system model location store, located in the data directory.",
     help="The local directory to download the model files into.",
 )

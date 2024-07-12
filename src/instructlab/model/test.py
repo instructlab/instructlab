@@ -20,14 +20,14 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--data-dir",
     help="Base directory where data is stored.",
-    default=lambda: DEFAULTS.INTERNAL_DIR,
+    default=DEFAULTS.INTERNAL_DIR,
     show_default="Default internal data directory, stored in the instructlab package.",
 )
 # for macOS:
 @click.option(
     "--model-dir",
     help="Base directory where model is stored.",
-    default=lambda: DEFAULTS.CHECKPOINTS_DIR,
+    default=DEFAULTS.CHECKPOINTS_DIR,
     show_default="Default instructlab system checkpoints directory.",
 )
 @click.option(
@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "-m",
     "--model",
-    default=lambda: DEFAULTS.DEFAULT_GGUF_MODEL,
+    default=DEFAULTS.DEFAULT_GGUF_MODEL,
     show_default=True,
     help="Base model name to test on Linux",
 )

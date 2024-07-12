@@ -27,14 +27,14 @@ ADDITIONAL_ARGUMENTS = "additional_args"
     cls=clickext.ConfigOption,
     required=True,  # default from config
     help="Base directory where data is stored.",
-    default=lambda: DEFAULTS.DATASETS_DIR,
+    default=DEFAULTS.DATASETS_DIR,
 )
 @click.option(
     "--ckpt-output-dir",
     type=click.Path(),
     cls=clickext.ConfigOption,
     required=True,  # default from config
-    default=lambda: DEFAULTS.CHECKPOINTS_DIR,
+    default=DEFAULTS.CHECKPOINTS_DIR,
     help="output directory to store checkpoints in during training",
 )
 @click.option(
@@ -42,7 +42,7 @@ ADDITIONAL_ARGUMENTS = "additional_args"
     type=click.Path(),
     cls=clickext.ConfigOption,
     required=True,  # default from config
-    default=lambda: DEFAULTS.INTERNAL_DIR,
+    default=DEFAULTS.INTERNAL_DIR,
     help="output directory to store training data in",
 )
 @click.option(

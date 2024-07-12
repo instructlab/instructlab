@@ -239,7 +239,7 @@ class _chat(BaseModel):
     context: str = "default"
     session: typing.Optional[str] = None
     logs_dir: str = Field(
-        default_factory=lambda: DEFAULTS.CHATLOGS_DIR
+        default_factory=DEFAULTS.CHATLOGS_DIR
     )  # use a lambda to avoid caching
     greedy_mode: bool = False
     max_tokens: typing.Optional[int] = None
@@ -260,9 +260,9 @@ class _generate(BaseModel):
     num_cpus: PositiveInt = DEFAULTS.NUM_CPUS
     chunk_word_count: PositiveInt = DEFAULTS.CHUNK_WORD_COUNT
     num_instructions: PositiveInt = DEFAULTS.NUM_INSTRUCTIONS
-    output_dir: StrictStr = Field(default_factory=lambda: DEFAULTS.DATASETS_DIR)
-    prompt_file: StrictStr = Field(default_factory=lambda: DEFAULTS.PROMPT_FILE)
-    seed_file: StrictStr = Field(default_factory=lambda: DEFAULTS.SEED_FILE)
+    output_dir: StrictStr = Field(default_factory=DEFAULTS.DATASETS_DIR)
+    prompt_file: StrictStr = Field(default_factory=DEFAULTS.PROMPT_FILE)
+    seed_file: StrictStr = Field(default_factory=DEFAULTS.SEED_FILE)
 
 
 class _serve_vllm(BaseModel):

@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
     "--taxonomy-path",
     type=click.Path(),
     help="Path to where the taxonomy is stored locally.",
-    default=lambda: DEFAULTS.TAXONOMY_DIR,
+    default=DEFAULTS.TAXONOMY_DIR,
     show_default="Default taxonomy location in the instructlab data directory.",
 )
 @click.option(
