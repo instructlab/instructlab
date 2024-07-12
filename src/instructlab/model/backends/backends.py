@@ -23,7 +23,7 @@ import httpx
 import uvicorn
 
 # Local
-from ...client import ClientException, check_api_base, list_models
+from ...client import check_api_base
 from ...configuration import _serve as serve_config
 from ...configuration import get_api_base
 from ...utils import split_hostport
@@ -257,19 +257,14 @@ def ensure_server(
             # TODO should this be configurable?
             vllm_startup_timeout = 60
             while count < vllm_startup_timeout:
-                try:
-                    list_models(
-                        api_base=temp_api_base,
-                        http_client=http_client,
-                    )
+                if check_api_base(temp_api_base, http_client):
                     logger.info(f"vLLM engine successfully started at {temp_api_base}")
                     break
-                except ClientException:
-                    count += 1
-                    logger.info(
-                        f"Waiting for the vLLM server to start at {temp_api_base}, this might take a moment... Retries: {count}/{vllm_startup_timeout}"
-                    )
-                    sleep(5)
+                count += 1
+                logger.info(
+                    f"Waiting for the vLLM server to start at {temp_api_base}, this might take a moment... Retries: {count}/{vllm_startup_timeout}"
+                )
+                sleep(5)
 
             if count >= vllm_startup_timeout:
                 shutdown_process(vllm_server_process, 20)
@@ -290,14 +285,8 @@ def ensure_server(
             count = 0
             while llama_cpp_server_process.is_alive():
                 sleep(0.1)
-                try:
-                    list_models(
-                        api_base=temp_api_base,
-                        http_client=http_client,
-                    )
+                if check_api_base(temp_api_base, http_client):
                     break
-                except ClientException:
-                    pass
                 if count > 50:
                     logger.error("failed to reach the API server")
                     break
