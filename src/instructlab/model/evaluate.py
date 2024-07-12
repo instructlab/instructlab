@@ -387,7 +387,12 @@ def launch_server(
 @click.option(
     "--backend",
     type=click.Choice(tuple(backends.SUPPORTED_BACKENDS)),
-    help="Serving backend to use for evaluation. Options are vllm and llama-cpp.",
+    help="Serving backend to use for the model and base model (if applicable) during evaluation. Options are vllm and llama-cpp.",
+)
+@click.option(
+    "--judge-backend",
+    type=click.Choice(tuple(backends.SUPPORTED_BACKENDS)),
+    help="Serving backend to use for the judge model for during mt_bench or mt_bench_branch evaluation. Options are vllm and llama-cpp.",
 )
 @click.option(
     "--tls-insecure",
@@ -438,6 +443,7 @@ def evaluate(
     gpus,
     merge_system_user_message,
     backend,
+    judge_backend,
     tls_insecure,  # pylint: disable=unused-argument
     tls_client_cert,  # pylint: disable=unused-argument
     tls_client_key,  # pylint: disable=unused-argument
@@ -491,7 +497,7 @@ def evaluate(
                     JUDGE_MODEL_NAME,
                     max_workers,
                     gpus,
-                    backend,
+                    judge_backend,
                     enable_serving_output,
                 )
                 overall_score, qa_pairs, turn_scores, error_rate = (
@@ -567,7 +573,7 @@ def evaluate(
                     JUDGE_MODEL_NAME,
                     max_workers,
                     gpus,
-                    backend,
+                    judge_backend,
                     enable_serving_output,
                 )
                 for i, evaluator in enumerate(evaluators):
