@@ -263,7 +263,7 @@ def test_evaluate_mmlu_branch(run_mock, cli_runner: CliRunner):
             "models/instructlab/granite-7b-lab",
             "--base-model",
             "models/instructlab/granite-7b-lab",
-            "--sdg-path",
+            "--tasks-dir",
             "generated",
         ],
     )

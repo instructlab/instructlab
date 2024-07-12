@@ -200,7 +200,7 @@ evaluate:
     few_shots: 2
     batch_size: 5
   mmlu_branch:
-    sdg_path: /path/to/sdg
+    tasks_dir: /path/to/sdg
   mt_bench:
     judge_model: prometheus
     output_dir: /dir/to/output
