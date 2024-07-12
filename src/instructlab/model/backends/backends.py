@@ -217,10 +217,15 @@ def shutdown_process(process: subprocess.Popen, timeout: int) -> None:
         Nothing
     """
     # vLLM responds to SIGINT by shutting down gracefully and reaping the children
+    logger.debug(f"Sending SIGINT to vLLM server PID {process.pid}")
     process.send_signal(signal.SIGINT)
     try:
+        logger.debug("Waiting for vLLM server to shut down gracefully")
         process.wait(timeout)
     except subprocess.TimeoutExpired:
+        logger.debug(
+            f"Sending SIGKILL to vLLM server since timeout ({timeout}s) expired"
+        )
         process.kill()
 
 
