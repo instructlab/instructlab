@@ -6,6 +6,7 @@ from copy import copy
 import enum
 import logging
 import os
+import pathlib
 import typing
 
 # Third Party
@@ -248,7 +249,12 @@ def launch_server(
 
     eval_serve = copy(ctx.obj.config.serve)
     if backend is None:
-        eval_serve.backend = backends.VLLM
+        try:
+            backend = eval_serve.backend = backends.get(pathlib.Path(model), backend)
+        except ValueError as e:
+            click.secho(f"Failed to determine backend: {e}", fg="red")
+            raise click.exceptions.Exit(1)
+
     if backend == backends.VLLM:
         eval_serve.vllm.vllm_args.extend(["--served-model-name", model_name])
         if gpus:
@@ -259,7 +265,7 @@ def launch_server(
                 click.echo(
                     "Ignoring --gpus with --tensor-parallel-size configured in serve vllm_args"
                 )
-    if backend == backends.LLAMA_CPP:
+    elif backend == backends.LLAMA_CPP:
         if ctx.obj.config.serve.llama_cpp.max_ctx_size < 5120:
             eval_serve.llama_cpp.max_ctx_size = 5120
             logging.debug(
