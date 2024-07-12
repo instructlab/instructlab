@@ -12,13 +12,23 @@ import typing
 from click.testing import CliRunner
 import pytest
 
-# First Party
-from instructlab.configuration import DEFAULTS
-
 # Local
 from .taxonomy import MockTaxonomy
 
 TESTS_PATH = pathlib.Path(__file__).parent.absolute()
+
+
+def pytest_addoption(parser) -> None:
+    parser.addoption(
+        "--regenerate-testdata",
+        action="store_true",
+        help="Regenerate test data like dumped config",
+    )
+
+
+@pytest.fixture
+def regenerate_testdata(request) -> bool:
+    return bool(request.config.getoption("--regenerate-testdata"))
 
 
 @pytest.fixture
@@ -49,6 +59,9 @@ def tmp_path_home(tmp_path: pathlib.Path) -> typing.Generator[pathlib.Path, None
 
     Yields `tmp_path` fixture path.
     """
+    # First Party
+    from instructlab.configuration import DEFAULTS
+
     with mock.patch.dict(os.environ):
         os.environ["HOME"] = str(tmp_path)
         for key in list(os.environ):

@@ -139,6 +139,10 @@ toolbox-rm: check-toolbox ## Stop and remove toolbox container
 tests: check-tox ## Run unit and type checks
 	tox -e py3-unit,mypy
 
+.PHONY: regenerate-testdata
+regenerate-testdata: check-tox ## Run unit tests and regenerate test data
+	tox -e py3-unit -- --regenerate-testdata
+
 .PHONY: verify
 verify: check-tox ## Run linting and formatting checks via tox
 	tox p -m fastverify

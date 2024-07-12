@@ -1,12 +1,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+from unittest.mock import patch
 import logging
 import os
+import pathlib
+import shutil
 
 # Third Party
 import platformdirs
 import pytest
+import yaml
 
 # First Party
 from instructlab import configuration as config
@@ -277,3 +281,35 @@ def test_logging(log_level, debug_level, root, instructlab, openai_httpx):
     assert logging.getLogger("instructlab").getEffectiveLevel() == instructlab
     assert logging.getLogger("openai").getEffectiveLevel() == openai_httpx
     assert logging.getLogger("httpx").getEffectiveLevel() == openai_httpx
+
+
+@patch.multiple(
+    config.DEFAULTS,
+    _cache_home="/cache/instructlab",
+    _config_dir="/config/instructlab",
+    _data_dir="/data/instructlab",
+)
+def test_compare_default_config_testdata(
+    testdata_path: pathlib.Path, tmp_path: pathlib.Path, regenerate_testdata: bool
+):
+    assert config.DEFAULTS.CHECKPOINTS_DIR == "/data/instructlab/checkpoints"
+    saved_file = testdata_path / "default_config.yaml"
+    current_file = tmp_path / "current_config.yaml"
+
+    current_cfg = config.get_default_config()
+    # roundtrip to verify serialization and de-serialization
+    config.write_config(current_cfg, str(current_file))
+    with current_file.open(encoding="utf-8") as yamlfile:
+        current_content = yaml.safe_load(yamlfile)
+
+    if regenerate_testdata:
+        shutil.copy(current_file, saved_file)
+
+    with saved_file.open(encoding="utf-8") as yamlfile:
+        saved_content = yaml.safe_load(yamlfile)
+
+    assert current_content == saved_content, (
+        "current and expected configs are different. If the change was "
+        "intentional, run 'make regenerate-testdata' and commit the "
+        "updated test data."
+    )

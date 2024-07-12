@@ -1,0 +1,80 @@
+chat:
+  context: default
+  greedy_mode: false
+  logs_dir: /data/instructlab/chatlogs
+  max_tokens: null
+  model: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+  session: null
+  vi_mode: false
+  visible_overflow: true
+evaluate:
+  base_branch: null
+  base_model: instructlab/granite-7b-lab
+  branch: null
+  gpus: 1
+  mmlu:
+    batch_size: auto
+    few_shots: 2
+  mmlu_branch:
+    tasks_dir: /data/instructlab/datasets
+  model: null
+  mt_bench:
+    judge_model: prometheus-eval/prometheus-8x7b-v2.0
+    max_workers: 16
+    output_dir: /data/instructlab/internal/eval_data
+  mt_bench_branch:
+    taxonomy_path: /data/instructlab/taxonomy
+general:
+  debug_level: 0
+  log_level: INFO
+generate:
+  chunk_word_count: 1000
+  model: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+  num_cpus: 10
+  output_dir: /data/instructlab/datasets
+  prompt_file: /data/instructlab/internal/prompt.txt
+  sdg_scale_factor: 30
+  seed_file: /data/instructlab/internal/seed_tasks.json
+  taxonomy_base: origin/main
+  taxonomy_path: /data/instructlab/taxonomy
+  teacher:
+    backend: null
+    chat_template: null
+    host_port: 127.0.0.1:8000
+    llama_cpp:
+      gpu_layers: -1
+      llm_family: ''
+      max_ctx_size: 4096
+    model_path: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+    vllm:
+      llm_family: ''
+      vllm_args: []
+serve:
+  backend: null
+  chat_template: null
+  host_port: 127.0.0.1:8000
+  llama_cpp:
+    gpu_layers: -1
+    llm_family: ''
+    max_ctx_size: 4096
+  model_path: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+  vllm:
+    llm_family: ''
+    vllm_args: []
+train:
+  additional_args: {}
+  ckpt_output_dir: /data/instructlab/checkpoints
+  data_output_dir: /data/instructlab/internal
+  data_path: /data/instructlab/datasets
+  deepspeed_cpu_offload_optimizer: false
+  effective_batch_size: 3840
+  is_padding_free: false
+  lora_quantize_dtype: nf4
+  lora_rank: 4
+  max_batch_len: 10000
+  max_seq_len: 4096
+  model_path: instructlab/granite-7b-lab
+  nproc_per_node: 1
+  num_epochs: 10
+  save_samples: 250000
+version: 1.0.0
