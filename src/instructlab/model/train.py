@@ -311,13 +311,13 @@ def train(
     if four_bit_quant and device != "cuda":
         ctx.fail("'--4-bit-quant' option requires '--device=cuda'")
 
-    effective_data_dir = Path(data_path or DEFAULTS.TAXONOMY_DIR)
+    effective_data_dir = Path(data_path if data_path else DEFAULTS.DATASETS_DIR)
     train_file = Path(effective_data_dir / "train_gen.jsonl")
     test_file = Path(effective_data_dir / "test_gen.jsonl")
     ckpt_output_dir = Path(kwargs["ckpt_output_dir"])
 
     # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
-    if not data_path or data_path == DEFAULTS.TAXONOMY_DIR:
+    if not data_path or data_path.strip() == DEFAULTS.DATASETS_DIR:
         data_path = str(effective_data_dir)
         if not os.path.exists(input_dir):
             click.secho(
@@ -343,8 +343,18 @@ def train(
                 reverse=True,
             )
 
-        train_files = get_files(input_dir, "train_*")
-        test_files = get_files(input_dir, "test_*")
+        # ignore the test_file and train_file to prevent it from being copied back onto itself
+        # see: https://github.com/instructlab/instructlab/pull/1685
+        test_files = [
+            f
+            for f in get_files(input_dir, "test_*")
+            if os.path.basename(f) != os.path.basename(test_file)
+        ]
+        train_files = [
+            f
+            for f in get_files(input_dir, "train_*")
+            if os.path.basename(f) != os.path.basename(train_file)
+        ]
 
         if not train_files or not test_files:
             click.secho(
