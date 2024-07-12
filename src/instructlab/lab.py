@@ -77,8 +77,8 @@ aliases = {
     "--config",
     "config_file",
     type=click.Path(),
-    default=lambda: cfg.DEFAULTS.CONFIG_FILE,
-    show_default="config in user config directory",
+    default=cfg.DEFAULTS.CONFIG_FILE,
+    show_default=True,
     help="Path to a configuration file.",
 )
 @click.option(
