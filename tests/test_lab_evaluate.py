@@ -360,8 +360,7 @@ def test_invalid_model_mmlu(cli_runner: CliRunner):
             "invalid",
         ],
     )
-    # TODO: This error could use some work
-    # assert "is not a valid model" in str(result.exception)
+    assert "Model could not be found" in result.output
     assert result.exit_code != 0
 
 
@@ -393,8 +392,7 @@ def test_invalid_taxonomy_mt_bench_branch(launch_server_mock, cli_runner: CliRun
         ],
     )
     launch_server_mock.assert_called_once()
-    # TODO: This error could use some work
-    # assert "/invalid_taxonomy" in str(result.exception)
+    assert "Taxonomy git repo not found" in result.output
     assert result.exit_code != 0
 
 
@@ -427,8 +425,5 @@ def test_invalid_branch_mt_bench_branch(launch_server_mock, cli_runner: CliRunne
         ],
     )
     launch_server_mock.assert_called_once()
-    # TODO: This error could use some work
-    # assert "pathspec 'invalid' did not match any file(s) known to git" in str(
-    #    result.exception
-    # )
+    assert "Invalid git branch" in result.output
     assert result.exit_code != 0
