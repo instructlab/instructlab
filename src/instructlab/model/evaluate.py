@@ -405,6 +405,14 @@ def launch_server(
     default="",
     help="TLS client certificate password for model serving.",
 )
+@click.option(
+    "--device",
+    type=click.STRING,
+    default="",
+    cls=clickext.ConfigOption,
+    config_sections="mmlu",
+    help="PyTorch device (e.g. 'cpu' or 'cuda:0') for running models.",
+)
 @click.pass_context
 @display_params
 def evaluate(
@@ -424,6 +432,7 @@ def evaluate(
     gpus,
     merge_system_user_message,
     backend,
+    device,
     tls_insecure,  # pylint: disable=unused-argument
     tls_client_cert,  # pylint: disable=unused-argument
     tls_client_key,  # pylint: disable=unused-argument

@@ -288,6 +288,7 @@ class _serve(BaseModel):
 class _mmlu(BaseModel):
     few_shots: int
     batch_size: int
+    device: str
 
 
 class _mtbench(BaseModel):
@@ -413,6 +414,7 @@ def get_default_config() -> Config:
             mmlu=_mmlu(
                 few_shots=2,
                 batch_size=5,
+                device="cpu"
             ),
             mt_bench_branch=_mtbenchbranch(taxonomy_path=DEFAULTS.TAXONOMY_DIR),
             mmlu_branch=_mmlubranch(tasks_dir=DEFAULTS.DATASETS_DIR),
