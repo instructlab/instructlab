@@ -238,6 +238,7 @@ def ensure_server(
     and the URL where it's available."""
 
     # pylint: disable=no-else-return
+    logger.info(f"Trying to connect to model server at {api_base}")
     if check_api_base(api_base, http_client):
         return (None, None, api_base)
     else:
