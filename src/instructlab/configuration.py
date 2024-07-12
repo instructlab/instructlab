@@ -365,7 +365,7 @@ class _train(BaseModel):
 
     nproc_per_node: int
 
-    additional_args: dict[str, str]
+    additional_args: dict[str, typing.Any]
 
 
 class Config(BaseModel):

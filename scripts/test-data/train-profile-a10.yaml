@@ -1,37 +1,21 @@
-torch_args:
-  nnodes: 1
-  node_rank: 0
-  nproc_per_node: 1
-  rdzv_endpoint: 127.0.0.1:12222
-  rdzv_id: 123
-train_args:
-  ckpt_output_dir: checkpoints
-  data_output_dir: train-output
-  data_path: ./taxonomy_data
-  deepspeed_options:
-    cpu_offload_optimizer: true
-    cpu_offload_optimizer_pin_memory: false
-    cpu_offload_optimizer_ratio: 1
-    save_samples: null
-  effective_batch_size: 100
-  is_padding_free: false
-  learning_rate: 2e-6
-  lora:
-    alpha: 32
-    dropout: 0.1
-    quantize_data_type: nf4
-    rank: 2
-    target_modules:
-    - q_proj
-    - k_proj
-    - v_proj
-    - o_proj
-  max_batch_len: 1000
-  max_seq_len: 96
-  mock_data: false
-  mock_data_len: 0
-  model_path: instructlab/granite-7b-lab
-  num_epochs: 1
-  random_seed: 42
-  save_samples: 100
+additional_args:
   warmup_steps: 10
+  learning_rate: 2e-6
+  lora_dropout: 0.1
+  lora_alpha: 32
+  deepspeed_cpu_offload_optimizer_pin_memory: false
+  deepspeed_cpu_oddload_optimizer_ratio: 1
+ckpt_output_dir: checkpoints
+data_output_dir: train-output
+data_path: ./taxonomy_data
+deepspeed_cpu_offload_optimizer: true
+effective_batch_size: 100
+lora_quantize_dtype: nf4
+lora_rank: 2
+max_batch_len: 1000
+max_seq_len: 96
+model_path: instructlab/granite-7b-lab
+num_epochs: 1
+save_samples: 100
+is_padding_free: false
+nproc_per_node: 1
