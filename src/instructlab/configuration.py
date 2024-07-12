@@ -9,6 +9,7 @@ import sys
 import typing
 
 # Third Party
+# pylint: disable=ungrouped-imports
 from instructlab.training import (
     DeepSpeedOptions,
     LoraOptions,
@@ -147,6 +148,26 @@ class _InstructlabDefaults:
     @property
     def EVAL_DATA_DIR(self) -> str:
         return path.join(self.INTERNAL_DIR, "eval_data")
+
+    @property
+    def TRAIN_CONFIG_DIR(self) -> str:
+        return path.join(self.INTERNAL_DIR, "train_configuration")
+
+    @property
+    def TRAIN_PROFILE_DIR(self) -> str:
+        return path.join(self.TRAIN_CONFIG_DIR, "profiles")
+
+    @property
+    def TRAIN_ADDITIONAL_OPTIONS_DIR(self) -> str:
+        return path.join(self.TRAIN_CONFIG_DIR, "additional")
+
+    @property
+    def TRAIN_ADDITIONAL_OPTIONS_FILE(self) -> str:
+        return path.join(self.TRAIN_ADDITIONAL_OPTIONS_DIR, "additional_args.yaml")
+
+    @property
+    def TRAIN_DEFAULT_PROFILE(self) -> str:
+        return path.join(self.TRAIN_PROFILE_DIR, "default.yaml")
 
 
 DEFAULTS = _InstructlabDefaults()
@@ -320,8 +341,31 @@ class _evaluate(BaseModel):
 
 
 class _train(BaseModel):
-    train_args: TrainingArgs
-    torch_args: TorchrunArgs
+    # model configuration
+    model_config = ConfigDict(extra="ignore", protected_namespaces=())
+
+    model_path: str
+
+    data_path: str
+    ckpt_output_dir: str
+    data_output_dir: str
+
+    max_seq_len: int
+    max_batch_len: int
+    num_epochs: int
+    effective_batch_size: int
+    save_samples: int
+
+    deepspeed_cpu_offload_optimizer: bool
+
+    lora_rank: int
+    lora_quantize_dtype: str
+
+    is_padding_free: bool
+
+    nproc_per_node: int
+
+    additional_args: dict[str, str]
 
 
 class Config(BaseModel):
@@ -368,40 +412,21 @@ def get_default_config() -> Config:
             ),
         ),
         train=_train(
-            train_args=TrainingArgs(
-                model_path=DEFAULTS.MODEL_REPO,
-                data_path=DEFAULTS.DATASETS_DIR,
-                ckpt_output_dir=DEFAULTS.CHECKPOINTS_DIR,
-                data_output_dir=DEFAULTS.INTERNAL_DIR,
-                max_seq_len=4096,
-                max_batch_len=10000,
-                num_epochs=10,
-                effective_batch_size=3840,
-                save_samples=250000,
-                learning_rate=2e-6,
-                warmup_steps=800,
-                is_padding_free=False,
-                random_seed=42,
-                lora=LoraOptions(
-                    rank=4,
-                    alpha=32,
-                    dropout=0.1,
-                    target_modules=["q_proj", "k_proj", "v_proj", "o_proj"],
-                ),
-                deepspeed_options=DeepSpeedOptions(
-                    cpu_offload_optimizer=False,
-                    cpu_offload_optimizer_ratio=1,
-                    cpu_offload_optimizer_pin_memory=False,
-                    save_samples=None,
-                ),
-            ),
-            torch_args=TorchrunArgs(
-                node_rank=0,
-                nnodes=1,
-                nproc_per_node=1,
-                rdzv_id=123,
-                rdzv_endpoint="127.0.0.1:12222",
-            ),
+            model_path=DEFAULTS.MODEL_REPO,
+            data_path=DEFAULTS.DATASETS_DIR,
+            ckpt_output_dir=DEFAULTS.CHECKPOINTS_DIR,
+            data_output_dir=DEFAULTS.INTERNAL_DIR,
+            max_seq_len=4096,
+            max_batch_len=10000,
+            num_epochs=10,
+            effective_batch_size=3840,
+            save_samples=250000,
+            lora_quantize_dtype="nf4",
+            lora_rank=4,
+            nproc_per_node=1,
+            deepspeed_cpu_offload_optimizer=False,
+            additional_args={},
+            is_padding_free=False,
         ),
         evaluate=_evaluate(
             base_model=DEFAULTS.MODEL_REPO,
@@ -510,10 +535,32 @@ def ensure_storage_directories_exist():
         DEFAULTS.INTERNAL_DIR,
         DEFAULTS.MODELS_DIR,
         DEFAULTS.TAXONOMY_DIR,
+        DEFAULTS.TRAIN_CONFIG_DIR,
+        DEFAULTS.TRAIN_PROFILE_DIR,
+        DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_DIR,
     ]
 
     for dirpath in dirs_to_make:
         os.makedirs(dirpath, exist_ok=True)
+
+    additional_args_and_defaults = {
+        "learning_rate": 2e-5,
+        "warmup_steps": 25,
+        "random_seed": 42,
+        "node_rank": 0,
+        "nnodes": 1,
+        "rdzv_id": 123,
+        "rdzv_endpoint": "127.0.0.1:12222",
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": False,
+        "lora_alpha": 32,
+        "lora_dropout": 0.1,
+        "lora_target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"],
+    }
+
+    # create exper_args file for users to see/edit
+    with open(DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE, "w", encoding="utf-8") as outfile:
+        yaml.dump(additional_args_and_defaults, outfile)
 
 
 class Lab:
@@ -546,6 +593,7 @@ def init(
 ) -> None:
     config_obj: Config
     error_msg: str | None = None
+    ensure_storage_directories_exist()
     if config_file == "DEFAULT":
         config_obj = get_default_config()
     elif os.path.isfile(config_file):
@@ -582,5 +630,50 @@ def init(
             log_level=config_obj.general.log_level.upper(),
             debug_level=config_obj.general.debug_level,
         )
+        # subtly get the additional args per cfg section
+        # if any are missing, add in sane defaults
+        train_additional = ctx.default_map["train"]["additional_args"]
+        ctx.default_map["train"]["additional_args"] = finish_additional_train_args(
+            train_additional
+        )
     else:
         ctx.default_map = None
+
+
+def map_train_to_library(params):
+    # first do a lazy unwrap into the respective options
+    train_args = TrainingArgs(**params)
+    torch_args = TorchrunArgs(**params)
+
+    ds_args = DeepSpeedOptions(
+        cpu_offload_optimizer=params["deepspeed_cpu_offload_optimizer"],
+        cpu_offload_optimizer_ratio=params["deepspeed_cpu_offload_optimizer_ratio"],
+        cpu_offload_optimizer_pin_memory=params[
+            "deepspeed_cpu_offload_optimizer_pin_memory"
+        ],
+    )
+
+    lora_args = LoraOptions(
+        rank=params["lora_rank"],
+        alpha=params["lora_alpha"],
+        dropout=params["lora_dropout"],
+        target_modules=params["lora_target_modules"],
+        quantize_data_type=params["lora_quantize_dtype"],
+    )
+
+    train_args.deepspeed_options = ds_args
+    train_args.lora = lora_args
+
+    return train_args, torch_args
+
+
+def finish_additional_train_args(current_additional):
+    with open(
+        DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE, "r", encoding="utf-8"
+    ) as yamlfile:
+        content = yaml.safe_load(yamlfile)
+    for key, val in content.items():
+        if key not in current_additional:
+            current_additional[key] = val
+
+    return current_additional
