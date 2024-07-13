@@ -258,13 +258,18 @@ def launch_server(
     if backend == backends.VLLM:
         eval_serve.vllm.vllm_args.extend(["--served-model-name", model_name])
         if gpus:
-            # Don't override from vllm_args
-            if "--tensor-parallel-size" not in eval_serve.vllm.vllm_args:
-                eval_serve.vllm.vllm_args.extend(["--tensor-parallel-size", str(gpus)])
-            else:
-                click.echo(
-                    "Ignoring --gpus with --tensor-parallel-size configured in serve vllm_args"
+            # Warn when overriding from vllm_args
+            tps_prefix = "--tensor-parallel-size"
+            if any(
+                s == tps_prefix or s.startswith(tps_prefix + "=")
+                for s in eval_serve.vllm.vllm_args
+            ):
+                # Either tps_prefix value or tps_prefix=value
+                click.secho(
+                    "Using gpus from --gpus or evaluate config and ignoring --tensor-parallel-size configured in serve vllm_args",
+                    fg="yellow",
                 )
+            eval_serve.vllm.vllm_args.extend([tps_prefix, str(gpus)])
     elif backend == backends.LLAMA_CPP:
         if ctx.obj.config.serve.llama_cpp.max_ctx_size < 5120:
             eval_serve.llama_cpp.max_ctx_size = 5120
