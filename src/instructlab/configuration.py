@@ -433,7 +433,7 @@ def get_default_config() -> Config:
             mt_bench=_mtbench(
                 judge_model=DEFAULTS.JUDGE_MODEL_MT,
                 output_dir=DEFAULTS.EVAL_DATA_DIR,
-                max_workers=40,
+                max_workers=16,
             ),
             mmlu=_mmlu(
                 few_shots=2,
