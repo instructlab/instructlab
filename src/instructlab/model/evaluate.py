@@ -5,6 +5,7 @@
 from copy import copy
 import enum
 import logging
+import multiprocessing
 import os
 import pathlib
 import typing
@@ -272,9 +273,10 @@ def launch_server(
                 "Evaluate requires a context size of >= 5120, ignoring serve configuration for max_ctx_size"
             )
         # llama-cpp fails fast on too many incoming requests and returns errors to client
-        if max_workers > 16:
+        recommended_workers = max(multiprocessing.cpu_count() // 2, 1)
+        if max_workers > recommended_workers:
             logging.warning(
-                "When using llama-cpp, we recommend setting max_workers to a maximum of 16"
+                f"Based on your hardware configuration, when using llama-cpp, we recommend setting max-workers to a maximum of {recommended_workers}"
             )
         if gpus:
             logging.debug("Ignoring --gpus option for llama-cpp serving")
