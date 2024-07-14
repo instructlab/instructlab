@@ -244,9 +244,6 @@ def launch_server(
     backend,
     enable_serving_output,
 ) -> tuple:
-    # pylint: disable=import-outside-toplevel
-    # First Party
-
     eval_serve = copy(ctx.obj.config.serve)
     if backend is None:
         try:
