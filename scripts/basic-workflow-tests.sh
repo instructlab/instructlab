@@ -36,7 +36,6 @@ NC='\033[0m' # No Color
 
 SCRIPTDIR=$(dirname "$0")
 export E2E_TEST_DIR
-# E2E_TEST_DIR="$(pwd)/__e2e_test"
 export CONFIG_HOME
 export DATA_HOME
 export CACHE_HOME
