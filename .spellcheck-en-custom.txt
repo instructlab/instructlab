@@ -9,6 +9,8 @@ backends
 backport
 backported
 Bhandwaldar
+Chatlogs
+chatlogs
 cli
 CLI
 codebase
@@ -26,6 +28,7 @@ cuda
 CUDA
 cuda:0
 dataset
+datasets
 dev
 ditaa
 DKMS
@@ -155,6 +158,7 @@ VRAM
 wikisql
 WSL
 xcode
+XDG
 xlarge
 XNACK
 XT
