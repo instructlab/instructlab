@@ -3,6 +3,8 @@
 # Standard
 import logging
 import pathlib
+import signal
+import sys
 
 # Third Party
 import click
@@ -13,6 +15,21 @@ from instructlab.model.backends import backends
 from instructlab.model.backends.backends import ServerException
 
 logger = logging.getLogger(__name__)
+
+
+def signal_handler(
+    num_signal,
+    __,
+):
+    """
+    Signal handler for termination signals
+    """
+    print(f"Received termination signal {num_signal}, exiting...")
+    sys.exit(0)
+
+
+# Register the signal handler for SIGTERM
+signal.signal(signal.SIGTERM, signal_handler)
 
 
 @click.command(
@@ -150,3 +167,10 @@ def serve(
     except ServerException as exc:
         click.secho(f"Error creating server: {exc}", fg="red")
         raise click.exceptions.Exit(1)
+
+    except KeyboardInterrupt:
+        logger.info("Server terminated by keyboard")
+
+    finally:
+        backend_instance.shutdown()
+        raise click.exceptions.Exit(0)
