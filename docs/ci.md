@@ -19,6 +19,9 @@ job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e.
 that runs automatically on all PRs and after commits merge to `main` or release
 branches.
 
+We are currently doing a trial of running the smallest AWS-based e2e workflow
+automatically against PRs, as well.
+
 There are other E2E jobs that can be triggered manually on the [actions
 page](https://github.com/instructlab/instructlab/actions) for the repository.
 These run on a variety of instance types and can be run at the discretion of
