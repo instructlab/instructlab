@@ -59,16 +59,6 @@ def get_evaluator(
     if all needed configuration is present, returns the appropriate Evaluator class for the benchmark
     otherwise raises an exception for the missing values
     """
-    # Third Party
-    from instructlab.eval.mmlu import MMLUBranchEvaluator, MMLUEvaluator
-    from instructlab.eval.mt_bench import MTBenchBranchEvaluator, MTBenchEvaluator
-
-    benchmark_map = {
-        Benchmark.MMLU: MMLUEvaluator,
-        Benchmark.MMLU_BRANCH: MMLUBranchEvaluator,
-        Benchmark.MT_BENCH: MTBenchEvaluator,
-        Benchmark.MT_BENCH_BRANCH: MTBenchBranchEvaluator,
-    }
 
     # ensure skills benchmarks have proper arguments if selected
     if benchmark in {Benchmark.MT_BENCH, Benchmark.MT_BENCH_BRANCH}:
@@ -97,16 +87,21 @@ def get_evaluator(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
-        evaluator_class = benchmark_map[benchmark]
         if benchmark == Benchmark.MT_BENCH:
-            return evaluator_class(
+            # Third Party
+            from instructlab.eval.mt_bench import MTBenchEvaluator
+
+            return MTBenchEvaluator(
                 TEST_MODEL_NAME,
                 JUDGE_MODEL_NAME,
                 output_dir,
                 max_workers,
                 merge_system_user_message=merge_system_user_message,
             )
-        return evaluator_class(
+        # Third Party
+        from instructlab.eval.mt_bench import MTBenchBranchEvaluator
+
+        return MTBenchBranchEvaluator(
             TEST_MODEL_NAME,
             JUDGE_MODEL_NAME,
             taxonomy_path,
@@ -131,23 +126,28 @@ def get_evaluator(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
-        evaluator_class = benchmark_map[benchmark]
         if benchmark == Benchmark.MMLU:
+            # Third Party
+            from instructlab.eval.mmlu import MMLUEvaluator
+
             min_tasks = os.environ.get("INSTRUCTLAB_EVAL_MMLU_MIN_TASKS")
             if min_tasks is not None:
                 tasks = ["mmlu_abstract_algebra", "mmlu_anatomy", "mmlu_astronomy"]
-                evaluator = evaluator_class(
+                evaluator = MMLUEvaluator(
                     model,
                     tasks=tasks,
                     few_shots=few_shots,
                     batch_size=batch_size,
                 )
             else:
-                evaluator = evaluator_class(
+                evaluator = MMLUEvaluator(
                     model, few_shots=few_shots, batch_size=batch_size
                 )
             return evaluator
-        return evaluator_class(
+        # Third Party
+        from instructlab.eval.mmlu import MMLUBranchEvaluator
+
+        return MMLUBranchEvaluator(
             model,
             tasks_dir,
             ["mmlu_pr"],
