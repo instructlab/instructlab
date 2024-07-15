@@ -116,6 +116,7 @@ jobs:
                   inputs: >-
                       ./dist/*.tar.gz
                       ./dist/*.whl
+                  release-signing-artifacts: false
 
             - name: Upload artifacts and signatures to GitHub release
               env:
@@ -126,7 +127,7 @@ jobs:
             # PyPI does not accept .sigstore artifacts and
             # gh-action-pypi-publish has no option to ignore them.
             - name: Remove sigstore signatures before uploading to PyPI
-              run: rm ./dist/*.sigstore
+              run: rm ./dist/*.sigstore.json
 
             - name: Upload to PyPI
               uses: pypa/gh-action-pypi-publish@ec4db0b4ddc65acdf4bff5fa45ac92d78b56bdf0 # v1.9.0
