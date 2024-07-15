@@ -255,6 +255,17 @@ def launch_server(
 
     if backend == backends.VLLM:
         eval_serve.vllm.vllm_args.extend(["--served-model-name", model_name])
+        # Recommend max-workers based on hardware configuration. #cpus +- 50%
+        cpu_count = multiprocessing.cpu_count()
+        recommended_min_workers = max(cpu_count // 1.5, 1)
+        recommended_max_workers = max(cpu_count // 0.5, 1)
+        if (
+            max_workers > recommended_max_workers
+            or max_workers < recommended_min_workers
+        ):
+            logger.warning(
+                f"Based on your hardware configuration, when using vLLM, we recommend setting max-workers between {recommended_min_workers} and {recommended_max_workers} for optimal performance"
+            )
         if gpus:
             # Don't override from vllm_args
             if "--tensor-parallel-size" not in eval_serve.vllm.vllm_args:
@@ -266,17 +277,17 @@ def launch_server(
     elif backend == backends.LLAMA_CPP:
         if ctx.obj.config.serve.llama_cpp.max_ctx_size < 5120:
             eval_serve.llama_cpp.max_ctx_size = 5120
-            logging.debug(
+            logger.debug(
                 "Evaluate requires a context size of >= 5120, ignoring serve configuration for max_ctx_size"
             )
         # llama-cpp fails fast on too many incoming requests and returns errors to client
         recommended_workers = max(multiprocessing.cpu_count() // 2, 1)
         if max_workers > recommended_workers:
-            logging.warning(
+            logger.warning(
                 f"Based on your hardware configuration, when using llama-cpp, we recommend setting max-workers to a maximum of {recommended_workers}"
             )
         if gpus:
-            logging.debug("Ignoring --gpus option for llama-cpp serving")
+            logger.debug("Ignoring --gpus option for llama-cpp serving")
 
     eval_serve.model_path = model
 
