@@ -2,7 +2,6 @@
 # pylint: disable=duplicate-code
 
 # Standard
-import logging
 
 # Third Party
 from openai import OpenAI, OpenAIError
@@ -10,8 +9,6 @@ import httpx
 
 # Local
 from .configuration import DEFAULTS
-
-logger = logging.getLogger(__name__)
 
 
 class ClientException(Exception):
@@ -38,7 +35,6 @@ def list_models(
 
 def check_api_base(api_base: str, http_client: httpx.Client | None = None) -> bool:
     try:
-        logger.info(f"Trying to connect to model server at {api_base}")
         list_models(api_base=api_base, http_client=http_client)
         return True
     except ClientException:
