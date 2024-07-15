@@ -197,7 +197,7 @@ evaluate:
   gpus: 1
   mmlu:
     few_shots: 2
-    batch_size: 5
+    batch_size: auto
   mmlu_branch:
     tasks_dir: /path/to/sdg
   mt_bench:

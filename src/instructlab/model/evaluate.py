@@ -372,10 +372,10 @@ def launch_server(
 )
 @click.option(
     "--batch-size",
-    type=click.INT,
+    type=click.STRING,
     cls=clickext.ConfigOption,
     config_sections="mmlu",
-    help="Number of GPUs. Needed for running mmlu or mmlu_branch.",
+    help="Batch size for mmlu and mmlu_branch evaluation. Valid values are a positive integer, 'auto' to select the largest batch size that will fit in memory, or 'auto:N' to reselect the largest batch size N times'.",
 )
 @click.option(
     "--tasks-dir",
