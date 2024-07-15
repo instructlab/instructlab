@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+from importlib import metadata
 import json
+import pathlib
 import re
 import subprocess
 import sys
@@ -48,17 +50,9 @@ def test_import_mlx():
             __import__("mlx")
 
 
-def test_ilab_cli_imports():
-    # ensure that `ilab` CLI startup is not slowed down by heavy packages
-    unwanted = ["deepspeed", "llama_cpp", "torch", "vllm"]
-    code = ["import json, sys"]
-    for modname in unwanted:
-        # block unwanted imports
-        code.append(f"sys.modules['{modname}'] = None")
-    # import CLI last
-    code.append("import instructlab.lab")
-
-    subprocess.check_call([sys.executable, "-c", "; ".join(code)], text=True)
+def test_ilab_cli_imports(testdata_path: pathlib.Path):
+    script = testdata_path / "leanimports.py"
+    subprocess.check_call([sys.executable, str(script)], text=True)
 
 
 subcommands = [
@@ -141,10 +135,13 @@ def test_ilab_cli_debug_params(
 
 def test_ilab_commands_tested():
     ilab_commands = {None: set([""])}
-    for primary, group in lab.ilab.commands.items():
-        sub = ilab_commands.setdefault(primary, set())
+    for primary in metadata.entry_points(group="instructlab.command"):
+        sub = ilab_commands.setdefault(primary.name, set())
         sub.add("")
-        sub.update(group.commands)
+        for secondary in metadata.entry_points(
+            group=f"instructlab.command.{primary.name}"
+        ):
+            sub.add(secondary.name)
 
     tested = {None: set([""])}
     for primary, secondary, _ in subcommands:
@@ -152,4 +149,6 @@ def test_ilab_commands_tested():
         sub.add(secondary or "")
 
     assert ilab_commands == tested
-    assert set(lab.aliases) == set(aliases)
+
+    ep_aliases = metadata.entry_points(group="instructlab.command.alias")
+    assert set(aliases) == ep_aliases.names
