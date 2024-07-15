@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from time import sleep
+from time import sleep, time
 from types import FrameType
 from typing import Optional, Tuple
 import abc
@@ -260,26 +260,36 @@ def ensure_server(
         if backend == VLLM:
             # TODO: resolve how the hostname is getting passed around the class and this function
             vllm_server_process = server_process_func(port, background)
-            logger.info(f"Starting a temporary vLLM server at {temp_api_base}")
+            logger.info("Starting a temporary vLLM server at %s", temp_api_base)
             count = 0
             # TODO should this be configurable?
-            vllm_startup_timeout = 60
-            while count < vllm_startup_timeout:
-                if check_api_base(temp_api_base, http_client):
-                    logger.info(f"vLLM engine successfully started at {temp_api_base}")
-                    break
+
+            vllm_startup_max_attempts = 80  # Each call to check_api_base takes >2s + 2s sleep = ~5 mins of wait time
+            start_time_secs = time()
+            while count < vllm_startup_max_attempts:
                 count += 1
                 logger.info(
-                    f"Waiting for the vLLM server to start at {temp_api_base}, this might take a moment... Retries: {count}/{vllm_startup_timeout}"
+                    "Waiting for the vLLM server to start at %s, this might take a moment... Attempt: %s/%s",
+                    temp_api_base,
+                    count,
+                    vllm_startup_max_attempts,
                 )
-                sleep(5)
-
-            if count >= vllm_startup_timeout:
-                shutdown_process(vllm_server_process, 20)
-                # pylint: disable=raise-missing-from
-                raise ServerException(
-                    f"vLLM failed to start up in {vllm_startup_timeout} seconds"
-                )
+                if check_api_base(temp_api_base, http_client):
+                    logger.info("vLLM engine successfully started at %s", temp_api_base)
+                    break
+                if count == vllm_startup_max_attempts:
+                    logger.info(
+                        "Gave up waiting for vLLM server to start at %s after %s attempts",
+                        temp_api_base,
+                        vllm_startup_max_attempts,
+                    )
+                    duration = round(time() - start_time_secs, 1)
+                    shutdown_process(vllm_server_process, 20)
+                    # pylint: disable=raise-missing-from
+                    raise ServerException(
+                        f"vLLM failed to start up in {duration} seconds"
+                    )
+                sleep(2)
 
         elif backend == LLAMA_CPP:
             # server_process_func is a function! we invoke it here and pass the port that was determined
