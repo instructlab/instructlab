@@ -109,9 +109,34 @@ def serve(
     logger.info(f"Serving model '{model_path}' with {backend}")
 
     backend_instance: backends.BackendServer
+
+    # try to detect whether the user passed verbose, helper or debug flags
+    non_backend_extra_args_detected = any(
+        arg in ctx.args
+        for arg in [
+            "-h",
+            "--verbose",
+            "-v",
+            "--debug-params",
+            "--display-param-json",
+            "-vv",
+            "-vvv",
+            "-vvvv",
+        ]
+    )
+    if non_backend_extra_args_detected:
+        logger.info(
+            "Helper, verbose or debug flags must be passed BEFORE the 'serve' command. Like so:"
+            "ilab -v model serve"
+        )
+        # do not fail, let it fail later via the backend code
+
     if backend == backends.LLAMA_CPP:
         if ctx.args:
-            ctx.fail(f"Unsupported extra arguments: {', '.join(ctx.args)}")
+            # do not fail even if the user passed extra arguments, at least report they do not work
+            logger.error(
+                f"Unsupported extra arguments, backend specific argument are only supported for the vLLM backend: {', '.join(ctx.args)}"
+            )
         backend_instance = llama_cpp.Server(
             api_base=ctx.obj.config.serve.api_base(),
             model_path=model_path,
