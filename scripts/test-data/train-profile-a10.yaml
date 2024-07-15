@@ -6,8 +6,8 @@ additional_args:
   deepspeed_cpu_offload_optimizer_pin_memory: false
   deepspeed_cpu_oddload_optimizer_ratio: 1
 ckpt_output_dir: checkpoints
-data_output_dir: train-output
-data_path: ./taxonomy_data
+data_output_dir: /dev/shm  # use shared memory when processing the dataset
+data_path: /root/.local/share/instructlab/datasets  # todo: make this more dynamic / less fragile somehow 
 deepspeed_cpu_offload_optimizer: true
 effective_batch_size: 100
 lora_quantize_dtype: nf4
