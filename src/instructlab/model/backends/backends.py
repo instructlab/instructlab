@@ -267,80 +267,76 @@ def ensure_server(
     """Checks if server is running, if not starts one as a subprocess. Returns the server process
     and the URL where it's available."""
 
-    # pylint: disable=no-else-return
     logger.info(f"Trying to connect to model server at {api_base}")
     if check_api_base(api_base, http_client):
         return (None, None, api_base)
-    else:
-        port = free_tcp_ipv4_port(host)
-        logger.debug(f"Using available port {port} for temporary model serving.")
+    port = free_tcp_ipv4_port(host)
+    logger.debug(f"Using available port {port} for temporary model serving.")
 
-        host_port = f"{host}:{port}"
-        temp_api_base = get_api_base(host_port)
-        llama_cpp_server_process = None
-        vllm_server_process = None
+    host_port = f"{host}:{port}"
+    temp_api_base = get_api_base(host_port)
+    llama_cpp_server_process = None
+    vllm_server_process = None
 
-        if backend == VLLM:
-            # TODO: resolve how the hostname is getting passed around the class and this function
-            vllm_server_process = server_process_func(port, background)
-            logger.info("Starting a temporary vLLM server at %s", temp_api_base)
-            count = 0
-            # TODO should this be configurable?
+    if backend == VLLM:
+        # TODO: resolve how the hostname is getting passed around the class and this function
+        vllm_server_process = server_process_func(port, background)
+        logger.info("Starting a temporary vLLM server at %s", temp_api_base)
+        count = 0
+        # TODO should this be configurable?
 
-            vllm_startup_max_attempts = 80  # Each call to check_api_base takes >2s + 2s sleep = ~5 mins of wait time
-            start_time_secs = time()
-            while count < vllm_startup_max_attempts:
-                count += 1
+        vllm_startup_max_attempts = 80  # Each call to check_api_base takes >2s + 2s sleep = ~5 mins of wait time
+        start_time_secs = time()
+        while count < vllm_startup_max_attempts:
+            count += 1
+            logger.info(
+                "Waiting for the vLLM server to start at %s, this might take a moment... Attempt: %s/%s",
+                temp_api_base,
+                count,
+                vllm_startup_max_attempts,
+            )
+            if check_api_base(temp_api_base, http_client):
+                logger.info("vLLM engine successfully started at %s", temp_api_base)
+                break
+            if count == vllm_startup_max_attempts:
                 logger.info(
-                    "Waiting for the vLLM server to start at %s, this might take a moment... Attempt: %s/%s",
+                    "Gave up waiting for vLLM server to start at %s after %s attempts",
                     temp_api_base,
-                    count,
                     vllm_startup_max_attempts,
                 )
-                if check_api_base(temp_api_base, http_client):
-                    logger.info("vLLM engine successfully started at %s", temp_api_base)
-                    break
-                if count == vllm_startup_max_attempts:
-                    logger.info(
-                        "Gave up waiting for vLLM server to start at %s after %s attempts",
-                        temp_api_base,
-                        vllm_startup_max_attempts,
-                    )
-                    duration = round(time() - start_time_secs, 1)
-                    shutdown_process(vllm_server_process, 20)
-                    # pylint: disable=raise-missing-from
-                    raise ServerException(
-                        f"vLLM failed to start up in {duration} seconds"
-                    )
-                sleep(2)
-
-        elif backend == LLAMA_CPP:
-            # server_process_func is a function! we invoke it here and pass the port that was determined
-            # in this ensure_server() function
-            llama_cpp_server_process = server_process_func(port)
-            llama_cpp_server_process.start()
-            logger.debug(f"Starting a temporary llama.cpp server at {temp_api_base}")
-
-            # in case the server takes some time to fail we wait a bit
-            logger.debug("Waiting for the server to start...")
-            count = 0
-            while llama_cpp_server_process.is_alive():
-                sleep(0.1)
-                if check_api_base(temp_api_base, http_client):
-                    break
-                if count > 50:
-                    logger.error("failed to reach the API server")
-                    break
-                count += 1
-
-            logger.debug("Server started.")
-
-            # if the queue is not empty it means the server failed to start
-            if queue is not None and not queue.empty():
+                duration = round(time() - start_time_secs, 1)
+                shutdown_process(vllm_server_process, 20)
                 # pylint: disable=raise-missing-from
-                raise queue.get()
+                raise ServerException(f"vLLM failed to start up in {duration} seconds")
+            sleep(2)
 
-        return (llama_cpp_server_process, vllm_server_process, temp_api_base)
+    elif backend == LLAMA_CPP:
+        # server_process_func is a function! we invoke it here and pass the port that was determined
+        # in this ensure_server() function
+        llama_cpp_server_process = server_process_func(port)
+        llama_cpp_server_process.start()
+        logger.debug(f"Starting a temporary llama.cpp server at {temp_api_base}")
+
+        # in case the server takes some time to fail we wait a bit
+        logger.debug("Waiting for the server to start...")
+        count = 0
+        while llama_cpp_server_process.is_alive():
+            sleep(0.1)
+            if check_api_base(temp_api_base, http_client):
+                break
+            if count > 50:
+                logger.error("failed to reach the API server")
+                break
+            count += 1
+
+        logger.debug("Server started.")
+
+        # if the queue is not empty it means the server failed to start
+        if queue is not None and not queue.empty():
+            # pylint: disable=raise-missing-from
+            raise queue.get()
+
+    return (llama_cpp_server_process, vllm_server_process, temp_api_base)
 
 
 def free_tcp_ipv4_port(host: str) -> int:
