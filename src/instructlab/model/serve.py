@@ -33,7 +33,7 @@ signal.signal(signal.SIGTERM, signal_handler)
 
 
 @click.command(
-    context_settings={"allow_extra_args": True, "ignore_unknown_options": True},
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": False},
 )
 @click.option(
     "--model-path",
