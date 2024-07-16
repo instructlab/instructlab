@@ -237,13 +237,13 @@ def qa_pairs_to_qna_to_avg_scores(qa_pairs: list[dict]) -> dict[str, float]:
 
 
 def launch_server(
-    ctx,
-    model,
-    model_name,
-    max_workers,
-    gpus,
-    backend,
-    enable_serving_output,
+    ctx: click.Context,
+    model: str,
+    model_name: str,
+    max_workers: int,
+    gpus: int,
+    backend: str | None,
+    enable_serving_output: bool,
 ) -> tuple:
     eval_serve = deepcopy(ctx.obj.config.serve)
     if backend is None:
