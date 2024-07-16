@@ -3,6 +3,7 @@ from unittest import mock
 from unittest.mock import patch
 import pathlib
 import socket
+import sys
 
 # Third Party
 from click.testing import CliRunner
@@ -11,6 +12,7 @@ import pytest
 # First Party
 from instructlab import lab
 from instructlab.model.backends import backends
+from instructlab.model.backends.vllm import build_vllm_cmd
 
 
 def test_free_port():
@@ -152,3 +154,62 @@ def test_ilab_llama_cpp_args(
         num_threads=None,
         chat_template=None,
     )
+
+
+def test_build_vllm_cmd_with_defaults(tmp_path: pathlib.Path):
+    host = "localhost"
+    port = 8080
+    model_path = pathlib.Path("/path/to/model")
+    model_family = ""
+    chat_template = tmp_path / "chat_template.jinja2"
+    chat_template.touch()
+    vllm_args: list[str] = []
+    expected_cmd = [
+        sys.executable,
+        "-m",
+        "vllm.entrypoints.openai.api_server",
+        "--host",
+        host,
+        "--port",
+        str(port),
+        "--model",
+        str(model_path),
+        "--chat-template",
+        str(chat_template),
+        "--distributed-executor-backend",
+        "mp",
+    ]
+    cmd, _ = build_vllm_cmd(
+        host, port, model_family, model_path, str(chat_template), vllm_args
+    )
+    assert cmd == expected_cmd
+
+
+def test_build_vllm_cmd_with_args_provided(tmp_path: pathlib.Path):
+    host = "localhost"
+    port = 8080
+    model_path = pathlib.Path("/path/to/model")
+    model_family = ""
+    chat_template = tmp_path / "chat_template.jinja2"
+    chat_template.touch()
+    vllm_args = [
+        "--port",
+        str(8001),
+        "--model=/path/to/other/model",
+        "--distributed-executor-backend",
+        "ray",
+    ]
+    expected_cmd = [
+        sys.executable,
+        "-m",
+        "vllm.entrypoints.openai.api_server",
+        "--host",
+        host,
+        "--chat-template",
+        str(chat_template),
+    ] + vllm_args
+
+    cmd, _ = build_vllm_cmd(
+        host, port, model_family, model_path, str(chat_template), vllm_args
+    )
+    assert cmd == expected_cmd

@@ -38,6 +38,7 @@ def assert_template(args, expect_chat, path_chat, chat_value):
         if hit_chat:
             template = s
             template_exists = pathlib.Path(s).exists()
+            break  # break as soon as we find the chat template otherwise we will get the next argument and template_exists will fail
         if s == "--chat-template":
             hit_chat = True
 
