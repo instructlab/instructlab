@@ -2,6 +2,7 @@
 
 # Standard
 from contextlib import redirect_stderr, redirect_stdout
+from time import sleep
 from typing import Optional, cast
 import logging
 import multiprocessing
@@ -17,15 +18,16 @@ import httpx
 import llama_cpp.server.app as llama_app
 
 # Local
+from ...client import check_api_base
+from ...configuration import get_api_base
 from .backends import (
     API_ROOT_WELCOME_MESSAGE,
     CHAT_TEMPLATE_AUTO,
     CHAT_TEMPLATE_TOKENIZER,
-    LLAMA_CPP,
     BackendServer,
     ServerException,
     UvicornServer,
-    ensure_server,
+    free_tcp_ipv4_port,
     get_model_template,
     get_uvicorn_config,
     is_temp_server_running,
@@ -94,19 +96,38 @@ class Server(BackendServer):
     def run_detached(
         self, http_client: httpx.Client | None = None, background: bool = True
     ) -> str:
+        logger.info(f"Trying to connect to model server at {self.api_base}")
+        if check_api_base(self.api_base, http_client):
+            return self.api_base
         try:
-            llama_cpp_server_process, _, api_base = ensure_server(
-                backend=LLAMA_CPP,
-                api_base=self.api_base,
-                http_client=http_client,
-                host=self.host,
-                port=self.port,
-                queue=self.queue,
-                server_process_func=self.create_server_process,
-            )
-            self.process = llama_cpp_server_process or self.process
-            self.api_base = api_base or self.api_base
+            self.port = free_tcp_ipv4_port(self.host)
+            # start new server
+            self.api_base = str(get_api_base(f"{self.host}:{self.port}"))
+            logger.debug(f"Starting a temporary server at {self.api_base}...")
+            self.process = self.create_server_process(self.port)
+            self.process.start()
+
+            # in case the server takes some time to fail we wait a bit
+            logger.debug("Waiting for the server to start...")
+            count = 0
+            while self.process.is_alive():
+                sleep(0.1)
+                if check_api_base(self.api_base, http_client):
+                    break
+                if count > 50:
+                    logger.error("failed to reach the API server")
+                    break
+                count += 1
+
+            logger.debug("Server started.")
+
+            # if the queue is not empty it means the server failed to start
+            if self.queue is not None and not self.queue.empty():
+                # pylint: disable=raise-missing-from
+                raise self.queue.get()
+
         except ServerException as exc:
+            self.shutdown()
             raise exc
         return self.api_base
 
