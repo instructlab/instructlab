@@ -23,7 +23,7 @@ class TestLabModelTest:
     class ServerMock(BackendServer):
         # py lint: disable=W0613
         def __init__(self):
-            super().__init__("", "", "", 0)
+            super().__init__("", "", "", "", "", 0)
 
         def run_detached(
             self, http_client: httpx.Client | None = None, background: bool = True
