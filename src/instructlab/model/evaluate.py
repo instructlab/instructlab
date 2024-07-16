@@ -2,7 +2,7 @@
 
 # pylint: disable=ungrouped-imports
 # Standard
-from copy import copy
+from copy import deepcopy
 import enum
 import logging
 import multiprocessing
@@ -245,7 +245,7 @@ def launch_server(
     backend,
     enable_serving_output,
 ) -> tuple:
-    eval_serve = copy(ctx.obj.config.serve)
+    eval_serve = deepcopy(ctx.obj.config.serve)
     if backend is None:
         try:
             backend = eval_serve.backend = backends.get(pathlib.Path(model), backend)
