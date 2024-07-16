@@ -36,6 +36,14 @@ export CONFIG_HOME
 export DATA_HOME
 export CONFIG_HOME
 
+# ensure we have all the commands before proceeding
+for cmd in ilab jq; do
+    if ! type -p $cmd; then
+        echo "Error: ${cmd} is not installed"
+        exit 1
+    fi
+done
+
 
 
 ########################################
@@ -63,8 +71,28 @@ function init_e2e_tests() {
     STATE_HOME=$(python -c 'import platformdirs; print(platformdirs.user_state_dir())')
     # ensure that our mock e2e dirs exist
     for dir in "${CONFIG_HOME}" "${DATA_HOME}" "${STATE_HOME}"; do
-    	mkdir -p "${dir}"
+        mkdir -p "${dir}"
     done
+}
+
+########################################
+# Returns the actively served model from
+# the InstructLab model server.
+# 
+# This function assumes that models is running
+# and is serving a model.
+# 
+# Globals:
+#   None
+# Arguments:
+#   None
+# Outputs:
+#   String - the model being served by ilab
+########################################
+function get_served_model_from_server() {
+    local model
+    model=$(curl --silent http://127.0.0.1:8000/v1/models | jq -r '.data[0].id')
+    printf '%s' "${model}"
 }
 
 
@@ -170,13 +198,15 @@ test_serve() {
 }
 
 test_chat() {
+    local served_model
     task Chat with the model
-    CHAT_ARGS=()
-    if [ "$GRANITE" -eq 1 ]; then
-        CHAT_ARGS+=("-m" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
-    elif [ "$MIXTRAL" -eq 1 ]; then
-        CHAT_ARGS+=("-m" "${DATA_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf" "--model-family" "mixtral")
+
+    served_model=$(get_served_model_from_server)
+    CHAT_ARGS=('-m' "${served_model}")
+    if [[ "${MIXTRAL}" -eq 1 ]]; then
+        CHAT_ARGS+=('--model-family' 'mixtral')
     fi
+
     printf 'Say "Hello" and nothing else\n' | ilab model chat -qq "${CHAT_ARGS[@]}"
 }
 
