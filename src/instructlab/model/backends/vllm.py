@@ -177,6 +177,60 @@ def run_vllm(
 
     """
     vllm_process = None
+    vllm_cmd, tmp_files = build_vllm_cmd(
+        host, port, model_family, model_path, chat_template, vllm_args
+    )
+
+    logger.debug(f"vLLM serving command is: {vllm_cmd}")
+
+    try:
+        if background:
+            vllm_process = subprocess.Popen(
+                args=vllm_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+        else:
+            # pylint: disable=consider-using-with
+            vllm_process = subprocess.Popen(args=vllm_cmd)
+
+        api_base = get_api_base(f"{host}:{port}")
+        logger.info("vLLM starting up on pid %s at %s", vllm_process.pid, api_base)
+
+    except:
+        safe_close_all(tmp_files)
+        raise
+
+    return vllm_process, tmp_files
+
+
+def build_vllm_cmd(
+    host: str,
+    port: int,
+    model_family: str,
+    model_path: pathlib.Path,
+    chat_template: str,
+    vllm_args: list[str],
+) -> typing.Tuple[list[str], list[Closeable]]:
+    """
+    Build the vLLM command to run the server.
+
+    Args:
+        host          (str):          host to run server on
+        port          (int):          port to run server on
+        model_family  (str):          Family the model belongs to, used with 'auto' chat templates
+        model_path    (Path):         The path to the model file
+        chat_template (str):          Chat template to use when serving the model
+                                         'auto' (default) automatically determines a template\n
+                                         'tokenizer' uses the model provided template\n
+                                         (path) specifies a template file location to load from.
+
+        vllm_args     (list of str):  Specific arguments to pass into vllm.
+                                        Example: ["--dtype", "auto", "--enable-lora"]
+
+    Returns:
+        tuple: A tuple containing two values:
+            vllm_cmd (list of str): The command to run the vllm server
+            tmp_files: a list of temporary files necessary to launch the process
+    """
     vllm_cmd = [sys.executable, "-m", "vllm.entrypoints.openai.api_server"]
     tmp_files = []
 
@@ -205,24 +259,12 @@ def run_vllm(
             verify_template_exists(path)
             vllm_cmd.extend(["--chat-template", chat_template])
 
+    # Force multiprocessing for distributed serving, vLLM will try "ray" if it's installed but we do
+    # not support it (yet?). We don't install Ray but we might end up running on systems that have it,
+    # so let's make sure we use multiprocessing.
+    if not contains_argument("--distributed-executor-backend", vllm_args):
+        vllm_cmd.extend(["--distributed-executor-backend", "mp"])
+
     vllm_cmd.extend(vllm_args)
 
-    logger.debug(f"vLLM serving command is: {vllm_cmd}")
-
-    try:
-        if background:
-            vllm_process = subprocess.Popen(
-                args=vllm_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-            )
-        else:
-            # pylint: disable=consider-using-with
-            vllm_process = subprocess.Popen(args=vllm_cmd)
-
-        api_base = get_api_base(f"{host}:{port}")
-        logger.info("vLLM starting up on pid %s at %s", vllm_process.pid, api_base)
-
-    except:
-        safe_close_all(tmp_files)
-        raise
-
-    return vllm_process, tmp_files
+    return vllm_cmd, tmp_files
