@@ -5,7 +5,7 @@ import logging
 import os
 import sys
 
-FORMAT = "%(levelname)s %(asctime)s %(filename)s:%(lineno)d: %(funcName)s: %(message)s"
+FORMAT = "%(levelname)s %(asctime)s %(name)s:%(lineno)d: %(message)s"
 
 
 class CustomFormatter(logging.Formatter):
