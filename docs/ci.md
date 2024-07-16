@@ -24,6 +24,23 @@ page](https://github.com/instructlab/instructlab/actions) for the repository.
 These run on a variety of instance types and can be run at the discretion of
 repo maintainers.
 
+### E2E Test Coverage
+
+You can specify the following flags to test various features of `ilab` with the
+`basic-workflow-tests.sh` script - you can see examples of these being used within
+the E2E job configuration files found
+[here](https://github.com/instructlab/instructlab/blob/main/.github/workflows/).
+
+| Flag | Feature |
+| --- | --- |
+| `e` | Run model evaluation |
+| `m` | Run minimal configuration |
+| `M` | Use Mixtral model (4-bit quantized) |
+| `f` | Run "fullsize" training |
+| `F` | Run "fullsize" SDG |
+| `g` | Run with Granite model |
+| `v` | Run with vLLM for serving |
+
 ### Trigger via GitHub Web UI
 
 For the E2E jobs that are launched manually, they take an input field that

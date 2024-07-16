@@ -341,6 +341,7 @@ wait_for_server(){
     echo "server started"
 }
 
+# NOTE: If you add additional or modify existing options, please document them in 'docs/ci.md'
 usage() {
     echo "Usage: $0 [-m] [-h]"
     echo "  -m  Run minimal configuration (run quicker when you have no GPU)"
