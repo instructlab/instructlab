@@ -23,6 +23,7 @@
    template for both vLLM and llama.cpp backends. Options include 'auto' (current behavior, ilab
    provides its own template), 'tokenizer' (uses the model's tokenizer config), and an external
    file name.
+* Default log format changes to include the logger name in the logs.
 
 ### Breaking Changes
 

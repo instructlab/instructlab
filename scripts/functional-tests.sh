@@ -29,7 +29,7 @@ export ILAB_DATA_DIR
 # Initializes the environment necessary for this test script
 # Creates a temporary directory structure for the test data,
 # and sets the necessary environment variables.
-# 
+#
 # Arguments:
 #   None
 # Globals:
@@ -370,7 +370,7 @@ test_no_chat_logs(){
         send "hello!\r"
         sleep 1
         expect {
-            "_base_client.py" { exit 1 }
+            "openai._base_client" { exit 1 }
         }
         '
 }
@@ -466,7 +466,7 @@ test_model_print(){
             timeout { exit 1 }
         }
     ' "${expected_model_name}")
-    expect -c "${expect_script}" 
+    expect -c "${expect_script}"
 
     # validate that we fail on invalid model
     # shellcheck disable=SC2016
