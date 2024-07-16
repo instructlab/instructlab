@@ -36,6 +36,7 @@ from . import log
 
 ILAB_PACKAGE_NAME = "instructlab"
 CONFIG_FILENAME = "config.yaml"
+CONFIG_VERSION = "1.0.0"
 
 
 class STORAGE_DIR_NAMES:
@@ -372,6 +373,7 @@ class Config(BaseModel):
     chat: _chat
     generate: _generate
     serve: _serve
+    version: str
 
     # additional fields with defaults
     general: _general = _general()
@@ -389,6 +391,7 @@ class Config(BaseModel):
 def get_default_config() -> Config:
     """Generates default configuration for CLI"""
     return Config(
+        version=CONFIG_VERSION,
         chat=_chat(
             model=DEFAULTS.DEFAULT_MODEL,
         ),

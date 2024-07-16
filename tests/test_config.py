@@ -23,6 +23,7 @@ class TestConfig:
         default_model = f"{data_dir}/models/merlinite-7b-lab-Q4_K_M.gguf"
 
         assert cfg.general is not None
+        assert cfg.version is not None
         assert cfg.general.log_level == "INFO"
         assert cfg.general.debug_level == 0
 
@@ -102,10 +103,11 @@ class TestConfig:
             )
         with pytest.raises(
             config.ConfigException,
-            match=r"""4 errors in [\/\w-]+config.yaml:
+            match=r"""5 errors in [\/\w-]+config.yaml:
 - missing chat: field required
 - missing generate: field required
 - missing serve: field required
+- missing version: field required
 - missing evaluate: field required
 """,
         ):
@@ -123,11 +125,12 @@ generate:
             )
         with pytest.raises(
             config.ConfigException,
-            match=r"""5 errors in [\/\w-]+config.yaml:
+            match=r"""6 errors in [\/\w-]+config.yaml:
 - missing chat: field required
 - missing generate->taxonomy_path: field required
 - missing generate->taxonomy_base: field required
 - missing serve: field required
+- missing version: field required
 - missing evaluate: field required
 """,
         ):
@@ -177,6 +180,7 @@ generate:
         with open(config_path, "w", encoding="utf-8") as config_file:
             config_file.write(
                 """\
+version: 1.0.0
 chat:
   model: models/granite-7b-lab-Q4_K_M.gguf
 generate:
