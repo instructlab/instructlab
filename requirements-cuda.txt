@@ -1,0 +1,1 @@
+instructlab-training[cuda]>=0.2.0

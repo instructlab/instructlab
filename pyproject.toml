@@ -46,6 +46,7 @@ package-dir = { "" = "src" }
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
 optional-dependencies.hpu = { file = ["requirements-hpu.txt"] }
+optional-dependencies.cuda = { file = ["requirements-cuda.txt"] }
 
 [tool.setuptools.packages.find]
 where = ["src"]

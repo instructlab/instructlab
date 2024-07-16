@@ -178,7 +178,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       pip cache remove llama_cpp_python
-      pip install instructlab \
+      pip install instructlab[cuda] \
          -C cmake.args="-DLLAMA_CUDA=on" \
          -C cmake.args="-DLLAMA_NATIVE=off"
    ```
