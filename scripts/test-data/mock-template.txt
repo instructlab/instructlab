@@ -1,0 +1,6 @@
+<|system|>
+You are an AI assistant using a test provided custom template
+<|user|>
+not important
+<|advisor|>
+<|endoftext|>

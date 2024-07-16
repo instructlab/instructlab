@@ -6,6 +6,7 @@ import os
 import pathlib
 import subprocess
 import sys
+import tempfile
 import time
 import typing
 
@@ -15,11 +16,17 @@ import httpx
 # Local
 from ...configuration import get_api_base
 from .backends import (
+    CHAT_TEMPLATE_AUTO,
+    CHAT_TEMPLATE_TOKENIZER,
     VLLM,
     BackendServer,
+    Closeable,
     ServerException,
     ensure_server,
+    get_model_template,
+    safe_close_all,
     shutdown_process,
+    verify_template_exists,
 )
 
 logger = logging.getLogger(__name__)
@@ -29,13 +36,15 @@ class Server(BackendServer):
     def __init__(
         self,
         api_base: str,
+        model_family: str,
         model_path: pathlib.Path,
+        chat_template: str,
         host: str,
         port: int,
         background: bool = False,
         vllm_args: typing.Iterable[str] | None = (),
     ):
-        super().__init__(model_path, api_base, host, port)
+        super().__init__(model_family, model_path, chat_template, api_base, host, port)
         self.api_base = api_base
         self.model_path = model_path
         self.background = background
@@ -44,33 +53,39 @@ class Server(BackendServer):
         self.process: subprocess.Popen | None = None
 
     def run(self):
-        self.process = run_vllm(
+        self.process, files = run_vllm(
             self.host,
             self.port,
+            self.model_family,
             self.model_path,
+            self.chat_template,
             self.vllm_args,
             self.background,
         )
+        self.register_resources(files)
 
         try:
             while True:
                 time.sleep(1)
         except KeyboardInterrupt:
-            self.shutdown()
             logger.info("vLLM server terminated by keyboard")
         # pylint: disable=broad-exception-caught
         except BaseException:
-            self.shutdown()
             logger.exception("vLLM server terminated")
+        finally:
+            self.shutdown()
 
     def create_server_process(self, port: int, background: bool) -> subprocess.Popen:
-        server_process = run_vllm(
+        server_process, files = run_vllm(
             self.host,
             port,
+            self.model_family,
             self.model_path,
+            self.chat_template,
             self.vllm_args,
             background=background,
         )
+        self.register_resources(files)
         return server_process
 
     def run_detached(
@@ -96,56 +111,118 @@ class Server(BackendServer):
 
     def shutdown(self):
         """Shutdown vLLM server"""
+
+        super().shutdown()
+
         # Needed when a temporary server is started
         if self.process is not None:
             shutdown_process(self.process, 20)
 
 
+def format_template(model_family: str, model_path: pathlib.Path) -> str:
+    template, eos_token, bos_token = get_model_template(model_family, model_path)
+
+    prefix = ""
+    if eos_token:
+        prefix = '{{% set eos_token = "{}" %}}\n'.format(eos_token)
+    if bos_token:
+        prefix = '{}{{% set bos_token = "{}" %}}\n'.format(prefix, bos_token)
+
+    return prefix + template
+
+
+def contains_argument(prefix: str, arg: typing.Iterable[str]) -> bool:
+    # Either --foo value or --foo=value
+    return any(s == prefix or s.startswith(prefix + "=") for s in arg)
+
+
+def create_tmpfile(data: str):
+    # pylint: disable=consider-using-with
+    file = tempfile.NamedTemporaryFile()
+    file.write(data.encode("utf-8"))
+    file.flush()
+    return file
+
+
 def run_vllm(
     host: str,
     port: int,
+    model_family: str,
     model_path: pathlib.Path,
+    chat_template: str,
     vllm_args: list[str],
     background: bool,
-) -> subprocess.Popen:
+) -> typing.Tuple[subprocess.Popen, list[Closeable]]:
     """
     Start an OpenAI-compatible server with vLLM.
 
     Args:
-        host       (str):             host to run server on
-        port       (int):             port to run server on
-        model_path (Path):            The path to the model file.
-        vllm_args  (list of str):     Specific arguments to pass into vllm.
-                                      Example: ["--dtype", "auto", "--enable-lora"]
+        host          (str):          host to run server on
+        port          (int):          port to run server on
+        model_family  (str):          Family the model belongs to, used with 'auto' chat templates
+        model_path    (Path):         The path to the model file
+        chat_template (str):          Chat template to use when serving the model
+                                         'auto' (default) automatically determines a template\n
+                                         'tokenizer' uses the model provided template\n
+                                         (path) specifies a template file location to load from.
+
+        vllm_args     (list of str):  Specific arguments to pass into vllm.
+                                        Example: ["--dtype", "auto", "--enable-lora"]
         background (bool):            Whether the stdout and stderr vLLM should be sent to /dev/null (True)
                                       or stay in the foreground(False).
     Returns:
-        vllm_process (subprocess.Popen): process of the vllm server
+        tuple: A tuple containing two values:
+            vllm_process (subprocess.Popen): process of the vllm server
+            tmp_files: a list of temporary files necessary to launch the process
+
     """
     vllm_process = None
     vllm_cmd = [sys.executable, "-m", "vllm.entrypoints.openai.api_server"]
+    tmp_files = []
 
-    if "--host" not in vllm_args:
+    if not contains_argument("--host", vllm_args):
         vllm_cmd.extend(["--host", host])
 
-    if "--port" not in vllm_args:
+    if not contains_argument("--port", vllm_args):
         vllm_cmd.extend(["--port", str(port)])
 
-    if "--model" not in vllm_args:
+    if not contains_argument("--model", vllm_args):
         vllm_cmd.extend(["--model", os.fspath(model_path)])
+
+    if not contains_argument("--chat-template", vllm_args):
+        if chat_template == CHAT_TEMPLATE_AUTO:
+            # For auto templates, the build-in in-memory template
+            # needs to be written to a temporary file so that vLLM
+            # can read it
+            template = format_template(model_family, model_path)
+            file = create_tmpfile(template)
+            tmp_files.append(file)
+            vllm_cmd.extend(["--chat-template", file.name])
+        elif chat_template != CHAT_TEMPLATE_TOKENIZER:
+            # In this case the value represents a template file path
+            # Pass it directly to vllm
+            path = pathlib.Path(chat_template)
+            verify_template_exists(path)
+            vllm_cmd.extend(["--chat-template", chat_template])
 
     vllm_cmd.extend(vllm_args)
 
     logger.debug(f"vLLM serving command is: {vllm_cmd}")
-    if background:
-        vllm_process = subprocess.Popen(
-            args=vllm_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-        )
-    else:
-        # pylint: disable=consider-using-with
-        vllm_process = subprocess.Popen(args=vllm_cmd)
 
-    api_base = get_api_base(f"{host}:{port}")
-    logger.info(f"vLLM starting up on pid {vllm_process.pid} at {api_base}")
+    try:
+        if background:
+            vllm_process = subprocess.Popen(
+                args=vllm_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+        else:
+            # pylint: disable=consider-using-with
+            vllm_process = subprocess.Popen(args=vllm_cmd)
 
-    return vllm_process
+        api_base = get_api_base(f"{host}:{port}")
+        logger.info("vLLM starting up on pid %s at %s", vllm_process.pid, api_base)
+
+    except:
+        safe_close_all(tmp_files)
+        raise
+
+    return vllm_process, tmp_files

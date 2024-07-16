@@ -113,6 +113,8 @@ def test_ilab_vllm_args(
     m_backends_get.assert_called_once_with(tmp_path, backends.VLLM)
     m_server.assert_called_once_with(
         api_base="http://127.0.0.1:8000/v1",
+        chat_template=None,
+        model_family=None,
         model_path=tmp_path,
         vllm_args=["--enable_lora"],
         host="127.0.0.1",
@@ -148,4 +150,5 @@ def test_ilab_llama_cpp_args(
         gpu_layers=-1,
         max_ctx_size=4096,
         num_threads=None,
+        chat_template=None,
     )

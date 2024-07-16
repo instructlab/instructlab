@@ -75,6 +75,16 @@ signal.signal(signal.SIGTERM, signal_handler)
     help="Log file path to write server logs to.",
 )
 @click.option(
+    "--chat-template",
+    type=str,
+    help=(
+        "Which chat template to use in serving the model, either 'auto', "
+        "'tokenizer', or a path to a jinja formatted template file. \n"
+        " 'auto' (the default) indicates serve will decide which template to use.\n"
+        " 'tokenizer' indicates the model's tokenizer config will be preferred"
+    ),
+)
+@click.option(
     "--backend",
     type=click.Choice(tuple(backends.SUPPORTED_BACKENDS)),
     cls=clickext.ConfigOption,
@@ -95,6 +105,7 @@ def serve(
     model_family,
     log_file: pathlib.Path | None,
     backend: str | None,
+    chat_template: str | None,
 ) -> None:
     """Start a local server
 
@@ -119,6 +130,9 @@ def serve(
     # Redirect server stdout and stderr to the logger
     log.stdout_stderr_to_logger(logger, log_file)
 
+    if chat_template is None:
+        chat_template = ctx.obj.config.serve.chat_template
+
     logger.info(
         f"Using model '{model_path}' with {gpu_layers} gpu-layers and {max_ctx_size} max context size."
     )
@@ -133,6 +147,7 @@ def serve(
             api_base=ctx.obj.config.serve.api_base(),
             model_path=model_path,
             model_family=model_family,
+            chat_template=chat_template,
             host=host,
             port=port,
             gpu_layers=gpu_layers,
@@ -151,7 +166,9 @@ def serve(
 
         backend_instance = vllm.Server(
             api_base=ctx.obj.config.serve.api_base(),
+            model_family=model_family,
             model_path=model_path,
+            chat_template=chat_template,
             vllm_args=vllm_args,
             host=host,
             port=port,
