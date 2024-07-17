@@ -6,6 +6,7 @@ from types import FrameType
 from typing import Optional, Tuple
 import abc
 import contextlib
+import json
 import logging
 import mmap
 import multiprocessing
@@ -111,6 +112,50 @@ def safe_close_all(resources: typing.Iterable[Closeable]):
             resource.close()
 
 
+def is_model_safetensors(model_path: pathlib.Path) -> bool:
+    """Check if model_path is a valid safe tensors directory
+
+    Check if provided path to model represents directory containing a safetensors representation
+    of a model. Directory must contain a specific set of files to qualify as a safetensors model directory
+    Args:
+        model_path (Path): The path to the model directory
+    Returns:
+        bool: True if the model is a safetensors model, False otherwise.
+    """
+    try:
+        files = list(model_path.iterdir())
+    except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
+        logger.debug("Failed to read directory: %s", e)
+        return False
+
+    if not any(file.suffix == ".safetensors" for file in files):
+        logger.debug("'%s' has no *.safetensors files", model_path)
+        return False
+
+    basenames = {file.name for file in files}
+    requires_files = {
+        "config.json",
+        "tokenizer.json",
+        "tokenizer.model",
+        "tokenizer_config.json",
+    }
+    diff = requires_files.difference(basenames)
+    if diff:
+        logger.debug("'%s' is missing %s", model_path, diff)
+        return False
+
+    for file in model_path.glob("*.json"):
+        try:
+            with file.open(encoding="utf-8") as f:
+                json.load(f)
+        except (PermissionError, json.JSONDecodeError) as e:
+            logger.debug("'%s' is not a valid JSON file: e", file, e)
+            return False
+
+    # TODO: add check for safetensors file header (?)
+    return True
+
+
 def is_model_gguf(model_path: pathlib.Path) -> bool:
     """
     Check if the file is a GGUF file.
@@ -142,29 +187,29 @@ def determine_backend(model_path: pathlib.Path) -> Tuple[str, str]:
     """
     Determine the backend to use based on the model file properties.
     Args:
-        model_path (Path): The path to the model file.
+        model_path (Path): The path to the model file/directory.
     Returns:
         Tuple[str, str]: A tuple containing two strings:
                         - The backend to use.
                         - The reason why the backend was selected.
     """
-
-    if model_path.is_dir():
-        if sys.platform != "linux":
+    try:
+        if model_path.is_dir() and is_model_safetensors(model_path):
+            if sys.platform == "linux":
+                logger.debug(
+                    f"Model is huggingface safetensors and system is Linux, using {VLLM} backend."
+                )
+                return (
+                    VLLM,
+                    "model path is a directory containing huggingface safetensors files and running on Linux.",
+                )
             raise ValueError(
                 "Model is a directory containing huggingface safetensors files but the system is not Linux. "
                 "Using a directory with safetensors file will activate the vLLM serving backend, vLLM is only supported on Linux. "
                 "If you want to run the model on a different system (e.g. macOS), please use a GGUF file."
             )
-        # If the model is a directory, it's a VLLM model - it's kinda weak, but it's a start
-        if sys.platform == "linux":
-            logger.debug(
-                f"Model is a directory and system is Linux, using {VLLM} backend."
-            )
-            return (
-                VLLM,
-                "model path is a directory containing huggingface safetensors files and running on Linux.",
-            )
+    except Exception as e:
+        raise ValueError from e
 
     # Check if the model is a GGUF file
     try:
