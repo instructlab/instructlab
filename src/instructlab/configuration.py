@@ -95,7 +95,7 @@ class _InstructlabDefaults:
 
     @property
     def CHECKPOINTS_DIR(self) -> str:
-        return path.join(self._cache_home, STORAGE_DIR_NAMES.CHECKPOINTS)
+        return path.join(self._data_dir, STORAGE_DIR_NAMES.CHECKPOINTS)
 
     @property
     def DATASETS_DIR(self) -> str:
@@ -107,7 +107,7 @@ class _InstructlabDefaults:
 
     @property
     def MODELS_DIR(self) -> str:
-        return path.join(self._data_dir, STORAGE_DIR_NAMES.MODELS)
+        return path.join(self._cache_home, STORAGE_DIR_NAMES.MODELS)
 
     @property
     def DEFAULT_MODEL(self) -> str:
