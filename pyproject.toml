@@ -45,8 +45,11 @@ package-dir = { "" = "src" }
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
-optional-dependencies.hpu = { file = ["requirements-hpu.txt"] }
-optional-dependencies.cuda = { file = ["requirements-cuda.txt"] }
+optional-dependencies.cpu = { file = ["requirements/cpu.txt"] }
+optional-dependencies.cuda = { file = ["requirements/cuda.txt"] }
+optional-dependencies.hpu = { file = ["requirements/hpu.txt"] }
+optional-dependencies.mps = { file = ["requirements/mps.txt"] }
+optional-dependencies.rocm = { file = ["requirements/rocm.txt"] }
 
 [tool.setuptools.packages.find]
 where = ["src"]

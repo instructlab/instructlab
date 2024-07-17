@@ -275,14 +275,14 @@ setup_rh_devenv() {
 
 pip_install_with_nvidia() {
     local cloud_type=$1
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && source venv/bin/activate && pip cache remove llama_cpp_python && pip install -e . -C cmake.args='-DLLAMA_CUBLAS=on'"
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && source venv/bin/activate && pip cache remove llama_cpp_python && pip install -e .[cuda] -C cmake.args='-DLLAMA_CUDA=on'"
     "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && source venv/bin/activate && pip install -r requirements-vllm-cuda.txt && ilab"
 }
 
 pip_install_with_amd() {
     local cloud_type=$1
     "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && source venv/bin/activate && pip cache remove llama_cpp_python && \
-    pip install -e . --extra-index-url https://download.pytorch.org/whl/rocm6.0 \
+    pip install -e .[rocm] --extra-index-url https://download.pytorch.org/whl/rocm6.0 \
    -C cmake.args='-DLLAMA_HIPBLAS=on' \
    -C cmake.args='-DAMDGPU_TARGETS=all' \
    -C cmake.args='-DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang' \

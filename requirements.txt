@@ -5,9 +5,6 @@ click-didyoumean>=0.3.0
 datasets>=2.18.0
 gguf>=0.6.0
 GitPython>=3.1.42
-# Linux: 4-bit quantization with BitsAndBytes is not ready to use, yet.
-# see https://github.com/instructlab/instructlab/issues/579
-# bitsandbytes; sys_platform=='linux' and platform_machine=='x86_64'
 httpx>=0.25.0
 instructlab-eval>=0.0.9
 instructlab-quantize>=0.1.0
@@ -42,8 +39,7 @@ tqdm>=4.66.2
 # 'optimum' for Intel Gaudi needs transformers <4.41.0,>=4.40.0
 transformers>=4.40.0 ; python_version == '3.10'
 transformers>=4.41.2 ; python_version >= '3.11'
-trl>=0.7.11 ; python_version == '3.10'
-trl>=0.9.4 ; python_version >= '3.11'
+trl>=0.9.4
 wandb>=0.16.4
 # the below library should NOT be imported into any python files
 # it is for CLI usage ONLY
