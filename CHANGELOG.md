@@ -18,7 +18,6 @@
 * The `ilab` command now accepts a `-v` / `--verbose` option to enable debug logging.
   `ilab -vv` or `ilab --verbose --verbose` enables more verbose debug logging.
 * `ilab model test` generic support
-   evaluation (currently applicable for vLLM only).
 * Add `--chat-template` option to `ilab model serve` to support customization of the chat
    template for both vLLM and llama.cpp backends. Options include 'auto' (current behavior, ilab
    provides its own template), 'tokenizer' (uses the model's tokenizer config), and an external
