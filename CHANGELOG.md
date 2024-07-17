@@ -2,6 +2,15 @@
 
 ### Features
 
+* `ilab` now uses dedicated directories for storing config and data files. On Linux, these
+  will generally be the XDG directories: `~/.config/instructlab` for config and
+  `~/.local/share/instructlab` for data. On MacOS, both the config and data is
+  located at `~/Library/Application Support/instructlab`.
+* A new `ilab config show` command is introduced as a convenience feature, which prints out
+   the contents of the ***actively loaded*** config, not just the contents of the config file.
+* `ilab system`: A new command group named `ilab system` has been added which will serve as the
+   basis for all system-related commands. This currently contains `ilab system info` as its only
+   sub-command.
 * Add [vLLM](https://github.com/vllm-project/vllm) backend to serve, chat and generate commands.
 * Add `--backend` flag to `ilab model serve` command to allow for specifying the backend to use
    when serving a model. This is useful when you have multiple backends installed and want to
@@ -30,6 +39,19 @@
 
 * `ilab`: **Deprecation of Python 3.9 support and withdrawal of Python 3.12 support** Due to changes to training requiring the usage of [GPTDolomite](https://github.com/instructlab/GPTDolomite), Python 3.9 is no longer supported and Python 3.12 support is currently withdrawn. If you are using either of these versions, you will need to start using either Python 3.10 or Python 3.11 to use this and subsequent versions of the CLI.
 * `ilab model train`: The '--device' parameter no longer supports specifying a GPU index (e.g., 'cuda:0'). To use a specific GPU, set the visible GPU before running the train command.
+* `ilab init`: With the introduction of a dedicated storage system within the `ilab` CLI,
+   `ilab init` and `ilab config init` will now output and read the config file from the
+   platform's config directory under the `instructlab` package.
+* `ilab taxonomy` and `ilab data`: The `ilab` CLI now uses the platform's dedicated data directory to store
+   the taxonomy under the `instructlab/taxonomy` directory as a default.
+* `ilab data`: The default directory for new datasets is now under `instructlab/datasets` in the
+   platform's dedicated data directory under the `instructlab` package.
+* `ilab model`: The default location for saved and downloaded models is now under `instructlab/models`
+   in the platform's dedicated data directory under the `instructlab` package. Outputted
+   checkpoints now live in the `instructlab/checkpoints` directory under the platform's dedicated
+   program cache directory.
+* `ilab model chat`: Chatlogs are now stored under the `instructlab/checkpoints` directory in the
+   platform's dedicated data directory under the `instructlab` package.
 
 ## v0.17
 
