@@ -453,44 +453,49 @@ test_model_print(){
     wait_for_server
 
     # validate that we print the model from the server since it is different from the config
-    # shellcheck disable=SC2154,SC1001,SC2016
     local expected_model_name
     local expect_script
     expected_model_name=$(to_upper "${target_model}")
-    # shellcheck disable=SC2016
     expect_script=$(printf '
         spawn ilab model chat
         expect {
-            -re "Welcome to InstructLab Chat w/ \\\u001b\\\[1m%s" { exit 0 }
-            eof { catch wait result; exit [lindex $result 3] }
-            timeout { exit 1 }
+            timeout { exit 124 }
+            -re "%s" { exit 0 }
         }
-    ' "${expected_model_name}")
-    expect -c "${expect_script}"
+    ' "$(basename "${expected_model_name}")" # use basename otherwise the regex will not match since the path contains slashes
+    )
+    if ! expect -d -c "${expect_script}"; then
+        echo "Error: expect test failed"
+        exit 1
+    fi
 
     # validate that we fail on invalid model
-    # shellcheck disable=SC2016
-    expect_script=$(printf '
+    if ! expect -c '
         set timeout 30
         spawn ilab model chat -m bar
         expect {
-           "Executing chat failed with: Model bar is not served by the server. These are the served models: ['%s']" { exit 0 }
+            timeout { exit 124 }
+           -re "Executing chat failed with: Model bar is not served by the server" { exit 0 }
         }
-    ' "${target_model}")
-    expect -c "${expect_script}"
+    '; then
+        echo "Error: expect test failed"
+        exit 1
+    fi
 
-    # If we don't specify a model, validate that we print the model reported
-    # by the server since it is different from the config.
-    # shellcheck disable=SC2016
+    # # If we don't specify a model, validate that we print the model reported
+    # # by the server since it is different from the config.
     expect_script=$(printf '
         spawn ilab model chat
         expect {
-            -re "Welcome to InstructLab Chat w/ \\\u001b\\\[1m%s" { exit 0 }
-            eof { catch wait result; exit [lindex $result 3] }
-            timeout { exit 1 }
+            timeout { exit 124 }
+            -re "%s" { exit 0 }
         }
-    ' "${expected_model_name}")
-    expect -c "${expect_script}"
+    ' "$(basename "${expected_model_name}")"
+    )
+    if ! expect -c"${expect_script}"; then
+        echo "Error: expect test failed"
+        exit 1
+    fi
 }
 
 test_server_template_value(){

@@ -172,10 +172,8 @@ test_serve() {
 test_chat() {
     task Chat with the model
     CHAT_ARGS=()
-    if [ "$GRANITE" -eq 1 ]; then
-        CHAT_ARGS+=("-m" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
-    elif [ "$MIXTRAL" -eq 1 ]; then
-        CHAT_ARGS+=("-m" "${DATA_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf" "--model-family" "mixtral")
+    if [ "$MIXTRAL" -eq 1 ]; then
+        CHAT_ARGS+=("--model-family" "mixtral")
     fi
     printf 'Say "Hello" and nothing else\n' | ilab model chat -qq "${CHAT_ARGS[@]}"
 }
