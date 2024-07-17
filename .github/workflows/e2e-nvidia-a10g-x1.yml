@@ -154,7 +154,7 @@ jobs:
 
           python3.11 -m pip show nvidia-nccl-cu12
           
-          ./scripts/basic-workflow-tests.sh -cemf
+          ./scripts/basic-workflow-tests.sh -emf
 
       - name: Add comment to PR if the workflow failed
         if: failure() && steps.check_pr.outputs.is_pr == 'true'
