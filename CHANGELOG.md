@@ -75,6 +75,8 @@
 * The `--num-instructions` option to `ilab data generate` has been deprecated.
   See `--sdg-scale-factor` for an updated option providing similar
   functionality.
+* `ilab model train --legacy`: Trained GGUF models are now saved in the global user checkpoints directory.
+  Previously, checkpoints were always saved into a directory local to where the user called it from.
 
 ## v0.17
 
