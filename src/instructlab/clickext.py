@@ -10,6 +10,7 @@ import sys
 import typing
 
 # Third Party
+from click.core import ParameterSource
 import click
 
 logger = logging.getLogger(__name__)
@@ -88,6 +89,25 @@ class ConfigOption(click.Option):
             msg = f"{msg}  [{default_msg}]"
         return prefix, msg
 
+    def consume_value(
+        self, ctx: click.Context, opts: typing.Mapping[str, typing.Any]
+    ) -> tuple[typing.Any, ParameterSource]:
+        value, source = super().consume_value(ctx, opts)
+        # fix parameter source for config section that are mis-reported
+        # as DEFAULT source instead of DEFAULT_MAP source.
+        if (
+            source == ParameterSource.DEFAULT
+            and self.config_sections
+            and ctx.default_map is not None
+            and self.name is not None
+        ):
+            section = ctx.default_map
+            for secname in self.config_sections:
+                section = section.get(secname, {})
+            if self.name in section:
+                source = ParameterSource.DEFAULT_MAP
+        return value, source
+
     def get_default(
         self, ctx: click.Context, call: bool = True
     ) -> typing.Any | typing.Callable[[], typing.Any] | None:
@@ -99,12 +119,10 @@ class ConfigOption(click.Option):
         if not self.config_sections:
             # no config subsection
             return super().get_default(ctx, call=call)
-        if ctx.default_map is not None:
+        if ctx.default_map is not None and self.name is not None:
             section = ctx.default_map
             for secname in self.config_sections:
                 section = section.get(secname, {})
-            if typing.TYPE_CHECKING:
-                assert self.name
             value = section.get(self.name)
             if call and callable(value):
                 return value()
