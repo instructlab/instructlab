@@ -161,6 +161,31 @@ fi
 # download the latest version of the ilab
 ilab model download
 
+test_oci_model_download_with_vllm_backend(){
+   # Enable globstar for recursive globbing
+    shopt -s globstar
+
+    # Run the ilab model download command with REGISTRY_AUTH_FILE
+    REGISTRY_AUTH_FILE=$HOME/auth.json ilab model download --repository docker://quay.io/ai-lab/models/granite-7b-lab --release latest --model-dir models/instructlab
+
+    patterns=(
+        "models/instructlab/config.json"
+        "models/instructlab/tokenizer.json"
+        "models/instructlab/tokenizer_config.json"
+        "models/instructlab/*.safetensors"
+    )
+
+    for pattern in "${patterns[@]}"
+    do
+        matching_files=("$pattern")
+        if [ ${#matching_files[@]} -eq 0 ]
+        then
+            echo "No files found matching pattern: $pattern"
+            exit 1
+        fi
+    done
+}
+
 # check that ilab model serve is working
 test_bind_port(){
     local formatted_script
@@ -546,6 +571,8 @@ test_server_chat_template() {
 # MAIN #
 ########
 # call cleanup in-between each test so they can run without conflicting with the server/chat process
+test_oci_model_download_with_vllm_backend
+cleanup
 test_bind_port
 cleanup
 test_ctx_size

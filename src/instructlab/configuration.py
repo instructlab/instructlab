@@ -43,6 +43,7 @@ class STORAGE_DIR_NAMES:
     ILAB = "instructlab"
     DATASETS = "datasets"
     CHECKPOINTS = "checkpoints"
+    OCI = "oci"
     MODELS = "models"
     TAXONOMY = "taxonomy"
     INTERNAL = (
@@ -97,6 +98,10 @@ class _InstructlabDefaults:
     @property
     def CHECKPOINTS_DIR(self) -> str:
         return path.join(self._data_dir, STORAGE_DIR_NAMES.CHECKPOINTS)
+
+    @property
+    def OCI_DIR(self) -> str:
+        return path.join(self._cache_home, STORAGE_DIR_NAMES.OCI)
 
     @property
     def DATASETS_DIR(self) -> str:
@@ -545,6 +550,7 @@ def ensure_storage_directories_exist():
         DEFAULTS._data_dir,
         DEFAULTS.CHATLOGS_DIR,
         DEFAULTS.CHECKPOINTS_DIR,
+        DEFAULTS.OCI_DIR,
         DEFAULTS.DATASETS_DIR,
         DEFAULTS.EVAL_DATA_DIR,
         DEFAULTS.INTERNAL_DIR,

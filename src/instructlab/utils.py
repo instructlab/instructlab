@@ -605,3 +605,20 @@ def ensure_legacy_dataset(
         return dataset  # type: ignore
 
     return convert_messages_to_legacy_dataset(dataset)  # type: ignore
+
+
+def is_oci_repo(repo_url: str) -> bool:
+    """
+    Checks if a provided repository follows the OCI registry URL syntax
+    """
+
+    # TO DO: flesh this out and make it a more robust check
+    oci_url_prefix = "docker://"
+    return repo_url.startswith(oci_url_prefix)
+
+
+def is_huggingface_repo(repo_name: str) -> bool:
+    # allow alphanumerics, underscores, hyphens and periods in huggingface repo names
+    # repo name should be of the format <owner>/<model>
+    pattern = r"^[\w.-]+\/[\w.-]+$"
+    return re.match(pattern, repo_name) is not None

@@ -29,6 +29,7 @@ on:
 
 env:
   LC_ALL: en_US.UTF-8
+  REGISTRY_AUTH_FILE: /run/containers/1001/auth.json
 
 defaults:
   run:
@@ -67,15 +68,15 @@ jobs:
         if: matrix.platform != 'macos-latest'
         uses: ./.github/actions/free-disk-space
 
-      - name: Install the expect package
+      - name: Install the expect and skopeo package
         if: startsWith(matrix.platform, 'ubuntu')
         run: |
-          sudo apt-get install -y expect
+          sudo apt-get install -y expect skopeo
 
       - name: Install tools on MacOS
         if: startsWith(matrix.platform, 'macos')
         run: |
-          brew install expect coreutils bash
+          brew install expect coreutils bash skopeo
 
       - name: Setup Python ${{ matrix.python }}
         uses: actions/setup-python@39cd14951b08e74b54015e9e001cdefcf80e669f # v5.1.1
