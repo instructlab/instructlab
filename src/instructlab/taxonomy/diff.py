@@ -48,7 +48,7 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
     """
     # pylint: disable=import-outside-toplevel
     # Local
-    from ..utils import get_taxonomy_diff, read_taxonomy
+    from ..utils import get_taxonomy_diff, validate_taxonomy
 
     if not taxonomy_base:
         taxonomy_base = ctx.obj.config.generate.taxonomy_base
@@ -71,7 +71,7 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
             for f in updated_taxonomy_files:
                 click.echo(f)
     try:
-        read_taxonomy(None, taxonomy_path, taxonomy_base, yaml_rules)
+        validate_taxonomy(None, taxonomy_path, taxonomy_base, yaml_rules)
     except (SystemExit, yaml.YAMLError) as exc:
         if not quiet:
             click.secho(
