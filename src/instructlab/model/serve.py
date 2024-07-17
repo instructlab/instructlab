@@ -37,10 +37,10 @@ signal.signal(signal.SIGTERM, signal_handler)
 )
 @click.option(
     "--model-path",
-    type=click.Path(path_type=pathlib.Path),
+    type=utils.Pathlib(),
     cls=clickext.ConfigOption,
     required=True,  # default from config
-    help="Path to the model used during generation.",
+    help="Path to the model. Can be a GGUF file or a directory containing the huggingface safetensors files.",
 )
 @click.option(
     "--gpu-layers",

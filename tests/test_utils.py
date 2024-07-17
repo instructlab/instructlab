@@ -2,8 +2,10 @@
 
 # Standard
 from unittest.mock import Mock, patch
+import pathlib
 
 # Third Party
+import click
 import git
 import pytest
 import yaml
@@ -57,3 +59,9 @@ def test_split_hostport(url, expected_host, expected_port):
 def test_split_hostport_err(url):
     with pytest.raises(ValueError):
         utils.split_hostport(url)
+
+
+def test_empty_directory_path(tmp_path: pathlib.Path):
+    path_type = utils.Pathlib()
+    with pytest.raises(click.BadParameter):
+        path_type.convert(tmp_path, None, None)
