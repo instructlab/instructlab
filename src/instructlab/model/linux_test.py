@@ -87,7 +87,7 @@ def linux_test(
     # linux_test
     logger.debug("test_file=%s", test_file)
     if not models:
-        models = [DEFAULTS.DEFAULT_GGUF_MODEL]
+        models = [DEFAULTS.DEFAULT_MODEL]
     if not create_params:
         create_params = {}
 

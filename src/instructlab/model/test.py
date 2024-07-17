@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "-m",
     "--model",
-    default=lambda: DEFAULTS.DEFAULT_GGUF_MODEL,
+    default=lambda: DEFAULTS.DEFAULT_MODEL,
     show_default=True,
     help="Base model name to test on Linux",
 )

@@ -29,7 +29,7 @@ from instructlab.configuration import (
 @click.option(
     "--model-path",
     type=click.Path(),
-    default=lambda: DEFAULTS.DEFAULT_GGUF_MODEL,
+    default=lambda: DEFAULTS.DEFAULT_MODEL,
     show_default="The instructlab data files location per the user's system.",
     help="Path to the model used during generation.",
 )
