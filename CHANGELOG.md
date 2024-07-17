@@ -23,6 +23,8 @@
    provides its own template), 'tokenizer' (uses the model's tokenizer config), and an external
    file name.
 * Default log format changes to include the logger name in the logs.
+* Introduces CUDA-specific requirements in a new file `requirements-cuda.txt`. To install these
+  CUDA-enabled dependencies, simply run `pip install instructlab[cuda]`.
 
 ### Breaking Changes
 
