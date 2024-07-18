@@ -130,8 +130,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           . venv/bin/activate
-          # TODO Add training once training with the training lib is supported in e2e
-          SKIP_TRAIN=1 ./scripts/basic-workflow-tests.sh -mFM
+          ./scripts/basic-workflow-tests.sh -mFMT
 
       - name: Add comment to PR if the workflow failed
         if: failure() && steps.check_pr.outputs.is_pr == 'true'
