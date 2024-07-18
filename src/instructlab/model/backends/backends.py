@@ -122,6 +122,19 @@ def is_model_safetensors(model_path: pathlib.Path) -> bool:
     Returns:
         bool: True if the model is a safetensors model, False otherwise.
     """
+
+    # guards against users passing str-type paths if not
+    # statically analyzing.
+    if isinstance(model_path, str):
+        logger.debug("'model_path' was passed as 'str'. Casting to pathlib.Path")
+        model_path = pathlib.Path(model_path)
+
+    if not model_path.is_dir():
+        logger.debug(
+            f"The path to the model {model_path.as_posix()} is not a directory, and therefore cannot be a model in .safetensors format.",
+        )
+        return False
+
     try:
         files = list(model_path.iterdir())
     except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
@@ -167,6 +180,18 @@ def is_model_gguf(model_path: pathlib.Path) -> bool:
     # Third Party
     from gguf.constants import GGUF_MAGIC
 
+    # guards against users passing str-type paths if not
+    # statically analyzing.
+    if isinstance(model_path, str):
+        logger.debug("'model_path' was passed as 'str'. Casting to pathlib.Path")
+        model_path = pathlib.Path(model_path)
+
+    if not model_path.is_file():
+        logger.debug(
+            f"The path to the model {model_path.as_posix()} is not a file, and therefore cannot be a model in .gguf format.",
+        )
+        return False
+
     with open(model_path, "rb") as f:
         # Memory-map the file on the first 4 bytes (this is where the magic number is)
         mmapped_file = mmap.mmap(f.fileno(), length=4, access=mmap.ACCESS_READ)
@@ -194,7 +219,7 @@ def determine_backend(model_path: pathlib.Path) -> Tuple[str, str]:
                         - The reason why the backend was selected.
     """
     try:
-        if model_path.is_dir() and is_model_safetensors(model_path):
+        if is_model_safetensors(model_path):
             if sys.platform == "linux":
                 logger.debug(
                     f"Model is huggingface safetensors and system is Linux, using {VLLM} backend."
