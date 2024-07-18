@@ -123,6 +123,9 @@ jobs:
           python3.11 -m pip cache remove llama_cpp_python
           CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3.11 -m pip install --force-reinstall --no-binary llama_cpp_python -c constraints.txt llama_cpp_python
           python3.11 -m pip install bitsandbytes
+          
+          python3.11 -m pip install instructlab-training[cuda]
+
           python3.11 -m pip install .
 
       - name: Run e2e test
