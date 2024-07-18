@@ -194,7 +194,7 @@ def generate(
         from instructlab.model.backends import backends
 
         ctx.obj.config.serve.llama_cpp.llm_family = model_family
-        backend_instance = backends.select_backend(ctx.obj.config.serve)
+        backend_instance = backends.select_backend(ctx.obj.config.generate.teacher)
 
         try:
             # Run the llama server
