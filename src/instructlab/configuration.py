@@ -539,7 +539,8 @@ def ensure_storage_directories_exist():
     ]
 
     for dirpath in dirs_to_make:
-        os.makedirs(dirpath, exist_ok=True)
+        if not os.path.exists(dirpath):
+            os.makedirs(dirpath, exist_ok=True)
 
     additional_args_and_defaults = {
         "learning_rate": 2e-5,
@@ -557,8 +558,11 @@ def ensure_storage_directories_exist():
     }
 
     # create exper_args file for users to see/edit
-    with open(DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE, "w", encoding="utf-8") as outfile:
-        yaml.dump(additional_args_and_defaults, outfile)
+    if not os.path.isfile(DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE):
+        with open(
+            DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE, "w", encoding="utf-8"
+        ) as outfile:
+            yaml.dump(additional_args_and_defaults, outfile)
 
 
 class Lab:
