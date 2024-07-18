@@ -152,8 +152,8 @@ spellcheck: .spellcheck.yml ## Spellcheck markdown files
 	pyspelling --config $<
 
 .PHONY: spellcheck-sort
-spellcheck-sort: .spellcheck-en-custom.txt ## Sort spellcheck directory
-	sort -d -o $< $<
+spellcheck-sort: .spellcheck-en-custom.txt ## Sort and remove duplicate from the spellcheck custom file
+	sort --dictionary-order --unique --output $< $<
 
 .PHONY: docs
 docs: check-tox  ## Generate Sphinx docs and man pages
