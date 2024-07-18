@@ -8,6 +8,8 @@ export SCRIPTDIR=$(dirname "$0")
 # build a prompt string that includes the time, source file, line number, and function name
 export PS4='+$(date +"%Y-%m-%d %T") ${BASH_VERSION}:${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
+pip install .
+
 export TEST_DIR
 export PACKAGE_NAME='instructlab'  # name we use of the top-level package directories for CLI data
 
