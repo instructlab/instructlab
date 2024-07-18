@@ -2,7 +2,6 @@
 
 # Standard
 import logging
-import os
 
 # Third Party
 import click
@@ -133,12 +132,6 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--pipeline",
     type=click.STRING,
-    callback=lambda ctx, param, value: value
-    # check for directory instead of file
-    if value in ["simple", "full"] or os.path.isdir(value)
-    else ctx.fail(
-        f'{value} is not a valid pipeline alias ("simple" or "full") or path to a directory including pipeline configuration files.'
-    ),
     default="simple",
     # Hidden until instructlab-sdg releases a version with multiple pipelines
     # For now only "simple" is supported in the latest release.
