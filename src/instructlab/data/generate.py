@@ -144,6 +144,11 @@ logger = logging.getLogger(__name__)
     hidden=True,
     help="Data generation pipeline to use. Available: simple, full, or a valid path to a directory of pipeline worlfow YAML files. Note that 'full' requires a larger teacher model, Mixtral-8x7b.",
 )
+@click.option(
+    "--enable-serving-output",
+    is_flag=True,
+    help="Print serving engine logs.",
+)
 @click.pass_context
 @clickext.display_params
 def generate(
@@ -168,6 +173,7 @@ def generate(
     tls_client_passwd,
     model_family,
     pipeline,
+    enable_serving_output,
 ):
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=import-outside-toplevel
@@ -197,8 +203,10 @@ def generate(
         backend_instance = backends.select_backend(ctx.obj.config.generate.teacher)
 
         try:
-            # Run the llama server
-            api_base = backend_instance.run_detached(http_client(ctx.params))
+            # Run the backend server
+            api_base = backend_instance.run_detached(
+                http_client(ctx.params), background=not enable_serving_output
+            )
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
             raise click.exceptions.Exit(1)
