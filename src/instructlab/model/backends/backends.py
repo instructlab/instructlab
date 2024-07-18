@@ -136,7 +136,6 @@ def is_model_safetensors(model_path: pathlib.Path) -> bool:
     requires_files = {
         "config.json",
         "tokenizer.json",
-        "tokenizer.model",
         "tokenizer_config.json",
     }
     diff = requires_files.difference(basenames)

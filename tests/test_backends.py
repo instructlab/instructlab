@@ -22,7 +22,7 @@ def create_safetensors_model_files(safetensors_model_path: pathlib.Path, valid: 
     test_json_dict = {"a": 1, "b": 2}
     json_object = json.dumps(test_json_dict, indent=4)
 
-    for file in ["config.json", "tokenizer.json", "tokenizer_config.json"]:
+    for file in ["tokenizer.json", "tokenizer_config.json"]:
         os.makedirs(os.path.dirname(safetensors_model_path / file), exist_ok=True)
         with open(safetensors_model_path / file, "a+", encoding="UTF-8") as f:
             f.write(json_object)
@@ -32,10 +32,8 @@ def create_safetensors_model_files(safetensors_model_path: pathlib.Path, valid: 
     ) as f:
         f.write("")
     if valid:
-        with open(
-            safetensors_model_path / "tokenizer.model", "a+", encoding="UTF-8"
-        ) as f:
-            f.write("")
+        with open(safetensors_model_path / "config.json", "a+", encoding="UTF-8") as f:
+            f.write(json_object)
 
 
 def test_free_port():
