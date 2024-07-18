@@ -40,6 +40,7 @@ the E2E job configuration files found
 | `F` | Run "fullsize" SDG |
 | `g` | Run with Granite model |
 | `v` | Run with vLLM for serving |
+| `T` | Use the 'full' training library rather than legacy training |
 
 ### Trigger via GitHub Web UI
 

@@ -19,6 +19,7 @@ DIFF_ARGS=("--taxonomy-path" "./taxonomy")
 TRAIN_ARGS=()
 GRANITE=0
 FULLTRAIN=0
+TRAIN_LIBRARY=0
 BACKEND="llama-cpp"
 HF_TOKEN=${HF_TOKEN:-}
 SDG_PIPELINE="simple"
@@ -257,18 +258,7 @@ test_generate() {
 test_train() {
     task Train the model
 
-    # TODO Only cuda for now
-    TRAIN_ARGS+=("--legacy" "--device=cuda")
-    if [ "$FULLTRAIN" -eq 0 ]; then
-        TRAIN_ARGS+=("--4-bit-quant")
-    fi
-    if [ "$GRANITE" -eq 1 ]; then
-        TRAIN_ARGS+=("--gguf-model-path" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
-    fi
-
-    ilab model train "${TRAIN_ARGS[@]}"
-
-    if [ "$FULLTRAIN" -eq 1 ]; then
+    if [ "$TRAIN_LIBRARY" -eq 1 ]; then
 
         # TODO Only cuda for now
         # the train profile specified in test_init overrides the majority of TRAIN_ARGS, including things like num_epochs. While it looks like much of those settings are being lost, they just have different values here.
@@ -278,9 +268,20 @@ test_train() {
         fi
 
         ilab model train "${TRAIN_ARGS[@]}"
-    fi
-}
+    else
+        # TODO Only cuda for now
+        TRAIN_ARGS+=("--legacy" "--device=cuda")
+        if [ "$FULLTRAIN" -eq 0 ]; then
+            TRAIN_ARGS+=("--4-bit-quant")
+        fi
+        if [ "$GRANITE" -eq 1 ]; then
+            TRAIN_ARGS+=("--gguf-model-path" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
+        fi
 
+        ilab model train "${TRAIN_ARGS[@]}"
+    fi
+
+}
 test_convert() {
     task Converting the trained model and serving it
     ilab model convert
@@ -376,6 +377,7 @@ usage() {
     echo "Usage: $0 [-m] [-h]"
     echo "  -m  Run minimal configuration (run quicker when you have no GPU)"
     echo "  -e  Run model evaluation"
+    echo "  -T  Use the 'full' training library rather than legacy training"
     echo "  -f  Run the fullsize training instead of --4-bit-quant"
     echo "  -F  Use the 'full' SDG pipeline instead of the default 'simple' pipeline"
     echo "  -g  Use the granite model"
@@ -386,7 +388,7 @@ usage() {
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "cemMfFghv" opt; do
+while getopts "cemMfFghvT" opt; do
     case $opt in
         c)
             # old option, don't fail if it's specified
@@ -422,6 +424,10 @@ while getopts "cemMfFghv" opt; do
         v)
             BACKEND=vllm
             step "Running with vLLM backend."
+            ;;
+        T)
+            TRAIN_LIBRARY=1
+            step "Running with training library."
             ;;
         \?)
             echo "Invalid option: -$opt" >&2
