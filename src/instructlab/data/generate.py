@@ -145,6 +145,12 @@ logger = logging.getLogger(__name__)
     help="Data generation pipeline to use. Available: simple, full, or a valid path to a directory of pipeline workflow YAML files. Note that 'full' requires a larger teacher model, Mixtral-8x7b.",
 )
 @click.option(
+    "--batch-size",
+    type=click.IntRange(min=0),
+    default=None,
+    help="Number of elements to process in each batch through the SDG pipeline. Enabled by default for the vLLM serving backend, with a batch size of 8 chosen based on experiments to optimize for throughput. Use 0 to disable.",
+)
+@click.option(
     "--enable-serving-output",
     is_flag=True,
     help="Print serving engine logs.",
@@ -174,6 +180,7 @@ def generate(
     model_family,
     pipeline,
     enable_serving_output,
+    batch_size,
 ):
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=import-outside-toplevel
@@ -192,12 +199,19 @@ def generate(
     if ctx.obj is not None:
         prompt_file_path = ctx.obj.config.generate.prompt_file
 
+    # If batch size is not set explicitly, default to 8
+    # Once https://github.com/instructlab/sdg/issues/224 is resolved we can
+    # pass batch_size=None to the library instead
+    if batch_size is None:
+        batch_size = 8
+
     backend_instance = None
     if endpoint_url:
         api_base = endpoint_url
     else:
         # First Party
         from instructlab.model.backends import backends
+        from instructlab.model.backends.llama_cpp import Server as llama_cpp_server
 
         ctx.obj.config.serve.llama_cpp.llm_family = model_family
         backend_instance = backends.select_backend(ctx.obj.config.generate.teacher)
@@ -210,6 +224,14 @@ def generate(
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
             raise click.exceptions.Exit(1)
+
+        # disable batching when running with the local llama.cpp server
+        if isinstance(backend_instance, llama_cpp_server):
+            if batch_size is not None:
+                logger.warning(
+                    "Disabling SDG batching - unsupported with llama.cpp serving"
+                )
+            batch_size = 0
     try:
         click.echo(
             f"Generating synthetic data using '{model}' model, taxonomy:'{taxonomy_path}' against {api_base} server"
@@ -236,6 +258,7 @@ def generate(
             tls_client_key=tls_client_key,
             tls_client_passwd=tls_client_passwd,
             pipeline=pipeline,
+            batch_size=batch_size,
         )
     except GenerateException as exc:
         click.secho(
