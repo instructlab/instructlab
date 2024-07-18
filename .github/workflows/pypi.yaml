@@ -46,7 +46,7 @@ jobs:
                   # for setuptools-scm
                   fetch-depth: 0
 
-            - uses: hynek/build-and-inspect-python-package@b4fc3f6ba2b3da04f09659be99e2a29fb6146a61 # v2.6.0
+            - uses: hynek/build-and-inspect-python-package@7880597222384e8b859e486725ebe4a37018c80a # v2.7.0
 
     # push to Test PyPI on
     # - a new GitHub release is published
