@@ -191,18 +191,18 @@ class SourceDict(TypedDict):
     patterns: List[str]
 
 
-def get_documents(
+def _validate_documents(
     source: SourceDict,
     skip_checkout: bool = False,
-) -> List[str]:
+) -> None:
     """
-    Retrieve the content of files from a Git repository.
+    Validate that we can retrieve the content of files from a Git repository.
 
     Args:
         source (dict): Source info containing repository URL, commit hash, and list of file patterns.
 
     Returns:
-         List[str]: List of document contents.
+         None
     """ ""
     repo_url = source.get("repo", "")
     commit_hash = source.get("commit", "")
@@ -215,18 +215,19 @@ def get_documents(
                 temp_dir=temp_dir,
                 skip_checkout=skip_checkout,
             )
-            file_contents = []
 
             logger.debug("Processing files...")
+            opened_files = False
             for pattern in file_patterns:
                 for file_path in glob.glob(os.path.join(repo.working_dir, pattern)):
                     if os.path.isfile(file_path) and file_path.endswith(".md"):
-                        with open(file_path, "r", encoding="utf-8") as file:
-                            file_contents.append(file.read())
+                        with open(file_path, "r", encoding="utf-8"):
+                            # Success! we could open the file.
+                            # We don't actually care about the contents, though.
+                            opened_files = True
 
-            if file_contents:
-                return file_contents
-            raise TaxonomyReadingException("Couldn't find knowledge documents")
+            if not opened_files:
+                raise TaxonomyReadingException("Couldn't find knowledge documents")
         except (OSError, exc.GitCommandError, FileNotFoundError) as e:
             raise e
 
@@ -382,7 +383,7 @@ def validate_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
         if not contents:
             logger.warning(f"Skipping {file_path_p} because it is empty!")
             warnings += 1
-            return None, warnings, errors
+            return warnings, errors
         if not isinstance(contents, Mapping):
             logger.error(
                 f"{file_path_p} is not valid. The top-level element is not an object with key-value pairs."
@@ -444,6 +445,15 @@ def validate_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
             errors += validation_errors
             return warnings, errors
 
+        # If the taxonomy file includes a document reference, validate that
+        # we can retrieve the content of the document
+        if "document" in contents:
+            try:
+                _validate_documents(contents["document"])
+            except Exception as e:
+                errors += 1
+                logger.error(f"Failed to load document content for {file_path_p}: {e}")
+
     except Exception as e:
         errors += 1
         raise TaxonomyReadingException(f"Exception {e} raised in {file_path_p}") from e
@@ -460,9 +470,7 @@ def validate_taxonomy(_logger, taxonomy, taxonomy_base, yaml_rules):
                 f"{warnings} warnings (see above) due to taxonomy file not (fully) usable."
             )
         if errors:
-            raise TaxonomyReadingException(
-                yaml.YAMLError("Taxonomy file with errors! Exiting.")
-            )
+            raise TaxonomyReadingException(yaml.YAMLError("Taxonomy file with errors!"))
     else:  # taxonomy is dir
         # Gather the new or changed YAMLs using git diff
         updated_taxonomy_files = get_taxonomy_diff(taxonomy, taxonomy_base)
@@ -483,7 +491,7 @@ def validate_taxonomy(_logger, taxonomy, taxonomy_base, yaml_rules):
             )
         if total_errors:
             raise TaxonomyReadingException(
-                yaml.YAMLError(f"{total_errors} taxonomy files with errors! Exiting.")
+                yaml.YAMLError(f"{total_errors} taxonomy files with errors!")
             )
 
 
