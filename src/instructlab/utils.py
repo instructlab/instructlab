@@ -152,7 +152,7 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
         try:
             head_commit = repo.commit(base)
         except gitdb.exc.BadName as e:
-            raise SystemExit(
+            raise TaxonomyReadingException(
                 yaml.YAMLError(
                     f'Couldn\'t find the taxonomy git ref "{base}" from the current HEAD'
                 )
@@ -169,7 +169,7 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
         try:
             current_commit = current_commit.parents[0]
         except IndexError as e:
-            raise SystemExit(
+            raise TaxonomyReadingException(
                 yaml.YAMLError(
                     f'Couldn\'t find the taxonomy base branch "{base}" from the current HEAD'
                 )
@@ -226,7 +226,7 @@ def get_documents(
 
             if file_contents:
                 return file_contents
-            raise SystemExit("Couldn't find knowledge documents")
+            raise TaxonomyReadingException("Couldn't find knowledge documents")
         except (OSError, exc.GitCommandError, FileNotFoundError) as e:
             raise e
 
@@ -460,7 +460,9 @@ def validate_taxonomy(_logger, taxonomy, taxonomy_base, yaml_rules):
                 f"{warnings} warnings (see above) due to taxonomy file not (fully) usable."
             )
         if errors:
-            raise SystemExit(yaml.YAMLError("Taxonomy file with errors! Exiting."))
+            raise TaxonomyReadingException(
+                yaml.YAMLError("Taxonomy file with errors! Exiting.")
+            )
     else:  # taxonomy is dir
         # Gather the new or changed YAMLs using git diff
         updated_taxonomy_files = get_taxonomy_diff(taxonomy, taxonomy_base)
@@ -480,7 +482,7 @@ def validate_taxonomy(_logger, taxonomy, taxonomy_base, yaml_rules):
                 f"{total_warnings} warnings (see above) due to taxonomy files that were not (fully) usable."
             )
         if total_errors:
-            raise SystemExit(
+            raise TaxonomyReadingException(
                 yaml.YAMLError(f"{total_errors} taxonomy files with errors! Exiting.")
             )
 
