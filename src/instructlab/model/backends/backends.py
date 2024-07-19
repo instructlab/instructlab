@@ -128,8 +128,9 @@ def is_model_safetensors(model_path: pathlib.Path) -> bool:
         logger.debug("Failed to read directory: %s", e)
         return False
 
-    if not any(file.suffix == ".safetensors" for file in files):
-        logger.debug("'%s' has no *.safetensors files", model_path)
+    # directory should contain either .safetensors or .bin files to be considered valid
+    if not any(file.suffix in (".safetensors", ".bin") for file in files):
+        logger.debug("'%s' has no *.safetensors or *.bin files", model_path)
         return False
 
     basenames = {file.name for file in files}
