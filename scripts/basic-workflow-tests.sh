@@ -259,10 +259,10 @@ test_train() {
     task Train the model
 
     if [ "$TRAIN_LIBRARY" -eq 1 ]; then
-
+        DATA=$(find "${DATA_HOME}"/instructlab/datasets -name 'messages_*' | head -n 1)
         # TODO Only cuda for now
         # the train profile specified in test_init overrides the majority of TRAIN_ARGS, including things like num_epochs. While it looks like much of those settings are being lost, they just have different values here.
-        TRAIN_ARGS=("--device=cuda" "--model-path=instructlab/granite-7b-lab" "--data-path=${SCRIPTDIR}/test-data/train_all_pruned_SDG.jsonl" "--quantize-data-type=nf4" "--4-bit-quant")
+        TRAIN_ARGS=("--device=cuda" "--model-path=instructlab/granite-7b-lab" "--data-path=${DATA}" "--lora-quantize-dtype=nf4" "--4-bit-quant" "--effective-batch-size=4" "--is-padding-free=False")
         if [ "$GRANITE" -eq 1 ]; then
             TRAIN_ARGS+=("--gguf-model-path" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
         fi

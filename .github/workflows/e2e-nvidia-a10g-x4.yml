@@ -116,14 +116,17 @@ jobs:
 
       - name: Install ilab
         run: |
-          export PATH="/home/ec2-user/.local/bin:/usr/local/cuda/bin:$PATH"
-          python3.11 -m venv --upgrade-deps venv
+          export CUDA_HOME="/usr/local/cuda"
+          export LD_LIBRRY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64"
+          export PATH="$PATH:$CUDA_HOME/bin"
+          python3.11 -m venv venv
           . venv/bin/activate
+          nvidia-smi
           sed 's/\[.*\]//' requirements.txt > constraints.txt
           python3.11 -m pip cache remove llama_cpp_python
           CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3.11 -m pip install --force-reinstall --no-binary llama_cpp_python -c constraints.txt llama_cpp_python
-          python3.11 -m pip install bitsandbytes
-          
+                    
+          python3.11 -m pip install packaging wheel torch
           python3.11 -m pip install instructlab-training[cuda]
 
           python3.11 -m pip install .
