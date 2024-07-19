@@ -308,7 +308,7 @@ class _generate(BaseModel):
     chunk_word_count: PositiveInt = DEFAULTS.CHUNK_WORD_COUNT
     # DEPRECATED: see sdg_scale_factor instead
     # Left in place so that we can still detect and give a warning if its
-    # specified in an old configuraiton file.
+    # specified in an old configuration file.
     num_instructions: Optional[int] = Field(
         default=-1, deprecated="see 'sdg_scale_factor' instead", exclude=True
     )

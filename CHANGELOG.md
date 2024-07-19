@@ -38,6 +38,11 @@
 * The `instructlab` package now uses optional dependencies for each supported hardware `cpu`,
   `cuda`, `hpu`, `mps`, and `rocm`. To install InstructLab for e.g. NVIDIA CUDA, use
   `pip install instructlab[cuda]`.
+* Add a `--enable-serving-output` flag for `ilab data generate`. This flag determines whether vLLM
+  will have its output suppressed when it serves the teacher model in the background.
+* The `generate` section of the config now has a `teacher` section. This section configures the
+  teacher model when it is automatically served in the background. This new section has the same
+  values as the `serve` section of the config.
 
 ### Breaking Changes
 
