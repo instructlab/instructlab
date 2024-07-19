@@ -265,13 +265,20 @@ class _serve(BaseModel):
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
 
     # vllm configuration
-    vllm: _serve_vllm
+    vllm: _serve_vllm = _serve_vllm(
+        llm_family="",
+        vllm_args=[],
+    )
 
     # llama-cpp configuration
-    llama_cpp: _serve_llama_cpp
+    llama_cpp: _serve_llama_cpp = _serve_llama_cpp(
+        gpu_layers=-1,
+        max_ctx_size=4096,
+        llm_family="",
+    )
 
     # required fields
-    model_path: StrictStr
+    model_path: StrictStr = Field(default_factory=lambda: DEFAULTS.DEFAULT_MODEL)
     # additional fields with defaults
     host_port: StrictStr = "127.0.0.1:8000"
     chat_template: Optional[str] = None
@@ -296,7 +303,7 @@ class _generate(BaseModel):
     taxonomy_base: StrictStr
 
     # additional fields with defaults
-    teacher: _serve
+    teacher: _serve = Field(default_factory=_serve)
     num_cpus: PositiveInt = DEFAULTS.NUM_CPUS
     chunk_word_count: PositiveInt = DEFAULTS.CHUNK_WORD_COUNT
     # DEPRECATED: see sdg_scale_factor instead
@@ -406,18 +413,6 @@ def get_default_config() -> Config:
             model=DEFAULTS.DEFAULT_MODEL,
             taxonomy_path=DEFAULTS.TAXONOMY_DIR,
             taxonomy_base=DEFAULTS.TAXONOMY_BASE,
-            teacher=_serve(
-                model_path=DEFAULTS.DEFAULT_MODEL,
-                llama_cpp=_serve_llama_cpp(
-                    gpu_layers=-1,
-                    max_ctx_size=4096,
-                    llm_family="",
-                ),
-                vllm=_serve_vllm(
-                    llm_family="",
-                    vllm_args=[],
-                ),
-            ),
         ),
         serve=_serve(
             model_path=DEFAULTS.DEFAULT_MODEL,

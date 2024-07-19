@@ -42,7 +42,6 @@ class TestConfig:
         assert cfg.general.log_level == "INFO"
 
         assert cfg.generate is not None
-        assert cfg.generate.teacher is not None
         assert cfg.generate.teacher.model_path == default_model
         assert cfg.generate.teacher.llama_cpp is not None
         assert cfg.generate.teacher.llama_cpp.gpu_layers == -1
