@@ -3,12 +3,18 @@
 name: E2E (NVIDIA Tesla T4 x1)
 
 on:
-  workflow_dispatch:
-    inputs:
-      pr_or_branch:
-        description: 'pull request number or branch name'
-        required: true
-        default: 'main'
+  push:
+    branches:
+      - main
+      - release-*
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    branches:
+      - main
+      - release-*
 
 jobs:
   start-runner:
@@ -46,8 +52,10 @@ jobs:
     needs: start-runner
     runs-on: ${{ needs.start-runner.outputs.label }}
 
-    permissions:
-      pull-requests: write
+    # It is important that this job has no write permissions and has
+    # no access to any secrets. This part (e2e) is where we are running
+    # untrusted code from PRs.
+    permissions: {}
 
     steps:
       - name: Checkout
@@ -55,59 +63,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Determine if pr_or_branch is a PR number
-        id: check_pr
-        run: |
-          if [[ "${{ github.event.inputs.pr_or_branch }}" =~ ^[0-9]+$ ]]; then
-            echo "is_pr=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "is_pr=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Check if gh cli is installed
-        id: gh_cli
-        run: |
-          if command -v gh &> /dev/null ; then
-            echo "gh_cli_installed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "gh_cli_installed=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Install gh CLI
-        if: steps.gh_cli.outputs.gh_cli_installed == 'false'
-        run: |
-          sudo dnf install 'dnf-command(config-manager)' -y
-          sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
-          sudo dnf install gh --repo gh-cli -y
-
-      - name: test gh CLI
-        run: |
-          gh --version
-
-      - name: set default repo
-        run: |
-          gh repo set-default ${{ github.server_url }}/${{ github.repository }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Add comment to PR
-        if: steps.check_pr.outputs.is_pr == 'true'
-        run: |
-          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "${{ github.workflow }} workflow launched on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Fetch and checkout PR
-        if: steps.check_pr.outputs.is_pr == 'true'
+        id: fetch_pr
+        if: github.event_name == 'pull_request_target'
         run: |
-          gh pr checkout ${{ github.event.inputs.pr_or_branch }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Checkout branch
-        if: steps.check_pr.outputs.is_pr == 'false'
-        run: |
-          git checkout ${{ github.event.inputs.pr_or_branch }}
+          git fetch origin pull/${{ github.event.pull_request.number }}/head:pr-${{ github.event.pull_request.number }}
+          git checkout pr-${{ github.event.pull_request.number }}
 
       - name: Install Packages
         run: |
@@ -129,20 +90,6 @@ jobs:
         run: |
           . venv/bin/activate
           ./scripts/basic-workflow-tests.sh -m
-
-      - name: Add comment to PR if the workflow failed
-        if: failure() && steps.check_pr.outputs.is_pr == 'true'
-        run: |
-          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "e2e workflow failed on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), please investigate."
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Add comment to PR if the workflow succeeded
-        if: success() && steps.check_pr.outputs.is_pr == 'true'
-        run: |
-          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "e2e workflow succeeded on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), congrats!"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   stop-runner:
     name: Stop external EC2 runner
