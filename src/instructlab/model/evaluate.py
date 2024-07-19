@@ -41,7 +41,7 @@ class Benchmark(str, enum.Enum):
 
 
 def get_evaluator(
-    model,
+    model: str,
     base_model,
     benchmark,
     judge_model,
@@ -63,13 +63,11 @@ def get_evaluator(
     # ensure skills benchmarks have proper arguments if selected
     if benchmark in {Benchmark.MT_BENCH, Benchmark.MT_BENCH_BRANCH}:
         required_args = [
-            model,
             judge_model,
             output_dir,
             max_workers,
         ]
         required_arg_names = [
-            "model",
             "judge-model",
         ]
         if benchmark == Benchmark.MT_BENCH_BRANCH:
@@ -88,12 +86,12 @@ def get_evaluator(
             )
             raise click.exceptions.Exit(1)
         if os.path.exists(model):
-            model = pathlib.Path(model)
+            model_path = pathlib.Path(model)
             valid_model = False
-            if model.is_dir():
-                valid_model = backends.is_model_safetensors(model)
-            elif model.is_file():
-                valid_model = backends.is_model_gguf(model)
+            if model_path.is_dir():
+                valid_model = backends.is_model_safetensors(model_path)
+            elif model_path.is_file():
+                valid_model = backends.is_model_gguf(model_path)
             if not valid_model:
                 click.secho(
                     "MTBench and MTBenchBranch need to be passed either a safetensors directory or a GGUF file",
@@ -126,13 +124,11 @@ def get_evaluator(
 
     # ensure knowledge benchmarks have proper arguments if selected
     if benchmark in [Benchmark.MMLU, Benchmark.MMLU_BRANCH]:
-        required_args = [model, few_shots, batch_size]
-        required_arg_names = ["model"]
+        required_args = [few_shots, batch_size]
+        required_arg_names = ["few-shots", "batch-size"]
         if benchmark == Benchmark.MMLU_BRANCH:
-            required_args.append(tasks_dir)
-            required_args.append(base_model)
-            required_arg_names.append("tasks-dir")
-            required_arg_names.append("base-model")
+            required_args += [tasks_dir, base_model]
+            required_arg_names += ["tasks-dir", "base-model"]
         if None in required_args:
             click.secho(
                 f"Benchmark {benchmark} requires the following args to be set: {required_arg_names}",
@@ -335,6 +331,7 @@ def launch_server(
     "--model",
     type=click.STRING,
     cls=clickext.ConfigOption,
+    required=True,
     help="Model to be evaluated - can be a local path or the name of a Hugging Face repository",
 )
 @click.option(
@@ -465,7 +462,7 @@ def launch_server(
 @clickext.display_params
 def evaluate(
     ctx,
-    model,
+    model: str,
     base_model,
     benchmark,
     judge_model,
@@ -675,7 +672,6 @@ def evaluate(
                     batch_size=batch_size,
                 ),
             ]
-            m_paths = [model, base_model]
             overall_scores = []
             individual_scores_list = []
             for evaluator in evaluators:

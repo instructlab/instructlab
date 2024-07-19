@@ -86,7 +86,7 @@ subcommands: list[Command] = [
     Command(("model", "chat")),
     Command(("model", "convert"), ("--model-dir", "test")),
     Command(("model", "download")),
-    Command(("model", "evaluate"), ("--benchmark", "mmlu")),
+    Command(("model", "evaluate"), ("--benchmark", "mmlu", "--model", "test")),
     Command(("model", "serve")),
     Command(("model", "test")),
     Command(("model", "train")),
