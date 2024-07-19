@@ -333,10 +333,14 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         )
         self._sys_print(
             Markdown(
-                f"Welcome to InstructLab Chat w/ **{self.model.upper()}**"
+                f"Welcome to InstructLab Chat w/ **{self.model_name.upper()}**"
                 + side_info_str
             )
         )
+
+    @property
+    def model_name(self):
+        return os.path.basename(os.path.normpath(self.model))
 
     @property
     def _right_prompt(self):
@@ -643,7 +647,11 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
         response_content = Text()
         panel = (
-            Panel(response_content, title=self.model, subtitle_align="right")
+            Panel(
+                response_content,
+                title=self.model_name,
+                subtitle_align="right",
+            )
             if box
             else response_content
         )
