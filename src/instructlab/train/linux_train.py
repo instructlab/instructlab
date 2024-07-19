@@ -228,8 +228,8 @@ def linux_train(
     try:
         train_dataset = ensure_legacy_dataset(train_dataset)
         test_dataset = ensure_legacy_dataset(test_dataset)
-    except ValueError:
-        ctx.fail("failed to run training, dataset appears to be empty")
+    except ValueError as e:
+        ctx.fail(f"Failed to parse dataset: {e}")
 
     train_dataset.to_pandas().head()
 

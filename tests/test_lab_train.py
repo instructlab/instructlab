@@ -18,7 +18,7 @@ import pytest
 from instructlab import lab
 from instructlab.configuration import DEFAULTS
 from instructlab.train import linux_train
-from instructlab.utils import MessageRole, MessageSample
+from instructlab.utils import MessageSample
 
 INPUT_DIR = "test_generated"
 TRAINING_RESULTS_DIR = "training_results"
@@ -230,11 +230,11 @@ class TestLabTrain:
             {
                 "messages": [
                     {
-                        "role": MessageRole.SYSTEM.value,
+                        "role": "system",
                         "content": "You are a friendly assistant",
                     },
-                    {"role": MessageRole.USER.value, "content": "What is 2 + 2?"},
-                    {"role": MessageRole.ASSISTANT.value, "content": "2 + 2 = 4"},
+                    {"role": "user", "content": "What is 2 + 2?"},
+                    {"role": "assistant", "content": "2 + 2 = 4"},
                 ],
                 "group": " test",
                 "dataset": "test-dataset",
@@ -277,7 +277,6 @@ class TestLabTrain:
         assert convert_llama_to_gguf_mock.call_args[1]["pad_vocab"] is True
         assert len(convert_llama_to_gguf_mock.call_args[1]) == 2
         linux_train_mock.assert_called_once()
-        print(linux_train_mock.call_args[1])
         assert linux_train_mock.call_args[1]["train_file"] == Path(
             os.path.join(DEFAULTS.DATASETS_DIR, "train_gen.jsonl")
         )

@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from enum import Enum
 from functools import cache, wraps
 from importlib import resources
 from importlib.abc import Traversable
@@ -45,23 +44,14 @@ class TaxonomyReadingException(Exception):
     """An exception raised during reading of the taxonomy."""
 
 
-class MessageRole(Enum):
-    """
-    Defines the known roles used in message samples.
-    """
-
-    SYSTEM = "system"
-    USER = "user"
-    ASSISTANT = "assistant"
-
-
 class Message(TypedDict):
     """
     Represents a message within an AI conversation.
     """
 
     content: str
-    role: MessageRole
+    # one of: "user", "assistant", or "system"
+    role: str
 
 
 class MessageSample(TypedDict):
@@ -613,6 +603,7 @@ def convert_messages_to_legacy_dataset(
 ) -> List[LegacyMessageSample]:
     """
     Converts the new HuggingFace messages dataset format to the legacy format.
+    For reference, see: https://huggingface.co/docs/transformers/en/chat_templating#templates-for-chat-modelos
 
     **Note**: The legacy dataset format assumes only a turn of 1. All extra turns will be dropped.
     This means that we only look at the first 3 messages, and everything afterwards will be ignored.
@@ -622,7 +613,7 @@ def convert_messages_to_legacy_dataset(
         # in new dataset, the roles of a message will be determined.
         if len(dp["messages"]) < 3:
             raise ValueError(
-                "Dataset cannot be missing messages from roles. Please make sure that a message from each role is present."
+                "The dataset is expecting a minimum of 3 messages in each sample."
             )
 
         converted: LegacyMessageSample = {  # type: ignore
@@ -639,10 +630,10 @@ def is_messages_dataset(
     Indicates whether or not the provided dataset is using the newer "messages" format
     or the legacy format used by the old linux training script.
     """
-    if len(dataset) == 0:
+    if not dataset:
         raise ValueError("dataset is empty")
 
-    return bool("messages" in dataset[0])
+    return "messages" in dataset[0]
 
 
 def ensure_legacy_dataset(
