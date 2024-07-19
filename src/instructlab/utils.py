@@ -5,7 +5,7 @@ from functools import cache, wraps
 from importlib import resources
 from importlib.abc import Traversable
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, TypedDict
+from typing import Any, List, Mapping, Optional, Tuple, TypedDict
 from urllib.parse import urlparse
 import copy
 import glob
@@ -358,7 +358,9 @@ def get_version(contents: Mapping) -> int:
 
 
 # pylint: disable=broad-exception-caught
-def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
+def read_taxonomy_file(
+    file_path: str, yaml_rules: Optional[str] = None
+) -> Tuple[list[dict[str, Any]] | None, int, int]:
     seed_instruction_data = []
     warnings = 0
     errors = 0
