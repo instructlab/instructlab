@@ -115,7 +115,7 @@ jobs:
 
       - name: Install Packages
         run: |
-          sudo apt-get install -y cuda-toolkit git cmake build-essential virtualenv jq
+          sudo apt-get install -y cuda-toolkit git cmake build-essential virtualenv
           nvidia-smi
           sudo ls -l /dev/nvidia*
 

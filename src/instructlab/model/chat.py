@@ -206,10 +206,16 @@ def chat(
         # from the config is the same as the default value, then the user didn't provide a value
         # we then compare it with the value from the server to see if it's different
         if (
-            model == cfg.DEFAULTS.DEFAULT_MODEL
-            and ctx.obj.config.chat.model == cfg.DEFAULTS.DEFAULT_MODEL
+            # We need to get the base name of the model because the model path is a full path and
+            # the once from the config is just the model name
+            os.path.basename(model) == cfg.DEFAULTS.GGUF_MODEL_NAME
+            and os.path.basename(ctx.obj.config.chat.model)
+            == cfg.DEFAULTS.GGUF_MODEL_NAME
             and api_base == ctx.obj.config.serve.api_base()
         ):
+            logger.debug(
+                "No model was provided by the user as a CLI argument or in the config, will use the model from the server"
+            )
             try:
                 models = ilabclient.list_models(
                     api_base=api_base,
@@ -227,7 +233,7 @@ def chat(
                     and server_model != ctx.obj.config.chat.model
                     else model
                 )
-
+                logger.debug(f"Using model from server {model}")
             except ilabclient.ClientException as exc:
                 click.secho(
                     f"Failed to list models from {api_base}. Please check the API key and endpoint.",
