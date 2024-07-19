@@ -59,19 +59,16 @@ class Server(BackendServer):
 
     def run(self):
         """Start an OpenAI-compatible server with llama-cpp"""
-        try:
-            server(
-                model_path=self.model_path,
-                chat_template=self.chat_template,
-                gpu_layers=self.gpu_layers,
-                max_ctx_size=self.max_ctx_size,
-                model_family=self.model_family,
-                threads=self.num_threads,
-                host=self.host,
-                port=self.port,
-            )
-        except ServerException as exc:
-            raise exc
+        server(
+            model_path=self.model_path,
+            chat_template=self.chat_template,
+            gpu_layers=self.gpu_layers,
+            max_ctx_size=self.max_ctx_size,
+            model_family=self.model_family,
+            threads=self.num_threads,
+            host=self.host,
+            port=self.port,
+        )
 
     def create_server_process(self, port: int) -> multiprocessing.Process:
         mpctx = multiprocessing.get_context(None)
