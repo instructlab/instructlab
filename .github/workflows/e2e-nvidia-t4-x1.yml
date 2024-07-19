@@ -52,6 +52,11 @@ jobs:
     needs: start-runner
     runs-on: ${{ needs.start-runner.outputs.label }}
 
+    # It is important that this job has no write permissions and has
+    # no access to any secrets. This part (e2e) is where we are running
+    # untrusted code from PRs.
+    permissions: {}
+
     steps:
       - name: Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
