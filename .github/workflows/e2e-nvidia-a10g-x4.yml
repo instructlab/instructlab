@@ -123,9 +123,8 @@ jobs:
           python3.11 -m pip cache remove llama_cpp_python
           CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3.11 -m pip install --force-reinstall --no-binary llama_cpp_python -c constraints.txt llama_cpp_python
           python3.11 -m pip install bitsandbytes
-          
           python3.11 -m pip install instructlab-training[cuda]
-
+          python3.11 -m pip install -r requirements-vllm-cuda.txt
           python3.11 -m pip install .
 
       - name: Run e2e test
@@ -133,7 +132,8 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           . venv/bin/activate
-          ./scripts/basic-workflow-tests.sh -mFMT
+
+          ./scripts/basic-workflow-tests.sh -evmFMT
 
       - name: Add comment to PR if the workflow failed
         if: failure() && steps.check_pr.outputs.is_pr == 'true'
