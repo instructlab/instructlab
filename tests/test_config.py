@@ -46,7 +46,7 @@ class TestConfig:
         assert cfg.generate.taxonomy_path == f"{data_dir}/taxonomy"
         assert cfg.generate.taxonomy_base == "origin/main"
         assert cfg.generate.num_cpus == 10
-        assert cfg.generate.num_instructions == 100
+        assert cfg.generate.sdg_scale_factor == 30
         assert cfg.generate.chunk_word_count == 1000
         assert cfg.generate.output_dir == f"{data_dir}/datasets"
         assert cfg.generate.prompt_file == f"{data_dir}/{internal_dirname}/prompt.txt"

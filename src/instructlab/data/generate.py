@@ -37,11 +37,17 @@ logger = logging.getLogger(__name__)
     default=DEFAULTS.CHUNK_WORD_COUNT,
     show_default=True,
 )
+# TODO - DEPRECATED - Remove in a future release
 @click.option(
     "--num-instructions",
     type=click.INT,
-    help="Number of instructions to generate.",
-    default=DEFAULTS.NUM_INSTRUCTIONS,
+    default=-1,
+    hidden=True,
+)
+@click.option(
+    "--sdg-scale-factor",
+    type=click.INT,
+    help="Number of instructions to generate for each seed example. The examples map to sample q&a pairs for new skills. For knowledge, examples are generated with both the sample q&a pairs, as well as chunks of the knowledge document(s), so the resulting data set is typically larger for a knowledge addition for the same value of `--sdg-scale-factor`.",
     show_default=True,
 )
 @click.option(
@@ -145,6 +151,7 @@ def generate(
     model,
     num_cpus,
     num_instructions,
+    sdg_scale_factor,
     taxonomy_path,
     taxonomy_base,
     output_dir,
@@ -168,7 +175,14 @@ def generate(
     from instructlab.sdg.generate_data import generate_data
     from instructlab.sdg.utils import GenerateException
 
+    if num_instructions != -1:
+        click.secho(
+            "The --num-instructions flag is deprecated. Please use --sdg-scale-factor instead.",
+            fg="yellow",
+        )
+
     prompt_file_path = DEFAULTS.PROMPT_FILE
+
     if ctx.obj is not None:
         prompt_file_path = ctx.obj.config.generate.prompt_file
 
@@ -199,7 +213,7 @@ def generate(
             model_family=model_family,
             model_name=model,
             num_cpus=num_cpus,
-            num_instructions_to_generate=num_instructions,
+            num_instructions_to_generate=sdg_scale_factor,
             taxonomy=taxonomy_path,
             taxonomy_base=taxonomy_base,
             output_dir=output_dir,

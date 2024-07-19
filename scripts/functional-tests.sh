@@ -294,7 +294,7 @@ seed_examples:
 task_description: "simple maths"
 EOF
 
-    sed -i.bak -e 's/num_instructions:.*/num_instructions: 1/g' "${ILAB_CONFIG_FILE}"
+    sed -i.bak -e 's/sdg_scale_factor.*/sdg_scale_factor: 1/g' "${ILAB_CONFIG_FILE}"
 
     # This should be finished in a minute or so but time it out incase it goes wrong
     if ! timeout 20m ilab data generate --taxonomy-path test_taxonomy/compositional_skills/simple_math.yaml; then

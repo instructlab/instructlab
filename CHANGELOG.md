@@ -34,6 +34,9 @@
 * Default log format changes to include the logger name in the logs.
 * Introduces CUDA-specific requirements in a new file `requirements-cuda.txt`. To install these
   CUDA-enabled dependencies, simply run `pip install instructlab[cuda]`.
+* `ilab data generate` now supports a new and more extensive pipeline with the
+  option `--pipeline full`. This option requires `mixtral-8x7b-instruct` as the
+  teacher model.
 
 ### Breaking Changes
 
@@ -52,6 +55,9 @@
    program cache directory.
 * `ilab model chat`: Chatlogs are now stored under the `instructlab/checkpoints` directory in the
    platform's dedicated data directory under the `instructlab` package.
+* The `--num-instructions` option to `ilab data generate` has been deprecated.
+  See `--sdg-scale-factor` for an updated option providing similar
+  functionality.
 
 ## v0.17
 
