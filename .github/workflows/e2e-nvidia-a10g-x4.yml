@@ -3,6 +3,8 @@
 name: E2E (NVIDIA A10G x4)
 
 on:
+  schedule:
+    - cron:  '0 8,20 * * *' # Runs at 8 AM and 8 PM UTC every day
   workflow_dispatch:
     inputs:
       pr_or_branch:
@@ -58,11 +60,13 @@ jobs:
       - name: Determine if pr_or_branch is a PR number
         id: check_pr
         run: |
-          if [[ "${{ github.event.inputs.pr_or_branch }}" =~ ^[0-9]+$ ]]; then
+          PR_OR_BRANCH=${{ github.event.inputs.pr_or_branch || 'main' }} # Default to 'main' if not set
+          if [[ "$PR_OR_BRANCH" =~ ^[0-9]+$ ]]; then
             echo "is_pr=true" >> "$GITHUB_OUTPUT"
           else
             echo "is_pr=false" >> "$GITHUB_OUTPUT"
           fi
+          echo "pr_or_branch=$PR_OR_BRANCH" >> "$GITHUB_OUTPUT"
 
       - name: Check if gh cli is installed
         id: gh_cli
@@ -93,21 +97,21 @@ jobs:
       - name: Add comment to PR
         if: steps.check_pr.outputs.is_pr == 'true'
         run: |
-          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "${{ github.workflow }} workflow launched on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          gh pr comment "${{ steps.check_pr.outputs.pr_or_branch }}" -b "${{ github.workflow }} workflow launched on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Fetch and checkout PR
         if: steps.check_pr.outputs.is_pr == 'true'
         run: |
-          gh pr checkout ${{ github.event.inputs.pr_or_branch }}
+          gh pr checkout ${{ steps.check_pr.outputs.pr_or_branch }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout branch
         if: steps.check_pr.outputs.is_pr == 'false'
         run: |
-          git checkout ${{ github.event.inputs.pr_or_branch }}
+          git checkout ${{ steps.check_pr.outputs.pr_or_branch }}
 
       - name: Install Packages
         run: |
@@ -141,14 +145,14 @@ jobs:
       - name: Add comment to PR if the workflow failed
         if: failure() && steps.check_pr.outputs.is_pr == 'true'
         run: |
-          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "e2e workflow failed on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), please investigate."
+          gh pr comment "${{ steps.check_pr.outputs.pr_or_branch }}" -b "e2e workflow failed on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), please investigate."
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Add comment to PR if the workflow succeeded
         if: success() && steps.check_pr.outputs.is_pr == 'true'
         run: |
-          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "e2e workflow succeeded on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), congrats!"
+          gh pr comment "${{ steps.check_pr.outputs.pr_or_branch }}" -b "e2e workflow succeeded on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), congrats!"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
