@@ -307,6 +307,7 @@ test_train() {
 
     if [ "$TRAIN_LIBRARY" -eq 1 ]; then
         DATA=$(find "${DATA_HOME}"/instructlab/datasets -name 'messages_*' | head -n 1)
+
         # TODO Only cuda for now
         # the train profile specified in test_init overrides the majority of TRAIN_ARGS, including things like num_epochs. While it looks like much of those settings are being lost, they just have different values here.
         TRAIN_ARGS=("--device=cuda" "--model-path=${GRANITE_SAFETENSOR_REPO}" "--data-path=${DATA}" "--lora-quantize-dtype=nf4" "--4-bit-quant" "--effective-batch-size=4" "--is-padding-free=False")
@@ -317,8 +318,8 @@ test_train() {
         ilab model train "${TRAIN_ARGS[@]}"
     else
         # TODO Only cuda for now
-        TRAIN_ARGS+=("--legacy" "--device=cuda")
-        if [ "$LEGACYTRAIN" -eq 0 ]; then
+        TRAIN_ARGS+=("--legacy" "--device=cuda" "--data-path" "${DATA_HOME}/instructlab/datasets")
+        if [ "${FULLTRAIN}" -eq 0 ]; then
             TRAIN_ARGS+=("--4-bit-quant")
         fi
         if [ "${BACKEND}" != "vllm" ]; then

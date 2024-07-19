@@ -589,7 +589,7 @@ def train(
             shutil.rmtree(final_results_dir)
         final_results_dir.mkdir()
 
-        gguf_models_dir = Path(DEFAULTS.MODELS_DIR)
+        gguf_models_dir = Path(DEFAULTS.CHECKPOINTS_DIR)
         gguf_models_dir.mkdir(exist_ok=True)
         gguf_models_file = gguf_models_dir / "ggml-model-f16.gguf"
 
