@@ -145,6 +145,14 @@ test_download() {
     if [ "$EVAL" -eq 1 ]; then
         step Downloading a model to use with evaluation
         ilab model download --repository instructlab/granite-7b-lab
+
+        # if vllm is not configured as the backend, merlinite-7b-lab
+        # needs to be downloaded in .safetensor format since evaluation
+        # can only evaluate .safetensors models and merlinite-7b-lab is needed
+        if [ "$BACKEND" = "llama-cpp" ]; then
+          step Downloading a merlinite-7b-lab to use with evaluation
+          ilab download --repository instructlab/merlinite-7b-lab
+        fi
     fi
 }
 
