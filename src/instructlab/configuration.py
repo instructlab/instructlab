@@ -476,7 +476,7 @@ def read_config(
     config_file: str | os.PathLike[str] | None = None,
 ) -> Config:
     """Reads configuration from disk."""
-    config_file = DEFAULTS.CONFIG_FILE if config_file is None else config_file
+    config_file = config_file or DEFAULTS.CONFIG_FILE
     try:
         with open(config_file, "r", encoding="utf-8") as yamlfile:
             content = yaml.safe_load(yamlfile)
@@ -503,7 +503,7 @@ def get_dict(cfg: Config) -> dict[str, typing.Any]:
 
 def write_config(cfg: Config, config_file: typing.Optional[str] = None) -> None:
     """Writes configuration to a disk"""
-    config_file = DEFAULTS.CONFIG_FILE if config_file is None else config_file
+    config_file = config_file or DEFAULTS.CONFIG_FILE
     with open(config_file, "w", encoding="utf-8") as yamlfile:
         d = cfg.model_dump_json()
         loaded = yaml.load(d, Loader=yaml.SafeLoader)

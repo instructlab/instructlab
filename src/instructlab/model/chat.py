@@ -740,17 +740,16 @@ def chat_cli(
 
     # Initialize chat bot
     ccb = ConsoleChatBot(
-        config.model if model is None else model,
+        model or config.model,
         client=client,
         vi_mode=config.vi_mode,
         log_file=log_file,
         prompt=not qq,
         vertical_overflow=("visible" if config.visible_overflow else "ellipsis"),
         loaded=loaded,
-        greedy_mode=(
-            greedy_mode if greedy_mode else config.greedy_mode
-        ),  # The CLI flag can only be used to enable
-        max_tokens=(max_tokens if max_tokens else config.max_tokens),
+        # The CLI flag can only be used to enable
+        greedy_mode=greedy_mode or config.greedy_mode,
+        max_tokens=max_tokens or config.max_tokens,
     )
 
     if not qq and session is None:

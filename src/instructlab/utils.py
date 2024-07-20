@@ -343,7 +343,7 @@ def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
                 f"Validation error in {taxonomy_path}: [{yaml_path}] {message}"
             )
     except NoSuchResource as e:
-        cause = e.__cause__ if e.__cause__ is not None else e
+        cause = e.__cause__ or e
         errors += 1
         logger.error(f"Cannot load schema file {e.ref}. {cause}")
 

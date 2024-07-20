@@ -81,7 +81,7 @@ class BackendServer(abc.ABC):
     ) -> None:
         self.model_family = model_family
         self.model_path = model_path
-        self.chat_template = chat_template if chat_template else CHAT_TEMPLATE_AUTO
+        self.chat_template = chat_template or CHAT_TEMPLATE_AUTO
         self.api_base = api_base
         self.host = host
         self.port = port
@@ -410,7 +410,7 @@ def select_backend(
     from .vllm import Server as vllm_server
 
     model_path = pathlib.Path(model_path or cfg.model_path)
-    backend_name = backend if backend is not None else cfg.backend
+    backend_name = backend or cfg.backend
     try:
         backend = get(model_path, backend_name)
     except ValueError as e:

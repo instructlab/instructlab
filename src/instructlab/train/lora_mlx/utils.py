@@ -86,7 +86,7 @@ def upload_to_hub(path: str, name: str, hf_path: str):
     repo_id = f"mlx-community/{name}"
 
     card = ModelCard.load(hf_path)
-    card.data.tags = ["mlx"] if card.data.tags is None else card.data.tags + ["mlx"]
+    card.data.tags = (card.data.tags or []) + ["mlx"]
     card.text = f"""
 # {name}
 This model was converted to MLX format from [`{hf_path}`]().

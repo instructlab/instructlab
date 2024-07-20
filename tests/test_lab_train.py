@@ -33,7 +33,7 @@ ENCODING = "UTF-8"
 
 
 def setup_input_dir(root: typing.Optional[str] = None):
-    input_dir = root if root else INPUT_DIR
+    input_dir = root or INPUT_DIR
     os.makedirs(input_dir)
     for f_path in ["train_1.jsonl", "test_1.jsonl"]:
         print(f"Creating {os.path.join(input_dir, f_path)}")
