@@ -591,7 +591,7 @@ class Lab:
         `ilab config init`. First level subcommand functions call this
         method when they need a config for one of their subcommands.
         """
-        if self.config is None:
+        if self.error_msg is not None:
             ctx.fail(self.error_msg)
 
 
@@ -610,6 +610,9 @@ def init(
             # delayed, so ilab config init can override a broken config.
             config_obj = get_default_config()
             error_msg = str(e)
+            if error_msg is not None:
+                click.secho(f"Failed to parse the config: {error_msg}", fg="red")
+                raise click.exceptions.Exit(1)
     else:
         config_obj = get_default_config()
         error_msg = (
