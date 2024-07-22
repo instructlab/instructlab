@@ -35,7 +35,7 @@ class ExpandAliasesGroup(click.Group):
             group = self.aliases[cmd_name]["group"].name
             c = self.aliases[cmd_name]["cmd"].name
             click.echo(
-                f"You are using an aliased command, this will be deprecated in a future release. Please consider using `ilab {group} {c}` instead"
+                f"You are using an aliased command. This will be deprecated in a future release. Please consider using `ilab {group} {c}` instead"
             )
             return cmd
         cmd = click.Group.get_command(self, ctx, cmd_name)
