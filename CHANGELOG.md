@@ -32,11 +32,12 @@
    provides its own template), 'tokenizer' (uses the model's tokenizer config), and an external
    file name.
 * Default log format changes to include the logger name in the logs.
-* Introduces CUDA-specific requirements in a new file `requirements-cuda.txt`. To install these
-  CUDA-enabled dependencies, simply run `pip install instructlab[cuda]`.
 * `ilab data generate` now supports a new and more extensive pipeline with the
   option `--pipeline full`. This option requires `mixtral-8x7b-instruct` as the
   teacher model.
+* The `instructlab` package now uses optional dependencies for each supported hardware `cpu`,
+  `cuda`, `hpu`, `mps`, and `rocm`. To install InstructLab for e.g. NVIDIA CUDA, use
+  `pip install instructlab[cuda]`.
 
 ### Breaking Changes
 

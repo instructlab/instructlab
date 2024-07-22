@@ -146,7 +146,7 @@ Install `InstructLab` from checkout with additional dependencies:
 
 ```shell
 . $HABANALABS_VIRTUAL_DIR/bin/activate
-pip install -r instructlab/requirements-hpu.txt ./instructlab
+pip install ./instructlab[hpu]
 ```
 
 > **TIP** If `llama-cpp-python` fails to build with error ``unsupported instruction `vpdpbusd'``, then install with `CFLAGS="-mno-avx" pip install ...`.

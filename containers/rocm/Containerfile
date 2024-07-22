@@ -99,7 +99,7 @@ FROM pip-install AS instructlab
 COPY --chown=0:0 . /tmp/instructlab
 RUN --mount=type=cache,sharing=locked,id=pipcache,target=${PIP_CACHE_DIR},mode=777,z \
     umask 0000 && \
-    ${VIRTUAL_ENV}/bin/pip install --no-deps /tmp/instructlab
+    ${VIRTUAL_ENV}/bin/pip install --no-deps /tmp/instructlab[rocm]
 RUN find ${VIRTUAL_ENV} -name __pycache__ | xargs rm -rf
 
 
