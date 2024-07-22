@@ -356,9 +356,10 @@ test_convert() {
 }
 
 test_evaluate() {
-    local MODEL_PATH="${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab"
     # Temporarily using merlinite as the base model to confirm the workflow executes correctly 
     local BASE_MODEL_PATH="${CACHE_HOME}/instructlab/models/instructlab/merlinite-7b-lab"
+    local MODEL_PATH=""
+    MODEL_PATH=$(find checkpoints/hf_format -type f -print0 | xargs -0 stat --format="%Y %n" | sort -n | tail -n 1 | cut -d' ' -f2-)
     task Evaluate the model
 
     if [ "$EVAL" -eq 1 ]; then
