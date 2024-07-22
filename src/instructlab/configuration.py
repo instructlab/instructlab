@@ -242,32 +242,6 @@ class _chat(BaseModel):
     max_tokens: typing.Optional[int] = None
 
 
-class _generate(BaseModel):
-    """Class describing configuration of the generate sub-command."""
-
-    # model configuration
-    model_config = ConfigDict(extra="ignore")
-
-    # required fields
-    model: StrictStr
-    taxonomy_path: StrictStr
-    taxonomy_base: StrictStr
-
-    # additional fields with defaults
-    num_cpus: PositiveInt = DEFAULTS.NUM_CPUS
-    chunk_word_count: PositiveInt = DEFAULTS.CHUNK_WORD_COUNT
-    # DEPRECATED: see sdg_scale_factor instead
-    # Left in place so that we can still detect and give a warning if its
-    # specified in an old configuraiton file.
-    num_instructions: Optional[int] = Field(
-        default=-1, deprecated="see 'sdg_scale_factor' instead", exclude=True
-    )
-    sdg_scale_factor: Optional[PositiveInt] = DEFAULTS.SDG_SCALE_FACTOR
-    output_dir: StrictStr = Field(default_factory=lambda: DEFAULTS.DATASETS_DIR)
-    prompt_file: StrictStr = Field(default_factory=lambda: DEFAULTS.PROMPT_FILE)
-    seed_file: StrictStr = Field(default_factory=lambda: DEFAULTS.SEED_FILE)
-
-
 class _serve_vllm(BaseModel):
     """Class describing configuration of vllm serving backend."""
 
@@ -291,13 +265,20 @@ class _serve(BaseModel):
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
 
     # vllm configuration
-    vllm: _serve_vllm
+    vllm: _serve_vllm = _serve_vllm(
+        llm_family="",
+        vllm_args=[],
+    )
 
     # llama-cpp configuration
-    llama_cpp: _serve_llama_cpp
+    llama_cpp: _serve_llama_cpp = _serve_llama_cpp(
+        gpu_layers=-1,
+        max_ctx_size=4096,
+        llm_family="",
+    )
 
     # required fields
-    model_path: StrictStr
+    model_path: StrictStr = Field(default_factory=lambda: DEFAULTS.DEFAULT_MODEL)
     # additional fields with defaults
     host_port: StrictStr = "127.0.0.1:8000"
     chat_template: Optional[str] = None
@@ -308,6 +289,33 @@ class _serve(BaseModel):
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
         return get_api_base(self.host_port)
+
+
+class _generate(BaseModel):
+    """Class describing configuration of the generate sub-command."""
+
+    # model configuration
+    model_config = ConfigDict(extra="ignore")
+
+    # required fields
+    model: StrictStr
+    taxonomy_path: StrictStr
+    taxonomy_base: StrictStr
+
+    # additional fields with defaults
+    teacher: _serve = Field(default_factory=_serve)
+    num_cpus: PositiveInt = DEFAULTS.NUM_CPUS
+    chunk_word_count: PositiveInt = DEFAULTS.CHUNK_WORD_COUNT
+    # DEPRECATED: see sdg_scale_factor instead
+    # Left in place so that we can still detect and give a warning if its
+    # specified in an old configuration file.
+    num_instructions: Optional[int] = Field(
+        default=-1, deprecated="see 'sdg_scale_factor' instead", exclude=True
+    )
+    sdg_scale_factor: Optional[PositiveInt] = DEFAULTS.SDG_SCALE_FACTOR
+    output_dir: StrictStr = Field(default_factory=lambda: DEFAULTS.DATASETS_DIR)
+    prompt_file: StrictStr = Field(default_factory=lambda: DEFAULTS.PROMPT_FILE)
+    seed_file: StrictStr = Field(default_factory=lambda: DEFAULTS.SEED_FILE)
 
 
 class _mmlu(BaseModel):
