@@ -59,7 +59,7 @@ ec2__launch() {
         --security-group-ids "$EC2_SECURITY_GROUP_ID" \
         --subnet-id "$EC2_SUBNET_ID" \
         --key-name "$EC2_KEY_NAME" \
-        --block-device-mappings '{"DeviceName": "/dev/sda1","Ebs": {"VolumeSize": 200}}' \
+        --block-device-mappings '{"DeviceName": "/dev/sda1","Ebs": {"VolumeSize": 300}}' \
         --associate-public-ip-address \
         --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME}]" \
         "ResourceType=volume,Tags=[{Key=Name,Value=$INSTANCE_NAME}]" \
@@ -119,6 +119,19 @@ ec2__terminate() {
         --region "$EC2_REGION"
 }
 
+wait_ssh_listen() {
+    calculate_cloud_public_dns "$1"
+    user_name=$(instance_user_name "$1")
+    ssh_key=$(instance_key "$1")
+    while true; do
+        echo "Waiting for ssh..."
+        sleep 5
+        if ssh -i "$ssh_key" -o ConnectTimeout=5 -o StrictHostKeyChecking=no -q "$user_name"@"$PUBLIC_DNS" "true"; then
+            break
+        fi
+    done
+}
+
 ec2__ssh() {
     handle_help_and_instance_name_opts "$@"
     shift $((OPTIND-1))
@@ -127,6 +140,16 @@ ec2__ssh() {
     user_name=$(instance_user_name "ec2")
     ec2_calculate_instance_public_dns
     ssh -o "StrictHostKeyChecking no" -i "$EC2_KEY_LOCATION" "$user_name"@"$PUBLIC_DNS" "$@"
+}
+
+ec2__scp() {
+    handle_help_and_instance_name_opts "$@"
+    shift $((OPTIND-1))
+
+    local user_name
+    user_name=$(instance_user_name "ec2")
+    ec2_calculate_instance_public_dns
+    scp -o "StrictHostKeyChecking no" -i "$EC2_KEY_LOCATION" "$@" "$user_name"@"$PUBLIC_DNS":
 }
 
 ec2_calculate_instance_id() {
@@ -245,6 +268,24 @@ ibm_calculate_instance_public_dns() {
     python3 -c "import sys, json; print(json.load(sys.stdin)['network_interfaces'][0]['floating_ips'][0]['address'])")
 }
 
+calculate_cloud_public_dns() {
+    local cloud_type=$1
+    if [ "$cloud_type" = 'ec2' ]; then
+	ec2_calculate_instance_public_dns
+    elif [ "$cloud_type" = 'ibm' ]; then
+        ibm_calculate_instance_public_dns
+    fi
+}
+
+instance_key() {
+    local cloud_type=$1
+    if [ "$cloud_type" = 'ec2' ]; then
+        echo "$EC2_KEY_LOCATION"
+    elif [ "$cloud_type" = 'ibm' ]; then
+        echo "$IBM_KEY_LOCATION"
+    fi
+}
+
 instance_user_name() {
     local cloud_type=$1
     if [ "$cloud_type" = 'ec2' ]; then
@@ -265,18 +306,25 @@ instance_user_home() {
 
 setup_rh_devenv() {
     local cloud_type=$1
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf install git gcc make pip python3.11 python3.11-devel -y
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf install git gcc make python3.11 python3.11-devel -y
     "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "sudo dnf install g++ -y || sudo dnf install gcc-c++"
     "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "if [ ! -d instructlab.git ]; then git clone --bare https://github.com/instructlab/instructlab.git && git clone instructlab.git && pushd instructlab && git remote add syncrepo ../instructlab.git && git remote add upstream https://github.com/instructlab/instructlab.git; fi"
     "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && python3.11 -m venv --upgrade-deps venv"
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf update -y
-    echo "You'll need to reboot before installing gpu drivers (${BASH_SOURCE[0]} ${cloud_type} ssh sudo reboot)"
 }
 
 pip_install_with_nvidia() {
     local cloud_type=$1
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && source venv/bin/activate && pip cache remove llama_cpp_python && pip install -e .[cuda] -C cmake.args='-DLLAMA_CUDA=on'"
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && source venv/bin/activate && pip install -r requirements-vllm-cuda.txt && ilab"
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" \
+        "pushd instructlab && sed 's/\[.*\]//' requirements.txt > constraints.txt"
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" \
+        "pushd instructlab && source venv/bin/activate; \
+         export PATH=\$PATH:/usr/local/cuda/bin; \
+         pip cache remove llama_cpp_python \
+         && CMAKE_ARGS='-DLLAMA_CUBLAS=on' pip install --force-reinstall --no-binary \
+            llama_cpp_python -c constraints.txt llama_cpp_python \
+         && pip install wheel packaging torch -c constraints.txt \
+         && pip install .[cuda] -r requirements-vllm-cuda.txt \
+         && ilab"
 }
 
 pip_install_with_amd() {
@@ -290,18 +338,23 @@ pip_install_with_amd() {
    -C cmake.args='-DCMAKE_PREFIX_PATH=/opt/rocm'"
 }
 
+update_rh_nvidia_drivers() {
+    install_rh_nvidia_drivers "$1" "true"
+}
+
 install_rh_nvidia_drivers() {
     local cloud_type=$1
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "sudo dnf install kernel-devel-\$(uname -r) kernel-headers-\$(uname -r) -y"
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm -y
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf install https://developer.download.nvidia.com/compute/cuda/12.4.0/local_installers/cuda-repo-rhel9-12-4-local-12.4.0_550.54.14-1.x86_64.rpm -y
-    # Pinning to 12-4 to work with targetted versions of pytorch and vllm
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf install cuda-12-4 nvidia-gds-12-4 -y
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo -y
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf install libcudnn8 libnccl-2.21.5-1+cuda12.4 libnccl-devel-2.21.5-1+cuda12.4 libnccl-static-2.21.5-1+cuda12.4 -y
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "echo \"export PATH=/usr/local/cuda/bin:\\\$PATH\" >> ~/.bashrc"
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "echo \"export LD_LIBRARY_PATH=/usr/local/cuda/lib64:\\\$LD_LIBRARY_PATH\" >> ~/.bashrc"
-    echo "You'll need to reboot for these changes to take effect (${BASH_SOURCE[0]} ${cloud_type} ssh sudo reboot)"
+    local should_update=$2
+    if [[ "$should_update" == "true" ]]; then
+        "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf update -y
+        "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo reboot
+        echo "Rebooting instance after update.."
+        wait_ssh_listen "$cloud_type"
+        "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf remove --oldinstallonly -y
+    fi
+    "${BASH_SOURCE[0]}" "$cloud_type" scp -n "$INSTANCE_NAME" nvidia-setup.sh
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "sudo ./nvidia-setup.sh"
+    echo "You may want to reboot even though the install is live (${BASH_SOURCE[0]} ${cloud_type} ssh sudo reboot)"
 }
 
 sync() {
@@ -384,7 +437,11 @@ Commands
         -n
             Name of the instance to pip install (default provided in config)
 
-    install-rh-nvidia-drivers - Install nvidia drivers (reboot required)
+    install-rh-nvidia-drivers - Install nvidia drivers
+        -n
+            Name of the instance to install nvidia drivers (default provided in config)
+
+    update-rh-nvidia-drivers - Update and (re)install nvidia drivers (reboot required)
         -n
             Name of the instance to install nvidia drivers (default provided in config)
 
@@ -403,3 +460,4 @@ else
     show_usage
     exit 1
 fi
+
