@@ -80,7 +80,7 @@ task() {
 }
 
 set_defaults() {
-    if [ "$MINIMAL" -eq 0 ]; then
+    if [ "$MINIMAL" -eq 1 ]; then
         return
     fi
 
@@ -90,11 +90,6 @@ set_defaults() {
 
     if [ "${GRANITE}" -eq 1 ] && [ "${MIXTRAL}" -eq 1 ]; then
         echo "ERROR: Can not specify -g and -M at the same time."
-        exit 1
-    fi
-
-    if [ "${MIXTRAL}" -eq 1 ] && [ "${BACKEND}" = "vllm" ]; then
-        echo "ERROR: Can not specify -M and -v at the same time."
         exit 1
     fi
 
@@ -119,9 +114,18 @@ test_init() {
     else
         ilab config init --non-interactive
     fi
-    step Checking config.yaml
-    if [ "${MIXTRAL}" -eq 1 ]; then
+
+    step setting models in config.yaml
+    if [ "${GRANITE}" -eq 1 ] && [ "$BACKEND" == "vllm" ]; then
+        sed -i -e 's|merlinite.*|instructlab/granite-7b-lab|' "${CONFIG_HOME}/instructlab/config.yaml"
+    elif [ "${GRANITE}" -eq 1 ] && [ "$BACKEND" != "vllm" ]; then
+        sed -i -e 's|merlinite.*|granite-7b-lab-Q4_K_M.gguf|' "${CONFIG_HOME}/instructlab/config.yaml"
+    elif [ "${MIXTRAL}" -eq 1 ] && [ "$BACKEND" == "vllm" ]; then
+        sed -i -e 's|merlinite.*|TheBloke/Mixtral-8x7b-Instruct-v0.1-GPTQ|' "${CONFIG_HOME}/instructlab/config.yaml"
+    elif [ "${MIXTRAL}" -eq 1 ] && [ "$BACKEND" != "vllm" ]; then
         sed -i -e 's|merlinite.*|mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf|' "${CONFIG_HOME}/instructlab/config.yaml"
+    elif [ "${MIXTRAL}" -ne 1 ] && [ "${GRANITE}" -ne 1 ] && [ "$BACKEND" == "vllm" ]; then
+        sed -i -e 's|merlinite.*|instructlab/merlinite-7b-lab|' "${CONFIG_HOME}/instructlab/config.yaml"
     fi
 }
 
@@ -129,48 +133,76 @@ test_download() {
     task Download the model
 
     if [ "$GRANITE" -eq 1 ]; then
-        step Downloading the granite model
-        ilab model download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf
-    elif [ "$BACKEND" = "vllm" ]; then
-        step Downloading the model for vLLM
-        ilab download --repository instructlab/merlinite-7b-lab
+        if [ "$BACKEND" == "vllm" ]; then
+            step Downloading the .safetensors granite model
+            ilab download --repository instructlab/granite-7b-lab
+        else
+            step Downloading the granite .gguf model
+            ilab model download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf
+        fi
     elif [ "$MIXTRAL" -eq 1 ]; then
-        step Downloading the mixtral model
-        ilab model download --repository TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF --filename mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf --hf-token "${HF_TOKEN}"
+        if [ "$BACKEND" == "vllm" ]; then
+            step Downloading the .safetensors mixtral model
+            ilab model download --repository TheBloke/Mixtral-8x7B-Instruct-v0.1-GPTQ
+        else
+            step Downloading the mixtral .gguf model
+            ilab model download --repository TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF --filename mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf --hf-token "${HF_TOKEN}"
+        fi
     else
-        step Downloading the default model
-        ilab model download
+        if [ "$BACKEND" == "vllm" ]; then
+            step Downloading the default .safetensors model to use with vLLM
+            ilab download --repository instructlab/merlinite-7b-lab
+        else
+            step Downloading the default model
+            ilab model download
+        fi
     fi
 
     if [ "$EVAL" -eq 1 ]; then
-        step Downloading a model to use with evaluation
-        ilab model download --repository instructlab/granite-7b-lab
+        if [ "$GRANITE" -ne 1 ]; then
+            step Downloading a granite model to use with evaluation
+            ilab model download --repository instructlab/granite-7b-lab
+        fi
 
         # if vllm is not configured as the backend, merlinite-7b-lab
         # needs to be downloaded in .safetensor format since evaluation
         # can only evaluate .safetensors models and merlinite-7b-lab is needed
-        if [ "$BACKEND" = "llama-cpp" ]; then
-          step Downloading a merlinite-7b-lab to use with evaluation
-          ilab download --repository instructlab/merlinite-7b-lab
+        if [ "$BACKEND" == "llama-cpp" ]; then
+            step Downloading a merlinite-7b-lab to use with evaluation
+            ilab download --repository instructlab/merlinite-7b-lab
         fi
     fi
 }
 
 test_serve() {
+    # TODO: are these assignments even necessary because model_path is already set in the config in test_init
     # Accepts an argument of the model, or default here
     if [ "$GRANITE" -eq 1 ]; then
-        model="${1:-${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf}"
+        if [ "$BACKEND" == "vllm" ]; then
+            model="${1:-${DATA_HOME}/instructlab/models/instructlab/granite-7b-lab}"
+        else
+            model="${1:-${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf}"
+        fi
     elif [ "${MIXTRAL}" -eq 1 ]; then
-        model="${1:-${DATA_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf}"
+        if [ "$BACKEND" == "vllm" ]; then
+            model="${1:-${DATA_HOME}/instructlab/models/TheBloke/Mixtral-8x7B-Instruct-v0.1-GPTQ}"
+        else
+            model="${1:-${DATA_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf}"
+        fi
     else
-        model="${1:-}"
+        # `ilab model serve` with no args case
+        if [ "$BACKEND" == "vllm" ]; then
+            model="${1:-${DATA_HOME}/instructlab/models/instructlab/merlinite-7b-lab}"
+        else
+            model="${1:-}"
+        fi
     fi
     SERVE_ARGS=()
+    if [ "$BACKEND" == "vllm" ]; then
+        SERVE_ARGS+=("--enable-serve-output")
+    fi
     if [ -n "$model" ]; then
         SERVE_ARGS+=("--model-path" "${model}")
-    fi
-    if [ "$BACKEND" = "vllm" ]; then
-        SERVE_ARGS+=("--model-path" "${DATA_HOME}/instructlab/models/instructlab/merlinite-7b-lab")
     fi
 
     task Serve the model
@@ -217,13 +249,20 @@ test_taxonomy() {
 }
 
 test_generate() {
+    # TODO: are these assignments even necessary because model is already set in the config in test_init
     task Generate synthetic data
     if [ "$GRANITE" -eq 1 ]; then
-        GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
+        if [ "$BACKEND" == "vllm" ]; then
+          GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/instructlab/granite-7b-lab}")
+        else
+            GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
+        fi
     elif [ "$MIXTRAL" -eq 1 ]; then
-        GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf")
-    elif [ "$BACKEND" = "vllm" ]; then
-        GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/instructlab/merlinite-7b-lab")
+        if [ "$BACKEND" == "vllm" ]; then
+          GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/TheBloke/Mixtral-8x7B-Instruct-v0.1-GPTQ}")
+        else
+            GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf")
+        fi
     fi
     if [ "$SDG_PIPELINE" = "full" ]; then
         GENERATE_ARGS+=("--pipeline" "full")
@@ -240,7 +279,10 @@ test_train() {
         # the train profile specified in test_init overrides the majority of TRAIN_ARGS, including things like num_epochs. While it looks like much of those settings are being lost, they just have different values here.
         TRAIN_ARGS=("--device=cuda" "--model-path=instructlab/granite-7b-lab" "--data-path=${SCRIPTDIR}/test-data/train_all_pruned_SDG.jsonl" "--quantize-data-type=nf4" "--4-bit-quant")
         if [ "$GRANITE" -eq 1 ]; then
-            TRAIN_ARGS+=("--gguf-model-path" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
+            if [ "$BACKEND" == "llama-cpp" ]; then
+                TRAIN_ARGS+=("--gguf-model-path" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
+                #TODO figure out vllm case here
+            fi
         fi
 
         ilab model train "${TRAIN_ARGS[@]}"
@@ -251,7 +293,10 @@ test_train() {
             TRAIN_ARGS+=("--4-bit-quant")
         fi
         if [ "$GRANITE" -eq 1 ]; then
-            TRAIN_ARGS+=("--gguf-model-path" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
+            if [ "$BACKEND" == "llama-cpp" ]; then
+                TRAIN_ARGS+=("--gguf-model-path" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
+                #TODO figure out vllm case here
+            fi
         fi
 
         ilab model train "${TRAIN_ARGS[@]}"
