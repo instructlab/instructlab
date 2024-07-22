@@ -5,7 +5,7 @@ from functools import cache, wraps
 from importlib import resources
 from importlib.abc import Traversable
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, TypedDict
+from typing import Any, List, Mapping, Optional, Tuple, TypedDict
 from urllib.parse import urlparse
 import copy
 import glob
@@ -18,7 +18,7 @@ import subprocess
 import tempfile
 
 # Third Party
-from git import Repo, exc
+from git import Repo
 from referencing import Resource
 import click
 import git
@@ -208,27 +208,24 @@ def get_documents(
     commit_hash = source.get("commit", "")
     file_patterns = source.get("patterns", [])
     with tempfile.TemporaryDirectory() as temp_dir:
-        try:
-            repo = git_clone_checkout(
-                repo_url=repo_url,
-                commit_hash=commit_hash,
-                temp_dir=temp_dir,
-                skip_checkout=skip_checkout,
-            )
-            file_contents = []
+        repo = git_clone_checkout(
+            repo_url=repo_url,
+            commit_hash=commit_hash,
+            temp_dir=temp_dir,
+            skip_checkout=skip_checkout,
+        )
+        file_contents = []
 
-            logger.debug("Processing files...")
-            for pattern in file_patterns:
-                for file_path in glob.glob(os.path.join(repo.working_dir, pattern)):
-                    if os.path.isfile(file_path) and file_path.endswith(".md"):
-                        with open(file_path, "r", encoding="utf-8") as file:
-                            file_contents.append(file.read())
+        logger.debug("Processing files...")
+        for pattern in file_patterns:
+            for file_path in glob.glob(os.path.join(repo.working_dir, pattern)):
+                if os.path.isfile(file_path) and file_path.endswith(".md"):
+                    with open(file_path, "r", encoding="utf-8") as file:
+                        file_contents.append(file.read())
 
-            if file_contents:
-                return file_contents
-            raise SystemExit("Couldn't find knowledge documents")
-        except (OSError, exc.GitCommandError, FileNotFoundError) as e:
-            raise e
+        if file_contents:
+            return file_contents
+        raise SystemExit("Couldn't find knowledge documents")
 
 
 def git_clone_checkout(
@@ -358,7 +355,9 @@ def get_version(contents: Mapping) -> int:
 
 
 # pylint: disable=broad-exception-caught
-def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
+def read_taxonomy_file(
+    file_path: str, yaml_rules: Optional[str] = None
+) -> Tuple[list[dict[str, Any]] | None, int, int]:
     seed_instruction_data = []
     warnings = 0
     errors = 0

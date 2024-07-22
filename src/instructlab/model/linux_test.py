@@ -71,8 +71,6 @@ def test_model(ctx, res, ds, model: Path, create_params: dict):
         )
         for d in ds:
             res[d["user"]][str(model)] = response(client, d["user"], create_params)
-    except Exception as exc:
-        raise exc
     finally:
         if backend_instance:
             backend_instance.shutdown()

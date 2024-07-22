@@ -21,7 +21,6 @@ from .backends import (
     VLLM,
     BackendServer,
     Closeable,
-    ServerException,
     ensure_server,
     get_model_template,
     safe_close_all,
@@ -91,22 +90,17 @@ class Server(BackendServer):
     def run_detached(
         self, http_client: httpx.Client | None = None, background: bool = True
     ) -> str:
-        try:
-            _, vllm_server_process, api_base = ensure_server(
-                backend=VLLM,
-                api_base=self.api_base,
-                http_client=http_client,
-                host=self.host,
-                port=self.port,
-                background=background,
-                server_process_func=self.create_server_process,
-            )
-            self.process = vllm_server_process or self.process
-            self.api_base = api_base or self.api_base
-        except ServerException as exc:
-            raise exc
-        except SystemExit as exc:
-            raise exc
+        _, vllm_server_process, api_base = ensure_server(
+            backend=VLLM,
+            api_base=self.api_base,
+            http_client=http_client,
+            host=self.host,
+            port=self.port,
+            background=background,
+            server_process_func=self.create_server_process,
+        )
+        self.process = vllm_server_process or self.process
+        self.api_base = api_base or self.api_base
         return self.api_base
 
     def shutdown(self):
