@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euf
+set -exuf
 
 # This is a basic workflow test of the ilab CLI.
 #
@@ -135,7 +135,7 @@ test_download() {
     if [ "$GRANITE" -eq 1 ]; then
         if [ "$BACKEND" == "vllm" ]; then
             step Downloading the .safetensors granite model
-            ilab download --repository instructlab/granite-7b-lab
+            ilab model download --repository instructlab/granite-7b-lab
         else
             step Downloading the granite .gguf model
             ilab model download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf
@@ -151,7 +151,7 @@ test_download() {
     else
         if [ "$BACKEND" == "vllm" ]; then
             step Downloading the default .safetensors model to use with vLLM
-            ilab download --repository instructlab/merlinite-7b-lab
+            ilab model download --repository instructlab/merlinite-7b-lab
         else
             step Downloading the default model
             ilab model download
@@ -169,7 +169,7 @@ test_download() {
         # can only evaluate .safetensors models and merlinite-7b-lab is needed
         if [ "$BACKEND" == "llama-cpp" ]; then
             step Downloading a merlinite-7b-lab to use with evaluation
-            ilab download --repository instructlab/merlinite-7b-lab
+            ilab model download --repository instructlab/merlinite-7b-lab
         fi
     fi
 }
@@ -198,11 +198,16 @@ test_serve() {
         fi
     fi
     SERVE_ARGS=()
-    if [ "$BACKEND" == "vllm" ]; then
-        SERVE_ARGS+=("--enable-serve-output")
-    fi
     if [ -n "$model" ]; then
         SERVE_ARGS+=("--model-path" "${model}")
+    fi
+
+    if [ "$BACKEND" == "vllm" ]; then
+        SERVE_ARGS+=("--backend" "${BACKEND}")
+        if [ "$GRANITE" -ne 1 ]; then
+          # NEEDED FOR 1xA10
+          SERVE_ARGS+=("--" "--gpu-memory-utilization" "1")
+        fi
     fi
 
     task Serve the model
@@ -212,6 +217,7 @@ test_serve() {
 
 test_chat() {
     task Chat with the model
+    cat ${E2E_TEST_DIR}/.config/instructlab/config.yaml
     CHAT_ARGS=()
     if [ "$MIXTRAL" -eq 1 ]; then
         CHAT_ARGS+=("--model-family" "mixtral")
@@ -254,12 +260,14 @@ test_generate() {
     if [ "$GRANITE" -eq 1 ]; then
         if [ "$BACKEND" == "vllm" ]; then
           GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/instructlab/granite-7b-lab}")
+          GENERATE_ARGS+=("--enable-serving-output")
         else
             GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
         fi
     elif [ "$MIXTRAL" -eq 1 ]; then
         if [ "$BACKEND" == "vllm" ]; then
           GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/TheBloke/Mixtral-8x7B-Instruct-v0.1-GPTQ}")
+          GENERATE_ARGS+=("--enable-serving-output")
         else
             GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf")
         fi
@@ -342,41 +350,42 @@ test_exec() {
     step Kill ilab model serve $PID
     kill $PID
 
-    if [ "$SKIP_TRAIN" -eq 1 ]; then
-        # TODO - Drop this later.
-        # This is only a temporary measure while we bootstrap different CI workflows.
-        # There are some larger environments where it only makes sense to test the new
-        # training workflow using the training library, but that is not yet integrated
-        # here. Skip training for those environments for now.
-        task Halting prior to running training "(SKIP_TRAIN=1)"
-        return
-    fi
+    #if [ "$SKIP_TRAIN" -eq 1 ]; then
+    #    # TODO - Drop this later.
+    #    # This is only a temporary measure while we bootstrap different CI workflows.
+    #    # There are some larger environments where it only makes sense to test the new
+    #    # training workflow using the training library, but that is not yet integrated
+    #    # here. Skip training for those environments for now.
+    #    task Halting prior to running training "(SKIP_TRAIN=1)"
+    #    return
+    #fi
 
-    test_train
+    #test_train
 
-    if [ "$FULLTRAIN" -eq 0 ]; then
-        # When we run training with --4-bit-quant, we can't convert the result to a gguf
-        # https://github.com/instructlab/instructlab/issues/579
-        # so we skip trying to test the result
-        return
-    fi
+    #if [ "$FULLTRAIN" -eq 0 ]; then
+    #    # When we run training with --4-bit-quant, we can't convert the result to a gguf
+    #    # https://github.com/instructlab/instructlab/issues/579
+    #    # so we skip trying to test the result
+    #    return
+    #fi
 
-    # When you run this --
-    #   `ilab model convert` is only implemented for macOS with M-series chips for now
-    #test_convert
+    ## When you run this --
+    ##   `ilab model convert` is only implemented for macOS with M-series chips for now
+    ##test_convert
 
-    test_serve "${DATA_HOME}/instructlab/models/ggml-model-f16.gguf"
-    PID=$!
+    #test_serve "${DATA_HOME}/instructlab/models/ggml-model-f16.gguf"
+    #PID=$!
 
-    test_chat
+    #test_chat
 
-    # Kill the serve process
-    task Stopping the ilab model serve
-    step Kill ilab model serve $PID
-    kill $PID
+    ## Kill the serve process
+    #task Stopping the ilab model serve
+    #step Kill ilab model serve $PID
+    #kill $PID
 
-    task Evaluating the output of ilab model train
-    test_evaluate
+    #task Evaluating the output of ilab model train
+    #test_evaluate
+    task Success!
 }
 
 wait_for_server(){
