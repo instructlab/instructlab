@@ -1,9 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 # pylint: disable=duplicate-code
 
+# Third Party
 from click.testing import CliRunner
-from instructlab import lab
 import pytest
+
+# First Party
+from instructlab import lab
+
 
 @pytest.mark.parametrize(
     "args, expected_host, expected_port",
