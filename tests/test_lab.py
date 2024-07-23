@@ -90,6 +90,7 @@ subcommands: list[Command] = [
     Command(("model", "serve")),
     Command(("model", "test")),
     Command(("model", "train")),
+    Command(("model", "list")),
     Command(("data",), needs_config=False),
     Command(("data", "generate")),
     Command(("system",), needs_config=False),
@@ -110,6 +111,7 @@ aliases = [
     "diff",
     "generate",
     "sysinfo",
+    "list",
 ]
 
 

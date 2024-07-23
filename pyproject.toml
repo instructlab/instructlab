@@ -58,6 +58,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "serve" = "instructlab.model.serve:serve"
 "test" = "instructlab.model.test:test"
 "train" = "instructlab.model.train:train"
+"list" = "instructlab.model.list:model_list"
 
 [project.entry-points."instructlab.command.system"]
 "info" = "instructlab.system.info:info"
@@ -77,6 +78,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "sysinfo" = "instructlab.system.info:info"
 "test" = "instructlab.model.test:test"
 "train" = "instructlab.model.train:train"
+"list" = "instructlab.model.list:model_list"
 
 [tool.setuptools_scm]
 version_file = "src/instructlab/_version.py"
