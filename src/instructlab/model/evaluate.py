@@ -87,6 +87,19 @@ def get_evaluator(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
+        if os.path.exists(model):
+            model = pathlib.Path(model)
+            valid_model = False
+            if model.is_dir():
+                valid_model = backends.is_model_safetensors(model)
+            elif model.is_file():
+                valid_model = backends.is_model_gguf(model)
+            if not valid_model:
+                click.secho(
+                    "MTBench and MTBenchBranch need to be passed either a safetensors directory or a GGUF file",
+                    fg="red",
+                )
+                raise click.exceptions.Exit(1)
         if benchmark == Benchmark.MT_BENCH:
             # Third Party
             from instructlab.eval.mt_bench import MTBenchEvaluator
@@ -131,7 +144,7 @@ def get_evaluator(
         if os.path.isdir(model):
             if not backends.is_model_safetensors(pathlib.Path(model)):
                 click.secho(
-                    "MMLU and MMLUBranch can currently only be used with safetensors",
+                    "MMLU and MMLUBranch can currently only be used with a safetensors directory",
                     fg="red",
                 )
                 raise click.exceptions.Exit(1)
