@@ -62,6 +62,11 @@ class _InstructlabDefaults:
     # define static defaults up here
     API_KEY = "no_api_key"
 
+    # ILAB_GLOBAL_CONFIG is the environment variable that can be used to override the default config
+    # file. When set, the CLI will use the file specified in the environment variable as a sample to
+    # generate the default config file.
+    ILAB_GLOBAL_CONFIG = "ILAB_GLOBAL_CONFIG"
+
     # TODO: Consolidate --model and --model-path into one --model-path flag since we always need a path now
     MODEL_NAME_OLD = "merlinite-7b-lab-Q4_K_M"
     MERLINITE_GGUF_REPO = "instructlab/merlinite-7b-lab-GGUF"

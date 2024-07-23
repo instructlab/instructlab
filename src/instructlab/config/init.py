@@ -3,6 +3,8 @@
 # Standard
 from os import listdir
 from os.path import dirname, exists
+import pathlib
+import typing
 
 # Third Party
 from git import GitError, Repo
@@ -12,6 +14,7 @@ import click
 from instructlab import clickext, utils
 from instructlab.configuration import (
     DEFAULTS,
+    Config,
     ensure_storage_directories_exist,
     get_default_config,
     read_train_profile,
@@ -61,7 +64,9 @@ from instructlab.configuration import (
 )
 @click.option("--train-profile", type=click.Path(), default=None)
 @clickext.display_params
+@click.pass_context
 def init(
+    ctx,
     interactive,
     model_path: str,
     taxonomy_path,
@@ -72,6 +77,70 @@ def init(
 ):
     """Initializes environment for InstructLab"""
     ensure_storage_directories_exist()
+    # If the caller used `ilab init` then the parent command is `ilab`, so we need to get the
+    # parameter source from the parent command.
+    if ctx.parent.command.name == "ilab":
+        param_source = ctx.parent.get_parameter_source("config_file")
+    # if the caller used `ilab config init` then the parent command is `config`, so we need to get
+    # the parameter source from the parent of the parent command.
+    else:
+        param_source = ctx.parent.parent.get_parameter_source("config_file")
+
+    if param_source == click.core.ParameterSource.ENVIRONMENT:
+        model_path, taxonomy_path, taxonomy_base, cfg = get_params_from_env(ctx.obj)
+    else:
+        try:
+            model_path, taxonomy_path, cfg = get_params_default(
+                interactive,
+                repository,
+                min_taxonomy,
+                model_path,
+                taxonomy_path,
+            )
+        except click.exceptions.Exit as e:
+            ctx.exit(e.exit_code)
+
+    click.echo(f"Generating `{DEFAULTS.CONFIG_FILE}`...")
+    if train_profile is not None:
+        cfg.train = read_train_profile(train_profile)
+
+    cfg.chat.model = model_path
+    cfg.generate.model = model_path
+    cfg.serve.model_path = model_path
+    cfg.generate.taxonomy_path = taxonomy_path
+    cfg.generate.taxonomy_base = taxonomy_base
+    cfg.evaluate.model = model_path
+    cfg.evaluate.mt_bench_branch.taxonomy_path = taxonomy_path
+    write_config(cfg)
+
+    click.secho(
+        "Initialization completed successfully, you're ready to start using `ilab`. Enjoy!",
+        fg="green",
+    )
+
+
+def get_params_from_env(
+    obj: typing.Optional[typing.Any],
+) -> typing.Tuple[str, str, str, Config]:
+    if obj is None or not hasattr(obj, "config"):
+        raise ValueError("obj must not be None and must have a 'config' attribute")
+
+    return (
+        obj.config.serve.model_path,
+        obj.config.generate.taxonomy_path,
+        obj.config.generate.taxonomy_base,
+        obj.config,
+    )
+
+
+def get_params_default(
+    interactive: bool,
+    repository: str,
+    min_taxonomy: bool,
+    model_path: str,
+    taxonomy_path: pathlib.Path,
+) -> typing.Tuple[str, pathlib.Path, Config]:
+    cfg = get_default_config()
     clone_taxonomy_repo = True
     if interactive:
         if exists(DEFAULTS.CONFIG_FILE):
@@ -79,7 +148,7 @@ def init(
                 f"Found {DEFAULTS.CONFIG_FILE} in the current directory, do you still want to continue?"
             )
             if not overwrite:
-                return
+                raise click.exceptions.Exit(0)
         click.echo(
             "Welcome to InstructLab CLI. This guide will help you to setup your environment."
         )
@@ -125,20 +194,5 @@ def init(
         model_path = utils.expand_path(
             click.prompt("Path to your model", default=model_path)
         )
-    click.echo(f"Generating `{DEFAULTS.CONFIG_FILE}`...")
-    cfg = get_default_config()
-    if train_profile is not None:
-        cfg.train = read_train_profile(train_profile)
-    cfg.chat.model = model_path
-    cfg.generate.model = model_path
-    cfg.serve.model_path = model_path
-    cfg.generate.taxonomy_path = taxonomy_path
-    cfg.generate.taxonomy_base = taxonomy_base
-    cfg.evaluate.model = model_path
-    cfg.evaluate.mt_bench_branch.taxonomy_path = taxonomy_path
-    write_config(cfg)
 
-    click.secho(
-        "Initialization completed successfully, you're ready to start using `ilab`. Enjoy!",
-        fg="green",
-    )
+    return model_path, taxonomy_path, cfg
