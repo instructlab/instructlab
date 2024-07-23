@@ -494,3 +494,47 @@ def test_invalid_tasks_dir(cli_runner: CliRunner):
     )
     assert "Tasks dir not found:" in result.output
     assert result.exit_code != 0
+
+
+def test_invalid_model_path_mmlu(cli_runner: CliRunner, tmp_path):
+    test_dir = tmp_path / "test"
+    test_dir.mkdir()
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "mmlu",
+            "--model",
+            test_dir,
+        ],
+    )
+    assert (
+        "MMLU and MMLUBranch can currently only be used with a safetensors directory"
+        in result.output
+    )
+    assert result.exit_code != 0
+
+
+def test_invalid_model_path_mt_bench(cli_runner: CliRunner, tmp_path):
+    test_dir = tmp_path / "test"
+    test_dir.mkdir()
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "mt_bench",
+            "--model",
+            test_dir,
+        ],
+    )
+    assert (
+        "MTBench and MTBenchBranch need to be passed either a safetensors directory or a GGUF file"
+        in result.output
+    )
+    assert result.exit_code != 0
