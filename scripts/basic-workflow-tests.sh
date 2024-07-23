@@ -35,6 +35,7 @@ export E2E_TEST_DIR
 # E2E_TEST_DIR="$(pwd)/__e2e_test"
 export CONFIG_HOME
 export DATA_HOME
+export CACHE_HOME
 export CONFIG_HOME
 
 
@@ -48,6 +49,7 @@ export CONFIG_HOME
 #   None
 # Globals:
 #   DATA_HOME
+#   CACHE_HOME
 #   CONFIG_HOME
 #   STATE_HOME
 #   E2E_TEST_DIR
@@ -61,9 +63,10 @@ function init_e2e_tests() {
 
     CONFIG_HOME=$(python -c 'import platformdirs; print(platformdirs.user_config_dir())')
     DATA_HOME=$(python -c 'import platformdirs; print(platformdirs.user_data_dir())')
+    CACHE_HOME=$(python -c 'import platformdirs; print(platformdirs.user_cache_dir())')
     STATE_HOME=$(python -c 'import platformdirs; print(platformdirs.user_state_dir())')
     # ensure that our mock e2e dirs exist
-    for dir in "${CONFIG_HOME}" "${DATA_HOME}" "${STATE_HOME}"; do
+    for dir in "${CONFIG_HOME}" "${DATA_HOME}" "${STATE_HOME}" "${CACHE_HOME}"; do
     	mkdir -p "${dir}"
     done
 }
@@ -151,9 +154,9 @@ test_download() {
 test_serve() {
     # Accepts an argument of the model, or default here
     if [ "$GRANITE" -eq 1 ]; then
-        model="${1:-${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf}"
+        model="${1:-${CACHE_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf}"
     elif [ "${MIXTRAL}" -eq 1 ]; then
-        model="${1:-${DATA_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf}"
+        model="${1:-${CACHE_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf}"
     else
         model="${1:-}"
     fi
@@ -162,7 +165,7 @@ test_serve() {
         SERVE_ARGS+=("--model-path" "${model}")
     fi
     if [ "$BACKEND" = "vllm" ]; then
-        SERVE_ARGS+=("--model-path" "${DATA_HOME}/instructlab/models/instructlab/merlinite-7b-lab")
+        SERVE_ARGS+=("--model-path" "${CACHE_HOME}/instructlab/models/instructlab/merlinite-7b-lab")
     fi
 
     task Serve the model
@@ -211,11 +214,11 @@ test_taxonomy() {
 test_generate() {
     task Generate synthetic data
     if [ "$GRANITE" -eq 1 ]; then
-        GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
+        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
     elif [ "$MIXTRAL" -eq 1 ]; then
-        GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf")
+        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf")
     elif [ "$BACKEND" = "vllm" ]; then
-        GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/instructlab/merlinite-7b-lab")
+        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/instructlab/merlinite-7b-lab")
     fi
     if [ "$SDG_PIPELINE" = "full" ]; then
         GENERATE_ARGS+=("--pipeline" "full")
@@ -232,7 +235,7 @@ test_train() {
         # the train profile specified in test_init overrides the majority of TRAIN_ARGS, including things like num_epochs. While it looks like much of those settings are being lost, they just have different values here.
         TRAIN_ARGS=("--device=cuda" "--model-path=instructlab/granite-7b-lab" "--data-path=${DATA}" "--lora-quantize-dtype=nf4" "--4-bit-quant" "--effective-batch-size=4" "--is-padding-free=False")
         if [ "$GRANITE" -eq 1 ]; then
-            TRAIN_ARGS+=("--gguf-model-path" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
+            TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
         fi
 
         ilab model train "${TRAIN_ARGS[@]}"
@@ -243,7 +246,7 @@ test_train() {
             TRAIN_ARGS+=("--4-bit-quant")
         fi
         if [ "$GRANITE" -eq 1 ]; then
-            TRAIN_ARGS+=("--gguf-model-path" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
+            TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
         fi
 
         ilab model train "${TRAIN_ARGS[@]}"
@@ -261,7 +264,7 @@ test_evaluate() {
     if [ "$EVAL" -eq 1 ]; then
       export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true
       export HF_DATASETS_TRUST_REMOTE_CODE=true
-      ilab model evaluate --model "${DATA_HOME}/instructlab/models/instructlab/granite-7b-lab" --benchmark mmlu
+      ilab model evaluate --model "${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab" --benchmark mmlu
     fi
 }
 
@@ -312,7 +315,7 @@ test_exec() {
     #   `ilab model convert` is only implemented for macOS with M-series chips for now
     #test_convert
 
-    test_serve "${DATA_HOME}/instructlab/models/ggml-model-f16.gguf"
+    test_serve "${DATA_HOME}/instructlab/checkpoints/model.gguf"
     PID=$!
 
     test_chat
