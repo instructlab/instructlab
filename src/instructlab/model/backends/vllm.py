@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+import json
 import logging
 import os
 import pathlib
@@ -202,6 +203,29 @@ def run_vllm(
     return vllm_process, tmp_files
 
 
+def is_bnb_quantized(model_path: pathlib.Path) -> bool:
+    """
+    Check if provided model has quantization config with bitsandbytes specified.
+
+    Args:
+        model_path    (Path):         The path to the model files
+
+    Returns:
+        bool: Whether or not the model has been quantized via bitsandbytes
+    """
+    config_json = model_path / "config.json"
+    if not model_path.is_dir() or not config_json.is_file():
+        return False
+
+    with config_json.open(encoding="utf-8") as f:
+        config = json.load(f)
+
+    return (
+        "quantization_config" in config
+        and config["quantization_config"].get("quant_method", "") == "bitsandbytes"
+    )
+
+
 def build_vllm_cmd(
     host: str,
     port: int,
@@ -258,6 +282,13 @@ def build_vllm_cmd(
             path = pathlib.Path(chat_template)
             verify_template_exists(path)
             vllm_cmd.extend(["--chat-template", chat_template])
+
+    # Auto-detect whether model is quantized w/ bitsandbytes and add potentially missing args
+    if is_bnb_quantized(model_path):
+        if not contains_argument("--quantization", vllm_args):
+            vllm_cmd.extend(["--quantization", "bitsandbytes"])
+        if not contains_argument("--load-format", vllm_args):
+            vllm_cmd.extend(["--load-format", "bitsandbytes"])
 
     # Force multiprocessing for distributed serving, vLLM will try "ray" if it's installed but we do
     # not support it (yet?). We don't install Ray but we might end up running on systems that have it,
