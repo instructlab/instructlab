@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euf
+set -xeuf
 
 # This is a basic workflow test of the ilab CLI.
 #
@@ -25,6 +25,7 @@ HF_TOKEN=${HF_TOKEN:-}
 SDG_PIPELINE="simple"
 SKIP_TRAIN=${SKIP_TRAIN:-0}
 EVAL=0
+MIXTRAL_GPTQ_MODEL="TheBloke/Mixtral-8x7b-Instruct-v0.1-GPTQ"
 
 export GREP_COLORS='mt=1;33'
 BOLD='\033[1m'
@@ -93,8 +94,8 @@ set_defaults() {
         exit 1
     fi
 
-    if [ "${MIXTRAL}" -eq 1 ] && [ "${BACKEND}" = "vllm" ]; then
-        echo "ERROR: Can not specify -M and -v at the same time."
+    if { [ "${MIXTRAL}" -eq 1 ] && [ "${BACKEND}" != "vllm" ]; } || { [ "${MIXTRAL}" -ne 1 ] && [ "${BACKEND}" == "vllm" ]; }; then
+        echo "ERROR: Must specify -M and -v at the same time."
         exit 1
     fi
 
@@ -121,7 +122,7 @@ test_init() {
     fi
     step Checking config.yaml
     if [ "${MIXTRAL}" -eq 1 ]; then
-        sed -i -e 's|merlinite.*|mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf|' "${CONFIG_HOME}/instructlab/config.yaml"
+        sed -i -e "s|merlinite.*|${MIXTRAL_GPTQ_MODEL}|" "${CONFIG_HOME}/instructlab/config.yaml"
     fi
 }
 
@@ -131,12 +132,8 @@ test_download() {
     if [ "$GRANITE" -eq 1 ]; then
         step Downloading the granite model
         ilab model download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf
-    elif [ "$BACKEND" = "vllm" ]; then
-        step Downloading the model for vLLM
-        ilab download --repository instructlab/merlinite-7b-lab
     elif [ "$MIXTRAL" -eq 1 ]; then
-        step Downloading the mixtral model
-        ilab model download --repository TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF --filename mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf --hf-token "${HF_TOKEN}"
+        ilab model download --repository ${MIXTRAL_GPTQ_MODEL} --hf-token "${HF_TOKEN}"
     else
         step Downloading the default model
         ilab model download
@@ -152,8 +149,8 @@ test_serve() {
     # Accepts an argument of the model, or default here
     if [ "$GRANITE" -eq 1 ]; then
         model="${1:-${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf}"
-    elif [ "${MIXTRAL}" -eq 1 ]; then
-        model="${1:-${DATA_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf}"
+    elif [ "$MIXTRAL" -eq 1 ]; then
+        model="${1:-${DATA_HOME}/instructlab/models/${MIXTRAL_GPTQ_MODEL}}"
     else
         model="${1:-}"
     fi
@@ -161,22 +158,34 @@ test_serve() {
     if [ -n "$model" ]; then
         SERVE_ARGS+=("--model-path" "${model}")
     fi
-    if [ "$BACKEND" = "vllm" ]; then
-        SERVE_ARGS+=("--model-path" "${DATA_HOME}/instructlab/models/instructlab/merlinite-7b-lab")
+    if [ "$MIXTRAL" -eq 1 ]; then
+        SERVE_ARGS+=("--backend" "vllm")
+        SERVE_ARGS+=("--model-family" "mixtral")
+        # These flags must be the final entries in the list since
+        # these arguments are passed directly down to vLLM
+        SERVE_ARGS+=("--" "--tensor-parallel-size" "4")
     fi
 
     task Serve the model
+
+    # output serve log while ilab model serve is starting up
+    touch serve.log
+    tail -f serve.log &
+    TPID=$!
+
     ilab model serve "${SERVE_ARGS[@]}" &> serve.log &
     wait_for_server
+    kill "$TPID"
 }
 
 test_chat() {
     task Chat with the model
-    CHAT_ARGS=()
+    CHAT_ARGS=("--endpoint-url" "http://localhost:8000/v1")
     if [ "$MIXTRAL" -eq 1 ]; then
         CHAT_ARGS+=("--model-family" "mixtral")
+        CHAT_ARGS+=("--model" "${DATA_HOME}/instructlab/models/${MIXTRAL_GPTQ_MODEL}")
     fi
-    printf 'Say "Hello" and nothing else\n' | ilab model chat -qq "${CHAT_ARGS[@]}"
+    ilab model chat -qq "${CHAT_ARGS[@]}" 'Say "Hello" and nothing else\n'
 }
 
 test_taxonomy() {
@@ -210,13 +219,14 @@ test_taxonomy() {
 
 test_generate() {
     task Generate synthetic data
+    GENERATE_ARGS+=("--endpoint-url" "http://localhost:8000/v1")
     if [ "$GRANITE" -eq 1 ]; then
         GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
     elif [ "$MIXTRAL" -eq 1 ]; then
-        GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf")
-    elif [ "$BACKEND" = "vllm" ]; then
-        GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/instructlab/merlinite-7b-lab")
+      GENERATE_ARGS+=("--model" "${DATA_HOME}/instructlab/models/${MIXTRAL_GPTQ_MODEL}")
+      GENERATE_ARGS+=("--enable-serving-output")
     fi
+
     if [ "$SDG_PIPELINE" = "full" ]; then
         GENERATE_ARGS+=("--pipeline" "full")
     fi
@@ -327,10 +337,10 @@ test_exec() {
 }
 
 wait_for_server(){
-    if ! timeout 120 bash -c '
+    if ! timeout 240 bash -c '
         until curl -sS http://localhost:8000/docs &> /dev/null; do
             echo "waiting for server to start"
-            sleep 1
+            sleep 5
         done
     '; then
         echo "server did not start"
