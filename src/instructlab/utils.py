@@ -42,6 +42,16 @@ rules:
 """
 
 
+class SDGTokens:
+    """
+    Provides constant definitions for the tokens used by SDG.
+    """
+
+    USER = "<|user|>"
+    ASSISTANT = "<|assistant|>"
+    PRETRAINING = "<|pretraining|>"
+
+
 class TaxonomyReadingException(Exception):
     """An exception raised during reading of the taxonomy."""
 
@@ -591,15 +601,86 @@ def split_hostport(hostport: str) -> tuple[str, int]:
     return hostname, port
 
 
-def convert_messages_to_legacy_dataset(
+def is_pretraining_dataset(ds: List[MessageSample]) -> bool:
+    """
+    Determines whether or not the given dataset is the phase07 pretraining
+    dataset.
+    """
+    if not ds:
+        return False
+    sample = ds[0]
+    return any(m["role"] == "pretraining" for m in sample["messages"])
+
+
+def get_user_assistant_from_pretraining(pretraining: str) -> Tuple[str, str]:
+    """
+    Given a pretraining message sample which contains the tokens '<|user|>' and '<|assistant|>',
+    return the strings corresponding to the user & assistant inputs.
+
+    This function assumes that a given message contains only a single instance of each
+    `<|user|>` and `<|assistant|>` token, and that `<|user|>` precedes `<|assistant|>`.
+
+    Raises ValueError if neither the '<|user|>' or '<|assistant|>' tokens exist
+    within the given sample.
+    """
+    for token in (SDGTokens.ASSISTANT, SDGTokens.USER):
+        if token not in pretraining:
+            raise ValueError(
+                f"pretraining sample doesn't contain the '{token}' token: {pretraining}"
+            )
+    first, assistant = pretraining.split(SDGTokens.ASSISTANT)
+    _, user = first.split(SDGTokens.USER)
+    return user, assistant
+
+
+def convert_pretraining_messages_to_legacy_dataset(
     dataset: List[MessageSample],
 ) -> List[LegacyMessageSample]:
     """
-    Converts the new HuggingFace messages dataset format to the legacy format.
-    For reference, see: https://huggingface.co/docs/transformers/en/chat_templating#templates-for-chat-modelos
+    Given a Phase07 pretraining dataset that's in the messages format, returns
+    a version that's been converted to be compatible with the legacy ilab data format.
 
-    **Note**: The legacy dataset format assumes only a turn of 1. All extra turns will be dropped.
-    This means that we only look at the first 3 messages, and everything afterwards will be ignored.
+    This function assumes that each sample contains at least a single message with the
+    "pretraining" role. If a "system" role exists then it's also parsed out, otherwise
+    an empty string is set for the system.
+    """
+    converted_dataset: List[LegacyMessageSample] = []
+    for sample in dataset:
+        pretraining = next(
+            (
+                msg["content"]
+                for msg in sample["messages"]
+                if msg["role"] == "pretraining"
+            ),
+            None,
+        )
+        if not pretraining:
+            raise ValueError(
+                "dataset contains sample which lacks a pretraining message"
+            )
+
+        # not sure if 'system' will exist in phase07 or not - leaving here just in case
+        system = next(
+            (msg["content"] for msg in sample["messages"] if msg["role"] == "system"),
+            "",
+        )
+        user, assistant = get_user_assistant_from_pretraining(pretraining)
+        converted_dataset.append(
+            {"system": system, "user": user, "assistant": assistant}
+        )
+    return converted_dataset
+
+
+def convert_standard_messages_to_legacy_dataset(
+    dataset: List[MessageSample],
+) -> List[LegacyMessageSample]:
+    """
+    This function converts a standard dataset that's in the HuggingFace
+    messages format into the legacy ilab format.
+
+    This function assumes that each sample in the dataset has at least 3 messages,
+    of which the first 3 are: system, user, assistant. Any additional messages
+    are ignored.
     """
     converted_dataset: List[LegacyMessageSample] = []
     for dp in dataset:
@@ -614,6 +695,22 @@ def convert_messages_to_legacy_dataset(
         }
         converted_dataset.append(converted)
     return converted_dataset
+
+
+def convert_messages_to_legacy_dataset(
+    dataset: List[MessageSample],
+) -> List[LegacyMessageSample]:
+    """
+    Converts the new HuggingFace messages dataset format to the legacy format.
+    For reference, see: https://huggingface.co/docs/transformers/en/chat_templating#templates-for-chat-modelos
+
+    **Note**: The legacy dataset format assumes only a turn of 1. All extra turns will be dropped.
+    This means that we only look at the first 3 messages, and everything afterwards will be ignored.
+    """
+    # return the converted dataset based on the type
+    if is_pretraining_dataset(dataset):
+        return convert_pretraining_messages_to_legacy_dataset(dataset)
+    return convert_standard_messages_to_legacy_dataset(dataset)
 
 
 def is_messages_dataset(
@@ -636,6 +733,10 @@ def ensure_legacy_dataset(
     Given a dataset that's either in the HF messages format or the legacy ilab train format,
     ensure that the returned dataset is always in the legacy ilab train format.
     """
+    if not dataset:
+        # base case - they are both equivalent
+        return []
+
     if not is_messages_dataset(dataset):
         return dataset  # type: ignore
 
