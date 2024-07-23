@@ -572,7 +572,9 @@ You can use the `ilab` command to evaluate the models you are training with seve
 | MTBenchBranch | Skills | N/A | TODO |
 
 > [!NOTE]
-> MTBench and MTBenchBranch use [prometheus-8x7b-v2.0](https://huggingface.co/prometheus-eval/prometheus-8x7b-v2.0) as the judge model by default. While you do not **need** to use this model as your judge, it is strongly recommended. You can download it via `ilab model download`.
+> MTBench and MTBenchBranch use [prometheus-8x7b-v2.0](https://huggingface.co/prometheus-eval/prometheus-8x7b-v2.0) as the judge model by
+default. While you do not need to use this model as your judge, it is strongly recommended to do so if you have the necessary hardware
+resources. You can download it via `ilab model download`.
 
 #### Running MMLU
 
@@ -580,8 +582,8 @@ Below is an example of running MMLU on a local model with minimal tasks:
 
 ```bash
 $ export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true   # don't set this if you want to run full MMLU 
-$ export ILAB_MODELS_DIR=/home/example-user/.local/share/instructlab/models
-$ ilab model evaluate --benchmark mmlu --model ILAB_MODELS_DIR/instructlab/granite-7b-lab
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+$ ilab model evaluate --benchmark mmlu --model $ILAB_MODELS_DIR/instructlab/granite-7b-lab
 ...
 # KNOWLEDGE EVALUATION REPORT
 
@@ -618,15 +620,15 @@ mmlu_astronomy - 0.55
 ```
 
 > [!NOTE]
-> Currently, MMLU can only be run against against safetensors, either locally or on Hugging Face. GGUFs are not currently supported.
+> Currently, MMLU can only be run against a safetensors model directory, either locally or on Hugging Face. GGUFs are not currently supported.
 
 #### Running MMLUBranch
 
-Below is an example of running MMLUBranch with local safetensor models:
+Below is an example of running MMLUBranch with a local safetensors model directory:
 
 ```bash
-$ export ILAB_TAXONOMY_DIR=/home/example-user/.local/share/instructlab/taxonomy
-$ export ILAB_TASKS_DIR=/home/example-user/.local/share/instructlab/taxonomy
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+$ export ILAB_TASKS_DIR=$HOME/.local/share/instructlab/datasets
 $ ilab model evaluate --benchmark mmlu_branch --model $ILAB_MODELS_DIR/instructlab/granite-7b-lab --base-model $ILAB_MODELS_DIR/instructlab/granite-7b-lab --tasks-dir $ILAB_TASKS_DIR
 ...
 # KNOWLEDGE EVALUATION REPORT
@@ -647,8 +649,7 @@ $ ilab model evaluate --benchmark mmlu_branch --model $ILAB_MODELS_DIR/instructl
 Below is an example of running MMLUBranch with Hugging Face models:
 
 ```bash
-$ export ILAB_TAXONOMY_DIR=/home/example/.local/share/instructlab/taxonomy
-$ export ILAB_TASKS_DIR=/home/example-user/.local/share/instructlab/taxonomy
+$ export ILAB_TASKS_DIR=$HOME/.local/share/instructlab/datasets
 $ ilab model evaluate --benchmark mmlu_branch --model instructlab/granite-7b-lab --base-model instructlab/granite-7b-lab --tasks-dir $ILAB_TASKS_DIR
 ...
 # KNOWLEDGE EVALUATION REPORT
@@ -667,14 +668,14 @@ instructlab/granite-7b-lab
 ```
 
 > [!TIP]
-> You can mix and match running local models and remote models on Hugging Face, so long as the nessessary safetensors are present.
+> You can mix and match running local models and remote models on Hugging Face, so long as a safetensors model is present.
 
 #### Running MTBench
 
-Below is an example of running MTBench with local safetensor models:
+Below is an example of running MTBench with a local safetensors model directory:
 
 ```bash
-$ export ILAB_MODELS_DIR=/home/example-user/.local/share/instructlab/models
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
 $ ilab model evaluate --benchmark mt_bench --model $ILAB_MODELS_DIR/instructlab/granite-7b-lab --judge-model $ILAB_MODELS_DIR/instructlab/granite-7b-lab
 ...
 # SKILL EVALUATION REPORT
@@ -698,7 +699,7 @@ $ ilab model evaluate --benchmark mt_bench --model $ILAB_MODELS_DIR/instructlab/
 Below is an example of running MTBench with local GGUF models:
 
 ```bash
-$ export ILAB_MODELS_DIR=/home/example-user/.local/share/instructlab/models
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
 $ ilab model evaluate --benchmark mt_bench --model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf --judge-model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf
 ...
 # SKILL EVALUATION REPORT
@@ -724,11 +725,11 @@ N/A
 
 #### Running MTBenchBranch
 
-Below is an example of running MTBenchBranch with local safetensor models:
+Below is an example of running MTBenchBranch with a local safetensors model directory:
 
 ```bash
-$ export ILAB_MODELS_DIR=/home/example-user/.local/share/instructlab/models
-$ export ILAB_TAXONOMY_DIR=/home/example-user/.local/share/instructlab/taxonomy
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+$ export ILAB_TAXONOMY_DIR=$HOME/.local/share/instructlab/taxonomy
 $ ilab model evaluate --benchmark mt_bench_branch \
    --model $ILAB_MODELS_DIR/instructlab/granite-7b-lab \
    --judge-model $ILAB_MODELS_DIR/instructlab/granite-7b-lab \
@@ -773,10 +774,12 @@ $ ilab model evaluate --benchmark mt_bench_branch \
 0.32
 ```
 
-Below is an example of running MTBench with local GGUF models:
+Below is an example of running MTBenchBranch with local GGUF models:
 
 ```bash
-ilab model evaluate --benchmark mt_bench_branch --model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf --judge-model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf --base-model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf --taxonomy-path $ILAB_TAXONOMY_DIR --branch rc --base-branch main
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+$ export ILAB_TAXONOMY_DIR=$HOME/.local/share/instructlab/taxonomy
+$ ilab model evaluate --benchmark mt_bench_branch --model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf --judge-model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf --base-model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf --taxonomy-path $ILAB_TAXONOMY_DIR --branch rc --base-branch main
 ...
 # SKILL EVALUATION REPORT
 
