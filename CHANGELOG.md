@@ -2,6 +2,9 @@
 
 ### Features
 
+* `ilab model download` now supports downloading models from OCI registries. Repositories
+   that are prefixed by "docker://" and specified against `--repository` are treated as OCI
+   registries.
 * `ilab` now uses dedicated directories for storing config and data files. On Linux, these
   will generally be the XDG directories: `~/.config/instructlab` for config,
   `~/.local/share/instructlab` for data, and `~/.cache` for temporary files, including downloaded

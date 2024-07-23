@@ -29,7 +29,6 @@ on:
 
 env:
   LC_ALL: en_US.UTF-8
-  REGISTRY_AUTH_FILE: /run/containers/1001/auth.json
 
 defaults:
   run:
@@ -68,10 +67,31 @@ jobs:
         if: matrix.platform != 'macos-latest'
         uses: ./.github/actions/free-disk-space
 
-      - name: Install the expect and skopeo package
+      - name: Install the expect package
         if: startsWith(matrix.platform, 'ubuntu')
         run: |
-          sudo apt-get install -y expect skopeo
+          sudo apt-get install -y expect
+
+      - name: Install go for skopeo
+        if: startsWith(matrix.platform, 'ubuntu')
+        uses: actions/setup-go@v5
+        with:
+          cache: false
+          go-version: 1.22.x
+
+        # Building from source because the latest version of skopeo
+        # available on Ubuntu is v1.4 which is very old and
+        # was running into issues downloading artifacts properly
+      - name: install skopeo from source
+        if: startsWith(matrix.platform, 'ubuntu')
+        run: |
+          sudo apt-get install libgpgme-dev libassuan-dev libbtrfs-dev libdevmapper-dev pkg-config -y
+          git clone --depth 1 https://github.com/containers/skopeo -b v1.15.0 "$GITHUB_WORKSPACE"/src/github.com/containers/skopeo
+          cd "$GITHUB_WORKSPACE"/src/github.com/containers/skopeo
+          make bin/skopeo
+          sudo install -D -m 755 bin/skopeo /usr/bin/skopeo
+          rm -rf "$GITHUB_WORKSPACE"/src/github.com/containers/skopeo
+          skopeo --version
 
       - name: Install tools on MacOS
         if: startsWith(matrix.platform, 'macos')
