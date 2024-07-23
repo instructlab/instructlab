@@ -494,3 +494,25 @@ def test_invalid_tasks_dir(cli_runner: CliRunner):
     )
     assert "Tasks dir not found:" in result.output
     assert result.exit_code != 0
+
+
+def test_invalid_mmlu_model(cli_runner: CliRunner, tmp_path):
+    test_dir = tmp_path / "test"
+    test_dir.mkdir()
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "mmlu",
+            "--model",
+            test_dir,
+        ],
+    )
+    assert (
+        "MMLU and MMLUBranch can currently only be used with safetensors"
+        in result.output
+    )
+    assert result.exit_code != 0

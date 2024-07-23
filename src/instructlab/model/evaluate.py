@@ -126,6 +126,15 @@ def get_evaluator(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
+        # ensure user is passing full safetensors if they specify a local directory
+        # TODO: also allow GGUF once the following is resolved: https://github.com/instructlab/eval/issues/50
+        if os.path.isdir(model):
+            if not backends.is_model_safetensors(pathlib.Path(model)):
+                click.secho(
+                    "MMLU and MMLUBranch can currently only be used with safetensors",
+                    fg="red",
+                )
+                raise click.exceptions.Exit(1)
         if benchmark == Benchmark.MMLU:
             # Third Party
             from instructlab.eval.mmlu import MMLUEvaluator
