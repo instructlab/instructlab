@@ -19,16 +19,15 @@ class TestUtils:
         "instructlab.utils.git_clone_checkout",
         return_value=Mock(spec=git.Repo, working_dir="tests/testdata/temp_repo"),
     )
-    def test_get_document(self, git_clone_checkout):
+    def test_validate_documents(self, git_clone_checkout):
         with open(
             "tests/testdata/knowledge_valid.yaml", "r", encoding="utf-8"
         ) as qnafile:
-            documents = utils.get_documents(
+            utils._validate_documents(
                 source=yaml.safe_load(qnafile).get("document"),
                 skip_checkout=True,
             )
             git_clone_checkout.assert_called_once()
-            assert len(documents) == 2
 
 
 @pytest.mark.parametrize(

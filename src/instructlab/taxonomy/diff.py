@@ -48,7 +48,7 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
     """
     # pylint: disable=import-outside-toplevel
     # Local
-    from ..utils import get_taxonomy_diff, read_taxonomy
+    from ..utils import TaxonomyReadingException, get_taxonomy_diff, validate_taxonomy
 
     if not taxonomy_base:
         taxonomy_base = ctx.obj.config.generate.taxonomy_base
@@ -62,7 +62,7 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
         else:  # taxonomy_path is dir
             try:
                 updated_taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
-            except (SystemExit, GitError) as exc:
+            except (TaxonomyReadingException, GitError) as exc:
                 click.secho(
                     f"Reading taxonomy failed with the following error: {exc}",
                     fg="red",
@@ -71,8 +71,8 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
             for f in updated_taxonomy_files:
                 click.echo(f)
     try:
-        read_taxonomy(None, taxonomy_path, taxonomy_base, yaml_rules)
-    except (SystemExit, yaml.YAMLError) as exc:
+        validate_taxonomy(None, taxonomy_path, taxonomy_base, yaml_rules)
+    except (TaxonomyReadingException, yaml.YAMLError) as exc:
         if not quiet:
             click.secho(
                 f"Reading taxonomy failed with the following error: {exc}",
