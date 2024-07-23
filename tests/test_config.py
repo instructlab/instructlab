@@ -20,7 +20,8 @@ class TestConfig:
         package_name = "instructlab"
         internal_dirname = "internal"
         data_dir = platformdirs.user_data_dir(package_name)
-        default_model = f"{data_dir}/models/merlinite-7b-lab-Q4_K_M.gguf"
+        cache_dir = platformdirs.user_cache_dir(package_name)
+        default_model = f"{cache_dir}/models/merlinite-7b-lab-Q4_K_M.gguf"
 
         assert cfg.general is not None
         assert cfg.version is not None
@@ -78,8 +79,8 @@ class TestConfig:
 
     def _assert_model_defaults(self, cfg):
         package_name = "instructlab"
-        data_dir = platformdirs.user_data_dir(package_name)
-        default_model = f"{data_dir}/models/merlinite-7b-lab-Q4_K_M.gguf"
+        cache_dir = platformdirs.user_cache_dir(package_name)
+        default_model = f"{cache_dir}/models/merlinite-7b-lab-Q4_K_M.gguf"
 
         assert cfg.chat is not None
         assert cfg.chat.model == default_model

@@ -3,9 +3,10 @@
 ### Features
 
 * `ilab` now uses dedicated directories for storing config and data files. On Linux, these
-  will generally be the XDG directories: `~/.config/instructlab` for config and
-  `~/.local/share/instructlab` for data. On MacOS, both the config and data is
-  located at `~/Library/Application Support/instructlab`.
+  will generally be the XDG directories: `~/.config/instructlab` for config,
+  `~/.local/share/instructlab` for data, and `~/.cache` for temporary files, including downloaded
+  models. On MacOS, both the config and data is located at
+  `~/Library/Application Support/instructlab`.
 * A new `ilab config show` command is introduced as a convenience feature, which prints out
    the contents of the ***actively loaded*** config, not just the contents of the config file.
 * `ilab system`: A new command group named `ilab system` has been added which will serve as the

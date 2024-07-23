@@ -60,10 +60,12 @@ function init_test_script() {
 
     configdir_script=$(printf 'import platformdirs; print(platformdirs.user_config_dir("%s"))' "${PACKAGE_NAME}")
     datadir_script=$(printf 'import platformdirs; print(platformdirs.user_data_dir("%s"))' "${PACKAGE_NAME}")
+    cachedir_script=$(printf 'import platformdirs; print(platformdirs.user_cache_dir("%s"))' "${PACKAGE_NAME}")
 
     ILAB_CONFIGDIR_LOCATION=$(python -c "${configdir_script}")
     ILAB_CONFIG_FILE="${ILAB_CONFIGDIR_LOCATION}/config.yaml"
     ILAB_DATA_DIR=$(python -c "${datadir_script}")
+    ILAB_CACHE_DIR=$(python -c "${cachedir_script}")
 
     # ensure these exist at the time of running the test
     for d in "${CONFIG_DIR}" "${DATA_DIR}" "${CACHE_DIR}"; do
@@ -118,8 +120,8 @@ cleanup() {
     local original_model_filename="${original_model_name}.gguf"
     local temporary_model_filename='foo.gguf'
     sed -i.bak "s/baz/${original_model_name}/g" "${ILAB_CONFIG_FILE}"
-    mv "${ILAB_DATA_DIR}/models/${temporary_model_filename}" "${ILAB_DATA_DIR}/models/${original_model_filename}" || true
-    rm -f "${ILAB_CONFIG_FILE}.bak" serve.log "${ILAB_DATA_DIR}/models/${temporary_model_filename}"
+    mv "${ILAB_CACHE_DIR}/models/${temporary_model_filename}" "${ILAB_CACHE_DIR}/models/${original_model_filename}" || true
+    rm -f "${ILAB_CONFIG_FILE}.bak" serve.log "${ILAB_CACHE_DIR}/models/${temporary_model_filename}"
     set -e
 }
 
@@ -317,8 +319,9 @@ test_model_train() {
     if [[ "$(uname)" == Linux ]]; then
         # real `ilab model train` on Linux produces models/ggml-model-f16.gguf
         # fake gml-model-f16.gguf the same as merlinite-7b-lab-Q4_K_M.gguf
-        test -f "${ILAB_DATA_DIR}/models/ggml-model-f16.gguf" || \
-            ln -s merlinite-7b-lab-Q4_K_M.gguf "${ILAB_DATA_DIR}/models/ggml-model-f16.gguf"
+        checkpoints_dir="${ILAB_DATA_DIR}/checkpoints/ggml-model-f16.gguf"
+        test -f "${checkpoints_dir}" || \
+            ln -s "${ILAB_CACHE_DIR}/models/merlinite-7b-lab-Q4_K_M.gguf" "${checkpoints_dir}"
     fi
 }
 
@@ -444,8 +447,8 @@ function to_upper() {
 }
 
 test_model_print(){
-    local src_model="${ILAB_DATA_DIR}/models/merlinite-7b-lab-Q4_K_M.gguf"
-    local target_model="${ILAB_DATA_DIR}/models/foo.gguf"
+    local src_model="${ILAB_CACHE_DIR}/models/merlinite-7b-lab-Q4_K_M.gguf"
+    local target_model="${ILAB_CACHE_DIR}/models/foo.gguf"
     cp "${src_model}" "${target_model}"
     ilab model serve --model-path "${target_model}" &
     PID_SERVE=$!
