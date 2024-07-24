@@ -10,7 +10,7 @@ from instructlab import configuration, lab
 
 def test_ilab_config_show(cli_runner: CliRunner) -> None:
     result = cli_runner.invoke(lab.ilab, ["--config", "DEFAULT", "config", "show"])
-    assert result.exit_code == 0, result.stderr
+    assert result.exit_code == 0, result.stdout
 
     parsed = yaml.safe_load(result.stdout_bytes)
     assert parsed
