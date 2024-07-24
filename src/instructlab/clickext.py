@@ -2,6 +2,7 @@
 """Click extensions for InstructLab"""
 
 # Standard
+from importlib import metadata
 import functools
 import json
 import logging
@@ -11,9 +12,86 @@ import typing
 
 # Third Party
 from click.core import ParameterSource
+from click_didyoumean import DYMGroup
 import click
 
 logger = logging.getLogger(__name__)
+
+
+class LazyEntryPointGroup(DYMGroup):
+    """Lazy load commands from an entry point group
+
+    Entry points are defined in `pyproject.toml`. Example:
+
+        [project.entry-points."instructlab.command.config"]
+        "init" = "instructlab.config.init:init"
+
+    This defines the command `ilab config init` with the function
+    `from instructlab.config.init import init` as click command.
+    """
+
+    def __init__(self, *args, ep_group: str, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.eps: metadata.EntryPoints = metadata.entry_points(group=ep_group)
+        if not self.eps.names:
+            raise ValueError(f"{ep_group} is empty")
+
+    def list_commands(self, ctx: click.Context) -> list[str]:
+        result = list(super().list_commands(ctx))
+        result.extend(sorted(self.eps.names))
+        return result
+
+    def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:
+        if cmd_name in self.eps.names:
+            cmd = self.eps[cmd_name].load()
+        else:
+            cmd = super().get_command(ctx, cmd_name)
+        if typing.TYPE_CHECKING:
+            assert isinstance(cmd, click.Command) or cmd is None
+        return cmd
+
+
+class ExpandAliasesGroup(LazyEntryPointGroup):
+    """Lazy load commands and aliases from entry point groups"""
+
+    def __init__(self, *args, alias_ep_group: str, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.alias_eps: metadata.EntryPoints = metadata.entry_points(
+            group=alias_ep_group
+        )
+
+    def get_alias_info(self, cmd_name: str) -> tuple[str, str]:
+        ep: metadata.EntryPoint = self.alias_eps[cmd_name]
+        # assume that the second item of the module name is the group
+        return ep.module.split(".", 3)[1], ep.attr
+
+    def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:
+        if cmd_name in self.alias_eps.names:
+            cmd = self.alias_eps[cmd_name].load()
+            if typing.TYPE_CHECKING:
+                assert isinstance(cmd, click.Command)
+            group, primary = self.get_alias_info(cmd_name)
+            click.echo(
+                "You are using an aliased command, this will be deprecated "
+                "in a future release. Please consider using "
+                f"`ilab {group} {primary}` instead"
+            )
+            return cmd
+        return super().get_command(ctx, cmd_name)
+
+    def format_epilog(self, ctx: click.Context, formatter):
+        """Inject our aliases into the help string"""
+        if self.alias_eps.names:
+            formatter.write_paragraph()
+            formatter.write_text("Aliases:")
+            with formatter.indentation():
+                cmd_names = sorted(self.alias_eps.names)
+                pad = max(len(cmd_name) for cmd_name in cmd_names)
+                for cmd_name in cmd_names:
+                    group, primary = self.get_alias_info(cmd_name)
+                    formatter.write_text(f"{cmd_name:<{pad}}  {group} {primary}\n")
+
+        super().format_epilog(ctx, formatter)
 
 
 class ConfigOption(click.Option):
