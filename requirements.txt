@@ -33,8 +33,8 @@ sentencepiece>=0.2.0
 tokenizers>=0.11.1
 toml>=0.10.2
 # Habana Labs 1.16.2 has PyTorch 2.2.2a0+gitxxx pre-release
-torch>=2.2.2a0,<3.0.0 ; python_version == '3.10'
-torch>=2.3.0,<3.0.0 ; python_version >= '3.11'
+torch>=2.2.2a0,<2.4.0 ; python_version == '3.10'
+torch>=2.3.0,<2.4.0 ; python_version >= '3.11'
 tqdm>=4.66.2
 # 'optimum' for Intel Gaudi needs transformers <4.41.0,>=4.40.0
 transformers>=4.40.0 ; python_version == '3.10'
