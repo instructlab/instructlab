@@ -1,17 +1,17 @@
 # SPDX-License-Identifier: Apache-2.0
 
-click>=8.1.7,<9.0.0
-click-didyoumean>=0.3.0
-datasets>=2.18.0
-gguf>=0.6.0
-GitPython>=3.1.42
-httpx>=0.25.0
+click>=8.1.7,<8.2.0
+click-didyoumean>=0.3.0,<0.4.0
+datasets>=2.18.0,<2.19.0
+gguf>=0.6.0,<0.7.0
+GitPython>=3.1.42,<3.2.0
+httpx>=0.25.0,<0.26.0
 instructlab-eval>=0.0.9
 instructlab-quantize>=0.1.0
 instructlab-schema>=0.3.1
 instructlab-sdg>=0.2.0
 instructlab-training>=0.3.0
-jsonschema>=4.21.1
+jsonschema>=4.21.1,<4.22.0
 llama_cpp_python[server]==0.2.79
 mlx>=0.5.1,<0.6.0; sys_platform == 'darwin' and platform_machine == 'arm64'
 # HabanaLabs / Intel Gaudi env comes with Python 3.10 and slightly older
@@ -19,29 +19,29 @@ mlx>=0.5.1,<0.6.0; sys_platform == 'darwin' and platform_machine == 'arm64'
 # Habana installer has NumPy 1.23.5
 numpy>=1.23.5,<2.0.0 ; python_version == '3.10'
 numpy>=1.26.4,<2.0.0 ; python_version >= '3.11'
-openai>=1.13.3
-peft>=0.9.0
-platformdirs>=4.2
-prompt-toolkit>=3.0.38
-pydantic>=2.7.4
-pydantic_yaml>=1.2.0
-PyYAML>=6.0.0
-rich>=13.3.1
-rouge-score>=0.1.2
-sentencepiece>=0.2.0
+openai>=1.13.3,<1.14.0
+peft>=0.9.0,<0.10.0
+platformdirs>=4.2,<4.3
+prompt-toolkit>=3.0.38,<3.1.0
+pydantic>=2.7.4,<2.8.0
+pydantic_yaml>=1.2.0,<1.3.0
+PyYAML>=6.0.0,<6.1.0
+referencing>=0.35.0,<0.36.0
+rich>=13.3.1,<13.4.0
+rouge-score>=0.1.2,<0.2.0
+sentencepiece>=0.2.0,<0.3.0
 # "old" version required for vLLM on CUDA to build
-tokenizers>=0.11.1
-toml>=0.10.2
+tokenizers>=0.11.1,<0.20.0
+toml>=0.10.2,<0.11.0
 # Habana Labs 1.16.2 has PyTorch 2.2.2a0+gitxxx pre-release
 torch>=2.2.2a0,<2.4.0 ; python_version == '3.10'
 torch>=2.3.0,<2.4.0 ; python_version >= '3.11'
-tqdm>=4.66.2
+tqdm>=4.66.2,<4.67.0
 # 'optimum' for Intel Gaudi needs transformers <4.41.0,>=4.40.0
-transformers>=4.40.0 ; python_version == '3.10'
-transformers>=4.41.2 ; python_version >= '3.11'
-trl>=0.9.4
-wandb>=0.16.4
+transformers>=4.40.0,<4.44.0 ; python_version == '3.10'
+transformers>=4.41.2,<4.44.0 ; python_version >= '3.11'
+trl>=0.9.4,<0.10.0
+wandb>=0.16.4,<0.17.0
 # the below library should NOT be imported into any python files
 # it is for CLI usage ONLY
-yamllint>=1.35.1
-referencing>=0.35.0
+yamllint>=1.35.1,<1.36.0
