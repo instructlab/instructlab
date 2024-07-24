@@ -5,18 +5,22 @@ from pathlib import Path
 import abc
 import logging
 import os
+import re
 import subprocess
 
 # Third Party
 from huggingface_hub import hf_hub_download, list_repo_files
 from huggingface_hub import logging as hf_logging
 from huggingface_hub import snapshot_download
+from packaging import version
 import click
 
 # First Party
 from instructlab import clickext
 from instructlab.configuration import DEFAULTS
 from instructlab.utils import _extract_SHA, _load_json, is_huggingface_repo, is_oci_repo
+
+logger = logging.getLogger(__name__)
 
 
 class Downloader(abc.ABC):
@@ -195,6 +199,9 @@ class OCIDownloader(Downloader):
         oci_dir = f"{DEFAULTS.OCI_DIR}/{model_name}"
         os.makedirs(oci_dir, exist_ok=True)
 
+        # Check if skopeo is installed and the version is at least 1.15
+        check_skopeo_version()
+
         command = [
             "skopeo",
             "copy",
@@ -298,9 +305,45 @@ def download(ctx, repository, release, filename, model_dir, hf_token):
 
     try:
         downloader.download()
+    except FileNotFoundError as exc:
+        click.secho(
+            "skopeo is not installed, please install recommended version 1.15",
+            fg="red",
+        )
+        raise click.exceptions.Exit(1) from exc
     except Exception as exc:
         click.secho(
             f"Downloading model failed with the following error: {exc}",
             fg="red",
         )
         raise click.exceptions.Exit(1)
+
+
+def check_skopeo_version():
+    """
+    Check if skopeo is installed and the version is at least 1.15
+    This is required for downloading models from OCI registries.
+    The function intentionally does not raise an exception if the version is lower than 1.15, other
+    versions might work as well, but it is recommended to use at least 1.15.0
+    """
+    # Run the 'skopeo --version' command and capture the output
+    result = subprocess.run(
+        ["skopeo", "--version"], capture_output=True, text=True, check=True
+    )
+    logger.debug(f"'skopeo --version' output: {result.stdout}")
+
+    # Extract the version number using a regular expression
+    match = re.search(r"skopeo version (\d+\.\d+\.\d+)", result.stdout)
+    if match:
+        installed_version = match.group(1)
+        logger.debug(f"detected skopeo version: {installed_version}")
+
+        # Compare the extracted version with the required version
+        if version.parse(installed_version) < version.parse("1.15.0"):
+            logger.error(
+                f"skopeo version {installed_version} is lower than 1.15. Consider upgrading. Downloading the model might fail."
+            )
+    else:
+        logger.error(
+            "Failed to determine skopeo version. Recommended version is 1.15. Downloading the model might fail."
+        )
