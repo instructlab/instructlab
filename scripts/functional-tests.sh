@@ -169,21 +169,30 @@ test_oci_model_download_with_vllm_backend(){
     REGISTRY_AUTH_FILE=$HOME/auth.json ilab model download --repository docker://quay.io/ai-lab/models/granite-7b-lab --release latest --model-dir models/instructlab
 
     patterns=(
-        "models/instructlab/config.json"
-        "models/instructlab/tokenizer.json"
-        "models/instructlab/tokenizer_config.json"
-        "models/instructlab/*.safetensors"
+        "models/instructlab/granite-7b-lab/config.json"
+        "models/instructlab/granite-7b-lab/tokenizer.json"
+        "models/instructlab/granite-7b-lab/tokenizer_config.json"
+        "models/instructlab/granite-7b-lab/*.safetensors"
     )
 
+    match_count=0
     for pattern in "${patterns[@]}"
     do
-        matching_files=("$pattern")
-        if [ ${#matching_files[@]} -eq 0 ]
-        then
-            echo "No files found matching pattern: $pattern"
-            exit 1
+        # shellcheck disable=SC2206
+        # we want to split the output into an array
+        matching_files=($pattern)
+        if [ ! -s "${matching_files[0]}" ]; then
+            echo "No files found matching pattern: $pattern: ${matching_files[0]}"
+        else
+            echo "Files found matching pattern: $pattern: ${matching_files[0]}"
+            match_count=$((match_count+1))
         fi
     done
+
+    if [ $match_count -ne ${#patterns[@]} ]; then
+        echo "Error: Not all files were found, only $match_count files were found"
+        exit 1
+    fi
 }
 
 # check that ilab model serve is working

@@ -208,21 +208,15 @@ class OCIDownloader(Downloader):
             f"{self.repository}:{self.release}",
             f"oci:{oci_dir}",
         ]
-        if (
-            self.ctx.obj is not None
-            and self.ctx.obj.config.general.log_level == logging.DEBUG
-        ):
+        if self.ctx.obj is not None and logger.isEnabledFor(logging.DEBUG):
             command.append("--debug")
+        logger.debug(f"Running skopeo command: {command}")
 
         try:
             subprocess.run(command, check=True)
-        except FileNotFoundError as exc:
-            raise FileNotFoundError(
-                "skopeo not installed, but required to perform downloads from OCI registries. Exiting",
-            ) from exc
         except Exception as e:
             click.secho(
-                f"unexpected error: {e}",
+                f"Failed to run skopeo command: {e}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
