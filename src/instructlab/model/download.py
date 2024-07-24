@@ -18,7 +18,7 @@ import click
 # First Party
 from instructlab import clickext
 from instructlab.configuration import DEFAULTS
-from instructlab.utils import _extract_SHA, _load_json, is_huggingface_repo, is_oci_repo
+from instructlab.utils import is_huggingface_repo, is_oci_repo, load_json
 
 logger = logging.getLogger(__name__)
 
@@ -28,10 +28,12 @@ class Downloader(abc.ABC):
 
     def __init__(
         self,
+        ctx,
         repository: str,
         release: str,
         download_dest: str,
     ) -> None:
+        self.ctx = ctx
         self.repository = repository
         self.release = release
         self.download_dest = download_dest
@@ -54,18 +56,17 @@ class HFDownloader(Downloader):
         ctx,
     ) -> None:
         super().__init__(
-            repository=repository, release=release, download_dest=download_dest
+            ctx=ctx, repository=repository, release=release, download_dest=download_dest
         )
         self.filename = filename
         self.hf_token = hf_token
-        self.ctx = ctx
 
     def download(self):
         """
         Download specified model from Hugging Face
         """
         click.echo(
-            f"Downloading model from Hugging Face : {self.repository}@{self.release} to {self.download_dest}..."
+            f"Downloading model from Hugging Face: {self.repository}@{self.release} to {self.download_dest}..."
         )
 
         if self.hf_token == "" and "instructlab" not in self.repository:
@@ -103,27 +104,25 @@ class HFDownloader(Downloader):
 
         except Exception as exc:
             click.secho(
-                f"Downloading GGUF model failed with the following Hugging Face  Hub error: {exc}",
+                f"Downloading GGUF model failed with the following Hugging Face Hub error: {exc}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
 
     def download_safetensors(self) -> None:
         try:
-            os.makedirs(
-                name=os.path.join(self.download_dest, self.repository),
-                exist_ok=True,
-            )
+            local_dir = os.path.join(self.download_dest, self.repository)
+            os.makedirs(name=local_dir, exist_ok=True)
 
             snapshot_download(
                 token=self.hf_token,
                 repo_id=self.repository,
                 revision=self.release,
-                local_dir=os.path.join(self.download_dest, self.repository),
+                local_dir=local_dir,
             )
         except Exception as exc:
             click.secho(
-                f"Downloading safetensors model failed with the following Hugging Face  Hub error: {exc}",
+                f"Downloading safetensors model failed with the following Hugging Face Hub error: {exc}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
@@ -135,11 +134,9 @@ class OCIDownloader(Downloader):
     We are leveraging OCI v1.1 for this functionality
     """
 
-    def __init__(self, repository: str, release: str, download_dest: str, ctx) -> None:
-        super().__init__(
-            repository=repository, release=release, download_dest=download_dest
-        )
-        self.ctx = ctx
+    @staticmethod
+    def _extract_sha(sha: str):
+        return re.search("sha256:(.*)", sha)
 
     def _build_oci_model_file_map(self, oci_model_path: str) -> dict:
         """
@@ -149,35 +146,35 @@ class OCIDownloader(Downloader):
         index_hash = ""
         index_ref_path = f"{oci_model_path}/index.json"
         try:
-            index_ref = _load_json(Path(index_ref_path))
+            index_ref = load_json(Path(index_ref_path))
             match = None
             for manifest in index_ref["manifests"]:
                 if (
                     manifest["mediaType"]
                     == "application/vnd.oci.image.manifest.v1+json"
                 ):
-                    match = _extract_SHA(manifest["digest"])
+                    match = self._extract_sha(manifest["digest"])
+                    break
 
             if match:
                 index_hash = match.group(1)
             else:
                 raise ValueError(
-                    f"could not find hash for index file at: {oci_model_path}"
+                    f"failed to find hash in the index file: {oci_model_path}"
                 )
         except Exception as exc:
-            raise exc
+            raise ValueError(
+                f"failed to extract image hash from index file: {oci_model_path}"
+            ) from exc
 
         blob_dir = f"{oci_model_path}/blobs/sha256"
-        try:
-            index = _load_json(Path(f"{blob_dir}/{index_hash}"))
-        except Exception as exc:
-            raise exc
+        index = load_json(Path(f"{blob_dir}/{index_hash}"))
 
         title_ref = "org.opencontainers.image.title"
         oci_model_file_map = {}
         try:
             for layer in index["layers"]:
-                match = _extract_SHA(layer["digest"])
+                match = self._extract_sha(layer["digest"])
 
                 if match:
                     blob_name = match.group(1)
@@ -222,23 +219,25 @@ class OCIDownloader(Downloader):
             raise click.exceptions.Exit(1)
 
         file_map = self._build_oci_model_file_map(oci_dir)
+        if not file_map:
+            click.secho(
+                "Failed to find OCI image blob hashes",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
 
         blob_dir = f"{oci_dir}/blobs/sha256/"
-        for _, _, files in os.walk(blob_dir):
-            for name in files:
-                if name not in file_map:
-                    continue
-                dest = file_map[name]
-                dest_model_path = os.path.join(self.download_dest, model_name, dest)
-                # unlink any existing version of the file
-                if os.path.exists(dest_model_path):
-                    os.unlink(dest_model_path)
+        for name, dest in file_map.items():
+            dest_model_path = os.path.join(self.download_dest, model_name, dest)
+            # unlink any existing version of the file
+            if os.path.exists(dest_model_path):
+                os.unlink(dest_model_path)
 
-                # create symlink to files in cache, to avoid redownloading if model has been downloaded before
-                os.symlink(
-                    os.path.join(blob_dir, name),
-                    dest_model_path,
-                )
+            # create symlink to files in cache to avoid redownloading if model has been downloaded before
+            os.symlink(
+                os.path.join(blob_dir, name),
+                dest_model_path,
+            )
 
 
 @click.command()
@@ -246,13 +245,13 @@ class OCIDownloader(Downloader):
     "--repository",
     default=DEFAULTS.MERLINITE_GGUF_REPO,  # TODO: add to config.yaml
     show_default=True,
-    help="Hugging Face  or OCI repository of the model to download.",
+    help="Hugging Face or OCI repository of the model to download.",
 )
 @click.option(
     "--release",
     default="main",  # TODO: add to config.yaml
     show_default=True,
-    help="The revision of the model to download - e.g. a branch, tag, or commit hash for Hugging Face  repositories and tag or commit hash for OCI repositories.",
+    help="The revision of the model to download - e.g. a branch, tag, or commit hash for Hugging Face repositories and tag or commit hash for OCI repositories.",
 )
 @click.option(
     "--filename",
@@ -279,16 +278,16 @@ def download(ctx, repository, release, filename, model_dir, hf_token):
 
     if is_oci_repo(repository):
         downloader = OCIDownloader(
-            repository=repository, release=release, download_dest=model_dir, ctx=ctx
+            ctx=ctx, repository=repository, release=release, download_dest=model_dir
         )
     elif is_huggingface_repo(repository):
         downloader = HFDownloader(
+            ctx=ctx,
             repository=repository,
             release=release,
             download_dest=model_dir,
             filename=filename,
             hf_token=hf_token,
-            ctx=ctx,
         )
     else:
         click.secho(
@@ -299,12 +298,6 @@ def download(ctx, repository, release, filename, model_dir, hf_token):
 
     try:
         downloader.download()
-    except FileNotFoundError as exc:
-        click.secho(
-            "skopeo is not installed, please install recommended version 1.15",
-            fg="red",
-        )
-        raise click.exceptions.Exit(1) from exc
     except Exception as exc:
         click.secho(
             f"Downloading model failed with the following error: {exc}",
@@ -313,17 +306,28 @@ def download(ctx, repository, release, filename, model_dir, hf_token):
         raise click.exceptions.Exit(1)
 
 
+_RECOMMENDED_SCOPEO_VERSION = "1.15.0"
+
+
 def check_skopeo_version():
     """
-    Check if skopeo is installed and the version is at least 1.15
+    Check if skopeo is installed and the version is at least 1.15.0
     This is required for downloading models from OCI registries.
     The function intentionally does not raise an exception if the version is lower than 1.15, other
     versions might work as well, but it is recommended to use at least 1.15.0
     """
     # Run the 'skopeo --version' command and capture the output
-    result = subprocess.run(
-        ["skopeo", "--version"], capture_output=True, text=True, check=True
-    )
+    try:
+        result = subprocess.run(
+            ["skopeo", "--version"], capture_output=True, text=True, check=True
+        )
+    except FileNotFoundError as exc:
+        click.secho(
+            f"skopeo is not installed, please install recommended version {_RECOMMENDED_SCOPEO_VERSION}",
+            fg="red",
+        )
+        raise click.exceptions.Exit(1) from exc
+
     logger.debug(f"'skopeo --version' output: {result.stdout}")
 
     # Extract the version number using a regular expression
@@ -333,11 +337,13 @@ def check_skopeo_version():
         logger.debug(f"detected skopeo version: {installed_version}")
 
         # Compare the extracted version with the required version
-        if version.parse(installed_version) < version.parse("1.15.0"):
+        if version.parse(installed_version) < version.parse(
+            _RECOMMENDED_SCOPEO_VERSION
+        ):
             logger.error(
-                f"skopeo version {installed_version} is lower than 1.15. Consider upgrading. Downloading the model might fail."
+                f"skopeo version {installed_version} is lower than {_RECOMMENDED_SCOPEO_VERSION}. Consider upgrading. Downloading the model might fail."
             )
     else:
         logger.error(
-            "Failed to determine skopeo version. Recommended version is 1.15. Downloading the model might fail."
+            f"Failed to determine skopeo version. Recommended version is {_RECOMMENDED_SCOPEO_VERSION}. Downloading the model might fail."
         )
