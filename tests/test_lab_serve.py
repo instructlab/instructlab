@@ -1,13 +1,16 @@
 # Standard
 from unittest import mock
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 import pathlib
 
 # Third Party
 from click.testing import CliRunner
+import click
+import pytest
 
 # First Party
 from instructlab import lab
+from instructlab.model.serve import warn_for_unsuported_backend_param
 
 
 def vllm_setup_test(mock_popen, mock_determine, runner, args):
@@ -104,3 +107,36 @@ def test_chat_manual(mock_popen, mock_determine, _, cli_runner: CliRunner):
     )
     assert_vllm_args(args)
     assert_template(args=args, expect_chat=False, path_chat=False, chat_value="")
+
+
+@pytest.mark.parametrize(
+    "param,expected_call_count",
+    [
+        ("gpu_layers", 1),
+        ("num_threads", 1),
+        ("max_ctx_size", 1),
+        (
+            "supported_param",
+            0,
+        ),  # Example of a parameter that should not trigger a warning
+    ],
+)
+def test_warn_for_unsuported_backend_param(param, expected_call_count):
+    with patch("instructlab.model.serve.logger.warning") as mock_warning:
+        # Create a mock click.Context object
+        ctx = MagicMock()
+
+        # Set the get_parameter_source to return COMMANDLINE for the tested param
+        ctx.get_parameter_source.side_effect = (
+            lambda x: click.core.ParameterSource.COMMANDLINE if x == param else None
+        )
+
+        # Call the function to test
+        warn_for_unsuported_backend_param(ctx)
+
+        # Assert that logger.warning was called the expected number of times
+        assert mock_warning.call_count == expected_call_count
+        if expected_call_count > 0:
+            mock_warning.assert_called_with(
+                f"Option '--{param.replace('_','-')}' not supported by the backend."
+            )
