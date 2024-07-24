@@ -21,7 +21,11 @@ from instructlab.model.backends.vllm import build_vllm_cmd
 def create_safetensors_or_bin_model_files(
     model_path: pathlib.Path, model_file_type: str, valid: bool
 ):
-    test_json_dict = {"a": 1, "b": 2}
+    test_json_dict = {
+        "a": 1,
+        "b": 2,
+        "quantization_config": {"quant_method": "bitsandbytes"},
+    }
     json_object = json.dumps(test_json_dict, indent=4)
 
     for file in ["tokenizer.json", "tokenizer_config.json"]:
@@ -279,6 +283,40 @@ def test_build_vllm_cmd_with_args_provided(tmp_path: pathlib.Path):
         str(chat_template),
     ] + vllm_args
 
+    cmd, _ = build_vllm_cmd(
+        host, port, model_family, model_path, str(chat_template), vllm_args
+    )
+    assert cmd == expected_cmd
+
+
+def test_build_vllm_cmd_with_bnb_quant(tmp_path: pathlib.Path):
+    host = "localhost"
+    port = 8080
+    model_path = tmp_path / "model"
+    model_family = ""
+    chat_template = tmp_path / "chat_template.jinja2"
+    chat_template.touch()
+    vllm_args: list[str] = []
+    expected_cmd = [
+        sys.executable,
+        "-m",
+        "vllm.entrypoints.openai.api_server",
+        "--host",
+        host,
+        "--port",
+        str(port),
+        "--model",
+        str(model_path),
+        "--chat-template",
+        str(chat_template),
+        "--quantization",
+        "bitsandbytes",
+        "--load-format",
+        "bitsandbytes",
+        "--distributed-executor-backend",
+        "mp",
+    ]
+    create_safetensors_or_bin_model_files(model_path, "safetensors", True)
     cmd, _ = build_vllm_cmd(
         host, port, model_family, model_path, str(chat_template), vllm_args
     )
