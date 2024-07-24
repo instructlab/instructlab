@@ -562,14 +562,14 @@ The model can also be downloaded and served locally.
 
 ### 🧪 Evaluate the newly trained model
 
-You can use the `ilab` command to evaluate the models you are training with several benchmarks. Currently, four benchmarks are supported.
+You can use the `ilab model evaluate` command to evaluate the models you are training with several benchmarks. Currently, four benchmarks are supported.
 
-| Benchmark | Measures | Full Name | Description |
-| --- | --- | --- | --- |
-| MMLU | Knowledge | Massive Multitask Language Understanding | TODO |
-| MMLUBranch | Knowledge | N/A | TODO |
-| MTBench | Skills | Multi-turn Benchmark | TODO |
-| MTBenchBranch | Skills | N/A | TODO |
+| Benchmark | Measures | Full Name | Description | Reference |
+| --- | --- | --- | --- | --- |
+| MMLU | Knowledge | Massive Multitask Language Understanding | Tests a model against a standardized set of knowledge data and produces a score based on the model's performance | [Measuring Massive Multitask Language Understanding](https://arxiv.org/abs/2009.03300) |
+| MMLUBranch | Knowledge | N/A | Tests your knowledge contributions against a base model and produces a score based on the difference in performance | N/A |
+| MTBench | Skills | Multi-turn Benchmark | Tests a model's skill at applying its knowledge against a judge model and produces a score based on the model's performance | [MT-Bench (Multi-turn Benchmark)](https://klu.ai/glossary/mt-bench-eval) |
+| MTBenchBranch | Skills | N/A | Tests your skill contributions against a judge model and produces a score based on the difference in performance | N/A |
 
 > [!NOTE]
 > MTBench and MTBenchBranch use [prometheus-8x7b-v2.0](https://huggingface.co/prometheus-eval/prometheus-8x7b-v2.0) as the judge model by
