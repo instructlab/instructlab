@@ -228,3 +228,9 @@ tests = ["tests/"]
 
 [tool.coverage.report]
 exclude_lines = ["@abc.abstractmethod", "if typing.TYPE_CHECKING"]
+
+[tool.pytest.ini_options]
+# don't collect src/instructlab/model/linux_test.py
+testpaths = "tests"
+# verbose diffs
+verbosity_assertions = 2
