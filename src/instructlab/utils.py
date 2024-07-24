@@ -624,20 +624,13 @@ def is_huggingface_repo(repo_name: str) -> bool:
     return re.match(pattern, repo_name) is not None
 
 
-def _load_json(file_path: Path):
+def load_json(file_path: Path):
     try:
-        with open(
-            file_path,
-            encoding="UTF-8",
-        ) as f:
+        with open(file_path, encoding="UTF-8") as f:
             return json.load(f)
     except FileNotFoundError as e:
         raise ValueError(f"file not found: {file_path}") from e
     except json.JSONDecodeError as e:
         raise ValueError(f"could not read JSON file: {file_path}") from e
     except Exception as e:
-        raise ValueError("unexpected error occurred:") from e
-
-
-def _extract_SHA(SHAstr: str):
-    return re.search("sha256:(.*)", SHAstr)
+        raise ValueError("unexpected error occurred") from e
