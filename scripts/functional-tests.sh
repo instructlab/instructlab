@@ -161,6 +161,40 @@ fi
 # download the latest version of the ilab
 ilab model download
 
+test_oci_model_download_with_vllm_backend(){
+   # Enable globstar for recursive globbing
+    shopt -s globstar
+
+    # Run the ilab model download command with REGISTRY_AUTH_FILE
+    REGISTRY_AUTH_FILE=$HOME/auth.json ilab model download --repository docker://quay.io/ai-lab/models/granite-7b-lab --release latest --model-dir models/instructlab
+
+    patterns=(
+        "models/instructlab/granite-7b-lab/config.json"
+        "models/instructlab/granite-7b-lab/tokenizer.json"
+        "models/instructlab/granite-7b-lab/tokenizer_config.json"
+        "models/instructlab/granite-7b-lab/*.safetensors"
+    )
+
+    match_count=0
+    for pattern in "${patterns[@]}"
+    do
+        # shellcheck disable=SC2206
+        # we want to split the output into an array
+        matching_files=($pattern)
+        if [ ! -s "${matching_files[0]}" ]; then
+            echo "No files found matching pattern: $pattern: ${matching_files[0]}"
+        else
+            echo "Files found matching pattern: $pattern: ${matching_files[0]}"
+            match_count=$((match_count+1))
+        fi
+    done
+
+    if [ $match_count -ne ${#patterns[@]} ]; then
+        echo "Error: Not all files were found, only $match_count files were found"
+        exit 1
+    fi
+}
+
 # check that ilab model serve is working
 test_bind_port(){
     local formatted_script
@@ -546,6 +580,8 @@ test_server_chat_template() {
 # MAIN #
 ########
 # call cleanup in-between each test so they can run without conflicting with the server/chat process
+test_oci_model_download_with_vllm_backend
+cleanup
 test_bind_port
 cleanup
 test_ctx_size

@@ -605,3 +605,39 @@ def ensure_legacy_dataset(
         return dataset  # type: ignore
 
     return convert_messages_to_legacy_dataset(dataset)  # type: ignore
+
+
+def is_oci_repo(repo_url: str) -> bool:
+    """
+    Checks if a provided repository follows the OCI registry URL syntax
+    """
+
+    # TODO: flesh this out and make it a more robust check
+    oci_url_prefix = "docker://"
+    return repo_url.startswith(oci_url_prefix)
+
+
+def is_huggingface_repo(repo_name: str) -> bool:
+    # allow alphanumerics, underscores, hyphens and periods in huggingface repo names
+    # repo name should be of the format <owner>/<model>
+    pattern = r"^[\w.-]+\/[\w.-]+$"
+    return re.match(pattern, repo_name) is not None
+
+
+def _load_json(file_path: Path):
+    try:
+        with open(
+            file_path,
+            encoding="UTF-8",
+        ) as f:
+            return json.load(f)
+    except FileNotFoundError as e:
+        raise ValueError(f"file not found: {file_path}") from e
+    except json.JSONDecodeError as e:
+        raise ValueError(f"could not read JSON file: {file_path}") from e
+    except Exception as e:
+        raise ValueError("unexpected error occurred:") from e
+
+
+def _extract_SHA(SHAstr: str):
+    return re.search("sha256:(.*)", SHAstr)
