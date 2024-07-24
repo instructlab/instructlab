@@ -227,21 +227,17 @@ class OCIDownloader(Downloader):
             raise click.exceptions.Exit(1)
 
         blob_dir = f"{oci_dir}/blobs/sha256/"
-        for _, _, files in os.walk(blob_dir):
-            for name in files:
-                if name not in file_map:
-                    continue
-                dest = file_map[name]
-                dest_model_path = os.path.join(self.download_dest, model_name, dest)
-                # unlink any existing version of the file
-                if os.path.exists(dest_model_path):
-                    os.unlink(dest_model_path)
+        for name, dest in file_map.items():
+            dest_model_path = os.path.join(self.download_dest, model_name, dest)
+            # unlink any existing version of the file
+            if os.path.exists(dest_model_path):
+                os.unlink(dest_model_path)
 
-                # create symlink to files in cache, to avoid redownloading if model has been downloaded before
-                os.symlink(
-                    os.path.join(blob_dir, name),
-                    dest_model_path,
-                )
+            # create symlink to files in cache to avoid redownloading if model has been downloaded before
+            os.symlink(
+                os.path.join(blob_dir, name),
+                dest_model_path,
+            )
 
 
 @click.command()
