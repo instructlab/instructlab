@@ -599,7 +599,7 @@ class Lab:
         `ilab config init`. First level subcommand functions call this
         method when they need a config for one of their subcommands.
         """
-        if self.config is None:
+        if self.error_msg is not None:
             ctx.fail(self.error_msg)
 
 
