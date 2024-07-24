@@ -17,7 +17,6 @@ NUM_INSTRUCTIONS=5
 GENERATE_ARGS=("--num-cpus" "$(nproc)" --taxonomy-path='./taxonomy')
 DIFF_ARGS=("--taxonomy-path" "./taxonomy")
 TRAIN_ARGS=()
-GRANITE=0
 FULLTRAIN=0
 TRAIN_LIBRARY=0
 BACKEND="llama-cpp"
@@ -25,6 +24,7 @@ HF_TOKEN=${HF_TOKEN:-}
 SDG_PIPELINE="simple"
 SKIP_TRAIN=${SKIP_TRAIN:-0}
 EVAL=0
+MIXTRAL_GGUF_MODE="mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf"
 
 export GREP_COLORS='mt=1;33'
 BOLD='\033[1m'
@@ -91,14 +91,9 @@ set_defaults() {
     NUM_INSTRUCTIONS=1
     TRAIN_ARGS+=("--num-epochs" "1")
 
-    if [ "${GRANITE}" -eq 1 ] && [ "${MIXTRAL}" -eq 1 ]; then
-        echo "ERROR: Can not specify -g and -M at the same time."
-        exit 1
-    fi
-
-    if [ "${MIXTRAL}" -eq 1 ] && [ "${BACKEND}" = "vllm" ]; then
-        echo "ERROR: Can not specify -M and -v at the same time."
-        exit 1
+    if [ "${EVAL}" -eq 1 ] && [ "${BACKEND}" != "vllm" ]; then
+         echo "ERROR: Must specify -e and -v at the same time."
+         exit 1
     fi
 
     if [ "${MIXTRAL}" -eq 1 ] && [ -z "${HF_TOKEN}" ]; then
@@ -122,64 +117,79 @@ test_init() {
     else
         ilab config init --non-interactive
     fi
-    step Checking config.yaml
-    if [ "${MIXTRAL}" -eq 1 ]; then
-        sed -i -e 's|merlinite.*|mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf|' "${CONFIG_HOME}/instructlab/config.yaml"
+
+    step Replace model in config.yaml
+    if [ "${BACKEND}" == "vllm" ]; then
+        sed -i -e 's|merlinite.*|instructlab/granite-7b-lab|' "${CONFIG_HOME}/instructlab/config.yaml"
+    else
+        sed -i -e 's|merlinite.*|granite-7b-lab-Q4_K_M.gguf|' "${CONFIG_HOME}/instructlab/config.yaml"
     fi
 }
 
 test_download() {
     task Download the model
 
-    if [ "$GRANITE" -eq 1 ]; then
-        step Downloading the granite model
-        ilab model download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf
-    elif [ "$BACKEND" = "vllm" ]; then
-        step Downloading the model for vLLM
-        ilab download --repository instructlab/merlinite-7b-lab
-    elif [ "$MIXTRAL" -eq 1 ]; then
-        step Downloading the mixtral model
-        ilab model download --repository TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF --filename mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf --hf-token "${HF_TOKEN}"
+    if [ "${BACKEND}" == "vllm" ]; then
+        step Downloading the model granite .safetensors model
+        ilab download --repository instructlab/granite-7b-lab
     else
-        step Downloading the default model
-        ilab model download
+        step Downloading the granite .gguf model
+        ilab model download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf
     fi
 
-    if [ "$EVAL" -eq 1 ]; then
-        step Downloading a model to use with evaluation
-        ilab model download --repository instructlab/granite-7b-lab
+    if [ "$MIXTRAL" -eq 1 ]; then
+        step Downloading the mixtral model as the teacher
+        ilab model download --repository TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF --filename mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf --hf-token "${HF_TOKEN}"
+    else
+        step Downloading the default merlinite .gguf model as the teacher
+        ilab model download --repository instructlab/merlinite-7b-lab-GGUF --filename merlinite-7b-lab-Q4_K_M.gguf
     fi
 }
 
 test_serve() {
-    # Accepts an argument of the model, or default here
-    if [ "$GRANITE" -eq 1 ]; then
-        model="${1:-${CACHE_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf}"
-    elif [ "${MIXTRAL}" -eq 1 ]; then
-        model="${1:-${CACHE_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf}"
-    else
-        model="${1:-}"
-    fi
+    MODEL_TYPE="$1"
     SERVE_ARGS=()
+
+    if [ "${MODEL_TYPE}" == "base" ]; then
+        if [ "${BACKEND}" == "vllm" ]; then
+            model="${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab"
+        else
+            model="${CACHE_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf"
+        fi
+    elif [ "$MODEL_TYPE" == "teacher" ]; then
+        if [ "${MIXTRAL}" -eq 1 ]; then
+            model="${CACHE_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf"
+            SERVE_ARGS+=("--model-family" "mixtral")
+        else
+            model="${CACHE_HOME}/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf"
+        fi
+    elif [ "$MODEL_TYPE" == "trained" ]; then
+        model="${2:-}"
+    else
+        echo "Model type of 'teacher', 'base', or 'trained' not passed as an arg of test_serve()"
+        exit 1
+    fi
+
     if [ -n "$model" ]; then
         SERVE_ARGS+=("--model-path" "${model}")
     fi
-    if [ "$BACKEND" = "vllm" ]; then
-        SERVE_ARGS+=("--model-path" "${CACHE_HOME}/instructlab/models/instructlab/merlinite-7b-lab")
-    fi
 
     task Serve the model
+
+    # output serve log while ilab model serve is starting up
+    touch serve.log
+    tail -f serve.log &
+    TPID=$!
+
     ilab model serve "${SERVE_ARGS[@]}" &> serve.log &
     wait_for_server
+    kill "$TPID"
 }
 
 test_chat() {
     task Chat with the model
-    CHAT_ARGS=()
-    if [ "$MIXTRAL" -eq 1 ]; then
-        CHAT_ARGS+=("--model-family" "mixtral")
-    fi
-    printf 'Say "Hello" and nothing else\n' | ilab model chat -qq "${CHAT_ARGS[@]}"
+    CHAT_ARGS=("--endpoint-url" "http://localhost:8000/v1")
+    ilab model chat -qq "${CHAT_ARGS[@]}" 'Say "Hello" and nothing else\n'
 }
 
 test_taxonomy() {
@@ -213,13 +223,13 @@ test_taxonomy() {
 
 test_generate() {
     task Generate synthetic data
-    if [ "$GRANITE" -eq 1 ]; then
-        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
-    elif [ "$MIXTRAL" -eq 1 ]; then
+    GENERATE_ARGS+=("--endpoint-url" "http://localhost:8000/v1")
+    if [ "$MIXTRAL" -eq 1 ]; then
         GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf")
-    elif [ "$BACKEND" = "vllm" ]; then
-        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/instructlab/merlinite-7b-lab")
+    else
+        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf")
     fi
+
     if [ "$SDG_PIPELINE" = "full" ]; then
         GENERATE_ARGS+=("--pipeline" "full")
     fi
@@ -234,7 +244,7 @@ test_train() {
         # TODO Only cuda for now
         # the train profile specified in test_init overrides the majority of TRAIN_ARGS, including things like num_epochs. While it looks like much of those settings are being lost, they just have different values here.
         TRAIN_ARGS=("--device=cuda" "--model-path=instructlab/granite-7b-lab" "--data-path=${DATA}" "--lora-quantize-dtype=nf4" "--4-bit-quant" "--effective-batch-size=4" "--is-padding-free=False")
-        if [ "$GRANITE" -eq 1 ]; then
+        if [ "${BACKEND}" != "vllm" ]; then
             TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
         fi
 
@@ -245,7 +255,7 @@ test_train() {
         if [ "$FULLTRAIN" -eq 0 ]; then
             TRAIN_ARGS+=("--4-bit-quant")
         fi
-        if [ "$GRANITE" -eq 1 ]; then
+        if [ "${BACKEND}" != "vllm" ]; then
             TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
         fi
 
@@ -275,10 +285,18 @@ test_exec() {
     test_download
 
     # See below for cleanup, this runs an ilab model serve in the background
-    test_serve
+    test_serve base
     PID=$!
 
     test_chat
+
+    task Stopping the ilab model serve for the base model
+    step Kill ilab model serve $PID for base model
+    kill $PID
+
+    test_serve teacher
+    PID=$!
+    step served the teacher model
 
     test_taxonomy 1
     test_generate
@@ -288,8 +306,8 @@ test_exec() {
     test_generate
 
     # Kill the serve process
-    task Stopping the ilab model serve
-    step Kill ilab model serve $PID
+    task Stopping the ilab model serve for the teacher model
+    step Kill ilab model serve $PID for teacher model
     kill $PID
 
     if [ "$SKIP_TRAIN" -eq 1 ]; then
@@ -315,14 +333,14 @@ test_exec() {
     #   `ilab model convert` is only implemented for macOS with M-series chips for now
     #test_convert
 
-    test_serve "${DATA_HOME}/instructlab/checkpoints/model.gguf"
+    test_serve trained "${DATA_HOME}/instructlab/checkpoints/model.gguf"
     PID=$!
 
     test_chat
 
     # Kill the serve process
-    task Stopping the ilab model serve
-    step Kill ilab model serve $PID
+    task Stopping the ilab model serve for trained model
+    step Kill ilab model serve $PID for trained model
     kill $PID
 
     task Evaluating the output of ilab model train
@@ -330,10 +348,10 @@ test_exec() {
 }
 
 wait_for_server(){
-    if ! timeout 120 bash -c '
+    if ! timeout 240 bash -c '
         until curl -sS http://localhost:8000/docs &> /dev/null; do
             echo "waiting for server to start"
-            sleep 1
+            sleep 5
         done
     '; then
         echo "server did not start"
@@ -359,7 +377,7 @@ usage() {
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "cemMfFghvT" opt; do
+while getopts "cemMfFhvT" opt; do
     case $opt in
         c)
             # old option, don't fail if it's specified
@@ -383,10 +401,6 @@ while getopts "cemMfFghvT" opt; do
         F)
             SDG_PIPELINE="full"
             step "Using full SDG pipeline."
-            ;;
-        g)
-            GRANITE=1
-            step "Running with granite model."
             ;;
         h)
             usage

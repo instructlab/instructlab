@@ -41,7 +41,6 @@ the E2E job configuration files found
 | `M` | Use Mixtral model (4-bit quantized) |
 | `f` | Run "fullsize" training |
 | `F` | Run "fullsize" SDG |
-| `g` | Run with Granite model |
 | `v` | Run with vLLM for serving |
 | `T` | Use the 'full' training library rather than legacy training |
 
