@@ -5,7 +5,7 @@ from functools import cache, wraps
 from importlib import resources
 from importlib.abc import Traversable
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, TypedDict
+from typing import Any, List, Mapping, Optional, Tuple, TypedDict
 from urllib.parse import urlparse
 import copy
 import glob
@@ -646,3 +646,57 @@ def load_json(file_path: Path):
         raise ValueError(f"could not read JSON file: {file_path}") from e
     except Exception as e:
         raise ValueError("unexpected error occurred") from e
+
+
+def print_table(headers: list[str], data: list[list[str]]):
+    """
+    Given a set of headers and corresponding dataset where the
+    number of headers matches the length of each item in the given dataset.
+
+    Prints out the dataset in the format:
+    ```
+    +--------+--------+-----+
+    | Col 1  | Col 2  | ... |
+    +--------+--------+-----+
+    | Item 1 | Item 2 | ... |
+    +--------+--------+-----+
+    | .....  | .....  | ... |
+    +--------+--------+-----+
+    ```
+    """
+    column_widths = [
+        max(len(str(row[i])) for row in data + [headers]) for i in range(len(headers))
+    ]
+    # Print separator line between headers and data
+    horizontal_lines = ["-" * (width + 2) for width in column_widths]
+    joining_line = "+" + "+".join(horizontal_lines) + "+"
+    print(joining_line)
+    outputs = []
+    for header, width in zip(headers, column_widths, strict=False):
+        outputs.append(f" {header:{width}} ")
+    print("|" + "|".join(outputs) + "|")
+    print(joining_line)
+    for row in data:
+        outputs = []
+        for item, width in zip(row, column_widths, strict=False):
+            outputs.append(f" {item:{width}} ")
+        print("|" + "|".join(outputs) + "|")
+    print(joining_line)
+
+
+def convert_bytes_to_proper_mag(f_size: int) -> Tuple[float, str]:
+    """
+    Given an integer representing the filesize in bytes, returns
+    a floating point representation of the size along with the associated
+    magnitude of the size, e.g. 2000 would get converted into 1.95, "KB"
+    """
+    magnitudes = ["KB", "MB", "GB"]
+    magnitude = "B"
+    adjusted_fsize = float(f_size)
+    for mag in magnitudes:
+        if adjusted_fsize >= 1024:
+            magnitude = mag
+            adjusted_fsize /= 1024
+        else:
+            return adjusted_fsize, magnitude
+    return adjusted_fsize, magnitude

@@ -49,6 +49,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 
 [project.entry-points."instructlab.command.data"]
 "generate" = "instructlab.data.generate:generate"
+"list" = "instructlab.data.list:list_data"
 
 [project.entry-points."instructlab.command.model"]
 "chat" = "instructlab.model.chat:chat"

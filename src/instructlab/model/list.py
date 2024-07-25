@@ -13,6 +13,7 @@ import click
 from instructlab import clickext
 from instructlab.configuration import DEFAULTS
 from instructlab.model.backends.backends import is_model_gguf, is_model_safetensors
+from instructlab.utils import convert_bytes_to_proper_mag, print_table
 
 logger = logging.getLogger(__name__)
 
@@ -46,38 +47,6 @@ def model_list(model_dirs: list[str], list_checkpoints: bool):
 
 
 # convert_bytes_to_proper_mag takes a dir/file size in Bytes and converts it to the proper Magnitude (MiB, GiB)
-def convert_bytes_to_proper_mag(f_size: float):
-    magnitudes = ["KiB", "MiB", "GiB", "TiB"]
-    magnitude = "B"
-    for mag in magnitudes:
-        if f_size >= 1024:
-            magnitude = mag
-            f_size /= 1024
-        else:
-            return f_size, magnitude
-    return f_size, magnitude
-
-
-# print_table displays the models on the system in a nicely formatted table
-def print_table(headers: list[str], data: list[list[str]]):
-    column_widths = [
-        max(len(str(row[i])) for row in data + [headers]) for i in range(len(headers))
-    ]
-    # Print separator line between headers and data
-    horizontal_lines = ["-" * (width + 2) for width in column_widths]
-    joining_line = "+" + "+".join(horizontal_lines) + "+"
-    print(joining_line)
-    outputs = []
-    for header, width in zip(headers, column_widths, strict=False):
-        outputs.append(f" {header:{width}} ")
-    print("|" + "|".join(outputs) + "|")
-    print(joining_line)
-    for row in data:
-        outputs = []
-        for item, width in zip(row, column_widths, strict=False):
-            outputs.append(f" {item:{width}} ")
-        print("|" + "|".join(outputs) + "|")
-    print(joining_line)
 
 
 AnalyzeResultGGUF = list[str]
@@ -88,13 +57,13 @@ def _analyze_gguf(entry: Path) -> AnalyzeResultGGUF:
     # stat the gguf, add it to the table
     stat = Path(entry.absolute()).stat(follow_symlinks=False)
     f_size = stat.st_size
-    f_size, magnitude = convert_bytes_to_proper_mag(f_size)
+    adjusted_size, magnitude = convert_bytes_to_proper_mag(f_size)
     # add to table
     modification_time = os.path.getmtime(entry.absolute())
     modification_time_readable = time.strftime(
         "%Y-%m-%d %H:%M:%S", time.localtime(modification_time)
     )
-    return [entry.name, modification_time_readable, f"{f_size:.1f} {magnitude}"]
+    return [entry.name, modification_time_readable, f"{adjusted_size:.1f} {magnitude}"]
 
 
 def _analyze_dir(
@@ -134,7 +103,7 @@ def _analyze_dir(
             full_file = os.path.join(root, f)
             stat = Path(full_file).stat(follow_symlinks=False)
             all_files_sizes += stat.st_size
-        all_files_sizes, magnitude = convert_bytes_to_proper_mag(all_files_sizes)
+        adjusted_all_sizes, magnitude = convert_bytes_to_proper_mag(all_files_sizes)
         if add_model:
             # add to table
             modification_time = os.path.getmtime(entry.absolute())
@@ -145,7 +114,7 @@ def _analyze_dir(
                 [
                     actual_model_name,
                     modification_time_readable,
-                    f"{all_files_sizes:.1f} {magnitude}",
+                    f"{adjusted_all_sizes:.1f} {magnitude}",
                 ]
             )
     return models
