@@ -220,9 +220,8 @@ def is_bnb_quantized(model_path: pathlib.Path) -> bool:
     with config_json.open(encoding="utf-8") as f:
         config = json.load(f)
 
-    return (
-        "quantization_config" in config
-        and config["quantization_config"].get("quant_method", "") == "bitsandbytes"
+    return bool(
+        config.get("quantization_config", {}).get("quant_method", "") == "bitsandbytes"
     )
 
 
@@ -284,11 +283,14 @@ def build_vllm_cmd(
             vllm_cmd.extend(["--chat-template", chat_template])
 
     # Auto-detect whether model is quantized w/ bitsandbytes and add potentially missing args
-    if is_bnb_quantized(model_path):
-        if not contains_argument("--quantization", vllm_args):
-            vllm_cmd.extend(["--quantization", "bitsandbytes"])
-        if not contains_argument("--load-format", vllm_args):
-            vllm_cmd.extend(["--load-format", "bitsandbytes"])
+    quant_arg_present = contains_argument("--quantization", vllm_args)
+    load_arg_present = contains_argument("--load-format", vllm_args)
+    if not quant_arg_present or not load_arg_present:
+        if is_bnb_quantized(model_path):
+            if not quant_arg_present:
+                vllm_cmd.extend(["--quantization", "bitsandbytes"])
+            if not load_arg_present:
+                vllm_cmd.extend(["--load-format", "bitsandbytes"])
 
     # Force multiprocessing for distributed serving, vLLM will try "ray" if it's installed but we do
     # not support it (yet?). We don't install Ray but we might end up running on systems that have it,
