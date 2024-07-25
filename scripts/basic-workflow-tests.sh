@@ -189,7 +189,7 @@ test_serve() {
     TPID=$!
 
     ilab model serve "${SERVE_ARGS[@]}" &> serve.log &
-    wait_for_server
+    wait_for_server start
     kill "$TPID"
 }
 
@@ -322,8 +322,7 @@ test_exec() {
     test_chat
 
     task Stopping the ilab model serve for the base model
-    step Kill ilab model serve $PID for base model
-    kill $PID
+    wait_for_server shutdown $PID
 
     test_serve teacher
     PID=$!
@@ -338,8 +337,7 @@ test_exec() {
 
     # Kill the serve process
     task Stopping the ilab model serve for the teacher model
-    step Kill ilab model serve $PID for teacher model
-    kill $PID
+    wait_for_server shutdown $PID
 
     if [ "$SKIP_TRAIN" -eq 1 ]; then
         # TODO - Drop this later.
@@ -368,26 +366,40 @@ test_exec() {
 
         # Kill the serve process
         task Stopping the ilab model serve for trained model
-        step Kill ilab model serve $PID for trained model
-        kill $PID
+        wait_for_server shutdown $PID
     fi
 
     task Evaluating the output of ilab model train
     test_evaluate
 }
 
-wait_for_server(){
-    if ! timeout 240 bash -c '
-        until curl -sS http://localhost:8000/docs &> /dev/null; do
-            echo "waiting for server to start"
-            sleep 5
-        done
-    '; then
-        echo "server did not start"
-        cat serve.log || true
+wait_for_server() {
+    ACTION="$1"
+    if [ "${ACTION}" == "start" ]; then
+      step Wait for ilab model serve to start
+      CMD="curl -sS http://localhost:8000/docs &> /dev/null"
+      ACTION="started"
+    elif [ "${ACTION}" == "shutdown" ]; then
+      PID="${2:-}"
+      step Kill ilab model serve "$PID"
+      kill "$PID"
+      CMD="! ps -p ${PID} &> /dev/null"
+    else
+        echo "Action 'start' or 'shutdown' not passed as an arg of wait_for_server()"
         exit 1
     fi
-    echo "server started"
+
+    if ! timeout 240 bash -c "
+        until ${CMD}; do
+            echo 'waiting for server'
+            sleep 5
+        done
+    "; then
+        echo "server was not ${ACTION}"
+        exit 1
+    fi
+
+    echo "server ${ACTION}"
 }
 
 # NOTE: If you add additional or modify existing options, please document them in 'docs/ci.md'
