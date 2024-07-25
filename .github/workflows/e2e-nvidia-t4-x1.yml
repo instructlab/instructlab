@@ -83,12 +83,15 @@ jobs:
           nvidia-smi
           python3.11 -m pip cache remove llama_cpp_python
 
-          CMAKE_ARGS="-DLLAMA_CUDA=on" python3.11 -m pip install .
+          python3.11 -m pip install .
 
           # issue 1821: workaround for flash-attn
           # install with Torch and build dependencies installed
           python3.11 -m pip install packaging wheel setuptools-scm
           python3.11 -m pip install .[cuda]
+        env:
+          CMAKE_ARGS: -DLLAMA_CUDA=on
+          PIP_CONSTRAINT: requirements/constraints-cuda.txt
 
       - name: ilab system info
         run: |
