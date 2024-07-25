@@ -4,25 +4,11 @@
 set -ex
 
 # shellcheck disable=SC2155
-export SCRIPTDIR=$(dirname "$0")
+SCRIPTDIR=$(dirname "$0")
 # build a prompt string that includes the time, source file, line number, and function name
-export PS4='+$(date +"%Y-%m-%d %T") ${BASH_VERSION}:${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+PS4='+$(date +"%Y-%m-%d %T") ${BASH_VERSION}:${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
 
-export TEST_DIR
-export PACKAGE_NAME='instructlab'  # name we use of the top-level package directories for CLI data
-
-
-# get the directories from the platformdirs library
-export CONFIG_DIR
-export DATA_DIR
-export CACHE_DIR
-
-
-# we define the path here to reference elsewhere, but the existence of this file
-# will be managed by the ilab CLI
-export ILAB_CONFIGDIR_LOCATION
-export ILAB_CONFIG_FILE
-export ILAB_DATA_DIR
+PACKAGE_NAME='instructlab'  # name we use of the top-level package directories for CLI data
 
 
 ########################################
@@ -76,8 +62,8 @@ function init_test_script() {
 }
 
 
-export TEST_CTX_SIZE_LAB_SERVE_LOG_FILE=test_ctx_size_lab_serve.log
-export TEST_CTX_SIZE_LAB_CHAT_LOG_FILE=test_ctx_size_lab_chat.log
+TEST_CTX_SIZE_LAB_SERVE_LOG_FILE=test_ctx_size_lab_serve.log
+TEST_CTX_SIZE_LAB_CHAT_LOG_FILE=test_ctx_size_lab_chat.log
 
 for cmd in ilab expect timeout; do
     if ! type -p $cmd; then
