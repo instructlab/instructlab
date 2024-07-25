@@ -195,56 +195,27 @@ def chat(
     # in server mode (`ilab model serve` is running somewhere, or we are talking to another
     # OpenAI compatible endpoint).
     if not is_temp_server_running():
-        # Try to get the model name right if we know we're talking to a local `ilab model serve`.
-        #
-        # If the model from the CLI and the one in the config are the same, use the one from the
-        # server if they are different else let's use what the user provided
-        #
-        # 'model' will always get a value and never be None so it's hard to distinguish whether
-        # the value came from the user input or the default value.
-        # We can only assume that if the value is the same as the default value and the value
-        # from the config is the same as the default value, then the user didn't provide a value
-        # we then compare it with the value from the server to see if it's different
-        if (
-            # We need to get the base name of the model because the model path is a full path and
-            # the once from the config is just the model name
-            os.path.basename(model) == cfg.DEFAULTS.GGUF_MODEL_NAME
-            and os.path.basename(ctx.obj.config.chat.model)
-            == cfg.DEFAULTS.GGUF_MODEL_NAME
-            and api_base == ctx.obj.config.serve.api_base()
-        ):
-            logger.debug(
-                "No model was provided by the user as a CLI argument or in the config, will use the model from the server"
+        # get the default model being served automatically
+        try:
+            models = ilabclient.list_models(
+                api_base=api_base,
+                http_client=http_client(ctx.params),
             )
-            try:
-                models = ilabclient.list_models(
-                    api_base=api_base,
-                    http_client=http_client(ctx.params),
-                )
 
-                # Currently, we only present a single model so we can safely assume that the first model
-                server_model = models.data[0].id if models is not None else None
-
-                # override 'model' with the first returned model if not provided so that the chat print
-                # the model used by the server
-                model = (
-                    server_model
-                    if server_model is not None
-                    and server_model != ctx.obj.config.chat.model
-                    else model
-                )
-                logger.debug(f"Using model from server {model}")
-            except ilabclient.ClientException as exc:
-                click.secho(
-                    f"Failed to list models from {api_base}. Please check the API key and endpoint.",
-                    fg="red",
-                )
-                # Right now is_temp_server() does not check if a subprocessed vllm is up
-                # shut it down just in case an exception is raised in the try
-                # TODO: revise is_temp_server to check if a vllm server is running
-                if backend_instance is not None:
-                    backend_instance.shutdown()
-                raise click.exceptions.Exit(1) from exc
+            # Currently, we only present a single model so we can safely assume that the first model
+            model = models.data[0].id if models is not None else None
+            logger.debug(f"Using model from server {model}")
+        except ilabclient.ClientException as exc:
+            click.secho(
+                f"Failed to list models from {api_base}. Please check the API key and endpoint.",
+                fg="red",
+            )
+            # Right now is_temp_server() does not check if a subprocessed vllm is up
+            # shut it down just in case an exception is raised in the try
+            # TODO: revise is_temp_server to check if a vllm server is running
+            if backend_instance is not None:
+                backend_instance.shutdown()
+            raise click.exceptions.Exit(1) from exc
 
     try:
         chat_cli(

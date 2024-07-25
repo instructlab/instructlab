@@ -8,6 +8,7 @@ import click
 
 # First Party
 from instructlab import clickext
+from instructlab import client as ilabclient
 from instructlab.configuration import DEFAULTS
 
 # Local
@@ -210,6 +211,27 @@ def generate(
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
             raise click.exceptions.Exit(1)
+
+    # figure out what model is running
+    try:
+        models = ilabclient.list_models(
+            api_base=api_base, http_client=http_client(ctx.params)
+        )
+
+        model = models.data[0].id if models is not None else None
+        logger.debug(f"Using model from server {model}")
+    except ilabclient.ClientException as exc:
+        click.secho(
+            f"Failed to list models from {api_base}. Please check the API key and endpoint.",
+            fg="red",
+        )
+        # Right now is_temp_server() does not check if a subprocessed vllm is up
+        # shut it down just in case an exception is raised in the try
+        # TODO: revise is_temp_server to check if a vllm server is running
+        if backend_instance is not None:
+            backend_instance.shutdown()
+        raise click.exceptions.Exit(1) from exc
+
     try:
         click.echo(
             f"Generating synthetic data using '{model}' model, taxonomy:'{taxonomy_path}' against {api_base} server"
