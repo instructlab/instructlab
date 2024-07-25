@@ -15,6 +15,7 @@ from instructlab import clickext, utils
 from instructlab.configuration import (
     DEFAULTS,
     Config,
+    Lab,
     ensure_storage_directories_exist,
     get_default_config,
     read_train_profile,
@@ -119,12 +120,7 @@ def init(
     )
 
 
-def get_params_from_env(
-    obj: typing.Optional[typing.Any],
-) -> typing.Tuple[str, str, str, Config]:
-    if obj is None or not hasattr(obj, "config"):
-        raise ValueError("obj must not be None and must have a 'config' attribute")
-
+def get_params_from_env(obj: Lab) -> typing.Tuple[str, str, str, Config]:
     return (
         obj.config.serve.model_path,
         obj.config.generate.taxonomy_path,
