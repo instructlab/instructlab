@@ -145,7 +145,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           . venv/bin/activate
-          ./scripts/basic-workflow-tests.sh -mFMT
+          ./scripts/basic-workflow-tests.sh -mfFMT
 
       - name: Add comment to PR if the workflow failed
         if: failure() && steps.check_pr.outputs.is_pr == 'true'
