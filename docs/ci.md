@@ -83,13 +83,13 @@ The project currently supports the usage of the following runners for the E2E jo
 | Area | Feature | [`e2e.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e.yml) (small) ![`e2e.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e.yml/badge.svg?branch=main)| [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) (small) | [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) (medium) | [`e2e-nvidia-a10g-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x4.yml) (large) ![`e2e-nvidia-a10g-x4.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-a10g-x4.yml/badge.svg?branch=main)|
 | --- | --- | --- | --- | --- | --- |
 | **Serving**  | llama-cpp                |✅|✅|✅|✅ (temporary)|
-|              | vllm                     |⎯|⎯|⎯|❌|
+|              | vllm                     |⎯|⎯|⎯|✅|
 | **Generate** | simple                   |✅|✅|✅|⎯|
 |              | full                     |⎯|⎯|⎯|✅|
-| **Training** | legacy+Linux             |⎯|⎯|✅|⎯|
+| **Training** | legacy+Linux             |⎯|⎯|❌|⎯|
 |              | legacy+Linux+4-bit-quant |✅|✅|⎯|⎯|
 |              | training-lib             |⎯|⎯|⎯|✅|
-| **Eval**     | eval                     |⎯|⎯|✅(*2)|❌️|
+| **Eval**     | eval                     |⎯|⎯|❌(*2)|✅|
 
 Points of clarification (*):
 
