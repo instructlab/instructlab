@@ -32,6 +32,7 @@
     - [Train the model locally with GPU acceleration](#train-the-model-locally-with-gpu-acceleration)
     - [Train the model in the cloud](#train-the-model-in-the-cloud)
   - [📜 Test the newly trained model](#-test-the-newly-trained-model)
+  - [🧪 Evaluate the newly trained model](#-evaluate-the-newly-trained-model)
   - [🍴 Serve the newly trained model](#-serve-the-newly-trained-model)
 - [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
 - [🚀 Upgrade InstructLab to latest version](#-upgrade-instructlab-to-latest-version)
@@ -558,6 +559,252 @@ The model can also be downloaded and served locally.
    ```
 
    The output from the command will consist of a series of outputs from the model before and after training.
+
+### 🧪 Evaluate the newly trained model
+
+You can use the `ilab model evaluate` command to evaluate the models you are training with several benchmarks. Currently, four benchmarks are supported.
+
+| Benchmark | Measures | Full Name | Description | Reference |
+| --- | --- | --- | --- | --- |
+| MMLU | Knowledge | Massive Multitask Language Understanding | Tests a model against a standardized set of knowledge data and produces a score based on the model's performance | [Measuring Massive Multitask Language Understanding](https://arxiv.org/abs/2009.03300) |
+| MMLUBranch | Knowledge | N/A | Tests your knowledge contributions against a base model and produces a score based on the difference in performance | N/A |
+| MTBench | Skills | Multi-turn Benchmark | Tests a model's skill at applying its knowledge against a judge model and produces a score based on the model's performance | [MT-Bench (Multi-turn Benchmark)](https://klu.ai/glossary/mt-bench-eval) |
+| MTBenchBranch | Skills | N/A | Tests your skill contributions against a judge model and produces a score based on the difference in performance | N/A |
+
+> [!NOTE]
+> MTBench and MTBenchBranch use [prometheus-8x7b-v2.0](https://huggingface.co/prometheus-eval/prometheus-8x7b-v2.0) as the judge model by
+default. While you do not need to use this model as your judge, it is strongly recommended to do so if you have the necessary hardware
+resources. You can download it via `ilab model download`.
+
+#### Running MMLU
+
+Below is an example of running MMLU on a local model with minimal tasks:
+
+```bash
+$ export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true   # don't set this if you want to run full MMLU 
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+$ ilab model evaluate --benchmark mmlu --model $ILAB_MODELS_DIR/instructlab/granite-7b-lab
+...
+# KNOWLEDGE EVALUATION REPORT
+
+## MODEL
+/home/example-user/.local/share/instructlab/models/instructlab/granite-7b-lab
+
+### AVERAGE:
+0.45 (across 3)
+
+### SCORES:
+mmlu_abstract_algebra - 0.35
+mmlu_anatomy - 0.44
+mmlu_astronomy - 0.55
+```
+
+Below is an example of running MMLU on a Hugging Face model with minimal tasks:
+
+```bash
+$ export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true   # don't set this if you want to run full MMLU 
+$ ilab model evaluate --benchmark mmlu --model instructlab/granite-7b-lab
+...
+# KNOWLEDGE EVALUATION REPORT
+
+## MODEL
+instructlab/granite-7b-lab
+
+### AVERAGE:
+0.45 (across 3)
+
+### SCORES:
+mmlu_abstract_algebra - 0.35
+mmlu_anatomy - 0.44
+mmlu_astronomy - 0.55
+```
+
+> [!NOTE]
+> Currently, MMLU can only be run against a safetensors model directory, either locally or on Hugging Face. GGUFs are not currently supported.
+
+#### Running MMLUBranch
+
+Below is an example of running MMLUBranch with a local safetensors model directory:
+
+```bash
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+$ export ILAB_TASKS_DIR=$HOME/.local/share/instructlab/datasets
+$ ilab model evaluate --benchmark mmlu_branch --model $ILAB_MODELS_DIR/instructlab/granite-7b-lab --base-model $ILAB_MODELS_DIR/instructlab/granite-7b-lab --tasks-dir $ILAB_TASKS_DIR
+...
+# KNOWLEDGE EVALUATION REPORT
+
+## BASE MODEL
+/home/example-user/.local/share/instructlab/models/instructlab/granite-7b-lab
+
+## MODEL
+/home/example-user/.local/share/instructlab/models/instructlab/granite-7b-lab
+
+### AVERAGE:
++0.0 (across 1)
+
+### NO CHANGE:
+1. tonsils
+```
+
+Below is an example of running MMLUBranch with Hugging Face models:
+
+```bash
+$ export ILAB_TASKS_DIR=$HOME/.local/share/instructlab/datasets
+$ ilab model evaluate --benchmark mmlu_branch --model instructlab/granite-7b-lab --base-model instructlab/granite-7b-lab --tasks-dir $ILAB_TASKS_DIR
+...
+# KNOWLEDGE EVALUATION REPORT
+
+## BASE MODEL
+instructlab/granite-7b-lab
+
+## MODEL
+instructlab/granite-7b-lab
+
+### AVERAGE:
++0.0 (across 1)
+
+### NO CHANGE:
+1. tonsils
+```
+
+> [!TIP]
+> You can mix and match running local models and remote models on Hugging Face, so long as a safetensors model is present.
+
+#### Running MTBench
+
+Below is an example of running MTBench with a local safetensors model directory:
+
+```bash
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+$ ilab model evaluate --benchmark mt_bench --model $ILAB_MODELS_DIR/instructlab/granite-7b-lab --judge-model $ILAB_MODELS_DIR/instructlab/granite-7b-lab
+...
+# SKILL EVALUATION REPORT
+
+## MODEL
+/home/example-user/.local/share/instructlab/models/instructlab/granite-7b-lab
+
+### AVERAGE:
+8.07 (across 91)
+
+### TURN ONE:
+8.64
+
+### TURN TWO:
+7.19
+
+### ERROR RATE:
+0.43
+```
+
+Below is an example of running MTBench with local GGUF models:
+
+```bash
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+$ ilab model evaluate --benchmark mt_bench --model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf --judge-model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf
+...
+# SKILL EVALUATION REPORT
+
+## MODEL
+/home/example/.local/share/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+
+### AVERAGE:
+5.0 (across 1)
+
+### TURN ONE:
+5.0
+
+### TURN TWO:
+N/A
+
+### ERROR RATE:
+0.99
+```
+
+> [!NOTE]
+> Currently, MTBench must be used with local models. Using models directly from Hugging Face without downloading them is unsupported.
+
+#### Running MTBenchBranch
+
+Below is an example of running MTBenchBranch with a local safetensors model directory:
+
+```bash
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+$ export ILAB_TAXONOMY_DIR=$HOME/.local/share/instructlab/taxonomy
+$ ilab model evaluate --benchmark mt_bench_branch \
+   --model $ILAB_MODELS_DIR/instructlab/granite-7b-lab \
+   --judge-model $ILAB_MODELS_DIR/instructlab/granite-7b-lab \
+   --base-model $ILAB_MODELS_DIR/instructlab/granite-7b-lab \
+   --taxonomy-path $ILAB_TAXONOMY_DIR \
+   --branch rc \
+   --base-branch main
+...
+# SKILL EVALUATION REPORT
+
+## BASE MODEL
+/home/example/.local/share/instructlab/models/instructlab/granite-7b-lab
+
+## MODEL
+/home/example/.local/share/instructlab/models/instructlab/granite-7b-lab
+
+### IMPROVEMENTS:
+1. compositional_skills/extraction/receipt/markdown/qna.yaml (+4.0)
+2. compositional_skills/STEM/science/units_conversion/temperature_conversion/qna.yaml (+3.0)
+3. compositional_skills/extraction/commercial_lease_agreement/bullet_points/qna.yaml (+3.0)
+...
+
+### REGRESSIONS:
+1. compositional_skills/extraction/abstractive/title/qna.yaml (-5.0)
+2. compositional_skills/extraction/receipt/bullet_points/qna.yaml (-4.5)
+3. compositional_skills/writing/grounded/summarization/wiki_insights/one_line/qna.yaml (-4.0)
+...
+
+### NO CHANGE:
+1. compositional_skills/STEM/math/reasoning/qna.yaml
+2. compositional_skills/extraction/commercial_lease_agreement/csv/qna.yaml
+3. compositional_skills/roleplay/explain_like_i_am/graduate/qna.yaml
+...
+
+### NEW:
+1. compositional_skills/linguistics/organize_lists/qna.yaml
+2. compositional_skills/extraction/invoice/plain_text/qna.yaml
+3. compositional_skills/writing/grounded/summarization/wiki_insights/concise/qna.yaml
+...
+
+### ERROR RATE:
+0.32
+```
+
+Below is an example of running MTBenchBranch with local GGUF models:
+
+```bash
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+$ export ILAB_TAXONOMY_DIR=$HOME/.local/share/instructlab/taxonomy
+$ ilab model evaluate --benchmark mt_bench_branch --model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf --judge-model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf --base-model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf --taxonomy-path $ILAB_TAXONOMY_DIR --branch rc --base-branch main
+...
+# SKILL EVALUATION REPORT
+
+## BASE MODEL
+/home/ec2-user/.local/share/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+
+## MODEL
+/home/ec2-user/.local/share/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+
+### NO CHANGE:
+1. compositional_skills/STEM/math/distance_conversion/qna.yaml
+
+### NEW:
+1. compositional_skills/linguistics/organize_lists/qna.yaml
+2. compositional_skills/extraction/annual_report/reasoning/qna.yaml
+3. compositional_skills/extraction/email/plain_text/qna.yaml
+4. compositional_skills/extraction/technical_paper/tables/bullet_points/qna.yaml
+5. compositional_skills/extraction/technical_paper/abstract/reasoning/qna.yaml
+
+### ERROR RATE:
+0.98
+```
+
+> [!NOTE]
+> Currently, MTBenchBranch must be used with local models. Using models directly from Hugging Face without downloading them is unsupported.
 
 ### 🍴 Serve the newly trained model
 
