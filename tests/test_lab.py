@@ -189,7 +189,7 @@ def test_ilab_missing_config(command: Command, cli_runner: CliRunner) -> None:
     result = cli_runner.invoke(lab.ilab, cmd)
 
     if command.needs_config:
-        assert result.exit_code == 2, result
+        assert result.exit_code == 2, result.stdout
         assert "does not exist or is not a readable file" in result.stdout
     else:
-        assert result.exit_code == 0, result
+        assert result.exit_code == 0, result.stdout
