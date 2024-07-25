@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
+#
+# If you are running locally and calling the script multiple times you may want to run like this:
+#
+# TEST_DIR=/tmp/foo ./scripts/functional-tests.sh
+#
+# As soon as TEST_DIR is set to any non-empty value, the test directory will NOT be removed
+# This assumes you control your test directory TEST_DIR and its cleanup
 
 set -ex
 
@@ -7,6 +14,14 @@ set -ex
 export SCRIPTDIR=$(dirname "$0")
 # build a prompt string that includes the time, source file, line number, and function name
 export PS4='+$(date +"%Y-%m-%d %T") ${BASH_VERSION}:${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+
+if [ -n "$TEST_DIR" ]; then
+    echo "TEST_DIR is set to $TEST_DIR by the caller, will not remove it"
+    TEST_DIR_SET_BY_CALLER=1
+fi
+
+# Support overriding the test directory for local testing otherwise creates a temporary directory
+TEST_DIR=${TEST_DIR:-$(mktemp -d)}
 
 export TEST_DIR
 export PACKAGE_NAME='instructlab'  # name we use of the top-level package directories for CLI data
@@ -49,7 +64,6 @@ function init_test_script() {
     local prev_home="${HOME}"
 
     printf 'initializing test script...\n'
-    TEST_DIR=$(mktemp -d)
     HOME="${TEST_DIR}"  # to ensure platformdirs uses the test directory for the duration of this script
     printf 'changing home directory to "%s", was: "%s"\n' "${HOME}" "${prev_home}"
 
@@ -126,7 +140,7 @@ cleanup() {
 }
 
 init_test_script
-trap 'cleanup "${?}"; rm -rf "${TEST_DIR}"' EXIT QUIT INT TERM
+trap 'cleanup "${?}"; test -z "${TEST_DIR_SET_BY_CALLER}" && rm -rf "${TEST_DIR}"' EXIT QUIT INT TERM
 
 rm -f "${ILAB_CONFIG_FILE}"
 
@@ -507,7 +521,7 @@ test_model_print(){
     fi
 
     # validate that we fail on invalid model
-    if ! expect -c '
+    if ! expect -d -c '
         set timeout 30
         spawn ilab model chat -m bar
         expect {
@@ -529,7 +543,7 @@ test_model_print(){
         }
     ' "$(basename "${expected_model_name}")"
     )
-    if ! expect -c"${expect_script}"; then
+    if ! expect -d -c"${expect_script}"; then
         echo "Error: expect test failed"
         exit 1
     fi
