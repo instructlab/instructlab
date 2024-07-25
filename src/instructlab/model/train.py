@@ -2,6 +2,7 @@
 
 # Standard
 from pathlib import Path
+import glob
 import logging
 import os
 import shutil
@@ -304,6 +305,28 @@ def train(
     Takes synthetic data generated locally with `ilab data generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
+
+    if not legacy and os.path.isdir(data_path):
+        # need to get msgs jsonl, this is a hack but will work for now
+        pattern = os.path.join(data_path, f'*{"messages"}*')
+
+        # Find all files matching the pattern
+        files = glob.glob(pattern)
+
+        # If no files are found, error
+        if not files:
+            ctx.fail(
+                "'--data-path' needs to be a valid jsonl when not using legacy training"
+            )
+
+        # Sort files by modification time (most recent first)
+        files.sort(key=lambda x: os.path.getmtime(x), reverse=True)
+
+        # data_path gets set to the most recent messages_jsonl
+        logger.debug(
+            f"Switching '--data-path' to be {files[0]} because the training library requires a valid jsonl file."
+        )
+        data_path = files[0]
     if not input_dir:
         # By default, generate output-dir is used as train input-dir
         input_dir = ctx.obj.config.generate.output_dir
