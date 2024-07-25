@@ -47,6 +47,7 @@
 * The `generate` section of the config now has a `teacher` section. This section configures the
   teacher model when it is automatically served in the background. This new section has the same
   values as the `serve` section of the config.
+* `ilab system info` now includes the default config, data, and cache directories used by `ilab`.
 
 ### Breaking Changes
 

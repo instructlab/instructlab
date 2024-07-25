@@ -11,6 +11,7 @@ import click
 
 # First Party
 from instructlab import clickext
+from instructlab.configuration import DEFAULTS
 
 
 def _platform_info() -> typing.Dict[str, typing.Any]:
@@ -130,6 +131,33 @@ def _instructlab_info():
     return {f"{name}.version": ver for name, ver in pkgs}
 
 
+def _default_paths() -> dict[str, str]:
+    """Default directories used by ilab"""
+    # d = {
+    #     "defaults.chatlogs_dir": DEFAULTS.CHATLOGS_DIR,
+    #     "defaults.checkpoints_dir": DEFAULTS.CHECKPOINTS_DIR,
+    #     "defaults.config_file": DEFAULTS.CONFIG_FILE,
+    #     "defaults.datasets_dir": DEFAULTS.DATASETS_DIR,
+    #     "defaults.eval_data_dir": DEFAULTS.EVAL_DATA_DIR,
+    #     "defaults.internal_data_dir": DEFAULTS.INTERNAL_DIR,
+    #     "defaults.models_dir": DEFAULTS.MODELS_DIR,
+    #     "defaults.model": DEFAULTS.DEFAULT_MODEL,
+    #     "defaults.prompt_file": DEFAULTS.PROMPT_FILE,
+    #     "defaults.seed_file": DEFAULTS.SEED_FILE,
+    #     "defaults.taxonomy_dir": DEFAULTS.TAXONOMY_DIR,
+    #     "defaults.train_additional_options_dir": DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_DIR,
+    #     "defaults.train_config_dir": DEFAULTS.TRAIN_CONFIG_DIR,
+    #     "defaults.train_additional_options_file": DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE,
+    #     "defaults.train_profile_dir": DEFAULTS.TRAIN_PROFILE_DIR,
+    # }
+    d = {
+        "defaults.cache_dir": DEFAULTS._cache_home,
+        "defaults.data_dir": DEFAULTS._data_dir,
+        "defaults.config_home": DEFAULTS._cache_home,
+    }
+    return d
+
+
 def get_sysinfo() -> typing.Dict[str, typing.Any]:
     """Get system information"""
     d = {}
@@ -139,6 +167,7 @@ def get_sysinfo() -> typing.Dict[str, typing.Any]:
     d.update(_torch_cuda_info())
     d.update(_torch_hpu_info())
     d.update(_llama_cpp_info())
+    d.update(_default_paths())
     return d
 
 
