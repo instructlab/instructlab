@@ -47,6 +47,12 @@
 * The `generate` section of the config now has a `teacher` section. This section configures the
   teacher model when it is automatically served in the background. This new section has the same
   values as the `serve` section of the config.
+* Support for `ILAB_GLOBAL_CONFIG` environment variable: When set, this environment variable
+   specifies a global configuration file that serves as the template for the
+   `~/.config/instructlab/config.yaml` user space config. This bypasses the interactive mode in
+   `ilab config init` and can be used to specify alternative configurations for any command,
+   ensuring that defaults such as taxonomy repositories and base models are honored from the global
+   config.
 
 ### Breaking Changes
 
