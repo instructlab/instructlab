@@ -76,7 +76,7 @@ def init(
     if interactive:
         if exists(DEFAULTS.CONFIG_FILE):
             overwrite = click.confirm(
-                f"Found {DEFAULTS.CONFIG_FILE} in the current directory, do you still want to continue?"
+                f"Found {DEFAULTS.CONFIG_FILE}, do you still want to continue?"
             )
             if not overwrite:
                 return
