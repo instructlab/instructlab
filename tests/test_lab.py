@@ -180,6 +180,12 @@ def test_ilab_commands_tested():
 def test_ilab_missing_config(command: Command, cli_runner: CliRunner) -> None:
     cmd = command.get_args(default_config=False)
     assert "--config" not in cmd
+
+    # make sure cli doesn't attempt to read config from the default location
+    # (which may actually exist)
+    if command.needs_config:
+        cmd = ["--config", "./non-existing.yaml"] + cmd
+
     result = cli_runner.invoke(lab.ilab, cmd)
 
     if command.needs_config:
