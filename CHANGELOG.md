@@ -53,7 +53,7 @@
    `ilab config init` and can be used to specify alternative configurations for any command,
    ensuring that defaults such as taxonomy repositories and base models are honored from the global
    config.
-* `ilab model list`: a new command which lists all GGUF and Safetensor Models on the system.
+* `ilab model list`: a new command which lists all GGUF and Safetensors Models on the system.
 
 ### Breaking Changes
 

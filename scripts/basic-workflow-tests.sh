@@ -167,7 +167,7 @@ test_list() {
         ilab model list | grep merlinite-7b-lab-Q4_K_M.gguf4
     fi
     
-    # regardless, download merl safetensors to test that capability
+    # regardless, download merlinite safetensors to test that capability
     ilab model download --repository instructlab/merlinite-7b-lab
     ilab model list | grep instructlab/merlinite-7b-lab
 }

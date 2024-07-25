@@ -167,24 +167,23 @@ def is_model_gguf(model_path: pathlib.Path) -> bool:
     # Third Party
     from gguf.constants import GGUF_MAGIC
 
-    try:
-        with open(model_path, "rb") as f:
-            # Memory-map the file on the first 4 bytes (this is where the magic number is)
-            mmapped_file = mmap.mmap(f.fileno(), length=4, access=mmap.ACCESS_READ)
-
-            # Read the first 4 bytes
-            first_four_bytes = mmapped_file.read(4)
-
-            # Convert the first four bytes to an integer
-            first_four_bytes_int = int(struct.unpack("<I", first_four_bytes)[0])
-
-            # Close the memory-mapped file
-            mmapped_file.close()
-
-            return first_four_bytes_int == GGUF_MAGIC
-    except IsADirectoryError as exc:
-        logger.debug(f"GGUF Path is a directory, returning {exc}")
+    if not model_path.is_file():
         return False
+
+    with model_path.open("rb") as f:
+        # Memory-map the file on the first 4 bytes (this is where the magic number is)
+        mmapped_file = mmap.mmap(f.fileno(), length=4, access=mmap.ACCESS_READ)
+
+        # Read the first 4 bytes
+        first_four_bytes = mmapped_file.read(4)
+
+        # Close the memory-mapped file
+        mmapped_file.close()
+
+    # Convert the first four bytes to an integer
+    first_four_bytes_int = int(struct.unpack("<I", first_four_bytes)[0])
+
+    return first_four_bytes_int == GGUF_MAGIC
 
 
 def determine_backend(model_path: pathlib.Path) -> Tuple[str, str]:

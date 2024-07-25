@@ -2,6 +2,7 @@
 
 # Standard
 from pathlib import Path
+from typing import Generator, Tuple
 import logging
 import os
 import time
@@ -15,6 +16,9 @@ from instructlab.configuration import DEFAULTS
 from instructlab.model.backends.backends import is_model_gguf, is_model_safetensors
 
 logger = logging.getLogger(__name__)
+
+ModelInfo = Tuple[str, str, str]
+TableRow = ModelInfo
 
 
 @click.command(name="list")
@@ -34,32 +38,35 @@ def model_list(model_dirs: list[str], list_checkpoints: bool):
     """lists models"""
     data = []
     for directory in model_dirs:
-        for entry in Path(directory).iterdir():
-            # if file, just tally the size. This must be a GGUF.
-            if entry.is_file() and is_model_gguf(entry):
-                model, age, size = _analyze_gguf(entry)
-                data.append([model, age, size])
+        d = Path(directory)
+        if not d.is_dir():
+            continue
+        for entry in d.iterdir():
+            if is_model_gguf(entry):
+                data.append(_analyze_gguf(entry))
             elif entry.is_dir():
-                for m in _analyze_dir(entry, list_checkpoints, directory):
-                    data.append(m)
-    print_table(["Model Name", "Last Modified", "Size"], data)
+                data += list(_analyze_dir(entry, list_checkpoints, directory))
+    print_table(("Model Name", "Last Modified", "Size"), data)
 
 
-# convert_bytes_to_proper_mag takes a dir/file size in Bytes and converts it to the proper Magnitude (MiB, GiB)
-def convert_bytes_to_proper_mag(f_size: float):
-    magnitudes = ["KiB", "MiB", "GiB", "TiB"]
+def convert_bytes_to_human_readable_size(n_bytes: int) -> str:
+    """
+    Convert bytes size to a human readable string with the appropriate magnitude. (MiB, GiB, ...)
+    """
     magnitude = "B"
-    for mag in magnitudes:
-        if f_size >= 1024:
-            magnitude = mag
-            f_size /= 1024
-        else:
-            return f_size, magnitude
-    return f_size, magnitude
+    f_bytes = float(n_bytes)
+    for mag in ("KiB", "MiB", "GiB", "TiB"):
+        if f_bytes < 1024:
+            break
+        magnitude = mag
+        f_bytes /= 1024
+    return f"{f_bytes:.2f} {magnitude}"
 
 
-# print_table displays the models on the system in a nicely formatted table
-def print_table(headers: list[str], data: list[list[str]]):
+def print_table(headers: TableRow, data: list[TableRow]):
+    """
+    Displays rows of data in a nicely formatted table.
+    """
     column_widths = [
         max(len(str(row[i])) for row in data + [headers]) for i in range(len(headers))
     ]
@@ -80,72 +87,42 @@ def print_table(headers: list[str], data: list[list[str]]):
     print(joining_line)
 
 
-AnalyzeResultGGUF = list[str]
-AnalyzeResultDir = list[list[str]]
-
-
-def _analyze_gguf(entry: Path) -> AnalyzeResultGGUF:
-    # stat the gguf, add it to the table
-    stat = Path(entry.absolute()).stat(follow_symlinks=False)
-    f_size = stat.st_size
-    f_size, magnitude = convert_bytes_to_proper_mag(f_size)
-    # add to table
-    modification_time = os.path.getmtime(entry.absolute())
-    modification_time_readable = time.strftime(
-        "%Y-%m-%d %H:%M:%S", time.localtime(modification_time)
+def get_model_info(path: str, mtime: float, n_bytes: int) -> ModelInfo:
+    return (
+        path,
+        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(mtime)),
+        convert_bytes_to_human_readable_size(n_bytes),
     )
-    return [entry.name, modification_time_readable, f"{f_size:.1f} {magnitude}"]
 
 
+def _analyze_gguf(entry: Path) -> ModelInfo:
+    stat = entry.stat(follow_symlinks=False)
+    return get_model_info(entry.name, stat.st_mtime, stat.st_size)
+
+
+# There are only two directory cases:
+# (1) It's a Safetensors model
+# (2) Any other directory (e.g. checkpoint dir `step-19`)
 def _analyze_dir(
     entry: Path, list_checkpoints: bool, directory: str
-) -> AnalyzeResultDir:
-    actual_model_name = ""
-    all_files_sizes = 0
-    add_model = False
-    models = []
-    # walk entire dir.
-    for root, _, files in os.walk(entry.as_posix()):
-        normalized_path = os.path.normpath(root)
-        # Split the path into its components
-        parts = normalized_path.split(os.sep)
-        # Get the last two parts and join them back into a path
-        last_two_parts = os.path.join(parts[-2], parts[-1])
-        # if this is a dir it could be:
-        # top level repo dir `instructlab/`
-        # top level model dir `instructlab/granite-7b-lab`
-        # checkpoint top level dir `step-19`
-        # any lower level dir: `instructlab/granite-7b-lab/.huggingface/download.....`
-        # so, check if model is valid Safetensor, GGUF, or list it regardless w/ `--list-checkpoints`
-        # if --list-checkpoints is specified, we will list all checkpoints in the checkpoints dir regardless of the validity
-        if is_model_safetensors(Path(normalized_path)) or is_model_gguf(
-            Path(normalized_path)
+) -> Generator[ModelInfo, None, None]:
+    list_all = list_checkpoints and directory == DEFAULTS.CHECKPOINTS_DIR  # (2)
+    # TODO: switch to Path.walk after python3.12 bump
+    for root_, _, files in os.walk(entry.as_posix()):
+        root = Path(root_)
+        if not (
+            list_all  # (2)
+            or is_model_safetensors(root)  # (1)
         ):
-            actual_model_name = last_two_parts
-            all_files_sizes = 0
-            add_model = True
-        else:
-            if list_checkpoints and directory is DEFAULTS.CHECKPOINTS_DIR:
-                logging.debug("Including model regardless of model validity")
-            else:
-                continue
-        for f in files:
-            # stat each file in the dir, add the size in Bytes, then convert to proper magnitude
-            full_file = os.path.join(root, f)
-            stat = Path(full_file).stat(follow_symlinks=False)
-            all_files_sizes += stat.st_size
-        all_files_sizes, magnitude = convert_bytes_to_proper_mag(all_files_sizes)
-        if add_model:
-            # add to table
-            modification_time = os.path.getmtime(entry.absolute())
-            modification_time_readable = time.strftime(
-                "%Y-%m-%d %H:%M:%S", time.localtime(modification_time)
-            )
-            models.append(
-                [
-                    actual_model_name,
-                    modification_time_readable,
-                    f"{all_files_sizes:.1f} {magnitude}",
-                ]
-            )
-    return models
+            continue
+
+        total_bytes = sum(
+            os.stat(os.path.join(root, f), follow_symlinks=False).st_size for f in files
+        )
+
+        yield get_model_info(
+            # Get the last two parts and join them back into a path
+            os.path.join(root.parent.name, root.name),
+            entry.stat().st_mtime,
+            total_bytes,
+        )
