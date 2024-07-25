@@ -24,7 +24,9 @@ HF_TOKEN=${HF_TOKEN:-}
 SDG_PIPELINE="simple"
 SKIP_TRAIN=${SKIP_TRAIN:-0}
 EVAL=0
-MIXTRAL_GGUF_MODE="mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf"
+MIXTRAL_GGUF_MODEL="mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf"
+GRANITE_GGUF_MODEL="granite-7b-lab-Q4_K_M.gguf"
+MERLINITE_GGUF_MODEL="merlinite-7b-lab-Q4_K_M.gguf"
 
 export GREP_COLORS='mt=1;33'
 BOLD='\033[1m'
@@ -122,7 +124,7 @@ test_init() {
     if [ "${BACKEND}" == "vllm" ]; then
         sed -i -e 's|merlinite.*|instructlab/granite-7b-lab|' "${CONFIG_HOME}/instructlab/config.yaml"
     else
-        sed -i -e 's|merlinite.*|granite-7b-lab-Q4_K_M.gguf|' "${CONFIG_HOME}/instructlab/config.yaml"
+        sed -i -e "s|merlinite.*|${GRANITE_GGUF_MODEL}|" "${CONFIG_HOME}/instructlab/config.yaml"
     fi
 }
 
@@ -131,18 +133,18 @@ test_download() {
 
     if [ "${BACKEND}" == "vllm" ]; then
         step Downloading the model granite .safetensors model
-        ilab download --repository instructlab/granite-7b-lab
+        ilab model download --repository instructlab/granite-7b-lab
     else
         step Downloading the granite .gguf model
-        ilab model download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf
+        ilab model download --repository instructlab/granite-7b-lab-GGUF --filename ${GRANITE_GGUF_MODEL}
     fi
 
     if [ "$MIXTRAL" -eq 1 ]; then
         step Downloading the mixtral model as the teacher
-        ilab model download --repository TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF --filename mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf --hf-token "${HF_TOKEN}"
+        ilab model download --repository TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF --filename ${MIXTRAL_GGUF_MODEL} --hf-token "${HF_TOKEN}"
     else
         step Downloading the default merlinite .gguf model as the teacher
-        ilab model download --repository instructlab/merlinite-7b-lab-GGUF --filename merlinite-7b-lab-Q4_K_M.gguf
+        ilab model download --repository instructlab/merlinite-7b-lab-GGUF --filename ${MERLINITE_GGUF_MODEL}
     fi
 
     if [ "$EVAL" -eq 1 ]; then
@@ -159,14 +161,14 @@ test_serve() {
         if [ "${BACKEND}" == "vllm" ]; then
             model="${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab"
         else
-            model="${CACHE_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf"
+            model="${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}"
         fi
     elif [ "$MODEL_TYPE" == "teacher" ]; then
         if [ "${MIXTRAL}" -eq 1 ]; then
-            model="${CACHE_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf"
+            model="${CACHE_HOME}/instructlab/models/${MIXTRAL_GGUF_MODEL}"
             SERVE_ARGS+=("--model-family" "mixtral")
         else
-            model="${CACHE_HOME}/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf"
+            model="${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}"
         fi
     elif [ "$MODEL_TYPE" == "trained" ]; then
         model="${2:-}"
@@ -230,9 +232,9 @@ test_generate() {
     task Generate synthetic data
     GENERATE_ARGS+=("--endpoint-url" "http://localhost:8000/v1")
     if [ "$MIXTRAL" -eq 1 ]; then
-        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf")
+        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/${MIXTRAL_GGUF_MODEL}")
     else
-        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf")
+        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}")
     fi
 
     if [ "$SDG_PIPELINE" = "full" ]; then
@@ -250,7 +252,7 @@ test_train() {
         # the train profile specified in test_init overrides the majority of TRAIN_ARGS, including things like num_epochs. While it looks like much of those settings are being lost, they just have different values here.
         TRAIN_ARGS=("--device=cuda" "--model-path=instructlab/granite-7b-lab" "--data-path=${DATA}" "--lora-quantize-dtype=nf4" "--4-bit-quant" "--effective-batch-size=4" "--is-padding-free=False")
         if [ "${BACKEND}" != "vllm" ]; then
-            TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
+            TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}")
         fi
 
         ilab model train "${TRAIN_ARGS[@]}"
@@ -261,7 +263,7 @@ test_train() {
             TRAIN_ARGS+=("--4-bit-quant")
         fi
         if [ "${BACKEND}" != "vllm" ]; then
-            TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/granite-7b-lab-Q4_K_M.gguf")
+            TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}")
         fi
 
         ilab model train "${TRAIN_ARGS[@]}"
