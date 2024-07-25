@@ -322,26 +322,24 @@ test_exec() {
 
     test_train
 
-    if [ "$FULLTRAIN" -eq 0 ]; then
-        # When we run training with --4-bit-quant, we can't convert the result to a gguf
-        # https://github.com/instructlab/instructlab/issues/579
-        # so we skip trying to test the result
-        return
+    # When we run training with --4-bit-quant, we can't convert the result to a gguf
+    # https://github.com/instructlab/instructlab/issues/579
+    # so we skip trying to test the result
+    if [ "$FULLTRAIN" -eq 1 ]; then
+        # When you run this --
+        #   `ilab model convert` is only implemented for macOS with M-series chips for now
+        #test_convert
+
+        test_serve trained "${DATA_HOME}/instructlab/checkpoints/model.gguf"
+        PID=$!
+
+        test_chat
+
+        # Kill the serve process
+        task Stopping the ilab model serve for trained model
+        step Kill ilab model serve $PID for trained model
+        kill $PID
     fi
-
-    # When you run this --
-    #   `ilab model convert` is only implemented for macOS with M-series chips for now
-    #test_convert
-
-    test_serve trained "${DATA_HOME}/instructlab/checkpoints/model.gguf"
-    PID=$!
-
-    test_chat
-
-    # Kill the serve process
-    task Stopping the ilab model serve for trained model
-    step Kill ilab model serve $PID for trained model
-    kill $PID
 
     task Evaluating the output of ilab model train
     test_evaluate
