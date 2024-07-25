@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -euf
+set -xeuf
 
 # This is a basic workflow test of the ilab CLI.
 #
