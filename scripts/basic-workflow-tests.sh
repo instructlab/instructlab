@@ -153,6 +153,25 @@ test_download() {
     fi
 }
 
+test_list() {
+    task List the Downloaded Models
+
+    if [ "$GRANITE" -eq 1 ]; then
+        step Listing the granite GGUF model only
+        ilab model list | grep granite-7b-lab-Q4_K_M.gguf
+    elif [ "$MIXTRAL" -eq 1 ]; then
+        step Listing the mixtral model only
+        ilab model list | grep mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
+    else
+        step Listing the merlinite GGUF model only
+        ilab model list | grep merlinite-7b-lab-Q4_K_M.gguf4
+    fi
+    
+    # regardless, download merl safetensors to test that capability
+    ilab model download --repository instructlab/merlinite-7b-lab
+    ilab model list | grep instructlab/merlinite-7b-lab
+}
+
 test_serve() {
     MODEL_TYPE="$1"
     SERVE_ARGS=()
