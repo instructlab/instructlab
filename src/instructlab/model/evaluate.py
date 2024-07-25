@@ -100,6 +100,10 @@ def get_evaluator(
                     fg="red",
                 )
                 raise click.exceptions.Exit(1)
+            click.secho(
+                f"Using local model found at '{model}' for '--model'",
+                fg="blue",
+            )
         if benchmark == Benchmark.MT_BENCH:
             # Third Party
             from instructlab.eval.mt_bench import MTBenchEvaluator
@@ -148,6 +152,15 @@ def get_evaluator(
                     fg="red",
                 )
                 raise click.exceptions.Exit(1)
+            click.secho(
+                f"Using local safetensors found at '{model}' for '--model'",
+                fg="blue",
+            )
+        else:
+            click.secho(
+                f"Using safetensors from Hugging Face repo '{model}' for '--model'",
+                fg="blue",
+            )
         if benchmark == Benchmark.MMLU:
             # Third Party
             from instructlab.eval.mmlu import MMLUEvaluator
