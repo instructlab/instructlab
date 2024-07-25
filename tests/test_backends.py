@@ -313,6 +313,7 @@ def test_build_vllm_cmd_with_bnb_quant(tmp_path: pathlib.Path):
         "bitsandbytes",
         "--load-format",
         "bitsandbytes",
+        "--enforce-eager",
         "--distributed-executor-backend",
         "mp",
     ]

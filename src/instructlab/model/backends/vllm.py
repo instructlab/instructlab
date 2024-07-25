@@ -285,12 +285,15 @@ def build_vllm_cmd(
     # Auto-detect whether model is quantized w/ bitsandbytes and add potentially missing args
     quant_arg_present = contains_argument("--quantization", vllm_args)
     load_arg_present = contains_argument("--load-format", vllm_args)
-    if not quant_arg_present or not load_arg_present:
+    eager_arg_present = contains_argument("--enforce-eager", vllm_args)
+    if not (quant_arg_present and load_arg_present and eager_arg_present):
         if is_bnb_quantized(model_path):
             if not quant_arg_present:
                 vllm_cmd.extend(["--quantization", "bitsandbytes"])
             if not load_arg_present:
                 vllm_cmd.extend(["--load-format", "bitsandbytes"])
+            if not eager_arg_present:
+                vllm_cmd.append("--enforce-eager")
 
     # Force multiprocessing for distributed serving, vLLM will try "ray" if it's installed but we do
     # not support it (yet?). We don't install Ray but we might end up running on systems that have it,
