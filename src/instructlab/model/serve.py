@@ -94,6 +94,12 @@ signal.signal(signal.SIGTERM, signal_handler)
         "Automatically detected based on the model file properties.\n"
     ),
 )
+@click.option(
+    "--host-port",
+    type=str,
+    required=True,
+    help="Listen host:port for the server (example: 'localhost:8080').",
+)
 @click.pass_context
 @clickext.display_params
 def serve(
@@ -106,6 +112,7 @@ def serve(
     log_file: pathlib.Path | None,
     backend: str | None,
     chat_template: str | None,
+    host_port: str,
 ) -> None:
     """Start a local server
 
@@ -120,7 +127,7 @@ def serve(
     # First Party
     from instructlab.model.backends import llama_cpp, vllm
 
-    host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
+    host, port = utils.split_hostport(host_port)
     try:
         backend = backends.get(model_path, backend)
     except (ValueError, AttributeError) as e:
