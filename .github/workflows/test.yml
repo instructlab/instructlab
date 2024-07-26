@@ -123,6 +123,18 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install tox tox-gh>=1.2
 
+      # see https://github.com/instructlab/instructlab/issues/1886
+      - name: Verify test isolation
+        run: |
+          mkdir -p ~/.config/instructlab
+          echo "broken" > ~/.config/instructlab/config.yaml
+          
+          mkdir -p ~/.cache
+          echo "not a directory" > ~/.cache/instructlab
+          
+          mkdir -p ~/.local/share
+          echo "not a directory" > ~/.local/share/instructlab
+
       - name: Run unit and functional tests with tox
         run: |
           tox

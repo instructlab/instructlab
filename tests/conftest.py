@@ -60,16 +60,28 @@ def tmp_path_home(tmp_path: pathlib.Path) -> typing.Generator[pathlib.Path, None
     Yields `tmp_path` fixture path.
     """
     # First Party
+    from instructlab import lab
     from instructlab.configuration import DEFAULTS
 
+    # find the --config-file option
+    opt_config_file = [opt for opt in lab.ilab.params if opt.name == "config_file"][0]
+
     with mock.patch.dict(os.environ):
+        # set HOME as home of all XDG directories
         os.environ["HOME"] = str(tmp_path)
+        # unset custom config location
+        os.environ.pop(DEFAULTS.ILAB_GLOBAL_CONFIG, None)
+        # unset all XDG env vars
         for key in list(os.environ):
             if key.startswith("XDG_"):
                 os.environ.pop(key)
-
-        DEFAULTS._reset()  # resets the config defaults to use the new $HOME
-        yield tmp_path
+        # resets the config defaults to use the new $HOME
+        DEFAULTS._reset()
+        # patch default value of --config-file option
+        with mock.patch.object(
+            opt_config_file, attribute="default", new=DEFAULTS.CONFIG_FILE
+        ):
+            yield tmp_path
 
 
 @pytest.fixture
