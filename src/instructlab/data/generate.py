@@ -149,6 +149,13 @@ logger = logging.getLogger(__name__)
     is_flag=True,
     help="Print serving engine logs.",
 )
+@click.option(
+    "--checkpoint-dir",
+    type=click.Path(),
+    default=None,
+    show_default="The directory used by instructlab to checkpoint/load pipeline output to/from",
+    help="Path to output generated files.",
+)
 @click.pass_context
 @clickext.display_params
 def generate(
@@ -174,6 +181,7 @@ def generate(
     model_family,
     pipeline,
     enable_serving_output,
+    checkpoint_dir,
 ):
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=import-outside-toplevel
@@ -236,6 +244,7 @@ def generate(
             tls_client_key=tls_client_key,
             tls_client_passwd=tls_client_passwd,
             pipeline=pipeline,
+            checkpoint_dir=checkpoint_dir
         )
     except GenerateException as exc:
         click.secho(
