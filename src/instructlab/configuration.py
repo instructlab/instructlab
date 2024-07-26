@@ -4,6 +4,7 @@
 from os import path
 from re import match
 from typing import Optional
+import logging
 import os
 import sys
 import typing
@@ -200,7 +201,10 @@ class _general(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     # additional fields with defaults
+    # TODO(leseb): move these to a separate class? so we can have a
+    # "log" namespace and the options under it
     log_level: StrictStr = "INFO"
+    log_format: StrictStr = log.FORMAT
     debug_level: int = 0
 
     @field_validator("log_level")
@@ -222,6 +226,17 @@ class _general(BaseModel):
                 f"'{v}' is not a valid log level name. valid levels: {valid_levels}"
             )
         return v.upper()
+
+    @field_validator("log_format")
+    def validate_log_format(cls, log_format):
+        try:
+            logging.PercentStyle(log_format).validate()
+        except ValueError as e:
+            raise ValueError(
+                f"\nFailed to configure log format: {e}\n"
+                "Have you specified a valid log format?\n"
+                "Consider reading: https://docs.python.org/3/library/logging.html#logrecord-attributes"
+            ) from e
 
     @model_validator(mode="after")
     def after_debug_level(self):
@@ -655,7 +670,9 @@ def init(
         log.configure_logging(
             log_level=config_obj.general.log_level.upper(),
             debug_level=config_obj.general.debug_level,
+            fmt=config_obj.general.log_format,
         )
+
         # subtly get the additional args per cfg section
         # if any are missing, add in sane defaults
         train_additional = ctx.default_map["train"]["additional_args"]

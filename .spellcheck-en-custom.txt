@@ -143,6 +143,7 @@ repo
 runtime
 sexualized
 sshkey
+subcommand
 subdirectory
 tatsu
 th

@@ -469,6 +469,29 @@ test_server_welcome_message(){
     fi
 }
 
+test_log_format(){
+    # remove the log 'levelname' from the log format
+    sed -i.bak -e 's/log_format:.*/log_format: "%(name)s:%(lineno)d: %(message)s"/g' "${ILAB_CONFIG_FILE}"
+    ilab model serve &> serve.log &
+    PID_SERVE=$!
+
+    wait_for_server
+
+    if ! timeout 10 bash -c '
+        until test -s serve.log; do
+            echo "waiting for server log file to be created"
+            sleep 1
+        done
+        if grep INFO serve.log; then
+            echo "INFO log level found in server log - wrong log format"
+            exit 1
+        fi
+    '; then
+        echo "server log file was not created"
+        exit 1
+    fi
+}
+
 wait_for_server(){
     if ! timeout 60 bash -c '
         until curl 127.0.0.1:8000|grep "{\"message\":\"Hello from InstructLab! Visit us at https://instructlab.ai\"}"; do
@@ -621,5 +644,7 @@ cleanup
 test_server_welcome_message
 cleanup
 test_model_print
+cleanup
+test_log_format
 
 exit 0

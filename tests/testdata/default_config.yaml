@@ -26,6 +26,7 @@ evaluate:
     taxonomy_path: /data/instructlab/taxonomy
 general:
   debug_level: 0
+  log_format: '%(levelname)s %(asctime)s %(name)s:%(lineno)d: %(message)s'
   log_level: INFO
 generate:
   chunk_word_count: 1000
