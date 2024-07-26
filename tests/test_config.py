@@ -217,6 +217,11 @@ serve:
             "--qlora-adapter-name-or-path=$HOME/qlora-adapter-name-or-path"
         )
 
+    def test_validate_log_format_invalid(self):
+        cfg = config.get_default_config()
+        with pytest.raises(ValueError):
+            cfg.general.validate_log_format("INVALID")
+
     def test_get_model_family(self):
         good_cases = {
             # two known families
@@ -320,11 +325,12 @@ general:
     ],
 )
 def test_logging(log_level, debug_level, root, instructlab, openai_httpx):
-    configure_logging(log_level=log_level, debug_level=debug_level)
+    configure_logging(log_level=log_level, debug_level=debug_level, fmt="%(message)s")
     assert logging.getLogger("root").getEffectiveLevel() == root
     assert logging.getLogger("instructlab").getEffectiveLevel() == instructlab
     assert logging.getLogger("openai").getEffectiveLevel() == openai_httpx
     assert logging.getLogger("httpx").getEffectiveLevel() == openai_httpx
+    assert logging.getLogger("root").handlers[0].formatter._fmt == "%(message)s"
 
 
 @patch.multiple(

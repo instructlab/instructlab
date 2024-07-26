@@ -83,6 +83,9 @@ general:
   # Debug level for logging.
   # Default: 0
   debug_level: 0
+  # Log format. https://docs.python.org/3/library/logging.html#logrecord-attributes
+  # Default: %(levelname)s %(asctime)s %(name)s:%(lineno)d: %(message)s
+  log_format: '%(levelname)s %(asctime)s %(name)s:%(lineno)d: %(message)s'
   # Log level for logging.
   # Default: INFO
   log_level: INFO

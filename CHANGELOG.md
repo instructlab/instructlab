@@ -1,5 +1,9 @@
 ## v0.19
 
+### Features
+
+* Add `log_format` to the `config.yaml` file to allow for customizing the log format.
+
 ### Breaking Changes
 
 * InstructLab now uses XDG-based directories on macOS, similar to Linux.
