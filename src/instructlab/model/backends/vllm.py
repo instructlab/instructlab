@@ -292,6 +292,7 @@ def build_vllm_cmd(
                 vllm_cmd.extend(["--quantization", "bitsandbytes"])
             if not load_arg_present:
                 vllm_cmd.extend(["--load-format", "bitsandbytes"])
+            # Currently needed to retain generation quality w/ 4-bit bnb + vLLM (bypass graph bug)
             if not eager_arg_present:
                 vllm_cmd.append("--enforce-eager")
 
