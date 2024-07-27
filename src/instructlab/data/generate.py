@@ -139,9 +139,6 @@ logger = logging.getLogger(__name__)
     "--pipeline",
     type=click.STRING,
     default="simple",
-    # Hidden until instructlab-sdg releases a version with multiple pipelines
-    # For now only "simple" is supported in the latest release.
-    hidden=True,
     help="Data generation pipeline to use. Available: simple, full, or a valid path to a directory of pipeline workflow YAML files. Note that 'full' requires a larger teacher model, Mixtral-8x7b.",
 )
 @click.option(
