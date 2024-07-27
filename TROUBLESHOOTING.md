@@ -4,6 +4,13 @@ This document is for commonly found problems and their solutions when using `ila
 
 ## `ilab` troubleshooting
 
+### `ilab data generate --endpoint-url` with llama-cpp fails with `openai.InternalServerError: Service Unavailable`
+
+llama-cpp does not support batching, which is enabled by default with remote
+endpoints. To resolve this error, disable batching using `--batch-size=0`.
+
+See [this issue](https://github.com/instructlab/instructlab/issues/1892).
+
 ### `ilab data generate` command running slow on macOS
 
 If you notice `ilab data generate` running for several hours or more on a Mac M-series, you should first check out the available memory on your system (See [Activity Monitor](https://support.apple.com/en-ie/guide/activity-monitor/welcome/mac) for more details). If there is < 8GM RAM available before serving a model, then check to see if you can free up some memory.

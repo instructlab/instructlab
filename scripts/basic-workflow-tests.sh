@@ -259,6 +259,12 @@ test_generate() {
     if [ "$SDG_PIPELINE" = "full" ]; then
         GENERATE_ARGS+=("--pipeline" "full")
     fi
+
+    # Disable batching with llama-cpp. See https://github.com/instructlab/instructlab/issues/1892
+    if [ "$BACKEND" = "llama-cpp" ]; then
+        GENERATE_ARGS+=("--batch-size" "0")
+    fi
+
     ilab data generate --num-instructions ${NUM_INSTRUCTIONS} "${GENERATE_ARGS[@]}"
 }
 
