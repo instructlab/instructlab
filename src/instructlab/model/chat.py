@@ -212,19 +212,13 @@ def chat(
         api_base = users_endpoint_url
     else:
         # First Party
-        from instructlab.model.backends import backends
+        from instructlab.model.backends.backends import start_backend
 
         ctx.obj.config.serve.llama_cpp.llm_family = model_family
-        backend_instance = backends.select_backend(
-            ctx.obj.config.serve, model_path=model
+        backend_instance = start_backend(
+            http_client(ctx.params), ctx.obj.config.serve, model_path=model
         )
-
-        try:
-            # Run the llama server
-            api_base = backend_instance.run_detached(http_client(ctx.params))
-        except Exception as exc:
-            click.secho(f"Failed to start server: {exc}", fg="red")
-            raise click.exceptions.Exit(1)
+        api_base = backend_instance.api_base
 
     # if only the chat is running (`ilab model chat`) and the temp server is not, the chat interacts
     # in server mode (`ilab model serve` is running somewhere, or we are talking to another

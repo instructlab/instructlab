@@ -355,26 +355,22 @@ def launch_server(
 
     eval_serve.model_path = model
 
-    backend_instance = backends.select_backend(eval_serve, backend)
-    try:
-        # http_client is handling tls params
-        api_base = backend_instance.run_detached(
-            http_client(
-                {
-                    "tls_client_cert": ctx.params["tls_client_cert"],
-                    "tls_client_key": ctx.params["tls_client_key"],
-                    "tls_client_passwd": ctx.params["tls_client_passwd"],
-                    "tls_insecure": ctx.params["tls_insecure"],
-                }
-            ),
-            background=not enable_serving_output,
-            foreground_allowed=True,
-            max_startup_retries=1,
-        )
-    except Exception as exc:
-        click.secho(f"Failed to start server: {exc}", fg="red")
-        raise click.exceptions.Exit(1)
-    return backend_instance, api_base
+    backend_instance = backends.start_backend(
+        http_client(
+            {
+                "tls_client_cert": ctx.params["tls_client_cert"],
+                "tls_client_key": ctx.params["tls_client_key"],
+                "tls_client_passwd": ctx.params["tls_client_passwd"],
+                "tls_insecure": ctx.params["tls_insecure"],
+            }
+        ),
+        eval_serve,
+        backend,
+        background=not enable_serving_output,
+        foreground_allowed=True,
+        max_startup_retries=1,
+    )
+    return backend_instance, backend_instance.api_base
 
 
 @click.command()

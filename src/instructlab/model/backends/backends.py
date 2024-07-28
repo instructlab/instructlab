@@ -586,3 +586,21 @@ def verify_template_exists(path):
         raise IsADirectoryError(
             "Chat templates paths must point to a file: {}".format(path)
         )
+
+
+def start_backend(
+    client,
+    cfg: serve_config,
+    backend: Optional[str] = None,
+    model_path: pathlib.Path | None = None,
+    background: bool = True,
+    foreground_allowed: bool = False,
+    max_startup_retries: int = 0,
+) -> BackendServer:
+    be = select_backend(cfg, backend=backend, model_path=model_path)
+    try:
+        be.run_detached(client, background, foreground_allowed, max_startup_retries)
+    except Exception as exc:
+        click.secho(f"Failed to start server: {exc}", fg="red")
+        raise click.exceptions.Exit(1)
+    return be
