@@ -17,7 +17,7 @@ from instructlab.configuration import DEFAULTS
 
 # Local
 from ..utils import get_sysprompt, http_client
-from .backends import backends
+from .backends.backends import start_backend
 
 logger = logging.getLogger(__name__)
 
@@ -55,15 +55,10 @@ def test_model(ctx, res, ds, model: Path, create_params: dict):
     backend_instance = None
     try:
         ctx.obj.config.serve.llama_cpp.llm_family = ctx.params["model_family"]
-        backend_instance = backends.select_backend(
-            cfg=ctx.obj.config.serve, model_path=model
+        backend_instance = start_backend(
+            http_client(ctx.params), ctx.obj.config.serve, model_path=model
         )
-        try:
-            api_base = backend_instance.run_detached(http_client(ctx.params))
-        except Exception as exc:
-            click.secho(f"Failed to start server: {exc}", fg="red")
-            raise click.exceptions.Exit(1)
-        api_base = api_base or ctx.obj.config.serve.api_base()
+        api_base = backend_instance.api_base or ctx.obj.config.serve.api_base()
         logger.debug("api_base=%s", api_base)
         client = OpenAI(
             base_url=api_base,

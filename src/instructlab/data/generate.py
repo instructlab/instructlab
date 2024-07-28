@@ -239,8 +239,19 @@ def generate(
                     fg="yellow",
                 )
             gen_cfg.generate.teacher.vllm.vllm_args.extend([tps_prefix, str(gpus)])
-        backend_instance = backends.select_backend(
-            cfg=gen_cfg.generate.teacher, model_path=model_path
+        backend_instance = backends.start_backend(
+            http_client(
+                {
+                    "tls_client_cert": ctx.params["tls_client_cert"],
+                    "tls_client_key": ctx.params["tls_client_key"],
+                    "tls_client_passwd": ctx.params["tls_client_passwd"],
+                    "tls_insecure": ctx.params["tls_insecure"],
+                }
+            ),
+            cfg=gen_cfg.generate.teacher,
+            model_path=model_path,
+            background=not enable_serving_output,
+            foreground_allowed=True,
         )
         if (
             backend_instance.get_backend_type() is not backends.VLLM
@@ -249,24 +260,7 @@ def generate(
             logger.debug(
                 "Cannot specify '--gpus' with a llama-cpp backend, ignoring this flag."
             )
-
-        try:
-            # Run the backend server
-            api_base = backend_instance.run_detached(
-                http_client(
-                    {
-                        "tls_client_cert": tls_client_cert,
-                        "tls_client_key": tls_client_key,
-                        "tls_client_passwd": tls_client_passwd,
-                        "tls_insecure": tls_insecure,
-                    }
-                ),
-                background=not enable_serving_output,
-                foreground_allowed=True,
-            )
-        except Exception as exc:
-            click.secho(f"Failed to start server: {exc}", fg="red")
-            raise click.exceptions.Exit(1)
+        api_base = backend_instance.api_base
 
         # disable batching when running with the local llama.cpp server
         if isinstance(backend_instance, llama_cpp_server):
