@@ -117,7 +117,7 @@ class _chat(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore")
     model: str = Field(
-        default_factory=lambda: DEFAULTS.DEFAULT_MODEL,
+        default_factory=lambda: DEFAULTS.DEFAULT_MODEL_GGUF,
         description="Model to be used for chatting with.",
     )
     # additional fields with defaults
@@ -206,7 +206,7 @@ class _serve(BaseModel):
         description="llama-cpp serving settings.",
     )
     model_path: StrictStr = Field(
-        default_factory=lambda: DEFAULTS.DEFAULT_MODEL,
+        default_factory=lambda: DEFAULTS.DEFAULT_MODEL_GGUF,
         description="Directory where model to be served is stored.",
     )
     # additional fields with defaults
@@ -245,7 +245,7 @@ class _generate(BaseModel):
         description="Data generation pipeline to use. Available: 'simple', 'full', or a valid path to a directory of pipeline workflow YAML files. Note that 'full' requires a larger teacher model, Mixtral-8x7b.",
     )
     model: StrictStr = Field(
-        default_factory=lambda: DEFAULTS.DEFAULT_MODEL,
+        default_factory=lambda: DEFAULTS.DEFAULT_MODEL_GGUF,
         description="Teacher model that will be used to synthetically generate training data.",
     )
     taxonomy_path: StrictStr = Field(
@@ -350,7 +350,7 @@ class _evaluate(BaseModel):
         description="Model to be evaluated",
     )
     base_model: str = Field(
-        default=DEFAULTS.MODEL_REPO,
+        default=DEFAULTS.DEFAULT_MODEL,
         description="Base model to compare with 'model' for mt_bench_branch and mmlu_branch.",
     )
     branch: Optional[str] = Field(
@@ -389,7 +389,7 @@ class _train(BaseModel):
         use_enum_values=True,  # populate models with the value property of enums, rather than the raw enum.
     )
     model_path: str = Field(
-        default=DEFAULTS.MODEL_REPO,
+        default=DEFAULTS.DEFAULT_MODEL,
         description="Directory where the model to be trained is stored.",
     )
     data_path: str = Field(

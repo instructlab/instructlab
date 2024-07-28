@@ -117,7 +117,7 @@ test_smoke() {
 
 test_init() {
     task Initializing ilab
-    
+
     ilab config init --non-interactive
 
     step Replace model in config.yaml
@@ -166,7 +166,7 @@ test_list() {
         step Listing the merlinite GGUF model only
         ilab model list | grep merlinite-7b-lab-Q4_K_M.gguf4
     fi
-    
+
     # regardless, download merl safetensors to test that capability
     ilab model download --repository instructlab/merlinite-7b-lab
     ilab model list | grep instructlab/merlinite-7b-lab
@@ -181,16 +181,16 @@ test_serve() {
     serve_args=()
     if [ "${model_type}" == "base" ]; then
         if [ "${BACKEND}" == "vllm" ]; then
-            model_path="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}"
+            model_path="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}/main/"
         else    # if not using vLLM, use the GGUF for llama-cpp
-            model_path="${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}"
+            model_path="${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab-GGUF/main/${GRANITE_GGUF_MODEL}"
         fi
     elif [ "$model_type" == "teacher" ]; then
         if [ "${MIXTRAL}" -eq 1 ]; then
-            model_path="${CACHE_HOME}/instructlab/models/${MIXTRAL_GGUF_MODEL}"
-            serve_args+=("--model-family" "mixtral")
+            model_path="${CACHE_HOME}/instructlab/models/TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF/main/${MIXTRAL_GGUF_MODEL}"
+            SERVE_ARGS+=("--model-family" "mixtral")
         else
-            model_path="${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}"
+            model_path="${CACHE_HOME}/instructlab/models/instructlab/merlinite-7b-lab-GGUF/main/${MERLINITE_GGUF_MODEL}"
         fi
     elif [ "$model_type" == "trained" ]; then
         model_path="${2:-}"
@@ -253,12 +253,12 @@ test_taxonomy() {
 
 test_generate() {
     task Generate synthetic data
-    
+
     GENERATE_ARGS+=("--endpoint-url" "http://localhost:8000/v1")
     if [ "$MIXTRAL" -eq 1 ]; then
-        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/${MIXTRAL_GGUF_MODEL}")
+        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF/${MIXTRAL_GGUF_MODEL}")
     else
-        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}")
+        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/instructlab/merlinite-7b-lab-GGUF/${MERLINITE_GGUF_MODEL}")
     fi
 
     # default arg for '--pipeline' is "simple"
@@ -289,7 +289,7 @@ test_train() {
         # the train profile specified in test_init overrides the majority of TRAIN_ARGS, including things like num_epochs. While it looks like much of those settings are being lost, they just have different values here.
         TRAIN_ARGS=("--pipeline=accelerated" "--device=cuda" "--model-path=${GRANITE_SAFETENSOR_REPO}" "--data-path=${data}" "--lora-quantize-dtype=nf4" "--4-bit-quant" "--effective-batch-size=4" "--is-padding-free=False")
         if [ "${BACKEND}" != "vllm" ]; then
-            TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}")
+            TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab-GGUF/${GRANITE_GGUF_MODEL}")
         fi
     fi
     if [ "$SIMPLE_TRAIN" -eq 1 ]; then
@@ -299,7 +299,7 @@ test_train() {
         # TODO Only cuda for now
         TRAIN_ARGS+=("--pipeline=simple" "--device=cuda" "--num-epochs=1")
         if [ "${BACKEND}" != "vllm" ]; then
-            TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}")
+            TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab-GGUF/${GRANITE_GGUF_MODEL}")
         fi
     fi
     if [ "$FULL_TRAIN" -eq 1 ]; then
@@ -338,14 +338,14 @@ test_phased_train() {
         "--phased-mt-bench-judge-dir=${model_path}" # uses base model
     )
 
-    # phase 1 args 
+    # phase 1 args
     train_args+=(
         "--phased-phase1-num-epochs=1"
         "--phased-phase1-data=${data_path}"
         "--phased-phase1-samples-per-save=1"
     )
 
-    # phase 2 args 
+    # phase 2 args
     train_args+=(
         "--phased-phase2-num-epochs=1"
         "--phased-phase2-data=${data_path}"
@@ -364,9 +364,9 @@ test_convert() {
 
 test_evaluate() {
     task Evaluate the model
-    
+
     local model_path="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}"
-    # Temporarily using merlinite as the base model to confirm the workflow executes correctly 
+    # Temporarily using merlinite as the base model to confirm the workflow executes correctly
     local base_model_path="${CACHE_HOME}/instructlab/models/instructlab/merlinite-7b-lab"
 
     export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true

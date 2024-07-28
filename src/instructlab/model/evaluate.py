@@ -118,9 +118,7 @@ def validate_model(model: str, model_arg: str = "--model"):
         model_path = pathlib.Path(model)
         valid_model = False
         if model_path.is_dir():
-            valid_model = is_model_safetensors(model_path)
-        elif model_path.is_file():
-            valid_model = is_model_gguf(model_path)
+            valid_model = is_model_safetensors(model_path) or  is_model_gguf(model_path)
         if not valid_model:
             click.secho(
                 f"Evaluate '{model_arg}' needs to be passed either a safetensors directory or a GGUF file",

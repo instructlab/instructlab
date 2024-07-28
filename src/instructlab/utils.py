@@ -626,23 +626,6 @@ def ensure_legacy_dataset(
     return convert_messages_to_legacy_dataset(dataset)  # type: ignore
 
 
-def is_oci_repo(repo_url: str) -> bool:
-    """
-    Checks if a provided repository follows the OCI registry URL syntax
-    """
-
-    # TODO: flesh this out and make it a more robust check
-    oci_url_prefix = "docker://"
-    return repo_url.startswith(oci_url_prefix)
-
-
-def is_huggingface_repo(repo_name: str) -> bool:
-    # allow alphanumerics, underscores, hyphens and periods in huggingface repo names
-    # repo name should be of the format <owner>/<model>
-    pattern = r"^[\w.-]+\/[\w.-]+$"
-    return re.match(pattern, repo_name) is not None
-
-
 def load_json(file_path: Path):
     try:
         with open(file_path, encoding="UTF-8") as f:
@@ -689,6 +672,20 @@ def print_table(headers: List[str], data: List[Tuple[str, ...]] | List[List[str]
             outputs.append(f" {item:{width}} ")
         print("|" + "|".join(outputs) + "|")
     print(joining_line)
+
+
+def get_size(target: Path) -> int:
+    """Returns the size in bytes for any specified file or folder"""
+    if os.path.isfile(target):
+        return Path(target).stat(follow_symlinks=True).st_size
+
+    # For directories, calculate the total size recursively
+    total_size = 0
+    for dirpath, _, filenames in os.walk(target):
+        for filename in filenames:
+            file_path = Path(dirpath) / filename
+            total_size += file_path.stat(follow_symlinks=True).st_size
+    return total_size
 
 
 def convert_bytes_to_proper_mag(f_size: int) -> Tuple[float, str]:
@@ -761,36 +758,48 @@ def is_model_safetensors(model_path: pathlib.Path) -> bool:
 
 
 def is_model_gguf(model_path: pathlib.Path) -> bool:
-    """
-    Check if the file is a GGUF file.
+    """Check if model_path is a valid GGUF directory
+
+    Check if provided path to model represents directory containing a GGUF representation
+    of a model. Directory must contain a specific set of files to qualify as a GGUF model directory
     Args:
-        model_path (Path): The path to the file.
+        model_path (Path): The path to the model directory
     Returns:
-        bool: True if the file is a GGUF file, False otherwise.
+        bool: True if the model is a GGUF model, False otherwise.
     """
     # Third Party
     from gguf.constants import GGUF_MAGIC
 
     try:
-        with model_path.open("rb") as f:
-            first_four_bytes = f.read(4)
+        files = list(model_path.iterdir())
+    except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
+        logger.debug("Failed to read directory: %s", e)
+        return False
 
-        # Convert the first four bytes to an integer
-        first_four_bytes_int = int(struct.unpack("<I", first_four_bytes)[0])
+    # directory should contain .gguf files to be considered valid GGUF model
+    if not any(file.suffix in (".gguf") for file in files):
+        logger.debug("'%s' has no *.gguf files", model_path)
+        return False
 
-        return first_four_bytes_int == GGUF_MAGIC
-    except struct.error as e:
-        logger.debug(
-            f"Failed to unpack the first four bytes of {model_path}. "
-            f"The file might not be a valid GGUF file or is corrupted: {e}"
-        )
-        return False
-    except IsADirectoryError as e:
-        logger.debug(f"GGUF Path {model_path} is a directory, returning {e}")
-        return False
-    except OSError as e:
-        logger.debug(f"An unexpected error occurred while processing {model_path}: {e}")
-        return False
+    for file in files:
+        if file.suffix in (".gguf"):
+            try:
+                with file.open("rb") as f:
+                    first_four_bytes = f.read(4)
+
+                # Convert the first four bytes to an integer
+                first_four_bytes_int = int(struct.unpack("<I", first_four_bytes)[0])
+
+                return first_four_bytes_int == GGUF_MAGIC
+            except struct.error as e:
+                logger.debug(
+                    f"Failed to unpack the first four bytes of {model_path}. "
+                    f"The file might not be a valid GGUF file or is corrupted: {e}"
+                )
+                return False
+            except OSError as e:
+                logger.debug(f"An unexpected error occurred while processing {model_path}: {e}")
+                return False
 
 
 def _analyze_gguf(entry: Path) -> AnalyzeModelResult:
