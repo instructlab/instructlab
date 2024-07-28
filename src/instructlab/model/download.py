@@ -18,7 +18,7 @@ import click
 # First Party
 from instructlab import clickext
 from instructlab.configuration import DEFAULTS
-from instructlab.utils import is_huggingface_repo, is_oci_repo, load_json
+from instructlab.utils import load_json
 
 logger = logging.getLogger(__name__)
 
@@ -61,6 +61,13 @@ class HFDownloader(Downloader):
         self.filename = filename
         self.hf_token = hf_token
 
+    @staticmethod
+    def _is_huggingface_repo(repo_name: str) -> bool:
+        # allow alphanumerics, underscores, hyphens and periods in huggingface repo names
+        # repo name should be of the format <owner>/<model>
+        pattern = r"^[\w.-]+\/[\w.-]+$"
+        return re.match(pattern, repo_name) is not None
+
     def download(self):
         """
         Download specified model from Hugging Face
@@ -93,13 +100,14 @@ class HFDownloader(Downloader):
             raise click.exceptions.Exit(1)
 
     def download_gguf(self) -> None:
+        local_dir = os.path.join(self.download_dest, self.repository)
         try:
             hf_hub_download(
                 token=self.hf_token,
                 repo_id=self.repository,
                 revision=self.release,
                 filename=self.filename,
-                local_dir=self.download_dest,
+                local_dir=local_dir,
             )
 
         except Exception as exc:
@@ -133,6 +141,16 @@ class OCIDownloader(Downloader):
     Class to handle downloading safetensors models from OCI Registries
     We are leveraging OCI v1.1 for this functionality
     """
+
+    @staticmethod
+    def _is_oci_repo(repo_url: str) -> bool:
+        """
+        Checks if a provided repository follows the OCI registry URL syntax
+        """
+
+        # TODO: flesh this out and make it a more robust check
+        oci_url_prefix = "docker://"
+        return repo_url.startswith(oci_url_prefix)
 
     @staticmethod
     def _extract_sha(sha: str):
@@ -191,9 +209,13 @@ class OCIDownloader(Downloader):
             f"Downloading model from OCI registry: {self.repository}@{self.release} to {self.download_dest}..."
         )
 
-        model_name = self.repository.split("/")[-1]
-        os.makedirs(os.path.join(self.download_dest, model_name), exist_ok=True)
-        oci_dir = f"{DEFAULTS.OCI_DIR}/{model_name}"
+        model_sub_dirs = []
+        match = re.search("docker://(.*)", self.repository)
+        if match:
+            model_sub_dirs = match.group(1).split("/")
+        model_dest_dir = os.path.join(self.download_dest, *model_sub_dirs)
+        os.makedirs(model_dest_dir, exist_ok=True)
+        oci_dir = os.path.join(DEFAULTS.OCI_DIR, *model_sub_dirs)
         os.makedirs(oci_dir, exist_ok=True)
 
         # Check if skopeo is installed and the version is at least 1.15
@@ -228,7 +250,7 @@ class OCIDownloader(Downloader):
 
         blob_dir = f"{oci_dir}/blobs/sha256/"
         for name, dest in file_map.items():
-            dest_model_path = os.path.join(self.download_dest, model_name, dest)
+            dest_model_path = os.path.join(self.download_dest, *model_sub_dirs, dest)
             # unlink any existing version of the file
             if os.path.exists(dest_model_path):
                 os.unlink(dest_model_path)
@@ -277,11 +299,11 @@ def download(ctx, repository, release, filename, model_dir, hf_token):
     """Downloads model from a specified repository"""
     downloader = None
 
-    if is_oci_repo(repository):
+    if OCIDownloader._is_oci_repo(repository):
         downloader = OCIDownloader(
             ctx=ctx, repository=repository, release=release, download_dest=model_dir
         )
-    elif is_huggingface_repo(repository):
+    elif HFDownloader._is_huggingface_repo(repository):
         downloader = HFDownloader(
             ctx=ctx,
             repository=repository,

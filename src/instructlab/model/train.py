@@ -299,7 +299,6 @@ def train(
     device: str,
     four_bit_quant: bool,
     legacy,
-    **kwargs,
 ):
     """
     Takes synthetic data generated locally with `ilab data generate` and the previous model and learns a new model using the MLX API.
@@ -315,7 +314,6 @@ def train(
     effective_data_dir = Path(data_path if data_path else DEFAULTS.DATASETS_DIR)
     train_file = Path(effective_data_dir / "train_gen.jsonl")
     test_file = Path(effective_data_dir / "test_gen.jsonl")
-    ckpt_output_dir = Path(kwargs["ckpt_output_dir"])
 
     # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
     if not data_path or data_path.strip() == DEFAULTS.DATASETS_DIR:
@@ -395,10 +393,9 @@ def train(
 
         # NOTE we can skip this if we have a way ship MLX
         # PyTorch safetensors to MLX safetensors
-        model_dir_local = model_path.replace("/", "-")
-        model_dir_local = f"{ckpt_output_dir}/{model_dir_local}"
-        model_dir_mlx = f"{model_dir_local}-mlx"
-        model_dir_mlx_quantized = f"{model_dir_local}-mlx-q"
+        model_dir_local = os.path.join(DEFAULTS.MODELS_DIR, model_path)
+        model_dir_mlx = f"{model_dir_local}/mlx"
+        model_dir_mlx_quantized = f"{model_dir_local}/mlx-q"
 
         if skip_quantize:
             dest_model_dir = model_dir_mlx
@@ -407,6 +404,7 @@ def train(
             dest_model_dir = model_dir_mlx_quantized
             quantize_arg = True
 
+        os.makedirs(dest_model_dir, exist_ok=True)
         if tokenizer_dir is not None and gguf_model_path is not None:
             if not local:
                 tokenizer_dir_local = tokenizer_dir.replace("/", "-")
@@ -426,7 +424,7 @@ def train(
             # Downloading PyTorch SafeTensor and Converting to MLX SafeTensor
             convert_between_mlx_and_pytorch(
                 hf_path=model_path,
-                mlx_path=dest_model_dir,
+                dest_path=dest_model_dir,
                 quantize=quantize_arg,
                 local=local,
             )
