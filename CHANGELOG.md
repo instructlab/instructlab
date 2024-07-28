@@ -2,6 +2,9 @@
 
 ### Features
 
+* `ilab data generate` now supports parallelized data generation across batches of the seed
+   data when running with a the vLLM serving. The `--batch-size` argument can be used to
+   control this behavior.
 * `ilab model download` now supports downloading models from OCI registries. Repositories
    that are prefixed by "docker://" and specified against `--repository` are treated as OCI
    registries.

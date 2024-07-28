@@ -131,6 +131,7 @@ nb
 oneMKL
 orchestrator
 ots
+parallelized
 png
 pre
 preceeds
