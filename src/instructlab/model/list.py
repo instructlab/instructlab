@@ -44,6 +44,7 @@ def model_list(model_dirs: list[str], list_checkpoints: bool):
             elif entry.is_dir():
                 for m in _analyze_dir(entry, list_checkpoints, directory):
                     data.append(m)
+    print(f"All listed models can be found at: {DEFAULTS.MODELS_DIR}")
     print_table(["Model Name", "Last Modified", "Size"], data)
 
 
@@ -56,7 +57,7 @@ AnalyzeResultDir = list[list[str]]
 
 def _analyze_gguf(entry: Path) -> AnalyzeResultGGUF:
     # stat the gguf, add it to the table
-    stat = Path(entry.absolute()).stat(follow_symlinks=False)
+    stat = Path(entry.absolute()).stat(follow_symlinks=True)
     f_size = stat.st_size
     adjusted_size, magnitude = convert_bytes_to_proper_mag(f_size)
     # add to table
@@ -77,10 +78,6 @@ def _analyze_dir(
     # walk entire dir.
     for root, _, files in os.walk(entry.as_posix()):
         normalized_path = os.path.normpath(root)
-        # Split the path into its components
-        parts = normalized_path.split(os.sep)
-        # Get the last two parts and join them back into a path
-        last_two_parts = os.path.join(parts[-2], parts[-1])
         # if this is a dir it could be:
         # top level repo dir `instructlab/`
         # top level model dir `instructlab/granite-7b-lab`
@@ -88,10 +85,15 @@ def _analyze_dir(
         # any lower level dir: `instructlab/granite-7b-lab/.huggingface/download.....`
         # so, check if model is valid Safetensor, GGUF, or list it regardless w/ `--list-checkpoints`
         # if --list-checkpoints is specified, we will list all checkpoints in the checkpoints dir regardless of the validity
-        if is_model_safetensors(Path(normalized_path)) or is_model_gguf(
-            Path(normalized_path)
-        ):
-            actual_model_name = last_two_parts
+        for fname in [f for f in files if f.endswith("gguf")]:
+            gguf_path = os.path.join(root, fname)
+            if is_model_gguf(Path(gguf_path)):
+                _, age, size = _analyze_gguf(Path(gguf_path))
+                models.append(
+                    [gguf_path.partition(DEFAULTS.MODELS_DIR + "/")[2], age, size]
+                )
+        if is_model_safetensors(Path(normalized_path)):
+            actual_model_name = normalized_path.partition(DEFAULTS.MODELS_DIR + "/")[2]
             all_files_sizes = 0
             add_model = True
         else:

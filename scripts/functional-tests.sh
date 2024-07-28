@@ -183,10 +183,10 @@ test_oci_model_download_with_vllm_backend(){
     REGISTRY_AUTH_FILE=$HOME/auth.json ilab model download --repository docker://quay.io/ai-lab/models/granite-7b-lab --release latest --model-dir models/instructlab
 
     patterns=(
-        "models/instructlab/quay.io/ai-lab/models/config.json"
-        "models/instructlab/quay.io/ai-lab/models/tokenizer.json"
-        "models/instructlab/quay.io/ai-lab/models/tokenizer_config.json"
-        "models/instructlab/quay.io/ai-lab/models/*.safetensors"
+        "models/instructlab/quay.io/ai-lab/models/granite-7b-lab/config.json"
+        "models/instructlab/quay.io/ai-lab/models/granite-7b-lab/tokenizer.json"
+        "models/instructlab/quay.io/ai-lab/models/granite-7b-lab/tokenizer_config.json"
+        "models/instructlab/quay.io/ai-lab/models/granite-7b-lab/*.safetensors"
     )
 
     match_count=0
