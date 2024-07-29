@@ -1085,7 +1085,7 @@ def init(
         ctx.default_map = None
 
 
-def map_train_to_library(params):
+def map_train_to_library(ctx, params):
     # first do a lazy unwrap into the respective options
     train_args = TrainingArgs(**params)
     torch_args = TorchrunArgs(**params)
@@ -1105,6 +1105,9 @@ def map_train_to_library(params):
         target_modules=params["lora_target_modules"],
         quantize_data_type=params["lora_quantize_dtype"],
     )
+
+    if params["lora_quantize_dtype"] is not None and params["is_padding_free"]:
+        ctx.fail("Cannot combine LoRA with a padding free model.")
 
     train_args.deepspeed_options = ds_args
     train_args.lora = lora_args
