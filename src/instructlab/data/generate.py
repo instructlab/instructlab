@@ -19,8 +19,10 @@ logger = logging.getLogger(__name__)
 @click.command()
 @click.option(
     "--model",
-    default=lambda: DEFAULTS.DEFAULT_MODEL,
-    show_default="The default model used by the instructlab system, located in the data directory.",
+    "model_path",
+    cls=clickext.ConfigOption,
+    config_sections="teacher",
+    show_default=False,
     help="Name of the model used during generation.",
 )
 @click.option(
@@ -156,7 +158,7 @@ logger = logging.getLogger(__name__)
 @clickext.display_params
 def generate(
     ctx,
-    model,
+    model_path,
     num_cpus,
     num_instructions,
     sdg_scale_factor,
@@ -210,8 +212,11 @@ def generate(
         from instructlab.model.backends import backends
         from instructlab.model.backends.llama_cpp import Server as llama_cpp_server
 
+        # TODO (cdoern): we really should not edit the cfg object
         ctx.obj.config.serve.llama_cpp.llm_family = model_family
-        backend_instance = backends.select_backend(ctx.obj.config.generate.teacher)
+        backend_instance = backends.select_backend(
+            cfg=ctx.obj.config.generate.teacher, model_path=model_path
+        )
 
         try:
             # Run the backend server
@@ -231,14 +236,14 @@ def generate(
             batch_size = 0
     try:
         click.echo(
-            f"Generating synthetic data using '{model}' model, taxonomy:'{taxonomy_path}' against {api_base} server"
+            f"Generating synthetic data using '{model_path}' model, taxonomy:'{taxonomy_path}' against {api_base} server"
         )
         generate_data(
             logger=logging.getLogger("instructlab.sdg"),  # TODO: remove
             api_base=api_base,
             api_key=api_key,
             model_family=model_family,
-            model_name=model,
+            model_name=model_path,
             num_cpus=num_cpus,
             num_instructions_to_generate=sdg_scale_factor,
             taxonomy=taxonomy_path,
