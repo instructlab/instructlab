@@ -423,19 +423,13 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
 
 ### 📜 List and validate your new data
 
-1. List your new data by running the following command:
+You can use the `ilab taxonomy diff` command to ensure `ilab` is registering your new knowledge or skills and your contributions are properly formatted. This command displays any new or modified YAML files within your taxonomy tree. For example, the following is the expected result of a valid compositional skill contribution after adding a new skill called `foo-lang` to the freeform writing subdirectory:
 
-   ```shell
-   ilab taxonomy diff
-   ```
-
-2. To ensure `ilab` is registering your new knowledge or skills, you can run the `ilab taxonomy diff` command. The following is the expected result after adding the new compositional skill `foo-lang`:
-
-   ```shell
-   (venv) $ ilab taxonomy diff
-   compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
-   Taxonomy in /taxonomy/ is valid :)
-   ```
+```shell
+(venv) $ ilab taxonomy diff
+compositional_skills/writing/freeform/foo-lang/qna.yaml
+Taxonomy in $HOME/.local/share/instructlab/taxonomy is valid :)
+```
 
 ### 🚀 Generate a synthetic dataset
 
