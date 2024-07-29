@@ -76,6 +76,11 @@
   See `--sdg-scale-factor` for an updated option providing similar
   functionality.
 
+### Fixes
+
+* `ilab config`: Fixed a bug where `ilab` didn't recognize `train.lora_quantize_dtype: null` as a valid
+   value.
+
 ## v0.17
 
 ### Features
