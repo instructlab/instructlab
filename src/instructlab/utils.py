@@ -166,14 +166,18 @@ TAXONOMY_FOLDERS: List[str] = ["compositional_skills", "knowledge"]
 """Taxonomy folders which are also the schema names"""
 
 
-def istaxonomyfile(fn):
+def is_taxonomy_file(fn: str):
     path = Path(fn)
+    if path.suffix == ".yml" and path.parts[0] in TAXONOMY_FOLDERS:
+        logger.warning(
+            f"Found a '.yml' file: {path}: taxonomy files must have a '.yaml' extension. File will not be checked."
+        )
     return path.suffix == ".yaml" and path.parts[0] in TAXONOMY_FOLDERS
 
 
 def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     repo = git.Repo(repo)
-    untracked_files = [u for u in repo.untracked_files if istaxonomyfile(u)]
+    untracked_files = [u for u in repo.untracked_files if is_taxonomy_file(u)]
 
     branches = [b.name for b in repo.branches]
 
@@ -212,7 +216,7 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     modified_files = [
         d.b_path
         for d in head_commit.diff(None)
-        if not d.deleted_file and istaxonomyfile(d.b_path)
+        if not d.deleted_file and is_taxonomy_file(d.b_path)
     ]
 
     updated_taxonomy_files = list(set(untracked_files + modified_files))
