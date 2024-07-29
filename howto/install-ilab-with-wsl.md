@@ -1,17 +1,5 @@
 # Installing InstructLab on Windows using WSL (Windows Subsystem for Linux)
 
-Generative AI is the talk of the town. Large Language Models (LLMs) in particular are instrumental in creating a variety of applications, such as chatbots and coding assistants. These models can be either proprietary, like OpenAI’s GPT model, or come with different levels of transparency concerning training data and usage constraints, such as Meta’s Llama models, Mistral AI’s Mistral models, and IBM’s Granite models.
-
-Adapting a pre-trained LLM to meet specific business requirements is a common task for AI practitioners. However, this process is limited in several ways:
-Specializing an LLM in a specific domain typically involves forking an existing open model and conducting costly, resource-heavy training sessions to fine-tune it.
-Improvements made to the model cannot be fed back into the original project, preventing the model from benefiting from the contributions of a larger open-source community.
-Traditionally, fine-tuning LLMs requires vast amounts of human-generated data, which can be expensive and time-consuming to gather.
-
-InstructLab addresses these challenges by offering a method to enhance LLMs with significantly less human-generated data and reduced computational resources. Additionally, it enables continuous improvements to the model through contributions from an open-source community of developers. 
-
-Eager to try this out for myself, I pored over the documentation only to notice one key differentiator: the installation and training process were not entirely compatible with a Windows machine. Partitioning my hard drive to enable a Linux dual boot proved to be too onerous of a process. What was I to do? Lo and behold: WSL (Windows Subsystem for Linux)! It offered me the capability to run Linux on my computer without the need for a virtual machine or dual boot while utilizing the full resources of my laptop.
-
-
 In this tutorial, I will be walking through the full process of running InstructLab on WSL, from installation of WSL to the initialization of InstructLab. My laptop specs are:
 
 - CPU: Intel i7-10750H
