@@ -19,7 +19,7 @@ from instructlab.log import configure_logging
 
 class TestConfig:
     def _assert_defaults(self, cfg: config.Config):
-        # redefine defaults here instead of relyin on those in configuration.DEFAULTS
+        # redefine defaults here instead of relying on those in configuration.DEFAULTS
         # to catch any errors if we are doing things incorrectly over there
         package_name = "instructlab"
         internal_dirname = "internal"
