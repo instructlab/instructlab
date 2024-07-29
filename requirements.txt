@@ -9,7 +9,7 @@ httpx>=0.25.0
 instructlab-eval>=0.0.9
 instructlab-quantize>=0.1.0
 instructlab-schema>=0.3.1
-instructlab-sdg>=0.2.0
+instructlab-sdg>=0.2.2
 instructlab-training>=0.3.1
 jsonschema>=4.21.1
 llama_cpp_python[server]==0.2.79

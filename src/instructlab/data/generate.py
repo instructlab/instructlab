@@ -2,6 +2,7 @@
 
 # Standard
 import logging
+import os.path
 
 # Third Party
 import click
@@ -234,6 +235,12 @@ def generate(
                     "Disabling SDG batching - unsupported with llama.cpp serving"
                 )
             batch_size = 0
+
+    # Specify checkpoint dir if batching is enabled
+    checkpoint_dir = None
+    if batch_size > 0:
+        checkpoint_dir = os.path.join(output_dir, "checkpoints")
+
     try:
         click.echo(
             f"Generating synthetic data using '{model_path}' model, taxonomy:'{taxonomy_path}' against {api_base} server"
@@ -261,6 +268,7 @@ def generate(
             tls_client_passwd=tls_client_passwd,
             pipeline=pipeline,
             batch_size=batch_size,
+            checkpoint_dir=checkpoint_dir,
         )
     except GenerateException as exc:
         click.secho(
