@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+from typing import Any
 from unittest.mock import patch
 import logging
 import os
@@ -313,3 +314,54 @@ def test_compare_default_config_testdata(
         "intentional, run 'make regenerate-testdata' and commit the "
         "updated test data."
     )
+
+
+@pytest.mark.parametrize(
+    "lora_quantize_dtype,additional_args,raises_exception",
+    [
+        ("nf4", {}, False),
+        (None, {}, False),
+        ("nf4", None, True),
+        (None, None, True),
+        ("valid-for-cli-but-not-for-training-library", {}, False),
+        ("nf4", {"lora_alpha": 32}, False),
+    ],
+)
+def test_read_train_profile(
+    lora_quantize_dtype: str | None,
+    additional_args: dict[str, Any] | None,
+    raises_exception: bool,
+    tmp_path_home,
+):
+    # define a profile with yaml
+    profile_data = {
+        "model_path": "/path/to/model",
+        "data_path": "/path/to/data",
+        "ckpt_output_dir": "/path/to/checkpoints",
+        "data_output_dir": "/dev/shm",
+        "max_seq_len": 4096,
+        "max_batch_len": 60_000,
+        "num_epochs": 10,
+        "effective_batch_size": 3840,
+        "save_samples": 250_000,
+        "deepspeed_cpu_offload_optimizer": True,
+        "lora_rank": 4,
+        "lora_quantize_dtype": lora_quantize_dtype,
+        "is_padding_free": False,
+        "nproc_per_node": 8,
+        "additional_args": additional_args,
+    }
+    train_profile = pathlib.Path(tmp_path_home, "profile.yaml")
+    with open(train_profile, "w", encoding="utf-8") as outfile:
+        yaml.dump(profile_data, outfile)
+
+    if raises_exception:
+        with pytest.raises(config.ConfigException):
+            config.read_train_profile(train_profile)
+    else:
+        result = config.read_train_profile(train_profile)
+        assert result is not None
+        for k, v in result.dict().items():
+            if k not in profile_data:
+                continue
+            assert v == profile_data[k]

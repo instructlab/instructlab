@@ -81,6 +81,11 @@
 * `ilab model train --legacy`: Trained GGUF models are now saved in the global user checkpoints directory.
   Previously, checkpoints were always saved into a directory local to where the user called it from.
 
+### Fixes
+
+* `ilab config`: Fixed a bug where `ilab` didn't recognize `train.lora_quantize_dtype: null` as a valid
+   value.
+
 ## v0.17
 
 ### Features

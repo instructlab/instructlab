@@ -381,7 +381,7 @@ class _train(BaseModel):
     deepspeed_cpu_offload_optimizer: bool
 
     lora_rank: int
-    lora_quantize_dtype: str
+    lora_quantize_dtype: str | None
 
     is_padding_free: bool
 
@@ -470,7 +470,7 @@ def get_default_config() -> Config:
     )
 
 
-def read_train_profile(train_file):
+def read_train_profile(train_file) -> _train:
     try:
         with open(train_file, "r", encoding="utf-8") as yamlfile:
             content = yaml.safe_load(yamlfile)
@@ -482,7 +482,7 @@ def read_train_profile(train_file):
                 "- "
                 + err.get("type", "")
                 + " "
-                + "->".join(err.get("loc", ""))
+                + "->".join(err.get("loc", ""))  # type: ignore
                 + ": "
                 + err.get("msg", "").lower()
                 + "\n"
