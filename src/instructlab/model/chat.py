@@ -26,6 +26,7 @@ import openai
 from instructlab import clickext
 from instructlab import client as ilabclient
 from instructlab import configuration as cfg
+from instructlab.utils import HttpClientParams
 
 # Local
 from ..utils import get_sysprompt, http_client
@@ -60,6 +61,24 @@ CONTEXTS = {
 PROMPT_HISTORY_FILEPATH = os.path.expanduser("~/.local/chat-cli.history")
 
 PROMPT_PREFIX = ">>> "
+
+DEFAULT_ENDPOINT = cfg.get_api_base(cfg._serve().host_port)
+
+
+def is_openai_server_and_serving_model(
+    endpoint: str, api_key: str, http_params: HttpClientParams
+) -> bool:
+    """
+    Given an endpoint, returns whether or not the server is OpenAI-compatible
+    and is actively serving at least one model.
+    """
+    try:
+        models = ilabclient.list_models(
+            endpoint, api_key=api_key, http_client=http_client(http_params)
+        )
+        return len(models.data) > 0
+    except ilabclient.ClientException:
+        return False
 
 
 @click.command()
@@ -113,6 +132,7 @@ PROMPT_PREFIX = ">>> "
     "--endpoint-url",
     type=click.STRING,
     help="Custom URL endpoint for OpenAI-compatible API. Defaults to the `ilab model serve` endpoint.",
+    default=DEFAULT_ENDPOINT,
 )
 @click.option(
     "--api-key",
@@ -173,9 +193,20 @@ def chat(
     # First Party
     from instructlab.model.backends.llama_cpp import is_temp_server_running
 
-    # TODO: this whole code block is replicated in generate.py. Refactor to a common function.
     backend_instance = None
-    if endpoint_url:
+    if endpoint_url != DEFAULT_ENDPOINT or (
+        endpoint_url == DEFAULT_ENDPOINT
+        and is_openai_server_and_serving_model(
+            endpoint_url,
+            api_key,
+            {
+                "tls_client_cert": tls_client_cert,
+                "tls_client_key": tls_client_key,
+                "tls_client_passwd": tls_client_passwd,
+                "tls_insecure": tls_insecure,
+            },
+        )
+    ):
         api_base = endpoint_url
     else:
         # First Party

@@ -76,6 +76,17 @@ class LegacyMessageSample(TypedDict):
     assistant: str
 
 
+class HttpClientParams(TypedDict):
+    """
+    Types the parameters used when initializing the HTTP client.
+    """
+
+    tls_client_cert: str | None
+    tls_client_key: str | None
+    tls_client_passwd: str | None
+    tls_insecure: bool
+
+
 def macos_requirement(echo_func, exit_exception):
     """Adds a check for MacOS before running a method.
 
@@ -532,7 +543,7 @@ def get_ssl_cert_config(tls_client_cert, tls_client_key, tls_client_passwd):
         return tls_client_cert, tls_client_key, tls_client_passwd
 
 
-def http_client(params):
+def http_client(params: HttpClientParams):
     return httpx.Client(
         cert=get_ssl_cert_config(
             params.get("tls_client_cert", None),

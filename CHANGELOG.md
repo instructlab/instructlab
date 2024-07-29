@@ -85,6 +85,8 @@
 
 * `ilab config`: Fixed a bug where `ilab` didn't recognize `train.lora_quantize_dtype: null` as a valid
    value.
+* `ilab model chat`: Fixed an issue where the default served model couldn't be resolved when running
+   model besides the default `merlinite-7b-lab-Q4_K_M.gguf`.
 
 ## v0.17
 

@@ -335,7 +335,15 @@ def launch_server(
     try:
         # http_client is handling tls params
         api_base = backend_instance.run_detached(
-            http_client(ctx.params), background=not enable_serving_output
+            http_client(
+                {
+                    "tls_client_cert": ctx.params["tls_client_cert"],
+                    "tls_client_key": ctx.params["tls_client_key"],
+                    "tls_client_passwd": ctx.params["tls_client_passwd"],
+                    "tls_insecure": ctx.params["tls_insecure"],
+                }
+            ),
+            background=not enable_serving_output,
         )
     except Exception as exc:
         click.secho(f"Failed to start server: {exc}", fg="red")
