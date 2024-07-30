@@ -94,6 +94,13 @@ signal.signal(signal.SIGTERM, signal_handler)
         "Automatically detected based on the model file properties.\n"
     ),
 )
+@click.option(
+    "--gpus",
+    type=click.IntRange(min=0),
+    cls=clickext.ConfigOption,
+    config_sections="vllm",
+    help="Number of GPUs to use when serving this model",
+)
 @click.pass_context
 @clickext.display_params
 def serve(
@@ -106,6 +113,7 @@ def serve(
     log_file: pathlib.Path | None,
     backend: str | None,
     chat_template: str | None,
+    gpus: int | None,
 ) -> None:
     """Starts a local server
 
@@ -121,6 +129,14 @@ def serve(
     from instructlab.model.backends import llama_cpp, vllm
 
     host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
+
+    if gpus is not None:
+        if "--tensor-parallel-size" in ctx.args:
+            logger.info(
+                "'--gpus' flag used alongside '--tensor-parallel-size' in the vllm_args section of the config. Using the value found in the config"
+            )
+        else:
+            ctx.args.extend(["--tensor-parallel-size", str(gpus)])
     try:
         backend = backends.get(model_path, backend)
     except (ValueError, AttributeError) as e:

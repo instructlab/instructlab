@@ -266,6 +266,7 @@ class _serve_vllm(BaseModel):
 
     llm_family: str = ""
     max_startup_attempts: int | None = None
+    gpus: Optional[int] = None
     # arguments to pass into vllm process
     vllm_args: list[str] | None = None
 

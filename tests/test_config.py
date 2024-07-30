@@ -145,8 +145,7 @@ generate:
       max_ctx_size: 2048
       llm_family: ''
     vllm:
-      vllm_args:
-         - --tensor-parallel-size=8
+      gpus: 8
 """
             )
         with pytest.raises(
@@ -223,8 +222,7 @@ generate:
       max_ctx_size: 2048
       llm_family: ''
     vllm:
-      vllm_args:
-         - --tensor-parallel-size=8
+      gpus: 8
 serve:
   model_path: models/granite-7b-lab-Q4_K_M.gguf
   chat_template: tokenizer
@@ -233,6 +231,7 @@ serve:
     max_ctx_size: 2048
     llm_family: ''
   vllm:
+    gpus: 8
     vllm_args:
        - --dtype=auto
        - --enable-lora
