@@ -45,13 +45,11 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
     and checks that taxonomy is valid. Similar to 'git diff <ref>'.
     """
     # pylint: disable=import-outside-toplevel
+    # Third Party
+    from instructlab.schema.taxonomy import TaxonomyReadingException
+
     # Local
-    from ..utils import (
-        TaxonomyReadingException,
-        get_taxonomy,
-        get_taxonomy_diff,
-        validate_taxonomy,
-    )
+    from ..utils import get_taxonomy, get_taxonomy_diff, validate_taxonomy
 
     # load defaults from config ctx obj if not specified via CLI arg
     if not taxonomy_base:
@@ -83,7 +81,7 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
 
     # validate new or changed taxonomy files
     try:
-        validate_taxonomy(None, taxonomy_path, taxonomy_base, yaml_rules)
+        validate_taxonomy(taxonomy_path, taxonomy_base, yaml_rules)
     except (TaxonomyReadingException, yaml.YAMLError) as exc:
         if not quiet:
             click.secho(
