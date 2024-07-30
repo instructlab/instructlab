@@ -56,7 +56,7 @@ def test_model(ctx, res, ds, model: Path, create_params: dict):
     try:
         ctx.obj.config.serve.llama_cpp.llm_family = ctx.params["model_family"]
         backend_instance = backends.select_backend(
-            ctx.obj.config.serve, model_path=model
+            cfg=ctx.obj.config.serve, model_path=model
         )
         try:
             api_base = backend_instance.run_detached(http_client(ctx.params))

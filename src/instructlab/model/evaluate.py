@@ -426,7 +426,7 @@ def launch_server(
 )
 @click.option(
     "--gpus",
-    type=click.INT,
+    type=click.IntRange(min=0),
     help="Number of GPUs to utilize for evaluation (not applicable to llama-cpp)",
 )
 @click.option(

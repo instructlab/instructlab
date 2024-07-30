@@ -118,6 +118,9 @@ class Server(BackendServer):
         if self.process is not None:
             shutdown_process(self.process, 20)
 
+    def get_backend_type(self):
+        return VLLM
+
 
 def format_template(model_family: str, model_path: pathlib.Path) -> str:
     template, eos_token, bos_token = get_model_template(model_family, model_path)

@@ -105,6 +105,10 @@ class BackendServer(abc.ABC):
     def register_resources(self, resources: typing.Iterable[Closeable]) -> None:
         self.resources.extend(resources)
 
+    @abc.abstractmethod
+    def get_backend_type(self):
+        """Return which type of backend this is, llama-cpp or vllm"""
+
 
 def safe_close_all(resources: typing.Iterable[Closeable]):
     for resource in resources:

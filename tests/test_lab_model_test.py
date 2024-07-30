@@ -30,6 +30,9 @@ class TestLabModelTest:
         ) -> str:
             return "api_base_mock"
 
+        def get_backend_type(self):
+            return None
+
         def run(self):
             pass
 
@@ -39,7 +42,8 @@ class TestLabModelTest:
     @patch("instructlab.utils.is_macos_with_m_chip", return_value=False)
     @patch("instructlab.model.linux_test.response", return_value="answer!")
     @patch(
-        "instructlab.model.backends.backends.select_backend", return_value=ServerMock()
+        "instructlab.model.backends.backends.select_backend",
+        return_value=ServerMock(),
     )
     def test_model_test_linux(
         self,
