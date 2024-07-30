@@ -170,12 +170,12 @@ def is_taxonomy_file(fn: str) -> bool:
     path = Path(fn)
     if path.parts[0] not in TAXONOMY_FOLDERS:
         return False
-    if path.suffix == ".yml":
+    if path.name == "qna.yml":
         logger.warning(
-            f"Found a '.yml' file: {path}: taxonomy files must have a '.yaml' extension. File will not be checked."
+            f"Found a 'qna.yml' file: {path}: taxonomy files must be named 'qna.yaml'. File will not be checked."
         )
         return False
-    return path.suffix == ".yaml"
+    return path.name == "qna.yaml"
 
 
 def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
