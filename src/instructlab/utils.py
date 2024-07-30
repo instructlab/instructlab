@@ -31,6 +31,8 @@ from . import common
 
 logger = logging.getLogger(__name__)
 
+MIN_KNOWLEDGE_VERSION = 3
+
 DEFAULT_YAML_RULES = """\
 extends: relaxed
 
@@ -331,12 +333,13 @@ def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
     from jsonschema.validators import validator_for
     from referencing import Registry
     from referencing.exceptions import NoSuchResource
+    from referencing.typing import URI
 
     errors = 0
     version = get_version(contents)
     schemas_path = resources.files("instructlab.schema").joinpath(f"v{version}")
 
-    def retrieve(uri: str) -> Resource:
+    def retrieve(uri: URI) -> Resource:
         path = schemas_path.joinpath(uri)
         # This mypy violation will be fixed in:
         # https://github.com/instructlab/schema/pull/33
@@ -348,6 +351,13 @@ def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
         logger.info(
             f"Cannot determine schema name from path {taxonomy_path}. Using {schema_name} schema."
         )
+
+    if schema_name == "knowledge" and version < MIN_KNOWLEDGE_VERSION:
+        logger.error(
+            f"Version {version} is not supported for knowledge taxonomy. Minimum supported version is {MIN_KNOWLEDGE_VERSION}."
+        )
+        errors += 1
+        return errors
 
     try:
         schema_resource = retrieve(f"{schema_name}.json")
