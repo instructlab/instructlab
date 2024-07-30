@@ -166,13 +166,16 @@ TAXONOMY_FOLDERS: List[str] = ["compositional_skills", "knowledge"]
 """Taxonomy folders which are also the schema names"""
 
 
-def is_taxonomy_file(fn: str):
+def is_taxonomy_file(fn: str) -> bool:
     path = Path(fn)
-    if path.suffix == ".yml" and path.parts[0] in TAXONOMY_FOLDERS:
+    if path.parts[0] not in TAXONOMY_FOLDERS:
+        return False
+    if path.suffix == ".yml":
         logger.warning(
             f"Found a '.yml' file: {path}: taxonomy files must have a '.yaml' extension. File will not be checked."
         )
-    return path.suffix == ".yaml" and path.parts[0] in TAXONOMY_FOLDERS
+        return False
+    return path.suffix == ".yaml"
 
 
 def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
