@@ -27,6 +27,7 @@ EVAL=0
 MIXTRAL_GGUF_MODEL="mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf"
 GRANITE_GGUF_MODEL="granite-7b-lab-Q4_K_M.gguf"
 MERLINITE_GGUF_MODEL="merlinite-7b-lab-Q4_K_M.gguf"
+GRANITE_SAFETENSOR_REPO="instructlab/granite-7b-lab"
 
 export GREP_COLORS='mt=1;33'
 BOLD='\033[1m'
@@ -122,7 +123,7 @@ test_init() {
 
     step Replace model in config.yaml
     if [ "${BACKEND}" == "vllm" ]; then
-        sed -i -e 's|merlinite.*|instructlab/granite-7b-lab|' "${CONFIG_HOME}/instructlab/config.yaml"
+        sed -i -e "s|merlinite.*|${GRANITE_SAFETENSOR_REPO}|" "${CONFIG_HOME}/instructlab/config.yaml"
     else
         sed -i -e "s|merlinite.*|${GRANITE_GGUF_MODEL}|" "${CONFIG_HOME}/instructlab/config.yaml"
     fi
@@ -133,7 +134,7 @@ test_download() {
 
     if [ "${BACKEND}" == "vllm" ]; then
         step Downloading the model granite .safetensors model
-        ilab model download --repository instructlab/granite-7b-lab
+        ilab model download --repository ${GRANITE_SAFETENSOR_REPO}
     else
         step Downloading the granite .gguf model
         ilab model download --repository instructlab/granite-7b-lab-GGUF --filename ${GRANITE_GGUF_MODEL}
@@ -148,7 +149,7 @@ test_download() {
     fi
 
     if [ "$EVAL" -eq 1 ]; then
-        step Downloading merlinite .safetensors model to use in evaluation
+        step Downloading merlinite .safetensors model to use in evaluation as the judge model
         ilab model download --repository instructlab/merlinite-7b-lab
     fi
 }
@@ -179,7 +180,7 @@ test_serve() {
     if [ "${MODEL_TYPE}" == "base" ]; then
         if [ "${BACKEND}" == "vllm" ]; then
             model="${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab"
-        else
+        else    # if not using vLLM, use the GGUF for llama-cpp
             model="${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}"
         fi
     elif [ "$MODEL_TYPE" == "teacher" ]; then
@@ -202,7 +203,7 @@ test_serve() {
 
     task Serve the model
 
-    # output serve log while ilab model serve is starting up
+    # output serve log while `ilab model serve` is starting up
     touch serve.log
     tail -f serve.log &
     TPID=$!
@@ -256,6 +257,7 @@ test_generate() {
         GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}")
     fi
 
+    # default arg for '--pipeline' is "simple"
     if [ "$SDG_PIPELINE" = "full" ]; then
         GENERATE_ARGS+=("--pipeline" "full")
     fi
@@ -265,6 +267,7 @@ test_generate() {
         GENERATE_ARGS+=("--batch-size" "0")
     fi
 
+    # NUM_INSTRUCTIONS is '1' if MINIMAL is set, '5' otherwise
     ilab data generate --num-instructions ${NUM_INSTRUCTIONS} "${GENERATE_ARGS[@]}"
 }
 
@@ -275,7 +278,7 @@ test_train() {
         DATA=$(find "${DATA_HOME}"/instructlab/datasets -name 'messages_*' | head -n 1)
         # TODO Only cuda for now
         # the train profile specified in test_init overrides the majority of TRAIN_ARGS, including things like num_epochs. While it looks like much of those settings are being lost, they just have different values here.
-        TRAIN_ARGS=("--device=cuda" "--model-path=instructlab/granite-7b-lab" "--data-path=${DATA}" "--lora-quantize-dtype=nf4" "--4-bit-quant" "--effective-batch-size=4" "--is-padding-free=False")
+        TRAIN_ARGS=("--device=cuda" "--model-path=${GRANITE_SAFETENSOR_REPO}" "--data-path=${DATA}" "--lora-quantize-dtype=nf4" "--4-bit-quant" "--effective-batch-size=4" "--is-padding-free=False")
         if [ "${BACKEND}" != "vllm" ]; then
             TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}")
         fi
@@ -387,7 +390,7 @@ test_exec() {
         test_serve trained "${DATA_HOME}/instructlab/checkpoints/model.gguf"
         PID=$!
 
-       test_chat
+        test_chat
 
         # Kill the serve process
         task Stopping the ilab model serve for trained model
