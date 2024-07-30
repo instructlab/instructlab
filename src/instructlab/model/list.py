@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
     is_flag=True,
 )
 def model_list(model_dirs: list[str], list_checkpoints: bool):
-    """lists models"""
+    """Lists models"""
     data = []
     for directory in model_dirs:
         for entry in Path(directory).iterdir():

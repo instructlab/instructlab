@@ -274,6 +274,7 @@ class OCIDownloader(Downloader):
 @click.pass_context
 @clickext.display_params
 def download(ctx, repository, release, filename, model_dir, hf_token):
+    """Downloads model from a specified repository"""
     downloader = None
 
     if is_oci_repo(repository):

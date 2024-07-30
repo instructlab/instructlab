@@ -500,6 +500,7 @@ def evaluate(
     tls_client_passwd,  # pylint: disable=unused-argument
     enable_serving_output,
 ):
+    """Evaluates a trained model"""
     # get appropriate evaluator class from Eval lib
     evaluator = get_evaluator(
         model,
