@@ -107,7 +107,7 @@ def serve(
     backend: str | None,
     chat_template: str | None,
 ) -> None:
-    """Start a local server
+    """Starts a local server
 
     The vLLM backend accepts additional parameters in the form of extra
     arguments after "--" separator:

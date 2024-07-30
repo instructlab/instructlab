@@ -168,7 +168,7 @@ def chat(
     tls_client_passwd,  # pylint: disable=unused-argument
     model_family,
 ):
-    """Run a chat using the modified model"""
+    """Runs a chat using the modified model"""
     # pylint: disable=import-outside-toplevel
     # First Party
     from instructlab.model.backends.llama_cpp import is_temp_server_running
