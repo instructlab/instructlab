@@ -63,6 +63,7 @@ RX
 Radeon
 SDG
 SHA
+Safetensors
 Salawu
 Shaders
 Shivchander
@@ -157,4 +158,3 @@ vllm
 wikisql
 xcode
 xlarge
-Safetensor

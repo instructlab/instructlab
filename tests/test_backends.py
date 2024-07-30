@@ -17,7 +17,7 @@ from instructlab.model.backends import backends
 from instructlab.model.backends.vllm import build_vllm_cmd
 
 
-# helper function to create dummy valid and invalid safetensor or bin model directories
+# helper function to create dummy valid and invalid safetensors or bin model directories
 def create_safetensors_or_bin_model_files(
     model_path: pathlib.Path, model_file_type: str, valid: bool
 ):
