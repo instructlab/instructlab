@@ -416,6 +416,7 @@ def validate_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
         )
         warnings += 1
         return warnings, errors
+    # update path to point directly at file if it is not already
     for i in range(len(file_path_p.parts) - 1, -1, -1):
         if file_path_p.parts[i] in TAXONOMY_FOLDERS:
             taxonomy_path = Path(*file_path_p.parts[i:])
@@ -437,11 +438,13 @@ def validate_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
             errors += 1
             return warnings, errors
 
-        # do general YAML linting if specified
+        # do general YAML linting
         version = get_version(contents)
         if version > 1:  # no linting for version 1 yaml
-            if yaml_rules is not None:
-                if os.path.isfile(yaml_rules):
+            if yaml_rules is not None:  # user attempted to pass custom yaml rules file
+                if os.path.isfile(
+                    yaml_rules
+                ):  # custom rules file was found, use specified config
                     logger.debug(f"Using YAML rules from {yaml_rules}")
                     yamllint_cmd = [
                         "yamllint",
@@ -452,7 +455,7 @@ def validate_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
                         str(file_path_p),
                         "-s",
                     ]
-                else:
+                else:  # custom rules file was not found, use default config
                     logger.debug(f"Cannot find {yaml_rules}. Using default rules.")
                     yamllint_cmd = [
                         "yamllint",
@@ -463,7 +466,7 @@ def validate_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
                         str(file_path_p),
                         "-s",
                     ]
-            else:
+            else:  # no custom rules file was specified, use default config
                 yamllint_cmd = [
                     "yamllint",
                     "-f",
@@ -473,6 +476,7 @@ def validate_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
                     str(file_path_p),
                     "-s",
                 ]
+            # run YAML linter via yamllint subprocess
             try:
                 subprocess.check_output(yamllint_cmd, text=True)
             except subprocess.CalledProcessError as e:
@@ -486,6 +490,7 @@ def validate_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
                 logger.error("\n".join(lint_messages))
                 return warnings, errors
 
+        # validate file matches InstructLab Taxonomy Schema
         validation_errors = validate_yaml(contents, taxonomy_path)
         if validation_errors:
             errors += validation_errors
@@ -508,7 +513,7 @@ def validate_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
 
 
 # TODO: remove `_logger` parameter after instructlab.sdg is fixed.
-def validate_taxonomy(_logger, taxonomy, taxonomy_base, yaml_rules):
+def validate_taxonomy(_logger, taxonomy, taxonomy_base, yaml_rules) -> None:
     if os.path.isfile(taxonomy):
         warnings, errors = validate_taxonomy_file(taxonomy, yaml_rules)
         if warnings:
