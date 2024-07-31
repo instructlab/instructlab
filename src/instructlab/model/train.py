@@ -59,6 +59,7 @@ ADDITIONAL_ARGUMENTS = "additional_args"
 )
 @click.option(
     "--skip-preprocessing",
+    help="Skips data preprocessing step for MLX training if data is already cached.",
     is_flag=True,
 )
 @click.option(
