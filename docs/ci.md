@@ -35,33 +35,17 @@ the E2E job configuration files found
 | Flag | Feature |
 | --- | --- |
 | `e` | Run model evaluation |
-| `m` | Run minimal configuration |
-| `M` | Use Mixtral model (4-bit quantized) |
-| `f` | Run "fullsize" training |
 | `F` | Run "fullsize" SDG |
-| `v` | Run with vLLM for serving |
+| `L` | Run legacy training |
+| `m` | Run minimal configuration (lower number of instructions and training epochs) |
+| `M` | Use Mixtral model (4-bit quantized) instead of Merlinite (4-bit quantized) |
+| `P` | Use the phased training within the 'full' training library |
 | `T` | Use the 'full' training library rather than legacy training |
-
-### Triggering an E2E job via GitHub Web UI
-
-For the E2E jobs that can be launched manually, they take an input field that
-specifies the PR number or git branch to run them against. If you run them
-against a PR, they will automatically post a comment to the PR when the tests
-begin and end so it's easier for those involved in the PR to follow the results.
-
-1. Visit the [Actions tab](https://github.com/instructlab/instructlab/actions).
-2. Click on one of the E2E workflows on the left side of the page.
-3. Click on the `Run workflow` button on the right side of the page.
-4. Enter a branch name or a PR number in the input field.
-5. Click the green `Run workflow` button.
-
-Here is an example of using the GitHub Web UI to launch an E2E workflow:
-
-![GitHub Actions Run Workflow Example](images/github-actions-run-workflow-example.png)
+| `v` | Run with vLLM for serving |
 
 ### Current E2E Jobs
 
-| File | T-Shirt Size | Runner Host | Instance Type | OS | GPU Type | Script flags | Runs when? |
+| Name | T-Shirt Size | Runner Host | Instance Type | OS | GPU Type | Script flags | Runs when? |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | Small | AWS | [`g4dn.2xlarge`](https://aws.amazon.com/ec2/instance-types/g4/) | CentOS Stream 9 | 1 x NVIDIA Tesla T4 w/ 16 GB VRAM | `m` | Pull Requests, Push to `main` or `release-*` branch |
 | [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | Medium | AWS |[`g5.2xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | CentOS Stream 9 | 1 x NVIDIA A10G w/ 24 GB VRAM | `mf` | Manually by Maintainers |
@@ -90,3 +74,20 @@ Points of clarification (*):
 ![`e2e-nvidia-t4-x1.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-t4-x1.yml/badge.svg?branch=main)
 ![`e2e-nvidia-a10g-x1.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-a10g-x1.yml/badge.svg?branch=main)
 ![`e2e-nvidia-a10g-x4.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-a10g-x4.yml/badge.svg?branch=main)
+
+### Triggering an E2E job via GitHub Web UI
+
+For the E2E jobs that can be launched manually, they take an input field that
+specifies the PR number or git branch to run them against. If you run them
+against a PR, they will automatically post a comment to the PR when the tests
+begin and end so it's easier for those involved in the PR to follow the results.
+
+1. Visit the [Actions tab](https://github.com/instructlab/instructlab/actions).
+2. Click on one of the E2E workflows on the left side of the page.
+3. Click on the `Run workflow` button on the right side of the page.
+4. Enter a branch name or a PR number in the input field.
+5. Click the green `Run workflow` button.
+
+Here is an example of using the GitHub Web UI to launch an E2E workflow:
+
+![GitHub Actions Run Workflow Example](images/github-actions-run-workflow-example.png)
