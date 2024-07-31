@@ -204,9 +204,9 @@ class TestLabDiff:
         assert result.output == ""
         assert result.exit_code == 0
 
-    def test_diff_invalid_yaml(self, cli_runner: CliRunner, testdata_path):
+    def test_diff_invalid_yaml_content(self, cli_runner: CliRunner, testdata_path):
         qna = testdata_path.joinpath("invalid_yaml.yaml").read_bytes()
-        self.taxonomy.create_untracked("compositional_skills/qna_invalid.yaml", qna)
+        self.taxonomy.create_untracked("compositional_skills/qna.yaml", qna)
         result = cli_runner.invoke(
             lab.ilab,
             [
@@ -222,9 +222,11 @@ class TestLabDiff:
         assert "Reading taxonomy failed" in result.output
         assert result.exit_code == 1
 
-    def test_diff_invalid_yaml_quiet(self, cli_runner: CliRunner, testdata_path):
+    def test_diff_invalid_yaml_content_quiet(
+        self, cli_runner: CliRunner, testdata_path
+    ):
         qna = testdata_path.joinpath("invalid_yaml.yaml").read_bytes()
-        self.taxonomy.create_untracked("compositional_skills/qna_invalid.yaml", qna)
+        self.taxonomy.create_untracked("compositional_skills/qna.yaml", qna)
         result = cli_runner.invoke(
             lab.ilab,
             [
@@ -285,3 +287,42 @@ class TestLabDiff:
         )
         assert "Reading taxonomy failed" in result.output
         assert result.exit_code == 1
+
+    def test_diff_invalid_yaml_filename(self, cli_runner: CliRunner, testdata_path):
+        qna = testdata_path.joinpath("invalid_yaml.yaml").read_bytes()
+        self.taxonomy.create_untracked("compositional_skills/qna_invalid.yaml", qna)
+        result = cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "taxonomy",
+                "diff",
+                "--taxonomy-base",
+                TAXONOMY_BASE,
+                "--taxonomy-path",
+                self.taxonomy.root,
+            ],
+        )
+        assert f"Taxonomy in {self.taxonomy.root} is valid :)" in result.output
+        assert result.exit_code == 0
+
+    def test_diff_invalid_yaml_filename_quiet(
+        self, cli_runner: CliRunner, testdata_path
+    ):
+        qna = testdata_path.joinpath("invalid_yaml.yaml").read_bytes()
+        self.taxonomy.create_untracked("compositional_skills/qna_invalid.yaml", qna)
+        result = cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "taxonomy",
+                "diff",
+                "--taxonomy-base",
+                TAXONOMY_BASE,
+                "--taxonomy-path",
+                self.taxonomy.root,
+                "--quiet",
+            ],
+        )
+        assert result.output == ""
+        assert result.exit_code == 0

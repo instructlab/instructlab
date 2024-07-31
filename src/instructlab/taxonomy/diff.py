@@ -50,11 +50,13 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
     # Local
     from ..utils import TaxonomyReadingException, get_taxonomy_diff, validate_taxonomy
 
+    # load defaults from config ctx obj if not specified via CLI arg
     if not taxonomy_base:
         taxonomy_base = ctx.obj.config.generate.taxonomy_base
     if not taxonomy_path:
         taxonomy_path = ctx.obj.config.generate.taxonomy_path
 
+    # get all new or changed taxonomy files to be validated and output to user
     if not quiet:
         is_file = os.path.isfile(taxonomy_path)
         if is_file:  # taxonomy_path is file
@@ -70,6 +72,8 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
                 raise SystemExit(1) from exc
             for f in updated_taxonomy_files:
                 click.echo(f)
+
+    # validate new or changed taxonomy files
     try:
         validate_taxonomy(None, taxonomy_path, taxonomy_base, yaml_rules)
     except (TaxonomyReadingException, yaml.YAMLError) as exc:
