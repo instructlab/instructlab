@@ -93,6 +93,7 @@ subcommands: list[Command] = [
     Command(("model", "list")),
     Command(("data",), needs_config=False),
     Command(("data", "generate")),
+    Command(("data", "list")),
     Command(("system",), needs_config=False),
     Command(("system", "info"), needs_config=False),
     Command(("taxonomy",), needs_config=False),

@@ -57,6 +57,8 @@
    ensuring that defaults such as taxonomy repositories and base models are honored from the global
    config.
 * `ilab model list`: a new command which lists all GGUF and Safetensor Models on the system.
+* `ilab data list`: a new command which lists the generated datasets in the user's datasets
+  directory.
 
 ### Breaking Changes
 
