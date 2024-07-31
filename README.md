@@ -293,20 +293,32 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 2. When prompted by the interface, press **Enter** to add a new default `config.yaml` file.
 
-3. When prompted, clone the `https://github.com/instructlab/taxonomy.git` repository into the current directory by typing **y**.
+3. When prompted, clone the `https://github.com/instructlab/taxonomy.git` repository into the storage directory by typing **y**.
 
    **Optional**: If you want to point to an existing local clone of the `taxonomy` repository, you can pass the path interactively or alternatively with the `--taxonomy-path` flag.
+
+4. When prompted, download the `merlinite-7b-lab-Q4_K_M.gguf` model into the storage directory by typing **y**.
+
+   > **NOTE** ⏳ This command can take few minutes or complete immediately depending on your internet connection or if the model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
 
    *Example output after initializing `ilab`*
 
    ```shell
    (venv) $ ilab config init
-   Welcome to InstructLab CLI. This guide will help you set up your environment.
+   Welcome to InstructLab CLI. This guide will help you to setup your environment.
    Please provide the following values to initiate the environment [press Enter for defaults]:
-   Path to taxonomy repo [taxonomy]: <ENTER>
-   `taxonomy` seems to not exists or is empty. Should I clone https://github.com/instructlab/taxonomy.git for you? [y/N]: y
+   Path to taxonomy repo [~/.local/share/instructlab/taxonomy]: 
+   `~/.local/share/instructlab/taxonomy` seems to not exist or is empty. Should I clone https://github.com/instructlab/taxonomy.git for you? [y/N]: y
    Cloning https://github.com/instructlab/taxonomy.git...
-   Generating `config.yaml` in the current directory...
+   Path to your model [~/.local/share/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf]: 
+   `~/.local/share/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf` seems to not exist. Should I download merlinite-7b-lab-Q4_K_M.gguf to ~/.local/share/instructlab/models for you? [y/N]: y
+   Downloading model from instructlab/merlinite-7b-lab-GGUF@main to ~/.local/share/instructlab/models...
+   Downloading 'merlinite-7b-lab-Q4_K_M.gguf' to '~/.local/share/instructlab/models/.huggingface/download/merlinite-7b-lab-Q4_K_M.gguf.9ca044d727db34750e1aeb04e3b18c3cf4a8c064a9ac96cf00448c506631d16c.incomplete'
+   INFO 2024-07-18 15:16:14,456 huggingface_hub.file_download:1877: Downloading 'merlinite-7b-lab-Q4_K_M.gguf' to '~/.local/share/instructlab/models/.huggingface/download/merlinite-7b-lab-Q4_K_M.gguf.9ca044d727db34750e1aeb04e3b18c3cf4a8c064a9ac96cf00448c506631d16c.incomplete'
+   merlinite-7b-lab-Q4_K_M.gguf: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████| 4.37G/4.37G [02:44<00:00, 26.6MB/s]
+   Download complete. Moving file to ~/.local/share/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+   INFO 2024-07-18 15:18:59,059 huggingface_hub.file_download:1893: Download complete. Moving file to ~/.local/share/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+   Generating `~/.config/instructlab/config.yaml`...
    Initialization completed successfully, you're ready to start using `ilab`. Enjoy!
    ```
 
@@ -314,7 +326,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 ### 📥 Download the model
 
-- Run the `ilab model download` command.
+- Run the `ilab model download` command if you did not already do it as part of the previous step.
 
   ```shell
   ilab model download
@@ -329,7 +341,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
   merlinite-7b-lab-Q4_K_M.gguf
   ```
 
-  > **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
+  > **NOTE** ⏳ This command can take few minutes or complete immediately depending on your internet connection or if the model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
 
   #### Downloading a specific model from a Hugging Face repository
 

@@ -28,7 +28,7 @@ class TestLabInit:
         mock_clone_from.assert_called_once()
 
     def test_init_interactive(self, cli_runner: CliRunner):
-        result = cli_runner.invoke(lab.ilab, ["init"], input="\nn")
+        result = cli_runner.invoke(lab.ilab, ["init"], input="\nn\nn")
         assert result.exit_code == 0
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
 
@@ -44,7 +44,7 @@ class TestLabInit:
 
     @patch("instructlab.config.init.Repo.clone_from")
     def test_init_interactive_clone(self, mock_clone_from, cli_runner: CliRunner):
-        result = cli_runner.invoke(lab.ilab, ["init"], input="\ny")
+        result = cli_runner.invoke(lab.ilab, ["init"], input="\ny\nn")
         assert result.exit_code == 0
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
         mock_clone_from.assert_called_once()
@@ -78,3 +78,9 @@ class TestLabInit:
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
         config = read_config(DEFAULTS.CONFIG_FILE)
         assert config.generate.taxonomy_path == "different-taxonomy"
+
+    def test_init_interactive_with_no_model_download(self, cli_runner: CliRunner):
+        result = cli_runner.invoke(lab.ilab, ["init"], input="\nn\nn")
+        assert result.exit_code == 0
+        assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
+        assert os.listdir(DEFAULTS.MODELS_DIR) == []
