@@ -16,7 +16,7 @@ import httpx
 
 # Local
 from ...configuration import get_api_base
-from .backends import (
+from .common import (
     CHAT_TEMPLATE_AUTO,
     CHAT_TEMPLATE_TOKENIZER,
     VLLM,

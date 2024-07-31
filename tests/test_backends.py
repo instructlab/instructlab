@@ -13,7 +13,7 @@ import pytest
 
 # First Party
 from instructlab import lab
-from instructlab.model.backends import backends
+from instructlab.model.backends import backends, common
 from instructlab.model.backends.vllm import build_vllm_cmd
 
 
@@ -42,7 +42,7 @@ def create_safetensors_or_bin_model_files(
 
 def test_free_port():
     host = "localhost"
-    port = backends.free_tcp_ipv4_port(host)
+    port = common.free_tcp_ipv4_port(host)
     # check that port is bindable
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host, port))
