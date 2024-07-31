@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+import copy
 import logging
 import os.path
 
@@ -155,6 +156,12 @@ logger = logging.getLogger(__name__)
     is_flag=True,
     help="Print serving engine logs.",
 )
+@click.option(
+    "--gpus",
+    type=click.IntRange(min=0),
+    cls=clickext.ConfigOption,
+    help="Number of GPUs to run generation on",
+)
 @click.pass_context
 @clickext.display_params
 def generate(
@@ -181,6 +188,7 @@ def generate(
     pipeline,
     enable_serving_output,
     batch_size,
+    gpus,
 ):
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=import-outside-toplevel
@@ -214,10 +222,28 @@ def generate(
         from instructlab.model.backends.llama_cpp import Server as llama_cpp_server
 
         # TODO (cdoern): we really should not edit the cfg object
-        ctx.obj.config.serve.llama_cpp.llm_family = model_family
+        gen_cfg = copy.deepcopy(ctx.obj.config)
+        gen_cfg.generate.teacher.llama_cpp.llm_family = model_family
+        if gpus is not None:
+            tps_prefix = "--tensor-parallel-size"
+            if backends.vllm.contains_argument(
+                tps_prefix, gen_cfg.generte.teacher.vllm.vllm_args
+            ):
+                click.secho(
+                    "Using gpus from --gpus. Ignoring --tensor-parallel-size configured in generate.teacher vllm_args",
+                    fg="yellow",
+                )
+            gen_cfg.generate.teacher.vllm.vllm_args.extend([tps_prefix, str(gpus)])
         backend_instance = backends.select_backend(
-            cfg=ctx.obj.config.generate.teacher, model_path=model_path
+            cfg=gen_cfg.generate.teacher, model_path=model_path
         )
+        if (
+            backend_instance.get_backend_type() is not backends.VLLM
+            and gpus is not None
+        ):
+            logger.debug(
+                "Cannot specify '--gpus' with a llama-cpp backend, ignoring this flag."
+            )
 
         try:
             # Run the backend server

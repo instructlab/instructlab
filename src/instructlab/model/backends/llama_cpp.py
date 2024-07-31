@@ -24,6 +24,7 @@ from .backends import (
     API_ROOT_WELCOME_MESSAGE,
     CHAT_TEMPLATE_AUTO,
     CHAT_TEMPLATE_TOKENIZER,
+    LLAMA_CPP,
     BackendServer,
     ServerException,
     UvicornServer,
@@ -141,6 +142,9 @@ class Server(BackendServer):
             self.process.join(timeout=30)
             self.queue.close()
             self.queue.join_thread()
+
+    def get_backend_type(self):
+        return LLAMA_CPP
 
 
 def server(

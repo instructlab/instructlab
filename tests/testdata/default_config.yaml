@@ -29,6 +29,7 @@ general:
   log_level: INFO
 generate:
   chunk_word_count: 1000
+  gpus: null
   model: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
   num_cpus: 10
   output_dir: /data/instructlab/datasets
