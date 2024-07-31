@@ -37,12 +37,13 @@ the E2E job configuration files found
 | Flag | Feature |
 | --- | --- |
 | `e` | Run model evaluation |
-| `m` | Run minimal configuration |
-| `M` | Use Mixtral model (4-bit quantized) |
-| `f` | Run "fullsize" training |
 | `F` | Run "fullsize" SDG |
-| `v` | Run with vLLM for serving |
+| `L` | Run legacy training |
+| `m` | Run minimal configuration (lower number of instructions and training epochs) |
+| `M` | Use Mixtral model (4-bit quantized) instead of Merlinite (4-bit quantized) |
+| `P` | Use the phased training within the 'full' training library |
 | `T` | Use the 'full' training library rather than legacy training |
+| `v` | Run with vLLM for serving |
 
 ### Trigger via GitHub Web UI
 
