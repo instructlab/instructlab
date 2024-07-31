@@ -180,10 +180,10 @@ def generate(
     yaml_rules,
     chunk_word_count,
     server_ctx_size,
-    tls_insecure,
-    tls_client_cert,
-    tls_client_key,
-    tls_client_passwd,
+    tls_insecure: bool,
+    tls_client_cert: str | None,
+    tls_client_key: str | None,
+    tls_client_passwd: str | None,
     model_family,
     pipeline,
     enable_serving_output,
@@ -248,7 +248,15 @@ def generate(
         try:
             # Run the backend server
             api_base = backend_instance.run_detached(
-                http_client(ctx.params), background=not enable_serving_output
+                http_client(
+                    {
+                        "tls_client_cert": tls_client_cert,
+                        "tls_client_key": tls_client_key,
+                        "tls_client_passwd": tls_client_passwd,
+                        "tls_insecure": tls_insecure,
+                    }
+                ),
+                background=not enable_serving_output,
             )
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
