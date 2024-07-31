@@ -449,11 +449,19 @@ Before following these instructions, ensure the existing model you are adding sk
 
    ```shell
    (venv) $ ilab data generate
-   INFO 2024-02-29 19:09:48,804 lab.py:250 Generating model 'ggml-merlinite-7b-lab-Q4_K_M' using 10 CPUs,
-   taxonomy: '/home/username/instructlab/taxonomy' and seed 'seed_tasks.json'
-
-   0%|##########| 0/100 Cannot find prompt.txt. Using default prompt.
-   98%|##########| 98/100 INFO 2024-02-29 20:49:27,582 generate_data.py:428 Generation took 5978.78s
+   INFO 2024-07-30 19:57:44,093 numexpr.utils:161: NumExpr defaulting to 8 threads.
+   INFO 2024-07-30 19:57:44,452 datasets:58: PyTorch version 2.3.1 available.
+   Generating synthetic data using '$HOME/.cache/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf' model, taxonomy:'./taxonomy' against http://localhost:8000/v1 server
+   INFO 2024-07-30 19:57:45,084 instructlab.sdg:375: Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help.
+   INFO 2024-07-30 19:57:45,090 instructlab.sdg.pipeline:153: Running pipeline single-threaded
+   INFO 2024-07-30 19:57:47,820 instructlab.sdg.llmblock:51: LLM server supports batched inputs: False
+   INFO 2024-07-30 19:57:47,820 instructlab.sdg.pipeline:197: Running block: gen_skill_freeform
+   INFO 2024-07-30 19:57:47,820 instructlab.sdg.pipeline:198: Dataset({
+      features: ['task_description', 'seed_question', 'seed_response'],
+      num_rows: 5
+   })
+   INFO 2024-07-30 20:02:16,455 instructlab.sdg:411: Generated 1 samples
+   ...
    ```
 
    The synthetic data set will be three files in the newly created `generated` directory named `generated*.json`, `test*.jsonl`, and `train*.jsonl`.
