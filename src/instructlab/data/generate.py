@@ -220,15 +220,14 @@ def generate(
         # First Party
         from instructlab.model.backends import backends
         from instructlab.model.backends.llama_cpp import Server as llama_cpp_server
+        from instructlab.model.backends.vllm import contains_argument
 
         # TODO (cdoern): we really should not edit the cfg object
         gen_cfg = copy.deepcopy(ctx.obj.config)
         gen_cfg.generate.teacher.llama_cpp.llm_family = model_family
         if gpus is not None:
             tps_prefix = "--tensor-parallel-size"
-            if backends.vllm.contains_argument(
-                tps_prefix, gen_cfg.generte.teacher.vllm.vllm_args
-            ):
+            if contains_argument(tps_prefix, gen_cfg.generate.teacher.vllm.vllm_args):
                 click.secho(
                     "Using gpus from --gpus. Ignoring --tensor-parallel-size configured in generate.teacher vllm_args",
                     fg="yellow",
