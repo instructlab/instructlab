@@ -101,7 +101,7 @@ def _analyze_dir(
         for f in files:
             # stat each file in the dir, add the size in Bytes, then convert to proper magnitude
             full_file = os.path.join(root, f)
-            stat = Path(full_file).stat(follow_symlinks=False)
+            stat = Path(full_file).stat()
             all_files_sizes += stat.st_size
         adjusted_all_sizes, magnitude = convert_bytes_to_proper_mag(all_files_sizes)
         if add_model:
