@@ -341,10 +341,10 @@ def check_skopeo_version():
         if version.parse(installed_version) < version.parse(
             _RECOMMENDED_SCOPEO_VERSION
         ):
-            logger.error(
+            logger.warning(
                 f"skopeo version {installed_version} is lower than {_RECOMMENDED_SCOPEO_VERSION}. Consider upgrading. Downloading the model might fail."
             )
     else:
-        logger.error(
+        logger.warning(
             f"Failed to determine skopeo version. Recommended version is {_RECOMMENDED_SCOPEO_VERSION}. Downloading the model might fail."
         )
