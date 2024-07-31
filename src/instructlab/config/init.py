@@ -20,6 +20,7 @@ from instructlab.configuration import (
     read_train_profile,
     write_config,
 )
+from instructlab.model.download import download
 
 
 @click.command()
@@ -91,6 +92,7 @@ def init(
     else:
         try:
             model_path, taxonomy_path, cfg = get_params_default(
+                ctx,
                 interactive,
                 repository,
                 min_taxonomy,
@@ -134,6 +136,7 @@ def get_params_from_env(
 
 
 def get_params_default(
+    ctx,
     interactive: bool,
     repository: str,
     min_taxonomy: bool,
@@ -142,6 +145,7 @@ def get_params_default(
 ) -> typing.Tuple[str, pathlib.Path, Config]:
     cfg = get_default_config()
     clone_taxonomy_repo = True
+    download_model_file = True
     if interactive:
         if exists(DEFAULTS.CONFIG_FILE):
             overwrite = click.confirm(
@@ -194,5 +198,40 @@ def get_params_default(
         model_path = utils.expand_path(
             click.prompt("Path to your model", default=model_path)
         )
+
+    # check if model is present on disk or not
+    is_model_file = exists(model_path)
+    if is_model_file:
+        download_model_file = False
+    elif interactive:
+        # if user passed a custom model_path, prompt to download the default model there
+        if (
+            ctx.get_parameter_source("model_path")
+            == click.core.ParameterSource.COMMANDLINE
+        ):
+            desired_model_dir = models_dir
+        # otherwise prompt to download to default to default model directory
+        else:
+            desired_model_dir = DEFAULTS.MODELS_DIR
+        download_model_file = click.confirm(
+            f"`{model_path}` seems to not exist. Should I download {DEFAULTS.GGUF_MODEL_NAME} to {desired_model_dir} for you?"
+        )
+
+    # download model file via 'ilab model download' if it needs to be downloaded
+    # pylint: disable=broad-exception-caught
+    if download_model_file:
+        try:
+            ctx.invoke(
+                download,
+                repository=DEFAULTS.MERLINITE_GGUF_REPO,
+                release="main",
+                filename=DEFAULTS.GGUF_MODEL_NAME,
+                model_dir=desired_model_dir,
+            )
+        except Exception as exc:
+            click.secho(
+                f"Couldn't download {DEFAULTS.GGUF_MODEL_NAME} due to '{exc}' - continuing with setup steps, please try again later with 'ilab model download'",
+                fg="yellow",
+            )
 
     return model_path, taxonomy_path, cfg
