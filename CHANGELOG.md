@@ -59,6 +59,9 @@
 * `ilab model list`: a new command which lists all GGUF and Safetensor Models on the system.
 * `ilab data list`: a new command which lists the generated datasets in the user's datasets
   directory.
+* Legacy Linux training now supports the new messages format. When a dataset is provided in the
+  HuggingFace messages format, `ilab` will automatically convert it back into the legacy format.
+* Legacy Linux training is now compatible with the phase07 pretraining format.
 
 ### Breaking Changes
 
