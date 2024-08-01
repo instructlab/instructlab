@@ -187,6 +187,8 @@ generate:
             "MERLINiTe": "merlinite",
             # mapping granite to merlinite
             "granite": "merlinite",
+            # default empty value of model_family will use name of model in model path to guess model_family
+            "": "merlinite",
         }
         bad_cases = [
             # unknown family

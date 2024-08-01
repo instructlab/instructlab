@@ -385,6 +385,10 @@ def get_model_template(
     bos_token = ""
     template = ""
     resolved_family = get_model_family(model_family, model_path)
+    logger.debug(
+        "Searching hard coded model templates for model family %s's template",
+        resolved_family,
+    )
     for template_dict in templates:
         if template_dict["model"] == resolved_family:
             template = template_dict["template"]
