@@ -137,6 +137,7 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--model-family",
+    type=click.STRING,
     help="Force model family to use when picking a generation template",
 )
 @click.option(
@@ -224,7 +225,12 @@ def generate(
 
         # TODO (cdoern): we really should not edit the cfg object
         gen_cfg = copy.deepcopy(ctx.obj.config)
-        gen_cfg.generate.teacher.llama_cpp.llm_family = model_family
+        gen_cfg.generate.teacher.llama_cpp.llm_family = (
+            model_family or gen_cfg.generate.teacher.llama_cpp.llm_family
+        )
+        gen_cfg.generate.teacher.vllm.llm_family = (
+            model_family or gen_cfg.generate.teacher.vllm.llm_family
+        )
         if gpus is not None:
             tps_prefix = "--tensor-parallel-size"
             if contains_argument(tps_prefix, gen_cfg.generate.teacher.vllm.vllm_args):
