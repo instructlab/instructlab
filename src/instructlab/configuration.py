@@ -260,6 +260,13 @@ class _chat(BaseModel):
     greedy_mode: bool = False
     max_tokens: typing.Optional[int] = None
 
+    @model_validator(mode="before")
+    def fill_defaults(
+        cls, values: typing.Dict[str, typing.Any]
+    ) -> typing.Dict[str, typing.Any]:
+        defaults = {"model": DEFAULTS.DEFAULT_MODEL}
+        return finish_cfg_section(defaults, values)
+
 
 class _serve_vllm(BaseModel):
     """Class describing configuration of vllm serving backend."""
@@ -311,6 +318,17 @@ class _serve(BaseModel):
         """Returns server API URL, based on the configured host and port"""
         return get_api_base(self.host_port)
 
+    @model_validator(mode="before")
+    def fill_defaults(
+        cls, values: typing.Dict[str, typing.Any]
+    ) -> typing.Dict[str, typing.Any]:
+        defaults = {
+            "model_path": DEFAULTS.DEFAULT_MODEL,
+            "llama_cpp": {"gpu_layers": -1, "max_ctx_size": 4096, "llm_family": ""},
+            "vllm": {"llm_family": "", "vllm_args": [], "max_startup_attempts": 300},
+        }
+        return finish_cfg_section(defaults, values)
+
 
 class _generate(BaseModel):
     """Class describing configuration of the generate sub-command."""
@@ -339,10 +357,29 @@ class _generate(BaseModel):
     seed_file: StrictStr = Field(default_factory=lambda: DEFAULTS.SEED_FILE)
     gpus: Optional[int] = None
 
+    @model_validator(mode="before")
+    def fill_defaults(
+        cls, values: typing.Dict[str, typing.Any]
+    ) -> typing.Dict[str, typing.Any]:
+        defaults = {
+            "model": DEFAULTS.DEFAULT_MODEL,
+            "taxonomy_path": DEFAULTS.TAXONOMY_DIR,
+            "taxonomy_base": DEFAULTS.TAXONOMY_BASE,
+        }
+
+        return finish_cfg_section(defaults, values)
+
 
 class _mmlu(BaseModel):
     few_shots: int
     batch_size: str
+
+    @model_validator(mode="before")
+    def fill_defaults(
+        cls, values: typing.Dict[str, typing.Any]
+    ) -> typing.Dict[str, typing.Any]:
+        defaults = {"few_shots": 5, "batch_size": "auto"}
+        return finish_cfg_section(defaults, values)
 
 
 class _mtbench(BaseModel):
@@ -350,13 +387,39 @@ class _mtbench(BaseModel):
     output_dir: str
     max_workers: int
 
+    @model_validator(mode="before")
+    def fill_defaults(
+        cls, values: typing.Dict[str, typing.Any]
+    ) -> typing.Dict[str, typing.Any]:
+        defaults = {
+            "judge_model": DEFAULTS.JUDGE_MODEL_MT,
+            "output_dir": DEFAULTS.EVAL_DATA_DIR,
+            "max_workers": 16,
+        }
+        return finish_cfg_section(defaults, values)
+
 
 class _mtbenchbranch(BaseModel):
     taxonomy_path: str
 
+    @model_validator(mode="before")
+    def fill_defaults(
+        cls, values: typing.Dict[str, typing.Any]
+    ) -> typing.Dict[str, typing.Any]:
+        defaults = {"taxonomy_path": DEFAULTS.TAXONOMY_DIR}
+
+        return finish_cfg_section(defaults, values)
+
 
 class _mmlubranch(BaseModel):
     tasks_dir: str
+
+    @model_validator(mode="before")
+    def fill_defaults(
+        cls, values: typing.Dict[str, typing.Any]
+    ) -> typing.Dict[str, typing.Any]:
+        defaults = {"tasks_dir": DEFAULTS.DATASETS_DIR}
+        return finish_cfg_section(defaults, values)
 
 
 class _evaluate(BaseModel):
@@ -372,6 +435,23 @@ class _evaluate(BaseModel):
     mmlu_branch: _mmlubranch
     mt_bench: _mtbench
     mt_bench_branch: _mtbenchbranch
+
+    @model_validator(mode="before")
+    def fill_defaults(
+        cls, values: typing.Dict[str, typing.Any]
+    ) -> typing.Dict[str, typing.Any]:
+        defaults = {
+            "base_model": DEFAULTS.MODEL_REPO,
+            "mt_bench": {
+                "judge_model": DEFAULTS.JUDGE_MODEL_MT,
+                "output_dir": DEFAULTS.EVAL_DATA_DIR,
+                "max_workers": 16,
+            },
+            "mmlu": {"few_shots": 5, "batch_size": "auto"},
+            "mt_bench_branch": {"taxonomy_path": DEFAULTS.TAXONOMY_DIR},
+            "mmlu_branch": {"tasks_dir": DEFAULTS.DATASETS_DIR},
+        }
+        return finish_cfg_section(defaults, values)
 
 
 class _train(BaseModel):
@@ -413,6 +493,30 @@ class _train(BaseModel):
 
     phased_mt_bench_judge: str | None = None
 
+    @model_validator(mode="before")
+    def fill_defaults(
+        cls, values: typing.Dict[str, typing.Any]
+    ) -> typing.Dict[str, typing.Any]:
+        defaults = {
+            "model_path": DEFAULTS.MODEL_REPO,
+            "data_path": DEFAULTS.DATASETS_DIR,
+            "ckpt_output_dir": DEFAULTS.CHECKPOINTS_DIR,
+            "data_output_dir": DEFAULTS.INTERNAL_DIR,
+            "max_seq_len": 4096,
+            "max_batch_len": 10000,
+            "num_epochs": 10,
+            "effective_batch_size": 3840,
+            "save_samples": 250000,
+            "lora_quantize_dtype": None,
+            "lora_rank": 4,
+            "nproc_per_node": 1,
+            "deepspeed_cpu_offload_optimizer": False,
+            "additional_args": {},
+            "is_padding_free": False,
+        }
+
+        return finish_cfg_section(defaults, values)
+
 
 class Config(BaseModel):
     """Configuration for the InstructLab CLI."""
@@ -434,6 +538,63 @@ class Config(BaseModel):
 
     # model configuration
     model_config = ConfigDict(extra="ignore")
+
+    @model_validator(mode="before")
+    def fill_defaults(
+        cls, values: typing.Dict[str, typing.Any]
+    ) -> typing.Dict[str, typing.Any]:
+        defaults = {
+            "chat": {"model": DEFAULTS.DEFAULT_MODEL},
+            "serve": {
+                "model_path": DEFAULTS.DEFAULT_MODEL,
+                "llama_cpp": {"gpu_layers": -1, "max_ctx_size": 4096, "llm_family": ""},
+                "vllm": {"llm_family": "", "vllm_args": []},
+            },
+            "generate": {
+                "model": DEFAULTS.DEFAULT_MODEL,
+                "taxonomy_path": DEFAULTS.TAXONOMY_DIR,
+                "taxonomy_base": DEFAULTS.TAXONOMY_BASE,
+            },
+            "evaluate": {
+                "model": DEFAULTS.DEFAULT_MODEL,
+                "taxonomy_path": DEFAULTS.TAXONOMY_DIR,
+                "taxonomy_base": DEFAULTS.TAXONOMY_BASE,
+            },
+            "train": {
+                "model_path": DEFAULTS.MODEL_REPO,
+                "data_path": DEFAULTS.DATASETS_DIR,
+                "ckpt_output_dir": DEFAULTS.CHECKPOINTS_DIR,
+                "data_output_dir": DEFAULTS.INTERNAL_DIR,
+                "max_seq_len": 4096,
+                "max_batch_len": 10000,
+                "num_epochs": 10,
+                "effective_batch_size": 3840,
+                "save_samples": 250000,
+                "lora_quantize_dtype": None,
+                "lora_rank": 4,
+                "nproc_per_node": 1,
+                "deepspeed_cpu_offload_optimizer": False,
+                "additional_args": {},
+                "is_padding_free": False,
+            },
+            "version": CONFIG_VERSION,
+        }
+
+        for key, val in defaults.items():
+            if values.get(key) is None and val is not None:
+                values[key] = val
+
+        return values
+
+
+def finish_cfg_section(
+    defaults: dict, values: typing.Dict[str, typing.Any]
+) -> typing.Dict[str, typing.Any]:
+    for key, val in defaults.items():
+        if values.get(key) is None and val is not None:
+            values[key] = val
+
+    return values
 
 
 def get_default_config() -> Config:
@@ -603,7 +764,6 @@ def ensure_storage_directories_exist():
     for dirpath in dirs_to_make:
         if not os.path.exists(dirpath):
             os.makedirs(dirpath, exist_ok=True)
-
     additional_args_and_defaults = {
         "learning_rate": 2e-5,
         "warmup_steps": 25,
