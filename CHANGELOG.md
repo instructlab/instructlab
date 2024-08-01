@@ -62,6 +62,8 @@
 * Legacy Linux training now supports the new messages format. When a dataset is provided in the
   HuggingFace messages format, `ilab` will automatically convert it back into the legacy format.
 * Legacy Linux training is now compatible with the phase07 pretraining format.
+* Add support for `ILAB_TRAIN_PROFILE_DIR` which will point to the template train profiles to be brought into the `train_configuration` directory.
+* Add interactive prompt for users to choose their train profile.
 
 ### Breaking Changes
 

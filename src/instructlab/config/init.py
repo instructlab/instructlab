@@ -2,7 +2,7 @@
 
 # Standard
 from os import listdir
-from os.path import dirname, exists
+from os.path import dirname, exists, join
 import pathlib
 import typing
 
@@ -103,6 +103,29 @@ def init(
     click.echo(f"Generating `{DEFAULTS.CONFIG_FILE}`...")
     if train_profile is not None:
         cfg.train = read_train_profile(train_profile)
+    elif interactive:
+        entries = listdir(DEFAULTS.TRAIN_PROFILE_DIR)
+        click.echo("Please choose a train profile to use:")
+        for i, value in enumerate(entries):
+            click.echo(f"{i}. {value}")
+        train_profile_selection = click.prompt(
+            "Enter the number of your choice [hit enter for the default]",
+            type=int,
+            default=-1,
+        )
+        if 0 <= train_profile_selection < len(entries):
+            click.echo(f"You selected: {entries[train_profile_selection]}")
+            cfg.train = read_train_profile(
+                join(DEFAULTS.TRAIN_PROFILE_DIR, entries[train_profile_selection])
+            )
+        elif train_profile_selection == -1:
+            click.echo("Using default train profile.")
+        else:
+            click.secho(
+                "Invalid selection. Please select a valid train profile option.",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
 
     cfg.chat.model = model_path
     cfg.generate.model = model_path
