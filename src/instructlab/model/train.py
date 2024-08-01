@@ -2,22 +2,53 @@
 
 # Standard
 from pathlib import Path
+import enum
+import functools
 import logging
+import multiprocessing
 import os
+import pathlib
+import pprint
 import shutil
+import typing
 
 # Third Party
+from instructlab.training import TorchrunArgs, TrainingArgs
+
 # pylint: disable=ungrouped-imports
 import click
 
 # First Party
 from instructlab import clickext, utils
 from instructlab.configuration import DEFAULTS, map_train_to_library
+from instructlab.model.backends import backends
 
 logger = logging.getLogger(__name__)
 
-
 ADDITIONAL_ARGUMENTS = "additional_args"
+
+
+class SupportedTrainingStrategies(enum.Enum):
+    """Available advanced training stratefies"""
+
+    LAB_MULTIPHASE: str = "lab-multiphase"
+
+
+def clickpath_setup(is_dir: bool) -> click.Path:
+    """
+    Creates a click.Path object meeting requirements:
+        - path to target must exist,
+        - file vs. directory are mutually exclusive,
+        - path is fully resolved.
+    """
+
+    return click.Path(
+        exists=True,
+        file_okay=not is_dir,
+        dir_okay=is_dir,
+        resolve_path=True,
+        path_type=pathlib.Path,
+    )
 
 
 @click.command()
@@ -279,8 +310,68 @@ ADDITIONAL_ARGUMENTS = "additional_args"
 @click.option(
     "--legacy",
     is_flag=True,
-    default=False,
     help="if true, enables the legacy linux training codepath from release 0.17.0 and prior.",
+)
+@click.option(
+    "--strategy",
+    type=click.Choice(
+        [SupportedTrainingStrategies.LAB_MULTIPHASE.value], case_sensitive=False
+    ),
+    show_default=True,
+    help="If chosen, will run the selected training strategy instead of a single training run.",
+)
+@click.option(
+    "--phased-base-dir",
+    type=clickpath_setup(is_dir=True),
+    default=lambda: DEFAULTS.PHASED_DIR,
+    help="Base directory for organization of end-to-end intermediate outputs.",
+)
+@click.option(
+    "--phased-phase1-data",
+    type=clickpath_setup(is_dir=False),
+    help="Path to .jsonl file that will be used for the first phase of end-to-end training.",
+)
+@click.option(
+    "--phased-phase1-num-epochs",
+    cls=clickext.ConfigOption,
+    type=int,
+    help="Number of epochs to run for first phase of end-to-end training.",
+)
+@click.option(
+    "--phased-phase1-samples-per-save",
+    cls=clickext.ConfigOption,
+    type=int,
+    help="Number of samples to train on between saves for first phase of end-to-end training.",
+)
+@click.option(
+    "--phased-phase2-data",
+    type=clickpath_setup(is_dir=False),
+    help="Path to .jsonl file that will be used for the second phase of end-to-end training.",
+)
+@click.option(
+    "--phased-phase2-num-epochs",
+    cls=clickext.ConfigOption,
+    type=int,
+    help="Number of epochs to run for second phase of end-to-end training.",
+)
+@click.option(
+    "--phased-phase2-samples-per-save",
+    cls=clickext.ConfigOption,
+    type=int,
+    help="Number of samples to train on between saves for second phase of end-to-end training.",
+)
+@click.option(
+    "--phased-mt-bench-judge",
+    # type=clickpath_setup(is_dir=True), # want this in the future, can't guarantee it exists so can't enforce it this way.
+    type=click.Path(dir_okay=True, file_okay=False, path_type=pathlib.Path),
+    cls=clickext.ConfigOption,
+    help="MT-Bench judge. Should be absolute path to local judge model directory. Download with `ilab model download` if necessary.",
+)
+@click.option(
+    "--skip-user-confirm",
+    "-y",
+    is_flag=True,
+    help="Skips any user confirmation prompts.",
 )
 @click.pass_context
 @clickext.display_params
@@ -299,6 +390,16 @@ def train(
     device: str,
     four_bit_quant: bool,
     legacy,
+    strategy: str | None,
+    phased_base_dir: pathlib.Path,
+    phased_phase1_data: pathlib.Path | None,
+    phased_phase1_num_epochs: int | None,
+    phased_phase1_samples_per_save: int | None,
+    phased_phase2_data: pathlib.Path | None,
+    phased_phase2_num_epochs: int | None,
+    phased_phase2_samples_per_save: int | None,
+    phased_mt_bench_judge: pathlib.Path | None,
+    skip_user_confirm: bool,
     **kwargs,
 ):
     """
@@ -312,13 +413,15 @@ def train(
     if four_bit_quant and device != "cuda":
         ctx.fail("'--4-bit-quant' option requires '--device=cuda'")
 
-    effective_data_dir = Path(data_path if data_path else DEFAULTS.DATASETS_DIR)
-    train_file = Path(effective_data_dir / "train_gen.jsonl")
-    test_file = Path(effective_data_dir / "test_gen.jsonl")
+    effective_data_dir: pathlib.Path = Path(
+        data_path if data_path else DEFAULTS.DATASETS_DIR
+    )
+    train_file = effective_data_dir / "train_gen.jsonl"
+    test_file = effective_data_dir / "test_gen.jsonl"
     ckpt_output_dir = Path(kwargs["ckpt_output_dir"])
 
     # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
-    if not data_path or data_path.strip() == DEFAULTS.DATASETS_DIR:
+    if not data_path or data_path.strip() == DEFAULTS.DATASETS_DIR and not strategy:
         data_path = str(effective_data_dir)
         if not os.path.exists(input_dir):
             click.secho(
@@ -375,7 +478,7 @@ def train(
         shutil.copy(test_files[0], test_file)
 
     # if macos, preserve that path
-    if utils.is_macos_with_m_chip():
+    if utils.is_macos_with_m_chip() and not strategy:
         # Local
         from ..mlx_explore.gguf_convert_to_mlx import load
         from ..mlx_explore.utils import fetch_tokenizer_from_hub
@@ -521,20 +624,328 @@ def train(
         # pull the trainrandom.randinting and torch args from the flags
         # the flags are populated from the config as a base.
         params = ctx.params
-
-        if os.path.isdir(data_path):
-            click.secho(
-                f"Data path cannot be a directory. It must be a path to a valid jsonl file. Value given: {data_path}",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
         train_args, torch_args = map_train_to_library(params)
-        try:
-            run_training(train_args=train_args, torch_args=torch_args)
-        # unsure what types of exceptions training library returns, this will catch all for now
-        except Exception as exc:
-            click.secho(
-                f"Error while executing training library {exc}",
-                fg="red",
+
+        if strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value:
+            if not (phased_phase1_data and phased_phase2_data):
+                raise ctx.fail(
+                    "End-to-end training minimally requires: `--phased-phase1-data`, and `--phased-phase2-data`. One or more wasn't correctly specified."
+                )
+
+            # if they both exist, must be Path objects
+            if not (phased_phase1_data.exists() and phased_phase2_data.exists()):
+                raise FileNotFoundError(
+                    "Data for both phase1 and phase2 must be specified for phased training."
+                )
+
+            mt_bench_judge: pathlib.Path
+            if phased_mt_bench_judge is None:
+                ctx.fail(
+                    "No MT-Bench model was provided with '--phased-mt-bench-judge'"
+                )
+            elif not phased_mt_bench_judge.resolve().exists():
+                raise FileNotFoundError(
+                    f"MT-Bench model directory could not be found: {phased_mt_bench_judge}\nMust be an absolute path to a model directory."
+                )
+            else:
+                # makes MyPy happy because 'mt_bench_judge' isn't Path | None
+                mt_bench_judge = phased_mt_bench_judge
+
+            if not skip_user_confirm:
+                click.confirm(
+                    f"""\n\nSTARTING END-TO-END TRAINING.\nProceeding will OVERWRITE any metadata (checkpoints, intermediate results) that are stored at {phased_base_dir}.\n\nWould you like to proceed?""",
+                    abort=True,
+                )
+
+            _prepare_phased_base_dir(phased_base_dir)
+
+            _run_phased_training(
+                ctx=ctx,
+                train_args=train_args,
+                torch_args=torch_args,
+                base_dir=phased_base_dir,
+                phase1_data=phased_phase1_data,
+                phase1_num_epochs=phased_phase1_num_epochs,
+                phase1_samples_per_save=phased_phase1_samples_per_save,
+                phase1_checkpoints_dir=phased_base_dir / "phase1" / "checkpoints",
+                phase2_data=phased_phase1_data,
+                phase2_num_epochs=phased_phase2_num_epochs,
+                phase2_samples_per_save=phased_phase2_samples_per_save,
+                phase2_checkpoints_dir=phased_base_dir / "phase2" / "checkpoints",
+                phase2_eval_cache=phased_base_dir / "phase2" / "eval_cache",
+                mtbench_judge=mt_bench_judge,
             )
-            raise click.exceptions.Exit(1)
+
+        else:
+            if not os.path.isfile(data_path):
+                ctx.fail(
+                    f"Data path must be to a valid .jsonl file. Value given: {data_path}"
+                )
+
+            # TODO: should we have this wrapped in a try-except?
+            run_training(train_args=train_args, torch_args=torch_args)
+
+
+def _prepare_phased_base_dir(phased_base_dir: pathlib.Path) -> None:
+    """Adds phase1 and phase2 directories in phased_base_dir.
+    In each, adds `checkpoints` and `eval_cache` subdirectories.
+
+    Args:
+        phased_base_dir: directory wrapping phase1 and phase2 cached data.
+    """
+
+    logger.debug(f"Phased Training -- Preparing phased base dir: {phased_base_dir}")
+
+    phase1_dir_path = phased_base_dir / "phase1"
+    phase2_dir_path = phased_base_dir / "phase2"
+
+    for p in [phase1_dir_path, phase2_dir_path]:
+        utils.clear_directory(p)
+        _setup_phase_dirs(p)
+
+
+def _setup_phase_dirs(path: pathlib.Path) -> None:
+    """Creates {path}/checkpoints and {path}/eval_cache directories."""
+
+    # TODO: these sub-directory names are hard-coded here but they
+    # could be parameterized in config.
+    logger.debug(f"Phased Training -- Created phase directories for {path}")
+    ckpt_path = path / "checkpoints"
+    eval_cache_path = path / "eval_cache"
+
+    os.makedirs(ckpt_path)
+    os.makedirs(eval_cache_path)
+
+
+def _training_phase(
+    train_args: TrainingArgs,
+    torch_args: TorchrunArgs,
+    data_path: pathlib.Path,
+    model_override: pathlib.Path | None = None,
+    num_epochs: int | None = None,
+    samples_per_save: int | None = None,
+    checkpoint_dir: pathlib.Path | None = None,
+) -> None:
+    """A single step of phased training that supports key param overriding."""
+
+    # Third Party
+    from instructlab.training import run_training  # pylint: disable=no-name-in-module
+
+    logger.debug(
+        f"Phased Training -- training phase -- Overriding data_path: {train_args.data_path} with {data_path}"
+    )
+
+    # NOTE: have to cast pathlib.Path to str because Pydantic models require this. Here and below.
+    train_args.data_path = str(data_path)
+
+    if checkpoint_dir:
+        train_args.ckpt_output_dir = str(checkpoint_dir)
+
+    if model_override:
+        logger.debug(
+            f"Phased Training -- training phase -- Overriding model_path: {train_args.model_path} with {model_override}"
+        )
+        train_args.model_path = str(model_override)
+
+    if num_epochs:
+        logger.debug(
+            f"Phased Training -- training phase -- Overriding num epochs: {train_args.num_epochs} with {num_epochs}"
+        )
+        train_args.num_epochs = num_epochs
+
+    if samples_per_save:
+        logger.debug(
+            f"Phased Training -- training phase -- Overriding samples per save: {train_args.save_samples} with {samples_per_save}"
+        )
+        train_args.save_samples = samples_per_save
+
+    click.secho(
+        f"TrainingArgs for current phase: {pprint.pformat(train_args)}", fg="cyan"
+    )
+
+    run_training(train_args=train_args, torch_args=torch_args)
+
+
+def _mmlu(model: pathlib.Path) -> float:
+    # Third Party
+    from instructlab.eval.mmlu import MMLU_TASKS, MMLUEvaluator
+    import torch
+
+    # TODO: few_shots is enforced to be 5 here. Should be grabbed from config.
+    evaluator = MMLUEvaluator(model, tasks=MMLU_TASKS, few_shots=5)
+
+    # type the variable because MyPy doesn't seem to honor the types of the spread tuple
+    ckpt_score: float
+    ckpt_score, _ = evaluator.run()
+
+    logging.debug("Phased Training -- MMLU eval phase -- Clearing PyTorch cache")
+    torch.cuda.empty_cache()
+
+    return ckpt_score
+
+
+def _mtbench(
+    ctx,
+    model: pathlib.Path,
+    eval_cache: pathlib.Path,
+    mtbench_judge: pathlib.Path,
+) -> float:
+    # TODO: optimization: run all generations in serial and then do all judgements at once to save time loading/unloading prometheus.
+
+    # Third Party
+    from instructlab.eval.mt_bench import MTBenchEvaluator
+    import torch
+
+    # First Party
+    from instructlab.model.evaluate import launch_server
+
+    # hard-override for local insecure vLLM serving
+    ctx.params["tls_client_cert"] = None
+    ctx.params["tls_client_key"] = None
+    ctx.params["tls_client_passwd"] = None
+    ctx.params["tls_insecure"] = True
+
+    evaluator = MTBenchEvaluator(
+        model_name=str(model),
+        judge_model_name=str(mtbench_judge),
+        output_dir=str(eval_cache),
+        merge_system_user_message=True,  # TODO: expose this to the user
+    )
+
+    # TODO: Below, gpus=device_count() and max_workers=cpu_count() should be parameterized
+    #   by the user.
+
+    server = None
+    model_serve_url = None
+    try:
+        logger.debug("Starting model server for mt-bench answer generation")
+        server, model_serve_url = launch_server(
+            ctx=ctx,
+            model=str(model),
+            model_name=str(model),
+            gpus=torch.cuda.device_count(),
+            max_workers=multiprocessing.cpu_count(),
+            enable_serving_output=False,
+            backend=backends.VLLM,
+        )
+        logger.debug("Generating mt-bench answers")
+        evaluator.gen_answers(model_serve_url)
+    finally:
+        if server is not None:
+            server.shutdown()
+
+    try:
+        logger.debug("Starting model server for mt-bench answer judgement")
+        server, model_serve_url = launch_server(
+            ctx=ctx,
+            model=str(mtbench_judge),
+            model_name=str(mtbench_judge),
+            gpus=torch.cuda.device_count(),
+            max_workers=multiprocessing.cpu_count(),
+            backend=backends.VLLM,
+            enable_serving_output=False,
+        )
+        logger.debug("Judging mt-bench answers")
+        mt_bench_results: tuple = evaluator.judge_answers(model_serve_url)
+        ckpt_score: float = mt_bench_results[0]
+    finally:
+        if server is not None:
+            server.shutdown()
+
+    return ckpt_score
+
+
+def _evaluate_dir_of_checkpoints(
+    checkpoints_dir: pathlib.Path, eval_func: typing.Callable[..., float]
+) -> tuple[float, pathlib.Path]:
+    """Run eval_func on all model checkpoints in a directory, returning the best performing."""
+
+    # TODO: parallelize MMLU over available GPUs
+
+    results: list[typing.Tuple[float, pathlib.Path]] = []
+    for ckpt_path in checkpoints_dir.iterdir():
+        if ckpt_path.is_dir():
+            logger.debug(ckpt_path)
+            ckpt_score = eval_func(model=ckpt_path)
+            click.secho(
+                f"CHECKPOINT EVALUATION: {ckpt_path} SCORED {ckpt_score}",
+                fg="red",
+                bg="cyan",
+            )
+            results.append((ckpt_score, ckpt_path))
+
+    if not results:
+        raise RuntimeError(
+            "_evaluate_dir_of_checkpoints - No checkpoints were evaluated successfully at %s. No scores were recored."
+            % checkpoints_dir
+        )
+
+    ckpt_performance: list[tuple[float, pathlib.Path]] = sorted(results, reverse=True)
+
+    # (score, path)
+    return ckpt_performance[0]
+
+
+def _run_phased_training(
+    ctx,
+    train_args: TrainingArgs,
+    torch_args: TorchrunArgs,
+    base_dir: pathlib.Path,
+    phase1_data: pathlib.Path,
+    phase1_num_epochs: int | None,
+    phase1_samples_per_save: int | None,
+    phase1_checkpoints_dir: pathlib.Path,
+    phase2_data: pathlib.Path,
+    phase2_num_epochs: int | None,
+    phase2_samples_per_save: int | None,
+    phase2_checkpoints_dir: pathlib.Path,
+    phase2_eval_cache: pathlib.Path,
+    mtbench_judge: pathlib.Path,
+) -> None:
+    click.secho("Training Phase 1/2...", fg="cyan")
+
+    _training_phase(
+        train_args=train_args.model_copy(deep=True),
+        torch_args=torch_args,
+        data_path=phase1_data,
+        checkpoint_dir=phase1_checkpoints_dir,
+        num_epochs=phase1_num_epochs,
+        samples_per_save=phase1_samples_per_save,
+        # model override not necessary because we expect model to come from ctx.params.model_path.
+    )
+
+    click.secho("MMLU evaluation for Phase 1...", fg="cyan")
+    # NOTE: requires hf_format sub-directory. Training sets this up.
+    phase1_checkpoints_dir = phase1_checkpoints_dir / "hf_format"
+    _, p1_best_ckpt = _evaluate_dir_of_checkpoints(
+        checkpoints_dir=phase1_checkpoints_dir, eval_func=_mmlu
+    )
+
+    click.secho("Training Phase 2/2...", fg="cyan")
+    _training_phase(
+        train_args=train_args.model_copy(deep=True),
+        torch_args=torch_args,
+        data_path=phase2_data,
+        checkpoint_dir=phase2_checkpoints_dir,
+        model_override=p1_best_ckpt,
+        num_epochs=phase2_num_epochs,
+        samples_per_save=phase2_samples_per_save,
+    )
+
+    click.secho("MT-Bench evaluation for Phase 2...", fg="cyan")
+    phase2_checkpoints_dir = phase2_checkpoints_dir / "hf_format"
+    phase2_eval_cache = base_dir / "phase2" / "eval_cache"
+    phase2_best_checkpoint_score, phase2_best_checkpoint = _evaluate_dir_of_checkpoints(
+        checkpoints_dir=phase2_checkpoints_dir,
+        eval_func=functools.partial(
+            _mtbench,
+            ctx=ctx,
+            eval_cache=phase2_eval_cache,
+            mtbench_judge=mtbench_judge,
+        ),
+    )
+
+    click.secho(
+        f"Training finished! Best final checkpoint: {phase2_best_checkpoint} with score: {phase2_best_checkpoint_score}",
+        fg="green",
+    )

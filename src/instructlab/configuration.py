@@ -50,6 +50,7 @@ class STORAGE_DIR_NAMES:
         "internal"  # for storing all ilab-internal files the user doesn't need to see
     )
     CHATLOGS = "chatlogs"
+    PHASED = "phased"
 
 
 class _InstructlabDefaults:
@@ -135,6 +136,10 @@ class _InstructlabDefaults:
     @property
     def CHATLOGS_DIR(self) -> str:
         return path.join(self._data_dir, STORAGE_DIR_NAMES.CHATLOGS)
+
+    @property
+    def PHASED_DIR(self) -> str:
+        return path.join(self._data_dir, STORAGE_DIR_NAMES.PHASED)
 
     @property
     def INTERNAL_DIR(self) -> str:
@@ -394,6 +399,18 @@ class _train(BaseModel):
 
     additional_args: dict[str, typing.Any]
 
+    # additional training configuration for
+    # lab-multiphase training.
+    # TODO: could move into its own object.
+    # Not strictly necessary for a correct training object.
+    phased_phase1_num_epochs: int | None = None
+    phased_phase1_samples_per_save: int | None = None
+
+    phased_phase2_num_epochs: int | None = None
+    phased_phase2_samples_per_save: int | None = None
+
+    phased_mt_bench_judge: str | None = None
+
 
 class Config(BaseModel):
     """Configuration for the InstructLab CLI."""
@@ -457,6 +474,11 @@ def get_default_config() -> Config:
             deepspeed_cpu_offload_optimizer=False,
             additional_args={},
             is_padding_free=False,
+            phased_phase1_num_epochs=10,
+            phased_phase1_samples_per_save=25000,
+            phased_phase2_num_epochs=10,
+            phased_phase2_samples_per_save=25000,
+            phased_mt_bench_judge=DEFAULTS.DEFAULT_JUDGE_MODEL,
         ),
         evaluate=_evaluate(
             base_model=DEFAULTS.MODEL_REPO,
@@ -572,6 +594,7 @@ def ensure_storage_directories_exist():
         DEFAULTS.TRAIN_CONFIG_DIR,
         DEFAULTS.TRAIN_PROFILE_DIR,
         DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_DIR,
+        DEFAULTS.PHASED_DIR,
     ]
 
     for dirpath in dirs_to_make:

@@ -77,5 +77,10 @@ train:
   model_path: instructlab/granite-7b-lab
   nproc_per_node: 1
   num_epochs: 10
+  phased_mt_bench_judge: /cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
+  phased_phase1_num_epochs: 10
+  phased_phase1_samples_per_save: 25000
+  phased_phase2_num_epochs: 10
+  phased_phase2_samples_per_save: 25000
   save_samples: 250000
 version: 1.0.0

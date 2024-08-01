@@ -18,6 +18,7 @@ GENERATE_ARGS=("--num-cpus" "$(nproc)" --taxonomy-path='./taxonomy')
 DIFF_ARGS=("--taxonomy-path" "./taxonomy")
 TRAIN_ARGS=()
 FULLTRAIN=0
+PHASED_TRAINING=0
 TRAIN_LIBRARY=0
 BACKEND="llama-cpp"
 HF_TOKEN=${HF_TOKEN:-}
@@ -102,6 +103,10 @@ set_defaults() {
     if [ "${MIXTRAL}" -eq 1 ] && [ -z "${HF_TOKEN}" ]; then
         echo "ERROR: Must specify HF_TOKEN env var to download mixtral."
         exit 1
+    fi
+
+    if [ "${PHASED_TRAINING}" -eq 1 ] && [ "${TRAIN_LIBRARY}" -eq 0 ]; then
+        echo "ERROR: You have -P set. It requires -T."
     fi
 }
 
@@ -296,8 +301,55 @@ test_train() {
 
         ilab model train "${TRAIN_ARGS[@]}"
     fi
+}
+
+test_phased_train() {
+    task Train the model with LAB multi-phase strategy.
+
+    # linter wants DATA_PATH and over variables declared then assigned separately.
+    # 'Declare and assign separately to avoid masking return values' <-- error.
+    local DATA_PATH
+    DATA_PATH=$(find "${DATA_HOME}"/instructlab/datasets -name 'messages_*' | head -n 1)
+
+    local MODEL_PATH
+    MODEL_PATH="${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab"
+
+    # general training args
+    local TRAIN_ARGS
+    TRAIN_ARGS=(
+        "--model-path=${MODEL_PATH}"
+        "--lora-quantize-dtype=nf4"
+        "--4-bit-quant"
+        "--is-padding-free=False"
+        "--effective-batch-size=4"
+    )
+
+    # general phased training args
+    TRAIN_ARGS+=(
+        "--phased-training"
+        "--skip-user-confirm"
+        "--phased-mt-bench-judge-dir=${MODEL_PATH}" # uses base model
+    )
+
+    # phase 1 args 
+    TRAIN_ARGS+=(
+        "--phased-phase1-num-epochs=1"
+        "--phased-phase1-data=${DATA_PATH}"
+        "--phased-phase1-samples-per-save=1"
+    )
+
+    # phase 2 args 
+    TRAIN_ARGS+=(
+        "--phased-phase2-num-epochs=1"
+        "--phased-phase2-data=${DATA_PATH}"
+        "--phased-phase2-samples-per-save=1"
+    )
+
+    ilab model train "${TRAIN_ARGS[@]}"
+    # final best model is written to stdout.
 
 }
+
 test_convert() {
     task Converting the trained model and serving it
     ilab model convert
@@ -399,6 +451,10 @@ test_exec() {
 
     task Evaluating the output of ilab model train
     test_evaluate
+
+    if [ "${PHASED_TRAINING}" -eq 1 ]; then
+        test_phased_train
+    fi
 }
 
 wait_for_server() {
@@ -436,6 +492,7 @@ usage() {
     echo "  -m  Run minimal configuration (run quicker when you have no GPU)"
     echo "  -e  Run model evaluation"
     echo "  -T  Use the 'full' training library rather than legacy training"
+    echo "  -P  Run 'full phased' training using training library and evaluation steps. (requires -T)"
     echo "  -f  Run the fullsize training instead of --4-bit-quant"
     echo "  -F  Use the 'full' SDG pipeline instead of the default 'simple' pipeline"
     echo "  -g  Use the granite model"
@@ -446,7 +503,7 @@ usage() {
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "cemMfFhvT" opt; do
+while getopts "cemMfFhvTP" opt; do
     case $opt in
         c)
             # old option, don't fail if it's specified
@@ -482,6 +539,10 @@ while getopts "cemMfFhvT" opt; do
         T)
             TRAIN_LIBRARY=1
             step "Running with training library."
+            ;;
+        P)
+            PHASED_TRAINING=1
+            step "Running multi-phase training."
             ;;
         \?)
             echo "Invalid option: -$opt" >&2
