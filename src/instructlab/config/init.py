@@ -168,7 +168,8 @@ def get_params_default(
         clone_taxonomy_repo = False
     elif interactive:
         clone_taxonomy_repo = click.confirm(
-            f"`{taxonomy_path}` seems to not exist or is empty. Should I clone {repository} for you?"
+            f"`{taxonomy_path}` seems to not exist or is empty. Should I clone {repository} for you?",
+            default=True,
         )
 
     # clone taxonomy repo if it needs to be cloned
