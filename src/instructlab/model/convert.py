@@ -48,7 +48,6 @@ logger = logging.getLogger(__name__)
 @clickext.display_params
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 def convert(
-    ctx,  # pylint: disable=unused-argument
     model_dir,
     adapter_file,
     skip_de_quantize,
