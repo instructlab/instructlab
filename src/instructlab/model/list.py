@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--list-checkpoints",
+    help="Also list checkpoints [in addition to existing models].",
     is_flag=True,
 )
 def model_list(model_dirs: list[str], list_checkpoints: bool):
