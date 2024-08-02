@@ -377,11 +377,11 @@ class _train(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
 
-    model_path: str
+    model_path: str = Field(default_factory=lambda: DEFAULTS.MODEL_REPO)
 
-    data_path: str
-    ckpt_output_dir: str
-    data_output_dir: str
+    data_path: str = Field(default_factory=lambda: DEFAULTS.DATASETS_DIR)
+    ckpt_output_dir: str = Field(default_factory=lambda: DEFAULTS.CHECKPOINTS_DIR)
+    data_output_dir: str = Field(default_factory=lambda: DEFAULTS.INTERNAL_DIR)
 
     max_seq_len: int
     max_batch_len: int

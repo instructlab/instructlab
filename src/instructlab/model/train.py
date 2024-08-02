@@ -58,14 +58,12 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     cls=clickext.ConfigOption,
     required=True,  # default from config
     help="Base directory where data is stored.",
-    default=lambda: DEFAULTS.DATASETS_DIR,
 )
 @click.option(
     "--ckpt-output-dir",
     type=click.Path(),
     cls=clickext.ConfigOption,
     required=True,  # default from config
-    default=lambda: DEFAULTS.CHECKPOINTS_DIR,
     help="output directory to store checkpoints in during training",
 )
 @click.option(
@@ -73,7 +71,6 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     type=click.Path(),
     cls=clickext.ConfigOption,
     required=True,  # default from config
-    default=lambda: DEFAULTS.INTERNAL_DIR,
     help="output directory to store training data in",
 )
 @click.option(
@@ -106,7 +103,6 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     cls=clickext.ConfigOption,
     required=True,  # default from config
     help="HuggingFace model repo path, in the format of <namespace>/<repo_name>.",
-    default=DEFAULTS.MODEL_REPO,
 )
 @click.option(
     "--iters",
