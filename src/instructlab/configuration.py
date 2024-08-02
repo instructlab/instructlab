@@ -316,10 +316,9 @@ class _generate(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore")
 
-    # required fields
-    model: StrictStr
-    taxonomy_path: StrictStr
-    taxonomy_base: StrictStr
+    model: StrictStr = Field(default_factory=lambda: DEFAULTS.DEFAULT_MODEL)
+    taxonomy_path: StrictStr = Field(default_factory=lambda: DEFAULTS.TAXONOMY_DIR)
+    taxonomy_base: StrictStr = DEFAULTS.TAXONOMY_BASE
 
     # additional fields with defaults
     teacher: _serve = Field(default_factory=_serve)
@@ -333,7 +332,9 @@ class _generate(BaseModel):
     )
     sdg_scale_factor: Optional[PositiveInt] = DEFAULTS.SDG_SCALE_FACTOR
     output_dir: StrictStr = Field(default_factory=lambda: DEFAULTS.DATASETS_DIR)
+    # TODO: the field doesn't have a cli option
     prompt_file: StrictStr = Field(default_factory=lambda: DEFAULTS.PROMPT_FILE)
+    # TODO: the seed_file field is not used anywhere?
     seed_file: StrictStr = Field(default_factory=lambda: DEFAULTS.SEED_FILE)
     gpus: Optional[int] = None
 

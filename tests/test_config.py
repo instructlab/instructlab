@@ -151,10 +151,8 @@ generate:
             )
         with pytest.raises(
             config.ConfigException,
-            match=r"""6 errors in [\/\w-]+config.yaml:
+            match=r"""4 errors in [\/\w-]+config.yaml:
 - missing chat: field required
-- missing generate->taxonomy_path: field required
-- missing generate->taxonomy_base: field required
 - missing serve: field required
 - missing version: field required
 - missing evaluate: field required
