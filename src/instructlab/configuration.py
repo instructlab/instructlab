@@ -125,6 +125,10 @@ class _InstructlabDefaults:
         return path.join(self.MODELS_DIR, self.GGUF_MODEL_NAME)
 
     @property
+    def DEFAULT_JUDGE_MODEL(self) -> str:
+        return path.join(self.MODELS_DIR, self.JUDGE_MODEL_MT)
+
+    @property
     def TAXONOMY_DIR(self) -> str:
         return path.join(self._data_dir, STORAGE_DIR_NAMES.TAXONOMY)
 
@@ -457,7 +461,7 @@ def get_default_config() -> Config:
         evaluate=_evaluate(
             base_model=DEFAULTS.MODEL_REPO,
             mt_bench=_mtbench(
-                judge_model=DEFAULTS.JUDGE_MODEL_MT,
+                judge_model=DEFAULTS.DEFAULT_JUDGE_MODEL,
                 output_dir=DEFAULTS.EVAL_DATA_DIR,
                 max_workers=16,
             ),

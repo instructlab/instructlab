@@ -376,7 +376,7 @@ def launch_server(
     type=click.STRING,
     cls=clickext.ConfigOption,
     config_sections="mt_bench",
-    help="Model to be used as a judge for running mt_bench or mt_bench_branch - can be a local path or the name of a Hugging Face repository",
+    help="Model to be used as a judge for running mt_bench or mt_bench_branch - must be a local path to a downloaded model",
 )
 @click.option(
     "--output-dir",
