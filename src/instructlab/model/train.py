@@ -38,14 +38,6 @@ ADDITIONAL_ARGUMENTS = "additional_args"
     help="output directory to store checkpoints in during training",
 )
 @click.option(
-    "--data-output-dir",
-    type=click.Path(),
-    cls=clickext.ConfigOption,
-    required=True,  # default from config
-    default=lambda: DEFAULTS.INTERNAL_DIR,
-    help="output directory to store training data in",
-)
-@click.option(
     "--input-dir",
     type=click.Path(),
     show_default=True,  # TODO: set to None and change help message
@@ -125,158 +117,6 @@ ADDITIONAL_ARGUMENTS = "additional_args"
     ),
 )
 @click.option(
-    "--max-seq-len",
-    type=int,
-    cls=clickext.ConfigOption,
-    required=True,  # default from config
-    help="maximum length, in tokens, of a single sample.",
-)
-@click.option(
-    "--max-batch-len",
-    type=int,
-    cls=clickext.ConfigOption,
-    required=True,  # default from config
-    help="maximum overall length of samples processed in a given batch.",
-)
-@click.option(
-    "--effective-batch-size",
-    type=int,
-    cls=clickext.ConfigOption,
-    required=True,  # default from config
-    help="total batch size across all GPUs",
-)
-@click.option(
-    "--save-samples",
-    type=int,
-    cls=clickext.ConfigOption,
-    required=True,  # default from config
-    help="The number of samples processed in between checkpoints.",
-)
-@click.option(
-    "--learning-rate",
-    type=float,
-    cls=clickext.ConfigOption,
-    config_sections=ADDITIONAL_ARGUMENTS,
-    required=True,  # default from config
-    help="learning rate for training",
-)
-@click.option(
-    "--warmup-steps",
-    type=int,
-    cls=clickext.ConfigOption,
-    config_sections=ADDITIONAL_ARGUMENTS,
-    required=True,  # default from config
-    help="warmup steps for training",
-)
-@click.option(
-    "--deepspeed-cpu-offload-optimizer",
-    type=bool,
-    cls=clickext.ConfigOption,
-    required=True,  # default from config
-    # config_section="deepspeed_options",
-    help="if true enables optimizer offload",
-)
-@click.option(
-    "--deepspeed-cpu-offload-optimizer-ratio",
-    type=float,
-    cls=clickext.ConfigOption,
-    required=True,  # default from config
-    config_sections=ADDITIONAL_ARGUMENTS,
-    help="cpu offload optimizer ratio",
-)
-@click.option(
-    "--deepspeed-cpu-offload-optimizer-pin-memory",
-    type=bool,
-    cls=clickext.ConfigOption,
-    required=True,  # default from config
-    config_sections=ADDITIONAL_ARGUMENTS,
-    help="if true pin memory when using cpu optimizer",
-)
-# below flags are invalid if lora == false
-@click.option(
-    "--lora-rank",
-    type=int,
-    cls=clickext.ConfigOption,
-    required=True,  # default from config
-    # config_section="lora",
-    help="rank of update matricies",
-)
-@click.option(
-    "--lora-alpha",
-    type=int,
-    cls=clickext.ConfigOption,
-    required=True,  # default from config
-    config_sections=ADDITIONAL_ARGUMENTS,
-    help="how influential/strong lora tune will be",
-)
-@click.option(
-    "--lora-dropout",
-    type=float,
-    cls=clickext.ConfigOption,
-    required=True,  # default from config
-    config_sections=ADDITIONAL_ARGUMENTS,
-    help="dropout for LoRA layers",
-)
-@click.option(
-    "--lora-target-modules",
-    cls=clickext.ConfigOption,
-    config_sections=ADDITIONAL_ARGUMENTS,
-    multiple=True,
-    default=[],
-    help="LoRA modules to use",
-)
-@click.option(
-    "--lora-quantize-dtype",
-    type=str,
-    default=None,
-    help="quantization data type to use when training a LoRA.",
-)
-@click.option(
-    "--is-padding-free",
-    cls=clickext.ConfigOption,
-    type=bool,
-    help="whether or not we are training a padding free transformer.",
-)
-@click.option(
-    "--gpus",
-    "nproc_per_node",
-    cls=clickext.ConfigOption,
-    type=int,
-    help="this is the number of GPUs to use. This is a torch specific arg and must be called nproc-per-node",
-)
-@click.option(
-    "--nnodes",
-    type=int,
-    cls=clickext.ConfigOption,
-    config_sections=ADDITIONAL_ARGUMENTS,
-    required=True,  # default from config
-    help="number of machines in the training pool.",
-)
-@click.option(
-    "--node-rank",
-    type=int,
-    cls=clickext.ConfigOption,
-    config_sections=ADDITIONAL_ARGUMENTS,
-    required=True,  # default from config
-    help="the rank of this machine in the training group.",
-)
-@click.option(
-    "--rdzv-id",
-    type=int,
-    cls=clickext.ConfigOption,
-    config_sections=ADDITIONAL_ARGUMENTS,
-    required=True,  # default from config
-    help="this is the training group ID. So, if there are multiple matching endpoints, only the machines with matching IDs can connect.",
-)
-@click.option(
-    "--rdzv-endpoint",
-    type=str,
-    cls=clickext.ConfigOption,
-    config_sections=ADDITIONAL_ARGUMENTS,
-    required=True,  # default from config
-    help="this is the rendezvous endpoint which other torchrun jobs will join on.",
-)
-@click.option(
     "--legacy",
     is_flag=True,
     default=False,
@@ -299,7 +139,7 @@ def train(
     device: str,
     four_bit_quant: bool,
     legacy,
-    **kwargs,
+    ckpt_output_dir,
 ):
     """
     Takes synthetic data generated locally with `ilab data generate` and the previous model and learns a new model using the MLX API.
@@ -315,7 +155,6 @@ def train(
     effective_data_dir = Path(data_path if data_path else DEFAULTS.DATASETS_DIR)
     train_file = Path(effective_data_dir / "train_gen.jsonl")
     test_file = Path(effective_data_dir / "test_gen.jsonl")
-    ckpt_output_dir = Path(kwargs["ckpt_output_dir"])
 
     # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
     if not data_path or data_path.strip() == DEFAULTS.DATASETS_DIR:

@@ -278,7 +278,9 @@ test_train() {
         DATA=$(find "${DATA_HOME}"/instructlab/datasets -name 'messages_*' | head -n 1)
         # TODO Only cuda for now
         # the train profile specified in test_init overrides the majority of TRAIN_ARGS, including things like num_epochs. While it looks like much of those settings are being lost, they just have different values here.
-        TRAIN_ARGS=("--device=cuda" "--model-path=${GRANITE_SAFETENSOR_REPO}" "--data-path=${DATA}" "--lora-quantize-dtype=nf4" "--4-bit-quant" "--effective-batch-size=4" "--is-padding-free=False")
+        TRAIN_ARGS=("--device=cuda" "--model-path=${GRANITE_SAFETENSOR_REPO}" "--data-path=${DATA}" "--4-bit-quant")
+	# TODO: Should some of these options be configured via train profile?
+        #TRAIN_ARGS=("--device=cuda" "--model-path=${GRANITE_SAFETENSOR_REPO}" "--data-path=${DATA}" "--lora-quantize-dtype=nf4" "--4-bit-quant" "--effective-batch-size=4" "--is-padding-free=False")
         if [ "${BACKEND}" != "vllm" ]; then
             TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}")
         fi
