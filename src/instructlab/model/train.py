@@ -409,16 +409,13 @@ def train(
     if four_bit_quant and device != "cuda":
         ctx.fail("'--4-bit-quant' option requires '--device=cuda'")
 
-    effective_data_dir: pathlib.Path = Path(
-        data_path if data_path else DEFAULTS.DATASETS_DIR
-    )
+    effective_data_dir = Path(data_path)
     train_file = effective_data_dir / "train_gen.jsonl"
     test_file = effective_data_dir / "test_gen.jsonl"
     ckpt_output_dir = Path(kwargs["ckpt_output_dir"])
 
     # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
     if not data_path or data_path.strip() == DEFAULTS.DATASETS_DIR and not strategy:
-        data_path = str(effective_data_dir)
         if not os.path.exists(input_dir):
             click.secho(
                 f"Could not read directory: {input_dir}",
