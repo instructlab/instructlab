@@ -14,7 +14,7 @@ evaluate:
   gpus: 1
   mmlu:
     batch_size: auto
-    few_shots: 2
+    few_shots: 5
   mmlu_branch:
     tasks_dir: /data/instructlab/datasets
   model: null

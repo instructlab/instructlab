@@ -466,7 +466,7 @@ def get_default_config() -> Config:
                 max_workers=16,
             ),
             mmlu=_mmlu(
-                few_shots=2,
+                few_shots=5,
                 batch_size="auto",
             ),
             mt_bench_branch=_mtbenchbranch(taxonomy_path=DEFAULTS.TAXONOMY_DIR),
