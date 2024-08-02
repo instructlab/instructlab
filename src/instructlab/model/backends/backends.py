@@ -310,6 +310,7 @@ def ensure_server(
     port=8000,
     background=True,
     server_process_func=None,
+    max_startup_attempts=None,
 ) -> Tuple[
     Optional[multiprocessing.Process], Optional[subprocess.Popen], Optional[str]
 ]:
@@ -331,9 +332,9 @@ def ensure_server(
         vllm_server_process = server_process_func(port, background)
         logger.info("Starting a temporary vLLM server at %s", temp_api_base)
         count = 0
-        # TODO should this be configurable?
-
-        vllm_startup_max_attempts = 80  # Each call to check_api_base takes >2s + 2s sleep = ~5 mins of wait time
+        # Each call to check_api_base takes >2s + 2s sleep
+        # Default to 300 if not specified (~20 mins of wait time)
+        vllm_startup_max_attempts = max_startup_attempts or 300
         start_time_secs = time()
         while count < vllm_startup_max_attempts:
             count += 1
@@ -455,6 +456,7 @@ def select_backend(
             vllm_args=cfg.vllm.vllm_args,
             host=host,
             port=port,
+            max_startup_attempts=cfg.vllm.max_startup_attempts,
         )
     click.secho(f"Unknown backend: {backend}", fg="red")
     raise click.exceptions.Exit(1)

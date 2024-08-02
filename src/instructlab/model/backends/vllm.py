@@ -44,6 +44,7 @@ class Server(BackendServer):
         port: int,
         background: bool = False,
         vllm_args: typing.Iterable[str] | None = (),
+        max_startup_attempts: int | None = None,
     ):
         super().__init__(model_family, model_path, chat_template, api_base, host, port)
         self.api_base = api_base
@@ -52,6 +53,7 @@ class Server(BackendServer):
         self.vllm_args: list[str]
         self.vllm_args = list(vllm_args) if vllm_args is not None else []
         self.process: subprocess.Popen | None = None
+        self.max_startup_attempts = max_startup_attempts
 
     def run(self):
         self.process, files = run_vllm(
@@ -101,6 +103,7 @@ class Server(BackendServer):
                 port=self.port,
                 background=background,
                 server_process_func=self.create_server_process,
+                max_startup_attempts=self.max_startup_attempts,
             )
             self.process = vllm_server_process or self.process
             self.api_base = api_base or self.api_base
