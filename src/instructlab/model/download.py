@@ -243,19 +243,19 @@ class OCIDownloader(Downloader):
 @click.command()
 @click.option(
     "--repository",
-    default=DEFAULTS.MERLINITE_GGUF_REPO,  # TODO: add to config.yaml
+    default=DEFAULTS.MERLINITE_GGUF_REPO,
     show_default=True,
     help="Hugging Face or OCI repository of the model to download.",
 )
 @click.option(
     "--release",
-    default="main",  # TODO: add to config.yaml
+    default="main",
     show_default=True,
     help="The revision of the model to download - e.g. a branch, tag, or commit hash for Hugging Face repositories and tag or commit hash for OCI repositories.",
 )
 @click.option(
     "--filename",
-    default=DEFAULTS.GGUF_MODEL_NAME,
+    default=DEFAULTS.GGUF_MODEL_NAME,  # TODO: derive default value from the repository fetched
     show_default="The default model location in the instructlab data directory.",
     help="Name of the model file to download from the Hugging Face repository.",
 )
