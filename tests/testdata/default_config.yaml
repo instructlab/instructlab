@@ -19,7 +19,7 @@ evaluate:
     tasks_dir: /data/instructlab/datasets
   model: null
   mt_bench:
-    judge_model: prometheus-eval/prometheus-8x7b-v2.0
+    judge_model: /cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
     max_workers: 16
     output_dir: /data/instructlab/internal/eval_data
   mt_bench_branch:
