@@ -138,7 +138,7 @@ def is_openai_server_and_serving_model(
     "--api-key",
     type=click.STRING,
     default=cfg.DEFAULTS.API_KEY,  # Note: do not expose default API key
-    help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
+    help=f"API key for API endpoint. [default: {cfg.DEFAULTS.API_KEY}]",
 )
 @click.option(
     "--tls-insecure",

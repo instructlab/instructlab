@@ -246,14 +246,14 @@ class _chat(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore")
 
-    # required fields
-    model: str
-
-    # additional fields with defaults
+    model: str = Field(default_factory=lambda: DEFAULTS.DEFAULT_MODEL)
+    # TODO: the field doesn't have a cli option
     vi_mode: bool = False
+    # TODO: the field doesn't have a cli option
     visible_overflow: bool = True
     context: str = "default"
     session: typing.Optional[str] = None
+    # TODO: the field doesn't have a cli option
     logs_dir: str = Field(
         default_factory=lambda: DEFAULTS.CHATLOGS_DIR
     )  # use a lambda to avoid caching
