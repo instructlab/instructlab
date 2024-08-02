@@ -99,7 +99,7 @@ def convert(
     model_dir_fused_pt = f"{model_name}-trained"
     # this converts MLX to PyTorch
     convert_between_mlx_and_pytorch(
-        hf_path=model_dir_fused, mlx_path=model_dir_fused_pt, local=True, to_pt=True
+        hf_path=model_dir_fused, dest_path=model_dir_fused_pt, local=True, to_pt=True
     )
 
     logger.info(f"deleting {model_dir_fused}...")

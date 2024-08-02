@@ -48,15 +48,13 @@ def _get_classes(config: dict):
     return arch.Model, arch.ModelArgs
 
 
-def fetch_from_hub(hf_path: str, local: bool):
+def fetch_from_hub(hf_path: str, dest_path: str, local: bool):
     if local:
         model_path = hf_path
     else:
         model_path = snapshot_download(
             repo_id=hf_path,
-            local_dir=hf_path.replace(
-                "/", "-"
-            ),  # "instructlab/merlinite-7b-lab" to "instructlab-merlinite-7b-lab"
+            local_dir=dest_path,
             allow_patterns=["*.json", "*.safetensors", "tokenizer.model"],
         )
 

@@ -4,6 +4,7 @@
 # Standard
 from typing import Optional
 import copy
+import os
 
 # Third Party
 from mlx.utils import tree_flatten
@@ -11,6 +12,9 @@ import mlx.core as mx
 import mlx.nn as nn
 import numpy as np
 import torch
+
+# First Party
+from instructlab.configuration import DEFAULTS
 
 # Local
 from . import utils
@@ -47,7 +51,7 @@ def quantize_model(weights, config, q_group_size, q_bits):
 
 def convert_between_mlx_and_pytorch(
     hf_path: str,
-    mlx_path: str = "mlx_model",
+    dest_path: str = "mlx_model",
     quantize: bool = False,
     q_group_size: int = 64,
     q_bits: int = 4,
@@ -61,7 +65,9 @@ def convert_between_mlx_and_pytorch(
         raise  # TODO something
 
     print("[INFO] Loading")
-    weights, config, tokenizer = utils.fetch_from_hub(hf_path, local)
+    weights, config, tokenizer = utils.fetch_from_hub(
+        hf_path, os.path.join(DEFAULTS.MODELS_DIR, hf_path), local
+    )
 
     if to_pt:
         dtype = np.float16 if quantize else getattr(np, dtype)
@@ -78,6 +84,6 @@ def convert_between_mlx_and_pytorch(
         print("[INFO] Quantizing")
         weights, config = quantize_model(weights, config, q_group_size, q_bits)
 
-    utils.save_model(mlx_path, weights, tokenizer, config)
+    utils.save_model(dest_path, weights, tokenizer, config)
     if upload_name is not None:
-        utils.upload_to_hub(mlx_path, upload_name, hf_path)
+        utils.upload_to_hub(dest_path, upload_name, hf_path)

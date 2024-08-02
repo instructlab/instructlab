@@ -122,7 +122,9 @@ class _InstructlabDefaults:
 
     @property
     def DEFAULT_MODEL(self) -> str:
-        return path.join(self.MODELS_DIR, self.GGUF_MODEL_NAME)
+        return path.join(
+            self.MODELS_DIR, self.MERLINITE_GGUF_REPO, self.GGUF_MODEL_NAME
+        )
 
     @property
     def DEFAULT_JUDGE_MODEL(self) -> str:
