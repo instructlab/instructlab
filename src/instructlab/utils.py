@@ -12,8 +12,10 @@ import glob
 import json
 import logging
 import os
+import pathlib
 import platform
 import re
+import shutil
 import subprocess
 import tempfile
 
@@ -824,3 +826,10 @@ def convert_bytes_to_proper_mag(f_size: int) -> Tuple[float, str]:
         else:
             return adjusted_fsize, magnitude
     return adjusted_fsize, magnitude
+
+
+def clear_directory(path: pathlib.Path) -> None:
+    """Recursively deletes content below {path} and recreates directory."""
+    if path.exists():
+        shutil.rmtree(path)
+    os.makedirs(path)
