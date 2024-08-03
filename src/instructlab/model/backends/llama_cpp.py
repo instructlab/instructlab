@@ -95,7 +95,10 @@ class Server(BackendServer):
         return server_process
 
     def run_detached(
-        self, http_client: httpx.Client | None = None, background: bool = True
+        self,
+        http_client: httpx.Client | None = None,
+        background: bool = True,
+        foreground_allowed: bool = False,
     ) -> str:
         logger.info(f"Trying to connect to model server at {self.api_base}")
         if check_api_base(self.api_base, http_client):

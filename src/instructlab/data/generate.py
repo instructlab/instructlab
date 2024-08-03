@@ -262,6 +262,7 @@ def generate(
                     }
                 ),
                 background=not enable_serving_output,
+                foreground_allowed=True,
             )
         except Exception as exc:
             click.secho(f"Failed to start server: {exc}", fg="red")
