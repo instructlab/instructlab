@@ -93,7 +93,10 @@ class BackendServer(abc.ABC):
 
     @abc.abstractmethod
     def run_detached(
-        self, http_client: httpx.Client | None = None, background: bool = True
+        self,
+        http_client: httpx.Client | None = None,
+        background: bool = True,
+        foreground_allowed: bool = False,
     ) -> str:
         """Run serving backend in background ('ilab model chat' when server is not running)"""
 
@@ -309,6 +312,7 @@ def ensure_server(
     host="localhost",
     port=8000,
     background=True,
+    foreground_allowed=False,
     server_process_func=None,
 ) -> Tuple[
     Optional[multiprocessing.Process], Optional[subprocess.Popen], Optional[str]
@@ -337,6 +341,13 @@ def ensure_server(
         start_time_secs = time()
         while count < vllm_startup_max_attempts:
             count += 1
+            # Check if the process is still alive
+            if vllm_server_process.poll():
+                if foreground_allowed and background:
+                    raise ServerException(
+                        "vLLM failed to start.  Retry with --enable-serving-output to learn more about the failure."
+                    )
+                raise ServerException("vLLM failed to start.")
             logger.info(
                 "Waiting for the vLLM server to start at %s, this might take a moment... Attempt: %s/%s",
                 temp_api_base,

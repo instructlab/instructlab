@@ -90,7 +90,10 @@ class Server(BackendServer):
         return server_process
 
     def run_detached(
-        self, http_client: httpx.Client | None = None, background: bool = True
+        self,
+        http_client: httpx.Client | None = None,
+        background: bool = True,
+        foreground_allowed: bool = False,
     ) -> str:
         try:
             _, vllm_server_process, api_base = ensure_server(
@@ -100,6 +103,7 @@ class Server(BackendServer):
                 host=self.host,
                 port=self.port,
                 background=background,
+                foreground_allowed=foreground_allowed,
                 server_process_func=self.create_server_process,
             )
             self.process = vllm_server_process or self.process

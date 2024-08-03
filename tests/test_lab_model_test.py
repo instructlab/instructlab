@@ -26,7 +26,10 @@ class TestLabModelTest:
             super().__init__("", "", "", "", "", 0)
 
         def run_detached(
-            self, http_client: httpx.Client | None = None, background: bool = True
+            self,
+            http_client: httpx.Client | None = None,
+            background: bool = True,
+            foreground_allowed: bool = False,
         ) -> str:
             return "api_base_mock"
 
