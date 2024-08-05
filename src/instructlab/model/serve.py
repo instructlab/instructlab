@@ -130,13 +130,6 @@ def serve(
 
     host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
 
-    if gpus is not None:
-        if "--tensor-parallel-size" in ctx.args:
-            logger.info(
-                "'--gpus' flag used alongside '--tensor-parallel-size' in the vllm_args section of the config. Using the value found in the config"
-            )
-        else:
-            ctx.args.extend(["--tensor-parallel-size", str(gpus)])
     try:
         backend = backends.get(model_path, backend)
     except (ValueError, AttributeError) as e:
@@ -171,8 +164,28 @@ def serve(
             num_threads=num_threads,
         )
     elif backend == backends.VLLM:
+        # First Party
+        from instructlab.model.backends.vllm import contains_argument
+
         # Warn if unsupported backend parameters are passed
         warn_for_unsuported_backend_param(ctx)
+
+        if gpus:
+            # if `--tensor-parallel-size is included in ctx.args (click arguments after "--"),
+            # that value has precedence over the value of the --gpus flag.
+            if not contains_argument("--tensor-parallel-size", ctx.args):
+                ctx.args.extend(["--tensor-parallel-size", str(gpus)])
+            else:
+                logger.info(
+                    "'--gpus' flag used alongside '--tensor-parallel-size' flag in `ilab model serve`. Using value of the --tensor-parallel-size flag."
+                )
+
+            if contains_argument(
+                "--tensor-parallel-size", ctx.obj.config.serve.vllm.vllm_args
+            ):
+                logger.info(
+                    "'--gpus' flag used alongside '--tensor-parallel-size' in the vllm_args section of the config file. Using value of the --gpus flag."
+                )
 
         # Instantiate the vllm server
         if ctx.args:

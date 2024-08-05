@@ -338,7 +338,6 @@ class _generate(BaseModel):
     output_dir: StrictStr = Field(default_factory=lambda: DEFAULTS.DATASETS_DIR)
     prompt_file: StrictStr = Field(default_factory=lambda: DEFAULTS.PROMPT_FILE)
     seed_file: StrictStr = Field(default_factory=lambda: DEFAULTS.SEED_FILE)
-    gpus: Optional[int] = None
 
 
 class _mmlu(BaseModel):
