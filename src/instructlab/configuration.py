@@ -265,6 +265,7 @@ class _serve_vllm(BaseModel):
     """Class describing configuration of vllm serving backend."""
 
     llm_family: str = ""
+    max_startup_attempts: int | None = None
     # arguments to pass into vllm process
     vllm_args: list[str] | None = None
 
@@ -286,6 +287,7 @@ class _serve(BaseModel):
     # vllm configuration
     vllm: _serve_vllm = _serve_vllm(
         llm_family="",
+        max_startup_attempts=300,
         vllm_args=[],
     )
 
@@ -455,6 +457,7 @@ def get_default_config() -> Config:
             ),
             vllm=_serve_vllm(
                 llm_family="",
+                max_startup_attempts=300,
                 vllm_args=[],
             ),
         ),

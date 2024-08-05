@@ -49,6 +49,7 @@ generate:
     model_path: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
     vllm:
       llm_family: ''
+      max_startup_attempts: 300
       vllm_args: []
 serve:
   backend: null
@@ -61,6 +62,7 @@ serve:
   model_path: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
   vllm:
     llm_family: ''
+    max_startup_attempts: 300
     vllm_args: []
 train:
   additional_args: {}
