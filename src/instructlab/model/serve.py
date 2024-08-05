@@ -94,6 +94,11 @@ signal.signal(signal.SIGTERM, signal_handler)
         "Automatically detected based on the model file properties.\n"
     ),
 )
+@click.option(
+    "--gpus",
+    type=click.IntRange(min=0),
+    help="Number of GPUs to utilize for serving the model (not applicable to llama-cpp backend)",
+)
 @click.pass_context
 @clickext.display_params
 def serve(
@@ -106,6 +111,7 @@ def serve(
     log_file: pathlib.Path | None,
     backend: str | None,
     chat_template: str | None,
+    gpus: int | None,
 ) -> None:
     """Starts a local server
 
@@ -155,8 +161,24 @@ def serve(
             num_threads=num_threads,
         )
     elif backend == backends.VLLM:
+        # First Party
+        from instructlab.model.backends.vllm import contains_argument
+
         # Warn if unsupported backend parameters are passed
         warn_for_unsuported_backend_param(ctx)
+
+        if gpus:
+            # if `--tensor-parallel-size is included in ctx.args (click arguments after "--"),
+            # that value has precedence over the value of the --gpus flag.
+            if not contains_argument("--tensor-parallel-size", ctx.args):
+                ctx.args.extend(["--tensor-parallel-size", str(gpus)])
+
+            if contains_argument(
+                "--tensor-parallel-size", ctx.obj.config.serve.vllm.vllm_args
+            ):
+                logger.info(
+                    "'--gpus' flag used alongside '--tensor-parallel-size' in the vllm_args section of the config file. Using value of the --gpus flag."
+                )
 
         # Instantiate the vllm server
         if ctx.args:
