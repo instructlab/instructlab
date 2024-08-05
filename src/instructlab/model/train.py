@@ -668,7 +668,7 @@ def train(
                 phase1_num_epochs=phased_phase1_num_epochs,
                 phase1_samples_per_save=phased_phase1_samples_per_save,
                 phase1_checkpoints_dir=phased_base_dir / "phase1" / "checkpoints",
-                phase2_data=phased_phase1_data,
+                phase2_data=phased_phase2_data,
                 phase2_num_epochs=phased_phase2_num_epochs,
                 phase2_samples_per_save=phased_phase2_samples_per_save,
                 phase2_checkpoints_dir=phased_base_dir / "phase2" / "checkpoints",
