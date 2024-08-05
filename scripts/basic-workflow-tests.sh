@@ -306,10 +306,13 @@ test_train() {
 test_phased_train() {
     task Train the model with LAB multi-phase strategy.
 
-    # linter wants DATA_PATH and over variables declared then assigned separately.
+    # linter wants PHASE1_DATA_PATH and over variables declared then assigned separately.
     # 'Declare and assign separately to avoid masking return values' <-- error.
-    local DATA_PATH
-    DATA_PATH=$(find "${DATA_HOME}"/instructlab/datasets -name 'messages_*' | head -n 1)
+    local PHASE1_DATA_PATH
+    PHASE1_DATA_PATH=$(find "${DATA_HOME}"/instructlab/datasets -name 'knowledge_train_msgs_*' | head -n 1)
+
+    local PHASE2_DATA_PATH
+    PHASE2_DATA_PATH=$(find "${DATA_HOME}"/instructlab/datasets -name 'skills_train_msgs_*' | head -n 1)
 
     local MODEL_PATH
     MODEL_PATH="${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab"
@@ -334,14 +337,14 @@ test_phased_train() {
     # phase 1 args 
     TRAIN_ARGS+=(
         "--phased-phase1-num-epochs=1"
-        "--phased-phase1-data=${DATA_PATH}"
+        "--phased-phase1-data=${PHASE1_DATA_PATH}"
         "--phased-phase1-samples-per-save=1"
     )
 
     # phase 2 args 
     TRAIN_ARGS+=(
         "--phased-phase2-num-epochs=1"
-        "--phased-phase2-data=${DATA_PATH}"
+        "--phased-phase2-data=${PHASE2_DATA_PATH}"
         "--phased-phase2-samples-per-save=1"
     )
 
