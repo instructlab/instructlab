@@ -62,7 +62,12 @@ from instructlab.configuration import (
     "Please do not use this option if you are planning to contribute back "
     "using the same taxonomy repository. ",
 )
-@click.option("--train-profile", type=click.Path(), default=None)
+@click.option(
+    "--train-profile",
+    type=click.Path(),
+    default=None,
+    help="Overwrite the default training values in the generated config.yaml by passing in an existing training-specific yaml.",
+)
 @clickext.display_params
 @click.pass_context
 def init(
