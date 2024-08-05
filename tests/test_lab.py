@@ -80,6 +80,7 @@ subcommands: list[Command] = [
     # first, second, extra args
     Command((), needs_config=False),
     Command(("config",), needs_config=False),
+    Command(("config", "edit")),
     Command(("config", "init"), needs_config=False),
     Command(("config", "show")),
     Command(("model",), needs_config=False),

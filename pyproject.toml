@@ -44,6 +44,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "taxonomy" = "instructlab.taxonomy.taxonomy:taxonomy"
 
 [project.entry-points."instructlab.command.config"]
+"edit" = "instructlab.config.edit:edit"
 "init" = "instructlab.config.init:init"
 "show" = "instructlab.config.show:show"
 
