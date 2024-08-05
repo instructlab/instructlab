@@ -171,30 +171,30 @@ def serve(
         warn_for_unsuported_backend_param(ctx)
 
         if gpus:
-            # if `--tensor-parallel-size is included in ctx.args (click arguments after "--"),
-            # that value has precedence over the value of the --gpus flag.
-            if not contains_argument("--tensor-parallel-size", ctx.args):
-                ctx.args.extend(["--tensor-parallel-size", str(gpus)])
-            else:
-                logger.info(
-                    "'--gpus' flag used alongside '--tensor-parallel-size' flag in `ilab model serve`. Using value of the --tensor-parallel-size flag."
-                )
-
             if contains_argument(
                 "--tensor-parallel-size", ctx.obj.config.serve.vllm.vllm_args
             ):
                 logger.info(
                     "'--gpus' flag used alongside '--tensor-parallel-size' in the vllm_args section of the config file. Using value of the --gpus flag."
                 )
+            # even if there are 2 duplicate flags in vLLM args, vLLM uses the second flag
+            ctx.obj.config.serve.vllm.vllm_args.extend(
+                ["--tensor-parallel-size", str(gpus)]
+            )
+
+        # serve.vllm.vllm_args defaults to []
+        vllm_args = ctx.obj.config.serve.vllm.vllm_args
 
         # Instantiate the vllm server
         if ctx.args:
-            # extra click arguments after "--"
-            vllm_args = ctx.args
-        elif ctx.obj.config.serve.vllm.vllm_args:
-            vllm_args = ctx.obj.config.serve.vllm.vllm_args
-        else:
-            vllm_args = []
+            # any vllm flag included in ctx.args (click arguments after "--"),
+            # has precedence over the value over the flags in serve.vllm.vllm_args
+            # section of the config and the value of the flag `--gpus`.
+            if gpus and contains_argument("--tensor-parallel-size", ctx.args):
+                logger.info(
+                    "'--gpus' flag used alongside '--tensor-parallel-size' flag in `ilab model serve`. Using value of the --tensor-parallel-size flag."
+                )
+            vllm_args.extend(ctx.args)
 
         backend_instance = vllm.Server(
             api_base=ctx.obj.config.serve.api_base(),
