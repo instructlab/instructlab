@@ -191,6 +191,15 @@ class OCIDownloader(Downloader):
             f"Downloading model from OCI registry: {self.repository}@{self.release} to {self.download_dest}..."
         )
 
+        # raise an exception if user specified tag/SHA embedded in repository instead of specifying --release
+        match = re.search(r"^(?:[^:]*:){2}(.*)$", self.repository)
+        if match:
+            click.secho(
+                f"Invalid repository supplied: Please specify tag/version '{match.group(1)}' via --release",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
+
         model_name = self.repository.split("/")[-1]
         os.makedirs(os.path.join(self.download_dest, model_name), exist_ok=True)
         oci_dir = f"{DEFAULTS.OCI_DIR}/{model_name}"
