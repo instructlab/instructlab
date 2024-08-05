@@ -59,6 +59,7 @@ class TestConfig:
         assert cfg.generate.teacher.host_port == "127.0.0.1:8000"
         assert cfg.generate.teacher.backend is None
         assert cfg.generate.teacher.chat_template is None
+        assert cfg.generate.pipeline == "simple"
         assert cfg.generate.model == default_model
         assert cfg.generate.taxonomy_path == f"{data_dir}/taxonomy"
         assert cfg.generate.taxonomy_base == "origin/main"
@@ -128,6 +129,7 @@ class TestConfig:
                 """general:
   log_level: INFO
 generate:
+  pipeline: simple
   teacher:
     model_path: models/granite-7b-lab-Q4_K_M.gguf
     chat_template: tokenizer
@@ -194,6 +196,7 @@ version: 1.0.0
 chat:
   model: models/granite-7b-lab-Q4_K_M.gguf
 generate:
+  pipeline: simple
   model: models/granite-7b-lab-Q4_K_M.gguf
   taxonomy_base: upstream/main
   taxonomy_path: mytaxonomy
@@ -239,6 +242,7 @@ general:
         cfg = config.read_config(config_path)
         assert cfg is not None
         assert cfg.chat.model == "models/granite-7b-lab-Q4_K_M.gguf"
+        assert cfg.generate.pipeline == "simple"
         assert cfg.generate.model == "models/granite-7b-lab-Q4_K_M.gguf"
         assert cfg.serve.llama_cpp.gpu_layers == 1
         assert cfg.serve.llama_cpp.max_ctx_size == 2048

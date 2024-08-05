@@ -84,6 +84,7 @@ class _InstructlabDefaults:
     CONNECTION_TIMEOUT = httpx.Timeout(timeout=30.0)
     # use spawn start method, fork is not thread-safe
     MULTIPROCESSING_START_METHOD = "spawn"
+    SDG_PIPELINE = "simple"
     SDG_SCALE_FACTOR = 30
 
     # When otherwise unknown, ilab uses this as the default family
@@ -363,6 +364,7 @@ class _generate(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     # required fields
+    pipeline: StrictStr = DEFAULTS.SDG_PIPELINE
     model: StrictStr
     taxonomy_path: StrictStr
     taxonomy_base: StrictStr

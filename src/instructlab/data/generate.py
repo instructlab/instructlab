@@ -143,7 +143,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--pipeline",
     type=click.STRING,
-    default="simple",
+    cls=clickext.ConfigOption,
     help="Data generation pipeline to use. Available: simple, full, or a valid path to a directory of pipeline workflow YAML files. Note that 'full' requires a larger teacher model, Mixtral-8x7b.",
 )
 @click.option(
@@ -284,7 +284,7 @@ def generate(
 
     try:
         click.echo(
-            f"Generating synthetic data using '{model_path}' model, taxonomy:'{taxonomy_path}' against {api_base} server"
+            f"Generating synthetic data using '{pipeline}' pipeline, '{model_path}' model, '{taxonomy_path}' taxonomy, against {api_base} server"
         )
         generate_data(
             logger=logging.getLogger("instructlab.sdg"),  # TODO: remove
