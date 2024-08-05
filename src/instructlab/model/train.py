@@ -373,6 +373,11 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     is_flag=True,
     help="Skips any user confirmation prompts.",
 )
+@click.option(
+    "--enable-serving-output",
+    is_flag=True,
+    help="Print serving engine logs during phased training checkpoint evaluation.",
+)
 @click.pass_context
 @clickext.display_params
 def train(
@@ -400,6 +405,7 @@ def train(
     phased_phase2_samples_per_save: int | None,
     phased_mt_bench_judge: pathlib.Path | None,
     skip_user_confirm: bool,
+    enable_serving_output: bool,
     **kwargs,
 ):
     """
@@ -674,6 +680,7 @@ def train(
                 phase2_checkpoints_dir=phased_base_dir / "phase2" / "checkpoints",
                 phase2_eval_cache=phased_base_dir / "phase2" / "eval_cache",
                 mtbench_judge=mt_bench_judge,
+                enable_serving_output=enable_serving_output,
             )
 
         else:
@@ -789,6 +796,7 @@ def _mtbench(
     model: pathlib.Path,
     eval_cache: pathlib.Path,
     mtbench_judge: pathlib.Path,
+    enable_serving_output: bool,
 ) -> float:
     # TODO: optimization: run all generations in serial and then do all judgements at once to save time loading/unloading prometheus.
 
@@ -825,7 +833,7 @@ def _mtbench(
             model_name=str(model),
             gpus=torch.cuda.device_count(),
             max_workers=multiprocessing.cpu_count(),
-            enable_serving_output=False,
+            enable_serving_output=enable_serving_output,
             backend=backends.VLLM,
         )
         logger.debug("Generating mt-bench answers")
@@ -843,7 +851,7 @@ def _mtbench(
             gpus=torch.cuda.device_count(),
             max_workers=multiprocessing.cpu_count(),
             backend=backends.VLLM,
-            enable_serving_output=False,
+            enable_serving_output=enable_serving_output,
         )
         logger.debug("Judging mt-bench answers")
         mt_bench_results: tuple = evaluator.judge_answers(model_serve_url)
@@ -901,6 +909,7 @@ def _run_phased_training(
     phase2_checkpoints_dir: pathlib.Path,
     phase2_eval_cache: pathlib.Path,
     mtbench_judge: pathlib.Path,
+    enable_serving_output: bool,
 ) -> None:
     click.secho("Training Phase 1/2...", fg="cyan")
 
@@ -942,6 +951,7 @@ def _run_phased_training(
             ctx=ctx,
             eval_cache=phase2_eval_cache,
             mtbench_judge=mtbench_judge,
+            enable_serving_output=enable_serving_output,
         ),
     )
 
