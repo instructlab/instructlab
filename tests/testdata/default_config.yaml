@@ -11,7 +11,7 @@ evaluate:
   base_branch: null
   base_model: instructlab/granite-7b-lab
   branch: null
-  gpus: 1
+  gpus: null
   mmlu:
     batch_size: auto
     few_shots: 5

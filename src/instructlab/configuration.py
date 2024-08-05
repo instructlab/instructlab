@@ -367,7 +367,7 @@ class _evaluate(BaseModel):
     base_model: str
     branch: Optional[str] = None
     base_branch: Optional[str] = None
-    gpus: Optional[int] = 1
+    gpus: Optional[int] = None
     mmlu: _mmlu
     mmlu_branch: _mmlubranch
     mt_bench: _mtbench
