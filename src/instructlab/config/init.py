@@ -18,6 +18,7 @@ from instructlab.configuration import (
     ensure_storage_directories_exist,
     get_default_config,
     read_train_profile,
+    recreate_train_profiles,
     write_config,
 )
 
@@ -90,7 +91,10 @@ def init(
     # the parameter source from the parent of the parent command.
     else:
         param_source = ctx.parent.parent.get_parameter_source("config_file")
-
+    try:
+        overwrite = check_if_configs_exist()
+    except click.exceptions.Exit as e:
+        ctx.exit(e.exit_code)
     if param_source == click.core.ParameterSource.ENVIRONMENT:
         taxonomy_path, taxonomy_base, cfg = get_params_from_env(ctx.obj)
     else:
@@ -104,8 +108,13 @@ def init(
             )
         except click.exceptions.Exit as e:
             ctx.exit(e.exit_code)
-
-    click.echo(f"Generating `{DEFAULTS.CONFIG_FILE}`...")
+    if overwrite:
+        click.echo(
+            f"Generating `{DEFAULTS.CONFIG_FILE}` and `{DEFAULTS.TRAIN_PROFILE_DIR}`..."
+        )
+        recreate_train_profiles(overwrite=True)
+    else:
+        click.echo(f"Generating `{DEFAULTS.CONFIG_FILE}`...")
     if train_profile is not None:
         cfg.train = read_train_profile(train_profile)
     elif interactive:
@@ -150,12 +159,25 @@ def init(
     )
 
 
+def check_if_configs_exist() -> bool:
+    if exists(DEFAULTS.CONFIG_FILE):
+        overwrite = click.confirm(
+            f"Found {DEFAULTS.CONFIG_FILE}, do you still want to continue?"
+        )
+        if not overwrite:
+            raise click.exceptions.Exit(0)
+    if exists(DEFAULTS.TRAIN_PROFILE_DIR):
+        return click.confirm(
+            f"Found {DEFAULTS.TRAIN_PROFILE_DIR}, do you still want to continue?"
+        )
+    return True
+
+
 def get_params_from_env(
     obj: typing.Optional[typing.Any],
 ) -> typing.Tuple[str, str, Config]:
     if obj is None or not hasattr(obj, "config"):
         raise ValueError("obj must not be None and must have a 'config' attribute")
-
     return (
         obj.config.generate.taxonomy_path,
         obj.config.generate.taxonomy_base,
@@ -173,12 +195,6 @@ def get_params_default(
     cfg = get_default_config()
     clone_taxonomy_repo = True
     if interactive:
-        if exists(DEFAULTS.CONFIG_FILE):
-            overwrite = click.confirm(
-                f"Found {DEFAULTS.CONFIG_FILE}, do you still want to continue?"
-            )
-            if not overwrite:
-                raise click.exceptions.Exit(0)
         click.echo(
             "Welcome to InstructLab CLI. This guide will help you to setup your environment."
         )

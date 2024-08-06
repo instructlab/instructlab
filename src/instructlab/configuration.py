@@ -830,6 +830,18 @@ def ensure_storage_directories_exist():
         "lora_target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"],
     }
 
+    recreate_train_profiles()
+
+    # create expert_args file for users to see/edit
+    if not os.path.isfile(DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE):
+        with open(
+            DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE, "w", encoding="utf-8"
+        ) as outfile:
+            yaml.dump(additional_args_and_defaults, outfile)
+
+
+# recreate_train_profiles creates all train profiles in the proper directory and takes an argument, overwrite, which will write to the files even if they already exist
+def recreate_train_profiles(overwrite: bool = False):
     TRAIN_DIR_EXPECTED_FILES = {
         "A100_H100_x8.yaml",
         "A100_H100_x4.yaml",
@@ -1020,18 +1032,11 @@ def ensure_storage_directories_exist():
         }
 
         for file, train_cfg in to_write.items():
-            if not os.path.isfile(file):
+            if not os.path.isfile(file) or overwrite:
                 with open(file, "w", encoding="utf-8") as outfile:
                     d = train_cfg.model_dump_json()
                     loaded = yaml.load(d, Loader=yaml.SafeLoader)
                     yaml.dump(loaded, outfile)
-
-    # create expert_args file for users to see/edit
-    if not os.path.isfile(DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE):
-        with open(
-            DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE, "w", encoding="utf-8"
-        ) as outfile:
-            yaml.dump(additional_args_and_defaults, outfile)
 
 
 class Lab:
