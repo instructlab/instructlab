@@ -627,8 +627,7 @@ def train(
 
         # pull the trainrandom.randinting and torch args from the flags
         # the flags are populated from the config as a base.
-        params = ctx.params
-        train_args, torch_args = map_train_to_library(params)
+        train_args, torch_args = map_train_to_library(ctx, ctx.params)
 
         if strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value:
             if not (phased_phase1_data and phased_phase2_data):
