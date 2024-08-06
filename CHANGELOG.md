@@ -96,6 +96,8 @@
    value.
 * `ilab model chat`: Fixed an issue where the default served model couldn't be resolved when running
    model besides the default `merlinite-7b-lab-Q4_K_M.gguf`.
+* `ilab data generate`: Fixed a bug where ilab wasn't correctly checking if the user was actively serving
+   a model before serving its own.
 
 ## v0.17
 
