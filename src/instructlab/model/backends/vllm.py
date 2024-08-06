@@ -125,6 +125,7 @@ class Server(BackendServer):
         # Needed when a temporary server is started
         if self.process is not None:
             shutdown_process(self.process, 20)
+            self.process = None
 
     def get_backend_type(self):
         return VLLM
