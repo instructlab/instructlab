@@ -332,14 +332,20 @@ def clickpath_setup(is_dir: bool) -> click.Path:
 @click.option(
     "--phased-phase1-num-epochs",
     cls=clickext.ConfigOption,
-    type=int,
+    type=click.IntRange(min=1),
     help="Number of epochs to run for first phase of end-to-end training.",
 )
 @click.option(
     "--phased-phase1-samples-per-save",
     cls=clickext.ConfigOption,
-    type=int,
+    type=click.IntRange(min=1),
     help="Number of samples to train on between saves for first phase of end-to-end training.",
+)
+@click.option(
+    "--phased-phase1-effective-batch-size",
+    cls=clickext.ConfigOption,
+    type=click.IntRange(min=1),
+    help="Total size of a training batch over all GPUs for Phase 1",
 )
 @click.option(
     "--phased-phase2-data",
@@ -349,14 +355,20 @@ def clickpath_setup(is_dir: bool) -> click.Path:
 @click.option(
     "--phased-phase2-num-epochs",
     cls=clickext.ConfigOption,
-    type=int,
+    type=click.IntRange(min=1),
     help="Number of epochs to run for second phase of end-to-end training.",
 )
 @click.option(
     "--phased-phase2-samples-per-save",
     cls=clickext.ConfigOption,
-    type=int,
+    type=click.IntRange(min=1),
     help="Number of samples to train on between saves for second phase of end-to-end training.",
+)
+@click.option(
+    "--phased-phase2-effective-batch-size",
+    cls=clickext.ConfigOption,
+    type=click.IntRange(min=1),
+    help="Total size of a training batch over all GPUs for Phase 2",
 )
 @click.option(
     "--phased-mt-bench-judge",
@@ -398,9 +410,11 @@ def train(
     phased_phase1_data: pathlib.Path | None,
     phased_phase1_num_epochs: int | None,
     phased_phase1_samples_per_save: int | None,
+    phased_phase1_effective_batch_size: int | None,
     phased_phase2_data: pathlib.Path | None,
     phased_phase2_num_epochs: int | None,
     phased_phase2_samples_per_save: int | None,
+    phased_phase2_effective_batch_size: int | None,
     phased_mt_bench_judge: pathlib.Path | None,
     skip_user_confirm: bool,
     enable_serving_output: bool,
@@ -671,10 +685,12 @@ def train(
                 phase1_num_epochs=phased_phase1_num_epochs,
                 phase1_samples_per_save=phased_phase1_samples_per_save,
                 phase1_checkpoints_dir=phased_base_dir / "phase1" / "checkpoints",
+                phased_phase1_effective_batch_size=phased_phase1_effective_batch_size,
                 phase2_data=phased_phase2_data,
                 phase2_num_epochs=phased_phase2_num_epochs,
                 phase2_samples_per_save=phased_phase2_samples_per_save,
                 phase2_checkpoints_dir=phased_base_dir / "phase2" / "checkpoints",
+                phased_phase2_effective_batch_size=phased_phase2_effective_batch_size,
                 phase2_eval_cache=phased_base_dir / "phase2" / "eval_cache",
                 mtbench_judge=mt_bench_judge,
                 enable_serving_output=enable_serving_output,
@@ -729,6 +745,7 @@ def _training_phase(
     num_epochs: int | None = None,
     samples_per_save: int | None = None,
     checkpoint_dir: pathlib.Path | None = None,
+    effective_batch_size: int | None = None,
 ) -> None:
     """A single step of phased training that supports key param overriding."""
 
@@ -762,6 +779,12 @@ def _training_phase(
             f"Phased Training -- training phase -- Overriding samples per save: {train_args.save_samples} with {samples_per_save}"
         )
         train_args.save_samples = samples_per_save
+
+    if effective_batch_size:
+        logger.debug(
+            f"Phased Training -- training phase -- Overriding effective batch size: {train_args.effective_batch_size} with {effective_batch_size}"
+        )
+        train_args.effective_batch_size = effective_batch_size
 
     click.secho(
         f"TrainingArgs for current phase: {pprint.pformat(train_args)}", fg="cyan"
@@ -900,10 +923,12 @@ def _run_phased_training(
     phase1_num_epochs: int | None,
     phase1_samples_per_save: int | None,
     phase1_checkpoints_dir: pathlib.Path,
+    phased_phase1_effective_batch_size: int | None,
     phase2_data: pathlib.Path,
     phase2_num_epochs: int | None,
     phase2_samples_per_save: int | None,
     phase2_checkpoints_dir: pathlib.Path,
+    phased_phase2_effective_batch_size: int | None,
     phase2_eval_cache: pathlib.Path,
     mtbench_judge: pathlib.Path,
     enable_serving_output: bool,
@@ -917,6 +942,7 @@ def _run_phased_training(
         checkpoint_dir=phase1_checkpoints_dir,
         num_epochs=phase1_num_epochs,
         samples_per_save=phase1_samples_per_save,
+        effective_batch_size=phased_phase1_effective_batch_size,
         # model override not necessary because we expect model to come from ctx.params.model_path.
     )
 
@@ -936,6 +962,7 @@ def _run_phased_training(
         model_override=p1_best_ckpt,
         num_epochs=phase2_num_epochs,
         samples_per_save=phase2_samples_per_save,
+        effective_batch_size=phased_phase2_effective_batch_size,
     )
 
     click.secho("MT-Bench evaluation for Phase 2...", fg="cyan")
