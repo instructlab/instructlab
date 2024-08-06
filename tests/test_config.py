@@ -15,6 +15,7 @@ import yaml
 
 # First Party
 from instructlab import configuration as config
+from instructlab.configuration import DEFAULTS
 from instructlab.log import configure_logging
 
 
@@ -92,13 +93,12 @@ class TestConfig:
 
         assert cfg.evaluate is not None
         assert cfg.evaluate.base_model == "instructlab/granite-7b-lab"
-        assert cfg.evaluate.model is None
 
         assert cfg.generate is not None
-        assert cfg.generate.model == default_model
+        assert cfg.generate.model == DEFAULTS.DEFAULT_MODEL
 
         assert cfg.serve is not None
-        assert cfg.serve.model_path == default_model
+        assert cfg.serve.model_path == DEFAULTS.DEFAULT_MODEL
 
         assert cfg.train is not None
         assert cfg.train.model_path == "instructlab/granite-7b-lab"
@@ -109,7 +109,7 @@ class TestConfig:
         self._assert_defaults(cfg)
         self._assert_model_defaults(cfg)
 
-    def test_config_missing_required_field_groups(self, tmp_path_home):
+    def test_cfg_auto_fill(self, tmp_path_home):
         config_path = tmp_path_home / "config.yaml"
         with open(config_path, "w", encoding="utf-8") as config_file:
             config_file.write(
@@ -117,26 +117,17 @@ class TestConfig:
   log_level: INFO
 """
             )
-        with pytest.raises(
-            config.ConfigException,
-            match=r"""5 errors in [\/\w-]+config.yaml:
-- missing chat: field required
-- missing generate: field required
-- missing serve: field required
-- missing version: field required
-- missing evaluate: field required
-""",
-        ):
-            config.read_config(config_path)
+        cfg = config.read_config(config_path)
+        self._assert_defaults(cfg)
+        self._assert_model_defaults(cfg)
 
-    def test_config_missing_required_fields(self, tmp_path_home):
+    def test_cfg_auto_fill_with_large_config(self, tmp_path_home):  # pylint: disable=unused-argument
         config_path = tmp_path_home / "config.yaml"
         with open(config_path, "w", encoding="utf-8") as config_file:
             config_file.write(
                 """general:
   log_level: INFO
 generate:
-  model: models/merlinite-7b-lab-Q4_K_M.gguf
   teacher:
     model_path: models/granite-7b-lab-Q4_K_M.gguf
     chat_template: tokenizer
@@ -148,18 +139,10 @@ generate:
       gpus: 8
 """
             )
-        with pytest.raises(
-            config.ConfigException,
-            match=r"""6 errors in [\/\w-]+config.yaml:
-- missing chat: field required
-- missing generate->taxonomy_path: field required
-- missing generate->taxonomy_base: field required
-- missing serve: field required
-- missing version: field required
-- missing evaluate: field required
-""",
-        ):
-            config.read_config(config_path)
+        cfg = config.read_config(config_path)
+        # make sure the generate cfg passed is preserved
+        assert cfg.generate.teacher.llama_cpp.max_ctx_size == 2048
+        self._assert_model_defaults(cfg)
 
     def test_validate_log_level_invalid(self):
         cfg = config.get_default_config()
@@ -322,8 +305,8 @@ def test_compare_default_config_testdata(
     [
         ("nf4", {}, False),
         (None, {}, False),
-        ("nf4", None, True),
-        (None, None, True),
+        ("nf4", None, False),
+        (None, None, False),
         ("valid-for-cli-but-not-for-training-library", {}, False),
         ("nf4", {"lora_alpha": 32}, False),
     ],
@@ -365,4 +348,5 @@ def test_read_train_profile(
         for k, v in result.dict().items():
             if k not in profile_data:
                 continue
-            assert v == profile_data[k]
+            if profile_data[k] is not None:
+                assert v == profile_data[k]
