@@ -92,7 +92,7 @@ def init(
         param_source = ctx.parent.parent.get_parameter_source("config_file")
 
     if param_source == click.core.ParameterSource.ENVIRONMENT:
-        model_path, taxonomy_path, taxonomy_base, cfg = get_params_from_env(ctx.obj)
+        taxonomy_path, taxonomy_base, cfg = get_params_from_env(ctx.obj)
     else:
         try:
             model_path, taxonomy_path, cfg = get_params_default(
@@ -133,12 +133,14 @@ def init(
             )
             raise click.exceptions.Exit(1)
 
-    cfg.chat.model = model_path
-    cfg.generate.model = model_path
-    cfg.serve.model_path = model_path
+    # we should not override all paths with the serve model if special ENV vars exist
+    if param_source != click.core.ParameterSource.ENVIRONMENT:
+        cfg.chat.model = model_path
+        cfg.generate.model = model_path
+        cfg.serve.model_path = model_path
+        cfg.evaluate.model = model_path
     cfg.generate.taxonomy_path = taxonomy_path
     cfg.generate.taxonomy_base = taxonomy_base
-    cfg.evaluate.model = model_path
     cfg.evaluate.mt_bench_branch.taxonomy_path = taxonomy_path
     write_config(cfg)
 
@@ -150,12 +152,11 @@ def init(
 
 def get_params_from_env(
     obj: typing.Optional[typing.Any],
-) -> typing.Tuple[str, str, str, Config]:
+) -> typing.Tuple[str, str, Config]:
     if obj is None or not hasattr(obj, "config"):
         raise ValueError("obj must not be None and must have a 'config' attribute")
 
     return (
-        obj.config.serve.model_path,
         obj.config.generate.taxonomy_path,
         obj.config.generate.taxonomy_base,
         obj.config,
