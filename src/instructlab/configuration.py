@@ -67,6 +67,7 @@ class _InstructlabDefaults:
     # file. When set, the CLI will use the file specified in the environment variable as a sample to
     # generate the default config file.
     ILAB_GLOBAL_CONFIG = "ILAB_GLOBAL_CONFIG"
+    ILAB_TRAIN_PROFILE_DIR = "ILAB_TRAIN_PROFILE_DIR"
 
     # TODO: Consolidate --model and --model-path into one --model-path flag since we always need a path now
     MODEL_NAME_OLD = "merlinite-7b-lab-Q4_K_M"
@@ -184,6 +185,30 @@ class _InstructlabDefaults:
     @property
     def TRAIN_DEFAULT_PROFILE(self) -> str:
         return path.join(self.TRAIN_PROFILE_DIR, "default.yaml")
+
+    @property
+    def TRAIN_A100_H100_X4_PROFILE(self) -> str:
+        return path.join(self.TRAIN_PROFILE_DIR, "A100_H100_x4.yaml")
+
+    @property
+    def TRAIN_A100_H100_X8_PROFILE(self) -> str:
+        return path.join(self.TRAIN_PROFILE_DIR, "A100_H100_x8.yaml")
+
+    @property
+    def TRAIN_A100_H100_X2_PROFILE(self) -> str:
+        return path.join(self.TRAIN_PROFILE_DIR, "A100_H100_x2.yaml")
+
+    @property
+    def TRAIN_L40_X8_PROFILE(self) -> str:
+        return path.join(self.TRAIN_PROFILE_DIR, "L40_x8.yaml")
+
+    @property
+    def TRAIN_L40_X4_PROFILE(self) -> str:
+        return path.join(self.TRAIN_PROFILE_DIR, "L40_x4.yaml")
+
+    @property
+    def TRAIN_L4_X8_PROFILE(self) -> str:
+        return path.join(self.TRAIN_PROFILE_DIR, "L4_x8.yaml")
 
 
 DEFAULTS = _InstructlabDefaults()
@@ -619,7 +644,228 @@ def ensure_storage_directories_exist():
         "lora_target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"],
     }
 
-    # create exper_args file for users to see/edit
+    TRAIN_DIR_EXPECTED_FILES = {
+        "A100_H100_x4.yaml",
+        "A100_H100_x8.yaml",
+        "A100_H100_x2.yaml",
+        "L40_x8.yaml",
+        "L40_x4.yaml",
+        "L4_x8.yaml",
+    }
+
+    profile_dir = os.environ.get(DEFAULTS.ILAB_TRAIN_PROFILE_DIR)
+    if profile_dir != "" and profile_dir is not None:
+        # the train dir exists, read it
+        # expect only the supported cfgs.
+        for file in TRAIN_DIR_EXPECTED_FILES:
+            new_file = os.path.join(DEFAULTS.TRAIN_PROFILE_DIR, file)
+            tmpl_file = os.path.join(profile_dir, file)
+            train_cfg = read_train_profile(tmpl_file)
+            if not os.path.isfile(new_file):
+                with open(new_file, "w", encoding="utf-8") as outfile:
+                    d = train_cfg.model_dump_json()
+                    loaded = yaml.load(d, Loader=yaml.SafeLoader)
+                    yaml.dump(loaded, outfile)
+    else:
+        # else render the defaults
+        FOUR_GPU_TRAIN_AH = _train(
+            additional_args={
+                "warmup_steps": 10,
+                "learning_rate": 2e-5,
+                "lora_dropout": 0.1,
+                "lora_alpha": 32,
+            },
+            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+            nproc_per_node=4,
+            effective_batch_size=96,
+            lora_quantize_dtype=None,
+            lora_rank=0,
+            max_batch_len=60000,
+            max_seq_len=4096,
+            save_samples=1000,
+            deepspeed_cpu_offload_optimizer=False,
+            is_padding_free=True,
+            num_epochs=7,
+            model_path=os.path.join(
+                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
+            ),
+        )
+
+        EIGHT_GPU_TRAIN_AH = _train(
+            additional_args={
+                "warmup_steps": 10,
+                "learning_rate": 2e-5,
+                "lora_dropout": 0.1,
+                "lora_alpha": 32,
+            },
+            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+            nproc_per_node=8,
+            effective_batch_size=96,
+            lora_quantize_dtype=None,
+            lora_rank=0,
+            max_batch_len=60000,
+            max_seq_len=4096,
+            save_samples=1000,
+            deepspeed_cpu_offload_optimizer=False,
+            is_padding_free=True,
+            num_epochs=7,
+            model_path=os.path.join(
+                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
+            ),
+        )
+
+        FOUR_GPU_TRAIN_AH = _train(
+            additional_args={
+                "warmup_steps": 10,
+                "learning_rate": 2e-5,
+                "lora_dropout": 0.1,
+                "lora_alpha": 32,
+            },
+            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+            nproc_per_node=4,
+            effective_batch_size=96,
+            lora_quantize_dtype=None,
+            lora_rank=0,
+            max_batch_len=60000,
+            max_seq_len=4096,
+            save_samples=1000,
+            deepspeed_cpu_offload_optimizer=False,
+            is_padding_free=True,
+            num_epochs=7,
+            model_path=os.path.join(
+                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
+            ),
+        )
+
+        TWO_GPU_TRAIN_AH = _train(
+            additional_args={
+                "warmup_steps": 10,
+                "learning_rate": 2e-5,
+                "lora_dropout": 0.1,
+                "lora_alpha": 32,
+                "deepspeed_cpu_offload_optimizer_ratio": 1,
+                "deepspeed_cpu_offload_optimizer_pin_memory": False,
+            },
+            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+            nproc_per_node=2,
+            effective_batch_size=96,
+            lora_quantize_dtype=None,
+            lora_rank=0,
+            max_batch_len=60000,
+            max_seq_len=4096,
+            save_samples=1000,
+            deepspeed_cpu_offload_optimizer=True,
+            is_padding_free=True,
+            num_epochs=7,
+            model_path=os.path.join(
+                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
+            ),
+        )
+
+        EIGHT_L_FORTY_GPU = _train(
+            additional_args={
+                "warmup_steps": 10,
+                "learning_rate": 2e-5,
+                "lora_dropout": 0.1,
+                "lora_alpha": 32,
+            },
+            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+            nproc_per_node=8,
+            effective_batch_size=96,
+            lora_quantize_dtype=None,
+            lora_rank=0,
+            max_batch_len=30000,
+            max_seq_len=4096,
+            save_samples=1000,
+            deepspeed_cpu_offload_optimizer=False,
+            is_padding_free=True,
+            num_epochs=7,
+            model_path=os.path.join(
+                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
+            ),
+        )
+
+        FOUR_L_FORTY_GPU = _train(
+            additional_args={
+                "warmup_steps": 10,
+                "learning_rate": 2e-5,
+                "lora_dropout": 0.1,
+                "lora_alpha": 32,
+                "deepspeed_cpu_offload_optimizer_ratio": 1,
+                "deepspeed_cpu_offload_optimizer_pin_memory": False,
+            },
+            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+            nproc_per_node=4,
+            effective_batch_size=96,
+            lora_quantize_dtype=None,
+            lora_rank=0,
+            max_batch_len=30000,
+            max_seq_len=4096,
+            save_samples=1000,
+            num_epochs=7,
+            deepspeed_cpu_offload_optimizer=True,
+            is_padding_free=True,
+            model_path=os.path.join(
+                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
+            ),
+        )
+
+        EIGHT_L_FOUR_GPU = _train(
+            additional_args={
+                "warmup_steps": 10,
+                "learning_rate": 2e-5,
+                "lora_dropout": 0.1,
+                "lora_alpha": 32,
+                "deepspeed_cpu_offload_optimizer_ratio": 1,
+                "deepspeed_cpu_offload_optimizer_pin_memory": False,
+            },
+            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+            nproc_per_node=8,
+            effective_batch_size=96,
+            lora_quantize_dtype=None,
+            lora_rank=0,
+            max_batch_len=30000,
+            max_seq_len=4096,
+            save_samples=1000,
+            num_epochs=7,
+            deepspeed_cpu_offload_optimizer=True,
+            is_padding_free=True,
+            model_path=os.path.join(
+                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
+            ),
+        )
+
+        to_write = {
+            DEFAULTS.TRAIN_A100_H100_X4_PROFILE: FOUR_GPU_TRAIN_AH,
+            DEFAULTS.TRAIN_A100_H100_X8_PROFILE: EIGHT_GPU_TRAIN_AH,
+            DEFAULTS.TRAIN_A100_H100_X2_PROFILE: TWO_GPU_TRAIN_AH,
+            DEFAULTS.TRAIN_L40_X8_PROFILE: EIGHT_L_FORTY_GPU,
+            DEFAULTS.TRAIN_L40_X4_PROFILE: FOUR_L_FORTY_GPU,
+            DEFAULTS.TRAIN_L4_X8_PROFILE: EIGHT_L_FOUR_GPU,
+        }
+
+        for file, train_cfg in to_write.items():
+            if not os.path.isfile(file):
+                with open(file, "w", encoding="utf-8") as outfile:
+                    d = train_cfg.model_dump_json()
+                    loaded = yaml.load(d, Loader=yaml.SafeLoader)
+                    yaml.dump(loaded, outfile)
+
+    # create expert_args file for users to see/edit
     if not os.path.isfile(DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE):
         with open(
             DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE, "w", encoding="utf-8"
