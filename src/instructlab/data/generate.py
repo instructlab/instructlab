@@ -31,49 +31,45 @@ logger = logging.getLogger(__name__)
     "--num-cpus",
     type=click.INT,
     help="Number of processes to use.",
-    default=DEFAULTS.NUM_CPUS,
-    show_default=True,
+    cls=clickext.ConfigOption,
 )
 @click.option(
     "--chunk-word-count",
     type=click.INT,
     help="Number of words to chunk the document",
-    default=DEFAULTS.CHUNK_WORD_COUNT,
-    show_default=True,
+    cls=clickext.ConfigOption,
 )
 # TODO - DEPRECATED - Remove in a future release
 @click.option(
     "--num-instructions",
     type=click.INT,
-    default=-1,
     hidden=True,
+    cls=clickext.ConfigOption,
 )
 @click.option(
     "--sdg-scale-factor",
     type=click.INT,
     help="Number of instructions to generate for each seed example. The examples map to sample q&a pairs for new skills. For knowledge, examples are generated with both the sample q&a pairs, as well as chunks of the knowledge document(s), so the resulting data set is typically larger for a knowledge addition for the same value of `--sdg-scale-factor`.",
-    show_default=True,
+    cls=clickext.ConfigOption,
 )
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
-    default=lambda: DEFAULTS.TAXONOMY_DIR,
-    show_default="The default taxonomy path used by instructlab, located in the data directory.",
     help="Path to where the taxonomy is located.",
+    cls=clickext.ConfigOption,
 )
 @click.option(
     "--taxonomy-base",
-    default=DEFAULTS.TAXONOMY_BASE,
-    show_default=True,
     help="Base git-ref to use when generating new taxonomy.",
+    cls=clickext.ConfigOption,
 )
 @click.option(
     "--output-dir",
     type=click.Path(),
-    default=lambda: DEFAULTS.DATASETS_DIR,
-    show_default="The default output directory used by instructlab, located in the data directory.",
     help="Path to output generated files.",
+    cls=clickext.ConfigOption,
 )
+# TODO: no config option for --rouge-threshold
 @click.option(
     "--rouge-threshold",
     type=click.FLOAT,
@@ -94,8 +90,9 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--api-key",
     type=click.STRING,
-    default=DEFAULTS.API_KEY,  # Note: do not expose default API key
-    help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
+    default=DEFAULTS.API_KEY,
+    show_default=True,
+    help="API key for API endpoint.",
 )
 @click.option(
     "--yaml-rules",

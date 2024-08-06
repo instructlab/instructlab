@@ -12,9 +12,6 @@ from datasets import load_dataset
 from openai import OpenAI, Stream
 import click
 
-# First Party
-from instructlab.configuration import DEFAULTS
-
 # Local
 from ..utils import get_sysprompt, http_client
 from .backends import backends
@@ -81,13 +78,11 @@ def test_model(ctx, res, ds, model: Path, create_params: dict):
 def linux_test(
     ctx: click.Context,
     test_file: Path,
-    models=None,
+    models: list[Path],
     create_params=None,
 ) -> Dict[str, Any]:
     # linux_test
     logger.debug("test_file=%s", test_file)
-    if not models:
-        models = [DEFAULTS.DEFAULT_MODEL]
     if not create_params:
         create_params = {}
 

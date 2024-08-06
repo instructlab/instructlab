@@ -271,14 +271,14 @@ class _chat(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore")
 
-    # required fields
-    model: str
-
-    # additional fields with defaults
+    model: str = Field(default_factory=lambda: DEFAULTS.DEFAULT_MODEL)
+    # TODO: the field doesn't have a cli option
     vi_mode: bool = False
+    # TODO: the field doesn't have a cli option
     visible_overflow: bool = True
     context: str = "default"
     session: typing.Optional[str] = None
+    # TODO: the field doesn't have a cli option
     logs_dir: str = Field(
         default_factory=lambda: DEFAULTS.CHATLOGS_DIR
     )  # use a lambda to avoid caching
@@ -344,10 +344,9 @@ class _generate(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore")
 
-    # required fields
-    model: StrictStr
-    taxonomy_path: StrictStr
-    taxonomy_base: StrictStr
+    model: StrictStr = Field(default_factory=lambda: DEFAULTS.DEFAULT_MODEL)
+    taxonomy_path: StrictStr = Field(default_factory=lambda: DEFAULTS.TAXONOMY_DIR)
+    taxonomy_base: StrictStr = DEFAULTS.TAXONOMY_BASE
 
     # additional fields with defaults
     teacher: _serve = Field(default_factory=_serve)
@@ -361,7 +360,9 @@ class _generate(BaseModel):
     )
     sdg_scale_factor: Optional[PositiveInt] = DEFAULTS.SDG_SCALE_FACTOR
     output_dir: StrictStr = Field(default_factory=lambda: DEFAULTS.DATASETS_DIR)
+    # TODO: the field doesn't have a cli option
     prompt_file: StrictStr = Field(default_factory=lambda: DEFAULTS.PROMPT_FILE)
+    # TODO: the seed_file field is not used anywhere?
     seed_file: StrictStr = Field(default_factory=lambda: DEFAULTS.SEED_FILE)
 
 
@@ -403,11 +404,11 @@ class _train(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
 
-    model_path: str
+    model_path: str = Field(default_factory=lambda: DEFAULTS.MODEL_REPO)
 
-    data_path: str
-    ckpt_output_dir: str
-    data_output_dir: str
+    data_path: str = Field(default_factory=lambda: DEFAULTS.DATASETS_DIR)
+    ckpt_output_dir: str = Field(default_factory=lambda: DEFAULTS.CHECKPOINTS_DIR)
+    data_output_dir: str = Field(default_factory=lambda: DEFAULTS.INTERNAL_DIR)
 
     max_seq_len: int
     max_batch_len: int
