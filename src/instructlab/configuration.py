@@ -364,7 +364,7 @@ class _generate(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     # required fields
-    pipeline: StrictStr = DEFAULTS.SDG_PIPELINE
+    pipeline: Optional[str] = DEFAULTS.SDG_PIPELINE
     model: StrictStr
     taxonomy_path: StrictStr
     taxonomy_base: StrictStr

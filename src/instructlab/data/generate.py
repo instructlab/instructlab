@@ -198,6 +198,18 @@ def generate(
     from instructlab.sdg.generate_data import generate_data
     from instructlab.sdg.utils import GenerateException
 
+    # if --pipeline is not used, pipeline defaults to the value of ctx.obj.config.generate.pipeline
+    # set in the config file. A user could intentionally set this to 'null' in the config file
+    # if they want to ensure --pipeline needs to be used.
+    # This would happen if the type of pipeline needs to be different across different runs of
+    # `ilab data generate`.
+    if not pipeline:
+        click.secho(
+            "Pipeline not set. Please use the --pipeline flag or set it in the config file.",
+            fg="red",
+        )
+        raise click.exceptions.Exit(1)
+
     if num_instructions != -1:
         click.secho(
             "The --num-instructions flag is deprecated. Please use --sdg-scale-factor instead.",
