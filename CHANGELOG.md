@@ -64,6 +64,8 @@
 * Legacy Linux training is now compatible with the phase07 pretraining format.
 * Add support for `ILAB_TRAIN_PROFILE_DIR` which will point to the template train profiles to be brought into the `train_configuration` directory.
 * Add interactive prompt for users to choose their train profile.
+* The `generate` section of the config now has a `pipeline` value. This value sets a default value
+  and can be overridden by the `--pipeline` flag. The default for this value is 'simple'.
 
 ### Breaking Changes
 
