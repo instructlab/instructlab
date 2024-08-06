@@ -132,7 +132,6 @@ def is_openai_server_and_serving_model(
     "--endpoint-url",
     type=click.STRING,
     help="Custom URL endpoint for OpenAI-compatible API. Defaults to the `ilab model serve` endpoint.",
-    default=DEFAULT_ENDPOINT,
 )
 @click.option(
     "--api-key",
@@ -181,11 +180,11 @@ def chat(
     greedy_mode,
     max_tokens,
     endpoint_url,
-    api_key,  # pylint: disable=unused-argument
-    tls_insecure,  # pylint: disable=unused-argument
-    tls_client_cert,  # pylint: disable=unused-argument
-    tls_client_key,  # pylint: disable=unused-argument
-    tls_client_passwd,  # pylint: disable=unused-argument
+    api_key,
+    tls_insecure,
+    tls_client_cert,
+    tls_client_key,
+    tls_client_passwd,
     model_family,
 ):
     """Runs a chat using the modified model"""
@@ -193,21 +192,24 @@ def chat(
     # First Party
     from instructlab.model.backends.llama_cpp import is_temp_server_running
 
+    users_endpoint_url = cfg.get_api_base(ctx.obj.config.serve.host_port)
+
+    # we prefer the given endpoint when one is provided, else we check if the user
+    # is actively serving something before falling back to serving our own model
     backend_instance = None
-    if endpoint_url != DEFAULT_ENDPOINT or (
-        endpoint_url == DEFAULT_ENDPOINT
-        and is_openai_server_and_serving_model(
-            endpoint_url,
-            api_key,
-            {
-                "tls_client_cert": tls_client_cert,
-                "tls_client_key": tls_client_key,
-                "tls_client_passwd": tls_client_passwd,
-                "tls_insecure": tls_insecure,
-            },
-        )
-    ):
+    if endpoint_url:
         api_base = endpoint_url
+    elif is_openai_server_and_serving_model(
+        users_endpoint_url,
+        api_key,
+        http_params={
+            "tls_client_cert": tls_client_cert,
+            "tls_client_key": tls_client_key,
+            "tls_client_passwd": tls_client_passwd,
+            "tls_insecure": tls_insecure,
+        },
+    ):
+        api_base = users_endpoint_url
     else:
         # First Party
         from instructlab.model.backends import backends
