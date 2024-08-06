@@ -111,20 +111,21 @@ def init(
     elif interactive:
         entries = sorted(listdir(DEFAULTS.TRAIN_PROFILE_DIR))
         click.echo("Please choose a train profile to use:")
+        click.echo("[0] No profile (CPU-only)")
         for i, value in enumerate(entries):
-            click.echo(f"{i}. {value}")
+            click.echo(f"[{i+1}] {value}")
         train_profile_selection = click.prompt(
-            "Enter the number of your choice [hit enter for the default]",
+            "Enter the number of your choice [hit enter for the default CPU-only profile]",
             type=int,
-            default=-1,
+            default=0,
         )
-        if 0 <= train_profile_selection < len(entries):
-            click.echo(f"You selected: {entries[train_profile_selection]}")
+        if 1 <= train_profile_selection < len(entries):
+            click.echo(f"You selected: {entries[train_profile_selection - 1]}")
             cfg.train = read_train_profile(
-                join(DEFAULTS.TRAIN_PROFILE_DIR, entries[train_profile_selection])
+                join(DEFAULTS.TRAIN_PROFILE_DIR, entries[train_profile_selection - 1])
             )
-        elif train_profile_selection == -1:
-            click.echo("Using default train profile.")
+        elif train_profile_selection == 0:
+            click.echo("Using default CPU-only train profile.")
         else:
             click.secho(
                 "Invalid selection. Please select a valid train profile option.",
