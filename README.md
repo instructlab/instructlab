@@ -319,13 +319,13 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
   ilab model download
   ```
 
-  `ilab model download` downloads a compact pre-trained version of the [model](https://huggingface.co/instructlab/) (~4.4G) from HuggingFace and store it in a `models` directory:
+  `ilab model download` downloads a compact pre-trained version of the [model](https://huggingface.co/instructlab/) (~4.4G) from HuggingFace:
 
   ```shell
   (venv) $ ilab model download
-  Downloading model from instructlab/merlinite-7b-lab-GGUF@main to models...
-  (venv) $ ls models
-  merlinite-7b-lab-Q4_K_M.gguf
+  Downloading model from Hugging Face: instructlab/merlinite-7b-lab-GGUF@main to /home/user/.cache/instructlab/models...
+  ...
+  INFO 2024-08-01 15:05:48,464 huggingface_hub.file_download:1893: Download complete. Moving file to /home/user/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
   ```
 
   > **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
@@ -344,6 +344,25 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
   ```shell
   HF_TOKEN=<YOUR HUGGINGFACE TOKEN GOES HERE> ilab model download --repository=mistralai/Mixtral-8x7B-v0.1
+  ```
+
+  #### Listing downloaded models
+
+- All downloaded models can be seen with `ilab model list`.
+
+  ```shell
+  ilab model list
+  ```
+
+  *Example output of `ilab model list` after `ilab model download`*
+
+  ```shell
+  (venv) $ ilab model list
+  +------------------------------+---------------------+--------+
+  | Model Name                   | Last Modified       | Size   |
+  +------------------------------+---------------------+--------+
+  | merlinite-7b-lab-Q4_K_M.gguf | 2024-08-01 15:05:48 | 4.1 GB |
+  +------------------------------+---------------------+--------+
   ```
 
 ### 🍴 Serving the model
