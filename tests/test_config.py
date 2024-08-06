@@ -306,8 +306,8 @@ def test_compare_default_config_testdata(
     [
         ("nf4", {}, False),
         (None, {}, False),
-        ("nf4", None, False),
-        (None, None, False),
+        ("nf4", None, True),
+        (None, None, True),
         ("valid-for-cli-but-not-for-training-library", {}, False),
         ("nf4", {"lora_alpha": 32}, False),
     ],
