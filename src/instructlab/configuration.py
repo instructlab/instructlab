@@ -805,8 +805,8 @@ def ensure_storage_directories_exist():
     }
 
     TRAIN_DIR_EXPECTED_FILES = {
-        "A100_H100_x4.yaml",
         "A100_H100_x8.yaml",
+        "A100_H100_x4.yaml",
         "A100_H100_x2.yaml",
         "L40_x8.yaml",
         "L40_x4.yaml",
