@@ -1,0 +1,13 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: upstream integration tests
+spec:
+  description: >-
+    TBD
+  tasks:
+    - name: e2e-test
+      taskSpec:
+        steps:
+        - image: ubuntu
+          script: ./scripts/basic-workflow-tests.sh
