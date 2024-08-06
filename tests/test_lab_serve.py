@@ -7,10 +7,13 @@ import pathlib
 from click.testing import CliRunner
 import click
 import pytest
+import yaml
 
 # First Party
-from instructlab import lab
+from instructlab import configuration, lab
 from instructlab.model.serve import warn_for_unsuported_backend_param
+
+CFG_FILE_NAME = "test-serve-config.yaml"
 
 
 def vllm_setup_test(mock_popen, mock_determine, runner, args):
@@ -49,6 +52,21 @@ def assert_template(args, expect_chat, path_chat, chat_value):
     if path_chat:
         assert template_exists
         assert template == chat_value
+
+
+def assert_tps(args, tps):
+    assert args[-2] == "--tensor-parallel-size"
+    assert args[-1] == tps
+
+
+def setup_gpus_config(gpus=None, tps=None):
+    cfg = configuration.get_default_config()
+    if gpus:
+        cfg.serve.vllm.gpus = gpus
+    if tps:
+        cfg.serve.vllm.vllm_args.extend(["--tensor-parallel-size", str(tps)])
+    with pathlib.Path(CFG_FILE_NAME).open("w", encoding="utf-8") as f:
+        yaml.dump(cfg.model_dump(), f)
 
 
 @patch("time.sleep", side_effect=Exception("Intended Abort"))
@@ -107,6 +125,273 @@ def test_chat_manual(mock_popen, mock_determine, _, cli_runner: CliRunner):
     )
     assert_vllm_args(args)
     assert_template(args=args, expect_chat=False, path_chat=False, chat_value="")
+
+
+@patch("time.sleep", side_effect=Exception("Intended Abort"))
+@patch("instructlab.model.backends.backends.determine_backend")
+@patch("subprocess.Popen")
+def test_gpus(mock_popen, mock_determine, _, cli_runner: CliRunner):
+    args = vllm_setup_test(
+        mock_popen,
+        mock_determine,
+        cli_runner,
+        [
+            "--config=DEFAULT",
+            "model",
+            "serve",
+            "--model-path=foo",
+            "--gpus",
+            "8",
+        ],
+    )
+    assert_tps(args, "8")
+
+
+@patch("time.sleep", side_effect=Exception("Intended Abort"))
+@patch("instructlab.model.backends.backends.determine_backend")
+@patch("subprocess.Popen")
+def test_gpus_default(mock_popen, mock_determine, _, cli_runner: CliRunner):
+    args = vllm_setup_test(
+        mock_popen,
+        mock_determine,
+        cli_runner,
+        [
+            "--config=DEFAULT",
+            "model",
+            "serve",
+            "--model-path=foo",
+        ],
+    )
+    assert "--tensor-parallel-size" not in args
+
+
+@patch("time.sleep", side_effect=Exception("Intended Abort"))
+@patch("instructlab.model.backends.backends.determine_backend")
+@patch("subprocess.Popen")
+def test_ctx_tps_with_extra_params(
+    mock_popen, mock_determine, _, cli_runner: CliRunner
+):
+    args = vllm_setup_test(
+        mock_popen,
+        mock_determine,
+        cli_runner,
+        [
+            "--config=DEFAULT",
+            "model",
+            "serve",
+            "--model-path=foo",
+            "--",
+            "--served-model-name",
+            "mymodel",
+            "--tensor-parallel-size",
+            "8",
+        ],
+    )
+    assert args[-4] == "--served-model-name"
+    assert args[-3] == "mymodel"
+    assert_tps(args, "8")
+
+
+@patch("time.sleep", side_effect=Exception("Intended Abort"))
+@patch("instructlab.model.backends.backends.determine_backend")
+@patch("subprocess.Popen")
+def test_ctx_tps_with_gpus(mock_popen, mock_determine, _, cli_runner: CliRunner):
+    args = vllm_setup_test(
+        mock_popen,
+        mock_determine,
+        cli_runner,
+        [
+            "--config=DEFAULT",
+            "model",
+            "serve",
+            "--model-path=foo",
+            "--gpus",
+            "8",
+            "--",
+            "--served-model-name",
+            "mymodel",
+            "--tensor-parallel-size",
+            "4",
+        ],
+    )
+    assert args[-4] == "--served-model-name"
+    assert args[-3] == "mymodel"
+    assert_tps(args, "4")
+
+
+@patch("time.sleep", side_effect=Exception("Intended Abort"))
+@patch("instructlab.model.backends.backends.determine_backend")
+@patch("subprocess.Popen")
+def test_gpus_config(mock_popen, mock_determine, _, cli_runner: CliRunner):
+    setup_gpus_config(gpus=8)
+    args = vllm_setup_test(
+        mock_popen,
+        mock_determine,
+        cli_runner,
+        [
+            f"--config={CFG_FILE_NAME}",
+            "model",
+            "serve",
+            "--model-path=foo",
+        ],
+    )
+    assert_tps(args, "8")
+
+
+@patch("time.sleep", side_effect=Exception("Intended Abort"))
+@patch("instructlab.model.backends.backends.determine_backend")
+@patch("subprocess.Popen")
+def test_gpus_with_gpus_config(mock_popen, mock_determine, _, cli_runner: CliRunner):
+    setup_gpus_config(gpus=8)
+    args = vllm_setup_test(
+        mock_popen,
+        mock_determine,
+        cli_runner,
+        [
+            f"--config={CFG_FILE_NAME}",
+            "model",
+            "serve",
+            "--model-path=foo",
+            "--gpus",
+            "4",
+        ],
+    )
+    assert_tps(args, "4")
+
+
+@patch("time.sleep", side_effect=Exception("Intended Abort"))
+@patch("instructlab.model.backends.backends.determine_backend")
+@patch("subprocess.Popen")
+def test_ctx_tps_with_gpus_config(mock_popen, mock_determine, _, cli_runner: CliRunner):
+    setup_gpus_config(gpus=8)
+    args = vllm_setup_test(
+        mock_popen,
+        mock_determine,
+        cli_runner,
+        [
+            f"--config={CFG_FILE_NAME}",
+            "model",
+            "serve",
+            "--model-path=foo",
+            "--",
+            "--tensor-parallel-size",
+            "4",
+        ],
+    )
+    assert_tps(args, "4")
+
+
+@patch("time.sleep", side_effect=Exception("Intended Abort"))
+@patch("instructlab.model.backends.backends.determine_backend")
+@patch("subprocess.Popen")
+def test_gpus_with_ctx_tps_with_gpus_config(
+    mock_popen, mock_determine, _, cli_runner: CliRunner
+):
+    setup_gpus_config(gpus=8)
+    args = vllm_setup_test(
+        mock_popen,
+        mock_determine,
+        cli_runner,
+        [
+            f"--config={CFG_FILE_NAME}",
+            "model",
+            "serve",
+            "--model-path=foo",
+            "--gpus",
+            "2",
+            "--",
+            "--tensor-parallel-size",
+            "4",
+        ],
+    )
+    assert_tps(args, "4")
+
+
+@patch("time.sleep", side_effect=Exception("Intended Abort"))
+@patch("instructlab.model.backends.backends.determine_backend")
+@patch("subprocess.Popen")
+def test_vllm_args_config(mock_popen, mock_determine, _, cli_runner: CliRunner):
+    setup_gpus_config(tps=8)
+    args = vllm_setup_test(
+        mock_popen,
+        mock_determine,
+        cli_runner,
+        [
+            f"--config={CFG_FILE_NAME}",
+            "model",
+            "serve",
+            "--model-path=foo",
+        ],
+    )
+    assert_tps(args, "8")
+
+
+@patch("time.sleep", side_effect=Exception("Intended Abort"))
+@patch("instructlab.model.backends.backends.determine_backend")
+@patch("subprocess.Popen")
+def test_vllm_args_config_with_gpus_config(
+    mock_popen, mock_determine, _, cli_runner: CliRunner
+):
+    setup_gpus_config(gpus=4, tps=8)
+    args = vllm_setup_test(
+        mock_popen,
+        mock_determine,
+        cli_runner,
+        [
+            f"--config={CFG_FILE_NAME}",
+            "model",
+            "serve",
+            "--model-path=foo",
+        ],
+    )
+    assert_tps(args, "4")
+
+
+@patch("time.sleep", side_effect=Exception("Intended Abort"))
+@patch("instructlab.model.backends.backends.determine_backend")
+@patch("subprocess.Popen")
+def test_vllm_args_config_with_gpus(
+    mock_popen, mock_determine, _, cli_runner: CliRunner
+):
+    setup_gpus_config(tps=8)
+    args = vllm_setup_test(
+        mock_popen,
+        mock_determine,
+        cli_runner,
+        [
+            f"--config={CFG_FILE_NAME}",
+            "model",
+            "serve",
+            "--model-path=foo",
+            "--gpus",
+            "4",
+        ],
+    )
+    assert_tps(args, "4")
+
+
+@patch("time.sleep", side_effect=Exception("Intended Abort"))
+@patch("instructlab.model.backends.backends.determine_backend")
+@patch("subprocess.Popen")
+def test_vllm_args_config_with_ctx_tps(
+    mock_popen, mock_determine, _, cli_runner: CliRunner
+):
+    setup_gpus_config(tps=8)
+    args = vllm_setup_test(
+        mock_popen,
+        mock_determine,
+        cli_runner,
+        [
+            f"--config={CFG_FILE_NAME}",
+            "model",
+            "serve",
+            "--model-path=foo",
+            "--",
+            "--tensor-parallel-size",
+            "4",
+        ],
+    )
+    assert_tps(args, "4")
 
 
 @pytest.mark.parametrize(
