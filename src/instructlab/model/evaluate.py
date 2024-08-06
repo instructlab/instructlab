@@ -276,7 +276,7 @@ def launch_server(
     model: str,
     model_name: str,
     max_workers: int,
-    gpus: int,
+    gpus: int | None,
     backend: str | None,
     enable_serving_output: bool,
 ) -> tuple:
@@ -301,6 +301,7 @@ def launch_server(
             logger.warning(
                 f"Based on your hardware configuration, when using vLLM, we recommend setting max-workers between {recommended_min_workers} and {recommended_max_workers} for optimal performance"
             )
+        gpus = gpus or eval_serve.vllm.gpus
         if gpus:
             # Warn when overriding from vllm_args
             tps_prefix = "--tensor-parallel-size"

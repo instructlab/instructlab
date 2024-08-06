@@ -291,6 +291,7 @@ class _serve_vllm(BaseModel):
 
     llm_family: str = ""
     max_startup_attempts: int | None = None
+    gpus: Optional[int] = None
     # arguments to pass into vllm process
     vllm_args: list[str] | None = None
 
@@ -362,7 +363,6 @@ class _generate(BaseModel):
     output_dir: StrictStr = Field(default_factory=lambda: DEFAULTS.DATASETS_DIR)
     prompt_file: StrictStr = Field(default_factory=lambda: DEFAULTS.PROMPT_FILE)
     seed_file: StrictStr = Field(default_factory=lambda: DEFAULTS.SEED_FILE)
-    gpus: Optional[int] = None
 
 
 class _mmlu(BaseModel):
@@ -392,7 +392,7 @@ class _evaluate(BaseModel):
     base_model: str
     branch: Optional[str] = None
     base_branch: Optional[str] = None
-    gpus: Optional[int] = 1
+    gpus: Optional[int] = None
     mmlu: _mmlu
     mmlu_branch: _mmlubranch
     mt_bench: _mtbench

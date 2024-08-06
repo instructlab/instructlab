@@ -11,7 +11,7 @@ evaluate:
   base_branch: null
   base_model: instructlab/granite-7b-lab
   branch: null
-  gpus: 1
+  gpus: null
   mmlu:
     batch_size: auto
     few_shots: 5
@@ -29,7 +29,6 @@ general:
   log_level: INFO
 generate:
   chunk_word_count: 1000
-  gpus: null
   model: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
   num_cpus: 10
   output_dir: /data/instructlab/datasets
@@ -50,6 +49,7 @@ generate:
     vllm:
       llm_family: ''
       max_startup_attempts: 300
+      gpus: null
       vllm_args: []
 serve:
   backend: null
@@ -63,6 +63,7 @@ serve:
   vllm:
     llm_family: ''
     max_startup_attempts: 300
+    gpus: null
     vllm_args: []
 train:
   additional_args: {}

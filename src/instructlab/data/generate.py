@@ -161,6 +161,7 @@ logger = logging.getLogger(__name__)
     "--gpus",
     type=click.IntRange(min=0),
     cls=clickext.ConfigOption,
+    config_sections="teacher.vllm",
     help="Number of GPUs to run generation on",
 )
 @click.pass_context
