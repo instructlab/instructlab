@@ -109,7 +109,7 @@ def init(
     if train_profile is not None:
         cfg.train = read_train_profile(train_profile)
     elif interactive:
-        entries = listdir(DEFAULTS.TRAIN_PROFILE_DIR)
+        entries = sorted(listdir(DEFAULTS.TRAIN_PROFILE_DIR))
         click.echo("Please choose a train profile to use:")
         for i, value in enumerate(entries):
             click.echo(f"{i}. {value}")
