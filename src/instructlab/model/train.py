@@ -228,7 +228,6 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     "--lora-rank",
     type=int,
     cls=clickext.ConfigOption,
-    required=True,  # default from config
     # config_section="lora",
     help="rank of update matricies",
 )
@@ -236,7 +235,6 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     "--lora-alpha",
     type=int,
     cls=clickext.ConfigOption,
-    required=True,  # default from config
     config_sections=ADDITIONAL_ARGUMENTS,
     help="how influential/strong lora tune will be",
 )
@@ -244,7 +242,6 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     "--lora-dropout",
     type=float,
     cls=clickext.ConfigOption,
-    required=True,  # default from config
     config_sections=ADDITIONAL_ARGUMENTS,
     help="dropout for LoRA layers",
 )
@@ -259,6 +256,7 @@ def clickpath_setup(is_dir: bool) -> click.Path:
 @click.option(
     "--lora-quantize-dtype",
     type=str,
+    cls=clickext.ConfigOption,
     default=None,
     help="quantization data type to use when training a LoRA.",
 )
@@ -629,8 +627,7 @@ def train(
 
         # pull the trainrandom.randinting and torch args from the flags
         # the flags are populated from the config as a base.
-        params = ctx.params
-        train_args, torch_args = map_train_to_library(params)
+        train_args, torch_args = map_train_to_library(ctx, ctx.params)
 
         if strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value:
             if not (phased_phase1_data and phased_phase2_data):
