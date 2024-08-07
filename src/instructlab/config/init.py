@@ -119,7 +119,7 @@ def init(
             type=int,
             default=0,
         )
-        if 1 <= train_profile_selection < len(entries):
+        if 1 <= train_profile_selection <= len(entries):
             click.echo(f"You selected: {entries[train_profile_selection - 1]}")
             cfg.train = read_train_profile(
                 join(DEFAULTS.TRAIN_PROFILE_DIR, entries[train_profile_selection - 1])
