@@ -496,6 +496,7 @@ class _train(BaseModel):
     num_epochs: int
     effective_batch_size: int
     save_samples: int
+    checkpoint_at_epoch: bool = False
 
     deepspeed_cpu_offload_optimizer: bool
 
