@@ -129,7 +129,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       pip cache remove llama_cpp_python
-      pip install instructlab[cpu] \
+      pip install 'instructlab[cpu]' \
          --extra-index-url=https://download.pytorch.org/whl/cpu \
          -C cmake.args="-DLLAMA_NATIVE=off"
       ```
@@ -148,7 +148,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       pip cache remove llama_cpp_python
-      pip install instructlab[rocm] \
+      pip install 'instructlab[rocm]' \
          --extra-index-url https://download.pytorch.org/whl/rocm6.0 \
          -C cmake.args="-DLLAMA_HIPBLAS=on" \
          -C cmake.args="-DAMDGPU_TARGETS=all" \
@@ -169,7 +169,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       pip cache remove llama_cpp_python
-      pip install instructlab[mps]
+      pip install 'instructlab[mps]'
       ```
 
    #### Install with Nvidia CUDA
@@ -178,7 +178,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       pip cache remove llama_cpp_python
-      pip install instructlab[cuda] \
+      pip install 'instructlab[cuda]' \
          -C cmake.args="-DLLAMA_CUDA=on" \
          -C cmake.args="-DLLAMA_NATIVE=off"
    ```
