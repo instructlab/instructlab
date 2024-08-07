@@ -67,6 +67,9 @@ function init_test_script() {
     HOME="${TEST_DIR}"  # to ensure platformdirs uses the test directory for the duration of this script
     printf 'changing home directory to "%s", was: "%s"\n' "${HOME}" "${prev_home}"
 
+    # DO NOT REMOVE THE VARIABLE ASSIGNMENTS BELOW
+    # They might seem redundant given that `mkdir -p`` is called later, but they are necessary to
+    # ensure the directories are created by ilab CLI
     # get the directories from the platformdirs library
     CONFIG_DIR=$(python -c "import platformdirs; print(platformdirs.user_config_dir())")
     DATA_DIR=$(python -c "import platformdirs; print(platformdirs.user_data_dir())")
