@@ -154,7 +154,7 @@ ilab --version
 ilab system info
 
 # pipe 3 carriage returns to ilab config init to get past the prompts
-echo -e "\n\n\n" | ilab init
+echo -e "y\n\n\n\n" | ilab init
 
 # Enable Debug in func tests with debug level 1
 sed -i.bak -e 's/log_level:.*/log_level: DEBUG/g;' "${ILAB_CONFIG_FILE}"
