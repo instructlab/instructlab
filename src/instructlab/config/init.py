@@ -170,7 +170,7 @@ def check_if_configs_exist() -> bool:
             raise click.exceptions.Exit(0)
     if exists(DEFAULTS.TRAIN_PROFILE_DIR):
         return click.confirm(
-            f"Found {DEFAULTS.TRAIN_PROFILE_DIR}, do you still want to continue?"
+            f"Found {DEFAULTS.TRAIN_PROFILE_DIR}, do you also want to reset existing profiles?"
         )
     return True
 
