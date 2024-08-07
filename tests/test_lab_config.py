@@ -66,6 +66,5 @@ def test_ilab_config_init_with_model_path(cli_runner: CliRunner) -> None:
     with config_path.open(encoding="utf-8") as f:
         parsed = yaml.safe_load(f)
     assert parsed
-    assert configuration.Config(**parsed).generate.model == "path/to/model"
     assert configuration.Config(**parsed).generate.teacher.model_path == "path/to/model"
     assert configuration.Config(**parsed).serve.model_path == "path/to/model"

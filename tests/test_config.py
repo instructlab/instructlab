@@ -64,7 +64,6 @@ class TestConfig:
         assert cfg.generate.teacher.backend is None
         assert cfg.generate.teacher.chat_template is None
         assert cfg.generate.pipeline == "simple"
-        assert cfg.generate.model == default_model
         assert cfg.generate.taxonomy_path == f"{data_dir}/taxonomy"
         assert cfg.generate.taxonomy_base == "origin/main"
         assert cfg.generate.num_cpus == 10
@@ -99,7 +98,7 @@ class TestConfig:
         assert cfg.evaluate.base_model == "instructlab/granite-7b-lab"
 
         assert cfg.generate is not None
-        assert cfg.generate.model == DEFAULTS.DEFAULT_MODEL
+        assert cfg.generate.teacher.model_path == DEFAULTS.DEFAULT_MODEL
 
         assert cfg.serve is not None
         assert cfg.serve.model_path == DEFAULTS.DEFAULT_MODEL
@@ -125,7 +124,7 @@ class TestConfig:
         self._assert_defaults(cfg)
         self._assert_model_defaults(cfg)
 
-    def test_cfg_auto_fill_with_large_config(self, tmp_path_home):  # pylint: disable=unused-argument
+    def test_cfg_auto_fill_with_large_config(self, tmp_path_home):
         config_path = tmp_path_home / "config.yaml"
         with open(config_path, "w", encoding="utf-8") as config_file:
             config_file.write(
@@ -134,7 +133,6 @@ class TestConfig:
 generate:
   pipeline: simple
   teacher:
-    model_path: models/granite-7b-lab-Q4_K_M.gguf
     chat_template: tokenizer
     llama_cpp:
       gpu_layers: 1
@@ -174,7 +172,6 @@ version: 1.0.0
 chat:
   model: $HOME/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
 generate:
-  model: ~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
   taxonomy_base: upstream/main
   taxonomy_path: mytaxonomy
   teacher:
@@ -203,10 +200,6 @@ serve:
         assert cfg.chat.model.startswith("/")
         assert cfg.chat.model == os.path.expandvars(
             "$HOME/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf"
-        )
-        assert cfg.generate.model.startswith("/")
-        assert cfg.generate.model == os.path.expanduser(
-            "~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf"
         )
         # Validate multi level dict
         assert cfg.generate.teacher.model_path.startswith("/")
@@ -252,7 +245,6 @@ chat:
   model: models/granite-7b-lab-Q4_K_M.gguf
 generate:
   pipeline: simple
-  model: models/granite-7b-lab-Q4_K_M.gguf
   taxonomy_base: upstream/main
   taxonomy_path: mytaxonomy
   teacher:
@@ -298,7 +290,7 @@ general:
         assert cfg is not None
         assert cfg.chat.model == "models/granite-7b-lab-Q4_K_M.gguf"
         assert cfg.generate.pipeline == "simple"
-        assert cfg.generate.model == "models/granite-7b-lab-Q4_K_M.gguf"
+        assert cfg.generate.teacher.model_path == "models/granite-7b-lab-Q4_K_M.gguf"
         assert cfg.serve.llama_cpp.gpu_layers == 1
         assert cfg.serve.llama_cpp.max_ctx_size == 2048
         assert cfg.serve.chat_template == "tokenizer"

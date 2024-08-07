@@ -91,9 +91,6 @@ generate:
   # Maximum number of words per chunk.
   # Default: 1000
   chunk_word_count: 1000
-  # Teacher model that will be used to synthetically generate training data.
-  # Default: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
-  model: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
   # Number of CPU cores to use for generation.
   # Default: 10
   num_cpus: 10

@@ -216,10 +216,7 @@ class _generate(BaseModel):
         default=DEFAULTS.SDG_PIPELINE,
         description="Data generation pipeline to use. Available: 'simple', 'full', or a valid path to a directory of pipeline workflow YAML files. Note that 'full' requires a larger teacher model, Mixtral-8x7b.",
     )
-    model: StrictStr = Field(
-        default_factory=lambda: DEFAULTS.DEFAULT_MODEL,
-        description="Teacher model that will be used to synthetically generate training data.",
-    )
+    teacher: _serve = Field(default_factory=_serve, description="Teacher configuration")
     taxonomy_path: StrictStr = Field(
         default_factory=lambda: DEFAULTS.TAXONOMY_DIR,
         description="Directory where taxonomy is stored and accessed from.",
@@ -228,8 +225,8 @@ class _generate(BaseModel):
         default=DEFAULTS.TAXONOMY_BASE,
         description="Branch of taxonomy used to calculate diff against.",
     )
+
     # additional fields with defaults
-    teacher: _serve = Field(default_factory=_serve, description="Teacher configuration")
     num_cpus: PositiveInt = Field(
         default=DEFAULTS.NUM_CPUS,
         description="Number of CPU cores to use for generation.",
