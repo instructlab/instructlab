@@ -500,7 +500,7 @@ class _train(BaseModel):
     deepspeed_cpu_offload_optimizer: bool
 
     lora_rank: int | None = None
-    lora_quantize_dtype: str | None
+    lora_quantize_dtype: str | None = None
 
     is_padding_free: bool
 
@@ -535,7 +535,7 @@ class _train(BaseModel):
             "effective_batch_size": 3840,
             "save_samples": 250000,
             "lora_quantize_dtype": None,
-            "lora_rank": 4,
+            "lora_rank": None,
             "nproc_per_node": 1,
             "deepspeed_cpu_offload_optimizer": False,
             "additional_args": {},
@@ -1125,24 +1125,20 @@ def map_train_to_library(ctx, params):
     )
 
     lora_args = LoraOptions()
+    lora = False
     if params["lora_rank"] is not None:
         lora = True
-        lora_args.rank = params["lora_rank"]
     if params["lora_alpha"] is not None:
-        if not lora:
-            lora = True
+        lora = True
         lora_args.alpha = params["lora_alpha"]
     if params["lora_dropout"] is not None:
-        if not lora:
-            lora = True
+        lora = True
         lora_args.dropout = params["lora_dropout"]
     if params["lora_target_modules"] is not None:
-        if not lora:
-            lora = True
+        lora = True
         lora_args.target_modules = params["lora_target_modules"]
     if params["lora_quantize_dtype"] is not None:
-        if not lora:
-            lora = True
+        lora = True
         lora_args.quantize_data_type = params["lora_quantize_dtype"]
     if lora and params["is_padding_free"]:
         ctx.fail("Cannot combine LoRA with a padding free model.")
