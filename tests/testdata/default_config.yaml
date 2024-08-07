@@ -29,7 +29,6 @@ general:
   log_level: INFO
 generate:
   chunk_word_count: 1000
-  model: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
   num_cpus: 10
   output_dir: /data/instructlab/datasets
   pipeline: simple
@@ -44,11 +43,11 @@ generate:
     host_port: 127.0.0.1:8000
     llama_cpp:
       gpu_layers: -1
-      llm_family: ''
+      llm_family: ""
       max_ctx_size: 4096
     model_path: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
     vllm:
-      llm_family: ''
+      llm_family: ""
       max_startup_attempts: 300
       gpus: null
       vllm_args: []
@@ -58,11 +57,11 @@ serve:
   host_port: 127.0.0.1:8000
   llama_cpp:
     gpu_layers: -1
-    llm_family: ''
+    llm_family: ""
     max_ctx_size: 4096
   model_path: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
   vllm:
-    llm_family: ''
+    llm_family: ""
     max_startup_attempts: 300
     gpus: null
     vllm_args: []
