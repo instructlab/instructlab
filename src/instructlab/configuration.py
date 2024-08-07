@@ -1062,7 +1062,6 @@ class Lab:
 def init(
     ctx: click.Context, config_file: str | os.PathLike[str], debug_level: int = 0
 ) -> None:
-    config_obj: Config
     error_msg: str | None = None
     ensure_storage_directories_exist()
     if config_file == "DEFAULT":
@@ -1083,32 +1082,28 @@ def init(
         )
 
     # special case: --help should always work
-    if config_obj is None and "--help" in sys.argv[1:]:
-        config_obj = get_default_config()
+    if any(option in sys.argv[1:] for option in ctx.help_option_names):
         error_msg = None
 
     ctx.obj = Lab(config_obj, config_file, error_msg)
-    if config_obj is not None:
-        ctx.default_map = get_dict(config_obj)
+    ctx.default_map = get_dict(config_obj)
 
-        # --verbose option overrides config file
-        if debug_level > 0:
-            config_obj.general.log_level = "DEBUG"
-            config_obj.general.debug_level = debug_level
+    # --verbose option overrides config file
+    if debug_level > 0:
+        config_obj.general.log_level = "DEBUG"
+        config_obj.general.debug_level = debug_level
 
-        # setup logging
-        log.configure_logging(
-            log_level=config_obj.general.log_level.upper(),
-            debug_level=config_obj.general.debug_level,
-        )
-        # subtly get the additional args per cfg section
-        # if any are missing, add in sane defaults
-        train_additional = ctx.default_map["train"]["additional_args"]
-        ctx.default_map["train"]["additional_args"] = finish_additional_train_args(
-            train_additional
-        )
-    else:
-        ctx.default_map = None
+    # setup logging
+    log.configure_logging(
+        log_level=config_obj.general.log_level.upper(),
+        debug_level=config_obj.general.debug_level,
+    )
+    # subtly get the additional args per cfg section
+    # if any are missing, add in sane defaults
+    train_additional = ctx.default_map["train"]["additional_args"]
+    ctx.default_map["train"]["additional_args"] = finish_additional_train_args(
+        train_additional
+    )
 
 
 def map_train_to_library(ctx, params):
