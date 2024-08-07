@@ -26,9 +26,9 @@ def test_ilab_config_show(cli_runner: CliRunner) -> None:
 @pytest.mark.parametrize(
     "command",
     [
-        (["config", "init"]),
+        (["config", "init", "--non-interactive"]),
         (
-            ["init"]
+            ["init", "--non-interactive"]
         ),  # TODO: remove this test once the deprecated alias 'ilab init' is removed
     ],
 )

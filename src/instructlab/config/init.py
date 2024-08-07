@@ -92,7 +92,9 @@ def init(
     else:
         param_source = ctx.parent.parent.get_parameter_source("config_file")
     try:
-        overwrite = check_if_configs_exist()
+        overwrite = False
+        if interactive:
+            overwrite = check_if_configs_exist()
     except click.exceptions.Exit as e:
         ctx.exit(e.exit_code)
     if param_source == click.core.ParameterSource.ENVIRONMENT:
