@@ -91,25 +91,21 @@ def init(
     # the parameter source from the parent of the parent command.
     else:
         param_source = ctx.parent.parent.get_parameter_source("config_file")
-    try:
-        overwrite = False
-        if interactive:
-            overwrite = check_if_configs_exist()
-    except click.exceptions.Exit as e:
-        ctx.exit(e.exit_code)
+
+    overwrite = False
+    if interactive:
+        overwrite = check_if_configs_exist()
+
     if param_source == click.core.ParameterSource.ENVIRONMENT:
         taxonomy_path, taxonomy_base, cfg = get_params_from_env(ctx.obj)
     else:
-        try:
-            model_path, taxonomy_path, cfg = get_params_default(
-                interactive,
-                repository,
-                min_taxonomy,
-                model_path,
-                taxonomy_path,
-            )
-        except click.exceptions.Exit as e:
-            ctx.exit(e.exit_code)
+        model_path, taxonomy_path, cfg = get_params_default(
+            interactive,
+            repository,
+            min_taxonomy,
+            model_path,
+            taxonomy_path,
+        )
     if overwrite:
         click.echo(
             f"Generating `{DEFAULTS.CONFIG_FILE}` and `{DEFAULTS.TRAIN_PROFILE_DIR}`..."
