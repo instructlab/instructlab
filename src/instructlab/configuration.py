@@ -365,7 +365,6 @@ class _generate(BaseModel):
 
     # required fields
     pipeline: Optional[str] = DEFAULTS.SDG_PIPELINE
-    model: StrictStr
     taxonomy_path: StrictStr
     taxonomy_base: StrictStr
 
@@ -389,7 +388,6 @@ class _generate(BaseModel):
         cls, values: typing.Dict[str, typing.Any]
     ) -> typing.Dict[str, typing.Any]:
         defaults = {
-            "model": DEFAULTS.DEFAULT_MODEL,
             "taxonomy_path": DEFAULTS.TAXONOMY_DIR,
             "taxonomy_base": DEFAULTS.TAXONOMY_BASE,
         }
@@ -578,7 +576,6 @@ class Config(BaseModel):
                 "vllm": {"llm_family": "", "vllm_args": []},
             },
             "generate": {
-                "model": DEFAULTS.DEFAULT_MODEL,
                 "taxonomy_path": DEFAULTS.TAXONOMY_DIR,
                 "taxonomy_base": DEFAULTS.TAXONOMY_BASE,
             },
@@ -632,7 +629,6 @@ def get_default_config() -> Config:
             model=DEFAULTS.DEFAULT_MODEL,
         ),
         generate=_generate(
-            model=DEFAULTS.DEFAULT_MODEL,
             taxonomy_path=DEFAULTS.TAXONOMY_DIR,
             taxonomy_base=DEFAULTS.TAXONOMY_BASE,
         ),
