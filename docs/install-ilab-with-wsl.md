@@ -1,6 +1,6 @@
 # Installing InstructLab on Windows using WSL (Windows Subsystem for Linux)
 
-In this tutorial, I will be walking through the full process of running InstructLab on WSL, from installation of WSL to the initialization of InstructLab. My laptop specs are:
+This tutorial will walk through the full process of running InstructLab on WSL, from installation of WSL to the initialization of InstructLab. This tutorial has been performed using the following laptop specs:
 
 - CPU: Intel i7-10750H
 
@@ -10,7 +10,7 @@ In this tutorial, I will be walking through the full process of running Instruct
 
 - GPU: Geforce RTX 3060 Laptop GPU (12GB VRAM)
 
-Throughout this tutorial, we will be using the following software tools and packages:
+This tutorial will use the following software tools and packages:
 
 - Windows PowerShell
 
@@ -28,15 +28,13 @@ Throughout this tutorial, we will be using the following software tools and pack
 ## Installing WSL
 
 To install WSL, first open up Powershell. The following command installs the necessary features for WSL and the Ubuntu distro as default. The default distro can be changed with `wsl --list -d <DistributionName>`.
->NOTE: As of writing, Fedora is not supported with WSL (I could not figure out how to obtain the tar file for it) so I just proceeded with using Ubuntu.
+>NOTE: As of writing, Fedora is not supported with WSL so the tutorial proceeds with using Ubuntu.
 
 ```
 wsl --install
 ```
 
-WSL is installed! (Quite easy, wasn’t it?).  If you would still like to install WSL with Fedora, some links that may help are listed below:	
-- https://dev.to/bowmanjd/install-fedora-on-windows-subsystem-for-linux-wsl-4b26
-- https://learn.microsoft.com/en-us/windows/wsl/use-custom-distro
+WSL is installed
 
 To run WSL, simply type the following command to set up the Linux environment in Powershell:
 
@@ -44,26 +42,8 @@ To run WSL, simply type the following command to set up the Linux environment in
 wsl
 ```
 
-The expected output of this command should be similar to the following:
-
-```
-Welcome to Ubuntu 22.04.4 LTS (GNU/Linux 5.15.153.1-microsoft-standard-WSL2 x86_64)
-
- * Documentation:  https://help.ubuntu.com
- * Management:     https://landscape.canonical.com
- * Support:        https://ubuntu.com/pro
-
- * Strictly confined Kubernetes makes edge and IoT secure. Learn how MicroK8s
-   just raised the bar for easy, resilient and secure K8s cluster deployment.
-
-   https://ubuntu.com/engage/secure-kubernetes-at-the-edge
-
-This message is shown once a day. To disable it please create the
-/home/user/.hushlogin file.
-```
-
 ## Installing InstructLab 
-From here, we can proceed with setting up InstructLab within our Linux environment. The following instructions are a mix of both the official InstructLab documentation as well as the WSL installation/setup process I went through.
+From here, proceed with setting up InstructLab within the Linux environment. The following instructions are a mix of both the official InstructLab documentation as well as the WSL installation/setup process.
 
 Create a directory called `instructlab` to store the files InstructLab needs to run and cd into that directory:
 
@@ -108,7 +88,7 @@ sudo apt install build-essential
 Finally, install the `instructlab` package. Note that we are making sure the build is done without Apple M-series GPU support because we are not using MacOS.
 
 ```
-CMAKE_ARGS="-DLLAMA_METAL=off" pip install instructlab --extra-index-url=https://download.pytorch.org/whl/cpu
+CMAKE_ARGS="-DLLAMA_METAL=off" pip install instructlab[cpu] --extra-index-url=https://download.pytorch.org/whl/cpu -C cmake.args="-DLLAMA_NATIVE=off"
 ```
 
 ## Running InstructLab
