@@ -162,6 +162,58 @@ generate:
         assert cfg.general.validate_log_level("ERROR") == "ERROR"
         assert cfg.general.validate_log_level("NOTSET") == "NOTSET"
 
+    def test_expand_paths(self, tmp_path_home):
+        config_path = tmp_path_home / "config.yaml"
+        with open(config_path, "w", encoding="utf-8") as config_file:
+            config_file.write(
+                """\
+version: 1.0.0
+chat:
+  model: $HOME/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+generate:
+  model: ~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+  taxonomy_base: upstream/main
+  taxonomy_path: mytaxonomy
+  teacher:
+    model_path: ~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+    chat_template: tokenizer
+    llama_cpp:
+      gpu_layers: 1
+      max_ctx_size: 2048
+      llm_family: ''
+    vllm:
+      gpus: 8
+serve:
+  model_path: models/granite-7b-lab-Q4_K_M.gguf
+  chat_template: tokenizer
+  llama_cpp:
+    gpu_layers: 1
+    max_ctx_size: 2048
+    llm_family: ''
+  vllm:
+    gpus: 8
+    vllm_args:
+       - --qlora-adapter-name-or-path=$HOME/qlora-adapter-name-or-path
+"""
+            )
+        cfg = config.read_config(config_path)
+        assert cfg.chat.model.startswith("/")
+        assert cfg.chat.model == os.path.expandvars(
+            "$HOME/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf"
+        )
+        assert cfg.generate.model.startswith("/")
+        assert cfg.generate.model == os.path.expanduser(
+            "~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf"
+        )
+        # Validate multi level dict
+        assert cfg.generate.teacher.model_path.startswith("/")
+        assert cfg.generate.teacher.model_path == os.path.expanduser(
+            "~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf"
+        )
+        assert cfg.serve.vllm.vllm_args[0] == os.path.expandvars(
+            "--qlora-adapter-name-or-path=$HOME/qlora-adapter-name-or-path"
+        )
+
     def test_get_model_family(self):
         good_cases = {
             # two known families

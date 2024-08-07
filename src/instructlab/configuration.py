@@ -32,7 +32,7 @@ import platformdirs
 import yaml
 
 # Local
-from . import log
+from . import log, utils
 
 ILAB_PACKAGE_NAME = "instructlab"
 CONFIG_FILENAME = "config.yaml"
@@ -692,6 +692,7 @@ def read_train_profile(train_file) -> _train:
     try:
         with open(train_file, "r", encoding="utf-8") as yamlfile:
             content = yaml.safe_load(yamlfile)
+            _expand_paths(content)
             return _train(**content)
     except ValidationError as exc:
         msg = f"{exc.error_count()} errors in {train_file}:\n"
@@ -716,6 +717,7 @@ def read_config(
     try:
         with open(config_file, "r", encoding="utf-8") as yamlfile:
             content = yaml.safe_load(yamlfile)
+            _expand_paths(content)
             return Config(**content)
     except ValidationError as exc:
         msg = f"{exc.error_count()} errors in {config_file}:\n"
@@ -730,6 +732,27 @@ def read_config(
                 + "\n"
             )
         raise ConfigException(msg) from exc
+
+
+def _expand_paths(content: dict | list):
+    if isinstance(content, dict):
+        for key, value in content.items():
+            expanded_value = _expand_value(value)
+            if expanded_value is not None:
+                content[key] = expanded_value
+    elif isinstance(content, list):
+        for i, value in enumerate(content):
+            expanded_value = _expand_value(value)
+            if expanded_value is not None:
+                content[i] = expanded_value
+
+
+def _expand_value(value):
+    if isinstance(value, str):
+        return utils.expand_path(value)
+    if isinstance(value, (dict, list)):
+        _expand_paths(value)
+    return None
 
 
 def get_dict(cfg: Config) -> dict[str, typing.Any]:
@@ -1134,6 +1157,7 @@ def finish_additional_train_args(current_additional):
         DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE, "r", encoding="utf-8"
     ) as yamlfile:
         content = yaml.safe_load(yamlfile)
+        _expand_paths(content)
     for key, val in content.items():
         if key not in current_additional:
             current_additional[key] = val
