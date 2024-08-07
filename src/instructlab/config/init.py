@@ -33,7 +33,7 @@ from instructlab.configuration import (
 @click.option(
     "--model-path",
     type=click.Path(),
-    default=lambda: DEFAULTS.DEFAULT_MODEL,
+    default="",
     show_default="The instructlab data files location per the user's system.",
     help="Path to the model used during generation.",
 )
@@ -144,12 +144,12 @@ def init(
             )
             raise click.exceptions.Exit(1)
 
-    # we should not override all paths with the serve model if special ENV vars exist
-    if param_source != click.core.ParameterSource.ENVIRONMENT:
+    if model_path:
         cfg.chat.model = model_path
         cfg.generate.model = model_path
         cfg.serve.model_path = model_path
         cfg.evaluate.model = model_path
+
     cfg.generate.taxonomy_path = taxonomy_path
     cfg.generate.taxonomy_base = taxonomy_base
     cfg.evaluate.mt_bench_branch.taxonomy_path = taxonomy_path
