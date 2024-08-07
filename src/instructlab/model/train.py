@@ -84,7 +84,7 @@ def clickpath_setup(is_dir: bool) -> click.Path:
 )
 @click.option(
     "--gguf-model-path",
-    help="Local directory where gguf model is stored.",
+    help="Local directory where gguf model is stored. Please note that this value is used on macOS only.",
     default=None,
     show_default=True,
 )
@@ -96,7 +96,7 @@ def clickpath_setup(is_dir: bool) -> click.Path:
 @click.option(
     "--tokenizer-dir",
     type=click.Path(),
-    help="Base directory where tokenizer is stored.",
+    help="Base directory where tokenizer is stored. Please note that this value is used on macOS only.",
     default=None,
     show_default=True,
 )
@@ -110,7 +110,7 @@ def clickpath_setup(is_dir: bool) -> click.Path:
 )
 @click.option(
     "--iters",
-    help="Number of iterations to train LoRA.",
+    help="Number of iterations to train LoRA. Please note that this value is used on macOS only.",
     default=100,
 )
 @click.option(
@@ -407,8 +407,7 @@ def train(
     **kwargs,
 ):
     """
-    Takes synthetic data generated locally with `ilab data generate` and the previous model and learns a new model using the MLX API.
-    On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
+    Takes synthetic data generated locally with `ilab data generate` and the previous model and learns a new model.
     """
     if not input_dir:
         # By default, generate output-dir is used as train input-dir
@@ -514,6 +513,14 @@ def train(
             dest_model_dir = model_dir_mlx_quantized
             quantize_arg = True
 
+        if gguf_model_path is not None:
+            print(f"Train model with gguf_model_path {gguf_model_path}")
+            if tokenizer_dir is None:
+                click.secho(
+                    "'--tokenizer-dir' is required when using '--gguf-model-path'",
+                    fg="red",
+                )
+                raise click.exceptions.Exit(1)
         if tokenizer_dir is not None and gguf_model_path is not None:
             if not local:
                 tokenizer_dir_local = tokenizer_dir.replace("/", "-")
@@ -530,6 +537,7 @@ def train(
             shutil.rmtree(model_dir_local, ignore_errors=True)
 
         else:
+            print(f"Train model with model_path {model_path}")
             # Downloading PyTorch SafeTensor and Converting to MLX SafeTensor
             convert_between_mlx_and_pytorch(
                 hf_path=model_path,
@@ -555,6 +563,7 @@ def train(
         from ..llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
         from ..train.linux_train import linux_train
 
+        print(f"Train model with model_path {model_path}")
         training_results_dir = linux_train(
             ctx=ctx,
             train_file=train_file,
