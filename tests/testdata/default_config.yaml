@@ -32,6 +32,7 @@ generate:
   model: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
   num_cpus: 10
   output_dir: /data/instructlab/datasets
+  pipeline: simple
   prompt_file: /data/instructlab/internal/prompt.txt
   sdg_scale_factor: 30
   seed_file: /data/instructlab/internal/seed_tasks.json

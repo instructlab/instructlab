@@ -143,7 +143,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--pipeline",
     type=click.STRING,
-    default="simple",
+    cls=clickext.ConfigOption,
     help="Data generation pipeline to use. Available: simple, full, or a valid path to a directory of pipeline workflow YAML files. Note that 'full' requires a larger teacher model, Mixtral-8x7b.",
 )
 @click.option(
@@ -197,6 +197,18 @@ def generate(
     # Third Party
     from instructlab.sdg.generate_data import generate_data
     from instructlab.sdg.utils import GenerateException
+
+    # if --pipeline is not used, pipeline defaults to the value of ctx.obj.config.generate.pipeline
+    # set in the config file. A user could intentionally set this to 'null' in the config file
+    # if they want to ensure --pipeline needs to be used.
+    # This would happen if the type of pipeline needs to be different across different runs of
+    # `ilab data generate`.
+    if not pipeline:
+        click.secho(
+            "Pipeline not set. Please use the --pipeline flag or set it in the config file.",
+            fg="red",
+        )
+        raise click.exceptions.Exit(1)
 
     if num_instructions != -1:
         click.secho(
@@ -284,7 +296,7 @@ def generate(
 
     try:
         click.echo(
-            f"Generating synthetic data using '{model_path}' model, taxonomy:'{taxonomy_path}' against {api_base} server"
+            f"Generating synthetic data using '{pipeline}' pipeline, '{model_path}' model, '{taxonomy_path}' taxonomy, against {api_base} server"
         )
         generate_data(
             logger=logging.getLogger("instructlab.sdg"),  # TODO: remove
