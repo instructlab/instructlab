@@ -32,7 +32,7 @@ import platformdirs
 import yaml
 
 # Local
-from . import log, utils
+from . import log
 
 ILAB_PACKAGE_NAME = "instructlab"
 CONFIG_FILENAME = "config.yaml"
@@ -749,7 +749,8 @@ def _expand_paths(content: dict | list):
 
 def _expand_value(value):
     if isinstance(value, str):
-        return utils.expand_path(value)
+        expanded_value = os.path.expanduser(value)
+        return os.path.expandvars(expanded_value)
     if isinstance(value, (dict, list)):
         _expand_paths(value)
     return None
