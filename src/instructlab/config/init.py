@@ -95,25 +95,18 @@ def init(
     """Initializes environment for InstructLab"""
     fresh_install = ensure_storage_directories_exist()
     param_source = ctx.get_parameter_source("config_file")
-    try:
-        overwrite_profile = False
-        if interactive:
-            overwrite_profile = check_if_configs_exist(fresh_install)
-    except click.exceptions.Exit as e:
-        ctx.exit(e.exit_code)
-    else:
-        try:
-            model_path, taxonomy_path, cfg = get_params(
-                param_source,
-                interactive,
-                repository,
-                min_taxonomy,
-                model_path,
-                taxonomy_path,
-                config_file,
-            )
-        except click.exceptions.Exit as e:
-            ctx.exit(e.exit_code)
+    overwrite_profile = False
+    if interactive:
+        overwrite_profile = check_if_configs_exist(fresh_install)
+    model_path, taxonomy_path, cfg = get_params(
+        param_source,
+        interactive,
+        repository,
+        min_taxonomy,
+        model_path,
+        taxonomy_path,
+        config_file,
+    )
     if overwrite_profile:
         click.echo(
             f"Generating `{DEFAULTS.CONFIG_FILE}` and `{DEFAULTS.TRAIN_PROFILE_DIR}`..."
