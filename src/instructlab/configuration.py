@@ -37,6 +37,7 @@ from . import log
 ILAB_PACKAGE_NAME = "instructlab"
 CONFIG_FILENAME = "config.yaml"
 CONFIG_VERSION = "1.0.0"
+OPTIONAL_POSITIVE_INTEGER = Field(default=None, gt=0)
 
 
 class STORAGE_DIR_NAMES:
@@ -512,11 +513,13 @@ class _train(BaseModel):
     # lab-multiphase training.
     # TODO: could move into its own object.
     # Not strictly necessary for a correct training object.
-    phased_phase1_num_epochs: int | None = None
-    phased_phase1_samples_per_save: int | None = None
+    phased_phase1_num_epochs: int | None = OPTIONAL_POSITIVE_INTEGER
+    phased_phase1_samples_per_save: int | None = OPTIONAL_POSITIVE_INTEGER
+    phased_phase1_effective_batch_size: int | None = OPTIONAL_POSITIVE_INTEGER
 
-    phased_phase2_num_epochs: int | None = None
-    phased_phase2_samples_per_save: int | None = None
+    phased_phase2_num_epochs: int | None = OPTIONAL_POSITIVE_INTEGER
+    phased_phase2_samples_per_save: int | None = OPTIONAL_POSITIVE_INTEGER
+    phased_phase2_effective_batch_size: int | None = OPTIONAL_POSITIVE_INTEGER
 
     phased_mt_bench_judge: str | None = None
 
@@ -667,8 +670,10 @@ def get_default_config() -> Config:
             is_padding_free=False,
             phased_phase1_num_epochs=10,
             phased_phase1_samples_per_save=25000,
+            phased_phase1_effective_batch_size=128,
             phased_phase2_num_epochs=10,
             phased_phase2_samples_per_save=25000,
+            phased_phase2_effective_batch_size=3840,
             phased_mt_bench_judge=DEFAULTS.DEFAULT_JUDGE_MODEL,
         ),
         evaluate=_evaluate(
