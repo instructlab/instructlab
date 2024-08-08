@@ -1133,6 +1133,7 @@ def map_train_to_library(ctx, params):
     lora = False
     if params["lora_rank"] is not None:
         lora = True
+        lora_args.rank = params["lora_rank"]
     if params["lora_alpha"] is not None:
         lora = True
         lora_args.alpha = params["lora_alpha"]
