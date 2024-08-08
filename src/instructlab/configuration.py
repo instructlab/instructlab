@@ -1130,24 +1130,29 @@ def map_train_to_library(ctx, params):
     )
 
     lora_args = LoraOptions()
-    lora = False
-    if params["lora_rank"] is not None:
-        lora = True
+    lora_enabled = False
+    lora_options = False
+    if params["lora_rank"] not in [0, None]:
+        lora_enabled = True
         lora_args.rank = params["lora_rank"]
     if params["lora_alpha"] is not None:
-        lora = True
+        lora_options = True
         lora_args.alpha = params["lora_alpha"]
     if params["lora_dropout"] is not None:
-        lora = True
+        lora_options = True
         lora_args.dropout = params["lora_dropout"]
     if params["lora_target_modules"] is not None:
-        lora = True
+        lora_options = True
         lora_args.target_modules = params["lora_target_modules"]
     if params["lora_quantize_dtype"] is not None:
-        lora = True
+        lora_options = True
         lora_args.quantize_data_type = params["lora_quantize_dtype"]
-    if lora and params["is_padding_free"]:
-        ctx.fail("Cannot combine LoRA with a padding free model.")
+    if lora_enabled and params["is_padding_free"]:
+        ctx.fail(
+            "Cannot combine LoRA with a padding free model. Set lora_rank to 0 or disable is_padding_free"
+        )
+    if lora_options and not lora_enabled:
+        click.secho("LoRA is disabled (rank=0), ignoring all additional LoRA args")
 
     train_args.deepspeed_options = ds_args
     train_args.lora = lora_args
