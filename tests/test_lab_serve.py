@@ -1,6 +1,7 @@
 # Standard
 from unittest import mock
 from unittest.mock import MagicMock, patch
+import os
 import pathlib
 
 # Third Party
@@ -11,6 +12,7 @@ import yaml
 
 # First Party
 from instructlab import configuration, lab
+from instructlab.model.backends.backends import get_max_stable_vram_wait
 from instructlab.model.serve import warn_for_unsuported_backend_param
 
 CFG_FILE_NAME = "test-serve-config.yaml"
@@ -24,7 +26,9 @@ def vllm_setup_test(mock_popen, mock_determine, runner, args):
     mock_process.returncode = 0
     mock_determine.return_value = ("vllm", "testing")
 
-    runner.invoke(lab.ilab, args)
+    result = runner.invoke(lab.ilab, args)
+    if result.exit_code != 0:
+        print(result.output)
 
     assert len(mock_popen.call_args_list) == 1
     return mock_popen.call_args_list[0][1]["args"]
@@ -392,6 +396,15 @@ def test_vllm_args_config_with_ctx_tps(
         ],
     )
     assert_tps(args, "4")
+
+
+def test_max_stable_vram_wait():
+    with mock.patch.dict(os.environ, {"ILAB_MAX_STABLE_VRAM_WAIT": "0"}):
+        wait = get_max_stable_vram_wait(10)
+        assert wait == 0
+    with mock.patch.dict(os.environ, clear=True):
+        wait = get_max_stable_vram_wait(10)
+        assert wait == 10
 
 
 @pytest.mark.parametrize(
