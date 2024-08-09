@@ -244,6 +244,9 @@ def generate(
         gen_cfg.generate.teacher.vllm.llm_family = (
             model_family or gen_cfg.generate.teacher.vllm.llm_family
         )
+        gen_cfg.generate.teacher.vllm.vllm_args = (
+            gen_cfg.generate.teacher.vllm.vllm_args or []
+        )
         if gpus is not None:
             tps_prefix = "--tensor-parallel-size"
             if contains_argument(tps_prefix, gen_cfg.generate.teacher.vllm.vllm_args):

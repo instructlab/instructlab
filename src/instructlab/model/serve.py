@@ -170,6 +170,7 @@ def serve(
         # Warn if unsupported backend parameters are passed
         warn_for_unsuported_backend_param(ctx)
 
+        ctx.obj.config.serve.vllm.vllm_args = ctx.obj.config.serve.vllm.vllm_args or []
         if gpus:
             if contains_argument(
                 "--tensor-parallel-size", ctx.obj.config.serve.vllm.vllm_args
