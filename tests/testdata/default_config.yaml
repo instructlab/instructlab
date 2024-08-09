@@ -68,7 +68,7 @@ serve:
     vllm_args: []
 train:
   additional_args: {}
-  checkpoint_at_epoch: false
+  checkpoint_at_epoch: true
   ckpt_output_dir: /data/instructlab/checkpoints
   data_output_dir: /data/instructlab/internal
   data_path: /data/instructlab/datasets
@@ -85,9 +85,9 @@ train:
   phased_mt_bench_judge: /cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
   phased_phase1_effective_batch_size: 128
   phased_phase1_num_epochs: 10
-  phased_phase1_samples_per_save: 25000
+  phased_phase1_samples_per_save: 0
   phased_phase2_effective_batch_size: 3840
   phased_phase2_num_epochs: 10
-  phased_phase2_samples_per_save: 25000
+  phased_phase2_samples_per_save: 0
   save_samples: 250000
 version: 1.0.0

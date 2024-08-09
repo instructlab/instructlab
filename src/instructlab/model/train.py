@@ -338,7 +338,7 @@ def clickpath_setup(is_dir: bool) -> click.Path:
 @click.option(
     "--phased-phase1-samples-per-save",
     cls=clickext.ConfigOption,
-    type=click.IntRange(min=1),
+    type=click.IntRange(min=0),
     help="Number of samples to train on between saves for first phase of end-to-end training.",
 )
 @click.option(
@@ -361,7 +361,7 @@ def clickpath_setup(is_dir: bool) -> click.Path:
 @click.option(
     "--phased-phase2-samples-per-save",
     cls=clickext.ConfigOption,
-    type=click.IntRange(min=1),
+    type=click.IntRange(min=0),
     help="Number of samples to train on between saves for second phase of end-to-end training.",
 )
 @click.option(
@@ -782,7 +782,7 @@ def _training_phase(
         )
         train_args.num_epochs = num_epochs
 
-    if samples_per_save:
+    if samples_per_save is not None:
         logger.debug(
             f"Phased Training -- training phase -- Overriding samples per save: {train_args.save_samples} with {samples_per_save}"
         )
