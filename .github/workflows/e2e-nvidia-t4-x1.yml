@@ -16,6 +16,10 @@ on:
       - main
       - release-*
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   start-runner:
     name: Start external EC2 runner
@@ -61,6 +65,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
+          # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
 
       - name: Fetch and checkout PR
@@ -85,7 +90,7 @@ jobs:
 
           CMAKE_ARGS="-DLLAMA_CUDA=on" python3.11 -m pip install .
 
-          # issue 1821: workaround for flash-attn
+          # https://github.com/instructlab/instructlab/issues/1821
           # install with Torch and build dependencies installed
           python3.11 -m pip install packaging wheel setuptools-scm
           python3.11 -m pip install .[cuda]
@@ -121,3 +126,12 @@ jobs:
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
           label: ${{ needs.start-runner.outputs.label }}
           ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
+
+  e2e-workflow-complete:
+    # we don't want to block PRs on failed EC2 cleanup
+    # so not requiring "stop-runner" as well
+    needs: ["start-runner", "e2e"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: E2E Workflow Complete
+        run: echo "E2E Workflow Complete"
