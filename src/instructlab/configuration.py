@@ -497,7 +497,7 @@ class _train(BaseModel):
     num_epochs: int
     effective_batch_size: int
     save_samples: int
-    checkpoint_at_epoch: bool = False
+    checkpoint_at_epoch: bool = True
 
     deepspeed_cpu_offload_optimizer: bool
 
@@ -515,12 +515,16 @@ class _train(BaseModel):
     # TODO: could move into its own object.
     # Not strictly necessary for a correct training object.
     phased_phase1_num_epochs: int | None = OPTIONAL_POSITIVE_INTEGER
-    phased_phase1_samples_per_save: int | None = OPTIONAL_POSITIVE_INTEGER
-    phased_phase1_effective_batch_size: int | None = OPTIONAL_POSITIVE_INTEGER
+    # phased_phase1_samples_per_save is disabled when the value is 0.
+    # anything greater than 0 enables samples_per_save for the phase.
+    phased_phase1_samples_per_save: int = Field(ge=0, default=0)
+    phased_phase1_effective_batch_size: int | None = 128
 
     phased_phase2_num_epochs: int | None = OPTIONAL_POSITIVE_INTEGER
-    phased_phase2_samples_per_save: int | None = OPTIONAL_POSITIVE_INTEGER
-    phased_phase2_effective_batch_size: int | None = OPTIONAL_POSITIVE_INTEGER
+    # phased_phase2_samples_per_save is disabled when the value is 0.
+    # anything greater than 0 enables samples_per_save for the phase.
+    phased_phase2_samples_per_save: int = Field(ge=0, default=0)
+    phased_phase2_effective_batch_size: int | None = 3840
 
     phased_mt_bench_judge: str | None = None
 
@@ -670,10 +674,8 @@ def get_default_config() -> Config:
             additional_args={},
             is_padding_free=False,
             phased_phase1_num_epochs=10,
-            phased_phase1_samples_per_save=25000,
             phased_phase1_effective_batch_size=128,
             phased_phase2_num_epochs=10,
-            phased_phase2_samples_per_save=25000,
             phased_phase2_effective_batch_size=3840,
             phased_mt_bench_judge=DEFAULTS.DEFAULT_JUDGE_MODEL,
         ),
