@@ -7,6 +7,7 @@ import os.path
 
 # Third Party
 import click
+import openai
 
 # First Party
 from instructlab import clickext
@@ -288,6 +289,9 @@ def generate(
                     "Disabling SDG batching - unsupported with llama.cpp serving"
                 )
             batch_size = 0
+    client = openai.OpenAI(
+        base_url=api_base, api_key=api_key, http_client=http_client(ctx.params)
+    )
 
     # Specify checkpoint dir if batching is enabled
     checkpoint_dir = None
@@ -300,8 +304,7 @@ def generate(
         )
         generate_data(
             logger=logging.getLogger("instructlab.sdg"),  # TODO: remove
-            api_base=api_base,
-            api_key=api_key,
+            client=client,
             model_family=model_family,
             model_name=model_path,
             num_cpus=num_cpus,
@@ -315,10 +318,6 @@ def generate(
             yaml_rules=yaml_rules,
             chunk_word_count=chunk_word_count,
             server_ctx_size=server_ctx_size,
-            tls_insecure=tls_insecure,
-            tls_client_cert=tls_client_cert,
-            tls_client_key=tls_client_key,
-            tls_client_passwd=tls_client_passwd,
             pipeline=pipeline,
             batch_size=batch_size,
             checkpoint_dir=checkpoint_dir,
