@@ -68,6 +68,7 @@ serve:
     vllm_args: []
 train:
   additional_args: {}
+  checkpoint_at_epoch: false
   ckpt_output_dir: /data/instructlab/checkpoints
   data_output_dir: /data/instructlab/internal
   data_path: /data/instructlab/datasets
