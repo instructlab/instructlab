@@ -17,6 +17,7 @@ from instructlab.configuration import (
     Config,
     ensure_storage_directories_exist,
     get_default_config,
+    read_config,
     read_train_profile,
     recreate_train_profiles,
     write_config,
@@ -69,6 +70,15 @@ from instructlab.configuration import (
     default=None,
     help="Overwrite the default training values in the generated config.yaml by passing in an existing training-specific yaml.",
 )
+@click.option(
+    "--config",
+    "config_file",
+    type=click.Path(),
+    default=None,
+    envvar=DEFAULTS.ILAB_GLOBAL_CONFIG,
+    show_default=True,
+    help="Path to a configuration file.",
+)
 @clickext.display_params
 @click.pass_context
 def init(
@@ -80,33 +90,26 @@ def init(
     repository,
     min_taxonomy,
     train_profile,
+    config_file,
 ):
     """Initializes environment for InstructLab"""
     ensure_storage_directories_exist()
-    # If the caller used `ilab init` then the parent command is `ilab`, so we need to get the
-    # parameter source from the parent command.
-    if ctx.parent.command.name == "ilab":
-        param_source = ctx.parent.get_parameter_source("config_file")
-    # if the caller used `ilab config init` then the parent command is `config`, so we need to get
-    # the parameter source from the parent of the parent command.
-    else:
-        param_source = ctx.parent.parent.get_parameter_source("config_file")
+    param_source = ctx.get_parameter_source("config_file")
     try:
         overwrite = False
         if interactive:
             overwrite = check_if_configs_exist()
     except click.exceptions.Exit as e:
         ctx.exit(e.exit_code)
-    if param_source == click.core.ParameterSource.ENVIRONMENT:
-        taxonomy_path, taxonomy_base, cfg = get_params_from_env(ctx.obj)
     else:
         try:
-            model_path, taxonomy_path, cfg = get_params_default(
+            model_path, taxonomy_path, cfg = get_params(
                 interactive,
                 repository,
                 min_taxonomy,
                 model_path,
                 taxonomy_path,
+                config_file,
             )
         except click.exceptions.Exit as e:
             ctx.exit(e.exit_code)
@@ -187,14 +190,17 @@ def get_params_from_env(
     )
 
 
-def get_params_default(
+def get_params(
     interactive: bool,
     repository: str,
     min_taxonomy: bool,
     model_path: str,
     taxonomy_path: pathlib.Path,
+    config: pathlib.Path | None,
 ) -> typing.Tuple[str, pathlib.Path, Config]:
     cfg = get_default_config()
+    if config is not None:
+        cfg = read_config(config)
     clone_taxonomy_repo = True
     if interactive:
         click.echo(

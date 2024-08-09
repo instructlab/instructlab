@@ -27,7 +27,6 @@ multiprocessing.set_start_method(cfg.DEFAULTS.MULTIPROCESSING_START_METHOD, forc
     "config_file",
     type=click.Path(),
     default=cfg.DEFAULTS.CONFIG_FILE,
-    envvar=cfg.DEFAULTS.ILAB_GLOBAL_CONFIG,
     show_default=True,
     help="Path to a configuration file.",
 )
