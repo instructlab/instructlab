@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: Apache-2.0
+
+created_by: test-bot
+version: 2
+domain: test-domain
+seed_examples:
+- question: What is this knowledge about?
+  answer: It's a knowledge that makes the tests more knowledgeable
+- answer: "answer2"
+  question: "question2"
+- answer: "answer3"
+  question: "question3"
+- answer: "answer4"
+  question: "question4"
+- answer: "answer5"
+  question: "question5"
+task_description: For knowledge tests
+document:
+  repo: https://github.com/example-org/example-repo
+  commit: a0c3c8e
+  patterns:
+  - "*.md"
+  - docs/*.md
