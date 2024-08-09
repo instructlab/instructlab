@@ -7,38 +7,42 @@ pull_request_rules:
     - "#changes-requested-reviews-by=0"
     - or:
       - base=main
-      - base~=release-.*
+      - base~=^release-
     - label!=hold
     - label!=do-not-merge
     - label!=needs-rebase
     - check-success=DCO
 
+    # The files conditions regex should match the globs in workflow files
     # If workflow configuration files in .github/ are changed, the actionlint check must pass
     - or:
       - and:
-        # regex should match the one in .github/workflows/actionlint.yml
-        - files~=\.github/(actions|workflows)/(.*\.ya?ml|actionlint\..*)
         - check-success=actionlint
-      - -files~=\.github/(actions|workflows)/(.*\.ya?ml|actionlint\..*)
+        - or:
+          - files~=^\.github/(actions|workflows)/.*\.ya?ml$
+          - files~=^\.github/workflows/actionlint\.
+      - and:
+        - -files~=^\.github/(actions|workflows)/.*\.ya?ml$
+        - -files~=^\.github/workflows/actionlint\.
 
     # e2e workflow
     - or:
       - and:
         - check-success=e2e
         - or:
-          - files~='.*\.py$'
-          - files~=pyproject.toml$
-          - files~=requirements.*\.txt$
-          - files~=.github/workflows/e2e.yml$
-          - files~='scripts/basic-workflow-tests.sh'
-          - files~='scripts/test-data/.*'
+          - files~=\.py$
+          - files=pyproject.toml
+          - files~=^requirements.*\.txt$
+          - files=scripts/basic-workflow-tests.sh
+          - files~=^scripts/test-data/
+          - files=.github/workflows/e2e.yml
       - and:
-        - -files~='.*\.py$'
-        - -files~=pyproject.toml$
-        - -files~=requirements.*\.txt$
-        - -files~=.github/workflows/e2e.yml$
-        - -files~='scripts/basic-workflow-tests.sh'
-        - -files~='scripts/test-data/.*'
+        - -files~=\.py$
+        - -files=pyproject.toml
+        - -files~=^requirements.*\.txt$
+        - -files=scripts/basic-workflow-tests.sh
+        - -files~=^scripts/test-data/
+        - -files=.github/workflows/e2e.yml
 
     # lint and test must pass if files change that would trigger this job
     - or:
@@ -47,43 +51,69 @@ pull_request_rules:
         - check-success=test-workflow-complete
         - or:
           # see .github/workflows/lint.yml and test.yml
-          - files~=.*\.py$
-          - files~=pyproject.toml$
-          - files~=requirements.*\.txt$
-          - files~=tox.ini$
-          - files~=scripts/[^/]+\.sh$
+          - files~=\.py$
+          - files=pyproject.toml
+          - files~=^requirements.*\.txt$
+          - files=tox.ini
+          - files~=^scripts/[^/]+\.sh$
+          - files=.github/workflows/lint.yml
+          - files=.github/workflows/test.yml
       - and:
-        - -files~=.*\.py$
-        - -files~=pyproject.toml$
-        - -files~=requirements.*\.txt$
-        - -files~=tox.ini$
-        - -files~=scripts/[^/]+\.sh$
+        - -files~=\.py$
+        - -files=pyproject.toml
+        - -files~=^requirements.*\.txt$
+        - -files=tox.ini
+        - -files~=^scripts/[^/]+\.sh$
+        - -files=.github/workflows/lint.yml
+        - -files=.github/workflows/test.yml
 
     - or:
       - and:
-        - or:
-          - files~='.*\.md'
-          - files='.markdownlint-cli2.yaml'
         - check-success=markdown-lint
+        - or:
+          - files~=\.md$
+          - files=.markdownlint-cli2.yaml
+          - files=.github/workflows/docs.yml
       - and:
-        - -files~='.*\.md'
-        - -files='.markdownlint-cli2.yaml'
+        - -files~=\.md$
+        - -files=.markdownlint-cli2.yaml
+        - -files=.github/workflows/docs.yml
 
     - or:
       - and:
-        - or:
-          - files~='notebooks/.*\.ipynb$'
         - check-success=validate-notebook
+        - or:
+          - files~=^notebooks/.*\.ipynb$
+          - files~=^scripts/[^/]+\.sh$
+          - files=.github/workflows/validate-notebooks.yml
       - and:
-        - -files~='notebooks/.*\.ipynb$'
+        - -files~=^notebooks/.*\.ipynb$
+        - -files~=^scripts/[^/]+\.sh$
+        - -files=.github/workflows/validate-notebooks.yml
 
     - or:
       - and:
-        - or:
-          - files~='.*\.sh$'
         - check-success=shellcheck
+        - or:
+          - files~=\.sh$
+          - files=.github/workflows/shellcheck.yaml
       - and:
-        - -files~='.*\.sh$'
+        - -files~=\.sh$
+        - -files=.github/workflows/shellcheck.yaml
+
+    - or:
+      - and:
+        - check-success=spellcheck
+        - or:
+          - files~=\.md$
+          - files=tox.ini
+          - files~=^\.spellcheck[^/]+$
+          - files=.github/workflows/spellcheck.yaml
+      - and:
+        - -files~=\.md$
+        - -files=tox.ini
+        - -files~=^\.spellcheck[^/]+$
+        - -files=.github/workflows/spellcheck.yaml
 
   actions:
     merge:
@@ -95,12 +125,11 @@ pull_request_rules:
   conditions:
     - or:
       - files=.github/mergify.yml
-      - files=.github/workflows/**/*
+      - files~=^\.github/(actions|workflows)/
       - files=scripts/ruff.sh
       - files=.pre-commit-config.yaml
       - files=.pylintrc
-      - files=.spellcheck-en-custom.txt
-      - files=.spellcheck.yml
+      - files~=^\.spellcheck[^/]+$
       - files=tox.ini
       - files=.markdownlint-cli2.yaml
   actions:
@@ -112,7 +141,7 @@ pull_request_rules:
   description: Automatically apply container label
   conditions:
     - or:
-      - files~=containers/.*
+      - files~=^containers/
       - files=.dockerignore
   actions:
     label:
@@ -123,16 +152,9 @@ pull_request_rules:
   description: Automatically apply documentation label
   conditions:
     - or:
-      - files=CODE_OF_CONDUCT.md
-      - files=CONTRIBUTOR_RULES.md
-      - files=governance.md
-      - files=MAINTAINERS.md
-      - files=README.md
-      - files=SECURITY.md
-      - files=TROUBLESHOOTING.md
-      - files~=CONTRIBUTING/.*
-      - files~=docs/.*
-      - files~=MAINTAINERS/.*
+      - files~=^[^/]+\.md$
+      - files~=^CONTRIBUTING/
+      - files~=^docs/
   actions:
     label:
       add:
@@ -142,7 +164,7 @@ pull_request_rules:
   description: Automatically apply testing label
   conditions:
     - or:
-      - files~=tests/.*
+      - files~=^tests/
       - files=scripts/functional-tests.sh
       - files=tox.ini
   actions:
@@ -175,19 +197,11 @@ pull_request_rules:
 - name: release-branch-label
   description: Automatically apply the release-branch label to release branch PRs
   conditions:
-    - base~=release-.*
+    - base~=^release-
   actions:
     label:
       add:
         - release-branch
-
-- name: backport release-v0.14
-  actions:
-    backport:
-      branches:
-        - release-v0.14
-  conditions:
-    - label=backport-release-v0.14
 
 - name: Apply ci-failure label if any CI checks have failed
   conditions:
@@ -225,8 +239,8 @@ pull_request_rules:
   description: Automatically apply dependencies label
   conditions:
     - or:
-      - files~=requirements.*\.txt$
-      - files=requirements/**/*
+      - files~=^requirements.*\.txt$
+      - files~=^requirements/
   actions:
     label:
       add:
