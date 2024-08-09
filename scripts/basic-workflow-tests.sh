@@ -36,7 +36,6 @@ NC='\033[0m' # No Color
 
 SCRIPTDIR=$(dirname "$0")
 export E2E_TEST_DIR
-# E2E_TEST_DIR="$(pwd)/__e2e_test"
 export CONFIG_HOME
 export DATA_HOME
 export CACHE_HOME
@@ -75,6 +74,35 @@ function init_e2e_tests() {
     done
 }
 
+
+function wait_for_server() {
+    ACTION="$1"
+    if [ "${ACTION}" == "start" ]; then
+      step Wait for ilab model serve to start
+      CMD="curl -sS http://localhost:8000/docs &> /dev/null"
+      ACTION="started"
+    elif [ "${ACTION}" == "shutdown" ]; then
+      PID="${2:-}"
+      step Kill ilab model serve "$PID"
+      kill "$PID"
+      CMD="! ps -p ${PID} &> /dev/null"
+    else
+        echo "Action 'start' or 'shutdown' not passed as an arg of wait_for_server()"
+        exit 1
+    fi
+
+    if ! timeout 240 bash -c "
+        until ${CMD}; do
+            echo 'waiting for server'
+            sleep 5
+        done
+    "; then
+        echo "server was not ${ACTION}"
+        exit 1
+    fi
+
+    echo "server ${ACTION}"
+}
 
 
 step() {
@@ -281,6 +309,7 @@ test_train() {
 
     if [ "$TRAIN_LIBRARY" -eq 1 ]; then
         DATA=$(find "${DATA_HOME}"/instructlab/datasets -name 'messages_*' | head -n 1)
+
         # TODO Only cuda for now
         # the train profile specified in test_init overrides the majority of TRAIN_ARGS, including things like num_epochs. While it looks like much of those settings are being lost, they just have different values here.
         TRAIN_ARGS=("--device=cuda" "--model-path=${GRANITE_SAFETENSOR_REPO}" "--data-path=${DATA}" "--lora-quantize-dtype=nf4" "--4-bit-quant" "--effective-batch-size=4" "--is-padding-free=False")
@@ -291,7 +320,7 @@ test_train() {
         ilab model train "${TRAIN_ARGS[@]}"
     else
         # TODO Only cuda for now
-        TRAIN_ARGS+=("--legacy" "--device=cuda")
+        TRAIN_ARGS+=("--legacy" "--device=cuda" "--data-path" "${DATA_HOME}/instructlab/datasets")
         if [ "$FULLTRAIN" -eq 0 ]; then
             TRAIN_ARGS+=("--4-bit-quant")
         fi
@@ -457,34 +486,6 @@ test_exec() {
     fi
 }
 
-wait_for_server() {
-    ACTION="$1"
-    if [ "${ACTION}" == "start" ]; then
-      step Wait for ilab model serve to start
-      CMD="curl -sS http://localhost:8000/docs &> /dev/null"
-      ACTION="started"
-    elif [ "${ACTION}" == "shutdown" ]; then
-      PID="${2:-}"
-      step Kill ilab model serve "$PID"
-      kill "$PID"
-      CMD="! ps -p ${PID} &> /dev/null"
-    else
-        echo "Action 'start' or 'shutdown' not passed as an arg of wait_for_server()"
-        exit 1
-    fi
-
-    if ! timeout 240 bash -c "
-        until ${CMD}; do
-            echo 'waiting for server'
-            sleep 5
-        done
-    "; then
-        echo "server was not ${ACTION}"
-        exit 1
-    fi
-
-    echo "server ${ACTION}"
-}
 
 # NOTE: If you add additional or modify existing options, please document them in 'docs/ci.md'
 usage() {
