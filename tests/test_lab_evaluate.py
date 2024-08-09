@@ -11,6 +11,9 @@ from git import Repo
 # First Party
 from instructlab import lab
 
+# Local
+from . import common
+
 
 def gen_qa_pairs(odd):
     i = 1
@@ -540,3 +543,24 @@ def test_invalid_model_path_mt_bench(cli_runner: CliRunner, tmp_path):
         in result.output
     )
     assert result.exit_code != 0
+
+
+def test_vllm_args_null(cli_runner: CliRunner):
+    fname = common.setup_gpus_config(section_path="serve", vllm_args=lambda: None)
+    args = common.vllm_setup_test(
+        cli_runner,
+        [
+            f"--config={fname}",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "mt_bench",
+            "--model",
+            "instructlab/granite-7b-lab",
+            "--judge-model",
+            "instructlab/merlinite-7b-lab",
+            "--gpus",
+            "4",
+        ],
+    )
+    common.assert_tps(args, "4")
