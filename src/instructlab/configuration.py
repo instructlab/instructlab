@@ -1134,10 +1134,10 @@ def map_train_to_library(ctx, params):
         ],
     )
 
-    lora_args = LoraOptions()
+    lora_args = LoraOptions(rank=0)
     lora_enabled = False
     lora_options = False
-    if params["lora_rank"] not in [0, None]:
+    if params["lora_rank"]:
         lora_enabled = True
         lora_args.rank = params["lora_rank"]
     if params["lora_alpha"] is not None:
