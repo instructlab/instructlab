@@ -62,7 +62,7 @@ PROMPT_HISTORY_FILEPATH = os.path.expanduser("~/.local/chat-cli.history")
 
 PROMPT_PREFIX = ">>> "
 
-DEFAULT_ENDPOINT = cfg.get_api_base(cfg._serve().host_port)
+DEFAULT_ENDPOINT = cfg._serve().api_base()
 
 
 def is_openai_server_and_serving_model(
