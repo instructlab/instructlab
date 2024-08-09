@@ -92,13 +92,15 @@ def init(
     else:
         param_source = ctx.parent.parent.get_parameter_source("config_file")
     try:
-        overwrite = False
         if interactive:
-            overwrite = check_if_configs_exist()
+            gate_user_from_overwriting_config()
     except click.exceptions.Exit as e:
         ctx.exit(e.exit_code)
+    recreate_profile_dir = False
     if param_source == click.core.ParameterSource.ENVIRONMENT:
         taxonomy_path, taxonomy_base, cfg = get_params_from_env(ctx.obj)
+        if interactive:
+            recreate_profile_dir = check_if_okay_to_overwrite_profiles()
     else:
         try:
             model_path, taxonomy_path, cfg = get_params_default(
@@ -108,9 +110,11 @@ def init(
                 model_path,
                 taxonomy_path,
             )
+            if interactive:
+                recreate_profile_dir = check_if_okay_to_overwrite_profiles()
         except click.exceptions.Exit as e:
             ctx.exit(e.exit_code)
-    if overwrite:
+    if recreate_profile_dir:
         click.echo(
             f"Generating `{DEFAULTS.CONFIG_FILE}` and `{DEFAULTS.TRAIN_PROFILE_DIR}`..."
         )
@@ -161,13 +165,23 @@ def init(
     )
 
 
-def check_if_configs_exist() -> bool:
+def gate_user_from_overwriting_config():
+    """
+    When a config already exists, verify that the user wants to overwrite it.
+    Raises a `click.exceptions.Exit` exception when the user declines to overwrite.
+    """
     if exists(DEFAULTS.CONFIG_FILE):
         overwrite = click.confirm(
             f"Found {DEFAULTS.CONFIG_FILE}, do you still want to continue?"
         )
         if not overwrite:
             raise click.exceptions.Exit(0)
+
+
+def check_if_okay_to_overwrite_profiles() -> bool:
+    """
+    Returns a boolean indicating whether or not it's okay to write to the train profile directory.
+    """
     if exists(DEFAULTS.TRAIN_PROFILE_DIR):
         return click.confirm(
             f"Found {DEFAULTS.TRAIN_PROFILE_DIR}, do you also want to reset existing profiles?"
