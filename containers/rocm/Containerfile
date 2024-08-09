@@ -21,7 +21,7 @@ ENV AMDGPU_ARCH="${AMDGPU_ARCH}" \
 COPY containers/rocm/remove-gfx.sh /tmp/
 RUN --mount=type=cache,target=/var/cache/dnf,z \
     dnf install -y --nodocs --setopt=install_weak_deps=False --setopt=keepcache=True \
-    rocm-runtime hipblas hiprand hipsparse lld-libs ${PYTHON} ${PYTHON}-devel nvtop radeontop make git gh && \
+    rocm-runtime hipblas hiprand hipsparse lld-libs libomp${CLANG_VER}-devel ${PYTHON} ${PYTHON}-devel nvtop radeontop make git gh && \
     /tmp/remove-gfx.sh
 # virtual env, umask 0000 to allow end-user to write to venv later
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
@@ -32,7 +32,7 @@ RUN umask 0000 && \
 ENV PATH="${VIRTUAL_ENV}/bin:${PATH}" \
     XDG_CACHE_HOME="${VIRTUAL_ENV}/.cache" \
     PIP_CACHE_DIR="${VIRTUAL_ENV}/.cache/pip"
-RUN mkdir -p -m777 ${PIP_CACHE_DIR} ${XDG_CACHE_HOME}/huggingface
+RUN mkdir -p -m777 ${PIP_CACHE_DIR} ${XDG_CACHE_HOME}/huggingface ${XDG_CACHE_HOME}/instructlab
 # SELinux workaround for https://github.com/python/cpython/issues/83074
 COPY --chown=0:0 containers/sitecustomize.py ${VIRTUAL_ENV}/lib/${PYTHON}/site-packages
 # additional helpers to debug torch and llama
@@ -65,7 +65,8 @@ FROM pytorch AS llama
 RUN --mount=type=cache,sharing=locked,id=pipcache,target=${PIP_CACHE_DIR},mode=777,z \
     pip cache remove llama_cpp_python && \
     umask 0000 && \
-    CMAKE_ARGS="-DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER=/usr/bin/clang-${CLANG_VER} -DCMAKE_CXX_COMPILER=/usr/bin/clang++-${CLANG_VER} -DAMDGPU_TARGETS=${AMDGPU_ARCH}" \
+    CMAKE_ARGS="-DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER=/usr/bin/clang-${CLANG_VER} -DCMAKE_CXX_COMPILER=/usr/bin/clang++-${CLANG_VER} -DAMDGPU_TARGETS=${AMDGPU_ARCH} \
+    -DCMAKE_HIP_COMPILER_ROCM_ROOT=/usr -DLLAVA_BUILD=OFF" \
     FORCE_CMAKE=1 \
     ${VIRTUAL_ENV}/bin/pip install -c ${VIRTUAL_ENV}/constraints.txt llama-cpp-python
 
