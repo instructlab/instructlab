@@ -644,8 +644,7 @@ Below is an example of running MMLUBranch with a local safetensors model directo
 
 ```bash
 $ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
-$ export ILAB_TASKS_DIR=$HOME/.local/share/instructlab/datasets
-$ ilab model evaluate --benchmark mmlu_branch --model $ILAB_MODELS_DIR/instructlab/granite-7b-lab --base-model $ILAB_MODELS_DIR/instructlab/granite-7b-lab --tasks-dir $ILAB_TASKS_DIR
+$ ilab model evaluate --benchmark mmlu_branch --model $ILAB_MODELS_DIR/instructlab/granite-7b-lab --base-model $ILAB_MODELS_DIR/instructlab/granite-7b-lab
 ...
 # KNOWLEDGE EVALUATION REPORT
 
@@ -665,8 +664,7 @@ $ ilab model evaluate --benchmark mmlu_branch --model $ILAB_MODELS_DIR/instructl
 Below is an example of running MMLUBranch with Hugging Face models:
 
 ```bash
-$ export ILAB_TASKS_DIR=$HOME/.local/share/instructlab/datasets
-$ ilab model evaluate --benchmark mmlu_branch --model instructlab/granite-7b-lab --base-model instructlab/granite-7b-lab --tasks-dir $ILAB_TASKS_DIR
+$ ilab model evaluate --benchmark mmlu_branch --model instructlab/granite-7b-lab --base-model instructlab/granite-7b-lab
 ...
 # KNOWLEDGE EVALUATION REPORT
 
