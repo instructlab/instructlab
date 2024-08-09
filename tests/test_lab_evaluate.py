@@ -345,7 +345,7 @@ def test_evaluate_mmlu_branch(run_mock, cli_runner: CliRunner):
     assert result.output == expected
 
 
-def test_no_model_mt_bench(cli_runner: CliRunner):
+def test_no_model(cli_runner: CliRunner):
     result = cli_runner.invoke(
         lab.ilab,
         [
@@ -356,10 +356,7 @@ def test_no_model_mt_bench(cli_runner: CliRunner):
             "mt_bench",
         ],
     )
-    assert (
-        result.output
-        == "Benchmark mt_bench requires the following args to be set: ['model', 'judge-model']\n"
-    )
+    assert "Error: Missing option '--model'." in result.output
     assert result.exit_code != 0
 
 
@@ -370,6 +367,8 @@ def test_missing_benchmark(cli_runner: CliRunner):
             "--config=DEFAULT",
             "model",
             "evaluate",
+            "--model",
+            "test",
         ],
     )
     assert "Missing option '--benchmark'" in result.output
