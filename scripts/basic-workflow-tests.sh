@@ -17,7 +17,7 @@ NUM_INSTRUCTIONS=5
 GENERATE_ARGS=("--num-cpus" "$(nproc)" --taxonomy-path='./taxonomy')
 DIFF_ARGS=("--taxonomy-path" "./taxonomy")
 TRAIN_ARGS=()
-FULLTRAIN=0
+LEGACYTRAIN=0
 PHASED_TRAINING=0
 TRAIN_LIBRARY=0
 BACKEND="llama-cpp"
@@ -87,14 +87,6 @@ task() {
 }
 
 set_defaults() {
-    if [ "$MINIMAL" -eq 0 ]; then
-        return
-    fi
-
-    # Minimal settings to run in less time
-    NUM_INSTRUCTIONS=1
-    TRAIN_ARGS+=("--num-epochs" "1")
-
     if [ "${EVAL}" -eq 1 ] && [ "${BACKEND}" != "vllm" ]; then
          echo "ERROR: Must specify -e and -v at the same time."
          exit 1
@@ -108,6 +100,12 @@ set_defaults() {
     if [ "${PHASED_TRAINING}" -eq 1 ] && [ "${TRAIN_LIBRARY}" -eq 0 ]; then
         echo "ERROR: You have -P set. It requires -T."
     fi
+
+    if [ "$MINIMAL" -eq 1 ]; then
+        # Minimal settings to run in less time
+        NUM_INSTRUCTIONS=1
+        TRAIN_ARGS+=("--num-epochs" "1")
+    fi
 }
 
 test_smoke() {
@@ -118,7 +116,7 @@ test_smoke() {
 test_init() {
     task Initializing ilab
 
-    if [ "$FULLTRAIN" -eq 1 ]; then
+    if [ "$LEGACYTRAIN" -eq 1 ]; then
         # TODO Only cuda for now
         step Setting train-profile for GPU accelerated training
         ilab config init --non-interactive --train-profile="${SCRIPTDIR}/test-data/train-profile-a10.yaml"
@@ -292,7 +290,7 @@ test_train() {
     else
         # TODO Only cuda for now
         TRAIN_ARGS+=("--legacy" "--device=cuda")
-        if [ "$FULLTRAIN" -eq 0 ]; then
+        if [ "$LEGACYTRAIN" -eq 0 ]; then
             TRAIN_ARGS+=("--4-bit-quant")
         fi
         if [ "${BACKEND}" != "vllm" ]; then
@@ -434,7 +432,7 @@ test_exec() {
     # When we run training with --4-bit-quant, we can't convert the result to a gguf
     # https://github.com/instructlab/instructlab/issues/579
     # so we skip trying to test the result
-    if [ "$FULLTRAIN" -eq 1 ]; then
+    if [ "$LEGACYTRAIN" -eq 1 ]; then
         # When you run this --
         #   `ilab model convert` is only implemented for macOS with M-series chips for now
         #test_convert
@@ -489,40 +487,26 @@ wait_for_server() {
 # NOTE: If you add additional or modify existing options, please document them in 'docs/ci.md'
 usage() {
     echo "Usage: $0 [-m] [-h]"
-    echo "  -m  Run minimal configuration (run quicker when you have no GPU)"
     echo "  -e  Run model evaluation"
     echo "  -T  Use the 'full' training library rather than legacy training"
-    echo "  -P  Run 'full phased' training using training library and evaluation steps. (requires -T)"
     echo "  -f  Run the fullsize training instead of --4-bit-quant"
     echo "  -F  Use the 'full' SDG pipeline instead of the default 'simple' pipeline"
-    echo "  -g  Use the granite model"
-    echo "  -v  Use the vLLM backend for serving"
-    echo "  -M  Use the mixtral model (4-bit quantized)"
     echo "  -h  Show this help text"
+    echo "  -L  Run legacy training with 4-bit quantization"
+    echo "  -m  Run minimal configuration with lower number of instructions and training epochs (run quicker when you have no GPU)"
+    echo "  -M  Use the mixtral model (4-bit quantized) instead of merlinite model (4-bit quantized)."
+    echo "  -P  Run multi-phase training"
+    echo "  -T  Use the 'full' training library rather than legacy training"
+    echo "  -v  Use the vLLM backend for serving"
 }
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "cemMfFhvTP" opt; do
+while getopts "eFhLmMPTv" opt; do
     case $opt in
-        c)
-            # old option, don't fail if it's specified
-            ;;
         e)
             EVAL=1
             step "Run model evaluation."
-            ;;
-        m)
-            MINIMAL=1
-            step "Running minimal configuration."
-            ;;
-        M)
-            MIXTRAL=1
-            step "Using mixtral model (4-bit quantized)."
-            ;;
-        f)
-            FULLTRAIN=1
-            step "Running fullsize training."
             ;;
         F)
             SDG_PIPELINE="full"
@@ -532,17 +516,29 @@ while getopts "cemMfFhvTP" opt; do
             usage
             exit 0
             ;;
-        v)
-            BACKEND=vllm
-            step "Running with vLLM backend."
+        L)
+            LEGACYTRAIN=1
+            step "Running legacy training with 4-bit quantization."
+            ;;
+        m)
+            MINIMAL=1
+            step "Running minimal configuration."
+            ;;
+        M)
+            MIXTRAL=1
+            step "Using mixtral model (4-bit quantized) instead of merlinite model (4-bit quantized)."
+            ;;
+        P)
+            PHASED_TRAINING=1
+            step "Running multi-phase training."
             ;;
         T)
             TRAIN_LIBRARY=1
             step "Running with training library."
             ;;
-        P)
-            PHASED_TRAINING=1
-            step "Running multi-phase training."
+        v)
+            BACKEND=vllm
+            step "Running with vLLM backend."
             ;;
         \?)
             echo "Invalid option: -$opt" >&2
