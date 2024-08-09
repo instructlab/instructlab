@@ -289,6 +289,7 @@ def launch_server(
             raise click.exceptions.Exit(1)
 
     if backend == backends.VLLM:
+        eval_serve.vllm.vllm_args = eval_serve.vllm.vllm_args or []
         eval_serve.vllm.vllm_args.extend(["--served-model-name", model_name])
         # Recommend max-workers based on hardware configuration. #cpus +- 50%
         cpu_count = multiprocessing.cpu_count()
