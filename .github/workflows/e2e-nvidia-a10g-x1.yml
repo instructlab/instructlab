@@ -53,6 +53,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
+          # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
 
       - name: Determine if pr_or_branch is a PR number
@@ -127,7 +128,7 @@ jobs:
 
           CMAKE_ARGS="-DLLAMA_CUDA=on" python3.11 -m pip install .
 
-          # issue 1821: workaround for flash-attn
+          # https://github.com/instructlab/instructlab/issues/1821
           # install with Torch and build dependencies installed
           python3.11 -m pip install packaging wheel setuptools-scm
           python3.11 -m pip install .[cuda]
