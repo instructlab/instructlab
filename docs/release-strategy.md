@@ -6,11 +6,13 @@ This document discusses the release strategy and processes for the
 
 ## Versioning Scheme
 
-Releases use a `X.Y.Z` numbering scheme.
+Releases use a `X.Y.Z`, [PEP 440-compatible](https://peps.python.org/pep-0440/) numbering scheme.
 
 X-stream release are for major releases. At this stage in the project a major release has not been cut and we expect each release to be a new Y-stream.
 
 Z-stream releases are meant for critical bug and documentation fixes. Z-stream releases are cut as maintainers see fit.
+
+A final release may be preceded by a pre-release (alpha `X.Y.ZaN`, beta `X.Y.ZbN`, or release candidate `X.Y.ZrcN`). PyPI and pip automatically recognize them as pre-release. Pip ignores pre-releases unless the user explicitly requests a pre-release with `pip install --pre` or `pip install instructlab==0.16.0a1`.
 
 ## Schedule
 
@@ -29,9 +31,15 @@ PRs and Issues associated with the next two milestones will be prioritized for r
 
 ## Git Branches and Tags
 
-Every `X.Y` release stream gets a new branch.
+Every `X.Y` release stream gets a new branch `release-X.Y`. The release branch is created with first beta, release candidate, or final `X.Y.0` release.
 
 Each release, `X.Y.Z`, exists as a tag named `vX.Y.Z`.
+
+Alpha releases are tagged as `vX.Y.Za1`, `vX.Y.Za2`, and so on. Alpha releases are created from the main branch, **not** from a `release-X.Y` branch.
+
+Beta releases are tagged as `vX.Y.Zb1`, `vX.Y.Zb2`, and so on from `release-X.Y` branch.
+
+Release candidates are tagged as `vX.Y.Zrc1`, `vX.Y.Zrc1`, and so on from `release-X.Y` branch.
 
 ## Release Branch Maintenance
 
@@ -47,19 +55,38 @@ The Release Manager for each release is identified in the Description of the Mil
 
 The following are the steps for how Y-stream and Z-stream releases gets cut.
 
-### Y-Stream
+### Y-Stream alpha pre-release (`X.Y.0a1`)
+
+1. Determine a commit on the main branch that will serve as the basis for the next release - most of the time this should be the latest commit.
+1. Validate the release branch with an [E2E test](ci.md).
+1. Create a new release on GitHub targeting the release branch and using the latest Y-Stream tag as the previous release (e.g. `0.15.1` precedes `0.16.0a1`). If there have been other pre-release, then use the previous pre-release.
+1. Announce release via the following:
+    - The `#announce` channel on Slack
+    - The `announce` mailing list
+
+### Y-Stream beta and release candidate pre-release (`X.Y.0b1`, `X.Y.0rc1`)
 
 1. Determine a commit on the main branch that will serve as the basis for the next release - most of the time this should be the latest commit.
 1. Create a new release branch in the format `release-vX.Y` off of the determined commit (will match `main` if the latest commit is chosen).
 1. Validate the release branch with an [E2E test](ci.md).
-1. Create a new release on GitHub targeting the release branch and using the latest Y-Stream tag as the previous release (e.g. `0.15.1` precedes `0.16.0`).
-1. Move the `stable` tag to the new release (note this tag is set to be deprecated on September 1st, 2024 - users should use PyPi to install the latest "stable" release)
+1. Create a new release on GitHub targeting the release branch and using the latest Y-Stream tag as the previous release (e.g. `0.15.1` precedes `0.16.0`). If there have been other pre-release, then use the previous pre-release.
+1. Announce release via the following:
+    - The `#announce` channel on Slack
+    - The `announce` mailing list
+
+### Y-Stream (`X.Y.0`)
+
+1. Determine a commit on the main branch that will serve as the basis for the next release - most of the time this should be the latest commit.
+1. Create a new release branch in the format `release-vX.Y` off of the determined commit (will match `main` if the latest commit is chosen).
+1. Validate the release branch with an [E2E test](ci.md).
+1. Create a new release on GitHub targeting the release branch and using the latest Y-Stream tag as the previous release (e.g. `0.15.1` precedes `0.16.0`). Include the change log from all previous pre-releases in the first Y-stream release.
+1. Move the `stable` tag to the new release (note this tag is set to be deprecated on September 1st, 2024 - users should use PyPi to install the latest "stable" release). Do not move the `stable` tag for beta and release candidates.
 1. Announce release via the following:
     - The `#announce` channel on Slack
     - The `announce` mailing list
 1. Create a milestone on GitHub for the next release without a milestone.
 
-### Z-Stream
+### Z-Stream (`X.Y.Z`)
 
 1. Backport all relevant commits from `main` to the `release-vX.Y` branch - this can be done automatically with Mergify or manually if preferred. A backport using Mergify is done by adding a comment to the PR with the change merged to `main` with the contents `@Mergifyio backport <release-vX.Y>`.
 1. Validate the release branch with an [E2E test](ci.md).
