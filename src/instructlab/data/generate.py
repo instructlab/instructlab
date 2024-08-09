@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+from pathlib import Path
 import copy
 import logging
 import os.path
@@ -10,7 +11,9 @@ import click
 
 # First Party
 from instructlab import clickext
+from instructlab.client import ClientException, list_models
 from instructlab.configuration import DEFAULTS
+from instructlab.utils import HttpClientParams, is_valid_path
 
 # Local
 from ..utils import http_client
@@ -18,7 +21,48 @@ from ..utils import http_client
 logger = logging.getLogger(__name__)
 
 
+def check_if_user_wants_to_use_model_at_server(
+    url: str, api_key: str, http_params: HttpClientParams
+) -> bool:
+    """
+    Returns a boolean indicating whether or not the given URL is
+    serving a teacher model and if the user wants to use it.
+    """
+    try:
+        res = list_models(
+            url,
+            api_key=api_key,
+            http_client=http_client(http_params),
+        )
+    except ClientException:
+        # do nothing
+        return False
+
+    if not res.data:
+        return False
+
+    discovered_model = res.data[0].id
+    presented_model = discovered_model
+    if is_valid_path(discovered_model):
+        # when the model is a long path, e.g. /home/user/.cache/instructlab/models/mistralai/Mixtral-8x7B_v0.1
+        # we truncate it for user-friendly presentation
+        discovered_model_as_path = Path(discovered_model)
+        presented_model = discovered_model_as_path.name
+
+    return click.confirm(
+        f"We've discovered the model {presented_model} being served at {url}\nWould you like to use this as the teacher model?",
+        default=True,
+        show_default=True,
+    )
+
+
 @click.command()
+@click.option(
+    "--interactive/--non-interactive",
+    default=True,
+    show_default=True,
+    help="Be prompted to confirm model selection when `ilab` detects one is already running.",
+)
 @click.option(
     "--model",
     "model_path",
@@ -168,6 +212,7 @@ logger = logging.getLogger(__name__)
 @clickext.display_params
 def generate(
     ctx,
+    interactive: bool,
     model_path,
     num_cpus,
     num_instructions,
@@ -228,8 +273,41 @@ def generate(
         batch_size = 8
 
     backend_instance = None
+
+    # Logic to automatically detect and select the models the user is already
+    # serving via `ilab model serve` and use them for the teacher model rather
+    # than launching our own. When interactive, we'll prompt the user to confirm them.
+    #
+    # Otherwise, when non-interactive, we will skip the automatic selection and expect
+    # the user to know which models they are launching.
+    active_url: str | None = None
+    if interactive and not endpoint_url:
+        # check the user's host ports to see if anything is actively running there,
+        # priority is given by the ordering of the hostports
+        url = ctx.obj.config.serve.api_base()
+        user_wants_to_use_served_model = check_if_user_wants_to_use_model_at_server(
+            url=url,
+            api_key=api_key,
+            http_params={
+                "tls_client_key": tls_client_key,
+                "tls_client_cert": tls_client_cert,
+                "tls_client_passwd": tls_client_passwd,
+                "tls_insecure": tls_insecure,
+            },
+        )
+        if user_wants_to_use_served_model:
+            active_url = url
+
+    else:
+        click.secho(
+            "Skipping automatic search for existing model servers in non-interactive mode. Please provide the model directly with `ilab data generate --model`.",
+            fg="yellow",
+        )
+
     if endpoint_url:
         api_base = endpoint_url
+    elif active_url:
+        api_base = active_url
     else:
         # First Party
         from instructlab.model.backends import backends

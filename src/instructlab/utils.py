@@ -28,6 +28,9 @@ import gitdb
 import httpx
 import yaml
 
+# First Party
+from instructlab import client as ilabclient
+
 # Local
 from . import common
 
@@ -833,3 +836,31 @@ def clear_directory(path: pathlib.Path) -> None:
     if path.exists():
         shutil.rmtree(path)
     os.makedirs(path)
+
+
+def is_openai_server_and_serving_model(
+    endpoint: str, api_key: str, http_params: HttpClientParams
+) -> bool:
+    """
+    Given an endpoint, returns whether or not the server is OpenAI-compatible
+    and is actively serving at least one model.
+    """
+    try:
+        models = ilabclient.list_models(
+            endpoint, api_key=api_key, http_client=http_client(http_params)
+        )
+        return len(models.data) > 0
+    except ilabclient.ClientException:
+        return False
+
+
+def is_valid_path(p: str) -> bool:
+    """
+    Determines whether the given string is a valid path or not.
+    This allows us to safely cast it into a `Path` object and perform Path operations on it.
+    """
+    try:
+        Path(p)
+    except Exception:
+        return False
+    return True
