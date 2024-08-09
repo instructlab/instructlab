@@ -302,7 +302,7 @@ class _serve_vllm(BaseModel):
     max_startup_attempts: int | None = None
     gpus: Optional[int] = None
     # arguments to pass into vllm process
-    vllm_args: list[str] | None = None
+    vllm_args: list[str] | None = Field(default_factory=lambda: [])
 
 
 class _serve_llama_cpp(BaseModel):
@@ -323,7 +323,6 @@ class _serve(BaseModel):
     vllm: _serve_vllm = _serve_vllm(
         llm_family="",
         max_startup_attempts=300,
-        vllm_args=[],
     )
 
     # llama-cpp configuration
@@ -654,7 +653,6 @@ def get_default_config() -> Config:
             vllm=_serve_vllm(
                 llm_family="",
                 max_startup_attempts=300,
-                vllm_args=[],
             ),
         ),
         train=_train(
