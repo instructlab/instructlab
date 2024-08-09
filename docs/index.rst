@@ -6,6 +6,7 @@ Welcome to InstructLab's documentation!
    :caption: Contents:
 
    ilab.rst
+   config.rst
    gpu-acceleration.md
    amd-rocm.md
    habana-gaudi.md

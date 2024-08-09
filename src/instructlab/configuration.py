@@ -236,7 +236,7 @@ class _general(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     # additional fields with defaults
-    log_level: StrictStr = "INFO"
+    log_level: str = "INFO"
     debug_level: int = 0
 
     @field_validator("log_level")
@@ -281,9 +281,10 @@ class _chat(BaseModel):
     visible_overflow: bool = True
     context: str = "default"
     session: typing.Optional[str] = None
-    logs_dir: str = Field(
-        default_factory=lambda: DEFAULTS.CHATLOGS_DIR
-    )  # use a lambda to avoid caching
+
+    logs_dir: str = Field(default_factory=lambda: DEFAULTS.CHATLOGS_DIR)
+    "Path to log directory for chat logs"
+
     greedy_mode: bool = False
     max_tokens: typing.Optional[int] = None
 
@@ -302,13 +303,21 @@ class _serve_vllm(BaseModel):
     max_startup_attempts: int | None = None
     gpus: Optional[int] = None
     # arguments to pass into vllm process
-    vllm_args: list[str] | None = None
+    vllm_args: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Additional command line arguments for vLLM, see "
+            "`command line arguments for server <https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html#command-line-arguments-for-the-server>`_"
+        ),
+    )
 
 
 class _serve_llama_cpp(BaseModel):
     """Class describing configuration of llama-cpp serving backend."""
 
     gpu_layers: int = -1
+    "Number of layers to offload to GPU, -1: offload all layers."
+
     max_ctx_size: PositiveInt = 4096
     llm_family: str = ""
 
@@ -641,11 +650,7 @@ def get_default_config() -> Config:
         ),
         serve=_serve(
             model_path=DEFAULTS.DEFAULT_MODEL,
-            llama_cpp=_serve_llama_cpp(
-                gpu_layers=-1,
-                max_ctx_size=4096,
-                llm_family="",
-            ),
+            llama_cpp=_serve_llama_cpp(),
             vllm=_serve_vllm(
                 llm_family="",
                 max_startup_attempts=300,
