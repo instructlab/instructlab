@@ -13,6 +13,7 @@ import click
 from instructlab import clickext, log, utils
 from instructlab.model.backends import backends
 from instructlab.model.backends.backends import ServerException
+from instructlab.configuration import _loRaAdapter
 
 logger = logging.getLogger(__name__)
 
@@ -101,6 +102,14 @@ signal.signal(signal.SIGTERM, signal_handler)
     config_sections="vllm",
     help="Number of GPUs to use when serving this model",
 )
+@click.option(
+    "--lora-adapters",
+    "-la",
+    type=(str, str),
+    multiple=True,
+    help="LoRA adapters to supplement served model. Supplied as one or more key value pairs",
+    default=None
+)
 @click.pass_context
 @clickext.display_params
 def serve(
@@ -114,6 +123,7 @@ def serve(
     backend: str | None,
     chat_template: str | None,
     gpus: int | None,
+    lora_adapters: list[_loRaAdapter], 
 ) -> None:
     """Starts a local server
 
@@ -148,8 +158,22 @@ def serve(
 
     logger.info(f"Serving model '{model_path}' with {backend}")
 
+    print(lora_adapters)
+    # accept lora adapters from flags, or default to adapters from config 
+    # adapters = dict(lora_adapters) if lora_adapters is not None else  adapters.update(a._get_dict() for a in ctx.obj.config.serve.lora_adapters)
+    adapters = {k: v for a in ctx.obj.config.serve.lora_adapters for k, v in a._get_dict().items()}
+
+
+    print(adapters)
+    
+    
+    exit(0)
+
     backend_instance: backends.BackendServer
     if backend == backends.LLAMA_CPP:
+        if lora_adapters:
+            logger.debug("LoRA adapters specified, but not supported when serving backend is Llama cpp. Ignoring adapters")
+
         if ctx.args:
             ctx.fail(f"Unsupported extra arguments: {', '.join(ctx.args)}")
         backend_instance = llama_cpp.Server(
@@ -205,6 +229,7 @@ def serve(
             vllm_args=vllm_args,
             host=host,
             port=port,
+            lora_adapters=lora_adapters
         )
     else:
         click.secho(f"Unknown backend: {backend}", fg="red")

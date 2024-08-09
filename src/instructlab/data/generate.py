@@ -164,6 +164,12 @@ logger = logging.getLogger(__name__)
     config_sections="teacher.vllm",
     help="Number of GPUs to run generation on",
 )
+@click.option(
+    "--lora-adapters",
+    type=(str, str),
+    multiple=True,
+    help="LoRA adapters to supplement teacher model. Supplied as one or more key value pairs"
+)
 @click.pass_context
 @clickext.display_params
 def generate(
@@ -191,6 +197,7 @@ def generate(
     enable_serving_output,
     batch_size,
     gpus,
+    lora_adapters,
 ):
     """Generates synthetic data to enhance your example data"""
     # pylint: disable=import-outside-toplevel
@@ -236,35 +243,39 @@ def generate(
         from instructlab.model.backends.llama_cpp import Server as llama_cpp_server
         from instructlab.model.backends.vllm import contains_argument
 
-        # TODO (cdoern): we really should not edit the cfg object
-        gen_cfg = copy.deepcopy(ctx.obj.config)
-        gen_cfg.generate.teacher.llama_cpp.llm_family = (
-            model_family or gen_cfg.generate.teacher.llama_cpp.llm_family
-        )
-        gen_cfg.generate.teacher.vllm.llm_family = (
-            model_family or gen_cfg.generate.teacher.vllm.llm_family
-        )
-        gen_cfg.generate.teacher.vllm.vllm_args = (
-            gen_cfg.generate.teacher.vllm.vllm_args or []
-        )
-        if gpus is not None:
-            tps_prefix = "--tensor-parallel-size"
-            if contains_argument(tps_prefix, gen_cfg.generate.teacher.vllm.vllm_args):
-                click.secho(
-                    "Using gpus from --gpus. Ignoring --tensor-parallel-size configured in generate.teacher vllm_args",
-                    fg="yellow",
-                )
-            gen_cfg.generate.teacher.vllm.vllm_args.extend([tps_prefix, str(gpus)])
+        # get base backend instance that uses cfg defaults first
         backend_instance = backends.select_backend(
-            cfg=gen_cfg.generate.teacher, model_path=model_path
+            cfg=ctx.obj.config.generate.teacher, backend=backends.VLLM, model_path=model_path
         )
-        if (
-            backend_instance.get_backend_type() is not backends.VLLM
-            and gpus is not None
-        ):
-            logger.debug(
-                "Cannot specify '--gpus' with a llama-cpp backend, ignoring this flag."
-            )
+
+        # apply overrides next, if any
+        backend_instance.model_family = model_family or backend_instance.model_family
+
+        if backend_instance.get_backend_type() is backends.LLAMA_CPP:
+            if gpus is not None:
+               logger.debug(
+                    "Cannot specify '--gpus' with a llama-cpp backend, ignoring this flag."
+                )
+
+            if lora_adapters is not None:
+               logger.debug(
+                    "Cannot specify '--lora-adapters' with a llama-cpp backend, ignoring this flag."
+                )
+        elif backend_instance.get_backend_type() is backends.VLLM:
+            if gpus is not None:
+                tps_prefix = "--tensor-parallel-size"
+                if contains_argument(tps_prefix, backend_instance.vllm_args):
+                    click.secho(
+                        "Using gpus from --gpus. Ignoring --tensor-parallel-size configured in generate.teacher vllm_args",
+                        fg="yellow",
+                    )
+                backend_instance.vllm_args.extend([tps_prefix, str(gpus)])
+
+            backend_instance.lora_adapters = lora_adapters or backend_instance.lora_adapters
+
+        print("&&&&&&&&&&&&&&")
+        print(backend_instance.lora_adapters)
+        exit(0)
 
         try:
             # Run the backend server

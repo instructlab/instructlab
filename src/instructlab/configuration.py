@@ -295,6 +295,14 @@ class _chat(BaseModel):
         return finish_cfg_section(defaults, values)
 
 
+class _loRaAdapter(BaseModel):
+    """Class describing LoRA adapters to be passed to vLLM"""
+    name: str = ""
+    path: str = ""
+
+    def _get_dict(self):
+        return {self.name : self.path}
+
 class _serve_vllm(BaseModel):
     """Class describing configuration of vllm serving backend."""
 
@@ -340,6 +348,10 @@ class _serve(BaseModel):
     backend: Optional[str] = (
         None  # we don't set a default value here since it's auto-detected
     )
+
+    # optional list of LoRA adapters to pass in addition to teacher model 
+    # only compatible with vLLM backend 
+    lora_adapters: Optional[list[_loRaAdapter]]
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
@@ -583,11 +595,18 @@ class Config(BaseModel):
                 "model_path": DEFAULTS.DEFAULT_MODEL,
                 "llama_cpp": {"gpu_layers": -1, "max_ctx_size": 4096, "llm_family": ""},
                 "vllm": {"llm_family": "", "vllm_args": []},
+                "lora_adapters": [],
             },
             "generate": {
                 "model": DEFAULTS.DEFAULT_MODEL,
                 "taxonomy_path": DEFAULTS.TAXONOMY_DIR,
                 "taxonomy_base": DEFAULTS.TAXONOMY_BASE,
+                "teacher": {
+                    "model_path": DEFAULTS.DEFAULT_MODEL,
+                    "llama_cpp": {"gpu_layers": -1, "max_ctx_size": 4096, "llm_family": ""},
+                    "vllm": {"llm_family": "", "vllm_args": []},
+                    "lora_adapters": [],
+                },
             },
             "evaluate": {
                 "model": DEFAULTS.DEFAULT_MODEL,

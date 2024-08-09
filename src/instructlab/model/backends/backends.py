@@ -581,6 +581,7 @@ def select_backend(
             host=host,
             port=port,
             max_startup_attempts=cfg.vllm.max_startup_attempts,
+            lora_adapters=cfg.lora_adapters
         )
     click.secho(f"Unknown backend: {backend}", fg="red")
     raise click.exceptions.Exit(1)
