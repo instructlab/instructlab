@@ -86,7 +86,7 @@ jobs:
         if: startsWith(matrix.platform, 'ubuntu')
         run: |
           sudo apt-get install libgpgme-dev libassuan-dev libbtrfs-dev libdevmapper-dev pkg-config -y
-          git clone --depth 1 https://github.com/containers/skopeo -b v1.15.0 "$GITHUB_WORKSPACE"/src/github.com/containers/skopeo
+          git clone --depth 1 https://github.com/containers/skopeo -b v1.9.0 "$GITHUB_WORKSPACE"/src/github.com/containers/skopeo
           cd "$GITHUB_WORKSPACE"/src/github.com/containers/skopeo
           make bin/skopeo
           sudo install -D -m 755 bin/skopeo /usr/bin/skopeo
@@ -128,10 +128,10 @@ jobs:
         run: |
           mkdir -p ~/.config/instructlab
           echo "broken" > ~/.config/instructlab/config.yaml
-          
+
           mkdir -p ~/.cache
           echo "not a directory" > ~/.cache/instructlab
-          
+
           mkdir -p ~/.local/share
           echo "not a directory" > ~/.local/share/instructlab
 
