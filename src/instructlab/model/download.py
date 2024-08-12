@@ -205,7 +205,7 @@ class OCIDownloader(Downloader):
         oci_dir = f"{DEFAULTS.OCI_DIR}/{model_name}"
         os.makedirs(oci_dir, exist_ok=True)
 
-        # Check if skopeo is installed and the version is at least 1.15
+        # Check if skopeo is installed and the version is at least 1.9
         check_skopeo_version()
 
         command = [
@@ -316,15 +316,13 @@ def download(ctx, repository, release, filename, model_dir, hf_token):
         raise click.exceptions.Exit(1)
 
 
-_RECOMMENDED_SCOPEO_VERSION = "1.15.0"
+_RECOMMENDED_SCOPEO_VERSION = "1.9.0"
 
 
 def check_skopeo_version():
     """
-    Check if skopeo is installed and the version is at least 1.15.0
+    Check if skopeo is installed and the version is at least 1.9.0
     This is required for downloading models from OCI registries.
-    The function intentionally does not raise an exception if the version is lower than 1.15, other
-    versions might work as well, but it is recommended to use at least 1.15.0
     """
     # Run the 'skopeo --version' command and capture the output
     try:
@@ -350,8 +348,8 @@ def check_skopeo_version():
         if version.parse(installed_version) < version.parse(
             _RECOMMENDED_SCOPEO_VERSION
         ):
-            logger.warning(
-                f"skopeo version {installed_version} is lower than {_RECOMMENDED_SCOPEO_VERSION}. Consider upgrading. Downloading the model might fail."
+            raise ValueError(
+                f"skopeo version {installed_version} is lower than {_RECOMMENDED_SCOPEO_VERSION}. Please upgrade it."
             )
     else:
         logger.warning(
