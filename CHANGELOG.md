@@ -9,6 +9,8 @@
 
 ### Features
 
+* A new `ilab shell` command is introduced as a convenience feature, which start an interactive
+   Read-Eval-Print Loop interface for the ilab CLI.
 * `ilab data generate` now supports parallelized data generation across batches of the seed
    data when running with a the vLLM serving. The `--batch-size` argument can be used to
    control this behavior.

@@ -6,6 +6,7 @@
 import multiprocessing
 
 # Third Party
+from click_repl import repl  # type: ignore
 import click
 
 # First Party
@@ -48,3 +49,17 @@ def ilab(ctx, config_file, debug_level: int = 0):
     If this is your first time running ilab, it's best to start with `ilab config init` to create the environment.
     """
     cfg.init(ctx, config_file, debug_level)
+
+
+# Register the REPL with a custom prompt
+def ilab_prompt():
+    return "ilab # "
+
+
+@ilab.command()
+def shell():
+    """Command Group for Interacting with the ilab REPL (Read-Eval-Print Loop) interface."""
+    prompt_kwargs = {
+        "message": ilab_prompt(),
+    }
+    repl(click.get_current_context(), prompt_kwargs=prompt_kwargs)
