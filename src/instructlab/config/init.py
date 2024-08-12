@@ -104,6 +104,7 @@ def init(
     else:
         try:
             model_path, taxonomy_path, cfg = get_params(
+                param_source,
                 interactive,
                 repository,
                 min_taxonomy,
@@ -191,6 +192,7 @@ def get_params_from_env(
 
 
 def get_params(
+    param_source: click.core.ParameterSource,
     interactive: bool,
     repository: str,
     min_taxonomy: bool,
@@ -210,9 +212,10 @@ def get_params(
             "Please provide the following values to initiate the "
             "environment [press Enter for defaults]:"
         )
-        taxonomy_path = utils.expand_path(
-            click.prompt("Path to taxonomy repo", default=taxonomy_path)
-        )
+        if param_source != click.core.ParameterSource.ENVIRONMENT:
+            taxonomy_path = utils.expand_path(
+                click.prompt("Path to taxonomy repo", default=taxonomy_path)
+            )
 
     try:
         taxonomy_contents = listdir(taxonomy_path)
@@ -220,7 +223,7 @@ def get_params(
         taxonomy_contents = []
     if taxonomy_contents:
         clone_taxonomy_repo = False
-    elif interactive:
+    elif interactive and param_source != click.core.ParameterSource.ENVIRONMENT:
         clone_taxonomy_repo = click.confirm(
             f"`{taxonomy_path}` seems to not exist or is empty. Should I clone {repository} for you?",
             default=True,
@@ -245,7 +248,11 @@ def get_params(
 
     # check if models dir exists, and if so ask for which model to use
     models_dir = dirname(model_path)
-    if interactive and exists(models_dir):
+    if (
+        interactive
+        and exists(models_dir)
+        and param_source != click.core.ParameterSource.ENVIRONMENT
+    ):
         model_path = utils.expand_path(
             click.prompt("Path to your model", default=model_path)
         )
