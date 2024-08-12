@@ -29,7 +29,7 @@ class TestLabInit:
 
     @patch("instructlab.config.init.Repo.clone_from")
     def test_init_interactive(self, mock_clone_from, cli_runner: CliRunner):
-        result = cli_runner.invoke(lab.ilab, ["init"], input="y\n\nn")
+        result = cli_runner.invoke(lab.ilab, ["init"], input="\nn")
         assert result.exit_code == 0
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
         assert "taxonomy" not in os.listdir()
@@ -66,16 +66,14 @@ class TestLabInit:
         self, mock_clone_from, cli_runner: CliRunner
     ):
         os.makedirs(f"{DEFAULTS.TAXONOMY_DIR}/contents")
-        result = cli_runner.invoke(lab.ilab, ["init"], input="y\n\n")
+        result = cli_runner.invoke(lab.ilab, ["init"], input="\n\n")
         assert result.exit_code == 0
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
         assert "taxonomy" in os.listdir(DEFAULTS._data_dir)
         mock_clone_from.assert_not_called()
 
     def test_init_interactive_with_preexisting_config(self, cli_runner: CliRunner):
-        result = cli_runner.invoke(
-            lab.ilab, ["init"], input="y\nnon-default-taxonomy\nn"
-        )
+        result = cli_runner.invoke(lab.ilab, ["init"], input="non-default-taxonomy\nn")
         assert result.exit_code == 0
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
         config = read_config(DEFAULTS.CONFIG_FILE)

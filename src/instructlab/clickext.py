@@ -15,6 +15,9 @@ from click.core import ParameterSource
 from click_didyoumean import DYMGroup
 import click
 
+# First Party
+from instructlab.configuration import DEFAULTS, storage_dirs_exist
+
 logger = logging.getLogger(__name__)
 
 
@@ -76,6 +79,17 @@ class ExpandAliasesGroup(LazyEntryPointGroup):
                 "in a future release. Please consider using "
                 f"`ilab {group} {primary}` instead"
             )
+            # if some storage dirs do not exist
+            # AND the command is not `ilab init`
+            # AND the --config flag is not customized, then we error
+            if not storage_dirs_exist() and (
+                primary != "init" and ctx.params["config_file"] == DEFAULTS.CONFIG_FILE
+            ):
+                click.secho(
+                    "Some ilab storage directories do not exist yet. Please run `ilab config init` before continuing.",
+                    fg="red",
+                )
+                raise click.exceptions.Exit(1)
             return cmd
         return super().get_command(ctx, cmd_name)
 

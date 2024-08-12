@@ -59,6 +59,7 @@ class Command(typing.NamedTuple):
     args: tuple[str, ...]
     extra_args: tuple[str, ...] = ()
     needs_config: bool = True
+    should_fail: bool = True
 
     def get_args(self, *extra, default_config: bool = True) -> list[str]:
         args = []
@@ -78,12 +79,12 @@ class Command(typing.NamedTuple):
 subcommands: list[Command] = [
     # split first and second level for nicer pytest output
     # first, second, extra args
-    Command((), needs_config=False),
-    Command(("config",), needs_config=False),
+    Command((), needs_config=False, should_fail=False),
+    Command(("config",), needs_config=False, should_fail=False),
     Command(("config", "edit")),
-    Command(("config", "init"), needs_config=False),
+    Command(("config", "init"), needs_config=False, should_fail=False),
     Command(("config", "show")),
-    Command(("model",), needs_config=False),
+    Command(("model",), needs_config=False, should_fail=False),
     Command(("model", "chat")),
     Command(("model", "convert"), ("--model-dir", "test")),
     Command(("model", "download")),
@@ -92,12 +93,12 @@ subcommands: list[Command] = [
     Command(("model", "test")),
     Command(("model", "train")),
     Command(("model", "list")),
-    Command(("data",), needs_config=False),
+    Command(("data",), needs_config=False, should_fail=False),
     Command(("data", "generate")),
     Command(("data", "list")),
-    Command(("system",), needs_config=False),
-    Command(("system", "info"), needs_config=False),
-    Command(("taxonomy",), needs_config=False),
+    Command(("system",), needs_config=False, should_fail=False),
+    Command(("system", "info"), needs_config=False, should_fail=False),
+    Command(("taxonomy",), needs_config=False, should_fail=False),
     Command(("taxonomy", "diff")),
 ]
 
@@ -188,4 +189,12 @@ def test_ilab_missing_config(command: Command, cli_runner: CliRunner) -> None:
         assert result.exit_code == 2, result
         assert "does not exist or is not a readable file" in result.stdout
     else:
-        assert result.exit_code == 0, result
+        # should fail due to missing dirs
+        if command.should_fail:
+            assert result.exit_code == 1, result
+            assert (
+                "Some ilab storage directories do not exist yet. Please run `ilab config init` before continuing."
+                in result.stdout
+            )
+        else:
+            assert result.exit_code == 0, result

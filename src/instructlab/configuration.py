@@ -90,6 +90,20 @@ class _InstructlabDefaults:
 
     # When otherwise unknown, ilab uses this as the default family
     MODEL_FAMILY = "merlinite"
+    ADDITIONAL_ARGS_DEFAULTS = {
+        "learning_rate": 2e-5,
+        "warmup_steps": 25,
+        "random_seed": 42,
+        "node_rank": 0,
+        "nnodes": 1,
+        "rdzv_id": 123,
+        "rdzv_endpoint": "127.0.0.1:12222",
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": False,
+        "lora_alpha": 32,
+        "lora_dropout": 0.1,
+        "lora_target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"],
+    }
 
     def __init__(self):
         self._reset()
@@ -796,7 +810,7 @@ def get_model_family(family, model_path):
     return guess if guess in MODEL_FAMILIES else DEFAULTS.MODEL_FAMILY
 
 
-def ensure_storage_directories_exist():
+def ensure_storage_directories_exist() -> bool:
     """
     Ensures that the default directories used by ilab exist.
     """
@@ -821,33 +835,21 @@ def ensure_storage_directories_exist():
     for dirpath in dirs_to_make:
         if not os.path.exists(dirpath):
             os.makedirs(dirpath, exist_ok=True)
-    additional_args_and_defaults = {
-        "learning_rate": 2e-5,
-        "warmup_steps": 25,
-        "random_seed": 42,
-        "node_rank": 0,
-        "nnodes": 1,
-        "rdzv_id": 123,
-        "rdzv_endpoint": "127.0.0.1:12222",
-        "deepspeed_cpu_offload_optimizer_ratio": 1,
-        "deepspeed_cpu_offload_optimizer_pin_memory": False,
-        "lora_alpha": 32,
-        "lora_dropout": 0.1,
-        "lora_target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"],
-    }
 
-    recreate_train_profiles()
+    fresh_install = recreate_train_profiles()
 
     # create expert_args file for users to see/edit
     if not os.path.isfile(DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE):
         with open(
             DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE, "w", encoding="utf-8"
         ) as outfile:
-            yaml.dump(additional_args_and_defaults, outfile)
+            yaml.dump(DEFAULTS.ADDITIONAL_ARGS_DEFAULTS, outfile)
+
+    return fresh_install
 
 
 # recreate_train_profiles creates all train profiles in the proper directory and takes an argument, overwrite, which will write to the files even if they already exist
-def recreate_train_profiles(overwrite: bool = False):
+def recreate_train_profiles(overwrite: bool = False) -> bool:
     TRAIN_DIR_EXPECTED_FILES = {
         "A100_H100_x8.yaml",
         "A100_H100_x4.yaml",
@@ -857,6 +859,7 @@ def recreate_train_profiles(overwrite: bool = False):
         "L4_x8.yaml",
     }
 
+    fresh_install = False
     profile_dir = os.environ.get(DEFAULTS.ILAB_TRAIN_PROFILE_DIR)
     if profile_dir != "" and profile_dir is not None:
         # the train dir exists, read it
@@ -866,6 +869,9 @@ def recreate_train_profiles(overwrite: bool = False):
             tmpl_file = os.path.join(profile_dir, file)
             train_cfg = read_train_profile(tmpl_file)
             if not os.path.isfile(new_file):
+                # If any of the train profiles are missing, treat this as a new system. We do not want to
+                # prompt the user TWICE if they want to overwrite the train profiles.
+                fresh_install = True
                 with open(new_file, "w", encoding="utf-8") as outfile:
                     d = train_cfg.model_dump_json()
                     loaded = yaml.load(d, Loader=yaml.SafeLoader)
@@ -1039,10 +1045,14 @@ def recreate_train_profiles(overwrite: bool = False):
 
         for file, train_cfg in to_write.items():
             if not os.path.isfile(file) or overwrite:
+                # If any of the train profiles are missing, treat this as a new system. We do not want to
+                # prompt the user TWICE if they want to overwrite the train profiles.
+                fresh_install = True
                 with open(file, "w", encoding="utf-8") as outfile:
                     d = train_cfg.model_dump_json()
                     loaded = yaml.load(d, Loader=yaml.SafeLoader)
                     yaml.dump(loaded, outfile)
+    return fresh_install
 
 
 class Lab:
@@ -1075,17 +1085,22 @@ def init(
 ) -> None:
     config_obj: Config
     error_msg: str | None = None
-    ensure_storage_directories_exist()
     if config_file == "DEFAULT":
+        # if user passed --config DEFAULT we should ensure all proper dirs are created
+        ensure_storage_directories_exist()
         config_obj = get_default_config()
     elif os.path.isfile(config_file):
         try:
+            # only create dirs if the user passed --config <some_file_other_than_default>
+            if config_file != DEFAULTS.CONFIG_FILE:
+                ensure_storage_directories_exist()
             config_obj = read_config(config_file)
         except ConfigException as e:
             # delayed, so ilab config init can override a broken config.
             config_obj = get_default_config()
             error_msg = str(e)
     else:
+        # if the user is running a cmd without --config then we should NOT create the persistent storage dirs for them, they must run `ilab config init`
         config_obj = get_default_config()
         error_msg = (
             f"`{config_file}` does not exist or is not a readable file.\n"
@@ -1167,13 +1182,39 @@ def map_train_to_library(ctx, params):
 
 
 def finish_additional_train_args(current_additional):
-    with open(
-        DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE, "r", encoding="utf-8"
-    ) as yamlfile:
-        content = yaml.safe_load(yamlfile)
-        _expand_paths(content)
-    for key, val in content.items():
+    additional_args_and_defaults = {}
+    try:
+        with open(
+            DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE, "r", encoding="utf-8"
+        ) as yamlfile:
+            additional_args_and_defaults = yaml.safe_load(yamlfile)
+    except FileNotFoundError:
+        additional_args_and_defaults = DEFAULTS.ADDITIONAL_ARGS_DEFAULTS
+        # user has not run `ilab config init`, yet. This should only happen once
+    _expand_paths(additional_args_and_defaults)
+    for key, val in additional_args_and_defaults.items():
         if key not in current_additional:
             current_additional[key] = val
 
     return current_additional
+
+
+def storage_dirs_exist() -> bool:
+    dirs_to_check = [
+        DEFAULTS._cache_home,
+        DEFAULTS._config_dir,
+        DEFAULTS._data_dir,
+        DEFAULTS.CHATLOGS_DIR,
+        DEFAULTS.CHECKPOINTS_DIR,
+        DEFAULTS.OCI_DIR,
+        DEFAULTS.DATASETS_DIR,
+        DEFAULTS.EVAL_DATA_DIR,
+        DEFAULTS.INTERNAL_DIR,
+        DEFAULTS.MODELS_DIR,
+        DEFAULTS.TAXONOMY_DIR,
+        DEFAULTS.TRAIN_CONFIG_DIR,
+        DEFAULTS.TRAIN_PROFILE_DIR,
+        DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_DIR,
+        DEFAULTS.PHASED_DIR,
+    ]
+    return all(os.path.exists(dirpath) for dirpath in dirs_to_check)

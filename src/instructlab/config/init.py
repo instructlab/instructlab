@@ -93,12 +93,12 @@ def init(
     config_file,
 ):
     """Initializes environment for InstructLab"""
-    ensure_storage_directories_exist()
+    fresh_install = ensure_storage_directories_exist()
     param_source = ctx.get_parameter_source("config_file")
     try:
-        overwrite = False
+        overwrite_profile = False
         if interactive:
-            overwrite = check_if_configs_exist()
+            overwrite_profile = check_if_configs_exist(fresh_install)
     except click.exceptions.Exit as e:
         ctx.exit(e.exit_code)
     else:
@@ -114,7 +114,7 @@ def init(
             )
         except click.exceptions.Exit as e:
             ctx.exit(e.exit_code)
-    if overwrite:
+    if overwrite_profile:
         click.echo(
             f"Generating `{DEFAULTS.CONFIG_FILE}` and `{DEFAULTS.TRAIN_PROFILE_DIR}`..."
         )
@@ -165,18 +165,19 @@ def init(
     )
 
 
-def check_if_configs_exist() -> bool:
+def check_if_configs_exist(fresh_install) -> bool:
     if exists(DEFAULTS.CONFIG_FILE):
         overwrite = click.confirm(
             f"Found {DEFAULTS.CONFIG_FILE}, do you still want to continue?"
         )
         if not overwrite:
             raise click.exceptions.Exit(0)
-    if exists(DEFAULTS.TRAIN_PROFILE_DIR):
+    if exists(DEFAULTS.TRAIN_PROFILE_DIR) and not fresh_install:
         return click.confirm(
             f"Found {DEFAULTS.TRAIN_PROFILE_DIR}, do you also want to reset existing profiles?"
         )
-    return True
+    # default behavior should be do NOT overwrite files that could have just been created
+    return False
 
 
 def get_params_from_env(
