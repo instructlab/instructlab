@@ -25,7 +25,6 @@ permissions:
 
 jobs:
   spellcheck:
-    name: Spellcheck (en_US)
     runs-on: ubuntu-latest
     steps:
       - name: "Harden Runner"
