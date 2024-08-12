@@ -152,6 +152,7 @@ def init(
     if param_source != click.core.ParameterSource.ENVIRONMENT:
         cfg.chat.model = model_path
         cfg.generate.model = model_path
+        cfg.generate.teacher.model_path = model_path
         cfg.serve.model_path = model_path
         cfg.evaluate.model = model_path
     cfg.generate.taxonomy_path = taxonomy_path
