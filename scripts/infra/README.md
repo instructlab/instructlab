@@ -55,11 +55,14 @@ Either way, you'll need to edit the config to reference your cloud environment(s
 
 `scripts/infra/cloud-instance.sh <cloud-type> <command> [options]`
 
-Example:
+### Example
+
+The following example commands assume AWS usage (`ec2`) but should also work with IBM Cloud (`ibm`)
 
 ```bash
-# Launch a new instance with your `EC2_INSTANCE_NAME` and `EC2_INSTANCE_TYPE` specified
-# in config with the instance type including Nvidia GPU(s)
+# Launch a new instance with the instance type in config including Nvidia GPU(s)
+# Will use `EC2_INSTANCE_NAME` and `EC2_INSTANCE_TYPE` if `ec2` is specified
+# Will use `IBM_INSTANCE_NAME` and `IBM_INSTANCE_PROFILE_NAME` if `ibm` is specified
 scripts/infra/cloud-instance.sh ec2 launch
 # Clone instructlab onto the instance and setup the development environment
 scripts/infra/cloud-instance.sh ec2 setup-rh-devenv

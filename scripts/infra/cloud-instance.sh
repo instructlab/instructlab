@@ -199,7 +199,7 @@ ibm__stop() {
 
 ibm__start() {
     handle_help_and_instance_name_opts "$@"
-    ibmcloud is instance-start -f "$INSTANCE_NAME"
+    ibmcloud is instance-start "$INSTANCE_NAME"
 }
 
 ibm__terminate() {
@@ -228,11 +228,10 @@ ibm__launch() {
             ;;
         esac
     done
-
+    echo "Creating IBM Cloud VPC instance..."
     ibmcloud is instance-create "$INSTANCE_NAME" "$IBM_VPC_ID" "$IBM_ZONE" "$IBM_INSTANCE_PROFILE_NAME" "$IBM_SUBNET_ID" --image "$IBM_IMAGE_ID" --boot-volume '{"name": "boot-vol-attachment-name", "volume": {"name": "boot-vol", "capacity": 200, "profile": {"name": "general-purpose"}}}' --keys "$IBM_KEY_NAME" --pnac-vni-name "$INSTANCE_NAME"
-
+    echo "Attaching IBM Cloud VNI for new instance..."
     ibmcloud is virtual-network-interface-floating-ip-add "$INSTANCE_NAME" "$INSTANCE_NAME" "$IBM_FLOATING_IP_NAME"
-
     local i
     i=0
     echo "Waiting for instance to be in the 'running' state..."
@@ -261,6 +260,16 @@ ibm__ssh() {
     user_name="$(instance_user_name "ibm")"
     ibm_calculate_instance_public_dns
     ssh -o "StrictHostKeyChecking no" -i "$IBM_KEY_LOCATION" "$user_name"@"$PUBLIC_DNS" "$@"
+}
+
+ibm__scp() {
+    handle_help_and_instance_name_opts "$@"
+    shift $((OPTIND-1))
+
+    local user_name
+    user_name=$(instance_user_name "ibm")
+    ibm_calculate_instance_public_dns
+    scp -o "StrictHostKeyChecking no" -i "$IBM_KEY_LOCATION" "$@" "$user_name"@"$PUBLIC_DNS":
 }
 
 ibm_calculate_instance_public_dns() {
