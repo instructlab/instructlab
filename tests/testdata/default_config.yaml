@@ -1,93 +1,330 @@
+# Chat configuration section.
 chat:
+  # Predefined setting or environment that influences the behavior and responses of
+  # the chat assistant. Each context is associated with a specific prompt that
+  # guides the assistant on how to respond to user inputs.
+  # Default: default
   context: default
+  # Sets temperature to 0 if enabled, leading to more deterministic responses.
+  # Default: False
   greedy_mode: false
+  # Directory where chat logs are stored.
+  # Default: /data/instructlab/chatlogs
   logs_dir: /data/instructlab/chatlogs
-  max_tokens: null
+  # The maximum number of tokens that can be generated in the chat completion. Be
+  # aware that larger values use more memory.
+  # Default: None
+  max_tokens:
+  # Model to be used for chatting with.
+  # Default: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
   model: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
-  session: null
+  # Filepath of a dialog session file.
+  # Default: None
+  session:
+  # Enable vim keybindings for chat.
+  # Default: False
   vi_mode: false
+  # Renders vertical overflow if enabled, displays elipses otherwise.
+  # Default: True
   visible_overflow: true
+# Evaluate configuration section.
 evaluate:
-  base_branch: null
+  # Base taxonomy branch
+  # Default: None
+  base_branch:
+  # Directory where model to be used for evaluation is stored.
+  # Default: instructlab/granite-7b-lab
   base_model: instructlab/granite-7b-lab
-  branch: null
-  gpus: null
+  # Taxonomy branch containing custom skills/knowledge that should be used for
+  # evaluation runs.
+  # Default: None
+  branch:
+  # Number of GPUs to use for running evaluation.
+  # Default: None
+  gpus:
+  # MMLU benchmarking settings
   mmlu:
+    # Batch size for evaluation. Valid values are a positive integer or 'auto' to
+    # select the largest batch size that will fit in memory.
+    # Default: auto
     batch_size: auto
+    # Number of question-answer pairs provided in the context preceding the question
+    # used for evaluation.
+    # Default: 5
     few_shots: 5
+  # Settings to run MMLU against a branch of taxonomy containing custom
+  # skills/knowledge used for training.
   mmlu_branch:
+    # Directory where custom MMLU tasks are stored.
+    # Default: /data/instructlab/datasets
     tasks_dir: /data/instructlab/datasets
-  model: null
+  # Model to be used for evaluation.
+  # Default: None
+  model:
+  # Multi-turn benchmarking settings for skills.
   mt_bench:
+    # Directory where model to be used as judge is stored.
+    # Default: prometheus-eval/prometheus-8x7b-v2.0
     judge_model: /cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
+    # Number of workers to use for evaluation.
+    # Default: 16
     max_workers: 16
+    # Directory where evaluation results are stored.
+    # Default: /data/instructlab/internal/eval_data
     output_dir: /data/instructlab/internal/eval_data
+  # Settings to run MT-Bench against a branch of taxonomy containing custom
+  # skills/knowledge used for training
   mt_bench_branch:
+    # Path to where base taxonomy is stored.
+    # Default: /data/instructlab/taxonomy
     taxonomy_path: /data/instructlab/taxonomy
+# General configuration section.
 general:
+  # Debug level for logging.
+  # Default: 0
   debug_level: 0
+  # Log level for logging.
+  # Default: INFO
   log_level: INFO
+# Generate configuration section.
 generate:
+  # Maximum number of words per chunk.
+  # Default: 1000
   chunk_word_count: 1000
+  # Teacher model that will be used to synthetically generate training data.
+  # Default: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
   model: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+  # Number of CPU cores to use for generation.
+  # Default: 10
   num_cpus: 10
+  # Number of instructions to use
+  # Default: -1
+  # Deprecated: see 'sdg_scale_factor' instead
+  num_instructions: -1
+  # Directory where generated datasets are stored.
+  # Default: /data/instructlab/datasets
   output_dir: /data/instructlab/datasets
+  # Data generation pipeline to use. Available: 'simple', 'full', or a valid path to
+  # a directory of pipeline workflow YAML files. Note that 'full' requires a larger
+  # teacher model, Mixtral-8x7b.
+  # Default: simple
   pipeline: simple
+  # Path to prompt file to be used for generation.
+  # Default: /data/instructlab/internal/prompt.txt
   prompt_file: /data/instructlab/internal/prompt.txt
+  # The total number of instructions to be generated.
+  # Default: 30
   sdg_scale_factor: 30
+  # Path to seed file to be used for generation.
+  # Default: /data/instructlab/internal/seed_tasks.json
+  # Deprecated
   seed_file: /data/instructlab/internal/seed_tasks.json
+  # Branch of taxonomy used to calculate diff against.
+  # Default: origin/main
   taxonomy_base: origin/main
+  # Directory where taxonomy is stored and accessed from.
+  # Default: /data/instructlab/taxonomy
   taxonomy_path: /data/instructlab/taxonomy
+  # Teacher configuration
   teacher:
-    backend: null
-    chat_template: null
+    # Serving backend to use to host the model.
+    # Default: None
+    # Examples:
+    #   - vllm
+    #   - llama-cpp
+    backend:
+    # Chat template to supply to the model. Possible values: 'auto'(default),
+    # 'tokenizer', a path to a jinja2 file.
+    # Default: None
+    # Examples:
+    #   - auto
+    #   - tokenizer
+    #   - A filesystem path expressing the location of a custom template
+    chat_template:
+    # Host and port to serve on.
+    # Default: 127.0.0.1:8000
     host_port: 127.0.0.1:8000
+    # llama-cpp serving settings.
     llama_cpp:
+      # Number of model layers to offload to GPU. -1 means all layers.
+      # Default: -1
       gpu_layers: -1
+      # Large Language Model Family
+      # Default: ''
+      # Examples:
+      #   - merlinite
+      #   - granite
       llm_family: ''
+      # Maximum number of tokens that can be processed by the model.
+      # Default: 4096
       max_ctx_size: 4096
+    # Directory where model to be served is stored.
+    # Default: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
     model_path: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+    # vLLM serving settings.
     vllm:
-      gpus: null
+      # Number of GPUs to use.
+      # Default: None
+      gpus:
+      # Large Language Model Family
+      # Default: ''
+      # Examples:
+      #   - merlinite
+      #   - granite
       llm_family: ''
+      # Maximum number of attempts to start the vLLM server.
+      # Default: 120
       max_startup_attempts: 120
+      # vLLM specific arguments. All settings can be passed as a list of strings, see:
+      # https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html
+      # Default: []
+      # Examples:
+      #   - ['--dtype', 'auto']
+      #   - ['--lora-alpha', '32']
       vllm_args: []
+# Serve configuration section.
 serve:
-  backend: null
-  chat_template: null
+  # Serving backend to use to host the model.
+  # Default: None
+  # Examples:
+  #   - vllm
+  #   - llama-cpp
+  backend:
+  # Chat template to supply to the model. Possible values: 'auto'(default),
+  # 'tokenizer', a path to a jinja2 file.
+  # Default: None
+  # Examples:
+  #   - auto
+  #   - tokenizer
+  #   - A filesystem path expressing the location of a custom template
+  chat_template:
+  # Host and port to serve on.
+  # Default: 127.0.0.1:8000
   host_port: 127.0.0.1:8000
+  # llama-cpp serving settings.
   llama_cpp:
+    # Number of model layers to offload to GPU. -1 means all layers.
+    # Default: -1
     gpu_layers: -1
+    # Large Language Model Family
+    # Default: ''
+    # Examples:
+    #   - merlinite
+    #   - granite
     llm_family: ''
+    # Maximum number of tokens that can be processed by the model.
+    # Default: 4096
     max_ctx_size: 4096
+  # Directory where model to be served is stored.
+  # Default: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
   model_path: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+  # vLLM serving settings.
   vllm:
-    gpus: null
+    # Number of GPUs to use.
+    # Default: None
+    gpus:
+    # Large Language Model Family
+    # Default: ''
+    # Examples:
+    #   - merlinite
+    #   - granite
     llm_family: ''
+    # Maximum number of attempts to start the vLLM server.
+    # Default: 120
     max_startup_attempts: 120
+    # vLLM specific arguments. All settings can be passed as a list of strings, see:
+    # https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html
+    # Default: []
+    # Examples:
+    #   - ['--dtype', 'auto']
+    #   - ['--lora-alpha', '32']
     vllm_args: []
+# Train configuration section.
 train:
+  # Additional arguments to pass to the training script. These arguments are passed
+  # as key-value pairs to the training script.
+  # Default: {}
   additional_args: {}
+  # Save a checkpoint at the end of each epoch.
+  # Default: True
   checkpoint_at_epoch: true
+  # Directory where periodic training checkpoints are stored.
+  # Default: /data/instructlab/checkpoints
   ckpt_output_dir: /data/instructlab/checkpoints
+  # Directory where the processed training data is stored (post
+  # filtering/tokenization/masking).
+  # Default: /data/instructlab/internal
   data_output_dir: /data/instructlab/internal
+  # For the training library (primary training method), this specifies the path to
+  # the dataset file. For legacy training (MacOS/Linux), this specifies the path to
+  # the directory.
+  # Default: /data/instructlab/datasets
   data_path: /data/instructlab/datasets
+  # Allow CPU offload for deepspeed optimizer.
+  # Default: False
   deepspeed_cpu_offload_optimizer: false
+  # The number of samples in a batch that the model should see before its parameters
+  # are updated.
+  # Default: 3840
   effective_batch_size: 3840
+  # Boolean to indicate if the model being trained is a padding-free transformer
+  # model such as Granite.
+  # Default: False
   is_padding_free: false
+  # The data type for quantization in LoRA training. Valid options are 'None' and
+  # 'nf4'.
+  # Default: None
+  # Examples:
+  #   - nf4
   lora_quantize_dtype: nf4
+  # Rank of low rank matrices to be used during training.
+  # Default: None
   lora_rank: 4
+  # Maximum tokens per gpu for each batch that will be handled in a single step. If
+  # running into out-of-memory errors, this value can be lowered but not below the
+  # `max_seq_len`.
+  # Default: 10000
   max_batch_len: 10000
+  # Maximum sequence length to be included in the training set. Samples exceeding
+  # this length will be dropped.
+  # Default: 4096
   max_seq_len: 4096
+  # Directory where the model to be trained is stored.
+  # Default: instructlab/granite-7b-lab
   model_path: instructlab/granite-7b-lab
+  # Number of GPUs to use for training. This value is not supported in legacy
+  # training or MacOS.
+  # Default: 1
   nproc_per_node: 1
+  # Number of epochs to run training for.
+  # Default: 10
   num_epochs: 10
+  # Judge model path for phased MT-Bench evaluation.
+  # Default: None
   phased_mt_bench_judge: /cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
+  # Phased phase1 effective batch size.
+  # Default: 128
   phased_phase1_effective_batch_size: 128
+  # Number of epochs to run training for during phase1.
+  # Default: None
   phased_phase1_num_epochs: 10
+  # Number of samples the model should see before saving a checkpoint during phase1.
+  # Disabled when set to 0.
+  # Default: 0
   phased_phase1_samples_per_save: 0
+  # Phased phase2 effective batch size.
+  # Default: 3840
   phased_phase2_effective_batch_size: 3840
+  # Number of epochs to run training for during phase2.
+  # Default: None
   phased_phase2_num_epochs: 10
+  # Number of samples the model should see before saving a checkpoint during phase2.
+  # Disabled when set to 0.
+  # Default: 0
   phased_phase2_samples_per_save: 0
+  # Number of samples the model should see before saving a checkpoint.
+  # Default: 250000
   save_samples: 250000
+# Configuration file structure version.
+# Default: 1.0.0
 version: 1.0.0

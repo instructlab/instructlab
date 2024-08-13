@@ -3,9 +3,10 @@
 # Standard
 from os import path
 from re import match
-from typing import Optional
+from typing import Any, Optional, Union
 import os
 import sys
+import textwrap
 import typing
 
 # Third Party
@@ -26,10 +27,12 @@ from pydantic import (
     field_validator,
     model_validator,
 )
+from pydantic_core import PydanticUndefined
+from ruamel.yaml import YAML, CommentedMap
+from typing_extensions import deprecated as Deprecated
 import click
 import httpx
 import platformdirs
-import yaml
 
 # Local
 from . import log
@@ -37,7 +40,10 @@ from . import log
 ILAB_PACKAGE_NAME = "instructlab"
 CONFIG_FILENAME = "config.yaml"
 CONFIG_VERSION = "1.0.0"
-OPTIONAL_POSITIVE_INTEGER = Field(default=None, gt=0)
+
+# Initialize ruamel.yaml
+yaml = YAML()
+yaml.indent(mapping=2, sequence=4, offset=2)
 
 
 class STORAGE_DIR_NAMES:
@@ -248,10 +254,9 @@ class _general(BaseModel):
 
     # model configuration
     model_config = ConfigDict(extra="ignore")
-
     # additional fields with defaults
-    log_level: StrictStr = "INFO"
-    debug_level: int = 0
+    log_level: StrictStr = Field(default="INFO", description="Log level for logging.")
+    debug_level: int = Field(default=0, description="Debug level for logging.")
 
     @field_validator("log_level")
     def validate_log_level(cls, v):
@@ -286,20 +291,35 @@ class _chat(BaseModel):
 
     # model configuration
     model_config = ConfigDict(extra="ignore")
-
-    # required fields
-    model: str
-
+    model: str = Field(
+        default_factory=lambda: DEFAULTS.DEFAULT_MODEL,
+        description="Model to be used for chatting with.",
+    )
     # additional fields with defaults
-    vi_mode: bool = False
-    visible_overflow: bool = True
-    context: str = "default"
-    session: typing.Optional[str] = None
+    vi_mode: bool = Field(default=False, description="Enable vim keybindings for chat.")
+    visible_overflow: bool = Field(
+        default=True,
+        description="Renders vertical overflow if enabled, displays elipses otherwise.",
+    )
+    context: str = Field(
+        default="default",
+        description="Predefined setting or environment that influences the behavior and responses of the chat assistant. Each context is associated with a specific prompt that guides the assistant on how to respond to user inputs.",
+    )
+    session: typing.Optional[str] = Field(
+        default=None, description="Filepath of a dialog session file."
+    )
     logs_dir: str = Field(
-        default_factory=lambda: DEFAULTS.CHATLOGS_DIR
+        default_factory=lambda: DEFAULTS.CHATLOGS_DIR,
+        description="Directory where chat logs are stored.",
     )  # use a lambda to avoid caching
-    greedy_mode: bool = False
-    max_tokens: typing.Optional[int] = None
+    greedy_mode: bool = Field(
+        default=False,
+        description="Sets temperature to 0 if enabled, leading to more deterministic responses.",
+    )
+    max_tokens: typing.Optional[int] = Field(
+        default=None,
+        description="The maximum number of tokens that can be generated in the chat completion. Be aware that larger values use more memory.",
+    )
 
     @model_validator(mode="before")
     def fill_defaults(
@@ -312,19 +332,43 @@ class _chat(BaseModel):
 class _serve_vllm(BaseModel):
     """Class describing configuration of vllm serving backend."""
 
-    llm_family: str = ""
-    max_startup_attempts: int | None = None
-    gpus: Optional[int] = None
+    llm_family: str = Field(
+        default="",  # TODO: convert to None and use a pattern to validate
+        description="Large Language Model Family",
+        examples=["merlinite", "granite"],
+    )
+    max_startup_attempts: int | None = Field(
+        default=120,
+        description="Maximum number of attempts to start the vLLM server.",
+    )
+    gpus: Optional[int] = Field(default=None, description="Number of GPUs to use.")
     # arguments to pass into vllm process
-    vllm_args: list[str] | None = Field(default_factory=lambda: [])
+    vllm_args: list[str] | None = Field(
+        default_factory=list,
+        description="vLLM specific arguments. All settings can be passed as a list of strings, see: https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html",
+        examples=[
+            ["--dtype", "auto"],
+            ["--lora-alpha", "32"],
+        ],
+    )
 
 
 class _serve_llama_cpp(BaseModel):
     """Class describing configuration of llama-cpp serving backend."""
 
-    gpu_layers: int = -1
-    max_ctx_size: PositiveInt = 4096
-    llm_family: str = ""
+    gpu_layers: int = Field(
+        default=-1,
+        description="Number of model layers to offload to GPU. -1 means all layers.",
+    )
+    max_ctx_size: PositiveInt = Field(
+        default=4096,
+        description="Maximum number of tokens that can be processed by the model.",
+    )
+    llm_family: str = Field(
+        default="",  # TODO: convert to None and use a pattern to validate
+        description="Large Language Model Family",
+        examples=["merlinite", "granite"],
+    )
 
 
 class _serve(BaseModel):
@@ -332,27 +376,39 @@ class _serve(BaseModel):
 
     # model configuration
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
-
     # vllm configuration
-    vllm: _serve_vllm = _serve_vllm(
-        llm_family="",
-        max_startup_attempts=120,
+    vllm: _serve_vllm = Field(
+        default_factory=lambda: _serve_vllm,
+        description="vLLM serving settings.",
     )
-
     # llama-cpp configuration
-    llama_cpp: _serve_llama_cpp = _serve_llama_cpp(
-        gpu_layers=-1,
-        max_ctx_size=4096,
-        llm_family="",
+    llama_cpp: _serve_llama_cpp = Field(
+        default_factory=lambda: _serve_llama_cpp,
+        description="llama-cpp serving settings.",
     )
-
-    # required fields
-    model_path: StrictStr = Field(default_factory=lambda: DEFAULTS.DEFAULT_MODEL)
+    model_path: StrictStr = Field(
+        default_factory=lambda: DEFAULTS.DEFAULT_MODEL,
+        description="Directory where model to be served is stored.",
+    )
     # additional fields with defaults
-    host_port: StrictStr = "127.0.0.1:8000"
-    chat_template: Optional[str] = None
-    backend: Optional[str] = (
-        None  # we don't set a default value here since it's auto-detected
+    host_port: StrictStr = Field(
+        default="127.0.0.1:8000", description="Host and port to serve on."
+    )
+    chat_template: Optional[str] = Field(
+        default=None,
+        description="Chat template to supply to the model. Possible values: 'auto'(default), 'tokenizer', a path to a jinja2 file.",
+        examples=[
+            "auto",
+            "tokenizer",
+            "A filesystem path expressing the location of a custom template",
+        ],
+    )
+    # we don't set a default value here since it's auto-detected
+    backend: Optional[str] = Field(
+        default=None,
+        description="Serving backend to use to host the model.",
+        examples=["vllm", "llama-cpp"],
+        pattern="vllm|llama-cpp",
     )
 
     def api_base(self):
@@ -376,27 +432,59 @@ class _generate(BaseModel):
 
     # model configuration
     model_config = ConfigDict(extra="ignore")
-
-    # required fields
-    pipeline: Optional[str] = DEFAULTS.SDG_PIPELINE
-    model: StrictStr
-    taxonomy_path: StrictStr
-    taxonomy_base: StrictStr
-
+    pipeline: Optional[str] = Field(
+        default=DEFAULTS.SDG_PIPELINE,
+        description="Data generation pipeline to use. Available: 'simple', 'full', or a valid path to a directory of pipeline workflow YAML files. Note that 'full' requires a larger teacher model, Mixtral-8x7b.",
+    )
+    model: StrictStr = Field(
+        default_factory=lambda: DEFAULTS.DEFAULT_MODEL,
+        description="Teacher model that will be used to synthetically generate training data.",
+    )
+    taxonomy_path: StrictStr = Field(
+        default_factory=lambda: DEFAULTS.TAXONOMY_DIR,
+        description="Directory where taxonomy is stored and accessed from.",
+    )
+    taxonomy_base: StrictStr = Field(
+        default=DEFAULTS.TAXONOMY_BASE,
+        description="Branch of taxonomy used to calculate diff against.",
+    )
     # additional fields with defaults
-    teacher: _serve = Field(default_factory=_serve)
-    num_cpus: PositiveInt = DEFAULTS.NUM_CPUS
-    chunk_word_count: PositiveInt = DEFAULTS.CHUNK_WORD_COUNT
+    teacher: _serve = Field(default_factory=_serve, description="Teacher configuration")
+    num_cpus: PositiveInt = Field(
+        default=DEFAULTS.NUM_CPUS,
+        description="Number of CPU cores to use for generation.",
+    )
+    chunk_word_count: PositiveInt = Field(
+        default=DEFAULTS.CHUNK_WORD_COUNT,
+        description="Maximum number of words per chunk.",
+    )
     # DEPRECATED: see sdg_scale_factor instead
     # Left in place so that we can still detect and give a warning if its
     # specified in an old configuration file.
     num_instructions: Optional[int] = Field(
-        default=-1, deprecated="see 'sdg_scale_factor' instead", exclude=True
+        default=-1,
+        description="Number of instructions to use",
+        deprecated="see 'sdg_scale_factor' instead",
+        exclude=True,
     )
-    sdg_scale_factor: Optional[PositiveInt] = DEFAULTS.SDG_SCALE_FACTOR
-    output_dir: StrictStr = Field(default_factory=lambda: DEFAULTS.DATASETS_DIR)
-    prompt_file: StrictStr = Field(default_factory=lambda: DEFAULTS.PROMPT_FILE)
-    seed_file: StrictStr = Field(default_factory=lambda: DEFAULTS.SEED_FILE)
+    sdg_scale_factor: Optional[PositiveInt] = Field(
+        default=DEFAULTS.SDG_SCALE_FACTOR,
+        description="The total number of instructions to be generated.",
+    )
+    output_dir: StrictStr = Field(
+        default_factory=lambda: DEFAULTS.DATASETS_DIR,
+        description="Directory where generated datasets are stored.",
+    )
+    prompt_file: StrictStr = Field(
+        default_factory=lambda: DEFAULTS.PROMPT_FILE,
+        description="Path to prompt file to be used for generation.",
+    )
+    # TODO: remove this? It's not used anywhere, was removed by 19b9f4794f79ef81578c00c901bac3ee9db8c046
+    seed_file: StrictStr = Field(
+        description="Path to seed file to be used for generation.",
+        default_factory=lambda: DEFAULTS.SEED_FILE,
+        deprecated=True,
+    )
 
     @model_validator(mode="before")
     def fill_defaults(
@@ -412,8 +500,14 @@ class _generate(BaseModel):
 
 
 class _mmlu(BaseModel):
-    few_shots: int
-    batch_size: str
+    few_shots: int = Field(
+        default=5,
+        description="Number of question-answer pairs provided in the context preceding the question used for evaluation.",
+    )
+    batch_size: str = Field(
+        default="auto",
+        description="Batch size for evaluation. Valid values are a positive integer or 'auto' to select the largest batch size that will fit in memory.",
+    )
 
     @model_validator(mode="before")
     def fill_defaults(
@@ -424,9 +518,18 @@ class _mmlu(BaseModel):
 
 
 class _mtbench(BaseModel):
-    judge_model: str
-    output_dir: str
-    max_workers: int
+    judge_model: str = Field(
+        default=DEFAULTS.JUDGE_MODEL_MT,
+        description="Directory where model to be used as judge is stored.",
+    )
+    output_dir: str = Field(
+        default_factory=lambda: DEFAULTS.EVAL_DATA_DIR,
+        description="Directory where evaluation results are stored.",
+    )
+    max_workers: int = Field(
+        default=16,
+        description="Number of workers to use for evaluation.",
+    )
 
     @model_validator(mode="before")
     def fill_defaults(
@@ -441,7 +544,10 @@ class _mtbench(BaseModel):
 
 
 class _mtbenchbranch(BaseModel):
-    taxonomy_path: str
+    taxonomy_path: str = Field(
+        default_factory=lambda: DEFAULTS.TAXONOMY_DIR,
+        description="Path to where base taxonomy is stored.",
+    )
 
     @model_validator(mode="before")
     def fill_defaults(
@@ -453,7 +559,10 @@ class _mtbenchbranch(BaseModel):
 
 
 class _mmlubranch(BaseModel):
-    tasks_dir: str
+    tasks_dir: str = Field(
+        default_factory=lambda: DEFAULTS.DATASETS_DIR,
+        description="Directory where custom MMLU tasks are stored.",
+    )
 
     @model_validator(mode="before")
     def fill_defaults(
@@ -466,16 +575,38 @@ class _mmlubranch(BaseModel):
 class _evaluate(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
-
-    model: Optional[str] = None
-    base_model: str
-    branch: Optional[str] = None
-    base_branch: Optional[str] = None
-    gpus: Optional[int] = None
-    mmlu: _mmlu
-    mmlu_branch: _mmlubranch
-    mt_bench: _mtbench
-    mt_bench_branch: _mtbenchbranch
+    model: Optional[str] = Field(
+        default=None,
+        description="Model to be used for evaluation.",
+    )
+    base_model: str = Field(
+        default=DEFAULTS.MODEL_REPO,
+        description="Directory where model to be used for evaluation is stored.",
+    )
+    branch: Optional[str] = Field(
+        default=None,
+        description="Taxonomy branch containing custom skills/knowledge that should be used for evaluation runs.",
+    )
+    base_branch: Optional[str] = Field(default=None, description="Base taxonomy branch")
+    gpus: Optional[int] = Field(
+        default=None, description="Number of GPUs to use for running evaluation."
+    )
+    mmlu: _mmlu = Field(
+        default_factory=lambda: _mmlu,
+        description="MMLU benchmarking settings",
+    )
+    mmlu_branch: _mmlubranch = Field(
+        default_factory=lambda: DEFAULTS.DATASETS_DIR,
+        description="Settings to run MMLU against a branch of taxonomy containing custom skills/knowledge used for training.",
+    )
+    mt_bench: _mtbench = Field(
+        default_factory=lambda: _mtbench,
+        description="Multi-turn benchmarking settings for skills.",
+    )
+    mt_bench_branch: _mtbenchbranch = Field(
+        default_factory=lambda: DEFAULTS.TAXONOMY_DIR,
+        description="Settings to run MT-Bench against a branch of taxonomy containing custom skills/knowledge used for training",
+    )
 
     @model_validator(mode="before")
     def fill_defaults(
@@ -498,48 +629,105 @@ class _evaluate(BaseModel):
 class _train(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
-
-    model_path: str
-
-    data_path: str
-    ckpt_output_dir: str
-    data_output_dir: str
-
-    max_seq_len: int
-    max_batch_len: int
-    num_epochs: int
-    effective_batch_size: int
-    save_samples: int
-    checkpoint_at_epoch: bool = True
-
-    deepspeed_cpu_offload_optimizer: bool
-
-    lora_rank: int | None = None
-    lora_quantize_dtype: str | None = None
-
-    is_padding_free: bool
-
-    nproc_per_node: int
-
-    additional_args: dict[str, typing.Any]
-
+    model_path: str = Field(
+        default=DEFAULTS.MODEL_REPO,
+        description="Directory where the model to be trained is stored.",
+    )
+    data_path: str = Field(
+        default_factory=lambda: DEFAULTS.DATASETS_DIR,
+        description="For the training library (primary training method), this specifies the path to the dataset file. For legacy training (MacOS/Linux), this specifies the path to the directory.",
+    )
+    ckpt_output_dir: str = Field(
+        default_factory=lambda: DEFAULTS.CHECKPOINTS_DIR,
+        description="Directory where periodic training checkpoints are stored.",
+    )
+    data_output_dir: str = Field(
+        default_factory=lambda: DEFAULTS.INTERNAL_DIR,
+        description="Directory where the processed training data is stored (post filtering/tokenization/masking).",
+    )
+    max_seq_len: int = Field(
+        default=4096,
+        description="Maximum sequence length to be included in the training set. Samples exceeding this length will be dropped.",
+    )
+    max_batch_len: int = Field(
+        default=10000,
+        description="Maximum tokens per gpu for each batch that will be handled in a single step. If running into out-of-memory errors, this value can be lowered but not below the `max_seq_len`.",
+    )
+    num_epochs: int = Field(
+        default=10, description="Number of epochs to run training for."
+    )
+    effective_batch_size: int = Field(
+        default=3840,
+        description="The number of samples in a batch that the model should see before its parameters are updated.",
+    )
+    save_samples: int = Field(
+        default=250000,
+        description="Number of samples the model should see before saving a checkpoint.",
+    )
+    checkpoint_at_epoch: bool = Field(
+        default=True, description="Save a checkpoint at the end of each epoch."
+    )
+    deepspeed_cpu_offload_optimizer: bool = Field(
+        default=False, description="Allow CPU offload for deepspeed optimizer."
+    )
+    lora_rank: int | None = Field(
+        default=None,
+        description="Rank of low rank matrices to be used during training.",
+    )
+    lora_quantize_dtype: str | None = Field(
+        default=None,
+        description="The data type for quantization in LoRA training. Valid options are 'None' and 'nf4'.",
+        examples=["nf4"],
+    )
+    is_padding_free: bool = Field(
+        default=False,
+        description="Boolean to indicate if the model being trained is a padding-free transformer model such as Granite.",
+    )
+    nproc_per_node: int = Field(
+        default=1,
+        description="Number of GPUs to use for training. This value is not supported in legacy training or MacOS.",
+    )
+    additional_args: dict[str, typing.Any] = Field(
+        default_factory=dict,
+        description="Additional arguments to pass to the training script. These arguments are passed as key-value pairs to the training script.",
+    )
     # additional training configuration for
     # lab-multiphase training.
     # TODO: could move into its own object.
     # Not strictly necessary for a correct training object.
-    phased_phase1_num_epochs: int | None = OPTIONAL_POSITIVE_INTEGER
-    # phased_phase1_samples_per_save is disabled when the value is 0.
+    phased_phase1_num_epochs: int | None = Field(
+        default=None,
+        gt=0,
+        description="Number of epochs to run training for during phase1.",
+    )
     # anything greater than 0 enables samples_per_save for the phase.
-    phased_phase1_samples_per_save: int = Field(ge=0, default=0)
-    phased_phase1_effective_batch_size: int | None = 128
-
-    phased_phase2_num_epochs: int | None = OPTIONAL_POSITIVE_INTEGER
+    phased_phase1_samples_per_save: int = Field(
+        default=0,
+        description="Number of samples the model should see before saving a checkpoint during phase1. Disabled when set to 0.",
+        ge=0,
+    )
+    phased_phase1_effective_batch_size: int | None = Field(
+        default=128,
+        description="Phased phase1 effective batch size.",
+    )
+    phased_phase2_num_epochs: int | None = Field(
+        default=None,
+        gt=0,
+        description="Number of epochs to run training for during phase2.",
+    )
     # phased_phase2_samples_per_save is disabled when the value is 0.
     # anything greater than 0 enables samples_per_save for the phase.
-    phased_phase2_samples_per_save: int = Field(ge=0, default=0)
-    phased_phase2_effective_batch_size: int | None = 3840
-
-    phased_mt_bench_judge: str | None = None
+    phased_phase2_samples_per_save: int = Field(
+        default=0,
+        ge=0,
+        description="Number of samples the model should see before saving a checkpoint during phase2. Disabled when set to 0.",
+    )
+    phased_phase2_effective_batch_size: int | None = Field(
+        default=3840, description="Phased phase2 effective batch size."
+    )
+    phased_mt_bench_judge: str | None = Field(
+        default=None, description="Judge model path for phased MT-Bench evaluation."
+    )
 
     @model_validator(mode="before")
     def fill_defaults(
@@ -569,23 +757,34 @@ class _train(BaseModel):
 class Config(BaseModel):
     """Configuration for the InstructLab CLI."""
 
-    # required fields
-    chat: _chat
-    generate: _generate
-    serve: _serve
-    version: str
-
+    chat: _chat = Field(
+        default_factory=_chat, description="Chat configuration section."
+    )
+    generate: _generate = Field(
+        default_factory=_generate, description="Generate configuration section."
+    )
+    serve: _serve = Field(
+        default_factory=_serve, description="Serve configuration section."
+    )
     # additional fields with defaults
-    general: _general = _general()
-
+    general: _general = Field(
+        default_factory=_general, description="General configuration section."
+    )
     # train configuration
-    train: Optional[_train] = None
-
+    train: _train = Field(
+        default_factory=_train, description="Train configuration section."
+    )
     # evaluate configuration
-    evaluate: _evaluate
-
+    evaluate: _evaluate = Field(
+        default_factory=_evaluate, description="Evaluate configuration section."
+    )
     # model configuration
     model_config = ConfigDict(extra="ignore")
+    version: str = Field(
+        default=CONFIG_VERSION,
+        description="Configuration file structure version.",
+        frozen=True,  # don't allow this to be changed anywhere in the code
+    )
 
     @model_validator(mode="before")
     def fill_defaults(
@@ -711,7 +910,7 @@ def get_default_config() -> Config:
 def read_train_profile(train_file) -> _train:
     try:
         with open(train_file, "r", encoding="utf-8") as yamlfile:
-            content = yaml.safe_load(yamlfile)
+            content = yaml.load(yamlfile)
             _expand_paths(content)
             return _train(**content)
     except ValidationError as exc:
@@ -736,7 +935,7 @@ def read_config(
     config_file = DEFAULTS.CONFIG_FILE if config_file is None else config_file
     try:
         with open(config_file, "r", encoding="utf-8") as yamlfile:
-            content = yaml.safe_load(yamlfile)
+            content = yaml.load(yamlfile)
             _expand_paths(content)
             return Config(**content)
     except ValidationError as exc:
@@ -784,10 +983,147 @@ def get_dict(cfg: Config) -> dict[str, typing.Any]:
 def write_config(cfg: Config, config_file: typing.Optional[str] = None) -> None:
     """Writes configuration to a disk"""
     config_file = DEFAULTS.CONFIG_FILE if config_file is None else config_file
-    with open(config_file, "w", encoding="utf-8") as yamlfile:
-        d = cfg.model_dump_json()
-        loaded = yaml.load(d, Loader=yaml.SafeLoader)
-        yaml.dump(loaded, stream=yamlfile)
+    write_config_to_yaml(cfg, config_file)
+
+
+def config_to_commented_map(
+    cfg: Union[Config, BaseModel], indent: int = 0
+) -> CommentedMap:
+    """
+    Convert a Pydantic model to a CommentedMap with comments derived from field descriptions.
+
+    This function iterates through the fields of our Config model, converting each field to a
+    CommentedMap entry. If a field is itself a model, the function handles it recursively.
+    Comments are added to each field based on its description and default value.
+
+    Args:
+        cfg (Union[Config, BaseModel]): The Pydantic model instance to convert.
+        indent (int, optional): The indentation level for nested fields. Defaults to 0.
+
+    Returns:
+        CommentedMap: A CommentedMap representation of the Config model with comments.
+    """
+    cm = CommentedMap()
+
+    sorted_fields = sorted(cfg.model_fields.items())
+
+    # Loop through the fields of the model
+    for field_name, field in sorted_fields:
+        value = getattr(cfg, field_name)
+        description = field.description
+        default_value = field.default
+        deprecated = field.deprecated
+        examples = field.examples
+        default_factory = field.default_factory
+
+        # Recursively handle nested models
+        if isinstance(value, BaseModel):
+            # If the value is a BaseModel but has Field attributes honor them
+            set_comment(
+                cm, field_name, description, default_value, deprecated, examples, indent
+            )
+
+            # Now recursively handle the nested model
+            nested_cm = config_to_commented_map(value, indent + 2)
+            cm[field_name] = nested_cm
+        else:
+            # If the default value comes from a factory, evaluate it and use the result as the default value
+            if default_value is PydanticUndefined:
+                if default_factory is not None and callable(default_factory):
+                    default_value = default_factory()
+            set_comment(
+                cm, field_name, description, default_value, deprecated, examples, indent
+            )
+            cm[field_name] = value
+
+    return cm
+
+
+def set_comment(
+    cm: CommentedMap,
+    field_name: str,
+    description: str | None,
+    default_value: Any,
+    deprecated: Deprecated | str | bool | None,
+    examples: list[Any] | None,
+    indent: int,
+):
+    """
+    Set a comment for a field in a CommentedMap.
+
+    This function adds a comment to a field in a CommentedMap based on the field's description
+    and default value. The comment is added before the field key.
+
+    Example of a YAML field with a comment:
+
+    ```
+    # This is the description of the field. It can be a longer text that wraps to
+    #   the next line if needed.
+    # Default: some_value
+    # Deprecated: reason for deprecation
+    # Examples:
+    # - An example
+    # - Another example
+    field_name: value
+    ```
+    Args:
+        cm (CommentedMap): The CommentedMap to modify.
+        field_name (str): The name of the field to comment.
+        description (str): The description of the field.
+        default_value (any): The default value of the field.
+        deprecated (bool): Whether the field is deprecated.
+        indent (int): The indentation level for the comment.
+    """
+    comment_parts = []
+
+    if description:
+        comment_parts.append(
+            # Initialize a TextWrapper.We use break_long_words=False to prevent breaking long words.
+            # It ensures that words are kept intact, which is usually preferable in most text
+            # wrapping scenarios. This is especially important for things like URLs, long variable
+            # names, or other strings that shouldn't be split.
+            textwrap.fill(description, width=80, break_long_words=False)
+        )
+
+    if default_value is not PydanticUndefined:
+        if default_value == "":
+            comment_parts.append("Default: ''")
+        else:
+            comment_parts.append(f"Default: {default_value}")
+
+    if deprecated:
+        if isinstance(deprecated, str):
+            comment_parts.append(f"Deprecated: {deprecated}")
+        else:
+            comment_parts.append("Deprecated")
+
+    # Join all parts with line breaks
+    full_comment = "\n".join(comment_parts)
+
+    # Add examples if present
+    if examples:
+        full_comment += "\nExamples:"
+        for example in examples:
+            full_comment += f"\n  - {example}"
+
+    cm.yaml_set_comment_before_after_key(
+        field_name,
+        before=full_comment,
+        indent=indent,
+    )
+
+
+def write_config_to_yaml(cfg: Config, file_path: str):
+    """
+    Write a Pydantic model to a YAML file with comments derived from field descriptions.
+
+    Args:
+        cfg (Config): The Pydantic model to write to YAML.
+        file_path (str): The path to the YAML file to write.
+    """
+    commented_map = config_to_commented_map(cfg)
+    with open(file_path, "w", encoding="utf-8") as yaml_file:
+        yaml.dump(commented_map, yaml_file)
 
 
 def get_api_base(host_port: str) -> str:
@@ -874,7 +1210,7 @@ def recreate_train_profiles(overwrite: bool = False) -> bool:
                 fresh_install = True
                 with open(new_file, "w", encoding="utf-8") as outfile:
                     d = train_cfg.model_dump_json()
-                    loaded = yaml.load(d, Loader=yaml.SafeLoader)
+                    loaded = yaml.load(d)
                     yaml.dump(loaded, outfile)
     else:
         # else render the defaults
@@ -1050,7 +1386,7 @@ def recreate_train_profiles(overwrite: bool = False) -> bool:
                 fresh_install = True
                 with open(file, "w", encoding="utf-8") as outfile:
                     d = train_cfg.model_dump_json()
-                    loaded = yaml.load(d, Loader=yaml.SafeLoader)
+                    loaded = yaml.load(d)
                     yaml.dump(loaded, outfile)
     return fresh_install
 
@@ -1187,7 +1523,7 @@ def finish_additional_train_args(current_additional):
         with open(
             DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE, "r", encoding="utf-8"
         ) as yamlfile:
-            additional_args_and_defaults = yaml.safe_load(yamlfile)
+            additional_args_and_defaults = yaml.load(yamlfile)
     except FileNotFoundError:
         additional_args_and_defaults = DEFAULTS.ADDITIONAL_ARGS_DEFAULTS
         # user has not run `ilab config init`, yet. This should only happen once
