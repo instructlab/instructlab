@@ -45,7 +45,7 @@ jobs:
             ghcr.io/${{ github.repository }}/instructlab-cuda
 
       - name: Build and push gobot image
-        uses: docker/build-push-action@16ebe778df0e7752d2cfcbd924afdbbd89c1a755 # v6.6.1
+        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # v6.7.0
         with:
           context: .
           platforms: linux/amd64
@@ -95,7 +95,7 @@ jobs:
             ghcr.io/${{ github.repository }}/instructlab-cuda
 
       - name: Build and push gobot image
-        uses: docker/build-push-action@16ebe778df0e7752d2cfcbd924afdbbd89c1a755 # v6.6.1
+        uses: docker/build-push-action@5cd11c3a4ced054e52742c5fd54dca954e0edd85 # v6.7.0
         with:
           context: .
           platforms: linux/amd64
