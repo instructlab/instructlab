@@ -58,3 +58,31 @@ def test_ilab_config_init_with_env_var_config(
     assert configuration.Config(**parsed).general.log_level == logging.getLevelName(
         logging.DEBUG
     )
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        (["config", "init"]),
+        (
+            ["init"]
+        ),  # TODO: remove this test once the deprecated alias 'ilab init' is removed
+    ],
+)
+def test_ilab_config_init_with_model_path(cli_runner: CliRunner, command: list) -> None:
+    # Common setup code
+    model_path = "path/to/model"
+    command.extend(["--model-path", model_path])
+    # Invoke the CLI command
+    result = cli_runner.invoke(lab.ilab, command)
+    assert result.exit_code == 0, result.stdout
+
+    # Load and check the generated config file
+    config_path = pathlib.Path(configuration.DEFAULTS.CONFIG_FILE)
+    assert config_path.exists()
+    with config_path.open(encoding="utf-8") as f:
+        parsed = yaml.safe_load(f)
+    assert parsed
+    assert configuration.Config(**parsed).generate.model == "path/to/model"
+    assert configuration.Config(**parsed).generate.teacher.model_path == "path/to/model"
+    assert configuration.Config(**parsed).serve.model_path == "path/to/model"
