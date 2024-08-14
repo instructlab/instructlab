@@ -321,13 +321,6 @@ class _chat(BaseModel):
         description="The maximum number of tokens that can be generated in the chat completion. Be aware that larger values use more memory.",
     )
 
-    @model_validator(mode="before")
-    def fill_defaults(
-        cls, values: typing.Dict[str, typing.Any]
-    ) -> typing.Dict[str, typing.Any]:
-        defaults = {"model": DEFAULTS.DEFAULT_MODEL}
-        return finish_cfg_section(defaults, values)
-
 
 class _serve_vllm(BaseModel):
     """Class describing configuration of vllm serving backend."""
@@ -378,12 +371,12 @@ class _serve(BaseModel):
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
     # vllm configuration
     vllm: _serve_vllm = Field(
-        default_factory=lambda: _serve_vllm,
+        default_factory=_serve_vllm,
         description="vLLM serving settings.",
     )
     # llama-cpp configuration
     llama_cpp: _serve_llama_cpp = Field(
-        default_factory=lambda: _serve_llama_cpp,
+        default_factory=_serve_llama_cpp,
         description="llama-cpp serving settings.",
     )
     model_path: StrictStr = Field(
@@ -414,17 +407,6 @@ class _serve(BaseModel):
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
         return get_api_base(self.host_port)
-
-    @model_validator(mode="before")
-    def fill_defaults(
-        cls, values: typing.Dict[str, typing.Any]
-    ) -> typing.Dict[str, typing.Any]:
-        defaults = {
-            "model_path": DEFAULTS.DEFAULT_MODEL,
-            "llama_cpp": {"gpu_layers": -1, "max_ctx_size": 4096, "llm_family": ""},
-            "vllm": {"llm_family": "", "vllm_args": [], "max_startup_attempts": 120},
-        }
-        return finish_cfg_section(defaults, values)
 
 
 class _generate(BaseModel):
@@ -486,18 +468,6 @@ class _generate(BaseModel):
         deprecated=True,
     )
 
-    @model_validator(mode="before")
-    def fill_defaults(
-        cls, values: typing.Dict[str, typing.Any]
-    ) -> typing.Dict[str, typing.Any]:
-        defaults = {
-            "model": DEFAULTS.DEFAULT_MODEL,
-            "taxonomy_path": DEFAULTS.TAXONOMY_DIR,
-            "taxonomy_base": DEFAULTS.TAXONOMY_BASE,
-        }
-
-        return finish_cfg_section(defaults, values)
-
 
 class _mmlu(BaseModel):
     few_shots: int = Field(
@@ -509,17 +479,10 @@ class _mmlu(BaseModel):
         description="Batch size for evaluation. Valid values are a positive integer or 'auto' to select the largest batch size that will fit in memory.",
     )
 
-    @model_validator(mode="before")
-    def fill_defaults(
-        cls, values: typing.Dict[str, typing.Any]
-    ) -> typing.Dict[str, typing.Any]:
-        defaults = {"few_shots": 5, "batch_size": "auto"}
-        return finish_cfg_section(defaults, values)
-
 
 class _mtbench(BaseModel):
     judge_model: str = Field(
-        default=DEFAULTS.JUDGE_MODEL_MT,
+        default_factory=lambda: DEFAULTS.JUDGE_MODEL_MT,
         description="Directory where model to be used as judge is stored.",
     )
     output_dir: str = Field(
@@ -531,17 +494,6 @@ class _mtbench(BaseModel):
         description="Number of workers to use for evaluation.",
     )
 
-    @model_validator(mode="before")
-    def fill_defaults(
-        cls, values: typing.Dict[str, typing.Any]
-    ) -> typing.Dict[str, typing.Any]:
-        defaults = {
-            "judge_model": DEFAULTS.JUDGE_MODEL_MT,
-            "output_dir": DEFAULTS.EVAL_DATA_DIR,
-            "max_workers": 16,
-        }
-        return finish_cfg_section(defaults, values)
-
 
 class _mtbenchbranch(BaseModel):
     taxonomy_path: str = Field(
@@ -549,27 +501,12 @@ class _mtbenchbranch(BaseModel):
         description="Path to where base taxonomy is stored.",
     )
 
-    @model_validator(mode="before")
-    def fill_defaults(
-        cls, values: typing.Dict[str, typing.Any]
-    ) -> typing.Dict[str, typing.Any]:
-        defaults = {"taxonomy_path": DEFAULTS.TAXONOMY_DIR}
-
-        return finish_cfg_section(defaults, values)
-
 
 class _mmlubranch(BaseModel):
     tasks_dir: str = Field(
         default_factory=lambda: DEFAULTS.DATASETS_DIR,
         description="Directory where custom MMLU tasks are stored.",
     )
-
-    @model_validator(mode="before")
-    def fill_defaults(
-        cls, values: typing.Dict[str, typing.Any]
-    ) -> typing.Dict[str, typing.Any]:
-        defaults = {"tasks_dir": DEFAULTS.DATASETS_DIR}
-        return finish_cfg_section(defaults, values)
 
 
 class _evaluate(BaseModel):
@@ -592,38 +529,21 @@ class _evaluate(BaseModel):
         default=None, description="Number of GPUs to use for running evaluation."
     )
     mmlu: _mmlu = Field(
-        default_factory=lambda: _mmlu,
+        default_factory=_mmlu,
         description="MMLU benchmarking settings",
     )
     mmlu_branch: _mmlubranch = Field(
-        default_factory=lambda: DEFAULTS.DATASETS_DIR,
+        default_factory=_mmlubranch,
         description="Settings to run MMLU against a branch of taxonomy containing custom skills/knowledge used for training.",
     )
     mt_bench: _mtbench = Field(
-        default_factory=lambda: _mtbench,
+        default_factory=_mtbench,
         description="Multi-turn benchmarking settings for skills.",
     )
     mt_bench_branch: _mtbenchbranch = Field(
-        default_factory=lambda: DEFAULTS.TAXONOMY_DIR,
+        default_factory=_mtbenchbranch,
         description="Settings to run MT-Bench against a branch of taxonomy containing custom skills/knowledge used for training",
     )
-
-    @model_validator(mode="before")
-    def fill_defaults(
-        cls, values: typing.Dict[str, typing.Any]
-    ) -> typing.Dict[str, typing.Any]:
-        defaults = {
-            "base_model": DEFAULTS.MODEL_REPO,
-            "mt_bench": {
-                "judge_model": DEFAULTS.JUDGE_MODEL_MT,
-                "output_dir": DEFAULTS.EVAL_DATA_DIR,
-                "max_workers": 16,
-            },
-            "mmlu": {"few_shots": 5, "batch_size": "auto"},
-            "mt_bench_branch": {"taxonomy_path": DEFAULTS.TAXONOMY_DIR},
-            "mmlu_branch": {"tasks_dir": DEFAULTS.DATASETS_DIR},
-        }
-        return finish_cfg_section(defaults, values)
 
 
 class _train(BaseModel):
@@ -671,11 +591,11 @@ class _train(BaseModel):
         default=False, description="Allow CPU offload for deepspeed optimizer."
     )
     lora_rank: int | None = Field(
-        default=None,
+        default=4,
         description="Rank of low rank matrices to be used during training.",
     )
     lora_quantize_dtype: str | None = Field(
-        default=None,
+        default="nf4",
         description="The data type for quantization in LoRA training. Valid options are 'None' and 'nf4'.",
         examples=["nf4"],
     )
@@ -696,7 +616,7 @@ class _train(BaseModel):
     # TODO: could move into its own object.
     # Not strictly necessary for a correct training object.
     phased_phase1_num_epochs: int | None = Field(
-        default=None,
+        default=10,
         gt=0,
         description="Number of epochs to run training for during phase1.",
     )
@@ -711,7 +631,7 @@ class _train(BaseModel):
         description="Phased phase1 effective batch size.",
     )
     phased_phase2_num_epochs: int | None = Field(
-        default=None,
+        default=10,
         gt=0,
         description="Number of epochs to run training for during phase2.",
     )
@@ -726,32 +646,9 @@ class _train(BaseModel):
         default=3840, description="Phased phase2 effective batch size."
     )
     phased_mt_bench_judge: str | None = Field(
-        default=None, description="Judge model path for phased MT-Bench evaluation."
+        default_factory=lambda: DEFAULTS.DEFAULT_JUDGE_MODEL,
+        description="Judge model path for phased MT-Bench evaluation.",
     )
-
-    @model_validator(mode="before")
-    def fill_defaults(
-        cls, values: typing.Dict[str, typing.Any]
-    ) -> typing.Dict[str, typing.Any]:
-        defaults = {
-            "model_path": DEFAULTS.MODEL_REPO,
-            "data_path": DEFAULTS.DATASETS_DIR,
-            "ckpt_output_dir": DEFAULTS.CHECKPOINTS_DIR,
-            "data_output_dir": DEFAULTS.INTERNAL_DIR,
-            "max_seq_len": 4096,
-            "max_batch_len": 10000,
-            "num_epochs": 10,
-            "effective_batch_size": 3840,
-            "save_samples": 250000,
-            "lora_quantize_dtype": None,
-            "lora_rank": None,
-            "nproc_per_node": 1,
-            "deepspeed_cpu_offload_optimizer": False,
-            "additional_args": {},
-            "is_padding_free": False,
-        }
-
-        return finish_cfg_section(defaults, values)
 
 
 class Config(BaseModel):
@@ -786,125 +683,10 @@ class Config(BaseModel):
         frozen=True,  # don't allow this to be changed anywhere in the code
     )
 
-    @model_validator(mode="before")
-    def fill_defaults(
-        cls, values: typing.Dict[str, typing.Any]
-    ) -> typing.Dict[str, typing.Any]:
-        defaults = {
-            "chat": {"model": DEFAULTS.DEFAULT_MODEL},
-            "serve": {
-                "model_path": DEFAULTS.DEFAULT_MODEL,
-                "llama_cpp": {"gpu_layers": -1, "max_ctx_size": 4096, "llm_family": ""},
-                "vllm": {"llm_family": "", "vllm_args": []},
-            },
-            "generate": {
-                "model": DEFAULTS.DEFAULT_MODEL,
-                "taxonomy_path": DEFAULTS.TAXONOMY_DIR,
-                "taxonomy_base": DEFAULTS.TAXONOMY_BASE,
-            },
-            "evaluate": {
-                "model": DEFAULTS.DEFAULT_MODEL,
-                "taxonomy_path": DEFAULTS.TAXONOMY_DIR,
-                "taxonomy_base": DEFAULTS.TAXONOMY_BASE,
-            },
-            "train": {
-                "model_path": DEFAULTS.MODEL_REPO,
-                "data_path": DEFAULTS.DATASETS_DIR,
-                "ckpt_output_dir": DEFAULTS.CHECKPOINTS_DIR,
-                "data_output_dir": DEFAULTS.INTERNAL_DIR,
-                "max_seq_len": 4096,
-                "max_batch_len": 10000,
-                "num_epochs": 10,
-                "effective_batch_size": 3840,
-                "save_samples": 250000,
-                "lora_quantize_dtype": None,
-                "lora_rank": 4,
-                "nproc_per_node": 1,
-                "deepspeed_cpu_offload_optimizer": False,
-                "additional_args": {},
-                "is_padding_free": False,
-            },
-            "version": CONFIG_VERSION,
-        }
-
-        for key, val in defaults.items():
-            if values.get(key) is None and val is not None:
-                values[key] = val
-
-        return values
-
-
-def finish_cfg_section(
-    defaults: dict, values: typing.Dict[str, typing.Any]
-) -> typing.Dict[str, typing.Any]:
-    for key, val in defaults.items():
-        if values.get(key) is None and val is not None:
-            values[key] = val
-
-    return values
-
 
 def get_default_config() -> Config:
     """Generates default configuration for CLI"""
-    return Config(
-        version=CONFIG_VERSION,
-        chat=_chat(
-            model=DEFAULTS.DEFAULT_MODEL,
-        ),
-        generate=_generate(
-            model=DEFAULTS.DEFAULT_MODEL,
-            taxonomy_path=DEFAULTS.TAXONOMY_DIR,
-            taxonomy_base=DEFAULTS.TAXONOMY_BASE,
-        ),
-        serve=_serve(
-            model_path=DEFAULTS.DEFAULT_MODEL,
-            llama_cpp=_serve_llama_cpp(
-                gpu_layers=-1,
-                max_ctx_size=4096,
-                llm_family="",
-            ),
-            vllm=_serve_vllm(
-                llm_family="",
-                max_startup_attempts=120,
-            ),
-        ),
-        train=_train(
-            model_path=DEFAULTS.MODEL_REPO,
-            data_path=DEFAULTS.DATASETS_DIR,
-            ckpt_output_dir=DEFAULTS.CHECKPOINTS_DIR,
-            data_output_dir=DEFAULTS.INTERNAL_DIR,
-            max_seq_len=4096,
-            max_batch_len=10000,
-            num_epochs=10,
-            effective_batch_size=3840,
-            save_samples=250000,
-            lora_quantize_dtype="nf4",
-            lora_rank=4,
-            nproc_per_node=1,
-            deepspeed_cpu_offload_optimizer=False,
-            additional_args={},
-            is_padding_free=False,
-            phased_phase1_num_epochs=10,
-            phased_phase1_effective_batch_size=128,
-            phased_phase2_num_epochs=10,
-            phased_phase2_effective_batch_size=3840,
-            phased_mt_bench_judge=DEFAULTS.DEFAULT_JUDGE_MODEL,
-        ),
-        evaluate=_evaluate(
-            base_model=DEFAULTS.MODEL_REPO,
-            mt_bench=_mtbench(
-                judge_model=DEFAULTS.DEFAULT_JUDGE_MODEL,
-                output_dir=DEFAULTS.EVAL_DATA_DIR,
-                max_workers=16,
-            ),
-            mmlu=_mmlu(
-                few_shots=5,
-                batch_size="auto",
-            ),
-            mt_bench_branch=_mtbenchbranch(taxonomy_path=DEFAULTS.TAXONOMY_DIR),
-            mmlu_branch=_mmlubranch(tasks_dir=DEFAULTS.DATASETS_DIR),
-        ),
-    )
+    return Config()
 
 
 def read_train_profile(train_file) -> _train:
@@ -1078,7 +860,7 @@ def set_comment(
 
     if description:
         comment_parts.append(
-            # Initialize a TextWrapper.We use break_long_words=False to prevent breaking long words.
+            # Initialize a TextWrapper. We use break_long_words=False to prevent breaking long words.
             # It ensures that words are kept intact, which is usually preferable in most text
             # wrapping scenarios. This is especially important for things like URLs, long variable
             # names, or other strings that shouldn't be split.

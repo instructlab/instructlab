@@ -65,7 +65,7 @@ evaluate:
   mt_bench:
     # Directory where model to be used as judge is stored.
     # Default: prometheus-eval/prometheus-8x7b-v2.0
-    judge_model: /cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
+    judge_model: prometheus-eval/prometheus-8x7b-v2.0
     # Number of workers to use for evaluation.
     # Default: 16
     max_workers: 16
@@ -273,12 +273,12 @@ train:
   is_padding_free: false
   # The data type for quantization in LoRA training. Valid options are 'None' and
   # 'nf4'.
-  # Default: None
+  # Default: nf4
   # Examples:
   #   - nf4
   lora_quantize_dtype: nf4
   # Rank of low rank matrices to be used during training.
-  # Default: None
+  # Default: 4
   lora_rank: 4
   # Maximum tokens per gpu for each batch that will be handled in a single step. If
   # running into out-of-memory errors, this value can be lowered but not below the
@@ -300,13 +300,13 @@ train:
   # Default: 10
   num_epochs: 10
   # Judge model path for phased MT-Bench evaluation.
-  # Default: None
+  # Default: /cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
   phased_mt_bench_judge: /cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
   # Phased phase1 effective batch size.
   # Default: 128
   phased_phase1_effective_batch_size: 128
   # Number of epochs to run training for during phase1.
-  # Default: None
+  # Default: 10
   phased_phase1_num_epochs: 10
   # Number of samples the model should see before saving a checkpoint during phase1.
   # Disabled when set to 0.
@@ -316,7 +316,7 @@ train:
   # Default: 3840
   phased_phase2_effective_batch_size: 3840
   # Number of epochs to run training for during phase2.
-  # Default: None
+  # Default: 10
   phased_phase2_num_epochs: 10
   # Number of samples the model should see before saving a checkpoint during phase2.
   # Disabled when set to 0.
