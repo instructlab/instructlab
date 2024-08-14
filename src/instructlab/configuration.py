@@ -282,7 +282,7 @@ class _mtbench(BaseModel):
 
     judge_model: str = Field(
         default_factory=lambda: DEFAULTS.JUDGE_MODEL_MT,
-        description="Directory where model to be used as judge is stored.",
+        description="Judge model for mt_bench and mt_bench_branch.",
     )
     output_dir: str = Field(
         default_factory=lambda: DEFAULTS.EVAL_DATA_DIR,
@@ -319,11 +319,11 @@ class _evaluate(BaseModel):
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
     model: Optional[str] = Field(
         default=None,
-        description="Model to be used for evaluation.",
+        description="Model to be evaluated",
     )
     base_model: str = Field(
         default=DEFAULTS.MODEL_REPO,
-        description="Directory where model to be used for evaluation is stored.",
+        description="Base model to compare with 'model' for mt_bench_branch and mmlu_branch.",
     )
     branch: Optional[str] = Field(
         default=None,

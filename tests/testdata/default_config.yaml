@@ -32,7 +32,7 @@ evaluate:
   # Base taxonomy branch
   # Default: None
   base_branch:
-  # Directory where model to be used for evaluation is stored.
+  # Base model to compare with 'model' for mt_bench_branch and mmlu_branch.
   # Default: instructlab/granite-7b-lab
   base_model: instructlab/granite-7b-lab
   # Taxonomy branch containing custom skills/knowledge that should be used for
@@ -58,12 +58,12 @@ evaluate:
     # Directory where custom MMLU tasks are stored.
     # Default: /data/instructlab/datasets
     tasks_dir: /data/instructlab/datasets
-  # Model to be used for evaluation.
+  # Model to be evaluated
   # Default: None
   model:
   # Multi-turn benchmarking settings for skills.
   mt_bench:
-    # Directory where model to be used as judge is stored.
+    # Judge model for mt_bench and mt_bench_branch.
     # Default: prometheus-eval/prometheus-8x7b-v2.0
     judge_model: prometheus-eval/prometheus-8x7b-v2.0
     # Number of workers to use for evaluation.

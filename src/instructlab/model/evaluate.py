@@ -83,23 +83,9 @@ def get_evaluator(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
-        if os.path.exists(model):
-            model = pathlib.Path(model)
-            valid_model = False
-            if model.is_dir():
-                valid_model = backends.is_model_safetensors(model)
-            elif model.is_file():
-                valid_model = backends.is_model_gguf(model)
-            if not valid_model:
-                click.secho(
-                    "MTBench and MTBenchBranch need to be passed either a safetensors directory or a GGUF file",
-                    fg="red",
-                )
-                raise click.exceptions.Exit(1)
-            click.secho(
-                f"Using local model found at '{model}' for '--model'",
-                fg="blue",
-            )
+
+        validate_model(model)
+        validate_model(judge_model, "--judge-model")
         if benchmark == Benchmark.MT_BENCH:
             # Third Party
             from instructlab.eval.mt_bench import MTBenchEvaluator
@@ -111,6 +97,9 @@ def get_evaluator(
                 max_workers,
                 merge_system_user_message=merge_system_user_message,
             )
+
+        validate_model(base_model, "--base-model")
+
         # Third Party
         from instructlab.eval.mt_bench import MTBenchBranchEvaluator
 
@@ -139,24 +128,8 @@ def get_evaluator(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
-        # ensure user is passing full safetensors if they specify a local directory
-        # TODO: also allow GGUF once the following is resolved: https://github.com/instructlab/eval/issues/50
-        if os.path.isdir(model):
-            if not backends.is_model_safetensors(pathlib.Path(model)):
-                click.secho(
-                    "MMLU and MMLUBranch can currently only be used with a safetensors directory",
-                    fg="red",
-                )
-                raise click.exceptions.Exit(1)
-            click.secho(
-                f"Using local safetensors found at '{model}' for '--model'",
-                fg="blue",
-            )
-        else:
-            click.secho(
-                f"Using safetensors from Hugging Face repo '{model}' for '--model'",
-                fg="blue",
-            )
+
+        validate_model(model)
         if benchmark == Benchmark.MMLU:
             # Third Party
             from instructlab.eval.mmlu import MMLUEvaluator
@@ -175,6 +148,9 @@ def get_evaluator(
                     model, few_shots=few_shots, batch_size=batch_size
                 )
             return evaluator
+
+        validate_model(base_model, "--base-model")
+
         # Third Party
         from instructlab.eval.mmlu import MMLUBranchEvaluator
 
@@ -185,6 +161,32 @@ def get_evaluator(
             few_shots=few_shots,
             batch_size=batch_size,
         )
+
+
+def validate_model(model: str, model_arg: str = "--model"):
+    if os.path.exists(model):
+        model_path = pathlib.Path(model)
+        valid_model = False
+        if model_path.is_dir():
+            valid_model = backends.is_model_safetensors(model_path)
+        elif model_path.is_file():
+            valid_model = backends.is_model_gguf(model_path)
+        if not valid_model:
+            click.secho(
+                f"Evaluate '{model_arg}' needs to be passed either a safetensors directory or a GGUF file",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
+        click.secho(
+            f"Using local model found at '{model_path}' for '{model_arg}'",
+            fg="blue",
+        )
+    else:
+        click.secho(
+            f"Model could not be found at '{model}' for '{model_arg}'",
+            fg="red",
+        )
+        raise click.exceptions.Exit(1)
 
 
 def sort_score(pairing: tuple[str, float]) -> float:
@@ -283,7 +285,7 @@ def launch_server(
     ctx: click.Context,
     model: str,
     model_name: str,
-    max_workers: int,
+    max_workers: int | None,
     gpus: int | None,
     backend: str | None,
     enable_serving_output: bool,
@@ -325,20 +327,21 @@ def launch_server(
                 )
         effective_gpus = effective_gpus or 1
 
-        # Recommend max-workers based on hardware configuration: min(#GPUs being used * 10, #CPU cores) +- 50%
-        # Edge cases:
-        # - Many GPUs, not many CPUs: Unlikely, workers might not be able to keep the GPUs busy but recommendation can be ignored.
-        # - Many CPUs, not many GPUs: More likely, 10 workers per GPU should still be reasonable.
-        target_max_workers = min(effective_gpus * 10, get_cpu_count())
-        recommended_min_workers = max(target_max_workers // 2, 1)
-        recommended_max_workers = max(int(target_max_workers // 0.5), 1)
-        if (
-            max_workers > recommended_max_workers
-            or max_workers < recommended_min_workers
-        ):
-            logger.warning(
-                f"Based on your hardware configuration, when using vLLM, we recommend setting max-workers between {recommended_min_workers} and {recommended_max_workers} for optimal performance"
-            )
+        if max_workers is not None:
+            # Recommend max-workers based on hardware configuration: min(#GPUs being used * 10, #CPU cores) +- 50%
+            # Edge cases:
+            # - Many GPUs, not many CPUs: Unlikely, workers might not be able to keep the GPUs busy but recommendation can be ignored.
+            # - Many CPUs, not many GPUs: More likely, 10 workers per GPU should still be reasonable.
+            target_max_workers = min(effective_gpus * 10, get_cpu_count())
+            recommended_min_workers = max(target_max_workers // 2, 1)
+            recommended_max_workers = max(int(target_max_workers // 0.5), 1)
+            if (
+                max_workers > recommended_max_workers
+                or max_workers < recommended_min_workers
+            ):
+                logger.warning(
+                    f"Based on your hardware configuration, when using vLLM, we recommend setting max-workers between {recommended_min_workers} and {recommended_max_workers} for optimal performance"
+                )
     elif backend == backends.LLAMA_CPP:
         if ctx.obj.config.serve.llama_cpp.max_ctx_size < 5120:
             eval_serve.llama_cpp.max_ctx_size = 5120
@@ -346,11 +349,12 @@ def launch_server(
                 "Evaluate requires a context size of >= 5120, ignoring serve configuration for max_ctx_size"
             )
         # llama-cpp fails fast on too many incoming requests and returns errors to client
-        recommended_workers = max(get_cpu_count() // 2, 1)
-        if max_workers > recommended_workers:
-            logger.warning(
-                f"Based on your hardware configuration, when using llama-cpp, we recommend setting max-workers to a maximum of {recommended_workers}"
-            )
+        if max_workers is not None:
+            recommended_workers = max(get_cpu_count() // 2, 1)
+            if max_workers > recommended_workers:
+                logger.warning(
+                    f"Based on your hardware configuration, when using llama-cpp, we recommend setting max-workers to a maximum of {recommended_workers}"
+                )
         if gpus:
             logger.debug("Ignoring --gpus option for llama-cpp serving")
 
@@ -691,7 +695,21 @@ def evaluate(
             display_error_rate((error_rate + base_error_rate) / 2)
 
         elif benchmark == Benchmark.MMLU:
-            overall_score, individual_scores = evaluator.run()
+            server = None
+            try:
+                server, api_base = launch_server(
+                    ctx,
+                    model,
+                    model,
+                    None,
+                    gpus,
+                    backend,
+                    enable_serving_output,
+                )
+                overall_score, individual_scores = evaluator.run(api_base)
+            finally:
+                if server is not None:
+                    server.shutdown()
 
             print("# KNOWLEDGE EVALUATION REPORT")
             display_model(model)
@@ -721,9 +739,23 @@ def evaluate(
             overall_scores = []
             individual_scores_list = []
             for evaluator in evaluators:
-                overall_score, individual_scores = evaluator.run()
-                overall_scores.append(overall_score)
-                individual_scores_list.append(individual_scores)
+                server = None
+                try:
+                    server, api_base = launch_server(
+                        ctx,
+                        model,
+                        model,
+                        None,
+                        gpus,
+                        backend,
+                        enable_serving_output,
+                    )
+                    overall_score, individual_scores = evaluator.run(api_base)
+                    overall_scores.append(overall_score)
+                    individual_scores_list.append(individual_scores)
+                finally:
+                    if server is not None:
+                        server.shutdown()
 
             overall_score = overall_scores[0]
             base_overall_score = overall_scores[1]
