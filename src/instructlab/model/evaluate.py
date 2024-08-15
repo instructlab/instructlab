@@ -304,13 +304,11 @@ def launch_server(
             )
         gpus = gpus or eval_serve.vllm.gpus
         if gpus:
-            # Warn when overriding from vllm_args
+            # First Party
+            from instructlab.model.backends.vllm import contains_argument
+
             tps_prefix = "--tensor-parallel-size"
-            if any(
-                s == tps_prefix or s.startswith(tps_prefix + "=")
-                for s in eval_serve.vllm.vllm_args
-            ):
-                # Either tps_prefix value or tps_prefix=value
+            if contains_argument(tps_prefix, eval_serve.vllm.vllm_args):
                 click.secho(
                     "Using gpus from --gpus or evaluate config and ignoring --tensor-parallel-size configured in serve vllm_args",
                     fg="yellow",
