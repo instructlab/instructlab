@@ -14,7 +14,12 @@ else
 fi
 
 ec2() {
-    local cmdname=$1; shift
+    local cmdname=$1
+    if [ -z "$cmdname" ]; then
+        show_usage
+        exit 1
+    fi
+    shift
     if [ "$(type -t "ec2__$cmdname")" = "function" ] >/dev/null 2>&1; then
         INSTANCE_NAME="$EC2_INSTANCE_NAME"
         "ec2__$cmdname" "$@"
@@ -177,7 +182,12 @@ ec2_calculate_instance_public_dns() {
 }
 
 ibm() {
-    local cmdname=$1; shift
+    local cmdname=$1
+    if [ -z "$cmdname" ]; then
+        show_usage
+        exit 1
+    fi
+    shift
     if [ "$(type -t "ibm__$cmdname")" = "function" ] >/dev/null 2>&1; then
         INSTANCE_NAME="$IBM_INSTANCE_NAME"
         "ibm__$cmdname" "$@"
