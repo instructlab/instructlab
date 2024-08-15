@@ -66,7 +66,7 @@ class ExpandAliasesGroup(LazyEntryPointGroup):
     def get_alias_info(self, cmd_name: str) -> tuple[str, str]:
         ep: metadata.EntryPoint = self.alias_eps[cmd_name]
         # assume that the second item of the module name is the group
-        return ep.module.split(".", 3)[1], ep.attr
+        return ep.module.split(".", 3)[1], ep.module.split(".", 3)[2]
 
     def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:
         if cmd_name in self.alias_eps.names:
