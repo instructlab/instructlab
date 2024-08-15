@@ -143,9 +143,36 @@ def format_template(model_family: str, model_path: pathlib.Path) -> str:
     return prefix + template
 
 
-def contains_argument(prefix: str, arg: typing.Iterable[str]) -> bool:
+def contains_argument(prefix: str, args: typing.Iterable[str]) -> bool:
     # Either --foo value or --foo=value
-    return any(s == prefix or s.startswith(prefix + "=") for s in arg)
+    return any(s == prefix or s.startswith(prefix + "=") for s in args)
+
+
+def get_argument(prefix: str, args: typing.List[str]):
+    # Return last value in args for either --foo value or --foo=value
+    # Returns True if flag --foo is provided with no value
+
+    args_len = len(args)
+    # Traverse the args in reverse (args_len-1 to 0)
+    for i in range(args_len - 1, -1, -1):
+        s = args[i]
+        if s == prefix:
+            # Case: --foo value or --foo (with no value)
+            if i == args_len - 1:
+                # --foo is the last entry, must be a flag
+                return True
+            next_arg = args[i + 1]
+            if next_arg.startswith("-"):
+                # No value provided, must be a flag
+                return True
+            # The entry after is the value
+            return next_arg
+        v = prefix + "="
+        if s.startswith(v):
+            # Case: --foo=value
+            # Return everything after prefix=
+            return s[len(v) :]
+    return None
 
 
 def create_tmpfile(data: str):

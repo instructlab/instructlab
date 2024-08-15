@@ -5,7 +5,6 @@
 from copy import deepcopy
 import enum
 import logging
-import multiprocessing
 import os
 import pathlib
 import typing
@@ -289,12 +288,41 @@ def launch_server(
             raise click.exceptions.Exit(1)
 
     if backend == backends.VLLM:
+        # First Party
+        from instructlab.model.backends.vllm import contains_argument, get_argument
+
         eval_serve.vllm.vllm_args = eval_serve.vllm.vllm_args or []
         eval_serve.vllm.vllm_args.extend(["--served-model-name", model_name])
-        # Recommend max-workers based on hardware configuration. #cpus +- 50%
-        cpu_count = multiprocessing.cpu_count()
-        recommended_min_workers = max(cpu_count // 1.5, 1)
-        recommended_max_workers = max(cpu_count // 0.5, 1)
+
+        tps_prefix = "--tensor-parallel-size"
+        gpus = gpus or eval_serve.vllm.gpus
+        if gpus:
+            if contains_argument(tps_prefix, eval_serve.vllm.vllm_args):
+                click.secho(
+                    "Using gpus from --gpus or evaluate config and ignoring --tensor-parallel-size configured in serve vllm_args",
+                    fg="yellow",
+                )
+            eval_serve.vllm.vllm_args.extend([tps_prefix, str(gpus)])
+
+        effective_gpus = gpus
+        if effective_gpus is None:
+            try:
+                tps = get_argument(tps_prefix, eval_serve.vllm.vllm_args)
+                if tps is not None:
+                    effective_gpus = int(tps)
+            except ValueError:
+                logger.warning(
+                    "Invalid --tensor-parallel-size found in serve vllm_args"
+                )
+        effective_gpus = effective_gpus or 1
+
+        # Recommend max-workers based on hardware configuration: min(#GPUs being used * 10, #CPU cores) +- 50%
+        # Edge cases:
+        # - Many GPUs, not many CPUs: Unlikely, workers might not be able to keep the GPUs busy but recommendation can be ignored.
+        # - Many CPUs, not many GPUs: More likely, 10 workers per GPU should still be reasonable.
+        target_max_workers = min(effective_gpus * 10, len(os.sched_getaffinity(0)))
+        recommended_min_workers = max(target_max_workers // 2, 1)
+        recommended_max_workers = max(int(target_max_workers // 0.5), 1)
         if (
             max_workers > recommended_max_workers
             or max_workers < recommended_min_workers
@@ -302,18 +330,6 @@ def launch_server(
             logger.warning(
                 f"Based on your hardware configuration, when using vLLM, we recommend setting max-workers between {recommended_min_workers} and {recommended_max_workers} for optimal performance"
             )
-        gpus = gpus or eval_serve.vllm.gpus
-        if gpus:
-            # First Party
-            from instructlab.model.backends.vllm import contains_argument
-
-            tps_prefix = "--tensor-parallel-size"
-            if contains_argument(tps_prefix, eval_serve.vllm.vllm_args):
-                click.secho(
-                    "Using gpus from --gpus or evaluate config and ignoring --tensor-parallel-size configured in serve vllm_args",
-                    fg="yellow",
-                )
-            eval_serve.vllm.vllm_args.extend([tps_prefix, str(gpus)])
     elif backend == backends.LLAMA_CPP:
         if ctx.obj.config.serve.llama_cpp.max_ctx_size < 5120:
             eval_serve.llama_cpp.max_ctx_size = 5120
@@ -321,7 +337,7 @@ def launch_server(
                 "Evaluate requires a context size of >= 5120, ignoring serve configuration for max_ctx_size"
             )
         # llama-cpp fails fast on too many incoming requests and returns errors to client
-        recommended_workers = max(multiprocessing.cpu_count() // 2, 1)
+        recommended_workers = max(len(os.sched_getaffinity(0)) // 2, 1)
         if max_workers > recommended_workers:
             logger.warning(
                 f"Based on your hardware configuration, when using llama-cpp, we recommend setting max-workers to a maximum of {recommended_workers}"
