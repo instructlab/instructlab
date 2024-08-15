@@ -88,12 +88,14 @@ jobs:
           nvidia-smi
           python3.11 -m pip cache remove llama_cpp_python
 
-          CMAKE_ARGS="-DLLAMA_CUDA=on" python3.11 -m pip install .
+          CMAKE_ARGS="-DLLAMA_CUDA=on -DLLAMA_NATIVE=off" python3.11 -m pip install .
 
           # https://github.com/instructlab/instructlab/issues/1821
           # install with Torch and build dependencies installed
           python3.11 -m pip install packaging wheel setuptools-scm
           python3.11 -m pip install .[cuda]
+
+          python3.11 -m pip install vllm@git+https://github.com/opendatahub-io/vllm@2024.08.01
 
       - name: ilab system info
         run: |
