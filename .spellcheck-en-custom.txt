@@ -63,6 +63,7 @@ RX
 Radeon
 SDG
 SHA
+Safetensors
 Salawu
 Shaders
 Shivchander
