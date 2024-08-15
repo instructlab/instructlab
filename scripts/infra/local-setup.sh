@@ -39,7 +39,12 @@ rh__ensure-aws-system-pkgs() {
 }
 
 rh() {
-    local cmdname=$1; shift
+    local cmdname=$1
+    if [ -z "$cmdname" ]; then
+        show_usage
+        exit 1
+    fi
+    shift
     if [ "$(type -t "rh__$cmdname")" = "function" ] >/dev/null 2>&1; then
         "rh__$cmdname" "$@"
     elif [ "$(type -t "${cmdname//-/_}")" = "function" ] >/dev/null 2>&1; then
@@ -52,7 +57,12 @@ rh() {
 }
 
 ibm() {
-    local cmdname=$1; shift
+    local cmdname=$1
+    if [ -z "$cmdname" ]; then
+        show_usage
+        exit 1
+    fi
+    shift
     if [ "$(type -t "ibm__$cmdname")" = "function" ] >/dev/null 2>&1; then
         "ibm__$cmdname" "$@"
     elif [ "$(type -t "${cmdname//-/_}")" = "function" ] >/dev/null 2>&1; then
