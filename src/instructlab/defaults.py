@@ -18,6 +18,9 @@ MODEL_FAMILY_MAPPINGS = {
     "granite": "merlinite",
 }
 
+# Default log format
+LOG_FORMAT = "%(levelname)s %(asctime)s %(name)s:%(lineno)d: %(message)s"
+
 
 class STORAGE_DIR_NAMES:
     ILAB = "instructlab"

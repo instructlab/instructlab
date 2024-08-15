@@ -30,7 +30,7 @@ from .common import (
     safe_close_all,
     verify_template_exists,
 )
-from .server import BackendServer
+from .server import BackendServer, ServerConfig
 
 logger = logging.getLogger(__name__)
 
@@ -47,8 +47,10 @@ class Server(BackendServer):
         background: bool = False,
         vllm_args: typing.Iterable[str] | None = (),
         max_startup_attempts: int | None = None,
+        log_file: pathlib.Path | None = None,
     ):
-        super().__init__(model_family, model_path, chat_template, api_base, host, port)
+        sc = ServerConfig(api_base, log_file)
+        super().__init__(model_family, model_path, chat_template, host, port, sc)
         self.api_base = api_base
         self.model_path = model_path
         self.background = background
@@ -66,6 +68,7 @@ class Server(BackendServer):
             self.chat_template,
             self.vllm_args,
             self.background,
+            log_file=self.config.log_file,
         )
         self.register_resources(files)
 
@@ -89,6 +92,7 @@ class Server(BackendServer):
             self.chat_template,
             self.vllm_args,
             background=background,
+            log_file=self.config.log_file,
         )
         self.register_resources(files)
         return server_process
@@ -251,6 +255,7 @@ def run_vllm(
     chat_template: str,
     vllm_args: list[str],
     background: bool,
+    log_file: pathlib.Path | None = None,
 ) -> typing.Tuple[subprocess.Popen, list[Closeable]]:
     """
     Start an OpenAI-compatible server with vLLM.
@@ -269,6 +274,7 @@ def run_vllm(
                                         Example: ["--dtype", "auto", "--enable-lora"]
         background (bool):            Whether the stdout and stderr vLLM should be sent to /dev/null (True)
                                       or stay in the foreground(False).
+        log_file (Path):              File to write stdout and stderr
     Returns:
         tuple: A tuple containing two values:
             vllm_process (subprocess.Popen): process of the vllm server
@@ -287,15 +293,28 @@ def run_vllm(
     vllm_env.pop("VLLM_CONFIGURE_LOGGING", None)
 
     try:
-        # Note: start_new_session=True is needed to create a process group which will later be used on shutdown
+        # Note: start_new_session=True is needed to create a process group which will later be used
+        # on shutdown. The new process will not be a child of the current process group. Instead, it
+        # will be the leader of a new session and process group.
         if background:
-            vllm_process = subprocess.Popen(
-                args=vllm_cmd,
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-                env=vllm_env,
-                start_new_session=True,
-            )
+            if log_file:
+                # write both stdout and stderr to the log file in append mode
+                with log_file.open("a", encoding="utf-8") as f:
+                    vllm_process = subprocess.Popen(
+                        args=vllm_cmd,
+                        stdout=f,
+                        stderr=f,
+                        start_new_session=True,
+                        env=vllm_env,
+                    )
+            else:
+                vllm_process = subprocess.Popen(
+                    args=vllm_cmd,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    env=vllm_env,
+                    start_new_session=True,
+                )
         else:
             # pylint: disable=consider-using-with
             vllm_process = subprocess.Popen(

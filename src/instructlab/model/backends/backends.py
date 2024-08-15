@@ -220,10 +220,13 @@ def select_backend(
     cfg: serve_config,
     backend: Optional[str] = None,
     model_path: pathlib.Path | None = None,
+    log_file: pathlib.Path | None = None,
 ) -> BackendServer:
     # Local
     from .llama_cpp import Server as llama_cpp_server
     from .vllm import Server as vllm_server
+
+    logger.debug("Selecting backend for model %s", model_path)
 
     model_path = pathlib.Path(model_path or cfg.model_path)
     backend_name = backend if backend is not None else cfg.backend
@@ -250,6 +253,7 @@ def select_backend(
             model_family=cfg.llama_cpp.llm_family,
             host=host,
             port=port,
+            log_file=log_file,
         )
     if backend == VLLM:
         # Instantiate the vllm server
@@ -262,6 +266,7 @@ def select_backend(
             host=host,
             port=port,
             max_startup_attempts=cfg.vllm.max_startup_attempts,
+            log_file=log_file,
         )
     click.secho(f"Unknown backend: {backend}", fg="red")
     raise click.exceptions.Exit(1)

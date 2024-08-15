@@ -5,6 +5,7 @@ import datetime
 import json
 import logging
 import os
+import pathlib
 import sys
 import time
 import traceback
@@ -27,6 +28,7 @@ import openai
 from instructlab import clickext
 from instructlab import client as ilabclient
 from instructlab import configuration as cfg
+from instructlab import log
 from instructlab.utils import HttpClientParams
 
 # Local
@@ -164,6 +166,12 @@ def is_openai_server_and_serving_model(
     "--model-family",
     help="Force model family to use when picking a chat template",
 )
+@click.option(
+    "--serving-log-file",
+    type=click.Path(path_type=pathlib.Path),
+    required=False,
+    help="Log file path to write server logs to.",
+)
 @click.pass_context
 @clickext.display_params
 def chat(
@@ -182,6 +190,7 @@ def chat(
     tls_client_key,
     tls_client_passwd,
     model_family,
+    serving_log_file,
 ):
     """Runs a chat using the modified model"""
     # pylint: disable=import-outside-toplevel
@@ -206,15 +215,25 @@ def chat(
         },
     ):
         api_base = users_endpoint_url
+        if serving_log_file:
+            logger.warning(
+                "Setting serving log file (--serving-log-file) is not supported when the server is already running"
+            )
     else:
         # First Party
         from instructlab.model.backends import backends
 
+        # If a log file is specified, write logs to the file
+        root_logger = logging.getLogger()
+        if serving_log_file:
+            log.add_file_handler_to_logger(root_logger, serving_log_file)
+
         ctx.obj.config.serve.llama_cpp.llm_family = model_family
         backend_instance = backends.select_backend(
-            ctx.obj.config.serve, model_path=model
+            ctx.obj.config.serve,
+            model_path=model,
+            log_file=serving_log_file,
         )
-
         try:
             # Run the llama server
             api_base = backend_instance.run_detached(http_client(ctx.params))
