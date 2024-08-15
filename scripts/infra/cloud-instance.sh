@@ -100,6 +100,14 @@ ec2__launch() {
 
 }
 
+ec2__details() {
+    handle_help_and_instance_name_opts "$@"
+    ec2_calculate_instance_id
+    aws ec2 describe-instances \
+        --instance-ids "$INSTANCE_ID" \
+        --region "$EC2_REGION"
+}
+
 ec2__stop() {
     handle_help_and_instance_name_opts "$@"
     ec2_calculate_instance_id
@@ -431,7 +439,11 @@ Commands
             Name of the instance to launch (default provided in config)
         -t
             Instance type (default provided in config)
-    
+
+    details - Get details of the instance
+        -n
+            Name of the instance to get details of (default provided in config)
+
     stop - Stop the instance
         -n
             Name of the instance to stop (default provided in config)
