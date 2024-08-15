@@ -126,7 +126,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    #### Install using PyTorch without CUDA bindings and no GPU acceleration
 
       ```shell
-      python3 -m venv --upgrade-deps venv
+      python3.11 -m venv --upgrade-deps venv
       source venv/bin/activate
       pip install instructlab
       ```
@@ -142,7 +142,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    #### Install with AMD ROCm
 
       ```shell
-      python3 -m venv --upgrade-deps venv
+      python3.11 -m venv --upgrade-deps venv
       source venv/bin/activate
       pip cache remove llama_cpp_python
       pip install 'instructlab[rocm]' \
@@ -163,7 +163,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       > or if your system is setup with [pyenv](https://github.com/pyenv/pyenv) by using the `file -b $(pyenv which python)` command.
 
       ```shell
-      python3 -m venv --upgrade-deps venv
+      python3.11 -m venv --upgrade-deps venv
       source venv/bin/activate
       pip cache remove llama_cpp_python
       pip install 'instructlab[mps]'
@@ -174,7 +174,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
      For the best CUDA experience, installing vLLM is necessary to serve Safetensors format models.
 
       ```shell
-      python3 -m venv --upgrade-deps venv
+      python3.11 -m venv --upgrade-deps venv
       source venv/bin/activate
       pip cache remove llama_cpp_python
       pip install 'instructlab[cuda]' \
