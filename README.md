@@ -591,6 +591,12 @@ Before following these instructions, ensure the existing model you are adding sk
    ilab data generate --endpoint-url http://localhost:8000/v1
    ```
 
+Note that it is also possible to generate a synthetic dataset based on the entire contents of the taxonomy repo using the `--taxonomy-base=empty` option:
+
+   ```shell
+   ilab data generate --taxonomy-base=`empty`
+   ```
+
 ### 👩‍🏫 Training the model
 
 There are many options for training the model with your synthetic data-enhanced dataset.
