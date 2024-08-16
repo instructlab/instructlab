@@ -195,14 +195,21 @@ def run_vllm(
 
     logger.debug(f"vLLM serving command is: {vllm_cmd}")
 
+    vllm_env = os.environ.copy()
+    # Reset vllm logging to the default (enabled)
+    vllm_env.pop("VLLM_CONFIGURE_LOGGING", None)
+
     try:
         if background:
             vllm_process = subprocess.Popen(
-                args=vllm_cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                args=vllm_cmd,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                env=vllm_env,
             )
         else:
             # pylint: disable=consider-using-with
-            vllm_process = subprocess.Popen(args=vllm_cmd)
+            vllm_process = subprocess.Popen(args=vllm_cmd, env=vllm_env)
 
         api_base = get_api_base(f"{host}:{port}")
         logger.info("vLLM starting up on pid %s at %s", vllm_process.pid, api_base)
