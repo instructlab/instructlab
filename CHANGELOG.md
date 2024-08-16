@@ -1,3 +1,10 @@
+## v0.18.1
+
+### Features
+
+* `ilab data generate` and `ilab taxonomy diff` now support `--taxonomy-base=empty` to allow
+  specifying that all taxonomy files in the supplied repo should be included.
+
 ## v0.18
 
 ### Features
