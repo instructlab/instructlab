@@ -49,7 +49,7 @@ Large Language Models (LLMs.) The "**lab**" in Instruct**Lab** 🐶 stands for
 
 ## 🎺 What's new
 
-InstructLab release 0.17.0 on June 14, 2024 contains updates to the `ilab` CLI design. The `ilab` commands now fall into groups for an easier workflow and understanding of the commands. For more information, see the [InstructLab CLI reference](docs/cli_reference.md) To view all the available flags for each command group, use the `--help` tag after the command. The original commands are still in effect, but will be deprecated in release 0.19.0 on July 11, 2024.
+InstructLab release 0.17.0 on June 14, 2024 contains updates to the `ilab` CLI design. The `ilab` commands now fall into groups for an easier workflow and understanding of the commands. For more information, see the [InstructLab CLI reference](docs/cli_reference.md) To view all the available flags for each command group, use the `--help` tag after the command. The original commands are still in effect, but will be deprecated in the planned release 0.19.0.
 
 ## ❓ What is `ilab`
 
