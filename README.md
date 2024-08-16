@@ -524,6 +524,16 @@ compositional_skills/writing/freeform/foo-lang/qna.yaml
 Taxonomy in $HOME/.local/share/instructlab/taxonomy is valid :)
 ```
 
+You can also validate your entire taxonomy by performing a diff against an empty base by using the `--taxonomy-base=empty` argument:
+
+```shell
+(venv) $ ilab taxonomy diff --taxonomy-base=empty
+compositional_skills/general/tables/empty/qna.yaml
+compositional_skills/general/tables/editing/add_remove/qna.yaml
+...
+Taxonomy in $HOME/.local/share/instructlab/taxonomy is valid :)
+```
+
 ### 🚀 Generate a synthetic dataset
 
 Before following these instructions, ensure the existing model you are adding skills or knowledge to is still running. Alternatively, `ilab data generate` can start a server for you if you provide a fully qualified model path via `--model`.
@@ -594,7 +604,7 @@ Before following these instructions, ensure the existing model you are adding sk
 Note that it is also possible to generate a synthetic dataset based on the entire contents of the taxonomy repo using the `--taxonomy-base=empty` option:
 
    ```shell
-   ilab data generate --taxonomy-base=`empty`
+   ilab data generate --taxonomy-base=empty
    ```
 
 ### 👩‍🏫 Training the model
