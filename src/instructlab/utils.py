@@ -584,7 +584,7 @@ def validate_taxonomy(_logger, taxonomy, taxonomy_base, yaml_rules) -> None:
         if total_errors:
             raise TaxonomyReadingException(
                 yaml.YAMLError(
-                    f"{total_errors} total errors found across {len(taxonomy_files)} updated taxonomy files!"
+                    f"{total_errors} total errors found across {len(taxonomy_files)} taxonomy files!"
                 )
             )
 
