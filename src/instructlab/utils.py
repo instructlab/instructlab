@@ -249,6 +249,17 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     return updated_taxonomy_files
 
 
+def get_taxonomy(repo="taxonomy"):
+    repo = Path(repo)
+    taxonomy_file_paths = []
+    for root, _, files in os.walk(repo):
+        for file in files:
+            file_path = Path(root).joinpath(file).relative_to(repo)
+            if is_taxonomy_file(file_path):
+                taxonomy_file_paths.append(str(file_path))
+    return taxonomy_file_paths
+
+
 class SourceDict(TypedDict):
     repo: str
     commit: str
@@ -549,15 +560,19 @@ def validate_taxonomy(_logger, taxonomy, taxonomy_base, yaml_rules) -> None:
         if errors:
             raise TaxonomyReadingException(yaml.YAMLError("Taxonomy file with errors!"))
     else:  # taxonomy is dir
-        # Gather the new or changed YAMLs using git diff
-        updated_taxonomy_files = get_taxonomy_diff(taxonomy, taxonomy_base)
+        if taxonomy_base == "empty":
+            # Gather all the yamls - equivalent to a diff against "the null tree"
+            taxonomy_files = get_taxonomy(taxonomy)
+        else:
+            # Gather the new or changed YAMLs using git diff, including untracked files
+            taxonomy_files = get_taxonomy_diff(taxonomy, taxonomy_base)
         total_errors = 0
         total_warnings = 0
-        if updated_taxonomy_files:
+        if taxonomy_files:
             logger.debug("Found new taxonomy files:")
-            for e in updated_taxonomy_files:
+            for e in taxonomy_files:
                 logger.debug(f"* {e}")
-        for f in updated_taxonomy_files:
+        for f in taxonomy_files:
             file_path = os.path.join(taxonomy, f)
             warnings, errors = validate_taxonomy_file(file_path, yaml_rules)
             total_warnings += warnings
@@ -569,7 +584,7 @@ def validate_taxonomy(_logger, taxonomy, taxonomy_base, yaml_rules) -> None:
         if total_errors:
             raise TaxonomyReadingException(
                 yaml.YAMLError(
-                    f"{total_errors} total errors found across {len(updated_taxonomy_files)} updated taxonomy files!"
+                    f"{total_errors} total errors found across {len(taxonomy_files)} updated taxonomy files!"
                 )
             )
 

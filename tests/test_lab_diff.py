@@ -49,6 +49,28 @@ class TestLabDiff:
         assert tracked_file not in result.output
         assert result.exit_code == 0
 
+    def test_diff_empty_base(self, cli_runner: CliRunner):
+        taxonomy_base = "empty"
+        untracked_file = "compositional_skills/new/qna.yaml"
+        tracked_file = "compositional_skills/tracked/qna.yaml"
+        self.taxonomy.create_untracked(untracked_file)
+        self.taxonomy.add_tracked(tracked_file)
+        result = cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "taxonomy",
+                "diff",
+                "--taxonomy-base",
+                taxonomy_base,
+                "--taxonomy-path",
+                self.taxonomy.root,
+            ],
+        )
+        assert untracked_file in result.output
+        assert tracked_file in result.output
+        assert result.exit_code == 0
+
     def test_diff_rm_tracked(self, cli_runner: CliRunner):
         tracked_file = "compositional_skills/tracked/qna.yaml"
         self.taxonomy.add_tracked(tracked_file)

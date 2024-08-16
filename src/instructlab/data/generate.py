@@ -65,7 +65,7 @@ logger = logging.getLogger(__name__)
     "--taxonomy-base",
     default=DEFAULTS.TAXONOMY_BASE,
     show_default=True,
-    help="Base git-ref to use when generating new taxonomy.",
+    help="Base git-ref to use for taxonomy, use 'empty' for the entire repo contents.",
 )
 @click.option(
     "--output-dir",
