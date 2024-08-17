@@ -1,14 +1,6 @@
 # Installing InstructLab on Windows using WSL (Windows Subsystem for Linux)
 
-This tutorial will walk through the full process of running InstructLab on WSL, from installation of WSL to the initialization of InstructLab. This tutorial has been performed using the following laptop specs:
-
-- CPU: Intel i7-10750H
-
-- OS: Windows 10 Home
-
-- RAM: 16GB
-
-- GPU: Geforce RTX 3060 Laptop GPU (12GB VRAM)
+This tutorial describes the full process of running InstructLab on WSL, from installation of WSL to the initialization of InstructLab.
 
 This tutorial will use the following software tools and packages:
 
@@ -18,9 +10,9 @@ This tutorial will use the following software tools and packages:
 
 - Ubuntu
 
-- `python3.10-venv`
+- `python3.11`
 
-- `cmake`
+- `python3.11-dev`
 
 - `build-essential`
 
@@ -34,7 +26,7 @@ To install WSL, first open up Powershell. The following command installs the nec
 wsl --install
 ```
 
-WSL is installed
+WSL is installed.
 
 To run WSL, simply type the following command to set up the Linux environment in Powershell:
 
@@ -45,38 +37,11 @@ wsl
 ## Installing InstructLab 
 From here, proceed with setting up InstructLab within the Linux environment. The following instructions are a mix of both the official InstructLab documentation as well as the WSL installation/setup process.
 
-Create a directory called `instructlab` to store the files InstructLab needs to run and cd into that directory:
-
-```	
-mkdir instructlab
-cd instructlab
-```
-
-Next, update and upgrade the Linux environment to ensure all of your installed packages are up-to-date.
+First, update and upgrade the Linux environment to ensure all of your installed packages are up-to-date.
 
 ```
 sudo apt update
 sudo apt upgrade
-```
-
-For the sake of simplicity, we will be installing InstructLab using PyTorch without CUDA bindings or GPU acceleration. To do that, first go ahead and install the `python3.10-venv` package.
-
-```
-sudo apt install python3.10-venv
-```
-
-Then,
-
-```
-python3 -m venv --upgrade-deps venv
-source venv/bin/activate
-pip cache remove llama_cpp_python
-```
-
-Install `cmake`:
-
-```
-pip install cmake
 ```
 
 And install `build-essential`:
@@ -85,10 +50,28 @@ And install `build-essential`:
 sudo apt install build-essential
 ```
 
-Finally, install the `instructlab` package. Note that we are making sure the build is done without Apple M-series GPU support because we are not using MacOS.
+Install the requisite packages:
+>NOTE: Since WSL uses Ubuntu as the default distro, use `apt install` instead of `dnf install` as is stated in the official InstructLab documentation.
 
 ```
-CMAKE_ARGS="-DLLAMA_METAL=off" pip install instructlab[cpu] --extra-index-url=https://download.pytorch.org/whl/cpu -C cmake.args="-DLLAMA_NATIVE=off"
+sudo apt install gcc g++ make git python3.11 python3.11-dev
+```
+
+Create a directory called `instructlab` to store the files InstructLab needs to run and cd into that directory:
+
+```	
+mkdir instructlab
+cd instructlab
+```
+
+Next, 
+
+For the sake of simplicity, install InstructLab using PyTorch without CUDA bindings or GPU acceleration. Note that we are making sure the build is done without Apple M-series GPU support because we are not using MacOS.
+
+```
+python3 -m venv --upgrade-deps venv
+source venv/bin/activate
+CMAKE_ARGS="-DLLAMA_METAL=off" pip install instructlab
 ```
 
 ## Running InstructLab
