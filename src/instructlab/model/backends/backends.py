@@ -302,7 +302,9 @@ def shutdown_process(process: subprocess.Popen, timeout: int) -> None:
     """
     Shuts down a process
 
-    Sends SIGINT and then after a timeout if the process still is not terminated sends a SIGKILL
+    Sends SIGINT and then after a timeout if the process still is not terminated sends
+    a SIGKILL. Finally, a SIGKILL is sent to the process group in case any child processes
+    weren't cleaned up.
 
     Args:
         process (subprocess.Popen): process of the vllm server
@@ -312,6 +314,7 @@ def shutdown_process(process: subprocess.Popen, timeout: int) -> None:
     """
     # vLLM responds to SIGINT by shutting down gracefully and reaping the children
     logger.debug(f"Sending SIGINT to vLLM server PID {process.pid}")
+    process_group_id = os.getpgid(process.pid)
     process.send_signal(signal.SIGINT)
     try:
         logger.debug("Waiting for vLLM server to shut down gracefully")
@@ -321,6 +324,17 @@ def shutdown_process(process: subprocess.Popen, timeout: int) -> None:
             f"Sending SIGKILL to vLLM server since timeout ({timeout}s) expired"
         )
         process.kill()
+
+    # Attempt to cleanup any remaining child processes
+    # Make sure process_group is legit (> 1) before trying
+    if process_group_id and process_group_id > 1:
+        try:
+            os.killpg(process_group_id, signal.SIGKILL)
+            logger.debug("Sent SIGKILL to vLLM process group")
+        except ProcessLookupError:
+            logger.debug("Nothing left to clean up with the vLLM process group")
+    else:
+        logger.debug("vLLM process group id not found")
 
     # Various facilities of InstructLab rely on multiple successive start/stop
     # cycles. Since vLLM relies on stable VRAM for estimating capacity, residual
