@@ -209,16 +209,22 @@ def run_vllm(
     vllm_env.pop("VLLM_CONFIGURE_LOGGING", None)
 
     try:
+        # Note: start_new_session=True is needed to create a process group which will later be used on shutdown
         if background:
             vllm_process = subprocess.Popen(
                 args=vllm_cmd,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
                 env=vllm_env,
+                start_new_session=True,
             )
         else:
             # pylint: disable=consider-using-with
-            vllm_process = subprocess.Popen(args=vllm_cmd, env=vllm_env)
+            vllm_process = subprocess.Popen(
+                args=vllm_cmd,
+                env=vllm_env,
+                start_new_session=True,
+            )
 
         api_base = get_api_base(f"{host}:{port}")
         logger.info("vLLM starting up on pid %s at %s", vllm_process.pid, api_base)
