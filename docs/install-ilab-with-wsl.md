@@ -57,29 +57,6 @@ Install the requisite packages:
 sudo apt install gcc g++ make git python3.11 python3.11-dev
 ```
 
-Create a directory called `instructlab` to store the files InstructLab needs to run and cd into that directory:
+From here, follow from Step 2 under [Installing `ilab`](https://github.com/instructlab/instructlab?tab=readme-ov-file#-getting-started) in the root directory.
 
-```	
-mkdir instructlab
-cd instructlab
-```
-
-Next, 
-
-For the sake of simplicity, install InstructLab using PyTorch without CUDA bindings or GPU acceleration. Note that we are making sure the build is done without Apple M-series GPU support because we are not using MacOS.
-
-```
-python3 -m venv --upgrade-deps venv
-source venv/bin/activate
-CMAKE_ARGS="-DLLAMA_METAL=off" pip install instructlab
-```
-
-## Running InstructLab
-At last, we can run `instructlab`. Verify the `ilab` CLI is running, then initialize it.
-
-```
-ilab
-ilab config init
-```
-
-And there you go! You have InstructLab setup on your Windows machine (using Linux) through WSL! But it doesn’t stop here. You still need to download your model, generate your synthetic test data, train your model, test it, and even talk to it. If you end up not having enough VRAM to train your models locally (like me), you can use a cloud service like Google Colab. I highly recommend checking out the [official documentation](https://github.com/instructlab/instructlab/tree/main) for these next steps. I will also be releasing more tutorials as I go through my InstructLab journey, so stay tuned!
+And there you go! You have InstructLab setup on your Windows machine (using Linux) through WSL! But it doesn’t stop here. You still need to download your model, generate your synthetic test data, train your model, test it, and even talk to it. If you end up not having enough VRAM to train your models locally (like me), you can use a cloud service like Google Colab. I highly recommend checking out the [official documentation](https://github.com/instructlab/instructlab) for these next steps. I will also be releasing more tutorials as I go through my InstructLab journey, so stay tuned!
