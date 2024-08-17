@@ -30,6 +30,7 @@ class TestLabModelTest:
             http_client: httpx.Client | None = None,
             background: bool = True,
             foreground_allowed: bool = False,
+            max_startup_retries: int = 0,
         ) -> str:
             return "api_base_mock"
 

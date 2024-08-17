@@ -99,6 +99,7 @@ class BackendServer(abc.ABC):
         http_client: httpx.Client | None = None,
         background: bool = True,
         foreground_allowed: bool = False,
+        max_startup_retries: int = 0,
     ) -> str:
         """Run serving backend in background ('ilab model chat' when server is not running)"""
 
