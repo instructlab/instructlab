@@ -57,6 +57,6 @@ Install the requisite packages:
 sudo apt install gcc g++ make git python3.11 python3.11-dev
 ```
 
-From here, follow from Step 2 under [Installing `ilab`](https://github.com/instructlab/instructlab?tab=readme-ov-file#-getting-started) in the root directory.
+From here, follow from Step #2 under [Installing `ilab`](https://github.com/instructlab/instructlab?tab=readme-ov-file#-getting-started) in the root directory.
 
 And there you go! You have InstructLab setup on your Windows machine (using Linux) through WSL! But it doesn’t stop here. You still need to download your model, generate your synthetic test data, train your model, test it, and even talk to it. If you end up not having enough VRAM to train your models locally (like me), you can use a cloud service like Google Colab. I highly recommend checking out the [official documentation](https://github.com/instructlab/instructlab) for these next steps. I will also be releasing more tutorials as I go through my InstructLab journey, so stay tuned!
