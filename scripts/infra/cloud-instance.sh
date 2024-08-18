@@ -351,6 +351,7 @@ pip_install_with_nvidia() {
             llama_cpp_python -c constraints.txt llama_cpp_python \
          && pip install wheel packaging torch -c constraints.txt \
          && pip install .[cuda] -r requirements-vllm-cuda.txt \
+         && pip install -e . --no-deps \
          && ilab"
 }
 
