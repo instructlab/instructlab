@@ -451,8 +451,8 @@ def ensure_server(
         logger.info("Starting a temporary vLLM server at %s", temp_api_base)
         count = 0
         # Each call to check_api_base takes >2s + 2s sleep
-        # Default to 300 if not specified (~20 mins of wait time)
-        vllm_startup_max_attempts = max_startup_attempts or 300
+        # Default to 120 if not specified (~8 mins of wait time)
+        vllm_startup_max_attempts = max_startup_attempts or 120
         start_time_secs = time()
         while count < vllm_startup_max_attempts:
             count += 1

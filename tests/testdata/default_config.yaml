@@ -50,7 +50,7 @@ generate:
     vllm:
       gpus: null
       llm_family: ''
-      max_startup_attempts: 300
+      max_startup_attempts: 120
       vllm_args: []
 serve:
   backend: null
@@ -64,7 +64,7 @@ serve:
   vllm:
     gpus: null
     llm_family: ''
-    max_startup_attempts: 300
+    max_startup_attempts: 120
     vllm_args: []
 train:
   additional_args: {}
