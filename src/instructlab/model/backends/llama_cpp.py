@@ -99,6 +99,7 @@ class Server(BackendServer):
         http_client: httpx.Client | None = None,
         background: bool = True,
         foreground_allowed: bool = False,
+        max_startup_retries: int = 0,
     ) -> str:
         logger.info(f"Trying to connect to model server at {self.api_base}")
         if check_api_base(self.api_base, http_client):
