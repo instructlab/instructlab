@@ -1,11 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from functools import cache, wraps
-from importlib import resources
-from importlib.abc import Traversable
+from functools import wraps
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, Tuple, TypedDict
+from typing import List, Tuple, TypedDict
 from urllib.parse import urlparse
 import copy
 import glob
@@ -21,7 +19,12 @@ import tempfile
 
 # Third Party
 from git import Repo, exc
-from referencing import Resource
+from instructlab.schema.taxonomy import DEFAULT_TAXONOMY_FOLDERS as TAXONOMY_FOLDERS
+from instructlab.schema.taxonomy import (
+    TaxonomyMessageFormat,
+    TaxonomyParser,
+    TaxonomyReadingException,
+)
 import click
 import git
 import gitdb
@@ -33,16 +36,6 @@ from . import common
 
 logger = logging.getLogger(__name__)
 
-MIN_KNOWLEDGE_VERSION = 3
-
-DEFAULT_YAML_RULES = """\
-extends: relaxed
-
-rules:
-  line-length:
-    max: 120
-"""
-
 
 class SDGTokens:
     """
@@ -52,10 +45,6 @@ class SDGTokens:
     USER = "<|user|>"
     ASSISTANT = "<|assistant|>"
     PRETRAINING = "<|pretraining|>"
-
-
-class TaxonomyReadingException(Exception):
-    """An exception raised during reading of the taxonomy."""
 
 
 class Message(TypedDict):
@@ -185,27 +174,29 @@ def make_lab_diff_aliases(cli, diff):
     cli.add_command(lab_check)
 
 
-TAXONOMY_FOLDERS: List[str] = ["compositional_skills", "knowledge"]
-"""Taxonomy folders which are also the schema names"""
-
-
 def is_taxonomy_file(fn: str) -> bool:
     path = Path(fn)
     if path.parts[0] not in TAXONOMY_FOLDERS:
         return False
-    if path.name == "qna.yml":
+    if path.name == "qna.yaml":
+        return True
+    if path.name.casefold() in {"qna.yml", "qna.yaml"}:
+        # warning for incorrect extension or case variants
         logger.warning(
-            f"Found a 'qna.yml' file: {path}: taxonomy files must be named 'qna.yaml'. File will not be checked."
+            "Found a '%s' file: %s: taxonomy files must be named 'qna.yaml'. File will not be checked.",
+            path.name,
+            path,
         )
-        return False
-    return path.name == "qna.yaml"
+    return False
 
 
-def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
-    repo = git.Repo(repo)
+def get_taxonomy_diff(
+    repo_path: str | Path = "taxonomy", base: str = "origin/main"
+) -> list[str]:
+    repo = git.Repo(repo_path)
     untracked_files = [u for u in repo.untracked_files if is_taxonomy_file(u)]
 
-    branches = [b.name for b in repo.branches]
+    branches = [b.name for b in repo.branches]  # type: ignore[attr-defined]
 
     head_commit = None
     if "/" in base:
@@ -226,8 +217,8 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     # then we can take our diff from there
     current_commit = repo.commit("HEAD")
     while not head_commit:
-        branches = repo.git.branch("-a", "--contains", current_commit.hexsha)
-        if re_git_branch.findall(branches):
+        contains = repo.git.branch("-a", "--contains", current_commit.hexsha)
+        if re_git_branch.findall(contains):
             head_commit = current_commit
             break
         try:
@@ -328,234 +319,58 @@ def get_sysprompt(model=None):
     return common.SYS_PROMPT
 
 
-@cache
-def _load_schema(path: Traversable) -> Resource:
-    """Load the schema from the path into a Resource object.
-
-    Args:
-        path (Traversable): Path to the schema to be loaded.
-
-    Raises:
-        NoSuchResource: If the resource cannot be loaded.
-
-    Returns:
-        Resource: A Resource containing the requested schema.
-    """
-    # pylint: disable=import-outside-toplevel
-    # Third Party
-    from referencing.exceptions import NoSuchResource
-    from referencing.jsonschema import DRAFT202012
-
-    try:
-        contents = json.loads(path.read_text(encoding="utf-8"))
-        resource = Resource.from_contents(
-            contents=contents, default_specification=DRAFT202012
-        )
-    except Exception as e:
-        raise NoSuchResource(str(path)) from e
-    return resource
-
-
-def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
-    """Validate the parsed yaml document using the taxonomy path to
-    determine the proper schema.
-
-    Args:
-        contents (Mapping): The parsed yaml document to validate against the schema.
-        taxonomy_path (Path): Relative path of the taxonomy yaml document where the
-            first element is the schema to use.
-
-    Returns:
-        int: The number of errors found during validation.
-        Messages for each error have been logged.
-    """
-    # Third Party
-    from jsonschema.protocols import Validator
-    from jsonschema.validators import validator_for
-    from referencing import Registry
-    from referencing.exceptions import NoSuchResource
-    from referencing.typing import URI
-
-    errors = 0
-    version = get_version(contents)
-    schemas_path = resources.files("instructlab.schema").joinpath(f"v{version}")
-
-    def retrieve(uri: URI) -> Resource:
-        path = schemas_path.joinpath(uri)
-        # This mypy violation will be fixed in:
-        # https://github.com/instructlab/schema/pull/33
-        return _load_schema(path)  # type: ignore[arg-type]
-
-    schema_name = taxonomy_path.parts[0]
-    if schema_name not in TAXONOMY_FOLDERS:
-        schema_name = "knowledge" if "document" in contents else "compositional_skills"
-        logger.info(
-            f"Cannot determine schema name from path {taxonomy_path}. Using {schema_name} schema."
-        )
-
-    if schema_name == "knowledge" and version < MIN_KNOWLEDGE_VERSION:
-        logger.error(
-            f"Version {version} is not supported for knowledge taxonomy. Minimum supported version is {MIN_KNOWLEDGE_VERSION}."
-        )
-        errors += 1
-        return errors
-
-    try:
-        schema_resource = retrieve(f"{schema_name}.json")
-        schema = schema_resource.contents
-        validator_cls = validator_for(schema)
-        validator: Validator = validator_cls(
-            # mypy doesn't understand attrs classes fields, see:
-            # https://github.com/python/mypy/issues/5406
-            schema,
-            registry=Registry(retrieve=retrieve),  # type: ignore[call-arg]
-        )
-
-        for validation_error in validator.iter_errors(contents):
-            errors += 1
-            yaml_path = validation_error.json_path[1:]
-            if not yaml_path:
-                yaml_path = "."
-            if validation_error.validator == "minItems":
-                # Special handling for minItems which can have a long message for seed_examples
-                message = (
-                    f"Value must have at least {validation_error.validator_value} items"
-                )
-            else:
-                message = validation_error.message[-200:]
-            logger.error(
-                f"Validation error in {taxonomy_path}: [{yaml_path}] {message}"
-            )
-    except NoSuchResource as e:
-        cause = e.__cause__ if e.__cause__ is not None else e
-        errors += 1
-        logger.error(f"Cannot load schema file {e.ref}. {cause}")
-
-    return errors
-
-
-def get_version(contents: Mapping) -> int:
-    try:
-        return int(contents.get("version", 1))
-    except (ValueError, TypeError):
-        return 1  # fallback to version 1
-
-
 # pylint: disable=broad-exception-caught
-def validate_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
-    warnings = 0
-    errors = 0
-    file_path_p = Path(file_path).resolve()
-    # file should end with ".yaml" explicitly
-    if file_path_p.suffix != ".yaml":
-        logger.warning(
-            f"Skipping {file_path_p}! Use lowercase '.yaml' extension instead."
-        )
-        warnings += 1
-        return warnings, errors
-    # update path to point directly at file if it is not already
-    for i in range(len(file_path_p.parts) - 1, -1, -1):
-        if file_path_p.parts[i] in TAXONOMY_FOLDERS:
-            taxonomy_path = Path(*file_path_p.parts[i:])
-            break
-    else:
-        taxonomy_path = file_path_p
-    # read file if extension is correct
-    try:
-        with file_path_p.open(encoding="utf-8") as file:
-            contents = yaml.safe_load(file)
-        if not contents:
-            logger.warning(f"Skipping {file_path_p} because it is empty!")
-            warnings += 1
-            return warnings, errors
-        if not isinstance(contents, Mapping):
+def validate_taxonomy_file(
+    file_path: str | Path, yamllint_config: str | None = None
+) -> tuple[int, int]:
+    parser = TaxonomyParser(
+        schema_version=0,  # Use version value in yaml
+        message_format=TaxonomyMessageFormat.LOGGING,  # Report warnings and errors to the logger
+        yamllint_config=yamllint_config,
+        yamllint_strict=True,  # Report yamllint warnings as errors
+    )
+    taxonomy = parser.parse(file_path)
+
+    if taxonomy.warnings or taxonomy.errors:
+        return taxonomy.warnings, taxonomy.errors
+
+    # If the taxonomy file includes a document reference, validate that
+    # we can retrieve the content of the document
+    document = taxonomy.contents.get("document")
+    if document:
+        try:
+            _validate_documents(document)
+        except Exception:
             logger.error(
-                f"{file_path_p} is not valid. The top-level element is not an object with key-value pairs."
+                "Failed to load document content for %s",
+                taxonomy.path,
+                exc_info=True,
             )
-            errors += 1
-            return warnings, errors
+            taxonomy.errors += 1
 
-        # do general YAML linting
-        version = get_version(contents)
-        if version > 1:  # no linting for version 1 yaml
-            if yaml_rules is not None:  # user attempted to pass custom yaml rules file
-                if os.path.isfile(
-                    yaml_rules
-                ):  # custom rules file was found, use specified config
-                    logger.debug(f"Using YAML rules from {yaml_rules}")
-                    yamllint_cmd = [
-                        "yamllint",
-                        "-f",
-                        "parsable",
-                        "-c",
-                        yaml_rules,
-                        str(file_path_p),
-                        "-s",
-                    ]
-                else:  # custom rules file was not found, use default config
-                    logger.debug(f"Cannot find {yaml_rules}. Using default rules.")
-                    yamllint_cmd = [
-                        "yamllint",
-                        "-f",
-                        "parsable",
-                        "-d",
-                        DEFAULT_YAML_RULES,
-                        str(file_path_p),
-                        "-s",
-                    ]
-            else:  # no custom rules file was specified, use default config
-                yamllint_cmd = [
-                    "yamllint",
-                    "-f",
-                    "parsable",
-                    "-d",
-                    DEFAULT_YAML_RULES,
-                    str(file_path_p),
-                    "-s",
-                ]
-            # run YAML linter via yamllint subprocess
-            try:
-                subprocess.check_output(yamllint_cmd, text=True)
-            except subprocess.CalledProcessError as e:
-                lint_messages = [f"Problems found in file {file_path_p}"]
-                parsed_output = e.output.splitlines()
-                for p in parsed_output:
-                    errors += 1
-                    delim = str(file_path_p) + ":"
-                    parsed_p = p.split(delim)[1]
-                    lint_messages.append(parsed_p)
-                logger.error("\n".join(lint_messages))
-                return warnings, errors
-
-        # validate file matches InstructLab Taxonomy Schema
-        validation_errors = validate_yaml(contents, taxonomy_path)
-        if validation_errors:
-            errors += validation_errors
-            return warnings, errors
-
-        # If the taxonomy file includes a document reference, validate that
-        # we can retrieve the content of the document
-        if "document" in contents:
-            try:
-                _validate_documents(contents["document"])
-            except Exception as e:
-                errors += 1
-                logger.error(f"Failed to load document content for {file_path_p}: {e}")
-
-    except Exception as e:
-        errors += 1
-        raise TaxonomyReadingException(f"Exception {e} raised in {file_path_p}") from e
-
-    return warnings, errors
+    return taxonomy.warnings, taxonomy.errors
 
 
-# TODO: remove `_logger` parameter after instructlab.sdg is fixed.
-def validate_taxonomy(_logger, taxonomy, taxonomy_base, yaml_rules) -> None:
+def validate_taxonomy(
+    taxonomy: str | Path,
+    taxonomy_base: str,
+    yaml_rules: str | Path | None = None,
+) -> None:
+    yamllint_config = None  # If no custom rules file, use default config
+    if yaml_rules is not None:  # user attempted to pass custom rules file
+        yaml_rules_path = Path(yaml_rules)
+        if yaml_rules_path.is_file():  # file was found, use specified config
+            logger.debug("Using YAML rules from %s", yaml_rules)
+            yamllint_config = yaml_rules_path.read_text(encoding="utf-8")
+        else:
+            logger.debug("Cannot find %s. Using default rules.", yaml_rules)
+
     if os.path.isfile(taxonomy):
-        warnings, errors = validate_taxonomy_file(taxonomy, yaml_rules)
+        warnings, errors = validate_taxonomy_file(taxonomy, yamllint_config)
         if warnings:
             logger.warning(
-                f"{warnings} warnings (see above) due to taxonomy file not (fully) usable."
+                "%s warnings (see above) due to taxonomy file not (fully) usable.",
+                warnings,
             )
         if errors:
             raise TaxonomyReadingException(yaml.YAMLError("Taxonomy file with errors!"))
@@ -571,15 +386,16 @@ def validate_taxonomy(_logger, taxonomy, taxonomy_base, yaml_rules) -> None:
         if taxonomy_files:
             logger.debug("Found new taxonomy files:")
             for e in taxonomy_files:
-                logger.debug(f"* {e}")
+                logger.debug("* %s", e)
         for f in taxonomy_files:
             file_path = os.path.join(taxonomy, f)
-            warnings, errors = validate_taxonomy_file(file_path, yaml_rules)
+            warnings, errors = validate_taxonomy_file(file_path, yamllint_config)
             total_warnings += warnings
             total_errors += errors
         if total_warnings:
             logger.warning(
-                f"{total_warnings} warnings (see above) due to taxonomy files that were not (fully) usable."
+                "%s warnings (see above) due to taxonomy files that were not (fully) usable.",
+                total_warnings,
             )
         if total_errors:
             raise TaxonomyReadingException(

@@ -8,10 +8,9 @@ GitPython>=3.1.42
 httpx>=0.25.0
 instructlab-eval>=0.1.1
 instructlab-quantize>=0.1.0
-instructlab-schema>=0.3.1
+instructlab-schema>=0.4.0
 instructlab-sdg>=0.2.6
 instructlab-training>=0.4.1
-jsonschema>=4.21.1
 llama_cpp_python[server]==0.2.79
 mlx>=0.5.1,<0.6.0; sys_platform == 'darwin' and platform_machine == 'arm64'
 # HabanaLabs / Intel Gaudi env comes with Python 3.10 and slightly older
@@ -41,7 +40,3 @@ transformers>=4.40.0 ; python_version == '3.10'
 transformers>=4.41.2 ; python_version >= '3.11'
 trl>=0.9.4
 wandb>=0.16.4
-# the below library should NOT be imported into any python files
-# it is for CLI usage ONLY
-yamllint>=1.35.1
-referencing>=0.35.0
