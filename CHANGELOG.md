@@ -73,6 +73,9 @@
 * Add interactive prompt for users to choose their train profile.
 * The `generate` section of the config now has a `pipeline` value. This value sets a default value
   and can be overridden by the `--pipeline` flag. The default for this value is 'simple'.
+* `ilab model train` now supports the `--strategy` option. Custom, independent training logic can be added to extend the `train` sub-command.
+  `--strategy lab-multiphase` runs training in `phased` mode. This is an implementation of the `LAB` paper's required training strategy.
+  Important training parameters like `effective_batch_size` and `num_epochs` are independent and configurable for each training phase.
 
 ### Breaking Changes
 
