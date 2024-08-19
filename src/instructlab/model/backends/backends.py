@@ -8,7 +8,6 @@ import abc
 import contextlib
 import json
 import logging
-import mmap
 import multiprocessing
 import os
 import pathlib
@@ -178,20 +177,13 @@ def is_model_gguf(model_path: pathlib.Path) -> bool:
     from gguf.constants import GGUF_MAGIC
 
     try:
-        with open(model_path, "rb") as f:
-            # Memory-map the file on the first 4 bytes (this is where the magic number is)
-            mmapped_file = mmap.mmap(f.fileno(), length=4, access=mmap.ACCESS_READ)
+        with model_path.open("rb") as f:
+            first_four_bytes = f.read(4)
 
-            # Read the first 4 bytes
-            first_four_bytes = mmapped_file.read(4)
+        # Convert the first four bytes to an integer
+        first_four_bytes_int = int(struct.unpack("<I", first_four_bytes)[0])
 
-            # Convert the first four bytes to an integer
-            first_four_bytes_int = int(struct.unpack("<I", first_four_bytes)[0])
-
-            # Close the memory-mapped file
-            mmapped_file.close()
-
-            return first_four_bytes_int == GGUF_MAGIC
+        return first_four_bytes_int == GGUF_MAGIC
     except IsADirectoryError as exc:
         logger.debug(f"GGUF Path is a directory, returning {exc}")
         return False
