@@ -17,9 +17,6 @@ import httpx
 # Local
 from ...configuration import get_api_base
 from .backends import (
-    CHAT_TEMPLATE_AUTO,
-    CHAT_TEMPLATE_TOKENIZER,
-    VLLM,
     BackendServer,
     Closeable,
     ServerException,
@@ -29,6 +26,7 @@ from .backends import (
     shutdown_process,
     verify_template_exists,
 )
+from .common import CHAT_TEMPLATE_AUTO, CHAT_TEMPLATE_TOKENIZER, VLLM
 
 logger = logging.getLogger(__name__)
 
