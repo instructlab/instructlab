@@ -126,7 +126,7 @@ export PATH=$PATH:$CUDA_HOME/bin
 
 # Recompile llama-cpp-python using CUDA
 pip cache remove llama_cpp_python
-pip install --force-reinstall llama_cpp_python==0.2.79 -C cmake.args="-DLLAMA_CUDA=on"
+pip install --force-reinstall --no-deps llama_cpp_python==0.2.79 -C cmake.args="-DLLAMA_CUDA=on"
 
 # Re-install InstructLab
 pip install ./instructlab[cuda]
