@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from time import monotonic, sleep, time
+from time import monotonic, sleep
 from types import FrameType
 from typing import Optional, Tuple
 import abc
@@ -26,9 +26,7 @@ import httpx
 import uvicorn
 
 # Local
-from ...client import check_api_base
 from ...configuration import _serve as serve_config
-from ...configuration import get_api_base
 from ...utils import split_hostport
 from .common import CHAT_TEMPLATE_AUTO, LLAMA_CPP, VLLM
 
@@ -408,73 +406,6 @@ def wait_for_stable_vram_cuda(timeout: int) -> Tuple[bool, bool]:
             torch.cuda.empty_cache()
         except Exception as e:  # pylint: disable=broad-exception-caught
             logger.debug("Could not free cuda cache: %s", e)
-
-
-def ensure_server(
-    backend: str,
-    api_base: str,
-    http_client=None,
-    host="localhost",
-    port=8000,
-    background=True,
-    foreground_allowed=False,
-    server_process_func=None,
-    max_startup_attempts=None,
-) -> Tuple[
-    Optional[multiprocessing.Process], Optional[subprocess.Popen], Optional[str]
-]:
-    """Checks if server is running, if not starts one as a subprocess. Returns the server process
-    and the URL where it's available."""
-
-    logger.info(f"Trying to connect to model server at {api_base}")
-    if check_api_base(api_base, http_client):
-        return (None, None, api_base)
-    port = free_tcp_ipv4_port(host)
-    logger.debug(f"Using available port {port} for temporary model serving.")
-
-    host_port = f"{host}:{port}"
-    temp_api_base = get_api_base(host_port)
-    vllm_server_process = None
-
-    if backend == VLLM:
-        # TODO: resolve how the hostname is getting passed around the class and this function
-        vllm_server_process = server_process_func(port, background)
-        logger.info("Starting a temporary vLLM server at %s", temp_api_base)
-        count = 0
-        # Each call to check_api_base takes >2s + 2s sleep
-        # Default to 120 if not specified (~8 mins of wait time)
-        vllm_startup_max_attempts = max_startup_attempts or 120
-        start_time_secs = time()
-        while count < vllm_startup_max_attempts:
-            count += 1
-            # Check if the process is still alive
-            if vllm_server_process.poll():
-                if foreground_allowed and background:
-                    raise ServerException(
-                        "vLLM failed to start.  Retry with --enable-serving-output to learn more about the failure."
-                    )
-                raise ServerException("vLLM failed to start.")
-            logger.info(
-                "Waiting for the vLLM server to start at %s, this might take a moment... Attempt: %s/%s",
-                temp_api_base,
-                count,
-                vllm_startup_max_attempts,
-            )
-            if check_api_base(temp_api_base, http_client):
-                logger.info("vLLM engine successfully started at %s", temp_api_base)
-                break
-            if count == vllm_startup_max_attempts:
-                logger.info(
-                    "Gave up waiting for vLLM server to start at %s after %s attempts",
-                    temp_api_base,
-                    vllm_startup_max_attempts,
-                )
-                duration = round(time() - start_time_secs, 1)
-                shutdown_process(vllm_server_process, 20)
-                # pylint: disable=raise-missing-from
-                raise ServerException(f"vLLM failed to start up in {duration} seconds")
-            sleep(2)
-    return (None, vllm_server_process, temp_api_base)
 
 
 def free_tcp_ipv4_port(host: str) -> int:
