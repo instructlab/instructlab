@@ -21,12 +21,16 @@ from .backends import (
     Closeable,
     ServerException,
     ensure_server,
-    get_model_template,
     safe_close_all,
     shutdown_process,
     verify_template_exists,
 )
-from .common import CHAT_TEMPLATE_AUTO, CHAT_TEMPLATE_TOKENIZER, VLLM
+from .common import (
+    CHAT_TEMPLATE_AUTO,
+    CHAT_TEMPLATE_TOKENIZER,
+    VLLM,
+    get_model_template,
+)
 
 logger = logging.getLogger(__name__)
 
