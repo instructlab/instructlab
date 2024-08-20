@@ -1,5 +1,7 @@
 # Installing InstructLab on Windows using WSL (Windows Subsystem for Linux)
 
+### ATTENTION: This process is not officially supported by InstructLab. It is a community contribution, and should not be interpreted as official documentation.
+
 This tutorial describes the full process of running InstructLab on WSL, from installation of WSL to the initialization of InstructLab.
 
 This tutorial will use the following software tools and packages:
