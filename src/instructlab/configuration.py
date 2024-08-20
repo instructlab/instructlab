@@ -245,6 +245,7 @@ MODEL_FAMILY_MAPPINGS = {
 }
 
 
+
 class ConfigException(Exception):
     """An exception that a configuration file has an error."""
 
@@ -907,6 +908,163 @@ def get_default_config() -> Config:
     )
 
 
+EIGHT_GPU_TRAIN_AH = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+         "lora_alpha": 32,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=8,
+    effective_batch_size=128,
+    lora_quantize_dtype=None,
+    lora_rank=0,
+    max_batch_len=60000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=False,
+    is_padding_free=True,
+    num_epochs=8,
+    model_path=os.path.join(
+        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
+    ),
+)
+
+FOUR_GPU_TRAIN_AH = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=4,
+    effective_batch_size=128,
+    lora_quantize_dtype=None,
+    lora_rank=0,
+    max_batch_len=54000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=False,
+    is_padding_free=True,
+    num_epochs=8,
+    model_path=os.path.join(
+        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
+    ),
+)
+
+TWO_GPU_TRAIN_AH = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": True,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=2,
+    effective_batch_size=128,
+    lora_quantize_dtype=None,
+    lora_rank=0,
+    max_batch_len=60000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=True,
+    is_padding_free=True,
+    num_epochs=8,
+    model_path=os.path.join(
+        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
+    ),
+)
+
+EIGHT_L_FORTY_GPU = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=8,
+    effective_batch_size=128,
+    lora_quantize_dtype=None,
+    lora_rank=0,
+    max_batch_len=30000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=False,
+    is_padding_free=True,
+    num_epochs=8,
+    model_path=os.path.join(
+        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
+    ),
+)
+
+FOUR_L_FORTY_GPU = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": True,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=4,
+    effective_batch_size=128,
+    lora_quantize_dtype=None,
+    lora_rank=0,
+    max_batch_len=30000,
+    max_seq_len=4096,
+    save_samples=1000,
+    num_epochs=8,
+    deepspeed_cpu_offload_optimizer=True,
+    is_padding_free=True,
+    model_path=os.path.join(
+        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
+    ),
+)
+
+EIGHT_L_FOUR_GPU = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": True,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=8,
+    effective_batch_size=128,
+    lora_quantize_dtype=None,
+    lora_rank=0,
+    max_batch_len=30000,
+    max_seq_len=4096,
+    save_samples=1000,
+    num_epochs=8,
+    deepspeed_cpu_offload_optimizer=True,
+    is_padding_free=True,
+    model_path=os.path.join(
+        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
+    ),
+)
+
+
 def read_train_profile(train_file) -> _train:
     try:
         with open(train_file, "r", encoding="utf-8") as yamlfile:
@@ -1213,163 +1371,6 @@ def recreate_train_profiles(overwrite: bool = False) -> bool:
                     loaded = yaml.load(d)
                     yaml.dump(loaded, outfile)
     else:
-        # else render the defaults
-        EIGHT_GPU_TRAIN_AH = _train(
-            additional_args={
-                "warmup_steps": 25,
-                "learning_rate": 2e-5,
-                "lora_dropout": 0.1,
-                "lora_alpha": 32,
-            },
-            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
-            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
-            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
-            nproc_per_node=8,
-            effective_batch_size=128,
-            lora_quantize_dtype=None,
-            lora_rank=0,
-            max_batch_len=60000,
-            max_seq_len=4096,
-            save_samples=1000,
-            deepspeed_cpu_offload_optimizer=False,
-            is_padding_free=True,
-            num_epochs=8,
-            model_path=os.path.join(
-                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-            ),
-        )
-
-        FOUR_GPU_TRAIN_AH = _train(
-            additional_args={
-                "warmup_steps": 25,
-                "learning_rate": 2e-5,
-                "lora_dropout": 0.1,
-                "lora_alpha": 32,
-            },
-            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
-            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
-            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
-            nproc_per_node=4,
-            effective_batch_size=128,
-            lora_quantize_dtype=None,
-            lora_rank=0,
-            max_batch_len=54000,
-            max_seq_len=4096,
-            save_samples=1000,
-            deepspeed_cpu_offload_optimizer=False,
-            is_padding_free=True,
-            num_epochs=8,
-            model_path=os.path.join(
-                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-            ),
-        )
-
-        TWO_GPU_TRAIN_AH = _train(
-            additional_args={
-                "warmup_steps": 25,
-                "learning_rate": 2e-5,
-                "lora_dropout": 0.1,
-                "lora_alpha": 32,
-                "deepspeed_cpu_offload_optimizer_ratio": 1,
-                "deepspeed_cpu_offload_optimizer_pin_memory": True,
-            },
-            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
-            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
-            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
-            nproc_per_node=2,
-            effective_batch_size=128,
-            lora_quantize_dtype=None,
-            lora_rank=0,
-            max_batch_len=60000,
-            max_seq_len=4096,
-            save_samples=1000,
-            deepspeed_cpu_offload_optimizer=True,
-            is_padding_free=True,
-            num_epochs=8,
-            model_path=os.path.join(
-                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-            ),
-        )
-
-        EIGHT_L_FORTY_GPU = _train(
-            additional_args={
-                "warmup_steps": 25,
-                "learning_rate": 2e-5,
-                "lora_dropout": 0.1,
-                "lora_alpha": 32,
-            },
-            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
-            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
-            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
-            nproc_per_node=8,
-            effective_batch_size=128,
-            lora_quantize_dtype=None,
-            lora_rank=0,
-            max_batch_len=30000,
-            max_seq_len=4096,
-            save_samples=1000,
-            deepspeed_cpu_offload_optimizer=False,
-            is_padding_free=True,
-            num_epochs=8,
-            model_path=os.path.join(
-                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-            ),
-        )
-
-        FOUR_L_FORTY_GPU = _train(
-            additional_args={
-                "warmup_steps": 25,
-                "learning_rate": 2e-5,
-                "lora_dropout": 0.1,
-                "lora_alpha": 32,
-                "deepspeed_cpu_offload_optimizer_ratio": 1,
-                "deepspeed_cpu_offload_optimizer_pin_memory": True,
-            },
-            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
-            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
-            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
-            nproc_per_node=4,
-            effective_batch_size=128,
-            lora_quantize_dtype=None,
-            lora_rank=0,
-            max_batch_len=30000,
-            max_seq_len=4096,
-            save_samples=1000,
-            num_epochs=8,
-            deepspeed_cpu_offload_optimizer=True,
-            is_padding_free=True,
-            model_path=os.path.join(
-                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-            ),
-        )
-
-        EIGHT_L_FOUR_GPU = _train(
-            additional_args={
-                "warmup_steps": 25,
-                "learning_rate": 2e-5,
-                "lora_dropout": 0.1,
-                "lora_alpha": 32,
-                "deepspeed_cpu_offload_optimizer_ratio": 1,
-                "deepspeed_cpu_offload_optimizer_pin_memory": True,
-            },
-            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
-            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
-            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
-            nproc_per_node=8,
-            effective_batch_size=128,
-            lora_quantize_dtype=None,
-            lora_rank=0,
-            max_batch_len=30000,
-            max_seq_len=4096,
-            save_samples=1000,
-            num_epochs=8,
-            deepspeed_cpu_offload_optimizer=True,
-            is_padding_free=True,
-            model_path=os.path.join(
-                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-            ),
-        )
-
         to_write = {
             DEFAULTS.TRAIN_A100_H100_X4_PROFILE: FOUR_GPU_TRAIN_AH,
             DEFAULTS.TRAIN_A100_H100_X8_PROFILE: EIGHT_GPU_TRAIN_AH,
@@ -1414,6 +1415,93 @@ class Lab:
         """
         if self.error_msg is not None:
             ctx.fail(self.error_msg)
+
+
+
+
+
+
+
+
+def render_configs_and_profiles(gpus: int) ->  dict[str, dict[str, tuple[Config, list[str]]]]:
+    single_gpu_confg = Config(
+        generate=_generate(
+            teacher=_serve(
+                model_path="~/.cache/instructlab/models/mistralai/Mistral-7B-Instruct-v0.2",
+                vllm=_serve_vllm(
+                    gpus=1,
+                    llm_family='mixtral'       
+                )
+            )
+        )
+    )
+    multi_gpu_config = Config(
+        generate=_generate(
+            teacher=_serve(
+                model_path="~/.cache/instructlab/models/mistralai/Mistral-7B-Instruct-v0.2",
+                vllm=_serve_vllm(
+                    gpus=gpus,
+                    llm_family='mixtral'       
+                )
+            )
+        )
+    )
+    single_server_gpu_config = Config(
+            serve=_serve(
+                vllm=_serve_vllm(
+                    gpus=1,
+                ),
+                model_path="~/.cache/instructlab/models/instructlab/granite-7b-lab",
+            ),
+            generate=_generate(
+            teacher=_serve(
+                model_path="~/.cache/instructlab/models/mistralai/Mistral-7B-Instruct-v0.2",
+                vllm=_serve_vllm(
+                    gpus=2,
+                    llm_family='mixtral'       
+                )
+            )
+        )
+    )
+    multi_server_gpu_config = Config(
+        serve=_serve(
+            vllm=_serve_vllm(
+                gpus=gpus,
+            ),
+            model_path="~/.cache/instructlab/models/instructlab/granite-7b-lab",
+        ),
+        generate=_generate(
+            teacher=_serve(
+                model_path="~/.cache/instructlab/models/mistralai/Mixtral-8x7B-Instruct-v0.1",
+                vllm=_serve_vllm(
+                    gpus=2,
+                    llm_family='mixtral'       
+                )
+            )
+        )
+    )
+    macos_config = Config(
+        _serve_llama_cpp(
+           gpu_layers=15 
+        ),
+        serve=_serve(
+            model_path="~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf",
+        ),
+        generate=_generate(
+            teacher=_serve(
+                model_path="~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf",
+            )
+        )
+    )
+
+
+    return {
+    "single-gpu": {"Single Consumer GPU": (single_gpu_confg, ["profiles"])},
+    "multi-gpu": {"Multi Consumer GPU": (multi_gpu_config, ["profiles"])},
+    "single-server-gpu": {"Single Server GPU": (single_server_gpu_config, ["profiles"])},
+    "multi-server-gpu": {"Multi Server GPU": (multi_server_gpu_config, [TWO_GPU_TRAIN_AH, FOUR_GPU_TRAIN_AH, EIGHT_GPU_TRAIN_AH, FOUR_L_FORTY_GPU, EIGHT_L_FORTY_GPU, EIGHT_L_FOUR_GPU])},
+    "macos": {"MacOS": (macos_config, ["profiles"])},
+    }
 
 
 def init(

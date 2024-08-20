@@ -42,6 +42,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "model" = "instructlab.model.model:model"
 "system" = "instructlab.system.system:system"
 "taxonomy" = "instructlab.taxonomy.taxonomy:taxonomy"
+"profile" = "instructlab.profile.profile:profile"
 
 [project.entry-points."instructlab.command.config"]
 "edit" = "instructlab.config.edit:edit"
@@ -67,6 +68,9 @@ issues = "https://github.com/instructlab/instructlab/issues"
 
 [project.entry-points."instructlab.command.taxonomy"]
 "diff" = "instructlab.taxonomy.diff:diff"
+
+[project.entry-points."instructlab.command.profile"]
+"set" = "instructlab.profile.set:set"
 
 [project.entry-points."instructlab.command.alias"]
 "chat" = "instructlab.model.chat:chat"
