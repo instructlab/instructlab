@@ -118,6 +118,14 @@ pull_request_rules:
   actions:
     merge:
       method: merge
+      commit_message_template: |
+        {{ title }} (#{{ number }})
+
+        {{ body }}
+
+        {% for user in approved_reviews_by %}
+        Approved-by: {{ user }}
+        {% endfor %}
     delete_head_branch:
 
 - name: label-cicd
