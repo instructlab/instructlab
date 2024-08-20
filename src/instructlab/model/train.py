@@ -806,8 +806,12 @@ def _mmlu(model: pathlib.Path) -> float:
     from instructlab.eval.mmlu import MMLU_TASKS, MMLUEvaluator
     import torch
 
-    # TODO: few_shots is enforced to be 5 here. Should be grabbed from config.
-    evaluator = MMLUEvaluator(model, tasks=MMLU_TASKS, few_shots=5)
+    min_tasks = os.environ.get("INSTRUCTLAB_EVAL_MMLU_MIN_TASKS")
+    if min_tasks is not None:
+        tasks = ["mmlu_abstract_algebra", "mmlu_anatomy", "mmlu_astronomy"]
+        evaluator = MMLUEvaluator(model, tasks=tasks)
+    else:
+        evaluator = MMLUEvaluator(model, tasks=MMLU_TASKS)
 
     # type the variable because MyPy doesn't seem to honor the types of the spread tuple
     ckpt_score: float
