@@ -626,7 +626,7 @@ missing-member-max-choices=1
 mixin-class-rgx=.*[Mm]ixin
 
 # List of decorators that change the signature of a decorated function.
-signature-mutators=unittest.mock.patch,unittest.mock.patch.object
+signature-mutators=
 
 
 [VARIABLES]
