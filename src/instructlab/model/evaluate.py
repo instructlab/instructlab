@@ -302,6 +302,11 @@ def launch_server(
                     fg="yellow",
                 )
             eval_serve.vllm.vllm_args.extend([tps_prefix, str(gpus)])
+        else:
+            click.secho(
+                "Evaluate is currently not configured to use GPUs. If you are on a GPU-enabled system edit your config or pass the number of GPUs you would like to use with '--gpus'",
+                fg="yellow",
+            )
 
         effective_gpus = gpus
         if effective_gpus is None:
