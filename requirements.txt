@@ -27,6 +27,7 @@ pydantic_yaml>=1.2.0
 PyYAML>=6.0.0
 rich>=13.3.1
 rouge-score>=0.1.2
+ruamel.yaml>=0.17.0
 sentencepiece>=0.2.0
 # "old" version required for vLLM on CUDA to build
 tokenizers>=0.11.1
