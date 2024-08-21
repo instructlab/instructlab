@@ -5,6 +5,7 @@
 from copy import deepcopy
 import enum
 import logging
+import multiprocessing
 import os
 import pathlib
 import typing
@@ -269,6 +270,14 @@ def get_model_name(model_path):
     return os.path.basename(os.path.normpath(model_path))
 
 
+def get_cpu_count():
+    try:
+        # Not available on all platforms
+        return len(os.sched_getaffinity(0))  # type: ignore[attr-defined]
+    except AttributeError:
+        return multiprocessing.cpu_count()
+
+
 def launch_server(
     ctx: click.Context,
     model: str,
@@ -319,7 +328,7 @@ def launch_server(
         # Edge cases:
         # - Many GPUs, not many CPUs: Unlikely, workers might not be able to keep the GPUs busy but recommendation can be ignored.
         # - Many CPUs, not many GPUs: More likely, 10 workers per GPU should still be reasonable.
-        target_max_workers = min(effective_gpus * 10, len(os.sched_getaffinity(0)))
+        target_max_workers = min(effective_gpus * 10, get_cpu_count())
         recommended_min_workers = max(target_max_workers // 2, 1)
         recommended_max_workers = max(int(target_max_workers // 0.5), 1)
         if (
@@ -336,7 +345,7 @@ def launch_server(
                 "Evaluate requires a context size of >= 5120, ignoring serve configuration for max_ctx_size"
             )
         # llama-cpp fails fast on too many incoming requests and returns errors to client
-        recommended_workers = max(len(os.sched_getaffinity(0)) // 2, 1)
+        recommended_workers = max(get_cpu_count() // 2, 1)
         if max_workers > recommended_workers:
             logger.warning(
                 f"Based on your hardware configuration, when using llama-cpp, we recommend setting max-workers to a maximum of {recommended_workers}"
