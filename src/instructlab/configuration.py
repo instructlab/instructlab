@@ -1527,11 +1527,7 @@ class Lab:
 
 
 
-
-
-
-
-def render_configs_and_profiles(gpus: int) ->  dict[str, dict[str, tuple[Config, list[str]]]]:
+def render_configs_and_profiles(gpus: int) ->  list[tuple[Config, list[dict[str, _train]]]]:
     single_gpu_confg = Config(
         generate=_generate(
             sdg_scale_factor=10,
@@ -1596,10 +1592,10 @@ def render_configs_and_profiles(gpus: int) ->  dict[str, dict[str, tuple[Config,
         )
     )
     macos_config = Config(
-        _serve_llama_cpp(
+        serve=_serve(
+            llama_cpp=_serve_llama_cpp(
            gpu_layers=15 
         ),
-        serve=_serve(
             model_path="~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf",
         ),
         generate=_generate(
@@ -1612,13 +1608,13 @@ def render_configs_and_profiles(gpus: int) ->  dict[str, dict[str, tuple[Config,
     )
 
 
-    return {
-    "single-gpu": {"Single Consumer GPU": (single_gpu_confg, [SINGLE_CONSUMER_GPU_TRAIN])},
-    "multi-gpu": {"Multi Consumer GPU": (multi_gpu_config, [MULTI_CONSUMER_GPU_TRAIN])},
-    "single-server-gpu": {"Single Server GPU": (single_server_gpu_config, [SINGLE_SERVER_GPU_TRAIN])},
-    "multi-server-gpu": {"Multi Server GPU": (multi_server_gpu_config, [TWO_GPU_TRAIN_AH, FOUR_GPU_TRAIN_AH, EIGHT_GPU_TRAIN_AH, FOUR_L_FORTY_GPU, EIGHT_L_FORTY_GPU, EIGHT_L_FOUR_GPU])},
-    "macos": {"MacOS": (macos_config, [MACOS_TRAIN])},
-    }
+    return [
+    (single_gpu_confg, [{"NVIDIA RTX 3070/3080/4070/4080": SINGLE_CONSUMER_GPU_TRAIN}]),
+    (multi_gpu_config, [{"NVIDIA RTX 3070/3080/4070/4080": MULTI_CONSUMER_GPU_TRAIN}]),
+    (single_server_gpu_config, [{"NVIDIA A100/H100/L40/L4": SINGLE_SERVER_GPU_TRAIN}]),
+    (multi_server_gpu_config, [{" NVIDIA 2xA100/H100": TWO_GPU_TRAIN_AH}, {"NVIDIA 4xA100/H100": FOUR_GPU_TRAIN_AH}, {"NVIDIA 8x A100 or H100": EIGHT_GPU_TRAIN_AH}, {"NVIDIA 4x L40": FOUR_L_FORTY_GPU}, {"NVIDIA 8x L40": EIGHT_L_FORTY_GPU}, {"NVIDIA 8x L4": EIGHT_L_FOUR_GPU}]),
+    (macos_config, [MACOS_TRAIN]),
+    ]
 
 
 def init(
