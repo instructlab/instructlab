@@ -1064,6 +1064,114 @@ EIGHT_L_FOUR_GPU = _train(
     ),
 )
 
+SINGLE_SERVER_GPU_TRAIN = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": True,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=1,
+    effective_batch_size=96,
+    lora_quantize_dtype='nf4',
+    lora_rank=2,
+    max_batch_len=60000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=True,
+    is_padding_free=True,
+    num_epochs=8,
+    model_path=os.path.join(
+        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
+    ),
+)
+
+MACOS_TRAIN = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": True,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=1,
+    effective_batch_size=96,
+    lora_quantize_dtype='nf4',
+    lora_rank=2,
+    max_batch_len=60000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=True,
+    is_padding_free=True,
+    num_epochs=5,
+    model_path=os.path.join(
+        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
+    ),
+)
+
+SINGLE_CONSUMER_GPU_TRAIN = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": True,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=1,
+    effective_batch_size=96,
+    lora_quantize_dtype='nf4',
+    lora_rank=2,
+    max_batch_len=30000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=True,
+    is_padding_free=True,
+    num_epochs=5,
+    model_path=os.path.join(
+        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
+    ),
+)
+
+
+MULTI_CONSUMER_GPU_TRAIN = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": True,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=2,
+    effective_batch_size=96,
+    lora_quantize_dtype='nf4',
+    lora_rank=2,
+    max_batch_len=30000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=True,
+    is_padding_free=True,
+    num_epochs=5,
+    model_path=os.path.join(
+        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
+    ),
+)
 
 def read_train_profile(train_file) -> _train:
     try:
@@ -1426,6 +1534,8 @@ class Lab:
 def render_configs_and_profiles(gpus: int) ->  dict[str, dict[str, tuple[Config, list[str]]]]:
     single_gpu_confg = Config(
         generate=_generate(
+            sdg_scale_factor=10,
+            pipeline="full",
             teacher=_serve(
                 model_path="~/.cache/instructlab/models/mistralai/Mistral-7B-Instruct-v0.2",
                 vllm=_serve_vllm(
@@ -1437,6 +1547,8 @@ def render_configs_and_profiles(gpus: int) ->  dict[str, dict[str, tuple[Config,
     )
     multi_gpu_config = Config(
         generate=_generate(
+            sdg_scale_factor=10,
+            pipeline="full",
             teacher=_serve(
                 model_path="~/.cache/instructlab/models/mistralai/Mistral-7B-Instruct-v0.2",
                 vllm=_serve_vllm(
@@ -1454,6 +1566,8 @@ def render_configs_and_profiles(gpus: int) ->  dict[str, dict[str, tuple[Config,
                 model_path="~/.cache/instructlab/models/instructlab/granite-7b-lab",
             ),
             generate=_generate(
+            sdg_scale_factor=10,
+            pipeline="full",
             teacher=_serve(
                 model_path="~/.cache/instructlab/models/mistralai/Mistral-7B-Instruct-v0.2",
                 vllm=_serve_vllm(
@@ -1472,6 +1586,7 @@ def render_configs_and_profiles(gpus: int) ->  dict[str, dict[str, tuple[Config,
         ),
         generate=_generate(
             teacher=_serve(
+            pipeline="full",
                 model_path="~/.cache/instructlab/models/mistralai/Mixtral-8x7B-Instruct-v0.1",
                 vllm=_serve_vllm(
                     gpus=2,
@@ -1488,6 +1603,8 @@ def render_configs_and_profiles(gpus: int) ->  dict[str, dict[str, tuple[Config,
             model_path="~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf",
         ),
         generate=_generate(
+            sdg_scale_factor=10,
+            pipeline="full",
             teacher=_serve(
                 model_path="~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf",
             )
@@ -1496,11 +1613,11 @@ def render_configs_and_profiles(gpus: int) ->  dict[str, dict[str, tuple[Config,
 
 
     return {
-    "single-gpu": {"Single Consumer GPU": (single_gpu_confg, ["profiles"])},
-    "multi-gpu": {"Multi Consumer GPU": (multi_gpu_config, ["profiles"])},
-    "single-server-gpu": {"Single Server GPU": (single_server_gpu_config, ["profiles"])},
+    "single-gpu": {"Single Consumer GPU": (single_gpu_confg, [SINGLE_CONSUMER_GPU_TRAIN])},
+    "multi-gpu": {"Multi Consumer GPU": (multi_gpu_config, [MULTI_CONSUMER_GPU_TRAIN])},
+    "single-server-gpu": {"Single Server GPU": (single_server_gpu_config, [SINGLE_SERVER_GPU_TRAIN])},
     "multi-server-gpu": {"Multi Server GPU": (multi_server_gpu_config, [TWO_GPU_TRAIN_AH, FOUR_GPU_TRAIN_AH, EIGHT_GPU_TRAIN_AH, FOUR_L_FORTY_GPU, EIGHT_L_FORTY_GPU, EIGHT_L_FOUR_GPU])},
-    "macos": {"MacOS": (macos_config, ["profiles"])},
+    "macos": {"MacOS": (macos_config, [MACOS_TRAIN])},
     }
 
 
