@@ -52,7 +52,10 @@ def vllm_setup_test(runner, args, mock_popen, *_mock_args):
     if result.exit_code != 0:
         print(result.output)
 
-    assert len(mock_popen.call_args_list) == 1
+    assert len(mock_popen.call_args_list) == 1 or (
+        "Retrying (1/1)" in result.output and len(mock_popen.call_args_list) == 2
+    )
+
     return mock_popen.call_args_list[0][1]["args"]
 
 
