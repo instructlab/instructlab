@@ -14,7 +14,7 @@ from instructlab import lab
 
 TAXONOMY_BASE = "main"
 
-TEST_CUSTOM_YAML_RULES = b"""extends: relaxed
+TEST_CUSTOM_YAML_RULES = b"""empty-lines: relaxed
 
 rules:
   line-length:

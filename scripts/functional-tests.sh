@@ -330,7 +330,7 @@ test_loading_session_history(){
 
 test_generate(){
     mkdir -p test_taxonomy/compositional_skills
-    cat - <<EOF >  test_taxonomy/compositional_skills/simple_math.yaml
+    cat - <<EOF >  test_taxonomy/compositional_skills/qna.yaml
 created_by: ci
 version: 2
 seed_examples:
@@ -350,7 +350,7 @@ EOF
     sed -i.bak -e 's/sdg_scale_factor.*/sdg_scale_factor: 1/g' "${ILAB_CONFIG_FILE}"
 
     # This should be finished in a minute or so but time it out incase it goes wrong
-    if ! timeout 20m ilab data generate --taxonomy-path test_taxonomy/compositional_skills/simple_math.yaml; then
+    if ! timeout 20m ilab data generate --taxonomy-path test_taxonomy/compositional_skills/qna.yaml; then
         echo "Error: ilab data generate command took more than 20 minutes and was cancelled"
         exit 1
     fi
