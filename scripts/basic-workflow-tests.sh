@@ -182,7 +182,7 @@ test_serve() {
 
     if [ "${MODEL_TYPE}" == "base" ]; then
         if [ "${BACKEND}" == "vllm" ]; then
-            model="${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab"
+            model="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}"
         else    # if not using vLLM, use the GGUF for llama-cpp
             model="${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}"
         fi
@@ -310,7 +310,7 @@ test_phased_train() {
     DATA_PATH=$(find "${DATA_HOME}"/instructlab/datasets -name 'messages_*' | head -n 1)
 
     local MODEL_PATH
-    MODEL_PATH="${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab"
+    MODEL_PATH="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}"
 
     # general training args
     local TRAIN_ARGS
@@ -354,7 +354,7 @@ test_convert() {
 }
 
 test_evaluate() {
-    local MODEL_PATH="${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab"
+    local MODEL_PATH="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}"
     # Temporarily using merlinite as the base model to confirm the workflow executes correctly 
     local BASE_MODEL_PATH="${CACHE_HOME}/instructlab/models/instructlab/merlinite-7b-lab"
     task Evaluate the model
