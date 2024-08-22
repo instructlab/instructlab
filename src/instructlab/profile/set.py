@@ -46,9 +46,20 @@ def set(ctx):
             handle = nvidia_smi.nvmlDeviceGetHandleByIndex(gpu)
             gpu_info = nvidia_smi.nvmlDeviceGetMemoryInfo(handle)
             total_vram += int(gpu_info.total)
+            # total vram can be used to pick a profile, the profiles should be mapped least to greatest in terms of available vram.
+        if total_vram > 0:
+            # this is a map of the maximum amount of vram for the config before moving onto the next one
+            for config_and_profile in profile_mappings:
+                # if the systems vram is < total vram for any of these profiles, then our profile is in here.
+                if total_vram < config_and_profile[0]:
+                    for profile_names_and_values in config_and_profile[2]:
+                       if total_vram < list(profile_names_and_values[0].items())[0][0]:
+                           print("here")
+                           train = (list(profile_names_and_values[0].items())[0][1])
+                    cfg = config_and_profile[1]
     else:
-        cfg = profile_mappings[profile_selection-1][0]
-        names_and_profiles_list = profile_mappings[profile_selection-1][1]
+        cfg = profile_mappings[profile_selection-1][1]
+        names_and_profiles_list = profile_mappings[profile_selection-1][2]
         if len(names_and_profiles_list) > 1:
             click.echo("Please choose the GPU Training profile that best matches your system")
             for ind, name_and_profile in enumerate(names_and_profiles_list):
@@ -59,9 +70,10 @@ def set(ctx):
                 type=int,
                 default=0,
             )
-            train = (list(names_and_profiles_list[train_profile_selection].items())[0][1]) #[1]
+            print(list(names_and_profiles_list[train_profile_selection].items()))
+            train = (list(names_and_profiles_list[train_profile_selection].items())[0][1][1]) #[1]
         else:
-            train = (list(names_and_profiles_list[0].items())[0][1])
+            train = (list(names_and_profiles_list[0].items())[0][1][1])
         cfg.train = train
         ctx.obj.config = cfg
         write_config(cfg)
