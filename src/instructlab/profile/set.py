@@ -31,7 +31,6 @@ def set(ctx):
     elif not utils.is_macos_with_m_chip():
         gpus = int(click.prompt("How many Dedicated GPUs do you have?"))
     profile_mappings = render_configs_and_profiles(gpus)    
-    #vals = list(profile_mappings.values())
     click.echo("Please choose a system profile to use")
     click.echo("[0] Choose for me (Hardware defaults)")
     for i, value in enumerate(PROFILES):
@@ -50,26 +49,21 @@ def set(ctx):
     else:
         cfg = profile_mappings[profile_selection-1][0]
         names_and_profiles_list = profile_mappings[profile_selection-1][1]
-        #items = (list(vals[profile_selection-1].values()))
-        #print(cfg)
-        click.echo("Please choose a training profile which matches your GPU type")
-        click.echo("[0] Choose for me (Hardware defaults)")
-        for name_and_profile in names_and_profiles_list:
-            for ind, (name, profile) in enumerate(name_and_profile.items()):
-              click.echo(f"[{ind+1}] {name}")
-        train_profile_selection = click.prompt(
-            "Enter the number of your choice [hit enter for the hardware defaults train profile]",
-            type=int,
-            default=0,
-        )
-        train = (list(names_and_profiles_list[train_profile_selection-1].items())[0][1]) #[1]
-        print(train)
+        if len(names_and_profiles_list) > 1:
+            click.echo("Please choose the GPU Training profile that best matches your system")
+            for ind, name_and_profile in enumerate(names_and_profiles_list):
+                for name, profile in name_and_profile.items():
+                    click.echo(f"[{ind}] {name}")
+            train_profile_selection = click.prompt(
+                "Enter the number of your choice [hit enter for the hardware defaults train profile]",
+                type=int,
+                default=0,
+            )
+            train = (list(names_and_profiles_list[train_profile_selection].items())[0][1]) #[1]
+        else:
+            train = (list(names_and_profiles_list[0].items())[0][1])
         cfg.train = train
         ctx.obj.config = cfg
         write_config(cfg)
-
-        
-        #print(items[1])
-        #print(cfg_and_profile)
         
            

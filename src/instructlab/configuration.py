@@ -1609,11 +1609,11 @@ def render_configs_and_profiles(gpus: int) ->  list[tuple[Config, list[dict[str,
 
 
     return [
-    (single_gpu_confg, [{"NVIDIA RTX 3070/3080/4070/4080": SINGLE_CONSUMER_GPU_TRAIN}]),
-    (multi_gpu_config, [{"NVIDIA RTX 3070/3080/4070/4080": MULTI_CONSUMER_GPU_TRAIN}]),
-    (single_server_gpu_config, [{"NVIDIA A100/H100/L40/L4": SINGLE_SERVER_GPU_TRAIN}]),
-    (multi_server_gpu_config, [{" NVIDIA 2xA100/H100": TWO_GPU_TRAIN_AH}, {"NVIDIA 4xA100/H100": FOUR_GPU_TRAIN_AH}, {"NVIDIA 8x A100 or H100": EIGHT_GPU_TRAIN_AH}, {"NVIDIA 4x L40": FOUR_L_FORTY_GPU}, {"NVIDIA 8x L40": EIGHT_L_FORTY_GPU}, {"NVIDIA 8x L4": EIGHT_L_FOUR_GPU}]),
-    (macos_config, [MACOS_TRAIN]),
+        (single_gpu_confg, [{"NVIDIA RTX 3070/3080/4070/4080": SINGLE_CONSUMER_GPU_TRAIN}]),
+        (multi_gpu_config, [{"NVIDIA RTX 3070/3080/4070/4080": MULTI_CONSUMER_GPU_TRAIN}]),
+        (single_server_gpu_config, [{"NVIDIA A100/H100/L40/L4": SINGLE_SERVER_GPU_TRAIN}]),
+        (multi_server_gpu_config, [{"NVIDIA 2x A100/H100": TWO_GPU_TRAIN_AH}, {"NVIDIA 4x A100/H100": FOUR_GPU_TRAIN_AH}, {"NVIDIA 8x A100 or H100": EIGHT_GPU_TRAIN_AH}, {"NVIDIA 4x L40": FOUR_L_FORTY_GPU}, {"NVIDIA 8x L40": EIGHT_L_FORTY_GPU}, {"NVIDIA 8x L4": EIGHT_L_FOUR_GPU}]),
+        (macos_config, [MACOS_TRAIN]),
     ]
 
 
