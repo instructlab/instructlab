@@ -99,6 +99,7 @@ set_defaults() {
 
     if [ "${PHASED_TRAINING}" -eq 1 ] && [ "${TRAIN_LIBRARY}" -eq 0 ]; then
         echo "ERROR: You have -P set. It requires -T."
+        exit 1
     fi
 
     if [ "$MINIMAL" -eq 1 ]; then
