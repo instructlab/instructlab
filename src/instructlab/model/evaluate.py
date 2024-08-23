@@ -3,6 +3,7 @@
 # pylint: disable=ungrouped-imports
 # Standard
 from copy import deepcopy
+import contextlib
 import enum
 import logging
 import multiprocessing
@@ -535,6 +536,10 @@ def evaluate(
     enable_serving_output,
 ):
     """Evaluates a trained model"""
+
+    with contextlib.suppress(ValueError):
+        batch_size = int(batch_size)
+
     # get appropriate evaluator class from Eval lib
     evaluator = get_evaluator(
         model,

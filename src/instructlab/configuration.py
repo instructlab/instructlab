@@ -504,7 +504,7 @@ class _mmlu(BaseModel):
         default=5,
         description="Number of question-answer pairs provided in the context preceding the question used for evaluation.",
     )
-    batch_size: str = Field(
+    batch_size: str | int = Field(
         default="auto",
         description="Batch size for evaluation. Valid values are a positive integer or 'auto' to select the largest batch size that will fit in memory.",
     )
