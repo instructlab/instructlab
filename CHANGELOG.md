@@ -1,9 +1,5 @@
 ## v0.19
 
-### Features
-
-* Add `log_format` to the `config.yaml` file to allow for customizing the log format.
-
 ### Breaking Changes
 
 * InstructLab now uses XDG-based directories on macOS, similar to Linux.
@@ -24,6 +20,10 @@
 ### Features
 
 * `ilab config init` now auto detects your hardware when running on Nvidia enabled systems and chooses the best train profile. It does this by checking first if your system directly matches one of our supported train profiles and then attempts to match the vRAM for each profile to the total vRAM on your system.
+* Add `log_format` to the `config.yaml` file to allow for customizing the log format.
+* `ilab model evaluate --max-workers=auto` is now supported and is the default option. When
+  auto is specified, the optimal value is determined based on your GPUs, CPUs, and
+  configuration.
 
 ## v0.18.1
 

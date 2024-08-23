@@ -292,7 +292,7 @@ evaluate:
   mt_bench:
     judge_model: prometheus
     output_dir: /dir/to/output
-    max_workers: 5
+    max_workers: auto
   mt_bench_branch:
     taxonomy_path: taxonomy
 general:

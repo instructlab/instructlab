@@ -66,9 +66,10 @@ evaluate:
     # Judge model for mt_bench and mt_bench_branch.
     # Default: prometheus-eval/prometheus-8x7b-v2.0
     judge_model: prometheus-eval/prometheus-8x7b-v2.0
-    # Number of workers to use for evaluation.
-    # Default: 16
-    max_workers: 16
+    # Number of workers to use for evaluation with mt_bench or mt_bench_branch. Must
+    # be a positive integer or 'auto'.
+    # Default: auto
+    max_workers: auto
     # Directory where evaluation results are stored.
     # Default: /data/instructlab/internal/eval_data
     output_dir: /data/instructlab/internal/eval_data
