@@ -366,7 +366,8 @@ After running `ilab config init` your directories will look like the following o
  3. `~/.local/share/instructlab/taxonomy/`: Contains the skill and knowledge data.
  4. `~/.local/share/instructlab/checkpoints/`: Contains the output of the training process
 
- On MacOS, these directories will be under `Library/Application Support/instructlab`. This directory setup is temporary in 0.18.0 and will mimic the Linux paths in future releases. The models directory will be under `Library/Caches/instructlab`.
+> [!IMPORTANT]
+> On MacOS, these directories will be under `Library/Application Support/instructlab`. This directory setup is temporary in 0.18.0 and will mimic the Linux paths in future releases. The models directory will be under `Library/Caches/instructlab`.
 
 ### 📥 Download the model
 
