@@ -5,6 +5,7 @@ from pathlib import Path
 import logging
 import os
 import time
+import pynvml
 import nvidia_smi
 
 # Third Party
@@ -27,6 +28,7 @@ PROFILES = ["Single Consumer GPU", "Multi Consumer GPU", "Single Server GPU", "M
 def set(ctx):
     gpus = 0
     if utils.are_nvidia_gpus_available():
+        pynvml.nvmlInit()
         gpus = nvidia_smi.nvmlDeviceGetCount()
     elif not utils.is_macos_with_m_chip():
         gpus = int(click.prompt("How many Dedicated GPUs do you have?"))
@@ -40,12 +42,18 @@ def set(ctx):
         type=int,
         default=0,
     )
+    # if they want us to choose for them:
+    # read vRAM, and map it to the profile which best matches.
+    train = None
+    config = None
     if profile_selection == 0:
         total_vram = 0    
         for gpu in range(gpus):
             handle = nvidia_smi.nvmlDeviceGetHandleByIndex(gpu)
             gpu_info = nvidia_smi.nvmlDeviceGetMemoryInfo(handle)
             total_vram += int(gpu_info.total)
+        total_vram = convert_bytes_to_proper_mag(total_vram)[0]
+        print(total_vram)
             # total vram can be used to pick a profile, the profiles should be mapped least to greatest in terms of available vram.
         if total_vram > 0:
             # this is a map of the maximum amount of vram for the config before moving onto the next one
@@ -53,9 +61,14 @@ def set(ctx):
                 # if the systems vram is < total vram for any of these profiles, then our profile is in here.
                 if total_vram < config_and_profile[0]:
                     for profile_names_and_values in config_and_profile[2]:
-                       if total_vram < list(profile_names_and_values[0].items())[0][0]:
-                           print("here")
-                           train = (list(profile_names_and_values[0].items())[0][1])
+                       if train is not None:
+                           break
+                       for vram_and_profile in list(profile_names_and_values.values()):
+                            print(vram_and_profile)
+                            if total_vram < vram_and_profile[0]:
+                                train = vram_and_profile[1]
+                                print("Found profile: ", train)
+                                break
                     cfg = config_and_profile[1]
     else:
         cfg = profile_mappings[profile_selection-1][1]
@@ -74,8 +87,8 @@ def set(ctx):
             train = (list(names_and_profiles_list[train_profile_selection].items())[0][1][1]) #[1]
         else:
             train = (list(names_and_profiles_list[0].items())[0][1][1])
-        cfg.train = train
-        ctx.obj.config = cfg
-        write_config(cfg)
+    cfg.train = train
+    ctx.obj.config = cfg
+    write_config(cfg)
         
            

@@ -1527,7 +1527,7 @@ class Lab:
 
 
 
-def render_configs_and_profiles(gpus: int) ->  list[tuple[int, Config, list[dict[str, _train]]]]:
+def render_configs_and_profiles(gpus: int) ->  list[tuple[int, Config, list[dict[str, tuple[int, _train]]]]]:
     single_gpu_confg = Config(
         generate=_generate(
             sdg_scale_factor=10,
@@ -1609,10 +1609,10 @@ def render_configs_and_profiles(gpus: int) ->  list[tuple[int, Config, list[dict
 
 
     return [
-        (16, single_gpu_confg, [{"NVIDIA RTX 3070/3080/4070/4080": SINGLE_CONSUMER_GPU_TRAIN}]),
-        (24, single_server_gpu_config, [{"NVIDIA A100/H100/L40/L4": SINGLE_SERVER_GPU_TRAIN}]),
-        (48, multi_gpu_config, [{"NVIDIA RTX 3070/3080/4070/4080": MULTI_CONSUMER_GPU_TRAIN}]),
-        (196, multi_server_gpu_config, [{"NVIDIA 2x A100/H100": (160, TWO_GPU_TRAIN_AH)}, {"NVIDIA 4x A100/H100": (320, FOUR_GPU_TRAIN_AH)}, {"NVIDIA 8x A100 or H100": (640, EIGHT_GPU_TRAIN_AH)}, {"NVIDIA 4x L40": (192, FOUR_L_FORTY_GPU)}, {"NVIDIA 8x L40": (384, EIGHT_L_FORTY_GPU)}, {"NVIDIA 8x L4": (192, EIGHT_L_FOUR_GPU)}]),
+        (16, single_gpu_confg, [{"NVIDIA RTX 3070/3080/4070/4080": (16, SINGLE_CONSUMER_GPU_TRAIN)}]),
+        (24, single_server_gpu_config, [{"NVIDIA A100/H100/L40/L4": (24, SINGLE_SERVER_GPU_TRAIN)}]),
+        (48, multi_gpu_config, [{"NVIDIA RTX 3070/3080/4070/4080": (48, MULTI_CONSUMER_GPU_TRAIN)}]),
+        (640, multi_server_gpu_config, [{"NVIDIA 2x A100/H100": (160, TWO_GPU_TRAIN_AH)}, {"NVIDIA 8x L4": (192, EIGHT_L_FOUR_GPU)}, {"NVIDIA 4x L40": (192, FOUR_L_FORTY_GPU)}, {"NVIDIA 4x A100/H100": (320, FOUR_GPU_TRAIN_AH)}, {"NVIDIA 8x L40": (384, EIGHT_L_FORTY_GPU)}, {"NVIDIA 8x A100 or H100": (640, EIGHT_GPU_TRAIN_AH)}, ]),
         (0, macos_config, [MACOS_TRAIN]),
     ]
 
