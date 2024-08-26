@@ -416,6 +416,28 @@ def test_invalid_model_mmlu(cli_runner: CliRunner):
 
 
 @patch(
+    "instructlab.eval.mmlu.MMLUEvaluator",
+    side_effect=Exception("Exiting to check call_args"),
+)
+def test_int_batchsize_mmlu(mmlu_mock, cli_runner: CliRunner):
+    cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "mmlu",
+            "--model",
+            "instructlab/granite-7b-lab",
+            "--batch-size",
+            "1",
+        ],
+    )
+    assert mmlu_mock.call_args_list[0][1]["batch_size"] == 1
+
+
+@patch(
     "instructlab.model.evaluate.launch_server",
     return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
 )
