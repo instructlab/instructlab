@@ -16,7 +16,6 @@ import re
 import shutil
 import subprocess
 import tempfile
-import nvidia_smi
 
 # Third Party
 from git import Repo, exc
@@ -30,6 +29,7 @@ import click
 import git
 import gitdb
 import httpx
+import nvidia_smi
 import yaml
 
 # Local

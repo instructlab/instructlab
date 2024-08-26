@@ -1,13 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Third Party
-from click_didyoumean import DYMGroup
 import click
-
 
 # First Party
 from instructlab import clickext
 from instructlab.configuration import storage_dirs_exist
+
 
 @click.group(
     cls=clickext.LazyEntryPointGroup,

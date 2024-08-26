@@ -245,7 +245,6 @@ MODEL_FAMILY_MAPPINGS = {
 }
 
 
-
 class ConfigException(Exception):
     """An exception that a configuration file has an error."""
 
@@ -913,7 +912,7 @@ EIGHT_GPU_TRAIN_AH = _train(
         "warmup_steps": 25,
         "learning_rate": 2e-5,
         "lora_dropout": 0.1,
-         "lora_alpha": 32,
+        "lora_alpha": 32,
     },
     ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
     data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
@@ -928,9 +927,7 @@ EIGHT_GPU_TRAIN_AH = _train(
     deepspeed_cpu_offload_optimizer=False,
     is_padding_free=True,
     num_epochs=8,
-    model_path=os.path.join(
-        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-    ),
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
 FOUR_GPU_TRAIN_AH = _train(
@@ -953,9 +950,7 @@ FOUR_GPU_TRAIN_AH = _train(
     deepspeed_cpu_offload_optimizer=False,
     is_padding_free=True,
     num_epochs=8,
-    model_path=os.path.join(
-        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-    ),
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
 TWO_GPU_TRAIN_AH = _train(
@@ -980,9 +975,7 @@ TWO_GPU_TRAIN_AH = _train(
     deepspeed_cpu_offload_optimizer=True,
     is_padding_free=True,
     num_epochs=8,
-    model_path=os.path.join(
-        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-    ),
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
 EIGHT_L_FORTY_GPU = _train(
@@ -1005,9 +998,7 @@ EIGHT_L_FORTY_GPU = _train(
     deepspeed_cpu_offload_optimizer=False,
     is_padding_free=True,
     num_epochs=8,
-    model_path=os.path.join(
-        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-    ),
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
 FOUR_L_FORTY_GPU = _train(
@@ -1032,9 +1023,7 @@ FOUR_L_FORTY_GPU = _train(
     num_epochs=8,
     deepspeed_cpu_offload_optimizer=True,
     is_padding_free=True,
-    model_path=os.path.join(
-        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-    ),
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
 EIGHT_L_FOUR_GPU = _train(
@@ -1059,9 +1048,7 @@ EIGHT_L_FOUR_GPU = _train(
     num_epochs=8,
     deepspeed_cpu_offload_optimizer=True,
     is_padding_free=True,
-    model_path=os.path.join(
-        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-    ),
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
 SINGLE_SERVER_GPU_TRAIN = _train(
@@ -1078,7 +1065,7 @@ SINGLE_SERVER_GPU_TRAIN = _train(
     data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
     nproc_per_node=1,
     effective_batch_size=96,
-    lora_quantize_dtype='nf4',
+    lora_quantize_dtype="nf4",
     lora_rank=2,
     max_batch_len=60000,
     max_seq_len=4096,
@@ -1086,9 +1073,7 @@ SINGLE_SERVER_GPU_TRAIN = _train(
     deepspeed_cpu_offload_optimizer=True,
     is_padding_free=True,
     num_epochs=8,
-    model_path=os.path.join(
-        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-    ),
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
 MACOS_TRAIN = _train(
@@ -1105,7 +1090,7 @@ MACOS_TRAIN = _train(
     data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
     nproc_per_node=1,
     effective_batch_size=96,
-    lora_quantize_dtype='nf4',
+    lora_quantize_dtype="nf4",
     lora_rank=2,
     max_batch_len=60000,
     max_seq_len=4096,
@@ -1113,9 +1098,7 @@ MACOS_TRAIN = _train(
     deepspeed_cpu_offload_optimizer=True,
     is_padding_free=True,
     num_epochs=5,
-    model_path=os.path.join(
-        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-    ),
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
 SINGLE_CONSUMER_GPU_TRAIN = _train(
@@ -1132,7 +1115,7 @@ SINGLE_CONSUMER_GPU_TRAIN = _train(
     data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
     nproc_per_node=1,
     effective_batch_size=96,
-    lora_quantize_dtype='nf4',
+    lora_quantize_dtype="nf4",
     lora_rank=2,
     max_batch_len=30000,
     max_seq_len=4096,
@@ -1140,9 +1123,7 @@ SINGLE_CONSUMER_GPU_TRAIN = _train(
     deepspeed_cpu_offload_optimizer=True,
     is_padding_free=True,
     num_epochs=5,
-    model_path=os.path.join(
-        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-    ),
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
 
@@ -1160,7 +1141,7 @@ MULTI_CONSUMER_GPU_TRAIN = _train(
     data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
     nproc_per_node=2,
     effective_batch_size=96,
-    lora_quantize_dtype='nf4',
+    lora_quantize_dtype="nf4",
     lora_rank=2,
     max_batch_len=30000,
     max_seq_len=4096,
@@ -1168,10 +1149,9 @@ MULTI_CONSUMER_GPU_TRAIN = _train(
     deepspeed_cpu_offload_optimizer=True,
     is_padding_free=True,
     num_epochs=5,
-    model_path=os.path.join(
-        DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-    ),
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
+
 
 def read_train_profile(train_file) -> _train:
     try:
@@ -1525,20 +1505,19 @@ class Lab:
             ctx.fail(self.error_msg)
 
 
-
-
-def render_configs_and_profiles(gpus: int) ->  list[tuple[int, Config, list[dict[str, tuple[int, _train]]]]]:
+# render_configs_and_profiles takes the amount of GPUs on the system and returns a list of the following format:
+# [(MAX_VRAM_FOR_THIS_GROUP, CFG_FOR_THIS_GROUP, [{"TRAIN_PROFILE_NAME": (VRAM_MAX_FOR_PROFILE, TRAIN_PROFILE)}....])]
+def render_configs_and_profiles(
+    gpus: int,
+) -> list[tuple[int, Config, list[dict[str, tuple[int, _train]]]]]:
     single_gpu_confg = Config(
         generate=_generate(
             sdg_scale_factor=10,
             pipeline="full",
             teacher=_serve(
                 model_path="~/.cache/instructlab/models/mistralai/Mistral-7B-Instruct-v0.2",
-                vllm=_serve_vllm(
-                    gpus=1,
-                    llm_family='mixtral'       
-                )
-            )
+                vllm=_serve_vllm(gpus=1, llm_family="mixtral"),
+            ),
         )
     )
     multi_gpu_config = Config(
@@ -1547,31 +1526,25 @@ def render_configs_and_profiles(gpus: int) ->  list[tuple[int, Config, list[dict
             pipeline="full",
             teacher=_serve(
                 model_path="~/.cache/instructlab/models/mistralai/Mistral-7B-Instruct-v0.2",
-                vllm=_serve_vllm(
-                    gpus=gpus,
-                    llm_family='mixtral'       
-                )
-            )
+                vllm=_serve_vllm(gpus=gpus, llm_family="mixtral"),
+            ),
         )
     )
     single_server_gpu_config = Config(
-            serve=_serve(
-                vllm=_serve_vllm(
-                    gpus=1,
-                ),
-                model_path="~/.cache/instructlab/models/instructlab/granite-7b-lab",
+        serve=_serve(
+            vllm=_serve_vllm(
+                gpus=1,
             ),
-            generate=_generate(
+            model_path="~/.cache/instructlab/models/instructlab/granite-7b-lab",
+        ),
+        generate=_generate(
             sdg_scale_factor=10,
             pipeline="full",
             teacher=_serve(
                 model_path="~/.cache/instructlab/models/mistralai/Mistral-7B-Instruct-v0.2",
-                vllm=_serve_vllm(
-                    gpus=2,
-                    llm_family='mixtral'       
-                )
-            )
-        )
+                vllm=_serve_vllm(gpus=gpus, llm_family="mixtral"),
+            ),
+        ),
     )
     multi_server_gpu_config = Config(
         serve=_serve(
@@ -1582,20 +1555,15 @@ def render_configs_and_profiles(gpus: int) ->  list[tuple[int, Config, list[dict
         ),
         generate=_generate(
             teacher=_serve(
-            pipeline="full",
+                pipeline="full",
                 model_path="~/.cache/instructlab/models/mistralai/Mixtral-8x7B-Instruct-v0.1",
-                vllm=_serve_vllm(
-                    gpus=2,
-                    llm_family='mixtral'       
-                )
+                vllm=_serve_vllm(gpus=gpus, llm_family="mixtral"),
             )
-        )
+        ),
     )
     macos_config = Config(
         serve=_serve(
-            llama_cpp=_serve_llama_cpp(
-           gpu_layers=15 
-        ),
+            llama_cpp=_serve_llama_cpp(gpu_layers=15),
             model_path="~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf",
         ),
         generate=_generate(
@@ -1603,17 +1571,39 @@ def render_configs_and_profiles(gpus: int) ->  list[tuple[int, Config, list[dict
             pipeline="full",
             teacher=_serve(
                 model_path="~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf",
-            )
-        )
+            ),
+        ),
     )
 
-
     return [
-        (16, single_gpu_confg, [{"NVIDIA RTX 3070/3080/4070/4080": (16, SINGLE_CONSUMER_GPU_TRAIN)}]),
-        (24, single_server_gpu_config, [{"NVIDIA A100/H100/L40/L4": (24, SINGLE_SERVER_GPU_TRAIN)}]),
-        (48, multi_gpu_config, [{"NVIDIA RTX 3070/3080/4070/4080": (48, MULTI_CONSUMER_GPU_TRAIN)}]),
-        (640, multi_server_gpu_config, [{"NVIDIA 2x A100/H100": (160, TWO_GPU_TRAIN_AH)}, {"NVIDIA 8x L4": (192, EIGHT_L_FOUR_GPU)}, {"NVIDIA 4x L40": (192, FOUR_L_FORTY_GPU)}, {"NVIDIA 4x A100/H100": (320, FOUR_GPU_TRAIN_AH)}, {"NVIDIA 8x L40": (384, EIGHT_L_FORTY_GPU)}, {"NVIDIA 8x A100 or H100": (640, EIGHT_GPU_TRAIN_AH)}, ]),
-        (0, macos_config, [MACOS_TRAIN]),
+        (
+            16,
+            single_gpu_confg,
+            [{"NVIDIA RTX 3070/3080/4070/4080": (16, SINGLE_CONSUMER_GPU_TRAIN)}],
+        ),
+        (
+            24,
+            single_server_gpu_config,
+            [{"NVIDIA A100/H100/L40/L4": (24, SINGLE_SERVER_GPU_TRAIN)}],
+        ),
+        (
+            48,
+            multi_gpu_config,
+            [{"NVIDIA RTX 3070/3080/4070/4080": (48, MULTI_CONSUMER_GPU_TRAIN)}],
+        ),
+        (
+            640,
+            multi_server_gpu_config,
+            [
+                {"NVIDIA 2x A100/H100": (160, TWO_GPU_TRAIN_AH)},
+                {"NVIDIA 8x L4": (192, EIGHT_L_FOUR_GPU)},
+                {"NVIDIA 4x L40": (192, FOUR_L_FORTY_GPU)},
+                {"NVIDIA 4x A100/H100": (320, FOUR_GPU_TRAIN_AH)},
+                {"NVIDIA 8x L40": (384, EIGHT_L_FORTY_GPU)},
+                {"NVIDIA 8x A100 or H100": (640, EIGHT_GPU_TRAIN_AH)},
+            ],
+        ),
+        (0, macos_config, [{"MacOS M Series GPU": (192, MACOS_TRAIN)}]),
     ]
 
 
