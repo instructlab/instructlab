@@ -308,7 +308,7 @@ def clickpath_setup(is_dir: bool) -> click.Path:
 @click.option(
     "--legacy",
     is_flag=True,
-    help="if true, enables the legacy linux training codepath from release 0.17.0 and prior.",
+    help="if true, enables the legacy linux training code path from release 0.17.0 and prior.",
 )
 @click.option(
     "--strategy",
@@ -830,7 +830,7 @@ def _mtbench(
     mtbench_judge: pathlib.Path,
     enable_serving_output: bool,
 ) -> float:
-    # TODO: optimization: run all generations in serial and then do all judgements at once to save time loading/unloading prometheus.
+    # TODO: optimization: run all generations in serial and then do all judgments at once to save time loading/unloading prometheus.
 
     # Third Party
     from instructlab.eval.mt_bench import MTBenchEvaluator
@@ -875,7 +875,7 @@ def _mtbench(
             server.shutdown()
 
     try:
-        logger.debug("Starting model server for mt-bench answer judgement")
+        logger.debug("Starting model server for mt-bench answer judgment")
         server, model_serve_url = launch_server(
             ctx=ctx,
             model=str(mtbench_judge),
@@ -916,7 +916,7 @@ def _evaluate_dir_of_checkpoints(
 
     if not results:
         raise RuntimeError(
-            "_evaluate_dir_of_checkpoints - No checkpoints were evaluated successfully at %s. No scores were recored."
+            "_evaluate_dir_of_checkpoints - No checkpoints were evaluated successfully at %s. No scores were recorded."
             % checkpoints_dir
         )
 
