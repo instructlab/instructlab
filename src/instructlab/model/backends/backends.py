@@ -28,9 +28,9 @@ import uvicorn
 # Local
 from ...client import check_api_base
 from ...configuration import _serve as serve_config
-from ...configuration import get_api_base, get_model_family
+from ...configuration import get_api_base
 from ...utils import split_hostport
-from .common import CHAT_TEMPLATE_AUTO, LLAMA_CPP, VLLM, templates
+from .common import CHAT_TEMPLATE_AUTO, LLAMA_CPP, VLLM
 
 logger = logging.getLogger(__name__)
 
@@ -493,27 +493,6 @@ def free_tcp_ipv4_port(host: str) -> int:
 def is_temp_server_running():
     """Check if the temp server is running."""
     return multiprocessing.current_process().name != "MainProcess"
-
-
-def get_model_template(
-    model_family: str, model_path: pathlib.Path
-) -> Tuple[str, str, str]:
-    eos_token = "<|endoftext|>"
-    bos_token = ""
-    template = ""
-    resolved_family = get_model_family(model_family, model_path)
-    logger.debug(
-        "Searching hard coded model templates for model family %s's template",
-        resolved_family,
-    )
-    for template_dict in templates:
-        if template_dict["model"] == resolved_family:
-            template = template_dict["template"]
-            if template_dict["model"] == "mixtral":
-                eos_token = "</s>"
-                bos_token = "<s>"
-
-    return template, eos_token, bos_token
 
 
 def get_uvicorn_config(app: fastapi.FastAPI, host: str, port: int) -> Config:
