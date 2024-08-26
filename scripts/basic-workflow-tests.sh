@@ -177,31 +177,34 @@ test_list() {
 }
 
 test_serve() {
-    MODEL_TYPE="$1"
-    SERVE_ARGS=()
+    local model_type
+    local serve_args
+    local model_path
 
-    if [ "${MODEL_TYPE}" == "base" ]; then
+    model_type="$1"
+    serve_args=()
+    if [ "${model_type}" == "base" ]; then
         if [ "${BACKEND}" == "vllm" ]; then
-            model="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}"
+            model_path="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}"
         else    # if not using vLLM, use the GGUF for llama-cpp
-            model="${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}"
+            model_path="${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}"
         fi
-    elif [ "$MODEL_TYPE" == "teacher" ]; then
+    elif [ "$model_type" == "teacher" ]; then
         if [ "${MIXTRAL}" -eq 1 ]; then
-            model="${CACHE_HOME}/instructlab/models/${MIXTRAL_GGUF_MODEL}"
-            SERVE_ARGS+=("--model-family" "mixtral")
+            model_path="${CACHE_HOME}/instructlab/models/${MIXTRAL_GGUF_MODEL}"
+            serve_args+=("--model-family" "mixtral")
         else
-            model="${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}"
+            model_path="${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}"
         fi
-    elif [ "$MODEL_TYPE" == "trained" ]; then
-        model="${2:-}"
+    elif [ "$model_type" == "trained" ]; then
+        model_path="${2:-}"
     else
         echo "Model type of 'teacher', 'base', or 'trained' not passed as an arg of test_serve()"
         exit 1
     fi
 
-    if [ -n "$model" ]; then
-        SERVE_ARGS+=("--model-path" "${model}")
+    if [ -n "$model_path" ]; then
+        serve_args+=("--model-path" "${model_path}")
     fi
 
     task Serve the model
@@ -211,7 +214,7 @@ test_serve() {
     tail -f serve.log &
     TPID=$!
 
-    ilab model serve "${SERVE_ARGS[@]}" &> serve.log &
+    ilab model serve "${serve_args[@]}" &> serve.log &
     wait_for_server start
     kill "$TPID"
 }
@@ -224,24 +227,25 @@ test_chat() {
 
 test_taxonomy() {
     task Update the taxonomy
+    local testnum
 
-    TESTNUM=$1
-    if [ "$TESTNUM" -ne 1 ] && [ "$TESTNUM" -ne 2 ] && [ "$TESTNUM" -ne 3 ]; then
-        echo "Invalid test number: $TESTNUM"
+    testnum=$1
+    if [ "$testnum" -ne 1 ] && [ "$testnum" -ne 2 ] && [ "$testnum" -ne 3 ]; then
+        echo "Invalid test number: $testnum"
         exit 1
     fi
 
     test -d taxonomy || git clone https://github.com/instructlab/taxonomy || true
 
     step Update taxonomy with sample qna additions
-    if [ "$TESTNUM" -eq 1 ]; then
+    if [ "$testnum" -eq 1 ]; then
         mkdir -p taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings
         cp "$SCRIPTDIR"/test-data/e2e-qna-freeform-skill.yaml taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings/qna.yaml
-    elif [ "$TESTNUM" -eq 2 ]; then
+    elif [ "$testnum" -eq 2 ]; then
         rm -rf taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings
         mkdir -p taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no
         cp "$SCRIPTDIR"/test-data/e2e-qna-grounded-skill.yaml taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no/qna.yaml
-    elif [ "$TESTNUM" -eq 3 ]; then
+    elif [ "$testnum" -eq 3 ]; then
         rm -rf taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no
         mkdir -p taxonomy/knowledge/tonsils/overview/e2e-tonsils
         cp "$SCRIPTDIR"/test-data/e2e-qna-knowledge.yaml taxonomy/knowledge/tonsils/overview/e2e-tonsils/qna.yaml
@@ -253,6 +257,7 @@ test_taxonomy() {
 
 test_generate() {
     task Generate synthetic data
+    
     GENERATE_ARGS+=("--endpoint-url" "http://localhost:8000/v1")
     if [ "$MIXTRAL" -eq 1 ]; then
         GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/${MIXTRAL_GGUF_MODEL}")
@@ -278,10 +283,11 @@ test_train() {
     task Train the model
 
     if [ "$TRAIN_LIBRARY" -eq 1 ]; then
-        DATA=$(find "${DATA_HOME}"/instructlab/datasets -name 'messages_*' | head -n 1)
+        local data
+        data=$(find "${DATA_HOME}"/instructlab/datasets -name 'messages_*' | head -n 1)
         # TODO Only cuda for now
         # the train profile specified in test_init overrides the majority of TRAIN_ARGS, including things like num_epochs. While it looks like much of those settings are being lost, they just have different values here.
-        TRAIN_ARGS=("--device=cuda" "--model-path=${GRANITE_SAFETENSOR_REPO}" "--data-path=${DATA}" "--lora-quantize-dtype=nf4" "--4-bit-quant" "--effective-batch-size=4" "--is-padding-free=False")
+        TRAIN_ARGS=("--device=cuda" "--model-path=${GRANITE_SAFETENSOR_REPO}" "--data-path=${data}" "--lora-quantize-dtype=nf4" "--4-bit-quant" "--effective-batch-size=4" "--is-padding-free=False")
         if [ "${BACKEND}" != "vllm" ]; then
             TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}")
         fi
@@ -304,18 +310,18 @@ test_train() {
 test_phased_train() {
     task Train the model with LAB multi-phase strategy.
 
-    # linter wants DATA_PATH and over variables declared then assigned separately.
+    # linter wants data_path and other variables declared then assigned separately.
     # 'Declare and assign separately to avoid masking return values' <-- error.
-    local DATA_PATH
-    DATA_PATH=$(find "${DATA_HOME}"/instructlab/datasets -name 'messages_*' | head -n 1)
+    local data_path
+    data_path=$(find "${DATA_HOME}"/instructlab/datasets -name 'messages_*' | head -n 1)
 
-    local MODEL_PATH
-    MODEL_PATH="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}"
+    local model_path
+    model_path="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}"
 
-    # general training args
-    local TRAIN_ARGS
-    TRAIN_ARGS=(
-        "--model-path=${MODEL_PATH}"
+    # general training args - not the same as the global TRAIN_ARGS
+    local train_args
+    train_args=(
+        "--model-path=${model_path}"
         "--lora-quantize-dtype=nf4"
         "--4-bit-quant"
         "--is-padding-free=False"
@@ -323,27 +329,27 @@ test_phased_train() {
     )
 
     # general phased training args
-    TRAIN_ARGS+=(
+    train_args+=(
         "--phased-training"
         "--skip-user-confirm"
-        "--phased-mt-bench-judge-dir=${MODEL_PATH}" # uses base model
+        "--phased-mt-bench-judge-dir=${model_path}" # uses base model
     )
 
     # phase 1 args 
-    TRAIN_ARGS+=(
+    train_args+=(
         "--phased-phase1-num-epochs=1"
-        "--phased-phase1-data=${DATA_PATH}"
+        "--phased-phase1-data=${data_path}"
         "--phased-phase1-samples-per-save=1"
     )
 
     # phase 2 args 
-    TRAIN_ARGS+=(
+    train_args+=(
         "--phased-phase2-num-epochs=1"
-        "--phased-phase2-data=${DATA_PATH}"
+        "--phased-phase2-data=${data_path}"
         "--phased-phase2-samples-per-save=1"
     )
 
-    ilab model train "${TRAIN_ARGS[@]}"
+    ilab model train "${train_args[@]}"
     # final best model is written to stdout.
 
 }
@@ -354,32 +360,32 @@ test_convert() {
 }
 
 test_evaluate() {
-    local MODEL_PATH="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}"
+    local model_path="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}"
     # Temporarily using merlinite as the base model to confirm the workflow executes correctly 
-    local BASE_MODEL_PATH="${CACHE_HOME}/instructlab/models/instructlab/merlinite-7b-lab"
+    local base_model_path="${CACHE_HOME}/instructlab/models/instructlab/merlinite-7b-lab"
     task Evaluate the model
 
     if [ "$EVAL" -eq 1 ]; then
       export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true
       export HF_DATASETS_TRUST_REMOTE_CODE=true
       task Running MMLU
-      ilab model evaluate --model "${MODEL_PATH}" --benchmark mmlu
+      ilab model evaluate --model "${model_path}" --benchmark mmlu
       task Running MMLU_BRANCH
-      ilab model evaluate --model "${MODEL_PATH}" --benchmark mmlu_branch --tasks-dir tests/testdata/mmlu_branch/ --base-model "${BASE_MODEL_PATH}"
+      ilab model evaluate --model "${model_path}" --benchmark mmlu_branch --tasks-dir tests/testdata/mmlu_branch/ --base-model "${base_model_path}"
 
       export INSTRUCTLAB_EVAL_FIRST_N_QUESTIONS=5
       task Running MT_Bench
-      ilab model evaluate --model "${MODEL_PATH}" --judge-model "${MODEL_PATH}" --enable-serving-output --benchmark mt_bench
+      ilab model evaluate --model "${model_path}" --judge-model "${model_path}" --enable-serving-output --benchmark mt_bench
       task Running MT_Bench_Branch
       cd "${DATA_HOME}/instructlab/taxonomy"
       git branch rc
       cd "${DATA_HOME}/instructlab"
       GPUS=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
       ilab model evaluate \
-      --model "${MODEL_PATH}" \
-      --judge-model "${MODEL_PATH}" \
+      --model "${model_path}" \
+      --judge-model "${model_path}" \
       --branch rc --base-branch main \
-      --base-model "${BASE_MODEL_PATH}" \
+      --base-model "${base_model_path}" \
       --gpus "${GPUS}" \
       --enable-serving-output \
       --benchmark mt_bench_branch \
