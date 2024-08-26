@@ -388,10 +388,22 @@ test_evaluate() {
     fi
 }
 
+test_sysinfo() {
+    task Output system info
+    ilab system info
+}
+
+test_config_show() {
+    task Output active config
+    ilab config show
+}
+
 test_exec() {
     # The list of actual tests to run through in workflow order
     test_smoke
+    test_sysinfo
     test_init
+    test_config_show
     test_download
 
     # See below for cleanup, this runs an ilab model serve in the background
