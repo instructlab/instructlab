@@ -248,7 +248,6 @@ def linux_train(
 
     if four_bit_quant:
         print("LINUX_TRAIN.PY: USING 4-bit quantization with BitsAndBytes")
-        use_fp16 = True
         bnb_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
@@ -257,7 +256,6 @@ def linux_train(
         )
     else:
         print("LINUX_TRAIN.PY: NOT USING 4-bit quantization")
-        use_fp16 = False
         bnb_config = None
 
     # Loading the model
@@ -344,7 +342,14 @@ def linux_train(
     )
 
     tokenizer.padding_side = "right"
-    per_device_train_batch_size = 1
+    train_args = {
+        "output_dir": "./training_results",
+        "fp16": four_bit_quant,
+        "num_train_epochs": num_epochs,
+        "per_device_train_batch_size": 1,
+        "save_strategy": "epoch",
+        "report_to": "none",
+    }
     max_seq_length = 300
 
     if device.type == "hpu":
@@ -352,6 +357,7 @@ def linux_train(
         # https://docs.habana.ai/en/latest/PyTorch/Getting_Started_with_PyTorch_and_Gaudi/Getting_Started_with_PyTorch.html
         # https://huggingface.co/docs/optimum/habana/quickstart
         # https://huggingface.co/docs/optimum/habana/package_reference/gaudi_config
+        per_device_train_batch_size = train_args["per_device_train_batch_size"]
         if per_device_train_batch_size == 1:
             per_device_train_batch_size = 8
 
@@ -389,27 +395,22 @@ def linux_train(
             "generation_config": GaudiGenerationConfig(),
         }
     else:
-        training_arguments = TrainingArguments(
-            output_dir=output_dir,
-            num_train_epochs=num_epochs,
-            per_device_train_batch_size=per_device_train_batch_size,
-            fp16=use_fp16,
-            bf16=not use_fp16,
-            # use_ipex=True, # TODO CPU test this possible optimization
-            use_cpu=model.device.type == "cpu",
-            save_strategy="epoch",
-            report_to="none",
-            # options to reduce GPU memory usage and improve performance
-            # https://huggingface.co/docs/transformers/perf_train_gpu_one
-            # https://stackoverflow.com/a/75793317
-            # torch_compile=True,
-            # fp16=False,  # fp16 increases memory consumption 1.5x
-            # gradient_accumulation_steps=8,
-            # gradient_checkpointing=True,
-            # eval_accumulation_steps=1,
-            # per_device_eval_batch_size=1,
-        )
-
+        ta = TrainingArguments(**train_args)
+        ta.bf16 = not ta.fp16
+        # include_tokens_per_second=True,
+        # include_num_input_tokens_seen=True,
+        # use_ipex=True, # TODO CPU test this possible optimization
+        ta.use_cpu = model.device.type == "cpu"
+        ta.dataloader_pin_memory = False
+        # options to reduce GPU memory usage and improve performance
+        # https://huggingface.co/docs/transformers/perf_train_gpu_one
+        # https://stackoverflow.com/a/75793317
+        # torch_compile=True,
+        # fp16=False,  # fp16 increases memory consumption 1.5x
+        # gradient_accumulation_steps=8,
+        # gradient_checkpointing=True,
+        # eval_accumulation_steps=1,
+        # per_device_eval_batch_size=1,
         # https://huggingface.co/docs/trl/main/en/sft_trainer#trl.SFTTrainer
         trainer = SFTTrainer(
             model=model,
@@ -420,7 +421,7 @@ def linux_train(
             data_collator=collator,
             max_seq_length=max_seq_length,
             tokenizer=tokenizer,
-            args=training_arguments,
+            args=ta,
         )
         generate_kwargs = {}
 
