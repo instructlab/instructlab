@@ -324,6 +324,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         greedy_mode=False,
         max_tokens=None,
     ):
+        logger.debug("ConsoleChatBot")
         self.client = client
         self.model = model
         self.vi_mode = vi_mode
@@ -564,10 +565,10 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
     def start_prompt(
         self,
-        logger,  # pylint: disable=redefined-outer-name
         content=None,
         box=True,
     ):
+        logger.debug("")
         handlers = {
             "/q": self._handle_quit,
             "quit": self._handle_quit,
@@ -728,6 +729,7 @@ def chat_cli(
     max_tokens,
 ):
     """Starts a CLI-based chat with the server"""
+    logger.debug("creating OpenAI client")
     client = OpenAI(
         base_url=api_base,
         api_key=ctx.params["api_key"],
@@ -806,7 +808,7 @@ def chat_cli(
         if not qq:
             print(f"{PROMPT_PREFIX}{question}")
         try:
-            ccb.start_prompt(logger, content=question, box=not qq)
+            ccb.start_prompt(content=question, box=not qq)
         except ChatException as exc:
             raise ChatException(f"API issue found while executing chat: {exc}") from exc
         except (ChatQuitException, KeyboardInterrupt, EOFError):
@@ -822,7 +824,7 @@ def chat_cli(
     # Start chatting
     while True:
         try:
-            ccb.start_prompt(logger)
+            ccb.start_prompt()
         except KeyboardInterrupt:
             continue
         except ChatException as exc:
