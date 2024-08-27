@@ -13,7 +13,7 @@ from requests import exceptions as requests_exceptions
 import click
 
 # First Party
-from instructlab import utils
+from instructlab import clickext, utils
 
 logger = logging.getLogger(__name__)
 
@@ -44,9 +44,9 @@ logger = logging.getLogger(__name__)
     default=None,
     show_default=True,
 )
-@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 @click.pass_context
-@utils.display_params
+@clickext.display_params
+@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
 def convert(
     ctx,  # pylint: disable=unused-argument
     model_dir,

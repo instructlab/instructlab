@@ -1,14 +1,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Third Party
-from click_didyoumean import DYMGroup
 import click
 
-# Local
-from .diff import diff
+# First Party
+from instructlab import clickext
 
 
-@click.group(cls=DYMGroup)
+@click.group(
+    cls=clickext.LazyEntryPointGroup,
+    ep_group="instructlab.command.taxonomy",
+)
 @click.pass_context
 def taxonomy(ctx):
     """Command Group for Interacting with the Taxonomy of InstructLab.
@@ -18,6 +20,3 @@ def taxonomy(ctx):
     ctx.obj = ctx.parent.obj
     ctx.obj.ensure_config(ctx)
     ctx.default_map = ctx.parent.default_map
-
-
-taxonomy.add_command(diff)

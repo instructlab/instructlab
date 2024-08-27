@@ -139,6 +139,10 @@ toolbox-rm: check-toolbox ## Stop and remove toolbox container
 tests: check-tox ## Run unit and type checks
 	tox -e py3-unit,mypy
 
+.PHONY: regenerate-testdata
+regenerate-testdata: check-tox ## Run unit tests and regenerate test data
+	tox -e py3-unit -- --regenerate-testdata
+
 .PHONY: verify
 verify: check-tox ## Run linting and formatting checks via tox
 	tox p -m fastverify
@@ -152,8 +156,8 @@ spellcheck: .spellcheck.yml ## Spellcheck markdown files
 	pyspelling --config $<
 
 .PHONY: spellcheck-sort
-spellcheck-sort: .spellcheck-en-custom.txt ## Sort spellcheck directory
-	sort -d -o $< $<
+spellcheck-sort: .spellcheck-en-custom.txt ## Sort and remove duplicate from the spellcheck custom file
+	sort --dictionary-order --unique --output $< $<
 
 .PHONY: docs
 docs: check-tox  ## Generate Sphinx docs and man pages

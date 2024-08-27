@@ -32,6 +32,7 @@
     - [Train the model locally with GPU acceleration](#train-the-model-locally-with-gpu-acceleration)
     - [Train the model in the cloud](#train-the-model-in-the-cloud)
   - [📜 Test the newly trained model](#-test-the-newly-trained-model)
+  - [🧪 Evaluate the newly trained model](#-evaluate-the-newly-trained-model)
   - [🍴 Serve the newly trained model](#-serve-the-newly-trained-model)
 - [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
 - [🚀 Upgrade InstructLab to latest version](#-upgrade-instructlab-to-latest-version)
@@ -83,8 +84,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 ## 📋 Requirements
 
-- **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora). Note Linux
- is not fully supported (testing a trained model does not currently work on Linux).
+- **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora).
   We anticipate support for more operating systems in the future.
 - C++ compiler
 - Python 3.10 or Python 3.11
@@ -129,7 +129,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       pip cache remove llama_cpp_python
-      pip install instructlab \
+      pip install 'instructlab[cpu]' \
          --extra-index-url=https://download.pytorch.org/whl/cpu \
          -C cmake.args="-DLLAMA_NATIVE=off"
       ```
@@ -148,7 +148,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       pip cache remove llama_cpp_python
-      pip install instructlab \
+      pip install 'instructlab[rocm]' \
          --extra-index-url https://download.pytorch.org/whl/rocm6.0 \
          -C cmake.args="-DLLAMA_HIPBLAS=on" \
          -C cmake.args="-DAMDGPU_TARGETS=all" \
@@ -169,7 +169,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       pip cache remove llama_cpp_python
-      pip install instructlab
+      pip install 'instructlab[mps]'
       ```
 
    #### Install with Nvidia CUDA
@@ -178,7 +178,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       pip cache remove llama_cpp_python
-      pip install instructlab \
+      pip install 'instructlab[cuda]' \
          -C cmake.args="-DLLAMA_CUDA=on" \
          -C cmake.args="-DLLAMA_NATIVE=off"
    ```
@@ -223,11 +223,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       train: model train
    ```
 
-   > **IMPORTANT:** every `ilab` command needs to be run from within your Python virtual environment. To enter the Python environment, run the following command:
-
-   ```shell
-   source venv/bin/activate
-   ```
+   > **IMPORTANT** Every `ilab` command needs to be run from within your Python virtual environment. You can enter the Python environment by running the `source venv/bin/activate` command.
 
 5. Optional: You can enable tab completion for the `ilab` command.
 
@@ -323,13 +319,13 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
   ilab model download
   ```
 
-  `ilab model download` downloads a compact pre-trained version of the [model](https://huggingface.co/instructlab/) (~4.4G) from HuggingFace and store it in a `models` directory:
+  `ilab model download` downloads a compact pre-trained version of the [model](https://huggingface.co/instructlab/) (~4.4G) from HuggingFace:
 
   ```shell
   (venv) $ ilab model download
-  Downloading model from instructlab/merlinite-7b-lab-GGUF@main to models...
-  (venv) $ ls models
-  merlinite-7b-lab-Q4_K_M.gguf
+  Downloading model from Hugging Face: instructlab/merlinite-7b-lab-GGUF@main to /home/user/.cache/instructlab/models...
+  ...
+  INFO 2024-08-01 15:05:48,464 huggingface_hub.file_download:1893: Download complete. Moving file to /home/user/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
   ```
 
   > **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
@@ -348,6 +344,25 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
   ```shell
   HF_TOKEN=<YOUR HUGGINGFACE TOKEN GOES HERE> ilab model download --repository=mistralai/Mixtral-8x7B-v0.1
+  ```
+
+  #### Listing downloaded models
+
+- All downloaded models can be seen with `ilab model list`.
+
+  ```shell
+  ilab model list
+  ```
+
+  *Example output of `ilab model list` after `ilab model download`*
+
+  ```shell
+  (venv) $ ilab model list
+  +------------------------------+---------------------+--------+
+  | Model Name                   | Last Modified       | Size   |
+  +------------------------------+---------------------+--------+
+  | merlinite-7b-lab-Q4_K_M.gguf | 2024-08-01 15:05:48 | 4.1 GB |
+  +------------------------------+---------------------+--------+
   ```
 
 ### 🍴 Serving the model
@@ -422,19 +437,13 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
 
 ### 📜 List and validate your new data
 
-1. List your new data by running the following command:
+You can use the `ilab taxonomy diff` command to ensure `ilab` is registering your new knowledge or skills and your contributions are properly formatted. This command displays any new or modified YAML files within your taxonomy tree. For example, the following is the expected result of a valid compositional skill contribution after adding a new skill called `foo-lang` to the freeform writing subdirectory:
 
-   ```shell
-   ilab taxonomy diff
-   ```
-
-2. To ensure `ilab` is registering your new knowledge or skills, you can run the `ilab taxonomy diff` command. The following is the expected result after adding the new compositional skill `foo-lang`:
-
-   ```shell
-   (venv) $ ilab taxonomy diff
-   compositional_skills/writing/freeform/foo-lang/foo-lang.yaml
-   Taxonomy in /taxonomy/ is valid :)
-   ```
+```shell
+(venv) $ ilab taxonomy diff
+compositional_skills/writing/freeform/foo-lang/qna.yaml
+Taxonomy in $HOME/.local/share/instructlab/taxonomy is valid :)
+```
 
 ### 🚀 Generate a synthetic dataset
 
@@ -458,11 +467,19 @@ Before following these instructions, ensure the existing model you are adding sk
 
    ```shell
    (venv) $ ilab data generate
-   INFO 2024-02-29 19:09:48,804 lab.py:250 Generating model 'ggml-merlinite-7b-lab-Q4_K_M' using 10 CPUs,
-   taxonomy: '/home/username/instructlab/taxonomy' and seed 'seed_tasks.json'
-
-   0%|##########| 0/100 Cannot find prompt.txt. Using default prompt.
-   98%|##########| 98/100 INFO 2024-02-29 20:49:27,582 generate_data.py:428 Generation took 5978.78s
+   INFO 2024-07-30 19:57:44,093 numexpr.utils:161: NumExpr defaulting to 8 threads.
+   INFO 2024-07-30 19:57:44,452 datasets:58: PyTorch version 2.3.1 available.
+   Generating synthetic data using 'simple' pipeline, '$HOME/.cache/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf' model, './taxonomy' taxonomy, against http://localhost:8000/v1 server
+   INFO 2024-07-30 19:57:45,084 instructlab.sdg:375: Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help.
+   INFO 2024-07-30 19:57:45,090 instructlab.sdg.pipeline:153: Running pipeline single-threaded
+   INFO 2024-07-30 19:57:47,820 instructlab.sdg.llmblock:51: LLM server supports batched inputs: False
+   INFO 2024-07-30 19:57:47,820 instructlab.sdg.pipeline:197: Running block: gen_skill_freeform
+   INFO 2024-07-30 19:57:47,820 instructlab.sdg.pipeline:198: Dataset({
+      features: ['task_description', 'seed_question', 'seed_response'],
+      num_rows: 5
+   })
+   INFO 2024-07-30 20:02:16,455 instructlab.sdg:411: Generated 1 samples
+   ...
    ```
 
    The synthetic data set will be three files in the newly created `generated` directory named `generated*.json`, `test*.jsonl`, and `train*.jsonl`.
@@ -558,6 +575,252 @@ The model can also be downloaded and served locally.
    ```
 
    The output from the command will consist of a series of outputs from the model before and after training.
+
+### 🧪 Evaluate the newly trained model
+
+You can use the `ilab model evaluate` command to evaluate the models you are training with several benchmarks. Currently, four benchmarks are supported.
+
+| Benchmark | Measures | Full Name | Description | Reference |
+| --- | --- | --- | --- | --- |
+| MMLU | Knowledge | Massive Multitask Language Understanding | Tests a model against a standardized set of knowledge data and produces a score based on the model's performance | [Measuring Massive Multitask Language Understanding](https://arxiv.org/abs/2009.03300) |
+| MMLUBranch | Knowledge | N/A | Tests your knowledge contributions against a base model and produces a score based on the difference in performance | N/A |
+| MTBench | Skills | Multi-turn Benchmark | Tests a model's skill at applying its knowledge against a judge model and produces a score based on the model's performance | [MT-Bench (Multi-turn Benchmark)](https://klu.ai/glossary/mt-bench-eval) |
+| MTBenchBranch | Skills | N/A | Tests your skill contributions against a judge model and produces a score based on the difference in performance | N/A |
+
+> [!NOTE]
+> MTBench and MTBenchBranch use [prometheus-8x7b-v2.0](https://huggingface.co/prometheus-eval/prometheus-8x7b-v2.0) as the judge model by
+default. While you do not need to use this model as your judge, it is strongly recommended to do so if you have the necessary hardware
+resources. You can download it via `ilab model download`.
+
+#### Running MMLU
+
+Below is an example of running MMLU on a local model with minimal tasks:
+
+```bash
+$ export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true   # don't set this if you want to run full MMLU 
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+$ ilab model evaluate --benchmark mmlu --model $ILAB_MODELS_DIR/instructlab/granite-7b-lab
+...
+# KNOWLEDGE EVALUATION REPORT
+
+## MODEL
+/home/example-user/.local/share/instructlab/models/instructlab/granite-7b-lab
+
+### AVERAGE:
+0.45 (across 3)
+
+### SCORES:
+mmlu_abstract_algebra - 0.35
+mmlu_anatomy - 0.44
+mmlu_astronomy - 0.55
+```
+
+Below is an example of running MMLU on a Hugging Face model with minimal tasks:
+
+```bash
+$ export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true   # don't set this if you want to run full MMLU 
+$ ilab model evaluate --benchmark mmlu --model instructlab/granite-7b-lab
+...
+# KNOWLEDGE EVALUATION REPORT
+
+## MODEL
+instructlab/granite-7b-lab
+
+### AVERAGE:
+0.45 (across 3)
+
+### SCORES:
+mmlu_abstract_algebra - 0.35
+mmlu_anatomy - 0.44
+mmlu_astronomy - 0.55
+```
+
+> [!NOTE]
+> Currently, MMLU can only be run against a safetensors model directory, either locally or on Hugging Face. GGUFs are not currently supported.
+
+#### Running MMLUBranch
+
+Below is an example of running MMLUBranch with a local safetensors model directory:
+
+```bash
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+$ export ILAB_TASKS_DIR=$HOME/.local/share/instructlab/datasets
+$ ilab model evaluate --benchmark mmlu_branch --model $ILAB_MODELS_DIR/instructlab/granite-7b-lab --base-model $ILAB_MODELS_DIR/instructlab/granite-7b-lab --tasks-dir $ILAB_TASKS_DIR
+...
+# KNOWLEDGE EVALUATION REPORT
+
+## BASE MODEL
+/home/example-user/.local/share/instructlab/models/instructlab/granite-7b-lab
+
+## MODEL
+/home/example-user/.local/share/instructlab/models/instructlab/granite-7b-lab
+
+### AVERAGE:
++0.0 (across 1)
+
+### NO CHANGE:
+1. tonsils
+```
+
+Below is an example of running MMLUBranch with Hugging Face models:
+
+```bash
+$ export ILAB_TASKS_DIR=$HOME/.local/share/instructlab/datasets
+$ ilab model evaluate --benchmark mmlu_branch --model instructlab/granite-7b-lab --base-model instructlab/granite-7b-lab --tasks-dir $ILAB_TASKS_DIR
+...
+# KNOWLEDGE EVALUATION REPORT
+
+## BASE MODEL
+instructlab/granite-7b-lab
+
+## MODEL
+instructlab/granite-7b-lab
+
+### AVERAGE:
++0.0 (across 1)
+
+### NO CHANGE:
+1. tonsils
+```
+
+> [!TIP]
+> You can mix and match running local models and remote models on Hugging Face, so long as a safetensors model is present.
+
+#### Running MTBench
+
+Below is an example of running MTBench with a local safetensors model directory:
+
+```bash
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+$ ilab model evaluate --benchmark mt_bench --model $ILAB_MODELS_DIR/instructlab/granite-7b-lab --judge-model $ILAB_MODELS_DIR/instructlab/granite-7b-lab
+...
+# SKILL EVALUATION REPORT
+
+## MODEL
+/home/example-user/.local/share/instructlab/models/instructlab/granite-7b-lab
+
+### AVERAGE:
+8.07 (across 91)
+
+### TURN ONE:
+8.64
+
+### TURN TWO:
+7.19
+
+### ERROR RATE:
+0.43
+```
+
+Below is an example of running MTBench with local GGUF models:
+
+```bash
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+$ ilab model evaluate --benchmark mt_bench --model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf --judge-model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf
+...
+# SKILL EVALUATION REPORT
+
+## MODEL
+/home/example/.local/share/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+
+### AVERAGE:
+5.0 (across 1)
+
+### TURN ONE:
+5.0
+
+### TURN TWO:
+N/A
+
+### ERROR RATE:
+0.99
+```
+
+> [!NOTE]
+> Currently, MTBench must be used with local models. Using models directly from Hugging Face without downloading them is unsupported.
+
+#### Running MTBenchBranch
+
+Below is an example of running MTBenchBranch with a local safetensors model directory:
+
+```bash
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+$ export ILAB_TAXONOMY_DIR=$HOME/.local/share/instructlab/taxonomy
+$ ilab model evaluate --benchmark mt_bench_branch \
+   --model $ILAB_MODELS_DIR/instructlab/granite-7b-lab \
+   --judge-model $ILAB_MODELS_DIR/instructlab/granite-7b-lab \
+   --base-model $ILAB_MODELS_DIR/instructlab/granite-7b-lab \
+   --taxonomy-path $ILAB_TAXONOMY_DIR \
+   --branch rc \
+   --base-branch main
+...
+# SKILL EVALUATION REPORT
+
+## BASE MODEL
+/home/example/.local/share/instructlab/models/instructlab/granite-7b-lab
+
+## MODEL
+/home/example/.local/share/instructlab/models/instructlab/granite-7b-lab
+
+### IMPROVEMENTS:
+1. compositional_skills/extraction/receipt/markdown/qna.yaml (+4.0)
+2. compositional_skills/STEM/science/units_conversion/temperature_conversion/qna.yaml (+3.0)
+3. compositional_skills/extraction/commercial_lease_agreement/bullet_points/qna.yaml (+3.0)
+...
+
+### REGRESSIONS:
+1. compositional_skills/extraction/abstractive/title/qna.yaml (-5.0)
+2. compositional_skills/extraction/receipt/bullet_points/qna.yaml (-4.5)
+3. compositional_skills/writing/grounded/summarization/wiki_insights/one_line/qna.yaml (-4.0)
+...
+
+### NO CHANGE:
+1. compositional_skills/STEM/math/reasoning/qna.yaml
+2. compositional_skills/extraction/commercial_lease_agreement/csv/qna.yaml
+3. compositional_skills/roleplay/explain_like_i_am/graduate/qna.yaml
+...
+
+### NEW:
+1. compositional_skills/linguistics/organize_lists/qna.yaml
+2. compositional_skills/extraction/invoice/plain_text/qna.yaml
+3. compositional_skills/writing/grounded/summarization/wiki_insights/concise/qna.yaml
+...
+
+### ERROR RATE:
+0.32
+```
+
+Below is an example of running MTBenchBranch with local GGUF models:
+
+```bash
+$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+$ export ILAB_TAXONOMY_DIR=$HOME/.local/share/instructlab/taxonomy
+$ ilab model evaluate --benchmark mt_bench_branch --model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf --judge-model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf --base-model $ILAB_MODELS_DIR/granite-7b-lab-Q4_K_M.gguf --taxonomy-path $ILAB_TAXONOMY_DIR --branch rc --base-branch main
+...
+# SKILL EVALUATION REPORT
+
+## BASE MODEL
+/home/ec2-user/.local/share/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+
+## MODEL
+/home/ec2-user/.local/share/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+
+### NO CHANGE:
+1. compositional_skills/STEM/math/distance_conversion/qna.yaml
+
+### NEW:
+1. compositional_skills/linguistics/organize_lists/qna.yaml
+2. compositional_skills/extraction/annual_report/reasoning/qna.yaml
+3. compositional_skills/extraction/email/plain_text/qna.yaml
+4. compositional_skills/extraction/technical_paper/tables/bullet_points/qna.yaml
+5. compositional_skills/extraction/technical_paper/abstract/reasoning/qna.yaml
+
+### ERROR RATE:
+0.98
+```
+
+> [!NOTE]
+> Currently, MTBenchBranch must be used with local models. Using models directly from Hugging Face without downloading them is unsupported.
 
 ### 🍴 Serve the newly trained model
 

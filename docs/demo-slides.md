@@ -33,7 +33,7 @@ source venv/bin/activate.fish
 Install CLI
 
 ```fish
-pip install instructlab
+pip install instructlab[cpu]
 ```
 
 <!-- pause -->

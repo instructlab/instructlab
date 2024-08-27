@@ -9,6 +9,9 @@ import typing
 # Third Party
 import click
 
+# First Party
+from instructlab import clickext
+
 
 def _platform_info() -> typing.Dict[str, typing.Any]:
     """Platform and machine information"""
@@ -18,6 +21,8 @@ def _platform_info() -> typing.Dict[str, typing.Any]:
         "os.name": os.name,
         "platform.release": platform.release(),
         "platform.machine": platform.machine(),
+        "platform.node": platform.node(),
+        "platform.python_version": platform.python_version(),
     }
     if sys.platform == "linux":
         os_release = platform.freedesktop_os_release()
@@ -55,7 +60,7 @@ def _torch_cuda_info() -> typing.Dict[str, typing.Any]:
 
     d = {
         "torch.cuda.bf16": torch.cuda.is_bf16_supported(),
-        "torch.cuda.current": torch.cuda.current_device(),
+        "torch.cuda.current.device": torch.cuda.current_device(),
     }
 
     for idx in range(torch.cuda.device_count()):
@@ -63,9 +68,12 @@ def _torch_cuda_info() -> typing.Dict[str, typing.Any]:
         free, total = torch.cuda.mem_get_info(device)
         capmax, capmin = torch.cuda.get_device_capability(device)
         d[f"torch.cuda.{idx}.name"] = torch.cuda.get_device_name(device)
-        d[f"torch.cuda.{idx}.free"] = f"{(free / 1024**3):.1f}"
-        d[f"torch.cuda.{idx}.total"] = f"{(total / 1024**3):.1f}"
-        d[f"torch.cuda.{idx}.capability"] = f"{capmax}.{capmin}"
+        d[f"torch.cuda.{idx}.free"] = f"{(free / 1024**3):.1f} GB"
+        d[f"torch.cuda.{idx}.total"] = f"{(total / 1024**3):.1f} GB"
+        # NVIDIA GPU compute capability table: https://developer.nvidia.com/cuda-gpus#compute
+        d[f"torch.cuda.{idx}.capability"] = (
+            f"{capmax}.{capmin} (see https://developer.nvidia.com/cuda-gpus#compute)"
+        )
 
     return d
 
@@ -140,6 +148,7 @@ def get_sysinfo() -> typing.Dict[str, typing.Any]:
 
 
 @click.command()
+@clickext.display_params
 def info():
     """Print system information"""
     for key, value in get_sysinfo().items():

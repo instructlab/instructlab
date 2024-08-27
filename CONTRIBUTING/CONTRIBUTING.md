@@ -85,7 +85,7 @@ pip install -r requirements.txt
 If you want to test the `ilab` binary, you can install `ilab` and all dependencies with:
 
 ```shell
-pip install .
+pip install .[cpu]
 ```
 
 ### Testing

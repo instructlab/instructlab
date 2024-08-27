@@ -1,14 +1,15 @@
 # SPDX-License-Identifier: Apache-2.0
 # Third Party
-from click_didyoumean import DYMGroup
 import click
 
-# Local
-from .init import init
-from .show import show
+# First Party
+from instructlab import clickext
 
 
-@click.group(cls=DYMGroup)
+@click.group(
+    cls=clickext.LazyEntryPointGroup,
+    ep_group="instructlab.command.config",
+)
 @click.pass_context
 def config(ctx):
     """Command Group for Interacting with the Config of InstructLab.
@@ -19,7 +20,3 @@ def config(ctx):
     if ctx.invoked_subcommand not in {"init"}:
         ctx.obj.ensure_config(ctx)
     ctx.default_map = ctx.parent.default_map
-
-
-config.add_command(init)
-config.add_command(show)

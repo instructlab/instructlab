@@ -16,4 +16,10 @@ assignees: ''
 <!-- CLI Triages or CLI Maintainers, see the above document for more details -->
 
 **Make your case here: Why should the nominated member be on the proposed team?**
-<!-- Feel free to write a brief testimonial here, try to include as many Pull Requests, Issues, etc. as possible -->
+<!-- Feel free to write a brief testimonial here, try to include as many Pull Requests, Issues, etc. as possible
+
+TIP: You can use the following queries to link to work items the nominee as been involved with
+Pull Requests Authored: https://github.com/instructlab/instructlab/pulls?q=is%3Apr+author%3A{GITHUB_USERNAME}+
+Pull Requests Reviewed: https://github.com/instructlab/instructlab/pulls?q=is%3Apr+reviewed-by%3A{GITHUB_USERNAME}+
+Issues Created:         https://github.com/instructlab/instructlab/issues?q=is%3Aissue+author%3A{GITHUB_USERNAME}+
+-->

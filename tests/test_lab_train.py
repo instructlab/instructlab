@@ -4,6 +4,7 @@
 # Standard
 from pathlib import Path
 from unittest.mock import patch
+import json
 import os
 import platform
 import sys
@@ -407,6 +408,113 @@ class TestLabTrain:
         assert len(linux_train_mock.call_args[1]) == 7
         is_macos_with_m_chip_mock.assert_called_once()
         assert not os.path.isfile(LINUX_GGUF_FILE)
+
+    @patch("instructlab.utils.is_macos_with_m_chip", return_value=False)
+    @patch.object(linux_train, "linux_train", return_value=Path("training_results"))
+    @patch(
+        "instructlab.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf",
+        side_effect=mock_convert_llama_to_gguf,
+    )
+    def test_double_train_linux(
+        self,
+        convert_llama_to_gguf_mock,
+        linux_train_mock,
+        is_macos_with_m_chip_mock,
+        tmp_path_home,
+    ):
+        cli_runner = CliRunner()
+        with cli_runner.isolated_filesystem(temp_dir=tmp_path_home):
+            # re-initialize the defaults
+            setup_input_dir(DEFAULTS.DATASETS_DIR)
+            setup_input_dir()
+            setup_linux_dir()
+
+            # create the files so they already exist
+            test_legacy_message = json.dumps(
+                {"user": "hi", "system": "hi", "assistant": "hi"}
+            )
+            test_files_to_create = ["train_gen.jsonl", "test_gen.jsonl"]
+            for f in test_files_to_create:
+                with open(
+                    os.path.join(tmp_path_home, DEFAULTS.DATASETS_DIR, f),
+                    "w",
+                    encoding=ENCODING,
+                ) as outfile:
+                    outfile.write(f"{test_legacy_message}\n")
+
+            assert "train_gen.jsonl" in os.listdir(DEFAULTS.DATASETS_DIR)
+            assert "test_gen.jsonl" in os.listdir(DEFAULTS.DATASETS_DIR)
+            result = cli_runner.invoke(
+                lab.ilab,
+                [
+                    "--config=DEFAULT",
+                    "model",
+                    "train",
+                    "--legacy",
+                    "--input-dir",
+                    DEFAULTS.DATASETS_DIR,
+                    "--data-path",
+                    DEFAULTS.DATASETS_DIR,
+                ],
+            )
+            assert result.exception is None
+            assert result.exit_code == 0
+            convert_llama_to_gguf_mock.assert_called_once()
+            assert convert_llama_to_gguf_mock.call_args[1]["model"] == Path(
+                "training_results/final"
+            )
+            assert convert_llama_to_gguf_mock.call_args[1]["pad_vocab"] is True
+            assert len(convert_llama_to_gguf_mock.call_args[1]) == 2
+            linux_train_mock.assert_called_once()
+            print(linux_train_mock.call_args[1])
+            assert linux_train_mock.call_args[1]["train_file"] == Path(
+                os.path.join(DEFAULTS.DATASETS_DIR, "train_gen.jsonl")
+            )
+            assert linux_train_mock.call_args[1]["test_file"] == Path(
+                os.path.join(DEFAULTS.DATASETS_DIR, "test_gen.jsonl")
+            )
+            assert linux_train_mock.call_args[1]["num_epochs"] == 10
+            assert linux_train_mock.call_args[1]["train_device"] is not None
+            assert not linux_train_mock.call_args[1]["four_bit_quant"]
+            assert len(linux_train_mock.call_args[1]) == 7
+            is_macos_with_m_chip_mock.assert_called_once()
+            assert not os.path.isfile(LINUX_GGUF_FILE)
+
+            assert "train_gen.jsonl" in os.listdir(DEFAULTS.DATASETS_DIR)
+            assert "test_gen.jsonl" in os.listdir(DEFAULTS.DATASETS_DIR)
+            # run this test a second time to ensure files are getting selected correctly
+            result = cli_runner.invoke(
+                lab.ilab,
+                [
+                    "--config=DEFAULT",
+                    "model",
+                    "train",
+                    "--legacy",
+                    "--input-dir",
+                    DEFAULTS.DATASETS_DIR,
+                    "--data-path",
+                    DEFAULTS.DATASETS_DIR,
+                ],
+            )
+            # assert result.exit_code == 0
+            assert result.exception is None
+            assert convert_llama_to_gguf_mock.call_args[1]["model"] == Path(
+                "training_results/final"
+            )
+            assert convert_llama_to_gguf_mock.call_args[1]["pad_vocab"] is True
+            assert len(convert_llama_to_gguf_mock.call_args[1]) == 2
+            print(linux_train_mock.call_args[1])
+            assert linux_train_mock.call_args[1]["train_file"] == Path(
+                os.path.join(DEFAULTS.DATASETS_DIR, "train_gen.jsonl")
+            )
+            assert linux_train_mock.call_args[1]["test_file"] == Path(
+                os.path.join(DEFAULTS.DATASETS_DIR, "test_gen.jsonl")
+            )
+            assert linux_train_mock.call_args[1]["num_epochs"] == 10
+            assert linux_train_mock.call_args[1]["train_device"] is not None
+            assert not linux_train_mock.call_args[1]["four_bit_quant"]
+            assert len(linux_train_mock.call_args[1]) == 7
+            assert not os.path.isfile(LINUX_GGUF_FILE)
 
     @patch("instructlab.utils.is_macos_with_m_chip", return_value=False)
     @patch(

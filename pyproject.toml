@@ -35,6 +35,53 @@ homepage = "https://instructlab.ai"
 source = "https://github.com/instructlab/instructlab"
 issues = "https://github.com/instructlab/instructlab/issues"
 
+# command entry points
+[project.entry-points."instructlab.command"]
+"config" = "instructlab.config.config:config"
+"data" = "instructlab.data.data:data"
+"model" = "instructlab.model.model:model"
+"system" = "instructlab.system.system:system"
+"taxonomy" = "instructlab.taxonomy.taxonomy:taxonomy"
+
+[project.entry-points."instructlab.command.config"]
+"edit" = "instructlab.config.edit:edit"
+"init" = "instructlab.config.init:init"
+"show" = "instructlab.config.show:show"
+
+[project.entry-points."instructlab.command.data"]
+"generate" = "instructlab.data.generate:generate"
+"list" = "instructlab.data.list:list_data"
+
+[project.entry-points."instructlab.command.model"]
+"chat" = "instructlab.model.chat:chat"
+"convert" = "instructlab.model.convert:convert"
+"download" = "instructlab.model.download:download"
+"evaluate" = "instructlab.model.evaluate:evaluate"
+"serve" = "instructlab.model.serve:serve"
+"test" = "instructlab.model.test:test"
+"train" = "instructlab.model.train:train"
+"list" = "instructlab.model.list:model_list"
+
+[project.entry-points."instructlab.command.system"]
+"info" = "instructlab.system.info:info"
+
+[project.entry-points."instructlab.command.taxonomy"]
+"diff" = "instructlab.taxonomy.diff:diff"
+
+[project.entry-points."instructlab.command.alias"]
+"chat" = "instructlab.model.chat:chat"
+"convert" = "instructlab.model.convert:convert"
+"diff" = "instructlab.taxonomy.diff:diff"
+"download" = "instructlab.model.download:download"
+"evaluate" = "instructlab.model.evaluate:evaluate"
+"generate" = "instructlab.data.generate:generate"
+"init" = "instructlab.config.init:init"
+"serve" = "instructlab.model.serve:serve"
+"sysinfo" = "instructlab.system.info:info"
+"test" = "instructlab.model.test:test"
+"train" = "instructlab.model.train:train"
+"list" = "instructlab.model.list:model_list"
+
 [tool.setuptools_scm]
 version_file = "src/instructlab/_version.py"
 # do not include +gREV local version, required for Test PyPI upload
@@ -45,7 +92,11 @@ package-dir = { "" = "src" }
 
 [tool.setuptools.dynamic]
 dependencies = { file = ["requirements.txt"] }
-optional-dependencies.hpu = { file = ["requirements-hpu.txt"] }
+optional-dependencies.cpu = { file = ["requirements/cpu.txt"] }
+optional-dependencies.cuda = { file = ["requirements/cuda.txt"] }
+optional-dependencies.hpu = { file = ["requirements/hpu.txt"] }
+optional-dependencies.mps = { file = ["requirements/mps.txt"] }
+optional-dependencies.rocm = { file = ["requirements/rocm.txt"] }
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -181,3 +232,9 @@ tests = ["tests/"]
 
 [tool.coverage.report]
 exclude_lines = ["@abc.abstractmethod", "if typing.TYPE_CHECKING"]
+
+[tool.pytest.ini_options]
+# don't collect src/instructlab/model/linux_test.py
+testpaths = "tests"
+# verbose diffs
+verbosity_assertions = 2

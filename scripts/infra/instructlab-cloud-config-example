@@ -1,4 +1,6 @@
 EC2_INSTANCE_TYPE="m4.large"
+# Nvidia 4x L4 GPU, 96GB VRAM (preferred)
+# EC2_INSTANCE_TYPE="g6.12xlarge"
 # Nvidia 4x A10 GPU, 96GB VRAM
 #EC2_INSTANCE_TYPE="g5.12xlarge"
 # Nvidia 1x A10 GPU, 24GB VRAM
