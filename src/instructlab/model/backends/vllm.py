@@ -23,13 +23,13 @@ from .backends import (
     ensure_server,
     safe_close_all,
     shutdown_process,
-    verify_template_exists,
 )
 from .common import (
     CHAT_TEMPLATE_AUTO,
     CHAT_TEMPLATE_TOKENIZER,
     VLLM,
     get_model_template,
+    verify_template_exists,
 )
 
 logger = logging.getLogger(__name__)

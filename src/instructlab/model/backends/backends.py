@@ -555,13 +555,3 @@ def select_backend(
         )
     click.secho(f"Unknown backend: {backend}", fg="red")
     raise click.exceptions.Exit(1)
-
-
-def verify_template_exists(path):
-    if not path.exists():
-        raise FileNotFoundError("Chat template file does not exist: {}".format(path))
-
-    if not path.is_file():
-        raise IsADirectoryError(
-            "Chat templates paths must point to a file: {}".format(path)
-        )

@@ -27,7 +27,6 @@ from .backends import (
     free_tcp_ipv4_port,
     get_uvicorn_config,
     is_temp_server_running,
-    verify_template_exists,
 )
 from .common import (
     API_ROOT_WELCOME_MESSAGE,
@@ -35,6 +34,7 @@ from .common import (
     CHAT_TEMPLATE_TOKENIZER,
     LLAMA_CPP,
     get_model_template,
+    verify_template_exists,
 )
 
 logger = logging.getLogger(__name__)
