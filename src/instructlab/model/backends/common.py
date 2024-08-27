@@ -44,3 +44,13 @@ def get_model_template(
                 bos_token = "<s>"
 
     return template, eos_token, bos_token
+
+
+def verify_template_exists(path):
+    if not path.exists():
+        raise FileNotFoundError("Chat template file does not exist: {}".format(path))
+
+    if not path.is_file():
+        raise IsADirectoryError(
+            "Chat templates paths must point to a file: {}".format(path)
+        )
