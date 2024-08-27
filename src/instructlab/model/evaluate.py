@@ -2,10 +2,12 @@
 
 # pylint: disable=ungrouped-imports
 # Standard
-from copy import copy
+from copy import deepcopy
 import enum
 import logging
+import multiprocessing
 import os
+import pathlib
 import typing
 
 # Third Party
@@ -16,7 +18,7 @@ from instructlab import clickext
 from instructlab.model.backends import backends
 
 # Local
-from ..utils import display_params, http_client
+from ..utils import http_client
 
 if typing.TYPE_CHECKING:
     # Third Party
@@ -57,16 +59,6 @@ def get_evaluator(
     if all needed configuration is present, returns the appropriate Evaluator class for the benchmark
     otherwise raises an exception for the missing values
     """
-    # Third Party
-    from instructlab.eval.mmlu import MMLUBranchEvaluator, MMLUEvaluator
-    from instructlab.eval.mt_bench import MTBenchBranchEvaluator, MTBenchEvaluator
-
-    benchmark_map = {
-        Benchmark.MMLU: MMLUEvaluator,
-        Benchmark.MMLU_BRANCH: MMLUBranchEvaluator,
-        Benchmark.MT_BENCH: MTBenchEvaluator,
-        Benchmark.MT_BENCH_BRANCH: MTBenchBranchEvaluator,
-    }
 
     # ensure skills benchmarks have proper arguments if selected
     if benchmark in {Benchmark.MT_BENCH, Benchmark.MT_BENCH_BRANCH}:
@@ -95,16 +87,38 @@ def get_evaluator(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
-        evaluator_class = benchmark_map[benchmark]
+        if os.path.exists(model):
+            model = pathlib.Path(model)
+            valid_model = False
+            if model.is_dir():
+                valid_model = backends.is_model_safetensors(model)
+            elif model.is_file():
+                valid_model = backends.is_model_gguf(model)
+            if not valid_model:
+                click.secho(
+                    "MTBench and MTBenchBranch need to be passed either a safetensors directory or a GGUF file",
+                    fg="red",
+                )
+                raise click.exceptions.Exit(1)
+            click.secho(
+                f"Using local model found at '{model}' for '--model'",
+                fg="blue",
+            )
         if benchmark == Benchmark.MT_BENCH:
-            return evaluator_class(
+            # Third Party
+            from instructlab.eval.mt_bench import MTBenchEvaluator
+
+            return MTBenchEvaluator(
                 TEST_MODEL_NAME,
                 JUDGE_MODEL_NAME,
                 output_dir,
                 max_workers,
                 merge_system_user_message=merge_system_user_message,
             )
-        return evaluator_class(
+        # Third Party
+        from instructlab.eval.mt_bench import MTBenchBranchEvaluator
+
+        return MTBenchBranchEvaluator(
             TEST_MODEL_NAME,
             JUDGE_MODEL_NAME,
             taxonomy_path,
@@ -129,23 +143,46 @@ def get_evaluator(
                 fg="red",
             )
             raise click.exceptions.Exit(1)
-        evaluator_class = benchmark_map[benchmark]
+        # ensure user is passing full safetensors if they specify a local directory
+        # TODO: also allow GGUF once the following is resolved: https://github.com/instructlab/eval/issues/50
+        if os.path.isdir(model):
+            if not backends.is_model_safetensors(pathlib.Path(model)):
+                click.secho(
+                    "MMLU and MMLUBranch can currently only be used with a safetensors directory",
+                    fg="red",
+                )
+                raise click.exceptions.Exit(1)
+            click.secho(
+                f"Using local safetensors found at '{model}' for '--model'",
+                fg="blue",
+            )
+        else:
+            click.secho(
+                f"Using safetensors from Hugging Face repo '{model}' for '--model'",
+                fg="blue",
+            )
         if benchmark == Benchmark.MMLU:
+            # Third Party
+            from instructlab.eval.mmlu import MMLUEvaluator
+
             min_tasks = os.environ.get("INSTRUCTLAB_EVAL_MMLU_MIN_TASKS")
             if min_tasks is not None:
                 tasks = ["mmlu_abstract_algebra", "mmlu_anatomy", "mmlu_astronomy"]
-                evaluator = evaluator_class(
+                evaluator = MMLUEvaluator(
                     model,
                     tasks=tasks,
                     few_shots=few_shots,
                     batch_size=batch_size,
                 )
             else:
-                evaluator = evaluator_class(
+                evaluator = MMLUEvaluator(
                     model, few_shots=few_shots, batch_size=batch_size
                 )
             return evaluator
-        return evaluator_class(
+        # Third Party
+        from instructlab.eval.mmlu import MMLUBranchEvaluator
+
+        return MMLUBranchEvaluator(
             model,
             tasks_dir,
             ["mmlu_pr"],
@@ -235,43 +272,63 @@ def qa_pairs_to_qna_to_avg_scores(qa_pairs: list[dict]) -> dict[str, float]:
 
 
 def launch_server(
-    ctx,
-    model,
-    model_name,
-    max_workers,
-    gpus,
-    backend,
-    enable_serving_output,
+    ctx: click.Context,
+    model: str,
+    model_name: str,
+    max_workers: int,
+    gpus: int | None,
+    backend: str | None,
+    enable_serving_output: bool,
 ) -> tuple:
-    # pylint: disable=import-outside-toplevel
-    # First Party
-
-    eval_serve = copy(ctx.obj.config.serve)
+    eval_serve = deepcopy(ctx.obj.config.serve)
     if backend is None:
-        eval_serve.backend = backends.VLLM
+        try:
+            backend = eval_serve.backend = backends.get(pathlib.Path(model), backend)
+        except ValueError as e:
+            click.secho(f"Failed to determine backend: {e}", fg="red")
+            raise click.exceptions.Exit(1)
+
     if backend == backends.VLLM:
         eval_serve.vllm.vllm_args.extend(["--served-model-name", model_name])
+        # Recommend max-workers based on hardware configuration. #cpus +- 50%
+        cpu_count = multiprocessing.cpu_count()
+        recommended_min_workers = max(cpu_count // 1.5, 1)
+        recommended_max_workers = max(cpu_count // 0.5, 1)
+        if (
+            max_workers > recommended_max_workers
+            or max_workers < recommended_min_workers
+        ):
+            logger.warning(
+                f"Based on your hardware configuration, when using vLLM, we recommend setting max-workers between {recommended_min_workers} and {recommended_max_workers} for optimal performance"
+            )
+        gpus = gpus or eval_serve.vllm.gpus
         if gpus:
-            # Don't override from vllm_args
-            if "--tensor-parallel-size" not in eval_serve.vllm.vllm_args:
-                eval_serve.vllm.vllm_args.extend(["--tensor-parallel-size", str(gpus)])
-            else:
-                click.echo(
-                    "Ignoring --gpus with --tensor-parallel-size configured in serve vllm_args"
+            # Warn when overriding from vllm_args
+            tps_prefix = "--tensor-parallel-size"
+            if any(
+                s == tps_prefix or s.startswith(tps_prefix + "=")
+                for s in eval_serve.vllm.vllm_args
+            ):
+                # Either tps_prefix value or tps_prefix=value
+                click.secho(
+                    "Using gpus from --gpus or evaluate config and ignoring --tensor-parallel-size configured in serve vllm_args",
+                    fg="yellow",
                 )
-    if backend == backends.LLAMA_CPP:
+            eval_serve.vllm.vllm_args.extend([tps_prefix, str(gpus)])
+    elif backend == backends.LLAMA_CPP:
         if ctx.obj.config.serve.llama_cpp.max_ctx_size < 5120:
             eval_serve.llama_cpp.max_ctx_size = 5120
-            logging.debug(
+            logger.debug(
                 "Evaluate requires a context size of >= 5120, ignoring serve configuration for max_ctx_size"
             )
         # llama-cpp fails fast on too many incoming requests and returns errors to client
-        if max_workers > 16:
-            logging.warning(
-                "When using llama-cpp, we recommend setting max_workers to a maximum of 16"
+        recommended_workers = max(multiprocessing.cpu_count() // 2, 1)
+        if max_workers > recommended_workers:
+            logger.warning(
+                f"Based on your hardware configuration, when using llama-cpp, we recommend setting max-workers to a maximum of {recommended_workers}"
             )
         if gpus:
-            logging.debug("Ignoring --gpus option for llama-cpp serving")
+            logger.debug("Ignoring --gpus option for llama-cpp serving")
 
     eval_serve.model_path = model
 
@@ -279,7 +336,16 @@ def launch_server(
     try:
         # http_client is handling tls params
         api_base = backend_instance.run_detached(
-            http_client(ctx.params), background=enable_serving_output
+            http_client(
+                {
+                    "tls_client_cert": ctx.params["tls_client_cert"],
+                    "tls_client_key": ctx.params["tls_client_key"],
+                    "tls_client_passwd": ctx.params["tls_client_passwd"],
+                    "tls_insecure": ctx.params["tls_insecure"],
+                }
+            ),
+            background=not enable_serving_output,
+            foreground_allowed=True,
         )
     except Exception as exc:
         click.secho(f"Failed to start server: {exc}", fg="red")
@@ -312,7 +378,7 @@ def launch_server(
     type=click.STRING,
     cls=clickext.ConfigOption,
     config_sections="mt_bench",
-    help="Model to be used as a judge for running mt_bench or mt_bench_branch - can be a local path or the name of a Hugging Face repository",
+    help="Model to be used as a judge for running mt_bench or mt_bench_branch - must be a local path to a downloaded model",
 )
 @click.option(
     "--output-dir",
@@ -356,10 +422,10 @@ def launch_server(
 )
 @click.option(
     "--batch-size",
-    type=click.INT,
+    type=click.STRING,
     cls=clickext.ConfigOption,
     config_sections="mmlu",
-    help="Number of GPUs. Needed for running mmlu or mmlu_branch.",
+    help="Batch size for mmlu and mmlu_branch evaluation. Valid values are a positive integer, 'auto' to select the largest batch size that will fit in memory, or 'auto:N' to reselect the largest batch size N times'.",
 )
 @click.option(
     "--tasks-dir",
@@ -370,7 +436,7 @@ def launch_server(
 )
 @click.option(
     "--gpus",
-    type=click.INT,
+    type=click.IntRange(min=0),
     help="Number of GPUs to utilize for evaluation (not applicable to llama-cpp)",
 )
 @click.option(
@@ -381,7 +447,12 @@ def launch_server(
 @click.option(
     "--backend",
     type=click.Choice(tuple(backends.SUPPORTED_BACKENDS)),
-    help="Serving backend to use for evaluation. Options are vllm and llama-cpp.",
+    help="Serving backend to use for the model and base model (if applicable) during evaluation. Options are vllm and llama-cpp.",
+)
+@click.option(
+    "--judge-backend",
+    type=click.Choice(tuple(backends.SUPPORTED_BACKENDS)),
+    help="Serving backend to use for the judge model for during mt_bench or mt_bench_branch evaluation. Options are vllm and llama-cpp.",
 )
 @click.option(
     "--tls-insecure",
@@ -414,7 +485,7 @@ def launch_server(
     help="Print serving engine logs.",
 )
 @click.pass_context
-@display_params
+@clickext.display_params
 def evaluate(
     ctx,
     model,
@@ -432,12 +503,14 @@ def evaluate(
     gpus,
     merge_system_user_message,
     backend,
+    judge_backend,
     tls_insecure,  # pylint: disable=unused-argument
     tls_client_cert,  # pylint: disable=unused-argument
     tls_client_key,  # pylint: disable=unused-argument
     tls_client_passwd,  # pylint: disable=unused-argument
     enable_serving_output,
 ):
+    """Evaluates a trained model"""
     # get appropriate evaluator class from Eval lib
     evaluator = get_evaluator(
         model,
@@ -485,7 +558,7 @@ def evaluate(
                     JUDGE_MODEL_NAME,
                     max_workers,
                     gpus,
-                    backend,
+                    judge_backend,
                     enable_serving_output,
                 )
                 overall_score, qa_pairs, turn_scores, error_rate = (
@@ -561,7 +634,7 @@ def evaluate(
                     JUDGE_MODEL_NAME,
                     max_workers,
                     gpus,
-                    backend,
+                    judge_backend,
                     enable_serving_output,
                 )
                 for i, evaluator in enumerate(evaluators):

@@ -5,15 +5,17 @@ from functools import cache, wraps
 from importlib import resources
 from importlib.abc import Traversable
 from pathlib import Path
-from typing import Any, List, Mapping, Optional, TypedDict
+from typing import Any, List, Mapping, Optional, Tuple, TypedDict
 from urllib.parse import urlparse
 import copy
 import glob
 import json
 import logging
 import os
+import pathlib
 import platform
 import re
+import shutil
 import subprocess
 import tempfile
 
@@ -31,6 +33,8 @@ from . import common
 
 logger = logging.getLogger(__name__)
 
+MIN_KNOWLEDGE_VERSION = 3
+
 DEFAULT_YAML_RULES = """\
 extends: relaxed
 
@@ -40,8 +44,61 @@ rules:
 """
 
 
+class SDGTokens:
+    """
+    Provides constant definitions for the tokens used by SDG.
+    """
+
+    USER = "<|user|>"
+    ASSISTANT = "<|assistant|>"
+    PRETRAINING = "<|pretraining|>"
+
+
 class TaxonomyReadingException(Exception):
     """An exception raised during reading of the taxonomy."""
+
+
+class Message(TypedDict):
+    """
+    Represents a message within an AI conversation.
+    """
+
+    content: str
+    # one of: "user", "assistant", or "system"
+    role: str
+
+
+class MessageSample(TypedDict):
+    """
+    Represents a sample datapoint for a dataset using the HuggingFace messages format.
+    """
+
+    messages: List[Message]
+    group: str
+    dataset: str
+    metadata: str
+
+
+class LegacyMessageSample(TypedDict):
+    """
+    Represents a legacy message sample within an AI conversation.
+    This is what is currently used by the legacy training methods such as Linux training and MacOS training.
+    """
+
+    system: str
+    user: str
+    assistant: str
+
+
+class HttpClientParams(TypedDict):
+    """
+    Types the parameters used when initializing the HTTP client.
+    """
+
+    tls_client_cert: str | None
+    tls_client_key: str | None
+    tls_client_passwd: str | None
+    tls_insecure: bool
 
 
 def macos_requirement(echo_func, exit_exception):
@@ -132,14 +189,21 @@ TAXONOMY_FOLDERS: List[str] = ["compositional_skills", "knowledge"]
 """Taxonomy folders which are also the schema names"""
 
 
-def istaxonomyfile(fn):
+def is_taxonomy_file(fn: str) -> bool:
     path = Path(fn)
-    return path.suffix == ".yaml" and path.parts[0] in TAXONOMY_FOLDERS
+    if path.parts[0] not in TAXONOMY_FOLDERS:
+        return False
+    if path.name == "qna.yml":
+        logger.warning(
+            f"Found a 'qna.yml' file: {path}: taxonomy files must be named 'qna.yaml'. File will not be checked."
+        )
+        return False
+    return path.name == "qna.yaml"
 
 
 def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     repo = git.Repo(repo)
-    untracked_files = [u for u in repo.untracked_files if istaxonomyfile(u)]
+    untracked_files = [u for u in repo.untracked_files if is_taxonomy_file(u)]
 
     branches = [b.name for b in repo.branches]
 
@@ -152,7 +216,7 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
         try:
             head_commit = repo.commit(base)
         except gitdb.exc.BadName as e:
-            raise SystemExit(
+            raise TaxonomyReadingException(
                 yaml.YAMLError(
                     f'Couldn\'t find the taxonomy git ref "{base}" from the current HEAD'
                 )
@@ -169,7 +233,7 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
         try:
             current_commit = current_commit.parents[0]
         except IndexError as e:
-            raise SystemExit(
+            raise TaxonomyReadingException(
                 yaml.YAMLError(
                     f'Couldn\'t find the taxonomy base branch "{base}" from the current HEAD'
                 )
@@ -178,7 +242,7 @@ def get_taxonomy_diff(repo="taxonomy", base="origin/main"):
     modified_files = [
         d.b_path
         for d in head_commit.diff(None)
-        if not d.deleted_file and istaxonomyfile(d.b_path)
+        if not d.deleted_file and is_taxonomy_file(d.b_path)
     ]
 
     updated_taxonomy_files = list(set(untracked_files + modified_files))
@@ -191,18 +255,18 @@ class SourceDict(TypedDict):
     patterns: List[str]
 
 
-def get_documents(
+def _validate_documents(
     source: SourceDict,
     skip_checkout: bool = False,
-) -> List[str]:
+) -> None:
     """
-    Retrieve the content of files from a Git repository.
+    Validate that we can retrieve the content of files from a Git repository.
 
     Args:
         source (dict): Source info containing repository URL, commit hash, and list of file patterns.
 
     Returns:
-         List[str]: List of document contents.
+         None
     """ ""
     repo_url = source.get("repo", "")
     commit_hash = source.get("commit", "")
@@ -215,18 +279,19 @@ def get_documents(
                 temp_dir=temp_dir,
                 skip_checkout=skip_checkout,
             )
-            file_contents = []
 
             logger.debug("Processing files...")
+            opened_files = False
             for pattern in file_patterns:
                 for file_path in glob.glob(os.path.join(repo.working_dir, pattern)):
                     if os.path.isfile(file_path) and file_path.endswith(".md"):
-                        with open(file_path, "r", encoding="utf-8") as file:
-                            file_contents.append(file.read())
+                        with open(file_path, "r", encoding="utf-8"):
+                            # Success! we could open the file.
+                            # We don't actually care about the contents, though.
+                            opened_files = True
 
-            if file_contents:
-                return file_contents
-            raise SystemExit("Couldn't find knowledge documents")
+            if not opened_files:
+                raise TaxonomyReadingException("Couldn't find knowledge documents")
         except (OSError, exc.GitCommandError, FileNotFoundError) as e:
             raise e
 
@@ -298,12 +363,13 @@ def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
     from jsonschema.validators import validator_for
     from referencing import Registry
     from referencing.exceptions import NoSuchResource
+    from referencing.typing import URI
 
     errors = 0
     version = get_version(contents)
     schemas_path = resources.files("instructlab.schema").joinpath(f"v{version}")
 
-    def retrieve(uri: str) -> Resource:
+    def retrieve(uri: URI) -> Resource:
         path = schemas_path.joinpath(uri)
         # This mypy violation will be fixed in:
         # https://github.com/instructlab/schema/pull/33
@@ -315,6 +381,13 @@ def validate_yaml(contents: Mapping[str, Any], taxonomy_path: Path) -> int:
         logger.info(
             f"Cannot determine schema name from path {taxonomy_path}. Using {schema_name} schema."
         )
+
+    if schema_name == "knowledge" and version < MIN_KNOWLEDGE_VERSION:
+        logger.error(
+            f"Version {version} is not supported for knowledge taxonomy. Minimum supported version is {MIN_KNOWLEDGE_VERSION}."
+        )
+        errors += 1
+        return errors
 
     try:
         schema_resource = retrieve(f"{schema_name}.json")
@@ -358,8 +431,7 @@ def get_version(contents: Mapping) -> int:
 
 
 # pylint: disable=broad-exception-caught
-def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
-    seed_instruction_data = []
+def validate_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
     warnings = 0
     errors = 0
     file_path_p = Path(file_path).resolve()
@@ -369,7 +441,8 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
             f"Skipping {file_path_p}! Use lowercase '.yaml' extension instead."
         )
         warnings += 1
-        return None, warnings, errors
+        return warnings, errors
+    # update path to point directly at file if it is not already
     for i in range(len(file_path_p.parts) - 1, -1, -1):
         if file_path_p.parts[i] in TAXONOMY_FOLDERS:
             taxonomy_path = Path(*file_path_p.parts[i:])
@@ -383,19 +456,21 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
         if not contents:
             logger.warning(f"Skipping {file_path_p} because it is empty!")
             warnings += 1
-            return None, warnings, errors
+            return warnings, errors
         if not isinstance(contents, Mapping):
             logger.error(
                 f"{file_path_p} is not valid. The top-level element is not an object with key-value pairs."
             )
             errors += 1
-            return None, warnings, errors
+            return warnings, errors
 
-        # do general YAML linting if specified
+        # do general YAML linting
         version = get_version(contents)
         if version > 1:  # no linting for version 1 yaml
-            if yaml_rules is not None:
-                if os.path.isfile(yaml_rules):
+            if yaml_rules is not None:  # user attempted to pass custom yaml rules file
+                if os.path.isfile(
+                    yaml_rules
+                ):  # custom rules file was found, use specified config
                     logger.debug(f"Using YAML rules from {yaml_rules}")
                     yamllint_cmd = [
                         "yamllint",
@@ -406,7 +481,7 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
                         str(file_path_p),
                         "-s",
                     ]
-                else:
+                else:  # custom rules file was not found, use default config
                     logger.debug(f"Cannot find {yaml_rules}. Using default rules.")
                     yamllint_cmd = [
                         "yamllint",
@@ -417,7 +492,7 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
                         str(file_path_p),
                         "-s",
                     ]
-            else:
+            else:  # no custom rules file was specified, use default config
                 yamllint_cmd = [
                     "yamllint",
                     "-f",
@@ -427,6 +502,7 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
                     str(file_path_p),
                     "-s",
                 ]
+            # run YAML linter via yamllint subprocess
             try:
                 subprocess.check_output(yamllint_cmd, text=True)
             except subprocess.CalledProcessError as e:
@@ -438,55 +514,40 @@ def read_taxonomy_file(file_path: str, yaml_rules: Optional[str] = None):
                     parsed_p = p.split(delim)[1]
                     lint_messages.append(parsed_p)
                 logger.error("\n".join(lint_messages))
-                return None, warnings, errors
+                return warnings, errors
 
+        # validate file matches InstructLab Taxonomy Schema
         validation_errors = validate_yaml(contents, taxonomy_path)
         if validation_errors:
             errors += validation_errors
-            return None, warnings, errors
+            return warnings, errors
 
-        # get seed instruction data
-        tax_path = "->".join(taxonomy_path.parent.parts)
-        task_description = contents.get("task_description")
-        documents = contents.get("document")
-        if documents:
-            documents = get_documents(source=documents)
-            logger.debug("Content from git repo fetched")
+        # If the taxonomy file includes a document reference, validate that
+        # we can retrieve the content of the document
+        if "document" in contents:
+            try:
+                _validate_documents(contents["document"])
+            except Exception as e:
+                errors += 1
+                logger.error(f"Failed to load document content for {file_path_p}: {e}")
 
-        for seed_example in contents.get("seed_examples", []):
-            question = seed_example.get("question")
-            answer = seed_example.get("answer")
-            context = seed_example.get("context", "")
-            seed_instruction_data.append(
-                {
-                    "instruction": question,
-                    "input": context,
-                    "output": answer,
-                    "taxonomy_path": tax_path,
-                    "task_description": task_description,
-                    "document": documents,
-                }
-            )
     except Exception as e:
         errors += 1
         raise TaxonomyReadingException(f"Exception {e} raised in {file_path_p}") from e
 
-    return seed_instruction_data, warnings, errors
+    return warnings, errors
 
 
 # TODO: remove `_logger` parameter after instructlab.sdg is fixed.
-def read_taxonomy(_logger, taxonomy, taxonomy_base, yaml_rules):
-    seed_instruction_data = []
+def validate_taxonomy(_logger, taxonomy, taxonomy_base, yaml_rules) -> None:
     if os.path.isfile(taxonomy):
-        seed_instruction_data, warnings, errors = read_taxonomy_file(
-            taxonomy, yaml_rules
-        )
+        warnings, errors = validate_taxonomy_file(taxonomy, yaml_rules)
         if warnings:
             logger.warning(
                 f"{warnings} warnings (see above) due to taxonomy file not (fully) usable."
             )
         if errors:
-            raise SystemExit(yaml.YAMLError("Taxonomy file with errors! Exiting."))
+            raise TaxonomyReadingException(yaml.YAMLError("Taxonomy file with errors!"))
     else:  # taxonomy is dir
         # Gather the new or changed YAMLs using git diff
         updated_taxonomy_files = get_taxonomy_diff(taxonomy, taxonomy_base)
@@ -498,20 +559,19 @@ def read_taxonomy(_logger, taxonomy, taxonomy_base, yaml_rules):
                 logger.debug(f"* {e}")
         for f in updated_taxonomy_files:
             file_path = os.path.join(taxonomy, f)
-            data, warnings, errors = read_taxonomy_file(file_path, yaml_rules)
+            warnings, errors = validate_taxonomy_file(file_path, yaml_rules)
             total_warnings += warnings
             total_errors += errors
-            if data:
-                seed_instruction_data.extend(data)
         if total_warnings:
             logger.warning(
                 f"{total_warnings} warnings (see above) due to taxonomy files that were not (fully) usable."
             )
         if total_errors:
-            raise SystemExit(
-                yaml.YAMLError(f"{total_errors} taxonomy files with errors! Exiting.")
+            raise TaxonomyReadingException(
+                yaml.YAMLError(
+                    f"{total_errors} total errors found across {len(updated_taxonomy_files)} updated taxonomy files!"
+                )
             )
-    return seed_instruction_data
 
 
 def get_ssl_cert_config(tls_client_cert, tls_client_key, tls_client_passwd):
@@ -519,7 +579,7 @@ def get_ssl_cert_config(tls_client_cert, tls_client_key, tls_client_passwd):
         return tls_client_cert, tls_client_key, tls_client_passwd
 
 
-def http_client(params):
+def http_client(params: HttpClientParams):
     return httpx.Client(
         cert=get_ssl_cert_config(
             params.get("tls_client_cert", None),
@@ -528,29 +588,6 @@ def http_client(params):
         ),
         verify=not params.get("tls_insecure", True),
     )
-
-
-def display_params(func):
-    """Display command parameters."""
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        try:
-            if (logger.isEnabledFor(logging.DEBUG)) and (
-                ("quiet" not in kwargs) or (not kwargs["quiet"])
-            ):
-                print("===================using parameters ========================")
-                max_param_length = max(len(param) for param in kwargs)
-                for param_name, param_value in kwargs.items():
-                    print(
-                        f"{param_name}{' ' * (max_param_length - len(param_name)):s}: {param_value}"
-                    )
-                print("============================================================")
-        except Exception:
-            pass
-        return func(*args, **kwargs)
-
-    return wrapper
 
 
 def split_hostport(hostport: str) -> tuple[str, int]:
@@ -564,3 +601,235 @@ def split_hostport(hostport: str) -> tuple[str, int]:
     if not hostname or not port:
         raise ValueError(f"Invalid host-port string: '{hostport}'")
     return hostname, port
+
+
+def is_pretraining_dataset(ds: List[MessageSample]) -> bool:
+    """
+    Determines whether or not the given dataset is the phase07 pretraining
+    dataset.
+    """
+    if not ds:
+        return False
+    sample = ds[0]
+    return any(m["role"] == "pretraining" for m in sample["messages"])
+
+
+def get_user_assistant_from_pretraining(pretraining: str) -> Tuple[str, str]:
+    """
+    Given a pretraining message sample which contains the tokens '<|user|>' and '<|assistant|>',
+    return the strings corresponding to the user & assistant inputs.
+
+    This function assumes that a given message contains only a single instance of each
+    `<|user|>` and `<|assistant|>` token, and that `<|user|>` precedes `<|assistant|>`.
+
+    Raises ValueError if neither the '<|user|>' or '<|assistant|>' tokens exist
+    within the given sample.
+    """
+    for token in (SDGTokens.ASSISTANT, SDGTokens.USER):
+        if token not in pretraining:
+            raise ValueError(
+                f"pretraining sample doesn't contain the '{token}' token: {pretraining}"
+            )
+    first, assistant = pretraining.split(SDGTokens.ASSISTANT)
+    _, user = first.split(SDGTokens.USER)
+    return user, assistant
+
+
+def convert_pretraining_messages_to_legacy_dataset(
+    dataset: List[MessageSample],
+) -> List[LegacyMessageSample]:
+    """
+    Given a Phase07 pretraining dataset that's in the messages format, returns
+    a version that's been converted to be compatible with the legacy ilab data format.
+
+    This function assumes that each sample contains at least a single message with the
+    "pretraining" role. If a "system" role exists then it's also parsed out, otherwise
+    an empty string is set for the system.
+    """
+    converted_dataset: List[LegacyMessageSample] = []
+    for sample in dataset:
+        pretraining = next(
+            (
+                msg["content"]
+                for msg in sample["messages"]
+                if msg["role"] == "pretraining"
+            ),
+            None,
+        )
+        if not pretraining:
+            raise ValueError(
+                "dataset contains sample which lacks a pretraining message"
+            )
+
+        # not sure if 'system' will exist in phase07 or not - leaving here just in case
+        system = next(
+            (msg["content"] for msg in sample["messages"] if msg["role"] == "system"),
+            "",
+        )
+        user, assistant = get_user_assistant_from_pretraining(pretraining)
+        converted_dataset.append(
+            {"system": system, "user": user, "assistant": assistant}
+        )
+    return converted_dataset
+
+
+def convert_standard_messages_to_legacy_dataset(
+    dataset: List[MessageSample],
+) -> List[LegacyMessageSample]:
+    """
+    This function converts a standard dataset that's in the HuggingFace
+    messages format into the legacy ilab format.
+
+    This function assumes that each sample in the dataset has at least 3 messages,
+    of which the first 3 are: system, user, assistant. Any additional messages
+    are ignored.
+    """
+    converted_dataset: List[LegacyMessageSample] = []
+    for dp in dataset:
+        # in new dataset, the roles of a message will be determined.
+        if len(dp["messages"]) < 3:
+            raise ValueError(
+                "The dataset is expecting a minimum of 3 messages in each sample."
+            )
+
+        converted: LegacyMessageSample = {  # type: ignore
+            m["role"]: m["content"] for m in dp["messages"][:3]
+        }
+        converted_dataset.append(converted)
+    return converted_dataset
+
+
+def convert_messages_to_legacy_dataset(
+    dataset: List[MessageSample],
+) -> List[LegacyMessageSample]:
+    """
+    Converts the new HuggingFace messages dataset format to the legacy format.
+    For reference, see: https://huggingface.co/docs/transformers/en/chat_templating#templates-for-chat-modelos
+
+    **Note**: The legacy dataset format assumes only a turn of 1. All extra turns will be dropped.
+    This means that we only look at the first 3 messages, and everything afterwards will be ignored.
+    """
+    # return the converted dataset based on the type
+    if is_pretraining_dataset(dataset):
+        return convert_pretraining_messages_to_legacy_dataset(dataset)
+    return convert_standard_messages_to_legacy_dataset(dataset)
+
+
+def is_messages_dataset(
+    dataset: List[MessageSample] | List[LegacyMessageSample],
+) -> bool:
+    """
+    Indicates whether or not the provided dataset is using the newer "messages" format
+    or the legacy format used by the old linux training script.
+    """
+    if not dataset:
+        raise ValueError("dataset is empty")
+
+    return "messages" in dataset[0]
+
+
+def ensure_legacy_dataset(
+    dataset: List[MessageSample] | List[LegacyMessageSample],
+) -> List[LegacyMessageSample]:
+    """
+    Given a dataset that's either in the HF messages format or the legacy ilab train format,
+    ensure that the returned dataset is always in the legacy ilab train format.
+    """
+    if not dataset:
+        # base case - they are both equivalent
+        return []
+
+    if not is_messages_dataset(dataset):
+        return dataset  # type: ignore
+
+    return convert_messages_to_legacy_dataset(dataset)  # type: ignore
+
+
+def is_oci_repo(repo_url: str) -> bool:
+    """
+    Checks if a provided repository follows the OCI registry URL syntax
+    """
+
+    # TODO: flesh this out and make it a more robust check
+    oci_url_prefix = "docker://"
+    return repo_url.startswith(oci_url_prefix)
+
+
+def is_huggingface_repo(repo_name: str) -> bool:
+    # allow alphanumerics, underscores, hyphens and periods in huggingface repo names
+    # repo name should be of the format <owner>/<model>
+    pattern = r"^[\w.-]+\/[\w.-]+$"
+    return re.match(pattern, repo_name) is not None
+
+
+def load_json(file_path: Path):
+    try:
+        with open(file_path, encoding="UTF-8") as f:
+            return json.load(f)
+    except FileNotFoundError as e:
+        raise ValueError(f"file not found: {file_path}") from e
+    except json.JSONDecodeError as e:
+        raise ValueError(f"could not read JSON file: {file_path}") from e
+    except Exception as e:
+        raise ValueError("unexpected error occurred") from e
+
+
+def print_table(headers: list[str], data: list[list[str]]):
+    """
+    Given a set of headers and corresponding dataset where the
+    number of headers matches the length of each item in the given dataset.
+
+    Prints out the dataset in the format:
+    ```
+    +--------+--------+-----+
+    | Col 1  | Col 2  | ... |
+    +--------+--------+-----+
+    | Item 1 | Item 2 | ... |
+    +--------+--------+-----+
+    | .....  | .....  | ... |
+    +--------+--------+-----+
+    ```
+    """
+    column_widths = [
+        max(len(str(row[i])) for row in data + [headers]) for i in range(len(headers))
+    ]
+    # Print separator line between headers and data
+    horizontal_lines = ["-" * (width + 2) for width in column_widths]
+    joining_line = "+" + "+".join(horizontal_lines) + "+"
+    print(joining_line)
+    outputs = []
+    for header, width in zip(headers, column_widths, strict=False):
+        outputs.append(f" {header:{width}} ")
+    print("|" + "|".join(outputs) + "|")
+    print(joining_line)
+    for row in data:
+        outputs = []
+        for item, width in zip(row, column_widths, strict=False):
+            outputs.append(f" {item:{width}} ")
+        print("|" + "|".join(outputs) + "|")
+    print(joining_line)
+
+
+def convert_bytes_to_proper_mag(f_size: int) -> Tuple[float, str]:
+    """
+    Given an integer representing the filesize in bytes, returns
+    a floating point representation of the size along with the associated
+    magnitude of the size, e.g. 2000 would get converted into 1.95, "KB"
+    """
+    magnitudes = ["KB", "MB", "GB"]
+    magnitude = "B"
+    adjusted_fsize = float(f_size)
+    for mag in magnitudes:
+        if adjusted_fsize >= 1024:
+            magnitude = mag
+            adjusted_fsize /= 1024
+        else:
+            return adjusted_fsize, magnitude
+    return adjusted_fsize, magnitude
+
+
+def clear_directory(path: pathlib.Path) -> None:
+    """Recursively deletes content below {path} and recreates directory."""
+    if path.exists():
+        shutil.rmtree(path)
+    os.makedirs(path)

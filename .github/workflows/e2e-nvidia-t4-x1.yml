@@ -3,12 +3,18 @@
 name: E2E (NVIDIA Tesla T4 x1)
 
 on:
-  workflow_dispatch:
-    inputs:
-      pr_or_branch:
-        description: 'pull request number or branch name'
-        required: true
-        default: 'main'
+  push:
+    branches:
+      - main
+      - release-*
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+    branches:
+      - main
+      - release-*
 
 jobs:
   start-runner:
@@ -46,8 +52,10 @@ jobs:
     needs: start-runner
     runs-on: ${{ needs.start-runner.outputs.label }}
 
-    permissions:
-      pull-requests: write
+    # It is important that this job has no write permissions and has
+    # no access to any secrets. This part (e2e) is where we are running
+    # untrusted code from PRs.
+    permissions: {}
 
     steps:
       - name: Checkout
@@ -55,59 +63,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Determine if pr_or_branch is a PR number
-        id: check_pr
-        run: |
-          if [[ "${{ github.event.inputs.pr_or_branch }}" =~ ^[0-9]+$ ]]; then
-            echo "is_pr=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "is_pr=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Check if gh cli is installed
-        id: gh_cli
-        run: |
-          if command -v gh &> /dev/null ; then
-            echo "gh_cli_installed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "gh_cli_installed=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Install gh CLI
-        if: steps.gh_cli.outputs.gh_cli_installed == 'false'
-        run: |
-          sudo dnf install 'dnf-command(config-manager)' -y
-          sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
-          sudo dnf install gh --repo gh-cli -y
-
-      - name: test gh CLI
-        run: |
-          gh --version
-
-      - name: set default repo
-        run: |
-          gh repo set-default ${{ github.server_url }}/${{ github.repository }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Add comment to PR
-        if: steps.check_pr.outputs.is_pr == 'true'
-        run: |
-          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "${{ github.workflow }} workflow launched on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Fetch and checkout PR
-        if: steps.check_pr.outputs.is_pr == 'true'
+        id: fetch_pr
+        if: github.event_name == 'pull_request_target'
         run: |
-          gh pr checkout ${{ github.event.inputs.pr_or_branch }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Checkout branch
-        if: steps.check_pr.outputs.is_pr == 'false'
-        run: |
-          git checkout ${{ github.event.inputs.pr_or_branch }}
+          git fetch origin pull/${{ github.event.pull_request.number }}/head:pr-${{ github.event.pull_request.number }}
+          git checkout pr-${{ github.event.pull_request.number }}
 
       - name: Install Packages
         run: |
@@ -119,30 +80,25 @@ jobs:
           export PATH="/home/ec2-user/.local/bin:/usr/local/cuda/bin:$PATH"
           python3.11 -m venv --upgrade-deps venv
           . venv/bin/activate
-          sed 's/\[.*\]//' requirements.txt > constraints.txt
+          nvidia-smi
           python3.11 -m pip cache remove llama_cpp_python
-          CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3.11 -m pip install --force-reinstall --no-binary llama_cpp_python -c constraints.txt llama_cpp_python
-          python3.11 -m pip install bitsandbytes
-          python3.11 -m pip install .
+
+          CMAKE_ARGS="-DLLAMA_CUDA=on" python3.11 -m pip install .
+
+          # issue 1821: workaround for flash-attn
+          # install with Torch and build dependencies installed
+          python3.11 -m pip install packaging wheel setuptools-scm
+          python3.11 -m pip install .[cuda]
+
+      - name: ilab system info
+        run: |
+          . venv/bin/activate
+          ilab system info
 
       - name: Run e2e test
         run: |
           . venv/bin/activate
-          ./scripts/basic-workflow-tests.sh -cm
-
-      - name: Add comment to PR if the workflow failed
-        if: failure() && steps.check_pr.outputs.is_pr == 'true'
-        run: |
-          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "e2e workflow failed on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), please investigate."
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Add comment to PR if the workflow succeeded
-        if: success() && steps.check_pr.outputs.is_pr == 'true'
-        run: |
-          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "e2e workflow succeeded on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), congrats!"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ./scripts/basic-workflow-tests.sh -m
 
   stop-runner:
     name: Stop external EC2 runner
@@ -159,7 +115,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Stop EC2 runner
-        uses: machulav/ec2-github-runner@v2
+        uses: machulav/ec2-github-runner@fcfb31a5760dad1314a64a0e172b78ec6fc8a17e # v2.3.6
         with:
           mode: stop
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}

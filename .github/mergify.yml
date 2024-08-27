@@ -13,13 +13,13 @@ pull_request_rules:
     - label!=needs-rebase
     - check-success=DCO
 
-    # If files are changed in .github/, the actionlint check must pass
+    # If workflow configuration files in .github/ are changed, the actionlint check must pass
     - or:
       - and:
         # regex should match the one in .github/workflows/actionlint.yml
-        - files~=.github/.*$
+        - files~=\.github/(actions|workflows)/(.*\.ya?ml|actionlint\..*)
         - check-success=actionlint
-      - -files~=.github/.*$
+      - -files~=\.github/(actions|workflows)/(.*\.ya?ml|actionlint\..*)
 
     # e2e workflow
     - or:
@@ -220,3 +220,14 @@ pull_request_rules:
     label:
       remove:
         - one-approval
+
+- name: label-dependencies
+  description: Automatically apply dependencies label
+  conditions:
+    - or:
+      - files~=requirements.*\.txt$
+      - files=requirements/**/*
+  actions:
+    label:
+      add:
+        - dependencies

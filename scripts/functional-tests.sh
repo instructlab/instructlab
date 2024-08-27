@@ -1,10 +1,27 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
+#
+# If you are running locally and calling the script multiple times you may want to run like this:
+#
+# TEST_DIR=/tmp/foo ./scripts/functional-tests.sh
+#
+# As soon as TEST_DIR is set to any non-empty value, the test directory will NOT be removed
+# This assumes you control your test directory TEST_DIR and its cleanup
 
 set -ex
 
+# shellcheck disable=SC2155
+export SCRIPTDIR=$(dirname "$0")
 # build a prompt string that includes the time, source file, line number, and function name
 export PS4='+$(date +"%Y-%m-%d %T") ${BASH_VERSION}:${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+
+if [ -n "$TEST_DIR" ]; then
+    echo "TEST_DIR is set to $TEST_DIR by the caller, will not remove it"
+    TEST_DIR_SET_BY_CALLER=1
+fi
+
+# Support overriding the test directory for local testing otherwise creates a temporary directory
+TEST_DIR=${TEST_DIR:-$(mktemp -d)}
 
 export TEST_DIR
 export PACKAGE_NAME='instructlab'  # name we use of the top-level package directories for CLI data
@@ -27,7 +44,7 @@ export ILAB_DATA_DIR
 # Initializes the environment necessary for this test script
 # Creates a temporary directory structure for the test data,
 # and sets the necessary environment variables.
-# 
+#
 # Arguments:
 #   None
 # Globals:
@@ -47,10 +64,12 @@ function init_test_script() {
     local prev_home="${HOME}"
 
     printf 'initializing test script...\n'
-    TEST_DIR=$(mktemp -d)
     HOME="${TEST_DIR}"  # to ensure platformdirs uses the test directory for the duration of this script
     printf 'changing home directory to "%s", was: "%s"\n' "${HOME}" "${prev_home}"
 
+    # DO NOT REMOVE THE VARIABLE ASSIGNMENTS BELOW
+    # They might seem redundant given that `mkdir -p`` is called later, but they are necessary to
+    # ensure the directories are created by ilab CLI
     # get the directories from the platformdirs library
     CONFIG_DIR=$(python -c "import platformdirs; print(platformdirs.user_config_dir())")
     DATA_DIR=$(python -c "import platformdirs; print(platformdirs.user_data_dir())")
@@ -58,10 +77,12 @@ function init_test_script() {
 
     configdir_script=$(printf 'import platformdirs; print(platformdirs.user_config_dir("%s"))' "${PACKAGE_NAME}")
     datadir_script=$(printf 'import platformdirs; print(platformdirs.user_data_dir("%s"))' "${PACKAGE_NAME}")
+    cachedir_script=$(printf 'import platformdirs; print(platformdirs.user_cache_dir("%s"))' "${PACKAGE_NAME}")
 
     ILAB_CONFIGDIR_LOCATION=$(python -c "${configdir_script}")
     ILAB_CONFIG_FILE="${ILAB_CONFIGDIR_LOCATION}/config.yaml"
     ILAB_DATA_DIR=$(python -c "${datadir_script}")
+    ILAB_CACHE_DIR=$(python -c "${cachedir_script}")
 
     # ensure these exist at the time of running the test
     for d in "${CONFIG_DIR}" "${DATA_DIR}" "${CACHE_DIR}"; do
@@ -116,13 +137,13 @@ cleanup() {
     local original_model_filename="${original_model_name}.gguf"
     local temporary_model_filename='foo.gguf'
     sed -i.bak "s/baz/${original_model_name}/g" "${ILAB_CONFIG_FILE}"
-    mv "${ILAB_DATA_DIR}/models/${temporary_model_filename}" "${ILAB_DATA_DIR}/models/${original_model_filename}" || true
-    rm -f "${ILAB_CONFIG_FILE}.bak" serve.log "${ILAB_DATA_DIR}/models/${temporary_model_filename}"
+    mv "${ILAB_CACHE_DIR}/models/${temporary_model_filename}" "${ILAB_CACHE_DIR}/models/${original_model_filename}" || true
+    rm -f "${ILAB_CONFIG_FILE}.bak" serve.log "${ILAB_CACHE_DIR}/models/${temporary_model_filename}"
     set -e
 }
 
 init_test_script
-trap 'cleanup "${?}"; rm -rf "${TEST_DIR}"' EXIT QUIT INT TERM
+trap 'cleanup "${?}"; test -z "${TEST_DIR_SET_BY_CALLER}" && rm -rf "${TEST_DIR}"' EXIT QUIT INT TERM
 
 rm -f "${ILAB_CONFIG_FILE}"
 
@@ -133,7 +154,7 @@ ilab --version
 ilab system info
 
 # pipe 3 carriage returns to ilab config init to get past the prompts
-echo -e "\n\n\n" | ilab init
+echo -e "y\n\n\n\n" | ilab init
 
 # Enable Debug in func tests with debug level 1
 sed -i.bak -e 's/log_level:.*/log_level: DEBUG/g;' "${ILAB_CONFIG_FILE}"
@@ -156,6 +177,40 @@ fi
 
 # download the latest version of the ilab
 ilab model download
+
+test_oci_model_download_with_vllm_backend(){
+   # Enable globstar for recursive globbing
+    shopt -s globstar
+
+    # Run the ilab model download command with REGISTRY_AUTH_FILE
+    REGISTRY_AUTH_FILE=$HOME/auth.json ilab model download --repository docker://quay.io/ai-lab/models/granite-7b-lab --release latest --model-dir models/instructlab
+
+    patterns=(
+        "models/instructlab/granite-7b-lab/config.json"
+        "models/instructlab/granite-7b-lab/tokenizer.json"
+        "models/instructlab/granite-7b-lab/tokenizer_config.json"
+        "models/instructlab/granite-7b-lab/*.safetensors"
+    )
+
+    match_count=0
+    for pattern in "${patterns[@]}"
+    do
+        # shellcheck disable=SC2206
+        # we want to split the output into an array
+        matching_files=($pattern)
+        if [ ! -s "${matching_files[0]}" ]; then
+            echo "No files found matching pattern: $pattern: ${matching_files[0]}"
+        else
+            echo "Files found matching pattern: $pattern: ${matching_files[0]}"
+            match_count=$((match_count+1))
+        fi
+    done
+
+    if [ $match_count -ne ${#patterns[@]} ]; then
+        echo "Error: Not all files were found, only $match_count files were found"
+        exit 1
+    fi
+}
 
 # check that ilab model serve is working
 test_bind_port(){
@@ -292,7 +347,7 @@ seed_examples:
 task_description: "simple maths"
 EOF
 
-    sed -i.bak -e 's/num_instructions:.*/num_instructions: 1/g' "${ILAB_CONFIG_FILE}"
+    sed -i.bak -e 's/sdg_scale_factor.*/sdg_scale_factor: 1/g' "${ILAB_CONFIG_FILE}"
 
     # This should be finished in a minute or so but time it out incase it goes wrong
     if ! timeout 20m ilab data generate --taxonomy-path test_taxonomy/compositional_skills/simple_math.yaml; then
@@ -315,8 +370,9 @@ test_model_train() {
     if [[ "$(uname)" == Linux ]]; then
         # real `ilab model train` on Linux produces models/ggml-model-f16.gguf
         # fake gml-model-f16.gguf the same as merlinite-7b-lab-Q4_K_M.gguf
-        test -f "${ILAB_DATA_DIR}/models/ggml-model-f16.gguf" || \
-            ln -s merlinite-7b-lab-Q4_K_M.gguf "${ILAB_DATA_DIR}/models/ggml-model-f16.gguf"
+        checkpoints_dir="${ILAB_DATA_DIR}/checkpoints/ggml-model-f16.gguf"
+        test -f "${checkpoints_dir}" || \
+            ln -s "${ILAB_CACHE_DIR}/models/merlinite-7b-lab-Q4_K_M.gguf" "${checkpoints_dir}"
     fi
 }
 
@@ -368,7 +424,7 @@ test_no_chat_logs(){
         send "hello!\r"
         sleep 1
         expect {
-            "_base_client.py" { exit 1 }
+            "openai._base_client" { exit 1 }
         }
         '
 }
@@ -442,8 +498,8 @@ function to_upper() {
 }
 
 test_model_print(){
-    local src_model="${ILAB_DATA_DIR}/models/merlinite-7b-lab-Q4_K_M.gguf"
-    local target_model="${ILAB_DATA_DIR}/models/foo.gguf"
+    local src_model="${ILAB_CACHE_DIR}/models/merlinite-7b-lab-Q4_K_M.gguf"
+    local target_model="${ILAB_CACHE_DIR}/models/foo.gguf"
     cp "${src_model}" "${target_model}"
     ilab model serve --model-path "${target_model}" &
     PID_SERVE=$!
@@ -451,50 +507,98 @@ test_model_print(){
     wait_for_server
 
     # validate that we print the model from the server since it is different from the config
-    # shellcheck disable=SC2154,SC1001,SC2016
     local expected_model_name
     local expect_script
     expected_model_name=$(to_upper "${target_model}")
-    # shellcheck disable=SC2016
     expect_script=$(printf '
         spawn ilab model chat
         expect {
-            -re "Welcome to InstructLab Chat w/ \\\u001b\\\[1m%s" { exit 0 }
-            eof { catch wait result; exit [lindex $result 3] }
-            timeout { exit 1 }
+            timeout { exit 124 }
+            -re "%s" { exit 0 }
         }
-    ' "${expected_model_name}")
-    expect -c "${expect_script}" 
+    ' "$(basename "${expected_model_name}")" # use basename otherwise the regex will not match since the path contains slashes
+    )
+    if ! expect -d -c "${expect_script}"; then
+        echo "Error: expect test failed"
+        exit 1
+    fi
 
     # validate that we fail on invalid model
-    # shellcheck disable=SC2016
-    expect_script=$(printf '
+    if ! expect -d -c '
         set timeout 30
         spawn ilab model chat -m bar
         expect {
-           "Executing chat failed with: Model bar is not served by the server. These are the served models: ['%s']" { exit 0 }
+            timeout { exit 124 }
+           -re "Executing chat failed with: Model bar is not served by the server" { exit 0 }
         }
-    ' "${target_model}")
-    expect -c "${expect_script}"
+    '; then
+        echo "Error: expect test failed"
+        exit 1
+    fi
 
-    # If we don't specify a model, validate that we print the model reported
-    # by the server since it is different from the config.
-    # shellcheck disable=SC2016
+    # # If we don't specify a model, validate that we print the model reported
+    # # by the server since it is different from the config.
     expect_script=$(printf '
         spawn ilab model chat
         expect {
-            -re "Welcome to InstructLab Chat w/ \\\u001b\\\[1m%s" { exit 0 }
-            eof { catch wait result; exit [lindex $result 3] }
-            timeout { exit 1 }
+            timeout { exit 124 }
+            -re "%s" { exit 0 }
         }
-    ' "${expected_model_name}")
-    expect -c "${expect_script}"
+    ' "$(basename "${expected_model_name}")"
+    )
+    if ! expect -d -c"${expect_script}"; then
+        echo "Error: expect test failed"
+        exit 1
+    fi
+}
+
+test_server_template_value(){
+    export template_value="$1"
+    export expected_result="$2"
+    # shellcheck disable=SC2016
+    expect -c '
+        set template_value $env(template_value)
+        set expected_result $env(expected_result)
+        set timeout 10
+        spawn ilab model serve --chat-template $template_value
+        set actual_result 0
+        expect {
+            "Replacing chat template" {
+                set actual_result 1
+                expect {
+                    "test provided custom template" {
+                       set actual_result 3
+                     }
+                     "Starting server process" {
+                     }
+                }
+            }
+            "Starting server process" {
+                set actual_result 2
+            }
+        }
+        send \x03
+        if { $actual_result != $expected_result } {
+            puts stderr "Error: ilab model serve with --chat-template command failed"
+            exit 1
+        }
+    '
+}
+
+test_server_chat_template() {
+    test_server_template_value "auto" 1
+    cleanup
+    test_server_template_value tokenizer 2
+    cleanup
+    test_server_template_value "$SCRIPTDIR/test-data/mock-template.txt" 3
 }
 
 ########
 # MAIN #
 ########
 # call cleanup in-between each test so they can run without conflicting with the server/chat process
+test_oci_model_download_with_vllm_backend
+cleanup
 test_bind_port
 cleanup
 test_ctx_size
@@ -514,6 +618,8 @@ cleanup
 test_no_chat_logs
 cleanup
 test_temp_server_ignore_internal_messages
+cleanup
+test_server_chat_template
 cleanup
 test_server_welcome_message
 cleanup

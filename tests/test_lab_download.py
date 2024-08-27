@@ -44,3 +44,34 @@ class TestLabDownload:
         )
         assert result.exit_code == 1, "command finished with an unexpected exit code"
         assert "Could not reach hugging face server" in result.output
+
+    @patch("instructlab.model.download.OCIDownloader.download")
+    def test_oci_download(self, mock_oci_download, cli_runner: CliRunner):
+        result = cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "model",
+                "download",
+                "--repository=docker://quay.io/ai-lab/models/granite-7b-lab",
+                "--release=latest",
+            ],
+        )
+        assert result.exit_code == 0
+        mock_oci_download.assert_called_once()
+
+    def test_oci_download_repository_error(self, cli_runner: CliRunner):
+        result = cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "model",
+                "download",
+                "--repository=docker://quay.io/ai-lab/models/granite-7b-lab:latest",
+            ],
+        )
+        assert result.exit_code == 1
+        assert (
+            "Invalid repository supplied: Please specify tag/version 'latest' via --release"
+            in result.output
+        )

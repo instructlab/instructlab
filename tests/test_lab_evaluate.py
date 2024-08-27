@@ -94,9 +94,9 @@ def run_mt_bench(cli_runner, error_rate):
             "--benchmark",
             "mt_bench",
             "--model",
-            "models/instructlab/granite-7b-lab",
+            "instructlab/granite-7b-lab",
             "--judge-model",
-            "models/instructlab/merlinite-7b-lab",
+            "instructlab/merlinite-7b-lab",
         ],
     )
     assert result.exit_code == 0
@@ -107,7 +107,7 @@ def run_mt_bench(cli_runner, error_rate):
         # SKILL EVALUATION REPORT
 
         ## MODEL
-        models/instructlab/granite-7b-lab
+        instructlab/granite-7b-lab
 
         ### AVERAGE:
         1.5 (across 2)
@@ -140,11 +140,11 @@ def run_mt_bench_branch(cli_runner, error_rate):
             "--benchmark",
             "mt_bench_branch",
             "--model",
-            "models/instructlab/granite-7b-lab",
+            "instructlab/granite-7b-lab",
             "--judge-model",
-            "models/instructlab/merlinite-7b-lab",
+            "instructlab/merlinite-7b-lab",
             "--base-model",
-            "models/instructlab/granite-7b-lab",
+            "instructlab/granite-7b-lab",
             "--branch",
             "rc",
             "--base-branch",
@@ -163,10 +163,10 @@ def run_mt_bench_branch(cli_runner, error_rate):
         # SKILL EVALUATION REPORT
 
         ## BASE MODEL
-        models/instructlab/granite-7b-lab
+        instructlab/granite-7b-lab
 
         ## MODEL
-        models/instructlab/granite-7b-lab
+        instructlab/granite-7b-lab
 
         ### IMPROVEMENTS:
         1. category1/qna.yaml (+0.1)
@@ -266,17 +266,18 @@ def test_evaluate_mmlu(run_mock, cli_runner: CliRunner):
             "--benchmark",
             "mmlu",
             "--model",
-            "models/instructlab/granite-7b-lab",
+            "instructlab/granite-7b-lab",
         ],
     )
     run_mock.assert_called_once()
     assert result.exit_code == 0
     expected = textwrap.dedent(
         """\
+        Using safetensors from Hugging Face repo 'instructlab/granite-7b-lab' for '--model'
         # KNOWLEDGE EVALUATION REPORT
 
         ## MODEL
-        models/instructlab/granite-7b-lab
+        instructlab/granite-7b-lab
 
         ### AVERAGE:
         0.5 (across 2)
@@ -306,9 +307,9 @@ def test_evaluate_mmlu_branch(run_mock, cli_runner: CliRunner):
             "--benchmark",
             "mmlu_branch",
             "--model",
-            "models/instructlab/granite-7b-lab",
+            "instructlab/granite-7b-lab",
             "--base-model",
-            "models/instructlab/granite-7b-lab",
+            "instructlab/granite-7b-lab",
             "--tasks-dir",
             "generated",
         ],
@@ -317,13 +318,14 @@ def test_evaluate_mmlu_branch(run_mock, cli_runner: CliRunner):
     assert result.exit_code == 0
     expected = textwrap.dedent(
         """\
+        Using safetensors from Hugging Face repo 'instructlab/granite-7b-lab' for '--model'
         # KNOWLEDGE EVALUATION REPORT
 
         ## BASE MODEL
-        models/instructlab/granite-7b-lab
+        instructlab/granite-7b-lab
 
         ## MODEL
-        models/instructlab/granite-7b-lab
+        instructlab/granite-7b-lab
 
         ### AVERAGE:
         -0.1 (across 5)
@@ -386,7 +388,7 @@ def test_invalid_model_mt_bench(cli_runner: CliRunner):
             "--model",
             "invalid",
             "--judge-model",
-            "models/instructlab/merlinite-7b-lab",
+            "instructlab/merlinite-7b-lab",
         ],
     )
     assert "Failed to determine backend:" in result.output
@@ -424,11 +426,11 @@ def test_invalid_taxonomy_mt_bench_branch(launch_server_mock, cli_runner: CliRun
             "--benchmark",
             "mt_bench_branch",
             "--model",
-            "models/instructlab/granite-7b-lab",
+            "instructlab/granite-7b-lab",
             "--judge-model",
-            "models/instructlab/merlinite-7b-lab",
+            "instructlab/merlinite-7b-lab",
             "--base-model",
-            "models/instructlab/granite-7b-lab",
+            "instructlab/granite-7b-lab",
             "--branch",
             "rc",
             "--base-branch",
@@ -457,11 +459,11 @@ def test_invalid_branch_mt_bench_branch(launch_server_mock, cli_runner: CliRunne
             "--benchmark",
             "mt_bench_branch",
             "--model",
-            "models/instructlab/granite-7b-lab",
+            "instructlab/granite-7b-lab",
             "--judge-model",
-            "models/instructlab/merlinite-7b-lab",
+            "instructlab/merlinite-7b-lab",
             "--base-model",
-            "models/instructlab/granite-7b-lab",
+            "instructlab/granite-7b-lab",
             "--branch",
             "invalid",
             "--base-branch",
@@ -485,12 +487,56 @@ def test_invalid_tasks_dir(cli_runner: CliRunner):
             "--benchmark",
             "mmlu_branch",
             "--model",
-            "models/instructlab/granite-7b-lab",
+            "instructlab/granite-7b-lab",
             "--base-model",
-            "models/instructlab/granite-7b-lab",
+            "instructlab/granite-7b-lab",
             "--tasks-dir",
             "invalid",
         ],
     )
     assert "Tasks dir not found:" in result.output
+    assert result.exit_code != 0
+
+
+def test_invalid_model_path_mmlu(cli_runner: CliRunner, tmp_path):
+    test_dir = tmp_path / "test"
+    test_dir.mkdir()
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "mmlu",
+            "--model",
+            test_dir,
+        ],
+    )
+    assert (
+        "MMLU and MMLUBranch can currently only be used with a safetensors directory"
+        in result.output
+    )
+    assert result.exit_code != 0
+
+
+def test_invalid_model_path_mt_bench(cli_runner: CliRunner, tmp_path):
+    test_dir = tmp_path / "test"
+    test_dir.mkdir()
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "mt_bench",
+            "--model",
+            test_dir,
+        ],
+    )
+    assert (
+        "MTBench and MTBenchBranch need to be passed either a safetensors directory or a GGUF file"
+        in result.output
+    )
     assert result.exit_code != 0

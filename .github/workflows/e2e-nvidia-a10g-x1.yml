@@ -118,22 +118,24 @@ jobs:
       - name: Install ilab
         run: |
           export CUDA_HOME="/usr/local/cuda"
-          export LD_LIBRRY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64"
+          export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64"
           export PATH="$PATH:$CUDA_HOME/bin"
-          python3.11 -m venv venv
+          python3.11 -m venv --upgrade-deps venv
           . venv/bin/activate
           nvidia-smi
-          sed 's/\[.*\]//' requirements.txt > constraints.txt
           python3.11 -m pip cache remove llama_cpp_python
-          CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3.11 -m pip install --force-reinstall --no-binary llama_cpp_python -c constraints.txt llama_cpp_python
-          python3.11 -m pip install bitsandbytes
 
-          # TODO This should be added to instructlab-training
-          python3.11 -m pip install packaging wheel
+          CMAKE_ARGS="-DLLAMA_CUDA=on" python3.11 -m pip install .
 
-          python3.11 -m pip install instructlab-training[cuda]
+          # issue 1821: workaround for flash-attn
+          # install with Torch and build dependencies installed
+          python3.11 -m pip install packaging wheel setuptools-scm
+          python3.11 -m pip install .[cuda]
 
-          python3.11 -m pip install .
+      - name: ilab system info
+        run: |
+          . venv/bin/activate
+          ilab system info
 
       - name: Run e2e test
         run: |
@@ -154,7 +156,7 @@ jobs:
 
           python3.11 -m pip show nvidia-nccl-cu12
           
-          ./scripts/basic-workflow-tests.sh -cemf
+          ./scripts/basic-workflow-tests.sh -mf
 
       - name: Add comment to PR if the workflow failed
         if: failure() && steps.check_pr.outputs.is_pr == 'true'
@@ -185,7 +187,7 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
       - name: Stop EC2 runner
-        uses: machulav/ec2-github-runner@v2
+        uses: machulav/ec2-github-runner@fcfb31a5760dad1314a64a0e172b78ec6fc8a17e # v2.3.6
         with:
           mode: stop
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}

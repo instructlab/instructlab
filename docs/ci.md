@@ -19,10 +19,30 @@ job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e.
 that runs automatically on all PRs and after commits merge to `main` or release
 branches.
 
+We are currently doing a trial of running the smallest AWS-based e2e workflow
+automatically against PRs, as well.
+
 There are other E2E jobs that can be triggered manually on the [actions
 page](https://github.com/instructlab/instructlab/actions) for the repository.
 These run on a variety of instance types and can be run at the discretion of
 repo maintainers.
+
+### E2E Test Coverage
+
+You can specify the following flags to test various features of `ilab` with the
+`basic-workflow-tests.sh` script - you can see examples of these being used within
+the E2E job configuration files found
+[here](https://github.com/instructlab/instructlab/blob/main/.github/workflows/).
+
+| Flag | Feature |
+| --- | --- |
+| `e` | Run model evaluation |
+| `m` | Run minimal configuration |
+| `M` | Use Mixtral model (4-bit quantized) |
+| `f` | Run "fullsize" training |
+| `F` | Run "fullsize" SDG |
+| `v` | Run with vLLM for serving |
+| `T` | Use the 'full' training library rather than legacy training |
 
 ### Trigger via GitHub Web UI
 
@@ -51,25 +71,25 @@ The project currently supports the usage of the following runners for the E2E jo
 
 ### E2E Workflows
 
-| File | Runner Host |Instance Type | GPU Type | OS |
-| --- | --- | --- | --- | --- |
-| [`e2e.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e.yml) | GitHub | N/A | 1 x NVIDIA Tesla T4 w/ 16 GB VRAM | Ubuntu |
-| [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | AWS | [`g4dn.2xlarge`](https://aws.amazon.com/ec2/instance-types/g4/) | 1 x NVIDIA Tesla T4 w/ 16 GB VRAM | CentOS Stream 9 |
-| [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | AWS |[`g5.2xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | 1 x NVIDIA A10G w/ 24 GB VRAM | CentOS Stream 9 |
-| [`e2e-nvidia-a10g-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x4.yml) | AWS |[`g5.12xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | 4 x NVIDIA A10G w/ 24 GB VRAM (98 GB) | CentOS Stream 9 |
+| File | T-Shirt Size | Runner Host |Instance Type | GPU Type | OS |
+| --- | --- | --- | --- | --- | --- |
+| [`e2e.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e.yml) | Small | GitHub | N/A | 1 x NVIDIA Tesla T4 w/ 16 GB VRAM | Ubuntu |
+| [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | Small | AWS | [`g4dn.2xlarge`](https://aws.amazon.com/ec2/instance-types/g4/) | 1 x NVIDIA Tesla T4 w/ 16 GB VRAM | CentOS Stream 9 |
+| [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | Medium | AWS |[`g5.2xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | 1 x NVIDIA A10G w/ 24 GB VRAM | CentOS Stream 9 |
+| [`e2e-nvidia-a10g-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x4.yml) | Large | AWS |[`g5.12xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | 4 x NVIDIA A10G w/ 24 GB VRAM (98 GB) | CentOS Stream 9 |
 
 ### E2E Test Matrix
 
-| Area | Feature | [`e2e.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e.yml) | [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | [`e2e-nvidia-a10g-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x4.yml) |
+| Area | Feature | [`e2e.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e.yml) (small) ![`e2e.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e.yml/badge.svg?branch=main)| [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) (small) | [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) (medium) | [`e2e-nvidia-a10g-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x4.yml) (large) ![`e2e-nvidia-a10g-x4.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-a10g-x4.yml/badge.svg?branch=main)|
 | --- | --- | --- | --- | --- | --- |
 | **Serving**  | llama-cpp                |✅|✅|✅|✅ (temporary)|
-|              | vllm                     |⎯|⎯|⎯|❌|
+|              | vllm                     |⎯|⎯|⎯|✅|
 | **Generate** | simple                   |✅|✅|✅|⎯|
 |              | full                     |⎯|⎯|⎯|✅|
-| **Training** | legacy+Linux             |⎯|⎯|✅|⎯|
+| **Training** | legacy+Linux             |⎯|⎯|❌|⎯|
 |              | legacy+Linux+4-bit-quant |✅|✅|⎯|⎯|
-|              | training-lib             |⎯|⎯|✅(*1)|❌|
-| **Eval**     | eval                     |⎯|⎯|✅(*2)|❌️|
+|              | training-lib             |⎯|⎯|⎯|✅|
+| **Eval**     | eval                     |⎯|⎯|❌(*2)|✅|
 
 Points of clarification (*):
 

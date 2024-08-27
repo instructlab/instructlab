@@ -5,6 +5,7 @@ Bhandwaldar
 CLI
 CRB
 CUDA
+Chatlogs
 Colab
 Conda
 Config
@@ -17,14 +18,11 @@ Finetuning
 GFX
 GGUF
 GPTDolomite
-GPTDolomite
-Gaudi
 Gaudi
 GiB
 GitHub
 Gmail
 HPU
-Habana
 Habana
 Heimes
 ISA
@@ -44,7 +42,6 @@ Mergify
 Merlinite
 Miniforge
 Mixtral
-NVidia
 NVidia
 Nvidia
 OCI
@@ -78,6 +75,7 @@ UI
 USM
 VRAM
 WSL
+XDG
 XNACK
 XT
 XTX
@@ -91,6 +89,7 @@ backend
 backends
 backport
 backported
+chatlogs
 cli
 codebase
 compositional
@@ -101,17 +100,17 @@ cuBLAS
 cuda
 cuda:0
 dataset
+datasets
 dev
 ditaa
 dr
 env
 eval
 frontend
+fullsize
 gpu
 gpus
 habana
-habana
-hipBLAS
 hipBLAS
 ibmcloud
 ilab
@@ -125,7 +124,6 @@ keypair
 lignment
 llms
 lora
-lora
 md
 mlx
 mmlu
@@ -133,13 +131,12 @@ nb
 oneMKL
 orchestrator
 ots
+parallelized
 png
-pre
 pre
 preceeds
 preprint
-preprint
-pyenv
+pretraining
 pyenv
 qlora
 quant
@@ -152,6 +149,7 @@ subdirectory
 tatsu
 th
 tl
+tokenizer
 tox
 triagers
 unquantized
@@ -160,3 +158,4 @@ vllm
 wikisql
 xcode
 xlarge
+Safetensor

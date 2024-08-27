@@ -457,6 +457,8 @@ disable=raw-checker-failed,
         logging-fstring-interpolation,  # FIXME
         duplicate-code,
         import-outside-toplevel,
+        too-many-lines,
+        too-many-public-methods,
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
