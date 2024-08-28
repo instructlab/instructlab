@@ -307,7 +307,6 @@ def generate(
             f"Generating synthetic data using '{pipeline}' pipeline, '{model_path}' model, '{taxonomy_path}' taxonomy, against {api_base} server"
         )
         generate_data(
-            logger=logging.getLogger("instructlab.sdg"),  # TODO: remove
             client=client,
             model_family=model_family,
             model_name=model_path,
