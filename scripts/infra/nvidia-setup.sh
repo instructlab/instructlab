@@ -168,4 +168,4 @@ fi \
     && ln -f -s /usr/lib/systemd/system/nvidia-toolkit-setup.service /usr/lib/systemd/system/basic.target.wants/nvidia-toolkit-setup.service \
     && ln -f -s /usr/lib/systemd/system/nvidia-persistenced.service /etc/systemd/system/multi-user.target.wants/nvidia-persistenced.service
     systemctl daemon-reload
-    systemctl restart nvidia-toolkit-setup.service
+    systemctl enable --now nvidia-toolkit-setup.service
