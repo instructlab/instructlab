@@ -32,7 +32,7 @@ def setup_gpus_config(section_path="serve", gpus=None, tps=None, vllm_args=lambd
     return _CFG_FILE_NAME
 
 
-@mock.patch("instructlab.model.backends.backends.check_api_base", return_value=False)
+@mock.patch("instructlab.model.backends.vllm.check_api_base", return_value=False)
 # ^ mimic server *not* running already
 @mock.patch(
     "instructlab.model.backends.backends.determine_backend",
