@@ -109,9 +109,6 @@ generate:
   # teacher model, Mixtral-8x7b.
   # Default: simple
   pipeline: simple
-  # Path to prompt file to be used for generation.
-  # Default: /data/instructlab/internal/prompt.txt
-  prompt_file: /data/instructlab/internal/prompt.txt
   # The total number of instructions to be generated.
   # Default: 30
   sdg_scale_factor: 30
