@@ -28,19 +28,11 @@ import uvicorn
 # Local
 from ...configuration import _serve as serve_config
 from ...utils import split_hostport
-from .common import CHAT_TEMPLATE_AUTO, LLAMA_CPP, VLLM
+from .common import CHAT_TEMPLATE_AUTO, LLAMA_CPP, VLLM, Closeable
 
 logger = logging.getLogger(__name__)
 
 SUPPORTED_BACKENDS = frozenset({LLAMA_CPP, VLLM})
-
-
-class Closeable(typing.Protocol):
-    def close(self) -> None: ...
-
-
-class ServerException(Exception):
-    """An exception raised when serving the API."""
 
 
 class UvicornServer(uvicorn.Server):
