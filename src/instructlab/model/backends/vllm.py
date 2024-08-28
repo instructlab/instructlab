@@ -15,7 +15,7 @@ import typing
 import httpx
 
 # Local
-from ...configuration import get_api_base
+from ...configuration import get_api_base, _loRaAdapter
 from .backends import (
     BackendServer,
     Closeable,
@@ -47,6 +47,7 @@ class Server(BackendServer):
         background: bool = False,
         vllm_args: typing.Iterable[str] | None = (),
         max_startup_attempts: int | None = None,
+        lora_adapters: list[_loRaAdapter] | None = None,
     ):
         super().__init__(model_family, model_path, chat_template, api_base, host, port)
         self.api_base = api_base
@@ -56,6 +57,7 @@ class Server(BackendServer):
         self.vllm_args = list(vllm_args) if vllm_args is not None else []
         self.process: subprocess.Popen | None = None
         self.max_startup_attempts = max_startup_attempts
+        self.lora_adapters = lora_adapters
 
     def run(self):
         self.process, files = run_vllm(
@@ -66,6 +68,7 @@ class Server(BackendServer):
             self.chat_template,
             self.vllm_args,
             self.background,
+            lora_adapters=self.lora_adapters
         )
         self.register_resources(files)
 
@@ -89,6 +92,7 @@ class Server(BackendServer):
             self.chat_template,
             self.vllm_args,
             background=background,
+            lora_adapters=self.lora_adapters
         )
         self.register_resources(files)
         return server_process
@@ -202,6 +206,7 @@ def run_vllm(
     chat_template: str,
     vllm_args: list[str],
     background: bool,
+    lora_adapters: list[_loRaAdapter] | None,
 ) -> typing.Tuple[subprocess.Popen, list[Closeable]]:
     """
     Start an OpenAI-compatible server with vLLM.
@@ -220,6 +225,9 @@ def run_vllm(
                                         Example: ["--dtype", "auto", "--enable-lora"]
         background (bool):            Whether the stdout and stderr vLLM should be sent to /dev/null (True)
                                       or stay in the foreground(False).
+        
+        lora_adapters (list of LoRaAdapter): List of key value pairs containing LoRA adapter names
+                                             and paths.                              
     Returns:
         tuple: A tuple containing two values:
             vllm_process (subprocess.Popen): process of the vllm server
@@ -228,7 +236,7 @@ def run_vllm(
     """
     vllm_process = None
     vllm_cmd, tmp_files = build_vllm_cmd(
-        host, port, model_family, model_path, chat_template, vllm_args
+        host, port, model_family, model_path, chat_template, vllm_args, lora_adapters
     )
 
     logger.debug(f"vLLM serving command is: {vllm_cmd}")
@@ -294,6 +302,7 @@ def build_vllm_cmd(
     model_path: pathlib.Path,
     chat_template: str,
     vllm_args: list[str],
+    lora_adapters: list[_loRaAdapter] | None,
 ) -> typing.Tuple[list[str], list[Closeable]]:
     """
     Build the vLLM command to run the server.
@@ -310,6 +319,9 @@ def build_vllm_cmd(
 
         vllm_args     (list of str):  Specific arguments to pass into vllm.
                                         Example: ["--dtype", "auto", "--enable-lora"]
+        
+        lora_adapters (list of LoRaAdapter): List of key value pairs containing LoRA adapter names
+                                             and paths.
 
     Returns:
         tuple: A tuple containing two values:
@@ -365,5 +377,17 @@ def build_vllm_cmd(
         vllm_cmd.extend(["--distributed-executor-backend", "mp"])
 
     vllm_cmd.extend(vllm_args)
+
+    if lora_adapters is not None:
+        # if lora_adapters are specified both, through first class config field as well as in vllm_args,
+        # allow vllm_args to take precedence 
+        if not contains_argument("--enable-lora", vllm_args):
+            vllm_cmd.extend(["--enable-lora"])
+        
+        if not contains_argument("--fully-sharded-loras", vllm_args):
+            vllm_cmd.extend(["--fully-shared-loras"])
+        
+        if not contains_argument("--lora-modules", vllm_args):
+            vllm_cmd.extend(["--lora-modules"] + [f"{adapter.name}={adapter.path}"] for adapter in lora_adapters)
 
     return vllm_cmd, tmp_files
