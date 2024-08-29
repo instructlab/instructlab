@@ -213,6 +213,7 @@ class OCIDownloader(Downloader):
             "copy",
             f"{self.repository}:{self.release}",
             f"oci:{oci_dir}",
+            "--remove-signatures",
         ]
         if self.ctx.obj is not None and logger.isEnabledFor(logging.DEBUG):
             command.append("--debug")
