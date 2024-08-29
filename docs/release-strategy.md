@@ -65,7 +65,7 @@ The following are the steps for how Y-stream and Z-stream releases gets cut.
 1. Validate the release branch with an [E2E test](ci.md).
 1. Create a new release on GitHub targeting the release branch and using the previous Z-Stream tag as the previous release (e.g. `0.15.0` precedes `0.15.1`).
 1. Move the `stable` tag to the new release (note this tag is set to be deprecated on September 1st, 2024 - users should use PyPi to install the latest "stable" release)
-1. Announce release via the following:
+1. If changes warrant an announcement, announce via the following:
     - The `#announce` channel on Slack
     - The `announce` mailing list
 
