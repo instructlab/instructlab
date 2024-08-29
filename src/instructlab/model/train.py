@@ -16,11 +16,15 @@ from instructlab.training import TorchrunArgs, TrainingArgs
 
 # pylint: disable=ungrouped-imports
 import click
+import torch
 
 # First Party
 from instructlab import clickext, utils
 from instructlab.configuration import DEFAULTS, map_train_to_library
 from instructlab.model.backends import backends
+
+# Local
+from . import full_train
 
 logger = logging.getLogger(__name__)
 
@@ -124,12 +128,13 @@ def clickpath_setup(is_dir: bool) -> click.Path:
 )
 @click.option(
     "--device",
-    type=click.Choice(["cpu", "cuda", "hpu"]),
+    type=click.Choice(["cpu", "cuda", "hpu", "mps"]),
     show_default=True,
     default="cpu",
     help=(
-        "PyTorch device for Linux training. Use 'cuda' "
+        "PyTorch device for full training. Use 'cuda' "
         "for NVidia CUDA / AMD ROCm GPU, to use specific GPU, set visible GPU before run train command."
+        "use 'cpu' for laptop CPU training and 'mps' for MacOS Metal Performance Shader training."
     ),
 )
 @click.option(
@@ -392,6 +397,7 @@ def train(
     Takes synthetic data generated locally with `ilab data generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
+    torch.set_autocast_enabled(False)
     if not input_dir:
         # By default, generate output-dir is used as train input-dir
         input_dir = ctx.obj.config.generate.output_dir
@@ -462,219 +468,83 @@ def train(
         logger.debug("test_file=%s", test_files[0])
         shutil.copy(train_files[0], train_file)
         shutil.copy(test_files[0], test_file)
+    # run_training is a dynamic attribute, pylint is not clever enough
+    # to detect it.
+    # Third Party
+    from instructlab.training import run_training  # pylint: disable=no-name-in-module
 
-    # if macos, preserve that path
-    if utils.is_macos_with_m_chip() and not strategy:
-        # Local
-        from ..mlx_explore.gguf_convert_to_mlx import load
-        from ..mlx_explore.utils import fetch_tokenizer_from_hub
-        from ..train.lora_mlx.convert import convert_between_mlx_and_pytorch
-        from ..train.lora_mlx.lora import load_and_train
-        from ..train.lora_mlx.make_data import make_data
+    # pull the trainrandom.randinting and torch args from the flags
+    # the flags are populated from the config as a base.
+    train_args, torch_args = map_train_to_library(ctx, ctx.params)
+    logger.debug(
+        "Rendered training arguments:\n%s", pprint.pformat(train_args.model_dump())
+    )
 
-        if not skip_preprocessing:
-            try:
-                make_data(data_dir=data_path)
-            except FileNotFoundError as exc:
-                click.secho(
-                    f"Could not read from data directory: {exc}",
-                    fg="red",
-                )
-                raise click.exceptions.Exit(1)
-
-        # NOTE we can skip this if we have a way ship MLX
-        # PyTorch safetensors to MLX safetensors
-        model_dir_local = model_path.replace("/", "-")
-        model_dir_local = f"{ckpt_output_dir}/{model_dir_local}"
-        model_dir_mlx = f"{model_dir_local}-mlx"
-        model_dir_mlx_quantized = f"{model_dir_local}-mlx-q"
-
-        if skip_quantize:
-            dest_model_dir = model_dir_mlx
-            quantize_arg = False
-        else:
-            dest_model_dir = model_dir_mlx_quantized
-            quantize_arg = True
-
-        if tokenizer_dir is not None and gguf_model_path is not None:
-            if not local:
-                tokenizer_dir_local = tokenizer_dir.replace("/", "-")
-                fetch_tokenizer_from_hub(tokenizer_dir, tokenizer_dir_local)
-
-            # no need to pass quantize_arg for now, script automatically detects if quantization is necessary based on whether gguf model is quantized or not
-            load(gguf=gguf_model_path, repo=tokenizer_dir, mlx_path=dest_model_dir)
-
-            for filename in os.listdir(model_dir_local):
-                shutil.copy(
-                    os.path.join(model_dir_local, filename),
-                    os.path.join(dest_model_dir, filename),
-                )
-            shutil.rmtree(model_dir_local, ignore_errors=True)
-
-        else:
-            # Downloading PyTorch SafeTensor and Converting to MLX SafeTensor
-            convert_between_mlx_and_pytorch(
-                hf_path=model_path,
-                mlx_path=dest_model_dir,
-                quantize=quantize_arg,
-                local=local,
+    if strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value:
+        if not (phased_phase1_data and phased_phase2_data):
+            raise ctx.fail(
+                "End-to-end training minimally requires: `--phased-phase1-data`, and `--phased-phase2-data`. One or more wasn't correctly specified."
             )
 
-        adapter_file_path = f"{dest_model_dir}/adapters.npz"
+        # if they both exist, must be Path objects
+        if not (phased_phase1_data.exists() and phased_phase2_data.exists()):
+            raise FileNotFoundError(
+                "Data for both phase1 and phase2 must be specified for phased training."
+            )
 
-        # train the model with LoRA
-        load_and_train(
-            model=dest_model_dir,
-            train=True,
-            data=data_path,
-            adapter_file=adapter_file_path,
-            iters=iters,
-            save_every=10,
-            steps_per_eval=10,
-        )
-    elif legacy:
-        # Local
-        from ..llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
-        from ..train.linux_train import linux_train
+        mt_bench_judge: pathlib.Path
+        if phased_mt_bench_judge is None:
+            ctx.fail("No MT-Bench model was provided with '--phased-mt-bench-judge'")
+        elif not phased_mt_bench_judge.resolve().exists():
+            raise FileNotFoundError(
+                f"MT-Bench model directory could not be found: {phased_mt_bench_judge}\nMust be an absolute path to a model directory."
+            )
+        else:
+            # makes MyPy happy because 'mt_bench_judge' isn't Path | None
+            mt_bench_judge = phased_mt_bench_judge
+        if not skip_user_confirm:
+            click.confirm(
+                f"""\n\nSTARTING END-TO-END TRAINING.\nProceeding will OVERWRITE any metadata (checkpoints, intermediate results) that are stored at {phased_base_dir}.\n\nWould you like to proceed?""",
+                abort=True,
+            )
 
-        training_results_dir = linux_train(
+        _prepare_phased_base_dir(phased_base_dir)
+
+        _run_phased_training(
             ctx=ctx,
-            train_file=train_file,
-            test_file=test_file,
-            model_name=model_path,
-            num_epochs=num_epochs,
-            train_device=device,
-            four_bit_quant=four_bit_quant,
+            train_args=train_args,
+            torch_args=torch_args,
+            base_dir=phased_base_dir,
+            phase1_data=phased_phase1_data,
+            phase1_num_epochs=phased_phase1_num_epochs,
+            phase1_samples_per_save=phased_phase1_samples_per_save,
+            phase1_checkpoints_dir=phased_base_dir / "phase1" / "checkpoints",
+            phased_phase1_effective_batch_size=phased_phase1_effective_batch_size,
+            phase2_data=phased_phase2_data,
+            phase2_num_epochs=phased_phase2_num_epochs,
+            phase2_samples_per_save=phased_phase2_samples_per_save,
+            phase2_checkpoints_dir=phased_base_dir / "phase2" / "checkpoints",
+            phased_phase2_effective_batch_size=phased_phase2_effective_batch_size,
+            phase2_eval_cache=phased_base_dir / "phase2" / "eval_cache",
+            mtbench_judge=mt_bench_judge,
+            enable_serving_output=enable_serving_output,
         )
 
-        final_results_dir = training_results_dir / "final"
-        if final_results_dir.exists():
-            shutil.rmtree(final_results_dir)
-        final_results_dir.mkdir()
-
-        gguf_models_dir = Path(DEFAULTS.CHECKPOINTS_DIR)
-        gguf_models_dir.mkdir(exist_ok=True)
-        gguf_models_file = gguf_models_dir / "ggml-model-f16.gguf"
-
-        # Remove previously trained model, its taking up space we may need in the next step
-        gguf_models_file.unlink(missing_ok=True)
-
-        # TODO: Figure out what to do when there are multiple checkpoint dirs.
-        # Right now it's just copying files from the first one numerically not necessarily the best one
-        for fpath in (
-            "checkpoint-*/added_tokens.json",
-            "checkpoint-*/special_tokens_map.json",
-            "checkpoint-*/tokenizer.json",
-            "checkpoint-*/tokenizer.model",
-            "checkpoint-*/tokenizer_config.json",
-            "merged_model/config.json",
-            "merged_model/generation_config.json",
-        ):
-            file_ = next(training_results_dir.glob(fpath))
-            shutil.copy(file_, final_results_dir)
-            print(f"Copied {file_} to {final_results_dir}")
-
-        for file in training_results_dir.glob("merged_model/*.safetensors"):
-            shutil.move(file, final_results_dir)
-            print(f"Moved {file} to {final_results_dir}")
-
-        if four_bit_quant:
-            print(
-                "SKIPPING CONVERSION to gguf. This is unsupported with --4-bit-quant. "
-                + "See https://github.com/instructlab/instructlab/issues/579."
-            )
-            return
-
-        gguf_file_path = convert_llama_to_gguf(model=final_results_dir, pad_vocab=True)
-
-        # Remove safetensors files to save space, were done with them here
-        # and the huggingface lib has them cached
-        for file in final_results_dir.glob("*.safetensors"):
-            file.unlink()
-
-        shutil.move(gguf_file_path, gguf_models_file)
-        print(f"Save trained model to {gguf_models_file}")
-
-        # cleanup checkpoint dir since it's name is unpredictable
-        # TODO: figure out how checkpoint dirs should be cleaned up
-        # checkpoint_dirs = training_results_dir.glob("checkpoint*")
-        # shutil.rmtree(checkpoint_dirs[0])
     else:
-        # run_training is a dynamic attribute, pylint is not clever enough
-        # to detect it.
-        # Third Party
-        from instructlab.training import (  # pylint: disable=no-name-in-module
-            run_training,
-        )
-
-        # pull the trainrandom.randinting and torch args from the flags
-        # the flags are populated from the config as a base.
-        train_args, torch_args = map_train_to_library(ctx, ctx.params)
-        logger.debug(
-            "Rendered training arguments:\n%s", pprint.pformat(train_args.model_dump())
-        )
-
-        if strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value:
-            if not (phased_phase1_data and phased_phase2_data):
-                raise ctx.fail(
-                    "End-to-end training minimally requires: `--phased-phase1-data`, and `--phased-phase2-data`. One or more wasn't correctly specified."
-                )
-
-            # if they both exist, must be Path objects
-            if not (phased_phase1_data.exists() and phased_phase2_data.exists()):
-                raise FileNotFoundError(
-                    "Data for both phase1 and phase2 must be specified for phased training."
-                )
-
-            mt_bench_judge: pathlib.Path
-            if phased_mt_bench_judge is None:
-                ctx.fail(
-                    "No MT-Bench model was provided with '--phased-mt-bench-judge'"
-                )
-            elif not phased_mt_bench_judge.resolve().exists():
-                raise FileNotFoundError(
-                    f"MT-Bench model directory could not be found: {phased_mt_bench_judge}\nMust be an absolute path to a model directory."
-                )
-            else:
-                # makes MyPy happy because 'mt_bench_judge' isn't Path | None
-                mt_bench_judge = phased_mt_bench_judge
-
-            if not skip_user_confirm:
-                click.confirm(
-                    f"""\n\nSTARTING END-TO-END TRAINING.\nProceeding will OVERWRITE any metadata (checkpoints, intermediate results) that are stored at {phased_base_dir}.\n\nWould you like to proceed?""",
-                    abort=True,
-                )
-
-            _prepare_phased_base_dir(phased_base_dir)
-
-            _run_phased_training(
-                ctx=ctx,
-                train_args=train_args,
-                torch_args=torch_args,
-                base_dir=phased_base_dir,
-                phase1_data=phased_phase1_data,
-                phase1_num_epochs=phased_phase1_num_epochs,
-                phase1_samples_per_save=phased_phase1_samples_per_save,
-                phase1_checkpoints_dir=phased_base_dir / "phase1" / "checkpoints",
-                phased_phase1_effective_batch_size=phased_phase1_effective_batch_size,
-                phase2_data=phased_phase2_data,
-                phase2_num_epochs=phased_phase2_num_epochs,
-                phase2_samples_per_save=phased_phase2_samples_per_save,
-                phase2_checkpoints_dir=phased_base_dir / "phase2" / "checkpoints",
-                phased_phase2_effective_batch_size=phased_phase2_effective_batch_size,
-                phase2_eval_cache=phased_base_dir / "phase2" / "eval_cache",
-                mtbench_judge=mt_bench_judge,
-                enable_serving_output=enable_serving_output,
+        if not os.path.isfile(data_path):
+            ctx.fail(
+                f"Data path must be to a valid .jsonl file. Value given: {data_path}"
             )
 
+        # we can use train_args locally to run lower fidelity training
+        if is_high_fidelity(device):
+            run_training(train_args=train_args, torch_args=torch_args, device=device)
         else:
-            if not os.path.isfile(data_path):
-                ctx.fail(
-                    f"Data path must be to a valid .jsonl file. Value given: {data_path}"
-                )
+            full_train.train(train_args, device)
 
-            # TODO: should we have this wrapped in a try-except?
-            run_training(train_args=train_args, torch_args=torch_args)
+
+def is_high_fidelity(device):
+    return device == "cuda" or device == "hpu"
 
 
 def _prepare_phased_base_dir(phased_base_dir: pathlib.Path) -> None:

@@ -1275,6 +1275,8 @@ def map_train_to_library(ctx, params):
 
     train_args.deepspeed_options = ds_args
     train_args.lora = lora_args
+    if params["pipeline"] == "full":
+        train_args.disable_flash_attn = True
 
     return train_args, torch_args
 
