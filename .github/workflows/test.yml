@@ -64,6 +64,7 @@ jobs:
           fetch-depth: 0
 
       - name: Free disk space
+        # TODO: remove the below line once this issue is resolved: https://github.com/instructlab/instructlab/issues/2171
         if: matrix.platform != 'macos-latest'
         uses: ./.github/actions/free-disk-space
 
