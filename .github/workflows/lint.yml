@@ -101,10 +101,8 @@ jobs:
           python -m pip cache remove llama_cpp_python
 
   lint-workflow-complete:
-    needs:
-      - "lint"
+    needs: ["lint"]
     runs-on: ubuntu-latest
     steps:
       - name: Lint Workflow Complete
-        run: |
-          echo "Lint Workflow Complete"
+        run: echo "Lint Workflow Complete"

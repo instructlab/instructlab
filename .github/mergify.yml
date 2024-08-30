@@ -28,21 +28,21 @@ pull_request_rules:
     # e2e workflow
     - or:
       - and:
-        - check-success=e2e
+        - check-success=e2e-workflow-complete
         - or:
           - files~=\.py$
           - files=pyproject.toml
           - files~=^requirements.*\.txt$
           - files=scripts/basic-workflow-tests.sh
           - files~=^scripts/test-data/
-          - files=.github/workflows/e2e.yml
+          - files=.github/workflows/e2e-nvidia-t4-x1.yml
       - and:
         - -files~=\.py$
         - -files=pyproject.toml
         - -files~=^requirements.*\.txt$
         - -files=scripts/basic-workflow-tests.sh
         - -files~=^scripts/test-data/
-        - -files=.github/workflows/e2e.yml
+        - -files=.github/workflows/e2e-nvidia-t4-x1.yml
 
     # lint and test must pass if files change that would trigger this job
     - or:
