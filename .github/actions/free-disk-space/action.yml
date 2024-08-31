@@ -3,7 +3,9 @@ description: 'Frees disk space on the runner'
 runs:
   using: "composite"
   steps:
-    - run: |
+    - name: 'Free Disk Space Linux'
+      if: matrix.platform != 'macos-latest'
+      run: |
         df -h
         sudo docker rmi "$(docker image ls -aq)" >/dev/null 2>&1 || true
         sudo rm -rf \
@@ -16,4 +18,11 @@ runs:
         sudo apt-get autoremove -y >/dev/null 2>&1
         sudo apt-get autoclean -y >/dev/null 2>&1
         df -h
+      shell: bash
+    - name: 'Check Disk Space Mac'
+      if: matrix.platform == 'macos-latest'
+      run: |
+        df -h
+        echo "df -h for $TMPDIR"
+        df -h "$TMPDIR"
       shell: bash
