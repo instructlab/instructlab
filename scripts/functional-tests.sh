@@ -8,7 +8,33 @@
 # As soon as TEST_DIR is set to any non-empty value, the test directory will NOT be removed
 # This assumes you control your test directory TEST_DIR and its cleanup
 
-set -ex
+set -e
+
+SKIP_MAC_OCI_DOWNLOAD=0
+
+usage() {
+    echo "Usage: $0"
+    echo "  -s  skip oci download for mac"
+    echo "  -h  display usage"
+}
+
+while getopts "sh" opt; do
+    case $opt in
+        s)
+            SKIP_MAC_OCI_DOWNLOAD=1
+            ;;
+        h)
+            usage
+            exit 0
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+set -x
 
 # shellcheck disable=SC2155
 export SCRIPTDIR=$(dirname "$0")
@@ -179,36 +205,39 @@ fi
 ilab model download
 
 test_oci_model_download_with_vllm_backend(){
-   # Enable globstar for recursive globbing
-    shopt -s globstar
+    # Disable for macos due to storage limitations with runner
+    if [[ "$(uname)" != "Darwin" || "$SKIP_MAC_OCI_DOWNLOAD" -eq 0 ]]; then
+        # Enable globstar for recursive globbing
+        shopt -s globstar
 
-    # Run the ilab model download command with REGISTRY_AUTH_FILE
-    REGISTRY_AUTH_FILE=$HOME/auth.json ilab model download --repository docker://quay.io/ai-lab/models/granite-7b-lab --release latest --model-dir models/instructlab
+        # Run the ilab model download command with REGISTRY_AUTH_FILE
+        REGISTRY_AUTH_FILE=$HOME/auth.json ilab model download --repository docker://quay.io/ai-lab/models/granite-7b-lab --release latest --model-dir models/instructlab
 
-    patterns=(
-        "models/instructlab/granite-7b-lab/config.json"
-        "models/instructlab/granite-7b-lab/tokenizer.json"
-        "models/instructlab/granite-7b-lab/tokenizer_config.json"
-        "models/instructlab/granite-7b-lab/*.safetensors"
-    )
+        patterns=(
+            "models/instructlab/granite-7b-lab/config.json"
+            "models/instructlab/granite-7b-lab/tokenizer.json"
+            "models/instructlab/granite-7b-lab/tokenizer_config.json"
+            "models/instructlab/granite-7b-lab/*.safetensors"
+        )
 
-    match_count=0
-    for pattern in "${patterns[@]}"
-    do
-        # shellcheck disable=SC2206
-        # we want to split the output into an array
-        matching_files=($pattern)
-        if [ ! -s "${matching_files[0]}" ]; then
-            echo "No files found matching pattern: $pattern: ${matching_files[0]}"
-        else
-            echo "Files found matching pattern: $pattern: ${matching_files[0]}"
-            match_count=$((match_count+1))
+        match_count=0
+        for pattern in "${patterns[@]}"
+        do
+            # shellcheck disable=SC2206
+            # we want to split the output into an array
+            matching_files=($pattern)
+            if [ ! -s "${matching_files[0]}" ]; then
+                echo "No files found matching pattern: $pattern: ${matching_files[0]}"
+            else
+                echo "Files found matching pattern: $pattern: ${matching_files[0]}"
+                match_count=$((match_count+1))
+            fi
+        done
+
+        if [ $match_count -ne ${#patterns[@]} ]; then
+            echo "Error: Not all files were found, only $match_count files were found"
+            exit 1
         fi
-    done
-
-    if [ $match_count -ne ${#patterns[@]} ]; then
-        echo "Error: Not all files were found, only $match_count files were found"
-        exit 1
     fi
 }
 
