@@ -191,6 +191,9 @@ exclude = [
   "^src/instructlab/train/lora_mlx/models/llama\\.py$",
   "^src/instructlab/train/lora_mlx/models/mixtral\\.py$",
   "^src/instructlab/train/lora_mlx/models/models\\.py$",
+  "^src/instructlab/train/lora_mlx/models/phi2\\.py$",
+  "^src/instructlab/train/lora_mlx/models/lora\\.py$",
+  "^src/instructlab/train/lora_mlx/utils\\.py$",
 ]
 
 [[tool.mypy.overrides]]
