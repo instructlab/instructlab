@@ -27,7 +27,7 @@ Steps to reproduce the behavior:
  - Hardware Specs: [e.g. Apple M2 Pro Chip, 16 GB Memory, etc.]
  - OS Version: [e.g. Mac OS 14.4.1, Fedora Linux 40]
  - Python Version: [output of `python --version`]
- - InstructLab Version: [output of `ilab --version`]
+ - InstructLab Version: [output of `ilab system info`]
 
 **Additional context**
 <!-- Add any other context about the problem here. -->
