@@ -728,6 +728,10 @@ class _train(BaseModel):
     phased_mt_bench_judge: str | None = Field(
         default=None, description="Judge model path for phased MT-Bench evaluation."
     )
+    phased_base_dir: str | None = Field(
+        default_factory=lambda: DEFAULTS.PHASED_DIR,
+        description="Base directory for organization of end-to-end intermediate outputs.",
+    )
 
     @model_validator(mode="before")
     def fill_defaults(

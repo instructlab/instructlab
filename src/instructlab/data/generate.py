@@ -58,21 +58,18 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--taxonomy-path",
     type=click.Path(),
-    default=lambda: DEFAULTS.TAXONOMY_DIR,
-    show_default="The default taxonomy path used by instructlab, located in the data directory.",
+    cls=clickext.ConfigOption,
     help="Path to where the taxonomy is located.",
 )
 @click.option(
     "--taxonomy-base",
-    default=DEFAULTS.TAXONOMY_BASE,
-    show_default=True,
+    cls=clickext.ConfigOption,
     help="Base git-ref to use for taxonomy, use 'empty' for the entire repo contents.",
 )
 @click.option(
     "--output-dir",
     type=click.Path(),
-    default=lambda: DEFAULTS.DATASETS_DIR,
-    show_default="The default output directory used by instructlab, located in the data directory.",
+    cls=clickext.ConfigOption,
     help="Path to output generated files.",
 )
 @click.option(
