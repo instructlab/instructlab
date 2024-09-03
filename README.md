@@ -90,9 +90,11 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 - Python 3.10 or Python 3.11
 - Approximately 60GB disk space (entire process)
 
-> **NOTE:** Python 3.12 is currently not supported, because some dependencies don't work on Python 3.12, yet.
+> [!NOTE]
+> Python 3.12 is currently not supported, because some dependencies don't work on Python 3.12, yet.
 <!-- -->
-> **NOTE:** When installing the `ilab` CLI on macOS, you may have to run the `xcode-select --install` command, installing the required packages previously listed.
+> [!NOTE]
+> When installing the `ilab` CLI on macOS, you may have to run the `xcode-select --install` command, installing the required packages previously listed.
 
 ## ✅ Getting started
 
@@ -108,80 +110,84 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 2. Create a new directory called `instructlab` to store the files the `ilab` CLI needs when running and `cd` into the directory by running the following command:
 
-   ```shell
-   mkdir instructlab
-   cd instructlab
-   ```
+```shell
+mkdir instructlab
+cd instructlab
+```
 
-   > **NOTE:** The following steps in this document use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. However, if you use another tool such as [pyenv](https://github.com/pyenv/pyenv) or [Conda Miniforge](https://github.com/conda-forge/miniforge) for managing Python environments on your machine continue to use that tool instead. Otherwise, you may have issues with packages that are installed but not found in `venv`.
+> [!NOTE]
+> The following steps in this document use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. However, if you use another tool such as [pyenv](https://github.com/pyenv/pyenv) or [Conda Miniforge](https://github.com/conda-forge/miniforge) for managing Python environments on your machine continue to use that tool instead. Otherwise, you may have issues with packages that are installed but not found in `venv`.
 
 3. There are a few ways you can locally install the `ilab` CLI. Select your preferred installation method from the following instructions. You can then install `ilab` and activate your `venv` environment.
 
-   > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection. In case installation fails with error ``unsupported instruction `vpdpbusd'``, append `-C cmake.args="-DLLAMA_NATIVE=off"` to `pip install` command.
+> [!NOTE]
+> ⏳ `pip install` may take some time, depending on your internet connection. In case installation fails with error ``unsupported instruction `vpdpbusd'``, append `-C cmake.args="-DLLAMA_NATIVE=off"` to `pip install` command.
 
-   See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for how to
-   to enable hardware acceleration for interaction and training on AMD ROCm,
-   Apple Metal Performance Shaders (MPS), and Nvidia CUDA.
+See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for how to
+to enable hardware acceleration for interaction and training on AMD ROCm,
+Apple Metal Performance Shaders (MPS), and Nvidia CUDA.
 
-   #### Install using PyTorch without CUDA bindings and no GPU acceleration
+#### Install using PyTorch without CUDA bindings and no GPU acceleration
 
-      ```shell
-      python3 -m venv --upgrade-deps venv
-      source venv/bin/activate
-      pip install instructlab
-      ```
+```shell
+python3 -m venv --upgrade-deps venv
+source venv/bin/activate
+pip install instructlab
+```
 
-      > **NOTE**: *Additional Build Argument for Intel Macs*
-      >
-      > If you have an Mac with an Intel CPU, you must add a prefix of
-      > `CMAKE_ARGS="-DLLAMA_METAL=off"` to the `pip install` command to ensure
-      > that the build is done without Apple M-series GPU support.
-      >
-      > `(venv) $ CMAKE_ARGS="-DLLAMA_METAL=off" pip install ...`
+> [!NOTE]
+> *Additional Build Argument for Intel Macs*
+>
+> If you have an Mac with an Intel CPU, you must add a prefix of
+> `CMAKE_ARGS="-DLLAMA_METAL=off"` to the `pip install` command to ensure
+> that the build is done without Apple M-series GPU support.
+>
+> `(venv) $ CMAKE_ARGS="-DLLAMA_METAL=off" pip install ...`
 
-   #### Install with AMD ROCm
+#### Install with AMD ROCm
 
-      ```shell
-      python3 -m venv --upgrade-deps venv
-      source venv/bin/activate
-      pip cache remove llama_cpp_python
-      pip install 'instructlab[rocm]' \
-         --extra-index-url https://download.pytorch.org/whl/rocm6.0 \
-         -C cmake.args="-DLLAMA_HIPBLAS=on" \
-         -C cmake.args="-DAMDGPU_TARGETS=all" \
-         -C cmake.args="-DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang" \
-         -C cmake.args="-DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++" \
-         -C cmake.args="-DCMAKE_PREFIX_PATH=/opt/rocm" \
-         -C cmake.args="-DLLAMA_NATIVE=off"
-      ```
+```shell
+python3 -m venv --upgrade-deps venv
+source venv/bin/activate
+pip cache remove llama_cpp_python
+pip install 'instructlab[rocm]' \
+  --extra-index-url https://download.pytorch.org/whl/rocm6.0 \
+  -C cmake.args="-DLLAMA_HIPBLAS=on" \
+  -C cmake.args="-DAMDGPU_TARGETS=all" \
+  -C cmake.args="-DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang" \
+  -C cmake.args="-DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++" \
+  -C cmake.args="-DCMAKE_PREFIX_PATH=/opt/rocm" \
+  -C cmake.args="-DLLAMA_NATIVE=off"
+```
 
-      On Fedora 40+, use `-DCMAKE_C_COMPILER=clang-17` and `-DCMAKE_CXX_COMPILER=clang++-17`.
+On Fedora 40+, use `-DCMAKE_C_COMPILER=clang-17` and `-DCMAKE_CXX_COMPILER=clang++-17`.
 
-   #### Install with Apple Metal on M1/M2/M3 Macs
+#### Install with Apple Metal on M1/M2/M3 Macs
 
-      > **NOTE**: Make sure your system Python build is `Mach-O 64-bit executable arm64` by using `file -b $(command -v python)`,
-      > or if your system is setup with [pyenv](https://github.com/pyenv/pyenv) by using the `file -b $(pyenv which python)` command.
+> [!NOTE]
+> Make sure your system Python build is `Mach-O 64-bit executable arm64` by using `file -b $(command -v python)`,
+> or if your system is setup with [pyenv](https://github.com/pyenv/pyenv) by using the `file -b $(pyenv which python)` command.
 
-      ```shell
-      python3 -m venv --upgrade-deps venv
-      source venv/bin/activate
-      pip cache remove llama_cpp_python
-      pip install 'instructlab[mps]'
-      ```
+```shell
+python3 -m venv --upgrade-deps venv
+source venv/bin/activate
+pip cache remove llama_cpp_python
+pip install 'instructlab[mps]'
+```
 
-   #### Install with Nvidia CUDA
+#### Install with Nvidia CUDA
 
-     For the best CUDA experience, installing vLLM is necessary to serve Safetensors format models.
+For the best CUDA experience, installing vLLM is necessary to serve Safetensors format models.
 
-      ```shell
-      python3 -m venv --upgrade-deps venv
-      source venv/bin/activate
-      pip cache remove llama_cpp_python
-      pip install 'instructlab[cuda]' \
-         -C cmake.args="-DLLAMA_CUDA=on" \
-         -C cmake.args="-DLLAMA_NATIVE=off"
-      pip install vllm@git+https://github.com/opendatahub-io/vllm@2024.08.01
-   ```
+```shell
+python3 -m venv --upgrade-deps venv
+source venv/bin/activate
+pip cache remove llama_cpp_python
+pip install 'instructlab[cuda]' \
+  -C cmake.args="-DLLAMA_CUDA=on" \
+  -C cmake.args="-DLLAMA_NATIVE=off"
+pip install vllm@git+https://github.com/opendatahub-io/vllm@2024.08.01
+```
 
 4. From your `venv` environment, verify `ilab` is installed correctly, by running the `ilab` command.
 
@@ -229,7 +235,8 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
    ```
 
-   > **IMPORTANT** Every `ilab` command needs to be run from within your Python virtual environment. You can enter the Python environment by running the `source venv/bin/activate` command.
+> [!IMPORTANT]
+> Every `ilab` command needs to be run from within your Python virtual environment. You can enter the Python environment by running the `source venv/bin/activate` command.
 
 5. Optional: You can enable tab completion for the `ilab` command.
 
@@ -332,8 +339,8 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    ```shell
    Welcome to InstructLab CLI. This guide will help you to setup your environment.
    Please provide the following values to initiate the environment [press Enter for defaults]:
-   Path to taxonomy repo [/home/user/.local/share/instructlab/taxonomy]: 
-   Path to your model [/home/user/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf]: 
+   Path to taxonomy repo [/home/user/.local/share/instructlab/taxonomy]:
+   Path to your model [/home/user/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf]:
    Generating `/home/user/.config/instructlab/config.yaml`...
    Please choose a train profile to use:
    [0] No profile (CPU-only)
@@ -343,7 +350,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    [4] L40_x4.yaml
    [5] L40_x8.yaml
    [6] L4_x8.yaml
-   Enter the number of your choice [hit enter for the default CPU-only profile] [0]:  
+   Enter the number of your choice [hit enter for the default CPU-only profile] [0]:
    Using default CPU-only train profile.
    Initialization completed successfully, you're ready to start using `ilab`. Enjoy!
    ```
@@ -385,7 +392,8 @@ After running `ilab config init` your directories will look like the following o
   INFO 2024-08-01 15:05:48,464 huggingface_hub.file_download:1893: Download complete. Moving file to /home/user/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
   ```
 
-  > **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
+> [!NOTE]
+> ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
 
   #### Downloading a specific model from a Hugging Face repository
 
@@ -448,7 +456,8 @@ After running `ilab config init` your directories will look like the following o
    Press CTRL+C to shut down the server.
    ```
 
-   > **NOTE:** If multiple `ilab` clients try to connect to the same InstructLab server at the same time, the 1st will connect to the server while the others will start their own temporary server. This will require additional resources on the host machine.
+> [!NOTE]
+> If multiple `ilab` clients try to connect to the same InstructLab server at the same time, the 1st will connect to the server while the others will start their own temporary server. This will require additional resources on the host machine.
 
 - Serve a non-default Safetensors model (e.g. granite-7b-lab). NOTE: this requires a GPU.
 
@@ -486,16 +495,17 @@ ilab model chat --model models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
 
 Please note that usage of `--model` necessitates that the existing server has that model. If not, you must exit the server. `--model` in `ilab model chat` has the ability to start a server on your behalf with the specified model if one is not already running on the port.
 
-Before you start adding new skills and knowledge to your model, you can check its baseline performance by asking it a question such as `what is the capital of Canada?`.
+Before you start adding new skills and knowledge to your model, you can check its baseline performance by asking it a question such as `What is the capital of Canada?`.
 
-> **NOTE:** the model needs to be trained with the generated synthetic data to use the new skills or knowledge
+> [!NOTE]
+> the model needs to be trained with the generated synthetic data to use the new skills or knowledge
 
 ```shell
 (venv) $ ilab model chat
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────── system ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ Welcome to InstructLab Chat w/ GGML-MERLINITE-7B-lab-Q4_K_M (type /h for help)                                                                                                                                                                    │
 ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
->>b> what is the capital of Canada                                                                                                                                                                                                 [S][default]
+>>> What is the capital of Canada?                                                                                                                                                                                                 [S][default]
 ╭────────────────────────────────────────────────────────────────────────────────────────────────────── ggml-merlinite-7b-lab-Q4_K_M ───────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ The capital city of Canada is Ottawa. It is located in the province of Ontario, on the southern banks of the Ottawa River in the eastern portion of southern Ontario. The city serves as the political center for Canada, as it is home to │
 │ Parliament Hill, which houses the House of Commons, Senate, Supreme Court, and Cabinet of Canada. Ottawa has a rich history and cultural significance, making it an essential part of Canada's identity.                                   │
@@ -558,7 +568,8 @@ Before following these instructions, ensure the existing model you are adding sk
    ilab data generate --model ~/.cache/instructlab/models/mistralai/mixtral-8x7b-instruct-v0.1 --pipeline full --gpus 4
    ```
 
-   > **NOTE:** ⏳ This can take from 15 minutes to 1+ hours to complete, depending on your computing resources.
+> [!NOTE]
+> ⏳ This can take from 15 minutes to 1+ hours to complete, depending on your computing resources.
 
    *Example output of `ilab data generate`*
 
@@ -611,7 +622,8 @@ Note that it is also possible to generate a synthetic dataset based on the entir
 
 There are many options for training the model with your synthetic data-enhanced dataset.
 
-> **Note:** **Every** `ilab` command needs to run from within your Python virtual environment.
+> [!NOTE]
+> **Every** `ilab` command needs to run from within your Python virtual environment.
 
 #### Train the model locally on Linux
 
@@ -619,7 +631,8 @@ There are many options for training the model with your synthetic data-enhanced 
 ilab model train
 ```
 
-> **NOTE:** ⏳ This step can potentially take **several hours** to complete depending on your computing resources. Please stop `ilab model chat` and `ilab model serve` first to free resources.
+> [!NOTE]
+> ⏳ This step can potentially take **several hours** to complete depending on your computing resources. Please stop `ilab model chat` and `ilab model serve` first to free resources.
 
 If you are using `ilab model train --legacy` or are on MacOS:
 
@@ -639,8 +652,8 @@ To train the model locally on your M-Series Mac is as easy as running:
 ilab model train
 ```
 
-> **Note:** ⏳ This process will take a little while to complete (time can vary based on hardware
-and output of `ilab data generate` but on the order of 5 to 15 minutes)
+> [!NOTE]
+> ⏳ This process will take a little while to complete (time can vary based on hardware and output of `ilab data generate` but on the order of 5 to 15 minutes)
 
 `ilab model train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory called `adapters.npz` (in `Numpy` compressed array format). For example:
 
@@ -677,7 +690,8 @@ ilab model train --strategy lab-multiphase --phased-phase1-data <knowledge train
 
 This command takes in two `.jsonl` files from your `datasets` directory, one is the knowledge jsonl and the other is a skills jsonl. The `-y` flag skips an interactive prompt asking the user if they are sure they want to run multi-phase training.
 
-Note: this command may take 3 or more hours depending on the size of the data and number of training epochs you run.
+> [!NOTE]
+> This command may take 3 or more hours depending on the size of the data and number of training epochs you run.
 
 #### Train the model in the cloud
 
@@ -722,7 +736,7 @@ resources. You can download it via `ilab model download`.
 Below is an example of running MMLU on a local model with minimal tasks:
 
 ```bash
-$ export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true   # don't set this if you want to run full MMLU 
+$ export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true   # don't set this if you want to run full MMLU
 $ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
 $ ilab model evaluate --benchmark mmlu --model $ILAB_MODELS_DIR/instructlab/granite-7b-lab
 ...
@@ -743,7 +757,7 @@ mmlu_astronomy - 0.55
 Below is an example of running MMLU on a Hugging Face model with minimal tasks:
 
 ```bash
-$ export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true   # don't set this if you want to run full MMLU 
+$ export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true   # don't set this if you want to run full MMLU
 $ ilab model evaluate --benchmark mmlu --model instructlab/granite-7b-lab
 ...
 # KNOWLEDGE EVALUATION REPORT
@@ -949,11 +963,9 @@ $ ilab model evaluate --benchmark mt_bench_branch --model $ILAB_MODELS_DIR/grani
 
 1. Stop the server you have running by entering `ctrl+c` keys in the terminal running the server.
 
-   > **IMPORTANT**:
-   - 🍎 This step is only implemented for macOS with M-series chips (for now).
-
-   - Before serving the newly trained model you must convert it to work with
-   the `ilab` cli. The `ilab model convert` command converts the new model into quantized [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format which is required by the server to host the model in the `ilab model serve` command.
+> [!IMPORTANT]
+> 🍎 This step is only implemented for macOS with M-series chips (for now).
+> Before serving the newly trained model you must convert it to work with the `ilab` cli. The `ilab model convert` command converts the new model into quantized [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format which is required by the server to host the model in the `ilab model serve` command.
 
 2. Convert the newly trained model by running the following command:
 
