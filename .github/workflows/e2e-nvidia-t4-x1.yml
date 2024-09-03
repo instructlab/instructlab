@@ -48,7 +48,8 @@ jobs:
           aws-resource-tags: >
             [
               {"Key": "Name", "Value": "instructlab-ci-github-small-runner"},
-              {"Key": "GitHubRepository", "Value": "${{ github.repository }}"}
+              {"Key": "GitHubRepository", "Value": "${{ github.repository }}"},
+              {"Key": "GitHubRef", "Value": "${{ github.ref }}"}
             ]
 
   e2e:
