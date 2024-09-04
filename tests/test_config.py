@@ -7,9 +7,11 @@ import logging
 import os
 import pathlib
 import shutil
+import typing
 
 # Third Party
 import platformdirs
+import pydantic
 import pytest
 import yaml
 
@@ -354,6 +356,29 @@ def test_compare_default_config_testdata(
         "intentional, run 'make regenerate-testdata' and commit the "
         "updated test data."
     )
+
+
+def test_all_config_options_have_description():
+    cfg = config.get_default_config()
+
+    def loop_through_fields(
+        cfg: pydantic.BaseModel,
+    ) -> typing.List[str]:
+        fields_without_description = []
+        for field_name, field in cfg.model_fields.items():
+            value = getattr(cfg, field_name)
+            description = field.description
+
+            if isinstance(value, pydantic.BaseModel):
+                fields_without_description.extend(loop_through_fields(value))
+
+            if not description:
+                fields_without_description.append(field_name)
+
+        return fields_without_description
+
+    fields_without_description = loop_through_fields(cfg)
+    assert not fields_without_description, f"Fields without description: {fields_without_description}, update 'configuration.py' Field with missing descriptions."
 
 
 @pytest.mark.parametrize(
