@@ -40,7 +40,6 @@ signal.signal(signal.SIGTERM, signal_handler)
     type=click.Path(path_type=pathlib.Path),
     cls=clickext.ConfigOption,
     required=True,  # default from config
-    help="Path to the model used during generation.",
 )
 @click.option(
     "--gpu-layers",
@@ -48,7 +47,6 @@ signal.signal(signal.SIGTERM, signal_handler)
     cls=clickext.ConfigOption,
     config_sections="llama_cpp",
     required=True,  # default from config
-    help="The number of layers to put on the GPU. -1 moves all layers. The rest will be on the CPU.",
 )
 @click.option(
     "--num-threads",
@@ -61,8 +59,8 @@ signal.signal(signal.SIGTERM, signal_handler)
     type=click.INT,
     cls=clickext.ConfigOption,
     config_sections="llama_cpp",
-    help="The context size is the maximum number of tokens considered by the model, for both the prompt and response. Defaults to 4096.",
 )
+# TODO: fix me, cli has model-family, but config option has llm-family :-/
 @click.option(
     "--model-family",
     type=str,
@@ -77,29 +75,19 @@ signal.signal(signal.SIGTERM, signal_handler)
 @click.option(
     "--chat-template",
     type=str,
-    help=(
-        "Which chat template to use in serving the model, either 'auto', "
-        "'tokenizer', or a path to a jinja formatted template file. \n"
-        " 'auto' (the default) indicates serve will decide which template to use.\n"
-        " 'tokenizer' indicates the model's tokenizer config will be preferred"
-    ),
+    cls=clickext.ConfigOption,
 )
 @click.option(
     "--backend",
     type=click.Choice(tuple(backends.SUPPORTED_BACKENDS)),
     cls=clickext.ConfigOption,
     required=False,  # auto-detect
-    help=(
-        "The backend to use for serving the model.\n"
-        "Automatically detected based on the model file properties.\n"
-    ),
 )
 @click.option(
     "--gpus",
     type=click.IntRange(min=0),
     cls=clickext.ConfigOption,
     config_sections="vllm",
-    help="Number of GPUs to use when serving this model",
 )
 @click.pass_context
 @clickext.display_params

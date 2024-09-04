@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
     cls=clickext.ConfigOption,
     config_sections="teacher",
     show_default=False,
-    help="Name of the model used during generation.",
 )
 @click.option(
     "--num-cpus",
@@ -59,18 +58,15 @@ logger = logging.getLogger(__name__)
     "--taxonomy-path",
     type=click.Path(),
     cls=clickext.ConfigOption,
-    help="Path to where the taxonomy is located.",
 )
 @click.option(
     "--taxonomy-base",
     cls=clickext.ConfigOption,
-    help="Base git-ref to use for taxonomy, use 'empty' for the entire repo contents.",
 )
 @click.option(
     "--output-dir",
     type=click.Path(),
     cls=clickext.ConfigOption,
-    help="Path to output generated files.",
 )
 @click.option(
     "--rouge-threshold",
@@ -142,7 +138,6 @@ logger = logging.getLogger(__name__)
     "--pipeline",
     type=click.STRING,
     cls=clickext.ConfigOption,
-    help="Data generation pipeline to use. Available: simple, full, or a valid path to a directory of pipeline workflow YAML files. Note that 'full' requires a larger teacher model, Mixtral-8x7b.",
 )
 @click.option(
     "--batch-size",
@@ -160,7 +155,6 @@ logger = logging.getLogger(__name__)
     type=click.IntRange(min=0),
     cls=clickext.ConfigOption,
     config_sections="teacher.vllm",
-    help="Number of GPUs to run generation on",
 )
 @click.pass_context
 @clickext.display_params
