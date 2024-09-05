@@ -67,7 +67,7 @@ the E2E job configuration files found
 Points of clarification (*):
 
 1. The `training-lib` testing is not testing using the output of the Generate step. <https://github.com/instructlab/instructlab/issues/1655>
-2. The `eval` testing is not evaluating the output of the Training step. <https://github.com/instructlab/instructlab/issues/1540>
+2. The `eval` testing is not evaluating the output of the Training step. <https://github.com/instructlab/instructlab/issues/1642>
 
 ### Current E2E Status against `main`
 
