@@ -441,6 +441,10 @@ Commands
         -t
             Instance type (default provided in config)
 
+    terminate - Terminate the instance
+        -n
+            Name of the instance to terminate (default provided in config)
+
     details - Get details of the instance
         -n
             Name of the instance to get details of (default provided in config)
