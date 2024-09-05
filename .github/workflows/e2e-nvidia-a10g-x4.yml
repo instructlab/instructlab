@@ -165,7 +165,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Post job results to Slack
-        if: steps.check_pr.outputs.is_pr == 'false'
+        if: ${{ !cancelled() && steps.check_pr.outputs.is_pr == 'false' }}
         id: slack
         uses: slackapi/slack-github-action@37ebaef184d7626c5f204ab8d3baff4262dd30f0 # v1.27.0
         with:
