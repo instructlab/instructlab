@@ -1,3 +1,10 @@
+## v0.19
+
+### Breaking Changes
+
+* InstructLab now uses XDG-based directories on macOS, similar to Linux.
+  Users are advised to re-initialize their config files and remove cached models.
+
 ## v0.18.1
 
 ### Features

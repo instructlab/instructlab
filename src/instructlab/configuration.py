@@ -30,9 +30,9 @@ from pydantic import (
 from pydantic_core import PydanticUndefined
 from ruamel.yaml import YAML, CommentedMap
 from typing_extensions import deprecated as Deprecated
+from xdg_base_dirs import xdg_cache_home, xdg_config_home, xdg_data_home
 import click
 import httpx
-import platformdirs
 
 # Local
 from . import log
@@ -119,10 +119,9 @@ class _InstructlabDefaults:
         Utility function which is mostly used for testing purposes to clear the cache.
         Otherwise, all tests will used cached temporary directories and cause errors.
         """
-        pd = platformdirs.PlatformDirs(appname=ILAB_PACKAGE_NAME)
-        self._cache_home = pd.user_cache_dir
-        self._config_dir = pd.user_config_dir
-        self._data_dir = pd.user_data_dir
+        self._cache_home = os.path.join(xdg_cache_home(), ILAB_PACKAGE_NAME)
+        self._config_dir = os.path.join(xdg_config_home(), ILAB_PACKAGE_NAME)
+        self._data_dir = os.path.join(xdg_data_home(), ILAB_PACKAGE_NAME)
 
     @property
     def CHECKPOINTS_DIR(self) -> str:

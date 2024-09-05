@@ -10,7 +10,7 @@ import shutil
 import typing
 
 # Third Party
-import platformdirs
+from xdg_base_dirs import xdg_cache_home, xdg_data_home
 import pydantic
 import pytest
 import yaml
@@ -27,8 +27,8 @@ class TestConfig:
         # to catch any errors if we are doing things incorrectly over there
         package_name = "instructlab"
         internal_dirname = "internal"
-        data_dir = platformdirs.user_data_dir(package_name)
-        cache_dir = platformdirs.user_cache_dir(package_name)
+        cache_dir = os.path.join(xdg_cache_home(), package_name)
+        data_dir = os.path.join(xdg_data_home(), package_name)
         default_model = f"{cache_dir}/models/merlinite-7b-lab-Q4_K_M.gguf"
 
         assert cfg.general is not None
@@ -88,7 +88,7 @@ class TestConfig:
 
     def _assert_model_defaults(self, cfg):
         package_name = "instructlab"
-        cache_dir = platformdirs.user_cache_dir(package_name)
+        cache_dir = os.path.join(xdg_cache_home(), package_name)
         default_model = f"{cache_dir}/models/merlinite-7b-lab-Q4_K_M.gguf"
 
         assert cfg.chat is not None

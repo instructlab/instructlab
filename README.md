@@ -332,8 +332,8 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    ```shell
    Welcome to InstructLab CLI. This guide will help you to setup your environment.
    Please provide the following values to initiate the environment [press Enter for defaults]:
-   Path to taxonomy repo [/home/user/.local/share/instructlab/taxonomy]: 
-   Path to your model [/home/user/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf]: 
+   Path to taxonomy repo [/home/user/.local/share/instructlab/taxonomy]:
+   Path to your model [/home/user/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf]:
    Generating `/home/user/.config/instructlab/config.yaml`...
    Please choose a train profile to use:
    [0] No profile (CPU-only)
@@ -343,7 +343,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    [4] L40_x4.yaml
    [5] L40_x8.yaml
    [6] L4_x8.yaml
-   Enter the number of your choice [hit enter for the default CPU-only profile] [0]:  
+   Enter the number of your choice [hit enter for the default CPU-only profile] [0]:
    Using default CPU-only train profile.
    Initialization completed successfully, you're ready to start using `ilab`. Enjoy!
    ```
@@ -365,8 +365,6 @@ After running `ilab config init` your directories will look like the following o
  2. `~/.local/share/instructlab/datasets/`: Contains data output from the SDG phase, built on modifications to the taxonomy repository.
  3. `~/.local/share/instructlab/taxonomy/`: Contains the skill and knowledge data.
  4. `~/.local/share/instructlab/checkpoints/`: Contains the output of the training process
-
- On MacOS, these directories will be under `Library/Application Support/instructlab`. This directory setup is temporary in 0.18.0 and will mimic the Linux paths in future releases. The models directory will be under `Library/Caches/instructlab`.
 
 ### 📥 Download the model
 
@@ -579,7 +577,7 @@ Before following these instructions, ensure the existing model you are adding sk
    ...
    ```
 
-   The synthetic data set will be two files in the newly created in the datasets directory. On Linux this will be: `~/.local/share/instructlab/datasets` and on MacOS this will be `~/Library/Application Support/instructlab/datasets`. These files will be named `skills_train_msgs_*.jsonl` and `knowledge_train_msgs_*.jsonl`.
+   The synthetic data set will be two files in the newly created in the datasets directory: `~/.local/share/instructlab/datasets`. These files will be named `skills_train_msgs_*.jsonl` and `knowledge_train_msgs_*.jsonl`.
 
 2. Verify the files have been created by running the `ls datasets` command. Note: you must be in your `XDG_DATA_HOME/instructlab` directory.
 
@@ -660,7 +658,7 @@ Training has experimental support for GPU acceleration with Nvidia CUDA or AMD R
 ilab model train --device=cuda
 ```
 
-This version of `ilab model train` outputs brand-new models that can be served in the `~/.local/share/instructlab/checkpoints` directory on Linux and `~/Library/Application Support/instructlab/checkpoints` on MacOS.  These models can be run through `ilab model evaluate` to choose the best one.
+This version of `ilab model train` outputs brand-new models that can be served in the `~/.local/share/instructlab/checkpoints` directory.  These models can be run through `ilab model evaluate` to choose the best one.
 
 #### Train the model locally with multi-phase training and GPU acceleration
 
@@ -722,7 +720,7 @@ resources. You can download it via `ilab model download`.
 Below is an example of running MMLU on a local model with minimal tasks:
 
 ```bash
-$ export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true   # don't set this if you want to run full MMLU 
+$ export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true   # don't set this if you want to run full MMLU
 $ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
 $ ilab model evaluate --benchmark mmlu --model $ILAB_MODELS_DIR/instructlab/granite-7b-lab
 ...
@@ -743,7 +741,7 @@ mmlu_astronomy - 0.55
 Below is an example of running MMLU on a Hugging Face model with minimal tasks:
 
 ```bash
-$ export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true   # don't set this if you want to run full MMLU 
+$ export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true   # don't set this if you want to run full MMLU
 $ ilab model evaluate --benchmark mmlu --model instructlab/granite-7b-lab
 ...
 # KNOWLEDGE EVALUATION REPORT
