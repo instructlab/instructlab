@@ -145,10 +145,10 @@ test_download() {
     fi
 
     if [ "$MIXTRAL" -eq 1 ]; then
-        step Downloading the mixtral model as the teacher
+        step Downloading the mixtral model as the teacher model for SDG
         ilab model download --repository TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF --filename ${MIXTRAL_GGUF_MODEL} --hf-token "${HF_TOKEN}"
     else
-        step Downloading the default merlinite .gguf model as the teacher
+        step Downloading the default merlinite .gguf model as the teacher model for SDG
         ilab model download --repository instructlab/merlinite-7b-lab-GGUF --filename ${MERLINITE_GGUF_MODEL}
     fi
 
@@ -361,37 +361,37 @@ test_convert() {
 }
 
 test_evaluate() {
+    task Evaluate the model
+    
     local model_path="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}"
     # Temporarily using merlinite as the base model to confirm the workflow executes correctly 
     local base_model_path="${CACHE_HOME}/instructlab/models/instructlab/merlinite-7b-lab"
-    task Evaluate the model
 
-    if [ "$EVAL" -eq 1 ]; then
-      export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true
-      export HF_DATASETS_TRUST_REMOTE_CODE=true
-      task Running MMLU
-      ilab model evaluate --model "${model_path}" --benchmark mmlu
-      task Running MMLU_BRANCH
-      ilab model evaluate --model "${model_path}" --benchmark mmlu_branch --tasks-dir tests/testdata/mmlu_branch/ --base-model "${base_model_path}"
+    export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true
+    export HF_DATASETS_TRUST_REMOTE_CODE=true
+    task Running MMLU
+    ilab model evaluate --model "${model_path}" --benchmark mmlu
+    task Running MMLU_BRANCH
+    ilab model evaluate --model "${model_path}" --benchmark mmlu_branch --tasks-dir tests/testdata/mmlu_branch/ --base-model "${base_model_path}"
 
-      export INSTRUCTLAB_EVAL_FIRST_N_QUESTIONS=5
-      task Running MT_Bench
-      ilab model evaluate --model "${model_path}" --judge-model "${model_path}" --enable-serving-output --benchmark mt_bench
-      task Running MT_Bench_Branch
-      cd "${DATA_HOME}/instructlab/taxonomy"
-      git branch rc
-      cd "${DATA_HOME}/instructlab"
-      GPUS=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
-      ilab model evaluate \
-      --model "${model_path}" \
-      --judge-model "${model_path}" \
-      --branch rc --base-branch main \
-      --base-model "${base_model_path}" \
-      --gpus "${GPUS}" \
-      --enable-serving-output \
-      --benchmark mt_bench_branch \
-      --taxonomy-path "${DATA_HOME}/instructlab/taxonomy"
-    fi
+    export INSTRUCTLAB_EVAL_FIRST_N_QUESTIONS=5
+    task Running MT_Bench
+    ilab model evaluate --model "${model_path}" --judge-model "${model_path}" --enable-serving-output --benchmark mt_bench
+    task Running MT_Bench_Branch
+    cd "${DATA_HOME}/instructlab/taxonomy"
+    git branch rc
+    cd "${DATA_HOME}/instructlab"
+    GPUS=$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l)
+    ilab model evaluate \
+    --model "${model_path}" \
+    --judge-model "${model_path}" \
+    --branch rc --base-branch main \
+    --base-model "${base_model_path}" \
+    --gpus "${GPUS}" \
+    --enable-serving-output \
+    --benchmark mt_bench_branch \
+    --taxonomy-path "${DATA_HOME}/instructlab/taxonomy"
+
 }
 
 test_sysinfo() {
@@ -466,8 +466,9 @@ test_exec() {
         wait_for_server shutdown $PID
     fi
 
-    task Evaluating the output of ilab model train
-    test_evaluate
+    if [ "$EVAL" -eq 1 ]; then
+        test_evaluate
+    fi
 
     if [ "${PHASED_TRAINING}" -eq 1 ]; then
         test_phased_train
