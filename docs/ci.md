@@ -45,11 +45,11 @@ the E2E job configuration files found
 
 ### Current E2E Jobs
 
-| Name | T-Shirt Size | Runner Host | Instance Type | OS | GPU Type | Script flags | Runs when? |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | Small | AWS | [`g4dn.2xlarge`](https://aws.amazon.com/ec2/instance-types/g4/) | CentOS Stream 9 | 1 x NVIDIA Tesla T4 w/ 16 GB VRAM | `m` | Pull Requests, Push to `main` or `release-*` branch |
-| [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | Medium | AWS |[`g5.2xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | CentOS Stream 9 | 1 x NVIDIA A10G w/ 24 GB VRAM | `mf` | Manually by Maintainers |
-| [`e2e-nvidia-a10g-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x4.yml) | Large | AWS |[`g5.12xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | CentOS Stream 9 | 4 x NVIDIA A10G w/ 24 GB VRAM (98 GB) | `mevFMT` | Manually by Maintainers, Automatically against `main` branch at 8AM/8PM UTC |
+| Name | T-Shirt Size | Runner Host | Instance Type | OS | GPU Type | Script flags | Runs when? | Slack reporting? |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | Small | AWS | [`g4dn.2xlarge`](https://aws.amazon.com/ec2/instance-types/g4/) | CentOS Stream 9 | 1 x NVIDIA Tesla T4 w/ 16 GB VRAM | `m` | Pull Requests, Push to `main` or `release-*` branch | No |
+| [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | Medium | AWS |[`g5.2xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | CentOS Stream 9 | 1 x NVIDIA A10G w/ 24 GB VRAM | `mf` | Manually by Maintainers | No |
+| [`e2e-nvidia-a10g-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x4.yml) | Large | AWS |[`g5.12xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | CentOS Stream 9 | 4 x NVIDIA A10G w/ 24 GB VRAM (98 GB) | `mevFMT` | Manually by Maintainers, Automatically against `main` branch at 8AM/8PM UTC | Yes |
 
 ### E2E Test Coverage Matrix
 
@@ -74,6 +74,11 @@ Points of clarification (*):
 ![`e2e-nvidia-t4-x1.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-t4-x1.yml/badge.svg?branch=main)
 ![`e2e-nvidia-a10g-x1.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-a10g-x1.yml/badge.svg?branch=main)
 ![`e2e-nvidia-a10g-x4.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-a10g-x4.yml/badge.svg?branch=main)
+
+### Slack reporting
+
+Some E2E jobs send their results to the InstructLab Slack workspace channel `#cli-e2e-results` via the `Son of Jeeves` bot. This has been implemented
+via [the official Slack GitHub Action](https://github.com/slackapi/slack-github-action?tab=readme-ov-file#technique-2-slack-app). You can see which jobs currently have reporting via the "Current E2E Jobs" table above.
 
 ### Triggering an E2E job via GitHub Web UI
 
