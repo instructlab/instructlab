@@ -2,9 +2,9 @@
 
 # Standard
 from pathlib import Path
-from typing import Optional
 import logging
 import os
+import typing
 
 # Third Party
 # https://huggingface.co/docs/datasets/en/package_reference/loading_methods#datasets.load_dataset
@@ -53,9 +53,6 @@ try:
     # Habana implementations of SFT Trainer
     # https://huggingface.co/docs/optimum/habana/index
     from optimum.habana import GaudiConfig, GaudiTrainingArguments
-    from optimum.habana.transformers.generation.configuration_utils import (
-        GaudiGenerationConfig,
-    )
     from optimum.habana.trl import GaudiSFTTrainer
 
     # silence warning: "Call mark_step function will not have any effect"
@@ -162,7 +159,7 @@ def linux_train(
     train_file: Path,
     test_file: Path,
     model_name: str,
-    num_epochs: Optional[int] = None,
+    num_epochs: int | None,
     train_device: str = "cpu",
     four_bit_quant: bool = False,
     output_dir: Path = Path("training_results"),
@@ -346,6 +343,7 @@ def linux_train(
     tokenizer.padding_side = "right"
     per_device_train_batch_size = 1
     max_seq_length = 300
+    generate_kwargs: dict[str, typing.Any]
 
     if device.type == "hpu":
         # Intel Gaudi trainer
@@ -384,10 +382,7 @@ def linux_train(
             args=training_arguments,
             gaudi_config=gaudi_config,
         )
-        generate_kwargs = {
-            # TODO: check generation config parameters?
-            "generation_config": GaudiGenerationConfig(),
-        }
+        generate_kwargs = {}
     else:
         training_arguments = TrainingArguments(
             output_dir=output_dir,
