@@ -20,8 +20,6 @@ from ...client import check_api_base
 from ...configuration import get_api_base
 from .backends import (
     BackendServer,
-    Closeable,
-    ServerException,
     free_tcp_ipv4_port,
     safe_close_all,
     shutdown_process,
@@ -30,6 +28,8 @@ from .common import (
     CHAT_TEMPLATE_AUTO,
     CHAT_TEMPLATE_TOKENIZER,
     VLLM,
+    Closeable,
+    ServerException,
     get_model_template,
     verify_template_exists,
 )

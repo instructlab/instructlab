@@ -2,6 +2,7 @@
 from typing import Tuple
 import logging
 import pathlib
+import typing
 
 # Local
 from ...configuration import get_model_family
@@ -23,6 +24,14 @@ templates = [
         "template": "{{ bos_token }}\n{% for message in messages %}\n{% if message['role'] == 'user' %}\n{{ '[INST] ' + message['content'] + ' [/INST]' }}\n{% elif message['role'] == 'assistant' %}\n{{ message['content'] + eos_token}}\n{% endif %}\n{% endfor %}",
     },
 ]
+
+
+class Closeable(typing.Protocol):
+    def close(self) -> None: ...
+
+
+class ServerException(Exception):
+    """An exception raised when serving the API."""
 
 
 def get_model_template(

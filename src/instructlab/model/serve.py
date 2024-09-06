@@ -12,7 +12,7 @@ import click
 # First Party
 from instructlab import clickext, log, utils
 from instructlab.model.backends import backends
-from instructlab.model.backends.backends import ServerException
+from instructlab.model.backends.common import ServerException
 
 logger = logging.getLogger(__name__)
 
