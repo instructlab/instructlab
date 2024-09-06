@@ -23,7 +23,6 @@ from ...configuration import get_api_base
 from .backends import (
     BackendServer,
     UvicornServer,
-    free_tcp_ipv4_port,
     get_uvicorn_config,
     is_temp_server_running,
 )
@@ -33,6 +32,7 @@ from .common import (
     CHAT_TEMPLATE_TOKENIZER,
     LLAMA_CPP,
     ServerException,
+    free_tcp_ipv4_port,
     get_model_template,
     verify_template_exists,
 )
