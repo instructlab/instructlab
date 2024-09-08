@@ -1,5 +1,6 @@
 # Standard
 from typing import Tuple
+import contextlib
 import logging
 import pathlib
 import socket
@@ -77,3 +78,9 @@ def free_tcp_ipv4_port(host: str) -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host, 0))
         return int(s.getsockname()[-1])
+
+
+def safe_close_all(resources: typing.Iterable[Closeable]):
+    for resource in resources:
+        with contextlib.suppress(Exception):
+            resource.close()
