@@ -64,20 +64,22 @@ function init_test_script() {
     local prev_home="${HOME}"
 
     printf 'initializing test script...\n'
-    HOME="${TEST_DIR}"  # to ensure platformdirs uses the test directory for the duration of this script
+    HOME="${TEST_DIR}"  # to ensure xdg-base-dirs uses the test directory for the duration of this script
     printf 'changing home directory to "%s", was: "%s"\n' "${HOME}" "${prev_home}"
 
     # DO NOT REMOVE THE VARIABLE ASSIGNMENTS BELOW
     # They might seem redundant given that `mkdir -p`` is called later, but they are necessary to
     # ensure the directories are created by ilab CLI
-    # get the directories from the platformdirs library
-    CONFIG_DIR=$(python -c "import platformdirs; print(platformdirs.user_config_dir())")
-    DATA_DIR=$(python -c "import platformdirs; print(platformdirs.user_data_dir())")
-    CACHE_DIR=$(python -c "import platformdirs; print(platformdirs.user_cache_dir())")
+    # get the directories from the xdg-base-dirs library
+    # Get configuration, data, and cache directories using Python
+    CONFIG_DIR=$(python -c "import xdg_base_dirs; print(xdg_base_dirs.xdg_config_home())")
+    DATA_DIR=$(python -c "import xdg_base_dirs; print(xdg_base_dirs.xdg_data_home())")
+    CACHE_DIR=$(python -c "import xdg_base_dirs; print(xdg_base_dirs.xdg_cache_home())")
 
-    configdir_script=$(printf 'import platformdirs; print(platformdirs.user_config_dir("%s"))' "${PACKAGE_NAME}")
-    datadir_script=$(printf 'import platformdirs; print(platformdirs.user_data_dir("%s"))' "${PACKAGE_NAME}")
-    cachedir_script=$(printf 'import platformdirs; print(platformdirs.user_cache_dir("%s"))' "${PACKAGE_NAME}")
+    # Define package-specific directories
+    configdir_script=$(printf 'import xdg_base_dirs, os; print(os.path.join(xdg_base_dirs.xdg_config_home(), "%s"))' "${PACKAGE_NAME}")
+    datadir_script=$(printf 'import xdg_base_dirs, os; print(os.path.join(xdg_base_dirs.xdg_data_home(), "%s"))' "${PACKAGE_NAME}")
+    cachedir_script=$(printf 'import xdg_base_dirs, os; print(os.path.join(xdg_base_dirs.xdg_cache_home(), "%s"))' "${PACKAGE_NAME}")
 
     ILAB_CONFIGDIR_LOCATION=$(python -c "${configdir_script}")
     ILAB_CONFIG_FILE="${ILAB_CONFIGDIR_LOCATION}/config.yaml"
