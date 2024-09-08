@@ -2,6 +2,7 @@
 from typing import Tuple
 import logging
 import pathlib
+import socket
 import typing
 
 # Local
@@ -63,3 +64,16 @@ def verify_template_exists(path):
         raise IsADirectoryError(
             "Chat templates paths must point to a file: {}".format(path)
         )
+
+
+def free_tcp_ipv4_port(host: str) -> int:
+    """Ask the OS for a random, ephemeral, and bindable TCP/IPv4 port
+
+    Note: The idea of finding a free port is bad design and subject to
+    race conditions. Instead vLLM and llama-cpp should accept port 0 and
+    have an API to return the actual listening port. Or they should be able
+    to use an existing socket like a systemd socket activation service.
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind((host, 0))
+        return int(s.getsockname()[-1])
