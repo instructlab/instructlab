@@ -164,16 +164,29 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Post job results to Slack
-        if: ${{ !cancelled() && steps.check_pr.outputs.is_pr == 'false' }}
-        id: slack
+      - name: Post job results to Slack if the workflow failed
+        if: failure() && steps.check_pr.outputs.is_pr == 'false'
+        id: slack-report-failure
         uses: slackapi/slack-github-action@37ebaef184d7626c5f204ab8d3baff4262dd30f0 # v1.27.0
         with:
           # Slack channel id, channel name, or user id to post message.
           # See also: https://api.slack.com/methods/chat.postMessage#channels
           # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
           channel-id: 'cli-e2e-results'
-          slack-message: "*e2e-nvidia-a10g-x4* job in *${{ github.repository }}* running on *${{ format('Branch {0}', steps.check_pr.outputs.pr_or_branch) }}* completed with result: *${{ job.status }}*"
+          slack-message: "*e2e-nvidia-a10g-x4* job in *${{ github.repository }}* running on branch `${{ steps.check_pr.outputs.pr_or_branch }}` completed *with failures* :meow_sad-rain: | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SON_OF_JEEVES_TOKEN }}
+
+      - name: Post job results to Slack if the workflow succeeded
+        if: success() && steps.check_pr.outputs.is_pr == 'false'
+        id: slack-report-success
+        uses: slackapi/slack-github-action@37ebaef184d7626c5f204ab8d3baff4262dd30f0 # v1.27.0
+        with:
+          # Slack channel id, channel name, or user id to post message.
+          # See also: https://api.slack.com/methods/chat.postMessage#channels
+          # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
+          channel-id: 'cli-e2e-results'
+          slack-message: "*e2e-nvidia-a10g-x4* job in *${{ github.repository }}* running on branch `${{ steps.check_pr.outputs.pr_or_branch }}` completed *successfully* :meow_party: | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SON_OF_JEEVES_TOKEN }}
 
