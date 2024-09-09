@@ -648,6 +648,10 @@ class _train(BaseModel):
         default_factory=lambda: DEFAULTS.DEFAULT_JUDGE_MODEL,
         description="Judge model path for phased MT-Bench evaluation.",
     )
+    phased_base_dir: str | None = Field(
+        default_factory=lambda: DEFAULTS.PHASED_DIR,
+        description="Base directory for organization of end-to-end intermediate outputs.",
+    )
 
 
 class Config(BaseModel):
