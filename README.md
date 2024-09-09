@@ -112,6 +112,8 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 3. There are a few ways you can locally install the `ilab` CLI. Select your preferred installation method from the following instructions. You can then install `ilab` and activate your `venv` environment.
 
+   > **NOTE**: ⏳ The `python3` binary shown in the following steps is the Python version that you installed in the above step. The command can also be `python3.11` or `python3.10` instead of `python3`. You can check Python's version by `python3 -V`.
+   >
    > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection. In case installation fails with error ``unsupported instruction `vpdpbusd'``, append `-C cmake.args="-DLLAMA_NATIVE=off"` to `pip install` command.
 
    See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for how to
