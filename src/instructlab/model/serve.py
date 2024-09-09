@@ -13,6 +13,7 @@ import click
 from instructlab import clickext, log, utils
 from instructlab.model.backends import backends
 from instructlab.model.backends.common import ServerException
+from instructlab.model.backends.server import BackendServer
 
 logger = logging.getLogger(__name__)
 
@@ -148,7 +149,7 @@ def serve(
 
     logger.info(f"Serving model '{model_path}' with {backend}")
 
-    backend_instance: backends.BackendServer
+    backend_instance: BackendServer
     if backend == backends.LLAMA_CPP:
         if ctx.args:
             ctx.fail(f"Unsupported extra arguments: {', '.join(ctx.args)}")
