@@ -4,7 +4,7 @@ name: E2E (NVIDIA A10G x4)
 
 on:
   schedule:
-    - cron:  '0 8,20 * * *' # Runs at 8 AM and 8 PM UTC every day
+    - cron: '0 11 * * *' # Runs at 11AM UTC every day
   workflow_dispatch:
     inputs:
       pr_or_branch:
