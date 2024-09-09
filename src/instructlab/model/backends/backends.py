@@ -5,7 +5,6 @@ from time import monotonic, sleep
 from types import FrameType
 from typing import Optional, Tuple
 import abc
-import contextlib
 import json
 import logging
 import multiprocessing
@@ -27,7 +26,7 @@ import uvicorn
 # Local
 from ...configuration import _serve as serve_config
 from ...utils import split_hostport
-from .common import CHAT_TEMPLATE_AUTO, LLAMA_CPP, VLLM, Closeable
+from .common import CHAT_TEMPLATE_AUTO, LLAMA_CPP, VLLM, Closeable, safe_close_all
 
 logger = logging.getLogger(__name__)
 
@@ -87,12 +86,6 @@ class BackendServer(abc.ABC):
     @abc.abstractmethod
     def get_backend_type(self):
         """Return which type of backend this is, llama-cpp or vllm"""
-
-
-def safe_close_all(resources: typing.Iterable[Closeable]):
-    for resource in resources:
-        with contextlib.suppress(Exception):
-            resource.close()
 
 
 def is_model_safetensors(model_path: pathlib.Path) -> bool:

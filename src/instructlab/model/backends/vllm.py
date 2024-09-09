@@ -18,7 +18,7 @@ import httpx
 # Local
 from ...client import check_api_base
 from ...configuration import get_api_base
-from .backends import BackendServer, safe_close_all, shutdown_process
+from .backends import BackendServer, shutdown_process
 from .common import (
     CHAT_TEMPLATE_AUTO,
     CHAT_TEMPLATE_TOKENIZER,
@@ -27,6 +27,7 @@ from .common import (
     ServerException,
     free_tcp_ipv4_port,
     get_model_template,
+    safe_close_all,
     verify_template_exists,
 )
 
