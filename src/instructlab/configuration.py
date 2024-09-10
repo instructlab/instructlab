@@ -176,10 +176,6 @@ class _InstructlabDefaults:
         return path.join(self._data_dir, STORAGE_DIR_NAMES.INTERNAL)
 
     @property
-    def PROMPT_FILE(self) -> str:
-        return path.join(self.INTERNAL_DIR, "prompt.txt")
-
-    @property
     def SEED_FILE(self) -> str:
         return path.join(self.INTERNAL_DIR, "seed_tasks.json")
 
@@ -455,10 +451,6 @@ class _generate(BaseModel):
     output_dir: StrictStr = Field(
         default_factory=lambda: DEFAULTS.DATASETS_DIR,
         description="Directory where generated datasets are stored.",
-    )
-    prompt_file: StrictStr = Field(
-        default_factory=lambda: DEFAULTS.PROMPT_FILE,
-        description="Path to prompt file to be used for generation.",
     )
     # TODO: remove this? It's not used anywhere, was removed by 19b9f4794f79ef81578c00c901bac3ee9db8c046
     seed_file: StrictStr = Field(

@@ -214,11 +214,6 @@ def generate(
             fg="yellow",
         )
 
-    prompt_file_path = DEFAULTS.PROMPT_FILE
-
-    if ctx.obj is not None:
-        prompt_file_path = ctx.obj.config.generate.prompt_file
-
     # If batch size is not set explicitly, default to 8
     # Once https://github.com/instructlab/sdg/issues/224 is resolved we can
     # pass batch_size=None to the library instead
@@ -312,7 +307,6 @@ def generate(
             taxonomy=taxonomy_path,
             taxonomy_base=taxonomy_base,
             output_dir=output_dir,
-            prompt_file_path=prompt_file_path,
             rouge_threshold=rouge_threshold,
             console_output=not quiet,
             yaml_rules=yaml_rules,
