@@ -16,15 +16,11 @@ from instructlab.training import TorchrunArgs, TrainingArgs
 
 # pylint: disable=ungrouped-imports
 import click
-import torch
 
 # First Party
 from instructlab import clickext, utils
 from instructlab.configuration import DEFAULTS, map_train_to_library
 from instructlab.model.backends import backends
-
-# Local
-from . import full_train
 
 logger = logging.getLogger(__name__)
 
@@ -400,8 +396,6 @@ def train(
     Takes synthetic data generated locally with `ilab data generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
-    torch.set_autocast_enabled(False)
-
     if (
         pipeline in ("full", "simple")
         and strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value
@@ -478,17 +472,23 @@ def train(
         logger.debug("test_file=%s", test_files[0])
         shutil.copy(train_files[0], train_file)
         shutil.copy(test_files[0], test_file)
-    # run_training is a dynamic attribute, pylint is not clever enough
-    # to detect it.
-    # Third Party
-    from instructlab.training import run_training  # pylint: disable=no-name-in-module
 
-    # pull the trainrandom.randinting and torch args from the flags
-    # the flags are populated from the config as a base.
-    train_args, torch_args = map_train_to_library(ctx, ctx.params)
-    logger.debug(
-        "Rendered training arguments:\n%s", pprint.pformat(train_args.model_dump())
-    )
+    if (
+        pipeline == "full"
+        or pipeline == "accelerated"
+        or strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value
+    ):
+        if not os.path.isfile(data_path):
+            ctx.fail(
+                f"Data path must be to a valid .jsonl file. Value given: {data_path}"
+            )
+
+        # pull the trainrandom.randinting and torch args from the flags
+        # the flags are populated from the config as a base.
+        train_args, torch_args = map_train_to_library(ctx, ctx.params)
+        logger.debug(
+            "Rendered training arguments:\n%s", pprint.pformat(train_args.model_dump())
+        )
 
     if strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value:
         if not (phased_phase1_data and phased_phase2_data):
@@ -523,7 +523,7 @@ def train(
         _run_phased_training(
             ctx=ctx,
             train_args=train_args,
-            torch_args=torch_args,
+            torch_args=torch_args,  # pylint: disable=possibly-used-before-assignment
             base_dir=phased_base_dir,
             phase1_data=phased_phase1_data,
             phase1_num_epochs=phased_phase1_num_epochs,
@@ -541,19 +541,28 @@ def train(
         )
 
     else:
-        if not os.path.isfile(data_path):
-            ctx.fail(
-                f"Data path must be to a valid .jsonl file. Value given: {data_path}"
+        # we can use train_args locally to run lower fidelity training
+        if is_high_fidelity(device=device) and pipeline == "accelerated":
+            # run_training is a dynamic attribute, pylint is not clever enough
+            # to detect it.
+            # Third Party
+            from instructlab.training import (
+                run_training,  # pylint: disable=no-name-in-module
             )
 
-        # we can use train_args locally to run lower fidelity training
-        if is_high_fidelity(device) or pipeline == "accelerated":
-            run_training(train_args=train_args, torch_args=torch_args, device=device)
-        elif not is_high_fidelity(device) or pipeline == "full":
+            run_training(train_args=train_args, torch_args=torch_args)
+        elif not is_high_fidelity(device=device) and pipeline == "full":
+            # Third Party
+            import torch
+
+            torch.set_autocast_enabled(False)
+            # Local
+            from . import full_train
+
             # if on CPU or MPS, execute full train, which is based
             # off of the structure of the training repo, just with different optimizers, model sizes, and special data gradient accumulation to get it
             # to fit on most consumer laptops
-            full_train.train(train_args, device)
+            full_train.train(train_args=train_args, device=device)
         elif pipeline == "simple":
             if utils.is_macos_with_m_chip() and not strategy:
                 # Local
@@ -695,7 +704,7 @@ def train(
 
 # chooses which type of training to run depending on the device provided
 def is_high_fidelity(device):
-    return device == "cuda" or device == "hpu"
+    return device in ("cuda", "hpu")
 
 
 def _prepare_phased_base_dir(phased_base_dir: pathlib.Path) -> None:
@@ -815,7 +824,6 @@ def _mtbench(
     enable_serving_output: bool,
 ) -> float:
     # TODO: optimization: run all generations in serial and then do all judgments at once to save time loading/unloading prometheus.
-
     # Third Party
     from instructlab.eval.mt_bench import MTBenchEvaluator
     import torch

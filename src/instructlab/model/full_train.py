@@ -7,22 +7,11 @@ import math
 import os
 
 # Third Party
-from instructlab.training import config
-from instructlab.training import data_process as dp
-from instructlab.training import (
-    multipack_sampler,
-    token_dataset,
-    tokenizer_utils,
-    utils,
-)
 from instructlab_quantize import run_quantize
-from torch.utils.data import DataLoader
 from tqdm import tqdm
 from transformers import Adafactor, AutoModelForCausalLM
 import numpy as np
 import psutil
-import torch
-import torch.nn.functional as F
 
 # First Party
 from instructlab.llamacpp import llamacpp_convert_to_gguf
@@ -36,6 +25,19 @@ def train(train_args, device):
     Adafactor is the optimizer of choice and the multiprocessing method is set to spawn.
     Dataloading functions imported from the training library.
     """
+
+    # pylint: disable=no-name-in-module
+    # Third Party
+    from instructlab.training import config
+    from instructlab.training import data_process as dp
+    from instructlab.training import (
+        multipack_sampler,
+        token_dataset,
+        tokenizer_utils,
+        utils,
+    )
+    from torch.utils.data import DataLoader
+    import torch
 
     dp.main(
         config.DataProcessArgs(
@@ -269,6 +271,9 @@ def train(train_args, device):
 def pad_collate_fn(batch, pad_token_id):
     lens = np.array([len(item["input_ids"]) for item in batch])
     max_len = max(lens)
+    # Third Party
+    import torch
+    import torch.nn.functional as F
 
     input_ids = torch.stack(
         [

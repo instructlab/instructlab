@@ -35,3 +35,4 @@ transformers>=4.41.2
 trl>=0.9.4
 wandb>=0.16.4
 xdg-base-dirs>=6.0.1
+psutil>=6.0.0
