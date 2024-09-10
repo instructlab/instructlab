@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: Apache-2.0
 #
+# This test script is laid out as follows:
+# - UTILITIES:  utility functions
+# - TESTS:      test functions
+# - SETUP:      environment setup steps
+# - MAIN:       test execution steps
+#
 # If you are running locally and calling the script multiple times you may want to run like this:
 #
 # TEST_DIR=/tmp/foo ./scripts/functional-tests.sh
@@ -10,35 +16,43 @@
 
 set -ex
 
-# shellcheck disable=SC2155
-export SCRIPTDIR=$(dirname "$0")
-# build a prompt string that includes the time, source file, line number, and function name
-export PS4='+$(date +"%Y-%m-%d %T") ${BASH_VERSION}:${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+#############
+# UTILITIES #
+#############
 
-if [ -n "$TEST_DIR" ]; then
-    echo "TEST_DIR is set to $TEST_DIR by the caller, will not remove it"
-    TEST_DIR_SET_BY_CALLER=1
-fi
+cleanup() {
+    set +e
+    if [ "${1:-0}" -ne 0 ]; then
+        printf "\n\n"
+        printf "\e[31m=%.0s\e[0m" {1..80}
+        printf "\n\e[31mERROR OCCURRED\e[0m\n"
+        printf "\e[31mFunction: %s\e[0m\n" "${FUNCNAME[1]}"
+        printf "\e[31mExit Code: %s\e[0m\n" "$1"
+        printf "\e[31m=%.0s\e[0m" {1..80}
+        printf "\n\n"
+    fi
+    for pid in $PID_SERVE $PID_CHAT; do
+        if [ -n "$pid" ]; then
+            kill "$pid"
+            wait "$pid"
+        fi
+    done
+    rm -f "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" \
+        "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" \
+        test_session_history
+    rm -rf test_taxonomy
+    # revert port change from test_bind_port()
+    sed -i.bak 's/9999/8000/g' "${ILAB_CONFIG_FILE}"
 
-# Support overriding the test directory for local testing otherwise creates a temporary directory
-TEST_DIR=${TEST_DIR:-$(mktemp -d)}
-
-export TEST_DIR
-export PACKAGE_NAME='instructlab'  # name we use of the top-level package directories for CLI data
-
-
-# get the directories from the platformdirs library
-export CONFIG_DIR
-export DATA_DIR
-export CACHE_DIR
-
-
-# we define the path here to reference elsewhere, but the existence of this file
-# will be managed by the ilab CLI
-export ILAB_CONFIGDIR_LOCATION
-export ILAB_CONFIG_FILE
-export ILAB_DATA_DIR
-
+    # revert model name change from test_model_print()
+    local original_model_name='merlinite-7b-lab-Q4_K_M'
+    local original_model_filename="${original_model_name}.gguf"
+    local temporary_model_filename='foo.gguf'
+    sed -i.bak "s/baz/${original_model_name}/g" "${ILAB_CONFIG_FILE}"
+    mv "${ILAB_CACHE_DIR}/models/${temporary_model_filename}" "${ILAB_CACHE_DIR}/models/${original_model_filename}" || true
+    rm -f "${ILAB_CONFIG_FILE}.bak" serve.log "${ILAB_CACHE_DIR}/models/${temporary_model_filename}"
+    set -e
+}
 
 ########################################
 # Initializes the environment necessary for this test script
@@ -94,91 +108,33 @@ function init_test_script() {
     printf 'finished initializing test script\n'
 }
 
-
-export TEST_CTX_SIZE_LAB_SERVE_LOG_FILE=test_ctx_size_lab_serve.log
-export TEST_CTX_SIZE_LAB_CHAT_LOG_FILE=test_ctx_size_lab_chat.log
-
-for cmd in ilab expect timeout; do
-    if ! type -p $cmd; then
-        echo "Error: ${cmd} is not installed"
-        exit 1
-    fi
-done
-
-PID_SERVE=
-PID_CHAT=
-
-chat_shot="ilab model chat -qq"
-
-cleanup() {
-    set +e
-    if [ "${1:-0}" -ne 0 ]; then
-        printf "\n\n"
-        printf "\e[31m=%.0s\e[0m" {1..80}
-        printf "\n\e[31mERROR OCCURRED\e[0m\n"
-        printf "\e[31mFunction: %s\e[0m\n" "${FUNCNAME[1]}"
-        printf "\e[31mExit Code: %s\e[0m\n" "$1"
-        printf "\e[31m=%.0s\e[0m" {1..80}
-        printf "\n\n"
-    fi
-    for pid in $PID_SERVE $PID_CHAT; do
-        if [ -n "$pid" ]; then
-            kill "$pid"
-            wait "$pid"
-        fi
-    done
-    rm -f "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" \
-        "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" \
-        test_session_history
-    rm -rf test_taxonomy
-    # revert port change from test_bind_port()
-    sed -i.bak 's/9999/8000/g' "${ILAB_CONFIG_FILE}"
-
-    # revert model name change from test_model_print()
-    local original_model_name='merlinite-7b-lab-Q4_K_M'
-    local original_model_filename="${original_model_name}.gguf"
-    local temporary_model_filename='foo.gguf'
-    sed -i.bak "s/baz/${original_model_name}/g" "${ILAB_CONFIG_FILE}"
-    mv "${ILAB_CACHE_DIR}/models/${temporary_model_filename}" "${ILAB_CACHE_DIR}/models/${original_model_filename}" || true
-    rm -f "${ILAB_CONFIG_FILE}.bak" serve.log "${ILAB_CACHE_DIR}/models/${temporary_model_filename}"
-    set -e
+########################################
+# This function converts a given string to uppercase.
+# Arguments:
+#  A string to convert to uppercase.
+# Outputs:
+#  The uppercase string.
+########################################
+function to_upper() {
+    local to_convert="$1"
+    printf '%s' "${to_convert^^}"
 }
 
-init_test_script
-trap 'cleanup "${?}"; test -z "${TEST_DIR_SET_BY_CALLER}" && rm -rf "${TEST_DIR}"' EXIT QUIT INT TERM
-
-rm -f "${ILAB_CONFIG_FILE}"
-
-# print version
-ilab --version
-
-# print system information
-ilab system info
-
-# pipe 3 carriage returns to ilab config init to get past the prompts
-echo -e "\n\n\n" | ilab init
-
-# Enable Debug in func tests with debug level 1
-sed -i.bak -e 's/log_level:.*/log_level: DEBUG/g;' "${ILAB_CONFIG_FILE}"
-sed -i.bak -e 's/debug_level:.*/debug_level: 1/g;' "${ILAB_CONFIG_FILE}"
-
-# It looks like GitHub action MacOS runner does not have graphics
-# so we need to disable the GPU layers if we are running in GitHub actions
-if [[ "$(uname)" == "Darwin" ]]; then
-    if command -v system_profiler; then
-        if system_profiler SPDisplaysDataType|grep "Metal Support"; then
-            echo "Metal GPU detected"
-        else
-            echo "No Metal GPU detected"
-            sed -i.bak -e 's/gpu_layers: -1/gpu_layers: 0/g;' "${ILAB_CONFIG_FILE}"
-        fi
-    else
-        echo "system_profiler not found, cannot determine GPU"
+wait_for_server(){
+    if ! timeout 60 bash -c '
+        until curl 127.0.0.1:8000|grep "{\"message\":\"Hello from InstructLab! Visit us at https://instructlab.ai\"}"; do
+            echo "waiting for server to start"
+            sleep 1
+        done
+    '; then
+        echo "server did not start"
+        exit 1
     fi
-fi
+}
 
-# download the latest version of the ilab
-ilab model download
+#########
+# TESTS #
+#########
 
 test_oci_model_download_with_vllm_backend(){
    # Enable globstar for recursive globbing
@@ -330,7 +286,7 @@ test_loading_session_history(){
     '
 }
 
-test_generate(){
+test_data_generate(){
     mkdir -p test_taxonomy/compositional_skills
     cat - <<EOF >  test_taxonomy/compositional_skills/qna.yaml
 created_by: ci
@@ -474,31 +430,6 @@ test_server_welcome_message(){
     fi
 }
 
-wait_for_server(){
-    if ! timeout 60 bash -c '
-        until curl 127.0.0.1:8000|grep "{\"message\":\"Hello from InstructLab! Visit us at https://instructlab.ai\"}"; do
-            echo "waiting for server to start"
-            sleep 1
-        done
-    '; then
-        echo "server did not start"
-        exit 1
-    fi
-}
-
-
-########################################
-# This function converts a given string to uppercase.
-# Arguments:
-#  A string to convert to uppercase.
-# Outputs:
-#  The uppercase string.
-########################################
-function to_upper() {
-    local to_convert="$1"
-    printf '%s' "${to_convert^^}"
-}
-
 test_model_print(){
     local src_model="${ILAB_CACHE_DIR}/models/merlinite-7b-lab-Q4_K_M.gguf"
     local target_model="${ILAB_CACHE_DIR}/models/foo.gguf"
@@ -595,6 +526,88 @@ test_server_chat_template() {
     test_server_template_value "$SCRIPTDIR/test-data/mock-template.txt" 3
 }
 
+#########
+# SETUP #
+#########
+
+# shellcheck disable=SC2155
+export SCRIPTDIR=$(dirname "$0")
+# build a prompt string that includes the time, source file, line number, and function name
+export PS4='+$(date +"%Y-%m-%d %T") ${BASH_VERSION}:${BASH_SOURCE}:${LINENO}: ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
+
+if [ -n "$TEST_DIR" ]; then
+    echo "TEST_DIR is set to $TEST_DIR by the caller, will not remove it"
+    TEST_DIR_SET_BY_CALLER=1
+fi
+
+# Support overriding the test directory for local testing otherwise creates a temporary directory
+TEST_DIR=${TEST_DIR:-$(mktemp -d)}
+
+export TEST_DIR
+export PACKAGE_NAME='instructlab'  # name we use of the top-level package directories for CLI data
+
+# get the directories from the platformdirs library
+export CONFIG_DIR
+export DATA_DIR
+export CACHE_DIR
+
+# we define the path here to reference elsewhere, but the existence of this file
+# will be managed by the ilab CLI
+export ILAB_CONFIGDIR_LOCATION
+export ILAB_CONFIG_FILE
+export ILAB_DATA_DIR
+
+export TEST_CTX_SIZE_LAB_SERVE_LOG_FILE=test_ctx_size_lab_serve.log
+export TEST_CTX_SIZE_LAB_CHAT_LOG_FILE=test_ctx_size_lab_chat.log
+
+for cmd in ilab expect timeout; do
+    if ! type -p $cmd; then
+        echo "Error: ${cmd} is not installed"
+        exit 1
+    fi
+done
+
+PID_SERVE=
+PID_CHAT=
+
+chat_shot="ilab model chat -qq"
+
+init_test_script
+trap 'cleanup "${?}"; test -z "${TEST_DIR_SET_BY_CALLER}" && rm -rf "${TEST_DIR}"' EXIT QUIT INT TERM
+
+rm -f "${ILAB_CONFIG_FILE}"
+
+# print version
+ilab --version
+
+# print system information
+ilab system info
+
+# pipe 3 carriage returns to ilab config init to get past the prompts
+echo -e "\n\n\n" | ilab init
+
+# Enable Debug in func tests with debug level 1
+sed -i.bak -e 's/log_level:.*/log_level: DEBUG/g;' "${ILAB_CONFIG_FILE}"
+sed -i.bak -e 's/debug_level:.*/debug_level: 1/g;' "${ILAB_CONFIG_FILE}"
+
+# It looks like GitHub action MacOS runner does not have graphics
+# so we need to disable the GPU layers if we are running in GitHub actions
+if [[ "$(uname)" == "Darwin" ]]; then
+    if command -v system_profiler; then
+        if system_profiler SPDisplaysDataType|grep "Metal Support"; then
+            echo "Metal GPU detected"
+        else
+            echo "No Metal GPU detected"
+            sed -i.bak -e 's/gpu_layers: -1/gpu_layers: 0/g;' "${ILAB_CONFIG_FILE}"
+        fi
+    else
+        echo "system_profiler not found, cannot determine GPU"
+    fi
+fi
+
+# download the latest version of the ilab
+ilab model download
+
 ########
 # MAIN #
 ########
@@ -607,7 +620,7 @@ test_ctx_size
 cleanup
 test_loading_session_history
 cleanup
-test_generate
+test_data_generate
 cleanup
 test_model_train
 cleanup
