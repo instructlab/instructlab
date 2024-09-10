@@ -143,13 +143,6 @@ jobs:
         run: |
           pip cache remove llama_cpp_python
 
-  test-workflow-complete:
-    needs: ["test"]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Test Workflow Complete
-        run: echo "Test Workflow Complete"
-
   docs:
     runs-on: ubuntu-latest
     steps:
@@ -214,3 +207,10 @@ jobs:
         if: always()
         run: |
           pip cache remove llama_cpp_python
+
+  test-workflow-complete:
+    needs: ["test", "docs"]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Workflow Complete
+        run: echo "Test Workflow Complete"
