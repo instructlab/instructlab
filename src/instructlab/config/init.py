@@ -117,23 +117,47 @@ def init(
     if train_profile is not None:
         cfg.train = read_train_profile(train_profile)
     elif interactive:
-        entries = sorted(listdir(DEFAULTS.TRAIN_PROFILE_DIR))
-        click.echo("Please choose a train profile to use:")
-        click.echo("[0] No profile (CPU-only)")
-        for i, value in enumerate(entries):
+        train_profile_filenames = sorted(listdir(DEFAULTS.TRAIN_PROFILE_DIR))
+        # generate human-friendly text out of train profile filenames
+        profile_options = []
+        for filename in train_profile_filenames:
+            # one gpu type
+            split_filename = filename.split("_")
+            if len(split_filename) == 2:
+                gputype1 = split_filename[0]
+                num_gpu = split_filename[1].split(".")[0]
+                profile_options.append(f"Nvidia {gputype1} {num_gpu} ({filename})")
+            # two gpu types
+            elif len(split_filename) == 3:
+                gputype1 = split_filename[0]
+                gputype2 = split_filename[1]
+                num_gpu = split_filename[2].split(".")[0]
+                profile_options.append(
+                    f"Nvidia {gputype1}/{gputype2} {num_gpu} ({filename})"
+                )
+        click.echo(
+            "Please choose a train profile to use.\nTrain profiles assist with the complexity of configuring specific GPU hardware with the InstructLab Training library.\nYou can still take advantage of hardware acceleration for training even if your hardware is not listed."
+        )
+        click.echo("[0] No profile (CPU, Apple Metal, AMD ROCm)")
+        for i, value in enumerate(profile_options):
             click.echo(f"[{i+1}] {value}")
         train_profile_selection = click.prompt(
-            "Enter the number of your choice [hit enter for the default CPU-only profile]",
+            "Enter the number of your choice [hit enter for no profile]",
             type=int,
             default=0,
         )
-        if 1 <= train_profile_selection <= len(entries):
-            click.echo(f"You selected: {entries[train_profile_selection - 1]}")
+        if 1 <= train_profile_selection <= len(profile_options):
+            click.echo(f"You selected: {profile_options[train_profile_selection - 1]}")
             cfg.train = read_train_profile(
-                join(DEFAULTS.TRAIN_PROFILE_DIR, entries[train_profile_selection - 1])
+                join(
+                    DEFAULTS.TRAIN_PROFILE_DIR,
+                    train_profile_filenames[train_profile_selection - 1],
+                )
             )
         elif train_profile_selection == 0:
-            click.echo("Using default CPU-only train profile.")
+            click.echo(
+                "No profile selected - any hardware acceleration for training must be configured manually."
+            )
         else:
             click.secho(
                 "Invalid selection. Please select a valid train profile option.",
@@ -168,7 +192,7 @@ def check_if_configs_exist(fresh_install) -> bool:
             raise click.exceptions.Exit(0)
     if exists(DEFAULTS.TRAIN_PROFILE_DIR) and not fresh_install:
         return click.confirm(
-            f"Found {DEFAULTS.TRAIN_PROFILE_DIR}, do you also want to reset existing profiles?"
+            f"Existing training profiles were found in {DEFAULTS.TRAIN_PROFILE_DIR}\nDo you also want to restore these profiles to the default values?"
         )
     # default behavior should be do NOT overwrite files that could have just been created
     return False
