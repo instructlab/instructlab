@@ -1,12 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from contextlib import redirect_stderr, redirect_stdout
 from time import sleep
 from typing import Optional, cast
 import logging
 import multiprocessing
-import os
 import pathlib
 
 # Third Party
@@ -20,7 +18,7 @@ import llama_cpp.server.app as llama_app
 # Local
 from ...client import check_api_base
 from ...configuration import get_api_base
-from .backends import UvicornServer, get_uvicorn_config, is_temp_server_running
+from .backends import UvicornServer, get_uvicorn_config
 from .common import (
     API_ROOT_WELCOME_MESSAGE,
     CHAT_TEMPLATE_AUTO,
@@ -200,21 +198,7 @@ def server(
     )
     s = UvicornServer(config)
 
-    # If this is not the main process, this is the temp server process that ran in the background
-    # after `ilab model chat` was executed.
-    # In this case, we want to redirect stdout to null to avoid cluttering the chat with messages
-    # returned by the server.
-    if is_temp_server_running():
-        # TODO: redirect temp server logs to a file instead of hidding the logs completely
-        # Redirect stdout and stderr to null
-        with (
-            open(os.devnull, "w", encoding="utf-8") as f,
-            redirect_stdout(f),
-            redirect_stderr(f),
-        ):
-            s.run()
-    else:
-        s.run()
+    s.run()
 
     if queue:
         queue.close()
