@@ -10,7 +10,7 @@ import click
 import pytest
 
 # First Party
-from instructlab.model.backends.backends import get_max_stable_vram_wait
+from instructlab.model.backends.vllm import get_max_stable_vram_wait
 from instructlab.model.serve import warn_for_unsuported_backend_param
 
 # Local
