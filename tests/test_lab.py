@@ -15,7 +15,9 @@ import click
 import pytest
 
 # First Party
+from instructlab import configuration as config
 from instructlab import lab
+from instructlab.clickext import ConfigOption, get_default_and_description
 from instructlab.utils import is_macos_with_m_chip
 
 
@@ -124,6 +126,70 @@ def test_ilab_cli_help(command: Command, cli_runner: CliRunner):
     assert "--help" in cmd
     result = cli_runner.invoke(lab.ilab, cmd)
     assert result.exit_code == 0, result.stdout
+
+
+def test_cli_help_matches_field_description(cli_runner: CliRunner):
+    commands: typing.Dict[str, typing.Set[str]] = {}
+    for primary in metadata.entry_points(group="instructlab.command"):
+        sub = commands.setdefault(primary.name, set())
+        sub.add("")
+        for secondary in metadata.entry_points(
+            group=f"instructlab.command.{primary.name}"
+        ):
+            sub.add(secondary.name)
+
+    for prim, secondaries in commands.items():
+        if prim == "config":
+            continue
+        for sec in secondaries:
+            command_name = f"{prim} {sec}".strip()
+            entry_points = metadata.entry_points(group=f"instructlab.command.{prim}")
+            for entry_point in entry_points:
+                if entry_point.name != sec:
+                    continue
+                command = entry_point.load()
+                if not isinstance(command, click.Command):
+                    continue
+                command_name_to_list = command_name.split()
+                result = cli_runner.invoke(
+                    lab.ilab,
+                    ["--config", "DEFAULT"] + command_name_to_list + ["--help"],
+                )
+                assert "Usage:" in result.output
+                assert result.exit_code == 0, result.output
+
+                for param in command.params:
+                    if not isinstance(param, ConfigOption):
+                        continue
+                    cfg = config.get_default_config()
+                    # Build the config name to retrieve the description
+                    # We only want the current command not the parent command
+                    # for instance command_name_to_list is "model generate", "model" is
+                    # not known in the Pydantic Config so we only want "generate". We
+                    # use the last element in case we add more positional arguments in
+                    # the future.
+                    config_identifier = (
+                        [command_name_to_list[-1]] if command_name_to_list[-1] else []
+                    )
+                    if hasattr(param, "config_sections") and param.config_sections:
+                        config_identifier += param.config_sections
+                    config_identifier.append(str(param.name))
+
+                    # Fetch the description
+                    description, _ = get_default_and_description(cfg, config_identifier)
+
+                    # This is annoying but for additional_args, the description
+                    # string is "Additional arguments to pass to the training
+                    # script. These arguments are passed as key-value pairs to the
+                    # training script." but when the help is generated, the text is
+                    # truncated at the key-value word and we end up with
+                    # "key-\nvalue", so when we normalize the output and remove the
+                    # newlines this gives us "key- value" which is NOT what we want.
+                    # So we need to replace "- " with "-" to make sure we match.
+                    normalize_output = " ".join(result.stdout.split()).replace(
+                        "- ", "-"
+                    )
+                    assert str(description) in normalize_output, normalize_output
 
 
 @pytest.mark.parametrize("alias", aliases)

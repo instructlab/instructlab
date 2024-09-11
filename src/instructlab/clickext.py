@@ -16,7 +16,7 @@ from click_didyoumean import DYMGroup
 import click
 
 # First Party
-from instructlab.configuration import DEFAULTS, storage_dirs_exist
+from instructlab.configuration import DEFAULTS, BaseModel, storage_dirs_exist
 
 logger = logging.getLogger(__name__)
 
@@ -111,11 +111,11 @@ class ExpandAliasesGroup(LazyEntryPointGroup):
 class ConfigOption(click.Option):
     """A click.Option with extended default lookup help
 
-    The defaults can be looked up in a subsection of the context's
-    default_map.
+    The defaults and description can be looked up in a subsection of the context's
+    config object.
 
     The help output of ConfigOption class reads defaults from the context's
-    default_map and shows the name of the config settings.
+    config object field and shows the name of the config settings.
 
     Example:
         Options:
@@ -133,10 +133,14 @@ class ConfigOption(click.Option):
         super().__init__(*args, **kwargs)
         if self.show_default:
             raise ValueError("show_default must be False")
+        if self.help:
+            raise ValueError(
+                f"help must not be set for '{self.name}', it is derived from the Field description in the Config class"
+            )
         if config_sections:
-            self.config_sections = tuple(config_sections.split("."))
+            self.config_sections = list(config_sections.split("."))
         else:
-            self.config_sections = ()
+            self.config_sections = []
 
     def get_help_record(self, ctx: click.Context) -> tuple[str, str] | None:
         result = super().get_help_record(ctx)
@@ -145,25 +149,29 @@ class ConfigOption(click.Option):
             # missing default map (clickman, sphinx)
             return result
 
-        # get default from default_map
         cmd = ctx.command.name
         name = self.name
+
         if self.config_sections:
-            config_name = f"{cmd}.{'.'.join(self.config_sections)}.{name}"
+            config_identifier = (
+                [str(cmd)]
+                + [
+                    str(section)
+                    for section in self.config_sections
+                    if section is not None
+                ]
+                + [str(name)]
+            )
         else:
-            config_name = f"{cmd}.{name}"
+            config_identifier = [str(cmd), str(name)]
 
         if typing.TYPE_CHECKING:
             assert name is not None
 
-        section = ctx.default_map
-        for secname in self.config_sections:
-            section = section.get(secname, {})
-        if self.name not in section:
-            raise ValueError(f"{config_name} not in default_map {ctx.default_map}")
-
         # create help extra
-        default_value = self.get_default(ctx)
+        description, default_value = get_default_and_description(
+            ctx.obj.config, config_identifier
+        )
         if default_value is None:
             default_string = "<None>"
         elif isinstance(default_value, (list, tuple)):
@@ -171,14 +179,23 @@ class ConfigOption(click.Option):
         else:
             default_string = str(default_value)
 
-        default_msg = f"default: {default_string}; config: '{config_name}'"
+        default_msg = (
+            f"default: {default_string}; config: '{'.'.join(config_identifier)}'"
+        )
 
         # extend message
         prefix, msg = result
-        if msg.endswith("]"):
-            msg = f"{msg[:-1]}; {default_msg}]"
+        # If the 'help' field on click.Option is not set, then 'msg' will be None
+        # unless options like 'required' are set
+        if msg:
+            # Needed to handle [required] option for example
+            if msg.endswith("]"):
+                msg = f"{description} {msg[:-1]}; {default_msg}]"
+            else:
+                msg = f"{description} {msg} [{default_msg}]"
         else:
-            msg = f"{msg}  [{default_msg}]"
+            # do not append description if msg is None to avoid space
+            msg = f"{description} [{default_msg}]"  # type: ignore
         return prefix, msg
 
     def consume_value(
@@ -321,3 +338,43 @@ def display_params(f: typing.Callable) -> typing.Callable:
     )
 
     return human_option(json_option(wrapper))
+
+
+def get_default_and_description(
+    cfg: BaseModel, config_identifier: list[str]
+) -> typing.Tuple[str | None, typing.Any]:
+    """
+    Retrieve the default value and description for a given configuration field name.
+
+    This function searches through the fields of a Pydantic BaseModel to find a field
+    that matches the provided configuration name. If the field is found, it returns
+    the field's description and default value. If the field is a nested model, the
+    function is called recursively to search within the nested model.
+
+    Args:
+        cfg (BaseModel): The Pydantic model instance containing the configuration fields.
+        config_identifier (list[str]): A list of field names to search for in the model.
+
+    Returns:
+        typing.Tuple[str | None, typing.Any]: A tuple containing the field's description
+        and default value. If the field is not found, a ValueError is raised.
+
+    Raises:
+        ValueError: If the specified config_identifier is not found in the model.
+    """
+    # Loop through the fields of the model
+    for field_name, field in cfg.model_fields.items():
+        if field_name == config_identifier[0]:
+            value = getattr(cfg, field_name)
+            description = field.description
+            default_value = field.get_default(call_default_factory=True)
+
+            # If the value is a nested model and there are more names to check, recurse
+            # Slice the config_identifier list to remove the current field name
+            if isinstance(value, BaseModel) and len(config_identifier) > 1:
+                return get_default_and_description(value, config_identifier[1:])
+
+            return description, default_value
+
+    # If no match is found, raise an exception
+    raise ValueError(f"{config_identifier} not in Config object")

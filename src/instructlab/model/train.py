@@ -57,21 +57,18 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     type=click.Path(file_okay=True),
     cls=clickext.ConfigOption,
     required=True,  # default from config
-    help="Base directory where data is stored.",
 )
 @click.option(
     "--ckpt-output-dir",
     type=click.Path(),
     cls=clickext.ConfigOption,
     required=True,  # default from config
-    help="output directory to store checkpoints in during training",
 )
 @click.option(
     "--data-output-dir",
     type=click.Path(),
     cls=clickext.ConfigOption,
     required=True,  # default from config
-    help="output directory to store training data in",
 )
 @click.option(
     "--input-dir",
@@ -102,7 +99,6 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     type=click.Path(),
     cls=clickext.ConfigOption,
     required=True,  # default from config
-    help="HuggingFace model repo path, in the format of <namespace>/<repo_name>.",
     default=DEFAULTS.MODEL_REPO,
 )
 @click.option(
@@ -126,7 +122,6 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     type=click.INT,
     cls=clickext.ConfigOption,
     required=True,  # default from config
-    help="The number of times the training data is passed through the training algorithm. Please note that this value is used on Linux platforms only.",
 )
 @click.option(
     "--device",
@@ -157,28 +152,24 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     type=int,
     cls=clickext.ConfigOption,
     required=True,  # default from config
-    help="maximum length, in tokens, of a single sample.",
 )
 @click.option(
     "--max-batch-len",
     type=int,
     cls=clickext.ConfigOption,
     required=True,  # default from config
-    help="maximum overall length of samples processed in a given batch.",
 )
 @click.option(
     "--effective-batch-size",
     type=int,
     cls=clickext.ConfigOption,
     required=True,  # default from config
-    help="total batch size across all GPUs",
 )
 @click.option(
     "--save-samples",
     type=int,
     cls=clickext.ConfigOption,
     required=True,  # default from config
-    help="The number of samples processed in between checkpoints.",
 )
 @click.option(
     "--learning-rate",
@@ -186,7 +177,6 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     cls=clickext.ConfigOption,
     config_sections=ADDITIONAL_ARGUMENTS,
     required=True,  # default from config
-    help="learning rate for training",
 )
 @click.option(
     "--warmup-steps",
@@ -194,7 +184,6 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     cls=clickext.ConfigOption,
     config_sections=ADDITIONAL_ARGUMENTS,
     required=True,  # default from config
-    help="warmup steps for training",
 )
 @click.option(
     "--deepspeed-cpu-offload-optimizer",
@@ -202,7 +191,6 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     cls=clickext.ConfigOption,
     required=True,  # default from config
     # config_section="deepspeed_options",
-    help="if true enables optimizer offload",
 )
 @click.option(
     "--deepspeed-cpu-offload-optimizer-ratio",
@@ -210,7 +198,6 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     cls=clickext.ConfigOption,
     required=True,  # default from config
     config_sections=ADDITIONAL_ARGUMENTS,
-    help="cpu offload optimizer ratio",
 )
 @click.option(
     "--deepspeed-cpu-offload-optimizer-pin-memory",
@@ -218,7 +205,6 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     cls=clickext.ConfigOption,
     required=True,  # default from config
     config_sections=ADDITIONAL_ARGUMENTS,
-    help="if true pin memory when using cpu optimizer",
 )
 # below flags are invalid if lora == false
 @click.option(
@@ -226,21 +212,18 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     type=int,
     cls=clickext.ConfigOption,
     # config_section="lora",
-    help="rank of update matricies",
 )
 @click.option(
     "--lora-alpha",
     type=int,
     cls=clickext.ConfigOption,
     config_sections=ADDITIONAL_ARGUMENTS,
-    help="how influential/strong lora tune will be",
 )
 @click.option(
     "--lora-dropout",
     type=float,
     cls=clickext.ConfigOption,
     config_sections=ADDITIONAL_ARGUMENTS,
-    help="dropout for LoRA layers",
 )
 @click.option(
     "--lora-target-modules",
@@ -248,27 +231,23 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     config_sections=ADDITIONAL_ARGUMENTS,
     multiple=True,
     default=[],
-    help="LoRA modules to use",
 )
 @click.option(
     "--lora-quantize-dtype",
     type=str,
     cls=clickext.ConfigOption,
     default=None,
-    help="quantization data type to use when training a LoRA.",
 )
 @click.option(
     "--is-padding-free",
     cls=clickext.ConfigOption,
     type=bool,
-    help="whether or not we are training a padding free transformer.",
 )
 @click.option(
     "--gpus",
     "nproc_per_node",
     cls=clickext.ConfigOption,
     type=int,
-    help="this is the number of GPUs to use. This is a torch specific arg and must be called nproc-per-node",
 )
 @click.option(
     "--nnodes",
@@ -276,7 +255,6 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     cls=clickext.ConfigOption,
     config_sections=ADDITIONAL_ARGUMENTS,
     required=True,  # default from config
-    help="number of machines in the training pool.",
 )
 @click.option(
     "--node-rank",
@@ -284,7 +262,6 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     cls=clickext.ConfigOption,
     config_sections=ADDITIONAL_ARGUMENTS,
     required=True,  # default from config
-    help="the rank of this machine in the training group.",
 )
 @click.option(
     "--rdzv-id",
@@ -292,7 +269,6 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     cls=clickext.ConfigOption,
     config_sections=ADDITIONAL_ARGUMENTS,
     required=True,  # default from config
-    help="this is the training group ID. So, if there are multiple matching endpoints, only the machines with matching IDs can connect.",
 )
 @click.option(
     "--rdzv-endpoint",
@@ -300,7 +276,6 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     cls=clickext.ConfigOption,
     config_sections=ADDITIONAL_ARGUMENTS,
     required=True,  # default from config
-    help="this is the rendezvous endpoint which other torchrun jobs will join on.",
 )
 @click.option(
     "--legacy",
@@ -319,7 +294,6 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     "--phased-base-dir",
     type=clickpath_setup(is_dir=True),
     cls=clickext.ConfigOption,
-    help="Base directory for organization of end-to-end intermediate outputs.",
 )
 @click.option(
     "--phased-phase1-data",
@@ -330,19 +304,16 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     "--phased-phase1-num-epochs",
     cls=clickext.ConfigOption,
     type=click.IntRange(min=1),
-    help="Number of epochs to run for first phase of end-to-end training.",
 )
 @click.option(
     "--phased-phase1-samples-per-save",
     cls=clickext.ConfigOption,
     type=click.IntRange(min=0),
-    help="Number of samples to train on between saves for first phase of end-to-end training.",
 )
 @click.option(
     "--phased-phase1-effective-batch-size",
     cls=clickext.ConfigOption,
     type=click.IntRange(min=1),
-    help="Total size of a training batch over all GPUs for Phase 1",
 )
 @click.option(
     "--phased-phase2-data",
@@ -353,26 +324,22 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     "--phased-phase2-num-epochs",
     cls=clickext.ConfigOption,
     type=click.IntRange(min=1),
-    help="Number of epochs to run for second phase of end-to-end training.",
 )
 @click.option(
     "--phased-phase2-samples-per-save",
     cls=clickext.ConfigOption,
     type=click.IntRange(min=0),
-    help="Number of samples to train on between saves for second phase of end-to-end training.",
 )
 @click.option(
     "--phased-phase2-effective-batch-size",
     cls=clickext.ConfigOption,
     type=click.IntRange(min=1),
-    help="Total size of a training batch over all GPUs for Phase 2",
 )
 @click.option(
     "--phased-mt-bench-judge",
     # type=clickpath_setup(is_dir=True), # want this in the future, can't guarantee it exists so can't enforce it this way.
     type=click.Path(dir_okay=True, file_okay=False, path_type=pathlib.Path),
     cls=clickext.ConfigOption,
-    help="MT-Bench judge. Should be absolute path to local judge model directory. Download with `ilab model download` if necessary.",
 )
 @click.option(
     "--skip-user-confirm",

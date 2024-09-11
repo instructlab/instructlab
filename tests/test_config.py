@@ -10,6 +10,7 @@ import shutil
 import typing
 
 # Third Party
+from pydantic import BaseModel, Field
 from xdg_base_dirs import xdg_cache_home, xdg_data_home
 import pydantic
 import pytest
@@ -17,6 +18,7 @@ import yaml
 
 # First Party
 from instructlab import configuration as config
+from instructlab.clickext import ConfigOption, get_default_and_description
 from instructlab.configuration import DEFAULTS
 from instructlab.log import configure_logging
 
@@ -428,3 +430,78 @@ def test_read_train_profile(
                 continue
             if profile_data[k] is not None:
                 assert v == profile_data[k]
+
+
+class NestedConfig(BaseModel):
+    nested_field: str = Field(
+        default="nested_default", description="Nested field description"
+    )
+
+
+class Config(BaseModel):
+    field: str = Field(default="default_value", description="Field description")
+    nested: NestedConfig = NestedConfig()
+
+
+@pytest.mark.parametrize(
+    "cfg, config_identifier, expected_description, expected_default_value, expect_error",
+    [
+        (Config(), ["field"], "Field description", "default_value", False),
+        (
+            Config(),
+            ["nested", "nested_field"],
+            "Nested field description",
+            "nested_default",
+            False,
+        ),
+        (Config(), ["non_existent_field"], None, None, True),
+        (Config(), ["nested", "non_existent_field"], None, None, True),
+    ],
+)
+def test_get_default_and_description(
+    cfg, config_identifier, expected_description, expected_default_value, expect_error
+):
+    if expect_error:
+        with pytest.raises(ValueError):
+            get_default_and_description(cfg, config_identifier)
+    else:
+        description, default_value = get_default_and_description(cfg, config_identifier)
+        assert description == expected_description
+        assert default_value == expected_default_value
+
+
+@pytest.mark.parametrize(
+    "param_decls, help_text, show_default, should_raise",
+    [
+        (
+            ["--test"],
+            "This is a test help message",
+            False,
+            True,
+        ),  # Should raise ValueError since there is help text but show_default=False
+        (["--test"], None, False, False),  # Should not raise ValueError
+        (
+            ["--test"],
+            None,
+            True,
+            True,
+        ),  # Should raise ValueError with show_default=True
+    ],
+)
+def test_click_option(param_decls, help_text, show_default, should_raise):
+    if should_raise:
+        with pytest.raises(ValueError):
+            ConfigOption(
+                param_decls=param_decls,
+                help=help_text,
+                show_default=show_default,
+            )
+    else:
+        try:
+            ConfigOption(
+                param_decls=param_decls,
+                help=help_text,
+                show_default=show_default,
+            )
+        except ValueError as e:
+            pytest.fail(f"ConfigOption raised an unexpected ValueError: {e}")
