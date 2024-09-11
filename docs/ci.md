@@ -2,15 +2,24 @@
 
 ## Unit tests
 
-All unit tests currently live in the `tests/` directory.
+Unit tests are designed to test specific InstructLab components or features in isolation. In CI, these tests are run on Python 3.11 and Python 3.10 on CPU-only Ubuntu
+runners as well as Python 3.11 on CPU-only MacOS runners. Generally, new code should be adding or modifying unit tests.
+
+All unit tests currently live in the `tests/` directory and are run with [pytest](https://docs.pytest.org/) via [tox](https://tox.wiki/).
 
 ## Functional tests
 
-The functional test script can be found at `scripts/functional-tests.sh`
+Functional tests are designed to test InstructLab components or features in tandem, but not necessarily as part of a complex workflow. In CI, these tests are run on
+Python 3.11 and Python 3.10 on CPU-only Ubuntu runners as well as Python 3.11 on CPU-only MacOS runners. New code may or may not need a functional test but should strive
+to implement one if possible.
+
+The functional test script is Shell-based and can be found at `scripts/functional-tests.sh`.
 
 ## End-to-end (E2E) tests
 
-The end-to-end test script can be found at `scripts/basic-workflow-tests.sh`.
+End-to-end (E2E) tests are designed to test the InstructLab workflow from end-to-end, mimicking real user behavior.
+
+The E2E test script is Shell-based and can be found at `scripts/basic-workflow-tests.sh`.
 This script takes arguments that control which features are used to allow
 varying test coverage based on the resources available on a given test runner.
 
