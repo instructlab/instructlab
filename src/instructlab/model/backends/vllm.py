@@ -18,7 +18,7 @@ import httpx
 # Local
 from ...client import check_api_base
 from ...configuration import get_api_base
-from .backends import BackendServer, shutdown_process
+from .backends import shutdown_process
 from .common import (
     CHAT_TEMPLATE_AUTO,
     CHAT_TEMPLATE_TOKENIZER,
@@ -30,6 +30,7 @@ from .common import (
     safe_close_all,
     verify_template_exists,
 )
+from .server import BackendServer
 
 logger = logging.getLogger(__name__)
 

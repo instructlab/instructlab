@@ -20,12 +20,7 @@ import llama_cpp.server.app as llama_app
 # Local
 from ...client import check_api_base
 from ...configuration import get_api_base
-from .backends import (
-    BackendServer,
-    UvicornServer,
-    get_uvicorn_config,
-    is_temp_server_running,
-)
+from .backends import UvicornServer, get_uvicorn_config, is_temp_server_running
 from .common import (
     API_ROOT_WELCOME_MESSAGE,
     CHAT_TEMPLATE_AUTO,
@@ -36,6 +31,7 @@ from .common import (
     get_model_template,
     verify_template_exists,
 )
+from .server import BackendServer
 
 logger = logging.getLogger(__name__)
 

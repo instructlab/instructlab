@@ -4,7 +4,6 @@
 from time import monotonic, sleep
 from types import FrameType
 from typing import Optional, Tuple
-import abc
 import json
 import logging
 import multiprocessing
@@ -14,19 +13,18 @@ import signal
 import struct
 import subprocess
 import sys
-import typing
 
 # Third Party
 from uvicorn import Config
 import click
 import fastapi
-import httpx
 import uvicorn
 
 # Local
 from ...configuration import _serve as serve_config
 from ...utils import split_hostport
-from .common import CHAT_TEMPLATE_AUTO, LLAMA_CPP, VLLM, Closeable, safe_close_all
+from .common import CHAT_TEMPLATE_AUTO, LLAMA_CPP, VLLM
+from .server import BackendServer
 
 logger = logging.getLogger(__name__)
 
@@ -39,53 +37,6 @@ class UvicornServer(uvicorn.Server):
     def handle_exit(self, sig: int, frame: Optional[FrameType]) -> None:
         if not is_temp_server_running() or sig != signal.SIGINT:
             super().handle_exit(sig=sig, frame=frame)
-
-
-class BackendServer(abc.ABC):
-    """Base class for a serving backend"""
-
-    def __init__(
-        self,
-        model_family: str,
-        model_path: pathlib.Path,
-        chat_template: str,
-        api_base: str,
-        host: str,
-        port: int,
-    ) -> None:
-        self.model_family = model_family
-        self.model_path = model_path
-        self.chat_template = chat_template if chat_template else CHAT_TEMPLATE_AUTO
-        self.api_base = api_base
-        self.host = host
-        self.port = port
-        self.resources: list[Closeable] = []
-
-    @abc.abstractmethod
-    def run(self):
-        """Run serving backend in foreground (ilab model serve)"""
-
-    @abc.abstractmethod
-    def run_detached(
-        self,
-        http_client: httpx.Client | None = None,
-        background: bool = True,
-        foreground_allowed: bool = False,
-        max_startup_retries: int = 0,
-    ) -> str:
-        """Run serving backend in background ('ilab model chat' when server is not running)"""
-
-    def shutdown(self):
-        """Shutdown serving backend"""
-
-        safe_close_all(self.resources)
-
-    def register_resources(self, resources: typing.Iterable[Closeable]) -> None:
-        self.resources.extend(resources)
-
-    @abc.abstractmethod
-    def get_backend_type(self):
-        """Return which type of backend this is, llama-cpp or vllm"""
 
 
 def is_model_safetensors(model_path: pathlib.Path) -> bool:

@@ -13,7 +13,7 @@ import pytest
 
 # First Party
 from instructlab import lab
-from instructlab.model.backends.backends import BackendServer
+from instructlab.model.backends.server import BackendServer
 
 
 @pytest.mark.usefixtures("mock_mlx_package")
