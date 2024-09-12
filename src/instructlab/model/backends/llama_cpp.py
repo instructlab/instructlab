@@ -3,23 +3,28 @@
 # Standard
 from contextlib import redirect_stderr
 from time import sleep
+from types import FrameType
 from typing import Optional, cast
 import logging
 import multiprocessing
 import pathlib
+import signal
 
 # Third Party
 from llama_cpp import llama_chat_format, llama_token_get_text
 from llama_cpp.server.app import create_app
 from llama_cpp.server.model import LlamaProxy
 from llama_cpp.server.settings import Settings
+from uvicorn import Config
+import fastapi
 import httpx
 import llama_cpp.server.app as llama_app
+import uvicorn
 
 # Local
 from ...client import check_api_base
 from ...configuration import get_api_base
-from .backends import UvicornServer, get_uvicorn_config
+from .backends import is_temp_server_running
 from .common import (
     API_ROOT_WELCOME_MESSAGE,
     CHAT_TEMPLATE_AUTO,
@@ -252,6 +257,25 @@ def server(
     if queue:
         queue.close()
         queue.join_thread()
+
+
+def get_uvicorn_config(app: fastapi.FastAPI, host: str, port: int) -> Config:
+    return Config(
+        app,
+        host=host,
+        port=port,
+        log_level=logging.ERROR,
+        limit_concurrency=2,  # Make sure we only serve a single client at a time
+        timeout_keep_alive=0,  # prevent clients holding connections open (we only have 1)
+    )
+
+
+class UvicornServer(uvicorn.Server):
+    """Override uvicorn.Server to handle SIGINT."""
+
+    def handle_exit(self, sig: int, frame: Optional[FrameType]) -> None:
+        if not is_temp_server_running() or sig != signal.SIGINT:
+            super().handle_exit(sig=sig, frame=frame)
 
 
 def augment_chat_template(

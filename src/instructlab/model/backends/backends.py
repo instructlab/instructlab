@@ -1,21 +1,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from types import FrameType
 from typing import Optional, Tuple
 import json
 import logging
 import multiprocessing
 import pathlib
-import signal
 import struct
 import sys
 
 # Third Party
-from uvicorn import Config
 import click
-import fastapi
-import uvicorn
 
 # Local
 from ...configuration import _serve as serve_config
@@ -26,14 +21,6 @@ from .server import BackendServer
 logger = logging.getLogger(__name__)
 
 SUPPORTED_BACKENDS = frozenset({LLAMA_CPP, VLLM})
-
-
-class UvicornServer(uvicorn.Server):
-    """Override uvicorn.Server to handle SIGINT."""
-
-    def handle_exit(self, sig: int, frame: Optional[FrameType]) -> None:
-        if not is_temp_server_running() or sig != signal.SIGINT:
-            super().handle_exit(sig=sig, frame=frame)
 
 
 def is_model_safetensors(model_path: pathlib.Path) -> bool:
@@ -203,17 +190,6 @@ def get(model_path: pathlib.Path, backend: str | None) -> str:
 def is_temp_server_running():
     """Check if the temp server is running."""
     return multiprocessing.current_process().name != "MainProcess"
-
-
-def get_uvicorn_config(app: fastapi.FastAPI, host: str, port: int) -> Config:
-    return Config(
-        app,
-        host=host,
-        port=port,
-        log_level=logging.ERROR,
-        limit_concurrency=2,  # Make sure we only serve a single client at a time
-        timeout_keep_alive=0,  # prevent clients holding connections open (we only have 1)
-    )
 
 
 def select_backend(
