@@ -186,6 +186,7 @@ def chat(
     """Runs a chat using the modified model"""
     # pylint: disable=import-outside-toplevel
     # First Party
+    # pylint: disable=import-outside-toplevel
     from instructlab.model.backends.llama_cpp import is_temp_server_running
 
     users_endpoint_url = cfg.get_api_base(ctx.obj.config.serve.host_port)
@@ -277,6 +278,8 @@ def chat(
                     backend_instance.shutdown()
                 raise click.exceptions.Exit(1) from exc
 
+    if not ctx.params["api_key"]:
+        ctx.params["api_key"] = api_key
     try:
         chat_cli(
             ctx,

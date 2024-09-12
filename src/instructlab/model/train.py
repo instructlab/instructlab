@@ -467,6 +467,7 @@ def train(
     # if macos, preserve that path
     if utils.is_macos_with_m_chip() and not strategy:
         # Local
+        # pylint: disable=import-outside-toplevel
         from ..mlx_explore.gguf_convert_to_mlx import load
         from ..mlx_explore.utils import fetch_tokenizer_from_hub
         from ..train.lora_mlx.convert import convert_between_mlx_and_pytorch
@@ -535,6 +536,7 @@ def train(
         )
     elif legacy:
         # Local
+        # pylint: disable=import-outside-toplevel
         from ..llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
         from ..train.linux_train import linux_train
 

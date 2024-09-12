@@ -12,3 +12,4 @@ pytest-asyncio
 pytest-cov[toml]
 pytest-html
 tox>=4.4.2,<5
+mlx; sys_platform=='linux'
