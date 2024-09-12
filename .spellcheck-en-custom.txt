@@ -30,6 +30,7 @@ cuda:0
 dataset
 datasets
 dev
+distrobox
 ditaa
 DKMS
 dr
