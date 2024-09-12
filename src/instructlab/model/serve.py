@@ -157,7 +157,7 @@ def serve(
         from instructlab.model.backends.vllm import contains_argument
 
         # Warn if unsupported backend parameters are passed
-        warn_for_unsuported_backend_param(ctx)
+        warn_for_unsupported_backend_param(ctx)
 
         ctx.obj.config.serve.vllm.vllm_args = ctx.obj.config.serve.vllm.vllm_args or []
         if gpus:
@@ -215,7 +215,7 @@ def serve(
         raise click.exceptions.Exit(0)
 
 
-def warn_for_unsuported_backend_param(
+def warn_for_unsupported_backend_param(
     ctx: click.Context,
 ):
     for param in ["gpu_layers", "num_threads", "max_ctx_size"]:

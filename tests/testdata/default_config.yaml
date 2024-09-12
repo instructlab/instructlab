@@ -24,7 +24,7 @@ chat:
   # Enable vim keybindings for chat.
   # Default: False
   vi_mode: false
-  # Renders vertical overflow if enabled, displays elipses otherwise.
+  # Renders vertical overflow if enabled, displays ellipses otherwise.
   # Default: True
   visible_overflow: true
 # Evaluate configuration section.
