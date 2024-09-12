@@ -1,17 +1,14 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from time import monotonic, sleep
 from types import FrameType
 from typing import Optional, Tuple
 import json
 import logging
 import multiprocessing
-import os
 import pathlib
 import signal
 import struct
-import subprocess
 import sys
 
 # Third Party
@@ -190,157 +187,6 @@ def get(model_path: pathlib.Path, backend: str | None) -> str:
             )
 
     return backend
-
-
-def get_max_stable_vram_wait(timeout: int) -> int:
-    # Internal env variable for CI adjustment / disablement
-    env_name = "ILAB_MAX_STABLE_VRAM_WAIT"
-    wait_str = os.getenv(env_name)
-    wait = timeout
-    try:
-        if wait_str:
-            wait = int(wait_str)
-    except ValueError:
-        logger.warning(
-            'Ignoring invalid timeout value for %s ("%s")', env_name, wait_str
-        )
-
-    return wait
-
-
-# TODO: This is only used by vLLM but should move to vllm.py
-def shutdown_process(process: subprocess.Popen, timeout: int) -> None:
-    """
-    Shuts down a process
-
-    Sends SIGINT and then after a timeout if the process still is not terminated sends
-    a SIGKILL. Finally, a SIGKILL is sent to the process group in case any child processes
-    weren't cleaned up.
-
-    Args:
-        process (subprocess.Popen): process of the vllm server
-
-    Returns:
-        Nothing
-    """
-    # vLLM responds to SIGINT by shutting down gracefully and reaping the children
-    logger.debug(f"Sending SIGINT to vLLM server PID {process.pid}")
-    process_group_id = os.getpgid(process.pid)
-    process.send_signal(signal.SIGINT)
-    try:
-        logger.debug("Waiting for vLLM server to shut down gracefully")
-        process.wait(timeout)
-    except subprocess.TimeoutExpired:
-        logger.debug(
-            f"Sending SIGKILL to vLLM server since timeout ({timeout}s) expired"
-        )
-        process.kill()
-
-    # Attempt to cleanup any remaining child processes
-    # Make sure process_group is legit (> 1) before trying
-    if process_group_id and process_group_id > 1:
-        try:
-            os.killpg(process_group_id, signal.SIGKILL)
-            logger.debug("Sent SIGKILL to vLLM process group")
-        except ProcessLookupError:
-            logger.debug("Nothing left to clean up with the vLLM process group")
-    else:
-        logger.debug("vLLM process group id not found")
-
-    # Various facilities of InstructLab rely on multiple successive start/stop
-    # cycles. Since vLLM relies on stable VRAM for estimating capacity, residual
-    # reclamation activity can lead to crashes on start. To prevent this add a
-    # short delay (typically ~ 10 seconds, max 30) to verify stability.
-    #
-    # Ideally a future enhancement would be contributed to vLLM to more gracefully
-    # handle this condition.
-    wait_for_stable_vram(get_max_stable_vram_wait(30))
-
-
-def wait_for_stable_vram(timeout: int):
-    logger.info("Waiting for GPU VRAM reclamation...")
-    supported, stable = wait_for_stable_vram_cuda(timeout)
-    if not supported:
-        # TODO add support for intel
-        sleep(timeout)
-        return
-    if not stable:
-        # Only for debugging since recovery is likely after additional start delay
-        logger.debug(
-            "GPU VRAM did not stabilize during max timeout (%d seconds)", timeout
-        )
-
-
-def wait_for_stable_vram_cuda(timeout: int) -> Tuple[bool, bool]:
-    if timeout == 0:
-        logger.debug("GPU vram stability check disabled with 0 max wait value")
-        return True, True
-
-    # Third Party
-    import torch
-
-    # Fallback to a constant sleep if we don't have support for the device
-    if not torch.cuda.is_available():
-        return False, False
-    start_time = monotonic()
-    stable_samples = 0
-    last_free = 0
-    try:
-        while True:
-            free_memory = 0
-            try:
-                # TODO In the future this should be enhanced to better handle
-                # GPU partitioning. However, to do so will require that serve
-                # assign specific GPUs to vLLM, so that the same device pool is
-                # analyzed.
-                for i in range(torch.cuda.device_count()):
-                    device = torch.device(f"cuda:{i}")
-                    free_memory += torch.cuda.mem_get_info(device)[0]
-            except Exception:  # pylint: disable=broad-exception-caught
-                logger.warning(
-                    "Could not determine CUDA memory, falling back to general sleep"
-                )
-                return False, False
-
-            # Wait for free memory to stop growing indicating the release of
-            # vram after vLLM shutdown is complete. Wait for 5 successful
-            # samples where this is true, but ignore any spurious readings that
-            # occur between those samples. In the future we may be able to
-            # optimize this by checking a few strictly successive samples.
-            if free_memory <= last_free:
-                stable_samples += 1
-                logger.debug(
-                    "GPU free vram stable (stable count %d, free %d, last free %d)",
-                    stable_samples,
-                    free_memory,
-                    last_free,
-                )
-                if stable_samples > 5:
-                    logger.debug(
-                        "Successful sample recorded, (stable count %d, free %d, last free %d)",
-                        stable_samples,
-                        free_memory,
-                        last_free,
-                    )
-                    return True, True
-            else:
-                if last_free != 0:
-                    logger.debug(
-                        "GPU free vram still growing (free %d, last free %d)",
-                        free_memory,
-                        last_free,
-                    )
-
-            if monotonic() - start_time > timeout:
-                return True, False
-
-            last_free = free_memory
-            sleep(1)
-    finally:
-        try:
-            torch.cuda.empty_cache()
-        except Exception as e:  # pylint: disable=broad-exception-caught
-            logger.debug("Could not free cuda cache: %s", e)
 
 
 def is_temp_server_running():
