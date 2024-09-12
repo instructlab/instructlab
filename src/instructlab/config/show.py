@@ -3,8 +3,8 @@
 import sys
 
 # Third Party
+from ruamel.yaml import YAMLError, ruamel
 import click
-import ruamel.yaml
 
 # First Party
 from instructlab import clickext, configuration
@@ -22,7 +22,7 @@ def show(ctx: click.Context) -> None:
     # TODO: make this use pretty colors like jq/yq
     try:
         commented_map = configuration.config_to_commented_map(ctx.obj.config)
-    except ruamel.yaml.YAMLError as e:
+    except YAMLError as e:
         click.secho(f"Error loading config as YAML: {e}", fg="red")
         ctx.exit(2)
     yaml.dump(commented_map, sys.stdout)
