@@ -249,6 +249,7 @@ class _general(BaseModel):
 
     # model configuration
     model_config = ConfigDict(extra="ignore")
+
     # additional fields with defaults
     log_level: StrictStr = Field(default="INFO", description="Log level for logging.")
     debug_level: int = Field(default=0, description="Debug level for logging.")
@@ -282,7 +283,7 @@ class _general(BaseModel):
 
 
 class _chat(BaseModel):
-    """Class describing configuration of the chat sub-command."""
+    """Class describing configuration of the 'chat' sub-command."""
 
     # model configuration
     model_config = ConfigDict(extra="ignore")
@@ -303,10 +304,11 @@ class _chat(BaseModel):
     session: typing.Optional[str] = Field(
         default=None, description="Filepath of a dialog session file."
     )
+    # use a lambda to avoid caching
     logs_dir: str = Field(
         default_factory=lambda: DEFAULTS.CHATLOGS_DIR,
         description="Directory where chat logs are stored.",
-    )  # use a lambda to avoid caching
+    )
     greedy_mode: bool = Field(
         default=False,
         description="Sets temperature to 0 if enabled, leading to more deterministic responses.",
@@ -318,7 +320,7 @@ class _chat(BaseModel):
 
 
 class _serve_vllm(BaseModel):
-    """Class describing configuration of vllm serving backend."""
+    """Class describing configuration of vLLM serving backend."""
 
     llm_family: str = Field(
         default="",  # TODO: convert to None and use a pattern to validate
@@ -330,7 +332,7 @@ class _serve_vllm(BaseModel):
         description="Maximum number of attempts to start the vLLM server.",
     )
     gpus: Optional[int] = Field(default=None, description="Number of GPUs to use.")
-    # arguments to pass into vllm process
+    # arguments to pass into vLLM process
     vllm_args: list[str] | None = Field(
         default_factory=list,
         description="vLLM specific arguments. All settings can be passed as a list of strings, see: https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html",
@@ -360,11 +362,11 @@ class _serve_llama_cpp(BaseModel):
 
 
 class _serve(BaseModel):
-    """Class describing configuration of the serve sub-command."""
+    """Class describing configuration of the 'serve' sub-command."""
 
     # model configuration
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
-    # vllm configuration
+    # vLLM configuration
     vllm: _serve_vllm = Field(
         default_factory=_serve_vllm,
         description="vLLM serving settings.",
@@ -405,7 +407,7 @@ class _serve(BaseModel):
 
 
 class _generate(BaseModel):
-    """Class describing configuration of the generate sub-command."""
+    """Class describing configuration of the 'generate' sub-command."""
 
     # model configuration
     model_config = ConfigDict(extra="ignore")
@@ -453,6 +455,7 @@ class _generate(BaseModel):
         description="Directory where generated datasets are stored.",
     )
     # TODO: remove this? It's not used anywhere, was removed by 19b9f4794f79ef81578c00c901bac3ee9db8c046
+    # related issue: https://github.com/instructlab/instructlab/issues/2261
     seed_file: StrictStr = Field(
         description="Path to seed file to be used for generation.",
         default_factory=lambda: DEFAULTS.SEED_FILE,
@@ -461,6 +464,8 @@ class _generate(BaseModel):
 
 
 class _mmlu(BaseModel):
+    """Class describing configuration of MMLU evaluation benchmark."""
+
     few_shots: int = Field(
         default=5,
         description="Number of question-answer pairs provided in the context preceding the question used for evaluation.",
@@ -472,6 +477,8 @@ class _mmlu(BaseModel):
 
 
 class _mtbench(BaseModel):
+    """Class describing configuration of MTBench evaluation benchmark."""
+
     judge_model: str = Field(
         default_factory=lambda: DEFAULTS.JUDGE_MODEL_MT,
         description="Directory where model to be used as judge is stored.",
@@ -487,6 +494,8 @@ class _mtbench(BaseModel):
 
 
 class _mtbenchbranch(BaseModel):
+    """Class describing configuration of MTBenchBranch evaluation benchmark."""
+
     taxonomy_path: str = Field(
         default_factory=lambda: DEFAULTS.TAXONOMY_DIR,
         description="Path to where base taxonomy is stored.",
@@ -494,6 +503,8 @@ class _mtbenchbranch(BaseModel):
 
 
 class _mmlubranch(BaseModel):
+    """Class describing configuration of MMLUBranch evaluation benchmark."""
+
     tasks_dir: str = Field(
         default_factory=lambda: DEFAULTS.DATASETS_DIR,
         description="Directory where custom MMLU tasks are stored.",
@@ -501,6 +512,8 @@ class _mmlubranch(BaseModel):
 
 
 class _evaluate(BaseModel):
+    """Class describing configuration of the 'evaluate' sub-command."""
+
     # model configuration
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
     model: Optional[str] = Field(
@@ -538,6 +551,8 @@ class _evaluate(BaseModel):
 
 
 class _train(BaseModel):
+    """Class describing configuration of the 'train' sub-command."""
+
     # model configuration
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
     model_path: str = Field(
@@ -614,8 +629,8 @@ class _train(BaseModel):
     # anything greater than 0 enables samples_per_save for the phase.
     phased_phase1_samples_per_save: int = Field(
         default=0,
-        description="Number of samples the model should see before saving a checkpoint during phase1. Disabled when set to 0.",
         ge=0,
+        description="Number of samples the model should see before saving a checkpoint during phase1. Disabled when set to 0.",
     )
     phased_phase1_effective_batch_size: int | None = Field(
         default=128,
@@ -647,20 +662,23 @@ class _train(BaseModel):
 
 
 class Config(BaseModel):
-    """Configuration for the InstructLab CLI."""
+    """Configuration for the InstructLab CLI.
+    Config options are defined by the respective subclasses and are loaded into a single 'Config' object here
+    Instantation of this object should be done via 'get_default_config()'
+    Note that values here can be overriden by a users 'config.yaml' or command line overrides in some cases
+    """
 
+    # chat configuration
     chat: _chat = Field(
         default_factory=_chat, description="Chat configuration section."
     )
+    # generate configuration
     generate: _generate = Field(
         default_factory=_generate, description="Generate configuration section."
     )
+    # serve configuration (includes both llama-cpp and vLLM configuration)
     serve: _serve = Field(
         default_factory=_serve, description="Serve configuration section."
-    )
-    # additional fields with defaults
-    general: _general = Field(
-        default_factory=_general, description="General configuration section."
     )
     # train configuration
     train: _train = Field(
@@ -670,8 +688,13 @@ class Config(BaseModel):
     evaluate: _evaluate = Field(
         default_factory=_evaluate, description="Evaluate configuration section."
     )
+    # additional fields with defaults
+    general: _general = Field(
+        default_factory=_general, description="General configuration section."
+    )
     # model configuration
     model_config = ConfigDict(extra="ignore")
+    # config file versioning
     version: str = Field(
         default=CONFIG_VERSION,
         description="Configuration file structure version.",
