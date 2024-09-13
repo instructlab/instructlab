@@ -295,7 +295,7 @@ class _chat(BaseModel):
     vi_mode: bool = Field(default=False, description="Enable vim keybindings for chat.")
     visible_overflow: bool = Field(
         default=True,
-        description="Renders vertical overflow if enabled, displays elipses otherwise.",
+        description="Renders vertical overflow if enabled, displays ellipses otherwise.",
     )
     context: str = Field(
         default="default",

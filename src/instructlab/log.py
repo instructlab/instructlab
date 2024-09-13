@@ -93,6 +93,6 @@ def configure_logging(
 
     if log_level != "DEBUG" or debug_level < 2:
         # Set logging level of OpenAI client and httpx library to ERROR to
-        # suppress INFO messages unless debug_leve is >= 2.
+        # suppress INFO messages unless debug_level is >= 2.
         openai_lgr.setLevel(logging.ERROR)
         httpx_lgr.setLevel(logging.ERROR)
