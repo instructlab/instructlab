@@ -11,7 +11,7 @@ import pytest
 
 # First Party
 from instructlab.model.backends.vllm import get_max_stable_vram_wait
-from instructlab.model.serve import warn_for_unsuported_backend_param
+from instructlab.model.serve import warn_for_unsupported_backend_param
 
 # Local
 from . import common
@@ -316,7 +316,7 @@ def test_max_stable_vram_wait():
         ),  # Example of a parameter that should not trigger a warning
     ],
 )
-def test_warn_for_unsuported_backend_param(param, expected_call_count):
+def test_warn_for_unsupported_backend_param(param, expected_call_count):
     with patch("instructlab.model.serve.logger.warning") as mock_warning:
         # Create a mock click.Context object
         ctx = MagicMock()
@@ -327,7 +327,7 @@ def test_warn_for_unsuported_backend_param(param, expected_call_count):
         )
 
         # Call the function to test
-        warn_for_unsuported_backend_param(ctx)
+        warn_for_unsupported_backend_param(ctx)
 
         # Assert that logger.warning was called the expected number of times
         assert mock_warning.call_count == expected_call_count
