@@ -14,10 +14,9 @@ RUN export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cu
     && export XLA_TARGET=cuda120 \
     && export XLA_FLAGS=--xla_gpu_cuda_data_dir=/usr/local/cuda
 
-ARG GIT_TAG=stable
-RUN if [[ "$(uname -m)" != "aarch64" ]]; then export CFLAGS="-mno-avx"; fi && \
-    CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3.11 -m pip install -r https://raw.githubusercontent.com/instructlab/instructlab/${GIT_TAG}/requirements.txt --force-reinstall --no-cache-dir llama-cpp-python
-RUN python3.11 -m pip install git+https://github.com/instructlab/instructlab.git@${GIT_TAG}
+#RUN python3.11 -m pip install instructlab
+RUN CMAKE_ARGS="-DLLAMA_CUDA=on -DLLAMA_NATIVE=off" python3.11 -m pip install instructlab packaging wheel \
+   && python3.11 -m pip install instructlab[cuda]
 
 CMD ["/bin/bash"]
 
