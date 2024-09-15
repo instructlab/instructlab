@@ -65,6 +65,13 @@ from instructlab.configuration import (
     "using the same taxonomy repository. ",
 )
 @click.option(
+    "--knowledge-docs-path",
+    type=click.Path(),
+    default=lambda: DEFAULTS.TAXONOMY_KNOWLEDGE_DOCS_DIR,
+    show_default="The instructlab data files location per the user's system.",
+    help="Path to where the taxonomy knowledge docs should be created.",
+)
+@click.option(
     "--train-profile",
     type=click.Path(),
     default=None,
@@ -89,6 +96,7 @@ def init(
     taxonomy_base,
     repository,
     min_taxonomy,
+    knowledge_docs_path,
     train_profile,
     config_file,
 ):
@@ -174,6 +182,7 @@ def init(
         cfg.evaluate.model = model_path
         cfg.generate.taxonomy_base = taxonomy_base
         cfg.generate.taxonomy_path = taxonomy_path
+        cfg.ingest.knowledge_docs_path = knowledge_docs_path
         cfg.evaluate.mt_bench_branch.taxonomy_path = taxonomy_path
     write_config(cfg)
 

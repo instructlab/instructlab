@@ -53,6 +53,7 @@ class STORAGE_DIR_NAMES:
     OCI = "oci"
     MODELS = "models"
     TAXONOMY = "taxonomy"
+    TAXONOMY_KNOWLEDGE_DOCS = "taxonomy-knowledge-docs"
     INTERNAL = (
         "internal"  # for storing all ilab-internal files the user doesn't need to see
     )
@@ -84,6 +85,10 @@ class _InstructlabDefaults:
     JUDGE_MODEL_MT = "prometheus-eval/prometheus-8x7b-v2.0"
     TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
     TAXONOMY_BASE = "origin/main"
+    TAXONOMY_KNOWLEDGE_DOCS_REPO = (
+        "https://github.com/instructlab-public/taxonomy-knowledge-docs.git"
+    )
+    TAXONOMY_KNOWLEDGE_DOCS_BASE = "origin/main"
     MAX_CONTEXT_SIZE = 4096
     # TODO: these constants should be removed, they should not leak out
     NUM_CPUS = 10
@@ -154,6 +159,10 @@ class _InstructlabDefaults:
     @property
     def TAXONOMY_DIR(self) -> str:
         return path.join(self._data_dir, STORAGE_DIR_NAMES.TAXONOMY)
+
+    @property
+    def TAXONOMY_KNOWLEDGE_DOCS_DIR(self) -> str:
+        return path.join(self._data_dir, STORAGE_DIR_NAMES.TAXONOMY_KNOWLEDGE_DOCS)
 
     @property
     def CHATLOGS_DIR(self) -> str:
@@ -463,6 +472,19 @@ class _generate(BaseModel):
     )
 
 
+class _ingest(BaseModel):
+    """Class describing configuration of the 'ingest' sub-command."""
+
+    knowledge_docs_path: StrictStr = Field(
+        default_factory=lambda: DEFAULTS.TAXONOMY_KNOWLEDGE_DOCS_DIR,
+        description="Directory where taxonomy knolwedge docs are stored and accessed from.",
+    )
+    knowledge_docs_base: StrictStr = Field(
+        default=DEFAULTS.TAXONOMY_KNOWLEDGE_DOCS_BASE,
+        description="Branch of taxonomy knowledge docs used to calculate diff against.",
+    )
+
+
 class _mmlu(BaseModel):
     """Class describing configuration of MMLU evaluation benchmark."""
 
@@ -675,6 +697,10 @@ class Config(BaseModel):
     # generate configuration
     generate: _generate = Field(
         default_factory=_generate, description="Generate configuration section."
+    )
+    # ingest configuration
+    ingest: _ingest = Field(
+        default_factory=_ingest, description="Ingest configuration section."
     )
     # serve configuration (includes both llama-cpp and vLLM configuration)
     serve: _serve = Field(
@@ -962,6 +988,8 @@ def ensure_storage_directories_exist() -> bool:
         DEFAULTS.INTERNAL_DIR,
         DEFAULTS.MODELS_DIR,
         DEFAULTS.TAXONOMY_DIR,
+        # TODO: should this be included?
+        # DEFAULTS.TAXONOMY_KNOWLEDGE_DOCS_DIR,
         DEFAULTS.TRAIN_CONFIG_DIR,
         DEFAULTS.TRAIN_PROFILE_DIR,
         DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_DIR,
@@ -1348,6 +1376,8 @@ def storage_dirs_exist() -> bool:
         DEFAULTS.INTERNAL_DIR,
         DEFAULTS.MODELS_DIR,
         DEFAULTS.TAXONOMY_DIR,
+        # TODO: should this be included?
+        # DEFAULTS.TAXONOMY_KNOWLEDGE_DOCS_DIR,
         DEFAULTS.TRAIN_CONFIG_DIR,
         DEFAULTS.TRAIN_PROFILE_DIR,
         DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_DIR,

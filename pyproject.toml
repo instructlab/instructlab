@@ -39,6 +39,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 [project.entry-points."instructlab.command"]
 "config" = "instructlab.config.config:config"
 "data" = "instructlab.data.data:data"
+"ingest" = "instructlab.ingest.ingest:ingest"
 "model" = "instructlab.model.model:model"
 "system" = "instructlab.system.system:system"
 "taxonomy" = "instructlab.taxonomy.taxonomy:taxonomy"
@@ -47,6 +48,9 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "edit" = "instructlab.config.edit:edit"
 "init" = "instructlab.config.init:init"
 "show" = "instructlab.config.show:show"
+
+[project.entry-points."instructlab.command.ingest"]
+"convert" = "instructlab.ingest.convert:convert"
 
 [project.entry-points."instructlab.command.data"]
 "generate" = "instructlab.data.generate:generate"
