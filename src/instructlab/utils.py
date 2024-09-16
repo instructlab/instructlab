@@ -31,6 +31,9 @@ import gitdb
 import httpx
 import yaml
 
+# First Party
+from instructlab.configuration import DEFAULTS, read_config
+
 # Local
 from . import common
 
@@ -316,7 +319,8 @@ def get_sysprompt(model=None):
     Returns:
         str: The system prompt for the model being used
     """
-    return common.SYS_PROMPT
+    config = read_config(DEFAULTS.CONFIG_FILE)
+    return config.prompts.system_prompt
 
 
 # pylint: disable=broad-exception-caught

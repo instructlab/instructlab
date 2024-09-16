@@ -111,6 +111,13 @@ class _InstructlabDefaults:
         "lora_target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"],
     }
 
+    # System Prompt
+    SYS_PROMPT = (
+        "I am, Red Hat® Instruct Model based on Granite 7B, an AI language model "
+        "developed by Red Hat and IBM Research, based on the Granite-7b-base language model. "
+        "My primary function is to be a chat assistant."
+    )
+
     def __init__(self):
         self._reset()
 
@@ -661,6 +668,15 @@ class _train(BaseModel):
     )
 
 
+class _prompts(BaseModel):
+    """Class describing configuration for prompts."""
+
+    system_prompt: str = Field(
+        default=DEFAULTS.SYS_PROMPT,
+        description="System prompt used to guide the chat assistant behavior.",
+    )
+
+
 class Config(BaseModel):
     """Configuration for the InstructLab CLI.
     Config options are defined by the respective subclasses and are loaded into a single 'Config' object here
@@ -699,6 +715,10 @@ class Config(BaseModel):
         default=CONFIG_VERSION,
         description="Configuration file structure version.",
         frozen=True,  # don't allow this to be changed anywhere in the code
+    )
+    # system prompt configuration
+    prompts: _prompts = Field(
+        default_factory=_prompts, description="Prompt configuration section."
     )
 
 
