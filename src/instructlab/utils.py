@@ -34,9 +34,6 @@ import yaml
 # First Party
 from instructlab.configuration import DEFAULTS, read_config
 
-# Local
-from . import common
-
 logger = logging.getLogger(__name__)
 
 
