@@ -2,48 +2,59 @@
 
 name: E2E (NVIDIA Tesla T4 x1)
 
+run-name: ${{ github.event.workflow_run.display_title || github.workflow }}
+
 on:
-  # run against every merge commit to 'main' and release branches
-  push:
-    branches:
-      - main
-      - release-*
-  # only run on PRs that touch certain regex paths
-  pull_request_target:
+  workflow_run:
+    workflows:
+      - 'E2E Starter'
     types:
-      - opened
-      - synchronize
-      - reopened
-    branches:
-      - main
-      - release-*
-    paths:
-      # note this should match the merging criteria in 'mergify.yml'
-      - '**.py'
-      - 'pyproject.toml'
-      - 'requirements**.txt'
-      - 'scripts/basic-workflow-tests.sh' # Used by this workflow
-      - 'scripts/test-data/**'
-      - '.github/workflows/e2e-nvidia-t4-x1.yml' # This workflow
+      - completed
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.workflow_run.event }}-${{ github.event.workflow_run.display_title || github.run_id }}
   cancel-in-progress: true
+
+env:
+  LC_ALL: en_US.UTF-8
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
 
 jobs:
   start-runner:
     name: Start external EC2 runner
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     outputs:
       label: ${{ steps.start-ec2-runner.outputs.label }}
       ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
+      number: ${{ steps.starter.outputs.number }}
     steps:
+      - name: "Download Starter Metadata artifact"
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
+        with:
+          name: e2e-starter
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: "Get Starter Metadata"
+        id: starter
+        run: |
+          jq -r '"number=" + .number' starter.json >> "$GITHUB_OUTPUT"
+          jq -r '"ref=" + .ref' starter.json >> "$GITHUB_OUTPUT"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Start EC2 runner
         id: start-ec2-runner
         uses: machulav/ec2-github-runner@fcfb31a5760dad1314a64a0e172b78ec6fc8a17e # v2.3.6
@@ -59,8 +70,8 @@ jobs:
             [
               {"Key": "Name", "Value": "instructlab-ci-github-small-runner"},
               {"Key": "GitHubRepository", "Value": "${{ github.repository }}"},
-              {"Key": "GitHubRef", "Value": "${{ github.ref }}"},
-              {"Key": "GitHubPR", "Value": "${{ github.event.number }}"}
+              {"Key": "GitHubRef", "Value": "${{ steps.starter.outputs.ref }}"},
+              {"Key": "GitHubPR", "Value": "${{ steps.starter.outputs.number }}"}
             ]
 
   e2e:
@@ -74,6 +85,11 @@ jobs:
     permissions: {}
 
     steps:
+      - name: Install Packages
+        run: |
+          cat /etc/os-release
+          sudo dnf install -y gcc gcc-c++ make git python3.11 python3.11-devel
+
       - name: Checkout
         uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
         with:
@@ -82,15 +98,10 @@ jobs:
 
       - name: Fetch and checkout PR
         id: fetch_pr
-        if: github.event_name == 'pull_request_target'
+        if: ${{ github.event.workflow_run.event == 'pull_request' }}
         run: |
-          git fetch origin pull/${{ github.event.pull_request.number }}/head:pr-${{ github.event.pull_request.number }}
-          git checkout pr-${{ github.event.pull_request.number }}
-
-      - name: Install Packages
-        run: |
-          cat /etc/os-release
-          sudo dnf install -y gcc gcc-c++ make git python3.11 python3.11-devel
+          git fetch origin pull/${{ needs.start-runner.outputs.number }}/head:pr-${{ needs.start-runner.outputs.number }}
+          git checkout pr-${{ needs.start-runner.outputs.number }}
 
       - name: Install ilab
         run: |
