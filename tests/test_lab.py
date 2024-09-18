@@ -134,16 +134,8 @@ subcommands: list[Command] = [
 aliases = [
     "serve",
     "train",
-    "convert",
     "chat",
-    "test",
-    "evaluate",
-    "init",
-    "download",
-    "diff",
     "generate",
-    "sysinfo",
-    "list",
 ]
 
 
@@ -209,14 +201,6 @@ def test_cli_help_matches_field_description(cli_runner: CliRunner):
                         "- ", "-"
                     )
                     assert str(description) in normalize_output, normalize_output
-
-
-@pytest.mark.parametrize("alias", aliases)
-def test_ilab_cli_deprecated_help(alias: str, cli_runner):
-    cmd = ["--config", "DEFAULT", alias, "--help"]
-    result = cli_runner.invoke(lab.ilab, cmd)
-    assert result.exit_code == 0, result.stdout
-    assert "this will be deprecated in a future release" in result.stdout
 
 
 @pytest.mark.parametrize(

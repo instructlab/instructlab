@@ -6,7 +6,6 @@ import pathlib
 
 # Third Party
 from click.testing import CliRunner
-import pytest
 import yaml
 
 # First Party
@@ -23,17 +22,8 @@ def test_ilab_config_show(cli_runner: CliRunner) -> None:
     assert configuration.Config(**parsed)
 
 
-@pytest.mark.parametrize(
-    "command",
-    [
-        (["config", "init", "--non-interactive"]),
-        (
-            ["init", "--non-interactive"]
-        ),  # TODO: remove this test once the deprecated alias 'ilab init' is removed
-    ],
-)
 def test_ilab_config_init_with_env_var_config(
-    cli_runner: CliRunner, tmp_path: pathlib.Path, command: list
+    cli_runner: CliRunner, tmp_path: pathlib.Path
 ) -> None:
     # Common setup code
     cfg = configuration.get_default_config()
@@ -44,6 +34,7 @@ def test_ilab_config_init_with_env_var_config(
         yaml.dump(cfg.model_dump(), f)
 
     # Invoke the CLI command
+    command = ["config", "init", "--non-interactive"]
     result = cli_runner.invoke(
         lab.ilab, command, env={"ILAB_GLOBAL_CONFIG": cfg_file.as_posix()}
     )
@@ -60,19 +51,11 @@ def test_ilab_config_init_with_env_var_config(
     )
 
 
-@pytest.mark.parametrize(
-    "command",
-    [
-        (["config", "init"]),
-        (
-            ["init"]
-        ),  # TODO: remove this test once the deprecated alias 'ilab init' is removed
-    ],
-)
-def test_ilab_config_init_with_model_path(cli_runner: CliRunner, command: list) -> None:
+def test_ilab_config_init_with_model_path(cli_runner: CliRunner) -> None:
     # Common setup code
     model_path = "path/to/model"
-    command.extend(["--model-path", model_path])
+    command = ["config", "init", "--model-path", model_path]
+
     # Invoke the CLI command
     result = cli_runner.invoke(lab.ilab, command)
     assert result.exit_code == 0, result.stdout
