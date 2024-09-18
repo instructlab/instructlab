@@ -80,8 +80,8 @@ class HFDownloader(Downloader):
             if self.ctx.obj is not None:
                 hf_logging.set_verbosity(self.ctx.obj.config.general.log_level.upper())
             files = list_repo_files(repo_id=self.repository, token=self.hf_token)
-            if any(".safetensors" in fname for fname in files):
-                self.download_safetensors()
+            if any(re.search(r"\.(safetensors|bin)$", fname) for fname in files):
+                self.download_entire_hf_repo()
             else:
                 self.download_gguf()
 
@@ -109,7 +109,7 @@ class HFDownloader(Downloader):
             )
             raise click.exceptions.Exit(1)
 
-    def download_safetensors(self) -> None:
+    def download_entire_hf_repo(self) -> None:
         try:
             local_dir = os.path.join(self.download_dest, self.repository)
             os.makedirs(name=local_dir, exist_ok=True)
