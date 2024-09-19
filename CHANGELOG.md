@@ -14,6 +14,8 @@
   * `list`
   * `sysinfo`
   * `test`
+* Intel Gaudi software has been updated to 1.17.1 with Python 3.11 and
+  Torch 2.3.1 support.
 
 ## v0.18.1
 

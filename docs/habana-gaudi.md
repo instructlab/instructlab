@@ -6,9 +6,9 @@
 
 ## System requirements
 
-- RHEL 9 on `x86_64` (tested with RHEL 9.3 and patched installer)
+- RHEL 9 on `x86_64` (tested with RHEL 9.4)
 - Intel Gaudi 2 device
-- [Habana Labs](https://docs.habana.ai/en/latest/index.html) software stack (tested with 1.16.2)
+- [Habana Labs](https://docs.habana.ai/en/latest/index.html) software stack (tested with 1.17.1)
 - software from Habana Vault for [RHEL](https://vault.habana.ai/ui/native/rhel) and [PyTorch](https://vault.habana.ai/ui/native/gaudi-pt-modules)
 - software [HabanaAI GitHub](https://github.com/HabanaAI/) org like [optimum-habana](https://github.com/HabanaAI/optimum-habana-fork) fork
 
@@ -28,7 +28,7 @@ sudo dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.
 ```ini
 [vault]
 name=Habana Vault
-baseurl=https://vault.habana.ai/artifactory/rhel/9/9.2
+baseurl=https://vault.habana.ai/artifactory/rhel/9/9.4
 enabled=1
 repo_gpgcheck=0
 ```
@@ -86,7 +86,7 @@ hl-smi
 +=============================================================================+
 ````
 
-See [Intel Gaudi SW Stack for RHEL 9.2](https://docs.habana.ai/en/latest/shared/Install_Driver_and_Firmware.html)
+See [Intel Gaudi SW Stack for RHEL 9.4](https://docs.habana.ai/en/latest/shared/Install_Driver_and_Firmware.html)
 for detailed documentation.
 
 ## Other tools
@@ -106,15 +106,7 @@ curl -O https://vault.habana.ai/artifactory/gaudi-installer/1.15.1/habanalabs-in
 chmod +x habanalabs-installer.sh
 ```
 
-> **NOTE**
->
-> Habana Labs Installer 1.15.1 only supports RHEL 9.2 and will fail on 9.3+. You can hack around the limitation by patching the installer:
->
-> ```shell
-> sed -i 's/OS_VERSION=\$VERSION_ID/OS_VERSION=9.2/' habanalabs-installer.sh
-> ```
-
-Install dependencies (use `--verbose` for verbose logging). This will install several RPM packages, download Intel compilers + libraries, download + compile Python 3.10, and more.
+Install dependencies (use `--verbose` for verbose logging). This will install several RPM packages, download Intel compilers + libraries, and more.
 
 ```shell
 export MAKEFLAGS="-j$(nproc)"

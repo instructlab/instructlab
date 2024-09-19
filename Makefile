@@ -28,7 +28,7 @@ HPU_CONTAINERFILE = $(CURDIR)/containers/hpu/Containerfile
 HPU_CONTEXT_DIR = $(CURDIR)/containers/hpu
 HPU_DEPS = \
 	$(HPU_CONTAINERFILE) \
-	$(CURDIR)/requirements-hpu.txt \
+	$(CURDIR)/requirements/hpu.txt \
 	$(COMMON_DEPS) \
 	$(NULL)
 
