@@ -15,6 +15,7 @@ import pytest
 from instructlab import lab
 from instructlab.model.backends import backends, common
 from instructlab.model.backends.vllm import build_vllm_cmd
+from instructlab.utils import is_model_safetensors
 
 
 # helper function to create dummy valid and invalid safetensor or bin model directories
@@ -106,7 +107,7 @@ def test_is_model_safetensors_or_bin_valid(
     model_path = tmp_path / model_dir
     create_safetensors_or_bin_model_files(model_path, model_file_type, expected)
 
-    val = backends.is_model_safetensors(model_path)
+    val = is_model_safetensors(model_path)
     assert val == expected
 
 
