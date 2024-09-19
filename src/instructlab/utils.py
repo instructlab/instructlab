@@ -29,6 +29,7 @@ import click
 import git
 import gitdb
 import httpx
+import nvidia_smi
 import yaml
 
 # Local
@@ -664,3 +665,13 @@ def clear_directory(path: pathlib.Path) -> None:
     if path.exists():
         shutil.rmtree(path)
     os.makedirs(path)
+
+
+def are_nvidia_gpus_available() -> bool:
+    """Check if NVIDIA GPUs are available"""
+    try:
+        nvidia_smi.nvmlInit()
+        nvidia_smi.nvmlShutdown()
+    except Exception:
+        return False
+    return True
