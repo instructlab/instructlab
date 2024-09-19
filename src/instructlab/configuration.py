@@ -448,6 +448,10 @@ class _train(BaseModel):
         default=1,
         description="Number of GPUs to use for training. This value is not supported in legacy training or MacOS.",
     )
+    disable_flash_attn: Optional[bool] = Field(
+        default=False,
+        description="Whether or not we should disable the use of flash-attention during training. This is useful when using older GPUs.",
+    )
     additional_args: dict[str, typing.Any] = Field(
         default_factory=dict,
         description="Additional arguments to pass to the training script. These arguments are passed as key-value pairs to the training script.",

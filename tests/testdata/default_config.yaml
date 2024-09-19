@@ -264,6 +264,10 @@ train:
   # Allow CPU offload for deepspeed optimizer.
   # Default: False
   deepspeed_cpu_offload_optimizer: false
+  # Whether or not we should disable the use of flash-attention during training.
+  # This is useful when using older GPUs.
+  # Default: False
+  disable_flash_attn: false
   # Pick a distributed training backend framework for GPU accelerated full fine-
   # tuning.
   # Default: deepspeed

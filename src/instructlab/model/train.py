@@ -296,6 +296,7 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     config_sections=ADDITIONAL_ARGUMENTS,
     required=True,  # default from config
 )
+@click.option("--disable-flash-attn", is_flag=True, cls=clickext.ConfigOption)
 @click.option(
     "--strategy",
     type=click.Choice(
