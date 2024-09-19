@@ -1,5 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
+INSTRUCTLAB_VERSION ?=
+
 BUILD_ARGS =
 CENGINE ?= podman
 CONTAINER_PREFIX ?= localhost/instructlab
@@ -11,19 +13,27 @@ COMMON_DEPS = \
 	$(NULL)
 
 CUDA_CONTAINERFILE = $(CURDIR)/containers/cuda/Containerfile
+CUDA_CONTEXT_DIR = $(CURDIR)/containers/cuda
+CUDA_VERSION ?= 12.4.1
+CUDA_BUILD_ARGS = --build-arg CUDA_VERSION=${CUDA_VERSION}
+ifdef $(INSTRUCTLAB_VERSION)
+	CUDA_BUILD_ARGS := $(CUDA_BUILD_ARGS) --build-arg INSTRUCTLAB_VERSION=${INSTRUCTLAB_VERSION}
+endif
 CUDA_DEPS = \
 	$(CUDA_CONTAINERFILE) \
 	$(COMMON_DEPS) \
 	$(NULL)
 
 HPU_CONTAINERFILE = $(CURDIR)/containers/hpu/Containerfile
+HPU_CONTEXT_DIR = $(CURDIR)/containers/hpu
 HPU_DEPS = \
 	$(HPU_CONTAINERFILE) \
 	$(CURDIR)/requirements-hpu.txt \
 	$(COMMON_DEPS) \
 	$(NULL)
 
-ROCM_CONTAINERFILE = containers/rocm/Containerfile
+ROCM_CONTAINERFILE = $(CURDIR)/containers/rocm/Containerfile
+ROCM_CONTEXT_DIR = $(CURDIR)/containers/rocm
 ROCM_DEPS = \
 	$(ROCM_CONTAINERFILE) \
 	$(COMMON_DEPS) \
@@ -60,28 +70,28 @@ images: ## Get the current controller, set the path, and build the Containerfile
 .PHONY: cuda
 cuda: check-engine $(CUDA_DEPS)  ## Build container for Nvidia CUDA
 	$(CENGINE) build $(BUILD_ARGS) \
+		--build-arg INSTRUCTLAB_VERSION=$(INSTRUCTLAB_VERSION) \
 		-t $(CONTAINER_PREFIX):$@ \
-		-f $(CUDA_CONTAINERFILE) \
-		.
+		$(CUDA_CONTEXT_DIR)
 
 # The base container uses uids beyond 65535. Rootless builds may not work
 # unless the user account has extended subordinate ids up to 2**24 - 1.
 .PHONY: hpu
 hpu: $(HPU_DEPS) check-engine ## Build container for Intel Gaudi HPU
 	$(CENGINE) build $(BUILD_ARGS) \
+		--build-arg INSTRUCTLAB_VERSION=$(INSTRUCTLAB_VERSION) \
 		-t $(CONTAINER_PREFIX):$@ \
-		-f $< \
-		.
+		$(HPU_CONTEXT_DIR)
 
 define build-rocm =
 	@echo "Building ROCm container for GPU arch '$(1)', version '$(2)'"
 	$(CENGINE) build $(BUILD_ARGS) \
 		--build-arg AMDGPU_ARCH=$(1) \
 		--build-arg HSA_OVERRIDE_GFX_VERSION=$(2) \
+		--build-arg INSTRUCTLAB_VERSION=$(INSTRUCTLAB_VERSION) \
 		-t $(CONTAINER_PREFIX):rocm-$(1) \
 		-t $(CONTAINER_PREFIX):rocm \
-		-f $(ROCM_CONTAINERFILE) \
-		.
+		$(ROCM_CONTEXT_DIR)
 endef
 
 .PHONY: rocm
