@@ -1,40 +1,43 @@
-ARG HABANA_VERSION=1.16.2
-ARG BASEIMAGE=vault.habana.ai/gaudi-docker/${HABANA_VERSION}/rhel9.2/habanalabs/pytorch-installer-2.2.2
+ARG HABANA_VERSION=1.17.1
+ARG BASEIMAGE=vault.habana.ai/gaudi-docker/${HABANA_VERSION}/rhel9.4/habanalabs/pytorch-installer-2.3.1
 
 FROM ${BASEIMAGE} AS runtime
 # base image has PyTorch fork with Habana plugins in self-compiled Python 3.10
-ARG PYTHON=python3.10
+ARG PYTHON=python3.11
 
 ENV PYTHON="${PYTHON}" \
     APP_ROOT="/opt/app-root"
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_COMPILE=1 \
+    PIP_NO_CACHE_DIR=off \
     PS1="(app-root) \w\$ " \
     VIRTUAL_ENV="${APP_ROOT}" \
     PATH="${APP_ROOT}/bin:${PATH}"
 
+# Gaudi container has Torch and habanalabs plugins in system Python.
+# Use system site packages and replace shebang, so scripts like torchrun
+# pick up the virtual env.
 RUN ${PYTHON} -m venv --upgrade-deps --system-site-packages ${VIRTUAL_ENV} && \
+    sed -i '1s:#!/usr/bin/python.*:#!/usr/bin/env python3:' /usr/local/bin/* && \
     mkdir ${VIRTUAL_ENV}/src && \
     find ${VIRTUAL_ENV} -name __pycache__ | xargs rm -rf
 
 COPY containers/sitecustomize.py ${VIRTUAL_ENV}/lib/${PYTHON}/site-packages/
 COPY containers/bin/debug-* ${VIRTUAL_ENV}/bin/
 
-# -mno-avx: work around a build problem with llama-cpp-python and gcc.
-# flash-attn is compiled from source, bitsandbytes has a manylinux wheel
-COPY requirements.txt requirements-hpu.txt /tmp
-RUN sed 's/\[.*\]//' /tmp/requirements.txt >/tmp/constraints.txt && \
-    export PIP_NO_CACHE_DIR=off; \
-    ${VIRTUAL_ENV}/bin/pip install -U wheel pip && \
-    CMAKE_ARGS="-DLLAMA_NATIVE=off" \
-        FORCE_CMAKE=1 \
-        ${VIRTUAL_ENV}/bin/pip install --no-binary llama_cpp_python -c /tmp/constraints.txt llama_cpp_python && \
-    ${VIRTUAL_ENV}/bin/pip install -r /tmp/requirements.txt -r /tmp/requirements-hpu.txt && \
-    rm /tmp/constraints.txt && \
+COPY . /tmp/instructlab
+RUN CMAKE_ARGS="-DLLAMA_NATIVE=off" \
+        ${VIRTUAL_ENV}/bin/pip install "/tmp/instructlab[hpu]" && \
     find ${VIRTUAL_ENV} -name __pycache__ | xargs rm -rf
 
-COPY . /tmp/instructlab
-RUN ${VIRTUAL_ENV}/bin/pip install "/tmp/instructlab[hpu]" && \
+# install Intel Gaudi fork of DeepSpeed
+RUN ${VIRTUAL_ENV}/bin/pip uninstall -y deepspeed && \
+    ${VIRTUAL_ENV}/bin/pip install --no-build-isolation git+https://github.com/HabanaAI/DeepSpeed.git@1.17.1 && \
+    find ${VIRTUAL_ENV} -name __pycache__ | xargs rm -rf
+
+# install Intel Gaudi fork of vLLM
+RUN VLLM_TARGET_DEVICE=hpu \
+        ${VIRTUAL_ENV}/bin/pip install --no-build-isolation git+https://github.com/HabanaAI/vllm-fork.git@v0.5.3.post1-Gaudi-1.17.0 && \
     pip list && \
     find ${VIRTUAL_ENV} -name __pycache__ | xargs rm -rf
 
@@ -43,14 +46,10 @@ WORKDIR "${HOME}"
 VOLUME ["/opt/app-root/src"]
 CMD ["/bin/bash"]
 
-
-# default values, override with `-e HABANA_VISIBLE_MODULES="0,1"`
-ENV TSAN_OPTIONS='ignore_noninstrumented_modules=1' \
-    HABANA_VISIBLE_MODULES="all" \
-    PT_HPU_LAZY_MODE=0 \
-    PT_HPU_ENABLE_EAGER_CACHE=TRUE \
-    PT_HPU_EAGER_4_STAGE_PIPELINE_ENABLE=TRUE \
-    PT_ENABLE_INT64_SUPPORT=1
+# https://docs.habana.ai/en/latest/PyTorch/Reference/Runtime_Flags.html
+# use eager mode / torch.compile()
+ENV PT_HPU_LAZY_MODE=0 \
+    PT_HPU_ENABLE_EAGER_CACHE=TRUE
 # workaround for race condition in libgomp / oneMKL (HS-1795)
 ENV OMP_NUM_THREADS=8
 

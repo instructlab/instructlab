@@ -21,7 +21,7 @@ class TestLabInit:
     # https://docs.python.org/3/library/unittest.mock.html#where-to-patch?
     @patch("instructlab.config.init.Repo.clone_from")
     def test_init_noninteractive(self, mock_clone_from, cli_runner: CliRunner):
-        result = cli_runner.invoke(lab.ilab, ["init", "--non-interactive"])
+        result = cli_runner.invoke(lab.ilab, ["config", "init", "--non-interactive"])
         assert result.exit_code == 0
         assert os.path.exists(DEFAULTS.CONFIG_FILE)
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
@@ -29,7 +29,7 @@ class TestLabInit:
 
     @patch("instructlab.config.init.Repo.clone_from")
     def test_init_interactive(self, mock_clone_from, cli_runner: CliRunner):
-        result = cli_runner.invoke(lab.ilab, ["init"], input="\nn")
+        result = cli_runner.invoke(lab.ilab, ["config", "init"], input="\nn")
         assert result.exit_code == 0
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
         assert "taxonomy" not in os.listdir()
@@ -40,14 +40,14 @@ class TestLabInit:
         MagicMock(side_effect=GitError("Authentication failed")),
     )
     def test_init_interactive_git_error(self, cli_runner: CliRunner):
-        result = cli_runner.invoke(lab.ilab, ["init"], input="y\n\ny")
+        result = cli_runner.invoke(lab.ilab, ["config", "init"], input="y\n\ny")
         assert result.exit_code == 1, "command finished with an unexpected exit code"
         assert "Failed to clone taxonomy repo: Authentication failed" in result.output
         assert "manually run" in result.output
 
     @patch("instructlab.config.init.Repo.clone_from")
     def test_init_interactive_clone(self, mock_clone_from, cli_runner: CliRunner):
-        result = cli_runner.invoke(lab.ilab, ["init"], input="y\n\ny")
+        result = cli_runner.invoke(lab.ilab, ["config", "init"], input="y\n\ny")
         assert result.exit_code == 0
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
         mock_clone_from.assert_called_once()
@@ -56,7 +56,7 @@ class TestLabInit:
     def test_init_interactive_default_clone(
         self, mock_clone_from, cli_runner: CliRunner
     ):
-        result = cli_runner.invoke(lab.ilab, ["init"], input="\n")
+        result = cli_runner.invoke(lab.ilab, ["config", "init"], input="\n")
         assert result.exit_code == 0
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
         mock_clone_from.assert_called_once()
@@ -66,14 +66,16 @@ class TestLabInit:
         self, mock_clone_from, cli_runner: CliRunner
     ):
         os.makedirs(f"{DEFAULTS.TAXONOMY_DIR}/contents")
-        result = cli_runner.invoke(lab.ilab, ["init"], input="\n\n")
+        result = cli_runner.invoke(lab.ilab, ["config", "init"], input="\n\n")
         assert result.exit_code == 0
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
         assert "taxonomy" in os.listdir(DEFAULTS._data_dir)
         mock_clone_from.assert_not_called()
 
     def test_init_interactive_with_preexisting_config(self, cli_runner: CliRunner):
-        result = cli_runner.invoke(lab.ilab, ["init"], input="non-default-taxonomy\nn")
+        result = cli_runner.invoke(
+            lab.ilab, ["config", "init"], input="non-default-taxonomy\nn"
+        )
         assert result.exit_code == 0
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
         config = read_config(DEFAULTS.CONFIG_FILE)
@@ -81,7 +83,7 @@ class TestLabInit:
 
         # second invocation should ask if we want to overwrite - yes, and change taxonomy path
         result = cli_runner.invoke(
-            lab.ilab, ["init"], input="y\ny\ndifferent-taxonomy\nn"
+            lab.ilab, ["config", "init"], input="y\ny\ndifferent-taxonomy\nn"
         )
         assert result.exit_code == 0
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
@@ -89,7 +91,7 @@ class TestLabInit:
         assert config.generate.taxonomy_path == "different-taxonomy"
 
         # third invocation should again ask, but this time don't overwrite
-        result = cli_runner.invoke(lab.ilab, ["init"], input="n")
+        result = cli_runner.invoke(lab.ilab, ["config", "init"], input="n")
         assert result.exit_code == 0
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
         config = read_config(DEFAULTS.CONFIG_FILE)

@@ -5,6 +5,17 @@
 * InstructLab now uses XDG-based directories on macOS, similar to Linux.
   Users are advised to re-initialize their config files and remove cached models.
 * Removed unused argument `--rouge-threshold` of `ilab data generate`
+* Removed the following aliased commands:
+  * `convert`
+  * `diff`
+  * `download`
+  * `evaluate`
+  * `init`
+  * `list`
+  * `sysinfo`
+  * `test`
+* Intel Gaudi software has been updated to 1.17.1 with Python 3.11 and
+  Torch 2.3.1 support.
 
 ## v0.18.1
 

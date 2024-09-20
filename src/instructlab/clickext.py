@@ -73,17 +73,10 @@ class ExpandAliasesGroup(LazyEntryPointGroup):
             cmd = self.alias_eps[cmd_name].load()
             if typing.TYPE_CHECKING:
                 assert isinstance(cmd, click.Command)
-            group, primary = self.get_alias_info(cmd_name)
-            click.echo(
-                "You are using an aliased command, this will be deprecated "
-                "in a future release. Please consider using "
-                f"`ilab {group} {primary}` instead"
-            )
             # if some storage dirs do not exist
-            # AND the command is not `ilab init`
             # AND the --config flag is not customized, then we error
             if not storage_dirs_exist() and (
-                primary != "init" and ctx.params["config_file"] == DEFAULTS.CONFIG_FILE
+                ctx.params["config_file"] == DEFAULTS.CONFIG_FILE
             ):
                 click.secho(
                     "Some ilab storage directories do not exist yet. Please run `ilab config init` before continuing.",

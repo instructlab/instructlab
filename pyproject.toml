@@ -70,17 +70,9 @@ issues = "https://github.com/instructlab/instructlab/issues"
 
 [project.entry-points."instructlab.command.alias"]
 "chat" = "instructlab.model.chat:chat"
-"convert" = "instructlab.model.convert:convert"
-"diff" = "instructlab.taxonomy.diff:diff"
-"download" = "instructlab.model.download:download"
-"evaluate" = "instructlab.model.evaluate:evaluate"
 "generate" = "instructlab.data.generate:generate"
-"init" = "instructlab.config.init:init"
 "serve" = "instructlab.model.serve:serve"
-"sysinfo" = "instructlab.system.info:info"
-"test" = "instructlab.model.test:test"
 "train" = "instructlab.model.train:train"
-"list" = "instructlab.model.list:model_list"
 
 [tool.setuptools_scm]
 version_file = "src/instructlab/_version.py"

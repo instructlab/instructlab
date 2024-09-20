@@ -7,6 +7,7 @@ import typing
 
 # Third Party
 from packaging.requirements import Requirement
+from packaging.version import Version
 import pytest
 
 PKG_NAME = "instructlab"
@@ -15,9 +16,8 @@ HW_EXTRAS = frozenset({"cpu", "cuda", "hpu", "mps", "rocm"})
 # special cases
 EXTRA_CHECKS = {
     "hpu": {
-        "numpy": "1.23.5",
-        "torch": "2.2.2a0",
-        "transformers": "4.40.2",
+        "torch": Version("2.3.1a0"),
+        "transformers": Version("4.43.0"),
     }
 }
 
@@ -44,8 +44,8 @@ def test_require_no_url_req():
 @pytest.mark.parametrize("hw_extra", sorted(HW_EXTRAS))
 @pytest.mark.parametrize("py_version", ["3.10", "3.11"])
 def test_package_conflict(py_version: str, hw_extra: str) -> None:
-    if py_version == "3.11" and hw_extra == "hpu":
-        pytest.skip("Intel Gaudi is not supported on 3.11")
+    if py_version != "3.11" and hw_extra == "hpu":
+        pytest.skip("Intel Gaudi only supports 3.11")
 
     base: dict[str, Requirement] = {}
     hw: dict[str, Requirement] = {}
@@ -72,12 +72,18 @@ def test_package_conflict(py_version: str, hw_extra: str) -> None:
             continue
         for specifier in hwreq.specifier:
             # naive check for common version conflicts
+            # allow pre-releases for Gaudi
             if specifier.operator in {"~=", "==", "<=", ">="}:
-                assert basereq.specifier.contains(specifier.version), (basereq, hwreq)
+                version: Version = Version(specifier.version)
+                assert basereq.specifier.contains(
+                    version, prereleases=version.is_prerelease
+                ), (basereq, hwreq)
 
     # verify special cases against base requirements
     if hw_extra in EXTRA_CHECKS:
         for name, basereq in base.items():
             extra_check = EXTRA_CHECKS[hw_extra].get(name)
             if extra_check is not None:
-                assert basereq.specifier.contains(extra_check), (basereq, extra_check)
+                assert basereq.specifier.contains(
+                    extra_check, prereleases=extra_check.is_prerelease
+                ), (basereq, extra_check)

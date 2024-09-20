@@ -34,6 +34,11 @@ logger = logging.getLogger(__name__)
 )
 def model_list(model_dirs: list[str], list_checkpoints: bool):
     """Lists models"""
+    # click converts lists into tuples when using multiple
+    model_dirs = list(model_dirs)
+    # if we want to list checkpoints, add that dir to our list
+    if list_checkpoints:
+        model_dirs.append(DEFAULTS.CHECKPOINTS_DIR)
     data = []
     for directory in model_dirs:
         for entry in Path(directory).iterdir():
@@ -42,7 +47,11 @@ def model_list(model_dirs: list[str], list_checkpoints: bool):
                 model, age, size = _analyze_gguf(entry)
                 data.append([model, age, size])
             elif entry.is_dir():
-                for m in _analyze_dir(entry, list_checkpoints, directory):
+                for m in _analyze_dir(
+                    entry,
+                    list_checkpoints,
+                    directory,
+                ):
                     data.append(m)
     print_table(["Model Name", "Last Modified", "Size"], data)
 
@@ -79,8 +88,10 @@ def _analyze_dir(
         normalized_path = os.path.normpath(root)
         # Split the path into its components
         parts = normalized_path.split(os.sep)
-        # Get the last two parts and join them back into a path
-        last_two_parts = os.path.join(parts[-2], parts[-1])
+        # Get the last two or three (for checkpoints) parts and join them back into a path
+        printed_parts = os.path.join(parts[-2], parts[-1])
+        if directory == DEFAULTS.CHECKPOINTS_DIR:
+            printed_parts = os.path.join(parts[-3], parts[-2], parts[-1])
         # if this is a dir it could be:
         # top level repo dir `instructlab/`
         # top level model dir `instructlab/granite-7b-lab`
@@ -91,7 +102,7 @@ def _analyze_dir(
         if is_model_safetensors(Path(normalized_path)) or is_model_gguf(
             Path(normalized_path)
         ):
-            actual_model_name = last_two_parts
+            actual_model_name = printed_parts
             all_files_sizes = 0
             add_model = True
         else:
@@ -102,7 +113,8 @@ def _analyze_dir(
         for f in files:
             # stat each file in the dir, add the size in Bytes, then convert to proper magnitude
             full_file = os.path.join(root, f)
-            stat = Path(full_file).stat()
+            # do not follow symlinks, we only want to list the models dir ones
+            stat = Path(full_file).stat(follow_symlinks=False)
             all_files_sizes += stat.st_size
         adjusted_all_sizes, magnitude = convert_bytes_to_proper_mag(all_files_sizes)
         if add_model:
