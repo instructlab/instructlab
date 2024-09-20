@@ -6,6 +6,9 @@ from os import path
 from xdg_base_dirs import xdg_cache_home, xdg_config_home, xdg_data_home
 import httpx
 
+# Local
+from . import common
+
 ILAB_PACKAGE_NAME = "instructlab"
 CONFIG_FILENAME = "config.yaml"
 CONFIG_VERSION = "1.0.0"
@@ -83,6 +86,9 @@ class _InstructlabDefaults:
         "lora_dropout": 0.1,
         "lora_target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"],
     }
+
+    # System Prompt
+    SYS_PROMPT = common.SYS_PROMPT
 
     def __init__(self):
         self._reset()
