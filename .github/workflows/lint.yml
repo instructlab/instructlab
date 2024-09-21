@@ -12,6 +12,7 @@ on:
       - 'pyproject.toml'
       - 'requirements*.txt'
       - 'tox.ini'
+      - .pylintrc
       - 'scripts/*.sh' # Used by this workflow
       - '.github/workflows/lint.yml' # This workflow
   pull_request:
@@ -23,6 +24,7 @@ on:
       - 'pyproject.toml'
       - 'requirements*.txt'
       - 'tox.ini'
+      - .pylintrc
       - 'scripts/*.sh' # Used by this workflow
       - '.github/workflows/lint.yml' # This workflow
 
