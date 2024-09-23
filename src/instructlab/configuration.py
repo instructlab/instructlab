@@ -14,6 +14,7 @@ import typing
 # pylint: disable=ungrouped-imports
 from instructlab.training import (
     DeepSpeedOptions,
+    FSDPOptions,
     LoraOptions,
     TorchrunArgs,
     TrainingArgs,
@@ -415,6 +416,9 @@ class _train(BaseModel):
     )
     deepspeed_cpu_offload_optimizer: bool = Field(
         default=False, description="Allow CPU offload for deepspeed optimizer."
+    )
+    fsdp_cpu_offload_optimizer: bool = Field(
+        default=False, description="Allow CPU offload for FSDP optimizer."
     )
     lora_rank: int | None = Field(
         default=4,
@@ -1248,6 +1252,10 @@ def map_train_to_library(ctx, params):
         ],
     )
 
+    fsdp_args = FSDPOptions(
+        cpu_offload_params=params["fsdp_cpu_offload_optimizer"],
+    )
+
     lora_args = LoraOptions(rank=0)
     lora_enabled = False
     lora_options = False
@@ -1274,6 +1282,7 @@ def map_train_to_library(ctx, params):
         click.secho("LoRA is disabled (rank=0), ignoring all additional LoRA args")
 
     train_args.deepspeed_options = ds_args
+    train_args.fsdp_options = fsdp_args
     train_args.lora = lora_args
 
     return train_args, torch_args

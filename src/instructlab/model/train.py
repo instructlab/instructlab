@@ -205,6 +205,11 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     required=True,  # default from config
     config_sections=ADDITIONAL_ARGUMENTS,
 )
+@click.option(
+    "--fsdp-cpu-offload-optimizer",
+    type=bool,
+    cls=clickext.ConfigOption,
+)
 # below flags are invalid if lora == false
 @click.option(
     "--lora-rank",
