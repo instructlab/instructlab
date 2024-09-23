@@ -189,6 +189,49 @@ ec2_calculate_instance_public_dns() {
     PUBLIC_DNS=$(echo "$PUBLIC_DNS" | xargs)
 }
 
+calculate_instance_public_dns() {
+    local cloud_type=$1
+    if [ "$cloud_type" = 'ec2' ]; then
+        ec2_calculate_instance_public_dns
+    elif [ "$cloud_type" = 'ibm' ]; then
+        ibm_calculate_instance_public_dns
+    else
+        echo "calculate_cloud_public_dns: Unknown cloud type: $cloud_type"
+        exit 1
+    fi
+}
+
+update_ssh_config() {
+    handle_help_and_instance_name_opts "$@"
+    calculate_instance_public_dns "$1"
+    local ssh_config="$HOME/.ssh/config"
+    local user_name
+    user_name=$(instance_user_name "$1")
+
+    if ! grep -q "Host ${INSTANCE_NAME}" "$ssh_config"; then
+        cat << EOF >> "$ssh_config"
+
+Host ${INSTANCE_NAME}
+    HostName ${PUBLIC_DNS}
+    User ${user_name}
+    IdentityFile ${EC2_KEY_LOCATION}
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+EOF
+        echo "Added entry for ${INSTANCE_NAME} in ${ssh_config}"
+    else
+        local temp_file
+        temp_file=$(mktemp)
+        awk -v ip="$PUBLIC_DNS" '
+            $1 == "Host" && $2 == "'"${INSTANCE_NAME}"'" {found=1}
+            found && $1 == "HostName" {$0 = "    HostName " ip; found=0}
+            {print}
+        ' "$ssh_config" > "$temp_file"
+        mv "$temp_file" "$ssh_config"
+        echo "Updated HostIpAddress for ${INSTANCE_NAME} to ${PUBLIC_DNS} in ${ssh_config}"
+    fi
+}
+
 ibm() {
     local cmdname=$1
     if [ -z "$cmdname" ]; then
@@ -486,6 +529,10 @@ Commands
             Name of the instance to sync to (default provided in config)
         -c
             Push uncommitted changes to the remote instance with a temporary commit
+
+    update-ssh-config - Update the HostIpAddress in ~/.ssh/config
+        -n
+            Name of the instance to update the HostIpAddress for (default provided in config)
 "
 }
 
