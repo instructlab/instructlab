@@ -158,6 +158,8 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
       > **NOTE**: Make sure your system Python build is `Mach-O 64-bit executable arm64` by using `file -b $(command -v python)`,
       > or if your system is setup with [pyenv](https://github.com/pyenv/pyenv) by using the `file -b $(pyenv which python)` command.
+      >
+      > **NOTE**: Also, ensure that both `python3 -c 'import platform; print(platform.machine())'` and `arch` return `arm64`. If `arch` returns `i386` or `python3` returns `x86_64`, it means your terminal or Python is running in Intel emulation mode, which isn't optimized for Apple Silicon. This is especially important if you have synced data from an Intel-based Mac to an Apple Silicon Mac (M1/M2/M3), as you may need to review and update your environment, especially tools like `Homebrew` or `Bash` that were previously installed under Intel.
 
       ```shell
       python3 -m venv --upgrade-deps venv
