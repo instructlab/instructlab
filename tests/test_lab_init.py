@@ -15,6 +15,20 @@ from instructlab.configuration import DEFAULTS, read_config
 
 
 class TestLabInit:
+    @patch(
+        "instructlab.config.init.convert_bytes_to_proper_mag", return_value=(89.0, "GB")
+    )
+    def test_ilab_config_init_auto_detection(
+        self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner
+    ):
+        result = cli_runner.invoke(lab.ilab, ["config", "init", "--interactive"])
+        assert result.exit_code == 0, result.stdout
+        convert_bytes_to_proper_mag_mock.assert_called_once()
+        assert (
+            "We chose Nvidia 2x A100 as your designated training profile. This is for systems with 160 GB of vRAM"
+            in result.stdout
+        )
+
     # When using `from X import Y` you need to understand that Y becomes part
     # of your module, so you should use `my_module.Y`` to patch.
     # When using `import X`, you should use `X.Y` to patch.

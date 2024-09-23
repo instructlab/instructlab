@@ -503,6 +503,303 @@ class Config(BaseModel):
     )
 
 
+EIGHT_GPU_TRAIN_AH = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=8,
+    effective_batch_size=128,
+    lora_quantize_dtype=None,
+    lora_rank=0,
+    max_batch_len=60000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=False,
+    is_padding_free=True,
+    num_epochs=8,
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
+)
+
+FOUR_GPU_TRAIN_AH = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=4,
+    effective_batch_size=128,
+    lora_quantize_dtype=None,
+    lora_rank=0,
+    max_batch_len=54000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=False,
+    is_padding_free=True,
+    num_epochs=8,
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
+)
+
+TWO_GPU_TRAIN_AH = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": True,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=2,
+    effective_batch_size=128,
+    lora_quantize_dtype=None,
+    lora_rank=0,
+    max_batch_len=60000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=True,
+    is_padding_free=True,
+    num_epochs=8,
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
+)
+
+EIGHT_L_FORTY_GPU = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=8,
+    effective_batch_size=128,
+    lora_quantize_dtype=None,
+    lora_rank=0,
+    max_batch_len=30000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=False,
+    is_padding_free=True,
+    num_epochs=8,
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
+)
+
+FOUR_L_FORTY_GPU = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": True,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=4,
+    effective_batch_size=128,
+    lora_quantize_dtype=None,
+    lora_rank=0,
+    max_batch_len=30000,
+    max_seq_len=4096,
+    save_samples=1000,
+    num_epochs=8,
+    deepspeed_cpu_offload_optimizer=True,
+    is_padding_free=True,
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
+)
+
+EIGHT_L_FOUR_GPU = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": True,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=8,
+    effective_batch_size=128,
+    lora_quantize_dtype=None,
+    lora_rank=0,
+    max_batch_len=30000,
+    max_seq_len=4096,
+    save_samples=1000,
+    num_epochs=8,
+    deepspeed_cpu_offload_optimizer=True,
+    is_padding_free=True,
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
+)
+
+SINGLE_SERVER_GPU_TRAIN = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": True,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=1,
+    effective_batch_size=96,
+    lora_quantize_dtype="nf4",
+    lora_rank=2,
+    max_batch_len=60000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=True,
+    is_padding_free=True,
+    num_epochs=8,
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
+)
+
+SINGLE_CONSUMER_GPU_TRAIN = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": True,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=1,
+    effective_batch_size=96,
+    lora_quantize_dtype="nf4",
+    lora_rank=2,
+    max_batch_len=30000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=True,
+    is_padding_free=True,
+    num_epochs=5,
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
+)
+
+
+MULTI_CONSUMER_GPU_TRAIN = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": True,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=2,
+    effective_batch_size=96,
+    lora_quantize_dtype="nf4",
+    lora_rank=2,
+    max_batch_len=30000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=True,
+    is_padding_free=True,
+    num_epochs=5,
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
+)
+
+
+SINGLE_L4 = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": True,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=1,
+    effective_batch_size=96,
+    lora_quantize_dtype="nf4",
+    lora_rank=2,
+    max_batch_len=30000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=True,
+    is_padding_free=True,
+    num_epochs=5,
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
+)
+
+SINGLE_L40 = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": True,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=1,
+    effective_batch_size=96,
+    lora_quantize_dtype="nf4",
+    lora_rank=2,
+    max_batch_len=30000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=True,
+    is_padding_free=True,
+    num_epochs=5,
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
+)
+
+SINGLE_A100_H100 = _train(
+    additional_args={
+        "warmup_steps": 25,
+        "learning_rate": 2e-5,
+        "lora_dropout": 0.1,
+        "lora_alpha": 32,
+        "deepspeed_cpu_offload_optimizer_ratio": 1,
+        "deepspeed_cpu_offload_optimizer_pin_memory": True,
+    },
+    ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
+    data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
+    data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
+    nproc_per_node=1,
+    effective_batch_size=128,
+    lora_quantize_dtype=None,
+    lora_rank=0,
+    max_batch_len=60000,
+    max_seq_len=4096,
+    save_samples=1000,
+    deepspeed_cpu_offload_optimizer=True,
+    is_padding_free=True,
+    num_epochs=8,
+    model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
+)
+
+
 def get_default_config() -> Config:
     """Generates default configuration for CLI"""
     return Config()
@@ -814,163 +1111,6 @@ def recreate_train_profiles(overwrite: bool = False) -> bool:
                     loaded = yaml.load(d)
                     yaml.dump(loaded, outfile)
     else:
-        # else render the defaults
-        EIGHT_GPU_TRAIN_AH = _train(
-            additional_args={
-                "warmup_steps": 25,
-                "learning_rate": 2e-5,
-                "lora_dropout": 0.1,
-                "lora_alpha": 32,
-            },
-            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
-            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
-            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
-            nproc_per_node=8,
-            effective_batch_size=128,
-            lora_quantize_dtype=None,
-            lora_rank=0,
-            max_batch_len=60000,
-            max_seq_len=4096,
-            save_samples=1000,
-            deepspeed_cpu_offload_optimizer=False,
-            is_padding_free=True,
-            num_epochs=8,
-            model_path=os.path.join(
-                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-            ),
-        )
-
-        FOUR_GPU_TRAIN_AH = _train(
-            additional_args={
-                "warmup_steps": 25,
-                "learning_rate": 2e-5,
-                "lora_dropout": 0.1,
-                "lora_alpha": 32,
-            },
-            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
-            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
-            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
-            nproc_per_node=4,
-            effective_batch_size=128,
-            lora_quantize_dtype=None,
-            lora_rank=0,
-            max_batch_len=54000,
-            max_seq_len=4096,
-            save_samples=1000,
-            deepspeed_cpu_offload_optimizer=False,
-            is_padding_free=True,
-            num_epochs=8,
-            model_path=os.path.join(
-                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-            ),
-        )
-
-        TWO_GPU_TRAIN_AH = _train(
-            additional_args={
-                "warmup_steps": 25,
-                "learning_rate": 2e-5,
-                "lora_dropout": 0.1,
-                "lora_alpha": 32,
-                "deepspeed_cpu_offload_optimizer_ratio": 1,
-                "deepspeed_cpu_offload_optimizer_pin_memory": True,
-            },
-            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
-            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
-            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
-            nproc_per_node=2,
-            effective_batch_size=128,
-            lora_quantize_dtype=None,
-            lora_rank=0,
-            max_batch_len=60000,
-            max_seq_len=4096,
-            save_samples=1000,
-            deepspeed_cpu_offload_optimizer=True,
-            is_padding_free=True,
-            num_epochs=8,
-            model_path=os.path.join(
-                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-            ),
-        )
-
-        EIGHT_L_FORTY_GPU = _train(
-            additional_args={
-                "warmup_steps": 25,
-                "learning_rate": 2e-5,
-                "lora_dropout": 0.1,
-                "lora_alpha": 32,
-            },
-            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
-            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
-            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
-            nproc_per_node=8,
-            effective_batch_size=128,
-            lora_quantize_dtype=None,
-            lora_rank=0,
-            max_batch_len=30000,
-            max_seq_len=4096,
-            save_samples=1000,
-            deepspeed_cpu_offload_optimizer=False,
-            is_padding_free=True,
-            num_epochs=8,
-            model_path=os.path.join(
-                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-            ),
-        )
-
-        FOUR_L_FORTY_GPU = _train(
-            additional_args={
-                "warmup_steps": 25,
-                "learning_rate": 2e-5,
-                "lora_dropout": 0.1,
-                "lora_alpha": 32,
-                "deepspeed_cpu_offload_optimizer_ratio": 1,
-                "deepspeed_cpu_offload_optimizer_pin_memory": True,
-            },
-            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
-            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
-            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
-            nproc_per_node=4,
-            effective_batch_size=128,
-            lora_quantize_dtype=None,
-            lora_rank=0,
-            max_batch_len=30000,
-            max_seq_len=4096,
-            save_samples=1000,
-            num_epochs=8,
-            deepspeed_cpu_offload_optimizer=True,
-            is_padding_free=True,
-            model_path=os.path.join(
-                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-            ),
-        )
-
-        EIGHT_L_FOUR_GPU = _train(
-            additional_args={
-                "warmup_steps": 25,
-                "learning_rate": 2e-5,
-                "lora_dropout": 0.1,
-                "lora_alpha": 32,
-                "deepspeed_cpu_offload_optimizer_ratio": 1,
-                "deepspeed_cpu_offload_optimizer_pin_memory": True,
-            },
-            ckpt_output_dir=os.path.join(DEFAULTS._data_dir, "checkpoints"),
-            data_output_dir=os.path.join(DEFAULTS._data_dir, "internal"),
-            data_path=os.path.join(DEFAULTS._data_dir, "datasets"),
-            nproc_per_node=8,
-            effective_batch_size=128,
-            lora_quantize_dtype=None,
-            lora_rank=0,
-            max_batch_len=30000,
-            max_seq_len=4096,
-            save_samples=1000,
-            num_epochs=8,
-            deepspeed_cpu_offload_optimizer=True,
-            is_padding_free=True,
-            model_path=os.path.join(
-                DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"
-            ),
-        )
-
         to_write = {
             DEFAULTS.TRAIN_A100_H100_X4_PROFILE: FOUR_GPU_TRAIN_AH,
             DEFAULTS.TRAIN_A100_H100_X8_PROFILE: EIGHT_GPU_TRAIN_AH,
@@ -1155,3 +1295,54 @@ def storage_dirs_exist() -> bool:
         DEFAULTS.PHASED_DIR,
     ]
     return all(os.path.exists(dirpath) for dirpath in dirs_to_check)
+
+
+# {"GPU Name": ({ "gpu_count": NUM_GPUS, "vram_and_config": {"vram": TOTAL_VRAM, "config": TRAIN_CONFIG}})...}
+PROFILE_MAPPINGS = {
+    "L40s": (
+        {"gpu_count": 1, "vram_and_config": {"vram": 80, "config": SINGLE_L40}},
+        {
+            "gpu_count": 4,
+            "vram_and_config": {"vram": 192, "config": FOUR_L_FORTY_GPU},
+        },
+        {
+            "gpu_count": 8,
+            "vram_and_config": {"vram": 384, "config": EIGHT_L_FORTY_GPU},
+        },
+    ),
+    "L4": (
+        {"gpu_count": 1, "vram_and_config": {"vram": 24, "config": SINGLE_L4}},
+        {
+            "gpu_count": 8,
+            "vram_and_config": {"vram": 192, "config": EIGHT_L_FOUR_GPU},
+        },
+    ),
+    "A100": (
+        {
+            "gpu_count": 2,
+            "vram_and_config": {"vram": 160, "config": TWO_GPU_TRAIN_AH},
+        },
+        {
+            "gpu_count": 4,
+            "vram_and_config": {"vram": 320, "config": FOUR_GPU_TRAIN_AH},
+        },
+        {
+            "gpu_count": 8,
+            "vram_and_config": {"vram": 640, "config": EIGHT_GPU_TRAIN_AH},
+        },
+    ),
+    "H100": (
+        {
+            "gpu_count": 2,
+            "vram_and_config": {"vram": 160, "config": TWO_GPU_TRAIN_AH},
+        },
+        {
+            "gpu_count": 4,
+            "vram_and_config": {"vram": 320, "config": FOUR_GPU_TRAIN_AH},
+        },
+        {
+            "gpu_count": 8,
+            "vram_and_config": {"vram": 640, "config": EIGHT_GPU_TRAIN_AH},
+        },
+    ),
+}
