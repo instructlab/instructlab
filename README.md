@@ -65,9 +65,10 @@ After you have added knowledge and skills to the taxonomy, you can perform the f
 graph TD;
   download-->chat
   chat[Chat with the LLM]-->add
-  add[Add new knowledge\nor skill to taxonomy]-->generate[generate new\nsynthetic training data]
+  add[Add new knowledge<br/>or skill to taxonomy]-->generate[generate new<br/>synthetic training data]
   generate-->train
-  train[Re-train]-->|Chat with\nthe re-trained LLM\nto see the results|chat
+  train[Re-train]-->|Chat with<br/>the re-trained LLM<br/>to see the results|chat
+
 ```
 
 For an overview of the full workflow, see the [workflow diagram](./docs/workflow.png).
