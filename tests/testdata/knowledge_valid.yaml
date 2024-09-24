@@ -21,3 +21,4 @@ document:
   patterns:
   - "*.md"
   - docs/*.md
+  - "*.pdf"
