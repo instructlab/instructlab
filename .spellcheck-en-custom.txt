@@ -93,9 +93,11 @@ Nvidia
 NVidia
 OCI
 oneMKL
+OOM
 orchestrator
 ots
 parallelized
+PEFT
 Pareja
 PEFT
 PlantUML
