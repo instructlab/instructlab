@@ -8,7 +8,6 @@ import os
 import pathlib
 import signal
 import subprocess
-import sys
 import tempfile
 import time
 import typing
@@ -47,6 +46,7 @@ class Server(BackendServer):
         background: bool = False,
         vllm_args: typing.Iterable[str] | None = (),
         max_startup_attempts: int | None = None,
+        vllm_path: Optional[str] = None,
     ):
         super().__init__(model_family, model_path, chat_template, api_base, host, port)
         self.api_base = api_base
@@ -56,6 +56,7 @@ class Server(BackendServer):
         self.vllm_args = list(vllm_args) if vllm_args is not None else []
         self.process: subprocess.Popen | None = None
         self.max_startup_attempts = max_startup_attempts
+        self.vllm_path = vllm_path
 
     def run(self):
         self.process, files = run_vllm(
@@ -66,6 +67,7 @@ class Server(BackendServer):
             self.chat_template,
             self.vllm_args,
             self.background,
+            self.vllm_path,
         )
         self.register_resources(files)
 
@@ -251,6 +253,7 @@ def run_vllm(
     chat_template: str,
     vllm_args: list[str],
     background: bool,
+    vllm_path: Optional[str] = None,
 ) -> typing.Tuple[subprocess.Popen, list[Closeable]]:
     """
     Start an OpenAI-compatible server with vLLM.
@@ -269,6 +272,7 @@ def run_vllm(
                                         Example: ["--dtype", "auto", "--enable-lora"]
         background (bool):            Whether the stdout and stderr vLLM should be sent to /dev/null (True)
                                       or stay in the foreground(False).
+        vllm_path     (str):          Path to the vllm executable
     Returns:
         tuple: A tuple containing two values:
             vllm_process (subprocess.Popen): process of the vllm server
@@ -277,7 +281,7 @@ def run_vllm(
     """
     vllm_process = None
     vllm_cmd, tmp_files = build_vllm_cmd(
-        host, port, model_family, model_path, chat_template, vllm_args
+        host, port, model_family, model_path, chat_template, vllm_args, vllm_path
     )
 
     logger.debug(f"vLLM serving command is: {vllm_cmd}")
@@ -343,6 +347,7 @@ def build_vllm_cmd(
     model_path: pathlib.Path,
     chat_template: str,
     vllm_args: list[str],
+    vllm_path: Optional[str] = None,
 ) -> typing.Tuple[list[str], list[Closeable]]:
     """
     Build the vLLM command to run the server.
@@ -359,13 +364,19 @@ def build_vllm_cmd(
 
         vllm_args     (list of str):  Specific arguments to pass into vllm.
                                         Example: ["--dtype", "auto", "--enable-lora"]
+        vllm_path     (str):          Path to the vllm executable
 
     Returns:
         tuple: A tuple containing two values:
             vllm_cmd (list of str): The command to run the vllm server
             tmp_files: a list of temporary files necessary to launch the process
     """
-    vllm_cmd = [sys.executable, "-m", "vllm.entrypoints.openai.api_server"]
+
+    if contains_argument("--model", vllm_args):
+        # The model is a positional argument to `vllm serve`
+        raise ValueError("The --model argument is not allowed in vllm_args")
+
+    vllm_cmd = [vllm_path if vllm_path else "vllm", "serve", os.fspath(model_path)]
     tmp_files = []
 
     if not contains_argument("--host", vllm_args):
@@ -373,9 +384,6 @@ def build_vllm_cmd(
 
     if not contains_argument("--port", vllm_args):
         vllm_cmd.extend(["--port", str(port)])
-
-    if not contains_argument("--model", vllm_args):
-        vllm_cmd.extend(["--model", os.fspath(model_path)])
 
     if not contains_argument("--chat-template", vllm_args):
         if chat_template == CHAT_TEMPLATE_AUTO:

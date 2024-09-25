@@ -162,6 +162,10 @@ class _serve_vllm(BaseModel):
             ["--lora-alpha", "32"],
         ],
     )
+    vllm_path: Optional[str] = Field(
+        default=None,
+        description="Path to the vLLM executable.",
+    )
 
 
 class _serve_llama_cpp(BaseModel):
