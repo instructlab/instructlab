@@ -200,7 +200,7 @@ class OCIDownloader(Downloader):
             )
             raise click.exceptions.Exit(1)
 
-        model_name = self.repository.split("/")[-1]
+        model_name = f"{self.repository.split('/')[-1]}-{self.release}"
         os.makedirs(os.path.join(self.download_dest, model_name), exist_ok=True)
         oci_dir = f"{DEFAULTS.OCI_DIR}/{model_name}"
         os.makedirs(oci_dir, exist_ok=True)
