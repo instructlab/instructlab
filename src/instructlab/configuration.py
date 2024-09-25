@@ -4,6 +4,7 @@
 from os import path
 from re import match
 from typing import Any, Optional, Union
+import logging
 import os
 import sys
 import textwrap
@@ -54,6 +55,11 @@ class _general(BaseModel):
     # additional fields with defaults
     log_level: StrictStr = Field(default="INFO", description="Log level for logging.")
     debug_level: int = Field(default=0, description="Debug level for logging.")
+    log_format: StrictStr = Field(
+        default="%(levelname)s %(asctime)s %(name)s:%(lineno)d: %(message)s",
+        description="Log format. https://docs.python.org/3/library/logging.html#logrecord-attributes",
+        validate_default=True,
+    )
 
     @field_validator("log_level")
     def validate_log_level(cls, v):
@@ -74,6 +80,19 @@ class _general(BaseModel):
                 f"'{v}' is not a valid log level name. valid levels: {valid_levels}"
             )
         return v.upper()
+
+    @field_validator("log_format")
+    @classmethod
+    def validate_log_format(cls, log_format):
+        try:
+            logging.PercentStyle(log_format).validate()
+            return log_format
+        except ValueError as e:
+            raise ValueError(
+                f"\nFailed to configure log format: {e}\n"
+                "Have you specified a valid log format?\n"
+                "Consider reading: https://docs.python.org/3/library/logging.html#logrecord-attributes"
+            ) from e
 
     @model_validator(mode="after")
     def after_debug_level(self):
@@ -1203,7 +1222,9 @@ def init(
         log.configure_logging(
             log_level=config_obj.general.log_level.upper(),
             debug_level=config_obj.general.debug_level,
+            fmt=config_obj.general.log_format,
         )
+
         # subtly get the additional args per cfg section
         # if any are missing, add in sane defaults
         train_additional = ctx.default_map["train"]["additional_args"]

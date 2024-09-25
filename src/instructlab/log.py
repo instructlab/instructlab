@@ -3,9 +3,8 @@
 # Standard
 import logging
 import os
+import pathlib
 import sys
-
-FORMAT = "%(levelname)s %(asctime)s %(name)s:%(lineno)d: %(message)s"
 
 
 class CustomFormatter(logging.Formatter):
@@ -37,15 +36,17 @@ class LoggerWriter:
         return False
 
 
-def stdout_stderr_to_logger(logger, log_file):
+def stdout_stderr_to_logger(
+    logger: logging.Logger, log_file: pathlib.Path | None, fmt: str
+):
     if log_file:
         # Use the existing log file if it exists and append to it
         mode = "a"
         # Create file handler
         file_handler = logging.FileHandler(log_file, mode, encoding="utf-8")
         logger.addHandler(file_handler)
-        # Create formatter and set it for both handlers
-        formatter = CustomFormatter(FORMAT)
+        # Create formatter and add it to the handler
+        formatter = CustomFormatter(fmt)
         file_handler.setFormatter(formatter)
 
     sys.stdout = LoggerWriter(logger.info)
@@ -56,7 +57,7 @@ def configure_logging(
     *,
     log_level: str,
     debug_level: int = 0,
-    fmt: str = FORMAT,
+    fmt: str,
 ) -> None:
     """Configure logging framework"""
     root = logging.getLogger()

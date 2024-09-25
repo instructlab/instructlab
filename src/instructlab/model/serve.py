@@ -126,7 +126,9 @@ def serve(
         raise click.exceptions.Exit(1)
 
     # Redirect server stdout and stderr to the logger
-    log.stdout_stderr_to_logger(logger, log_file)
+    log.stdout_stderr_to_logger(
+        logger=logger, log_file=log_file, fmt=ctx.obj.config.general.log_format
+    )
 
     if chat_template is None:
         chat_template = ctx.obj.config.serve.chat_template
