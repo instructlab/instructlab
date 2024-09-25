@@ -16,6 +16,7 @@
   * `test`
 * Intel Gaudi software has been updated to 1.17.1 with Python 3.11 and
   Torch 2.3.1 support.
+* `--legacy` has been removed and replaced with `--pipeline=simple` in `ilab model train`
 
 ### Features
 
@@ -24,6 +25,8 @@
 * `ilab model evaluate --max-workers=auto` is now supported and is the default option. When
   auto is specified, the optimal value is determined based on your GPUs, CPUs, and
   configuration.
+* `ilab model train` now supports `--pipeline`. The supported pipelines are `simple`, `full`, and `accelerated`. Simple preserves the functionality found in `--legacy` and current MacOS training. Full introduces a new training loop optimized for CPU and MacOS performance. `accelerated` allows users with dedicated graphics cards to run the full fine tuning and multi-phase training found in our training library.
+* `--device` in `ilab model train` now supports `mps` which stands for Metal Performance Shaders. This is a PyTorch device for MacOS training that allows us to utilize the same code path for Linux and MacOS.
 
 ## v0.18.1
 
