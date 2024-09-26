@@ -738,13 +738,14 @@ def evaluate(
             m_paths = [model, base_model]
             overall_scores = []
             individual_scores_list = []
-            for evaluator in evaluators:
+            for i, evaluator in enumerate(evaluators):
+                m_path = m_paths[i]
                 server = None
                 try:
                     server, api_base = launch_server(
                         ctx,
-                        model,
-                        model,
+                        m_path,
+                        m_path,
                         None,
                         gpus,
                         backend,
