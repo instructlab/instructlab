@@ -3,6 +3,7 @@
 import importlib
 import os
 import platform
+import subprocess
 import sys
 import typing
 
@@ -30,6 +31,16 @@ def _platform_info() -> typing.Dict[str, typing.Any]:
             value = os_release.get(key)
             if value:
                 d[f"os-release.{key}"] = value
+    elif sys.platform == "darwin":
+        try:
+            cpu_info = (
+                subprocess.check_output(["sysctl", "-n", "machdep.cpu.brand_string"])
+                .decode("utf-8")
+                .strip()
+            )
+            d["platform.cpu_brand"] = cpu_info
+        except subprocess.CalledProcessError:
+            d["platform.cpu_brand"] = "Unknown"
     return d
 
 
