@@ -139,18 +139,23 @@ def validate_model(model: str, model_arg: str = "--model"):
         raise click.exceptions.Exit(1)
 
 
-def sort_score(pairing: tuple[str, float]) -> float:
+def sort_score(pairing: tuple[str, float, float, float]) -> float:
     """helper func for display_branch_eval_summary
     takes a tuple pairing and returns just the score
     """
     return pairing[1]
 
 
-def display_models(model, base_model) -> None:
+def display_models_and_scores(
+    model, base_model, model_overall_score, base_model_overall_score
+) -> None:
     """prints the base_model and model with a header"""
-    print("## BASE MODEL")
-    print(base_model)
-    display_model(model)
+    base_model_overall_score = round(base_model_overall_score, 2)
+    model_overall_score = round(model_overall_score, 2)
+    print("## BASE MODEL (SCORE)")
+    print(f"{base_model} ({base_model_overall_score})")
+    print("\n## MODEL (SCORE)")
+    print(f"{model} ({model_overall_score})")
 
 
 def display_model(model) -> None:
@@ -167,9 +172,9 @@ def display_error_rate(error_rate) -> None:
 
 
 def display_branch_eval_summary(
-    improvements: list[tuple[str, float]],
-    regressions: list[tuple[str, float]],
-    no_changes: list[str],
+    improvements: list[tuple[str, float, float, float]],
+    regressions: list[tuple[str, float, float, float]],
+    no_changes: list[tuple[str, float]],
     new=None,
 ):
     """takes in results lists from mt_bench_branch benchmark evaluation
@@ -179,25 +184,37 @@ def display_branch_eval_summary(
         improvements.sort(key=sort_score, reverse=True)
         print("\n### IMPROVEMENTS:")
         for index, improvement in enumerate(improvements):
-            task, delta = improvement
-            print(f"{index+1}. {task} (+{delta})")
+            task, delta, base_score, new_score = improvement
+            base_score = round(base_score, 2)
+            new_score = round(new_score, 2)
+            print(
+                f"{index+1}. {task} (+{delta}) (BASE MODEL: {base_score} -> NEW MODEL: {new_score})"
+            )
 
     if len(regressions) > 0:
         regressions.sort(key=sort_score)
         print("\n### REGRESSIONS:")
         for index, regression in enumerate(regressions):
-            task, delta = regression
-            print(f"{index+1}. {task} ({delta})")
+            task, delta, base_score, new_score = regression
+            base_score = round(base_score, 2)
+            new_score = round(new_score, 2)
+            print(
+                f"{index+1}. {task} ({delta}) (BASE MODEL: {base_score} -> NEW MODEL: {new_score})"
+            )
 
     if len(no_changes) > 0:
         print("\n### NO CHANGE:")
-        for index, task in enumerate(no_changes):
-            print(f"{index+1}. {task}")
+        for index, entry in enumerate(no_changes):
+            task, avg_score = entry
+            avg_score = round(avg_score, 2)
+            print(f"{index+1}. {task} ({avg_score})")
 
     if new is not None and len(new) > 0:
         print("\n### NEW:")
-        for index, qna in enumerate(new):
-            print(f"{index+1}. {qna}")
+        for index, entry in enumerate(new):
+            qna, avg_score = entry
+            avg_score = round(avg_score, 2)
+            print(f"{index+1}. {qna} ({avg_score})")
 
 
 def qa_pairs_to_qna_to_avg_scores(qa_pairs: list[dict]) -> dict[str, float]:
@@ -659,43 +676,51 @@ def evaluate(
                 for i, evaluator in enumerate(evaluators):
                     branch = branches[i]
                     print(f"Evaluating answers for branch {branch}...")
-                    judgement = evaluator.judge_answers(
+                    overall_score, qa_pairs, error_rate = evaluator.judge_answers(
                         api_base, max_workers=max_workers, serving_gpus=effective_gpus
                     )
-
-                    if len(judgement) == 3:
-                        qa_pairs = judgement[1]
-                        error_rate = judgement[2]
-                    else:
-                        qa_pairs = judgement[0]
-                        error_rate = judgement[1]
-
-                    qa_pairs_and_errors.append((qa_pairs, error_rate))
+                    qa_pairs_and_errors.append((overall_score, qa_pairs, error_rate))
             finally:
                 if server is not None:
                     server.shutdown()
 
-            qa_pairs, error_rate = qa_pairs_and_errors[0]
-            base_qa_pairs, base_error_rate = qa_pairs_and_errors[1]
+            overall_score, qa_pairs, error_rate = qa_pairs_and_errors[0]
+            base_overall_score, base_qa_pairs, base_error_rate = qa_pairs_and_errors[1]
 
             qna_to_avg_scores = qa_pairs_to_qna_to_avg_scores(qa_pairs)
             base_qna_to_avg_scores = qa_pairs_to_qna_to_avg_scores(base_qa_pairs)
 
             print("# SKILL EVALUATION REPORT\n")
-            display_models(model, base_model)
+            display_models_and_scores(
+                model, base_model, overall_score, base_overall_score
+            )
 
             improvements, regressions, no_changes, new_qnas = [], [], [], []
             for qna, avg_score in qna_to_avg_scores.items():
                 base_avg_score = base_qna_to_avg_scores.get(qna)
                 if base_avg_score is not None:
                     if avg_score > base_avg_score:
-                        improvements.append((qna, round(avg_score - base_avg_score, 2)))
+                        improvements.append(
+                            (
+                                qna,
+                                round(avg_score - base_avg_score, 2),
+                                base_avg_score,
+                                avg_score,
+                            )
+                        )
                     elif avg_score == base_avg_score:
-                        no_changes.append(qna)
+                        no_changes.append((qna, avg_score))
                     else:
-                        regressions.append((qna, round(avg_score - base_avg_score, 2)))
+                        regressions.append(
+                            (
+                                qna,
+                                round(avg_score - base_avg_score, 2),
+                                base_avg_score,
+                                avg_score,
+                            )
+                        )
                 else:
-                    new_qnas.append((qna))
+                    new_qnas.append((qna, avg_score))
 
             # display summary of evaluation before exiting
             display_branch_eval_summary(improvements, regressions, no_changes, new_qnas)
@@ -791,7 +816,9 @@ def evaluate(
             base_individual_scores = individual_scores_list[1]
 
             print("# KNOWLEDGE EVALUATION REPORT\n")
-            display_models(model, base_model)
+            display_models_and_scores(
+                model, base_model, overall_score, base_overall_score
+            )
 
             print("\n### AVERAGE:")
             delta = round(overall_score - base_overall_score, 2)
@@ -809,11 +836,11 @@ def evaluate(
                 b_s = base_score["score"]
                 d = round(s - b_s, 2)
                 if s > b_s:
-                    improvements.append((task, d))
+                    improvements.append((task, d, b_s, s))
                 elif b_s > s:
-                    regressions.append((task, d))
+                    regressions.append((task, d, b_s, s))
                 else:
-                    no_changes.append(task)
+                    no_changes.append((task, s))
 
             # display summary of evaluation before exiting
             display_branch_eval_summary(improvements, regressions, no_changes)

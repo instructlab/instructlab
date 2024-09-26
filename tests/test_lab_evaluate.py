@@ -169,25 +169,25 @@ def run_mt_bench_branch(cli_runner, error_rate):
         Evaluating answers for branch main...
         # SKILL EVALUATION REPORT
 
-        ## BASE MODEL
-        instructlab/granite-7b-lab
+        ## BASE MODEL (SCORE)
+        instructlab/granite-7b-lab (0)
 
-        ## MODEL
-        instructlab/granite-7b-lab
+        ## MODEL (SCORE)
+        instructlab/granite-7b-lab (0)
 
         ### IMPROVEMENTS:
-        1. category1/qna.yaml (+0.1)
-        2. category3/qna.yaml (+0.1)
+        1. category1/qna.yaml (+0.1) (BASE MODEL: 0.1 -> NEW MODEL: 0.2)
+        2. category3/qna.yaml (+0.1) (BASE MODEL: 0.1 -> NEW MODEL: 0.2)
 
         ### REGRESSIONS:
-        1. category2/qna.yaml (-0.1)
-        2. category4/qna.yaml (-0.1)
+        1. category2/qna.yaml (-0.1) (BASE MODEL: 0.4 -> NEW MODEL: 0.3)
+        2. category4/qna.yaml (-0.1) (BASE MODEL: 0.4 -> NEW MODEL: 0.3)
 
         ### NO CHANGE:
-        1. category5/qna.yaml
+        1. category5/qna.yaml (0.5)
 
         ### NEW:
-        1. category6/qna.yaml
+        1. category6/qna.yaml (0.6)
         """
     )
     if error_rate > 0:
@@ -242,10 +242,10 @@ def test_evaluate_mt_bench(
 @patch(
     "instructlab.eval.mt_bench.MTBenchBranchEvaluator.judge_answers",
     side_effect=[
-        (gen_qa_pairs(True), 0),
-        (gen_qa_pairs(False), 0),
-        (gen_qa_pairs(True), 0.4567),
-        (gen_qa_pairs(False), 0.4567),
+        (0, gen_qa_pairs(True), 0),
+        (0, gen_qa_pairs(False), 0),
+        (0, gen_qa_pairs(True), 0.4567),
+        (0, gen_qa_pairs(False), 0.4567),
     ],
 )
 def test_evaluate_mt_bench_branch(
@@ -352,25 +352,25 @@ def test_evaluate_mmlu_branch(
         """\
         # KNOWLEDGE EVALUATION REPORT
 
-        ## BASE MODEL
-        instructlab/granite-7b-lab
+        ## BASE MODEL (SCORE)
+        instructlab/granite-7b-lab (0.6)
 
-        ## MODEL
-        instructlab/granite-7b-lab
+        ## MODEL (SCORE)
+        instructlab/granite-7b-lab (0.5)
 
         ### AVERAGE:
         -0.1 (across 5)
 
         ### IMPROVEMENTS:
-        1. task1 (+0.1)
-        2. task3 (+0.1)
+        1. task1 (+0.1) (BASE MODEL: 0.1 -> NEW MODEL: 0.2)
+        2. task3 (+0.1) (BASE MODEL: 0.1 -> NEW MODEL: 0.2)
 
         ### REGRESSIONS:
-        1. task2 (-0.1)
-        2. task4 (-0.1)
+        1. task2 (-0.1) (BASE MODEL: 0.4 -> NEW MODEL: 0.3)
+        2. task4 (-0.1) (BASE MODEL: 0.4 -> NEW MODEL: 0.3)
 
         ### NO CHANGE:
-        1. task5
+        1. task5 (0.5)
         """
     )
     assert result.output == expected
