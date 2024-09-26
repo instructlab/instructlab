@@ -29,7 +29,7 @@ pull_request_rules:
     - or:
       - and:
         # note this should match the triggering criteria in 'e2e-starter.yml'
-        - check-success=e2e-workflow-complete
+        - check-success~=e2e-workflow-complete
         - or:
           - files~=\.py$
           - files=pyproject.toml
@@ -51,7 +51,7 @@ pull_request_rules:
     - or:
       - and:
         # note this should match the triggering criteria in 'test.yml'
-        - check-success=test-workflow-complete
+        - check-success~=test-workflow-complete
         - or:
           - files~=\.py$
           - files=pyproject.toml
@@ -71,7 +71,7 @@ pull_request_rules:
     - or:
       - and:
         # note this should match the triggering criteria in 'lint.yml'
-        - check-success=lint-workflow-complete
+        - check-success~=lint-workflow-complete
         - or:
           - files~=\.py$
           - files=pyproject.toml
