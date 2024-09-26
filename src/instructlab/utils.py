@@ -31,8 +31,9 @@ import gitdb
 import httpx
 import yaml
 
-# First Party
-from instructlab.configuration import DEFAULTS, read_config
+# Local
+from .default import DEFAULTS
+from .configuration import read_config
 
 logger = logging.getLogger(__name__)
 
