@@ -19,6 +19,29 @@ set -ex
 #############
 # UTILITIES #
 #############
+init_config() {
+    # Generate initial configuration file
+    ilab config init --non-interactive
+
+    # It looks like GitHub action MacOS runner does not have graphics
+    # so we need to disable the GPU layers if we are running in GitHub actions
+    if [[ "$(uname)" == "Darwin" ]]; then
+        if command -v system_profiler; then
+            if system_profiler SPDisplaysDataType|grep "Metal Support"; then
+                echo "Metal GPU detected"
+            else
+                echo "No Metal GPU detected"
+                sed -i.bak -e 's/gpu_layers: -1/gpu_layers: 0/g;' "${ILAB_CONFIG_FILE}"
+            fi
+        else
+            echo "system_profiler not found, cannot determine GPU"
+        fi
+    fi
+
+    # Enable Debug in func tests with debug level 1
+    sed -i.bak -e 's/log_level:.*/log_level: DEBUG/g;' "${ILAB_CONFIG_FILE}"
+    sed -i.bak -e 's/debug_level:.*/debug_level: 1/g;' "${ILAB_CONFIG_FILE}"
+}
 
 cleanup() {
     set +e
@@ -41,16 +64,16 @@ cleanup() {
         "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" \
         test_session_history
     rm -rf test_taxonomy
-    # revert port change from test_bind_port()
-    sed -i.bak 's/9999/8000/g' "${ILAB_CONFIG_FILE}"
 
     # revert model name change from test_model_print()
-    local original_model_name='merlinite-7b-lab-Q4_K_M'
-    local original_model_filename="${original_model_name}.gguf"
+    local original_model_filename="merlinite-7b-lab-Q4_K_M.gguf"
     local temporary_model_filename='foo.gguf'
-    sed -i.bak "s/baz/${original_model_name}/g" "${ILAB_CONFIG_FILE}"
     mv "${ILAB_CACHE_DIR}/models/${temporary_model_filename}" "${ILAB_CACHE_DIR}/models/${original_model_filename}" || true
-    rm -f "${ILAB_CONFIG_FILE}.bak" serve.log "${ILAB_CACHE_DIR}/models/${temporary_model_filename}"
+    rm -f serve.log "${ILAB_CACHE_DIR}/models/${temporary_model_filename}"
+
+    # reset config file and re-init defaults
+    init_config
+
     set -e
 }
 
@@ -131,6 +154,7 @@ wait_for_server(){
         exit 1
     fi
 }
+
 
 #########
 # TESTS #
@@ -405,6 +429,29 @@ test_server_welcome_message(){
     fi
 }
 
+test_log_format(){
+    # remove the log 'levelname' from the log format
+    sed -i.bak -e 's/log_format:.*/log_format: "%(name)s:%(lineno)d: %(message)s"/g' "${ILAB_CONFIG_FILE}"
+    ilab model serve &> serve.log &
+    PID_SERVE=$!
+
+    wait_for_server
+
+    if ! timeout 10 bash -c '
+        until test -s serve.log; do
+            echo "waiting for server log file to be created"
+            sleep 1
+        done
+        if grep INFO serve.log; then
+            echo "INFO log level found in server log - wrong log format"
+            exit 1
+        fi
+    '; then
+        echo "server log file was not created"
+        exit 1
+    fi
+}
+
 test_model_print(){
     local src_model="${ILAB_CACHE_DIR}/models/merlinite-7b-lab-Q4_K_M.gguf"
     local target_model="${ILAB_CACHE_DIR}/models/foo.gguf"
@@ -558,27 +605,8 @@ ilab --version
 # print system information
 ilab system info
 
-# pipe 3 carriage returns to ilab config init to get past the prompts
-echo -e "\n\n\n" | ilab config init
-
-# Enable Debug in func tests with debug level 1
-sed -i.bak -e 's/log_level:.*/log_level: DEBUG/g;' "${ILAB_CONFIG_FILE}"
-sed -i.bak -e 's/debug_level:.*/debug_level: 1/g;' "${ILAB_CONFIG_FILE}"
-
-# It looks like GitHub action MacOS runner does not have graphics
-# so we need to disable the GPU layers if we are running in GitHub actions
-if [[ "$(uname)" == "Darwin" ]]; then
-    if command -v system_profiler; then
-        if system_profiler SPDisplaysDataType|grep "Metal Support"; then
-            echo "Metal GPU detected"
-        else
-            echo "No Metal GPU detected"
-            sed -i.bak -e 's/gpu_layers: -1/gpu_layers: 0/g;' "${ILAB_CONFIG_FILE}"
-        fi
-    else
-        echo "system_profiler not found, cannot determine GPU"
-    fi
-fi
+# initialize the configuration file
+init_config
 
 # download the latest version of the ilab
 ilab model download
@@ -612,5 +640,7 @@ cleanup
 test_server_welcome_message
 cleanup
 test_model_print
+cleanup
+test_log_format
 
 exit 0

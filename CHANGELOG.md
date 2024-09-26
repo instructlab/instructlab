@@ -1,5 +1,9 @@
 ## v0.19
 
+### Features
+
+* Add `log_format` to the `config.yaml` file to allow for customizing the log format.
+
 ### Breaking Changes
 
 * InstructLab now uses XDG-based directories on macOS, similar to Linux.
@@ -16,6 +20,10 @@
   * `test`
 * Intel Gaudi software has been updated to 1.17.1 with Python 3.11 and
   Torch 2.3.1 support.
+
+### Features
+
+* `ilab config init` now auto detects your hardware when running on Nvidia enabled systems and chooses the best train profile. It does this by checking first if your system directly matches one of our supported train profiles and then attempts to match the vRAM for each profile to the total vRAM on your system.
 
 ## v0.18.1
 

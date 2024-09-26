@@ -102,6 +102,8 @@ def run_mt_bench(cli_runner, error_rate):
             "instructlab/merlinite-7b-lab",
         ],
     )
+    if result.exit_code != 0:
+        print(result.output)
     assert result.exit_code == 0
     expected = textwrap.dedent(
         """\
@@ -156,6 +158,8 @@ def run_mt_bench_branch(cli_runner, error_rate):
             "taxonomy",
         ],
     )
+    if result.exit_code != 0:
+        print(result.output)
     assert result.exit_code == 0
     expected = textwrap.dedent(
         """\
@@ -197,6 +201,7 @@ def run_mt_bench_branch(cli_runner, error_rate):
     assert result.output == expected
 
 
+@patch("instructlab.model.evaluate.validate_model")
 @patch(
     "instructlab.model.evaluate.launch_server",
     return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
@@ -213,18 +218,22 @@ def test_evaluate_mt_bench(
     judge_answers_mock,
     gen_answers_mock,
     launch_server_mock,
+    validate_model_mock,
     cli_runner: CliRunner,
 ):
     run_mt_bench(cli_runner, 0)
+    assert validate_model_mock.call_count == 2
     judge_answers_mock.assert_called_once()
     gen_answers_mock.assert_called_once()
     assert launch_server_mock.call_count == 2
     run_mt_bench(cli_runner, 0.768)
+    assert validate_model_mock.call_count == 4
     assert judge_answers_mock.call_count == 2
     assert gen_answers_mock.call_count == 2
     assert launch_server_mock.call_count == 4
 
 
+@patch("instructlab.model.evaluate.validate_model")
 @patch(
     "instructlab.model.evaluate.launch_server",
     return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
@@ -243,23 +252,33 @@ def test_evaluate_mt_bench_branch(
     judge_answers_mock,
     gen_answers_mock,
     launch_server_mock,
+    validate_model_mock,
     cli_runner: CliRunner,
 ):
     run_mt_bench_branch(cli_runner, 0)
+    assert validate_model_mock.call_count == 3
     assert judge_answers_mock.call_count == 2
     assert gen_answers_mock.call_count == 2
     assert launch_server_mock.call_count == 3
     run_mt_bench_branch(cli_runner, 0.4567)
+    assert validate_model_mock.call_count == 6
     assert judge_answers_mock.call_count == 4
     assert gen_answers_mock.call_count == 4
     assert launch_server_mock.call_count == 6
 
 
+@patch("instructlab.model.evaluate.validate_model")
+@patch(
+    "instructlab.model.evaluate.launch_server",
+    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
+)
 @patch(
     "instructlab.eval.mmlu.MMLUEvaluator.run",
     return_value=(0.5, {"task1": {"score": 0.1}, "task2": {"score": 0.9}}),
 )
-def test_evaluate_mmlu(run_mock, cli_runner: CliRunner):
+def test_evaluate_mmlu(
+    run_mock, launch_server_mock, validate_model_mock, cli_runner: CliRunner
+):
     result = cli_runner.invoke(
         lab.ilab,
         [
@@ -272,11 +291,12 @@ def test_evaluate_mmlu(run_mock, cli_runner: CliRunner):
             "instructlab/granite-7b-lab",
         ],
     )
+    validate_model_mock.assert_called_once()
+    launch_server_mock.assert_called_once()
     run_mock.assert_called_once()
     assert result.exit_code == 0
     expected = textwrap.dedent(
         """\
-        Using safetensors from Hugging Face repo 'instructlab/granite-7b-lab' for '--model'
         # KNOWLEDGE EVALUATION REPORT
 
         ## MODEL
@@ -293,6 +313,11 @@ def test_evaluate_mmlu(run_mock, cli_runner: CliRunner):
     assert result.output == expected
 
 
+@patch("instructlab.model.evaluate.validate_model")
+@patch(
+    "instructlab.model.evaluate.launch_server",
+    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
+)
 @patch(
     "instructlab.eval.mmlu.MMLUBranchEvaluator.run",
     side_effect=[
@@ -300,7 +325,9 @@ def test_evaluate_mmlu(run_mock, cli_runner: CliRunner):
         (0.6, gen_individual_scores(False)),
     ],
 )
-def test_evaluate_mmlu_branch(run_mock, cli_runner: CliRunner):
+def test_evaluate_mmlu_branch(
+    run_mock, launch_server_mock, validate_model_mock, cli_runner: CliRunner
+):
     result = cli_runner.invoke(
         lab.ilab,
         [
@@ -317,11 +344,12 @@ def test_evaluate_mmlu_branch(run_mock, cli_runner: CliRunner):
             "generated",
         ],
     )
+    assert validate_model_mock.call_count == 2
+    assert launch_server_mock.call_count == 2
     assert run_mock.call_count == 2
     assert result.exit_code == 0
     expected = textwrap.dedent(
         """\
-        Using safetensors from Hugging Face repo 'instructlab/granite-7b-lab' for '--model'
         # KNOWLEDGE EVALUATION REPORT
 
         ## BASE MODEL
@@ -348,7 +376,8 @@ def test_evaluate_mmlu_branch(run_mock, cli_runner: CliRunner):
     assert result.output == expected
 
 
-def test_no_model_mt_bench(cli_runner: CliRunner):
+@patch("instructlab.model.evaluate.validate_model")
+def test_no_model_mt_bench(_, cli_runner: CliRunner):
     result = cli_runner.invoke(
         lab.ilab,
         [
@@ -394,7 +423,7 @@ def test_invalid_model_mt_bench(cli_runner: CliRunner):
             "instructlab/merlinite-7b-lab",
         ],
     )
-    assert "Failed to determine backend:" in result.output
+    assert "Model could not be found at 'invalid'" in result.output
     assert result.exit_code != 0
 
 
@@ -411,15 +440,16 @@ def test_invalid_model_mmlu(cli_runner: CliRunner):
             "invalid",
         ],
     )
-    assert "Model could not be found" in result.output
+    assert "Model could not be found at 'invalid'" in result.output
     assert result.exit_code != 0
 
 
+@patch("instructlab.model.evaluate.validate_model")
 @patch(
     "instructlab.eval.mmlu.MMLUEvaluator",
     side_effect=Exception("Exiting to check call_args"),
 )
-def test_int_batchsize_mmlu(mmlu_mock, cli_runner: CliRunner):
+def test_int_batchsize_mmlu(mmlu_mock, _, cli_runner: CliRunner):
     cli_runner.invoke(
         lab.ilab,
         [
@@ -437,11 +467,12 @@ def test_int_batchsize_mmlu(mmlu_mock, cli_runner: CliRunner):
     assert mmlu_mock.call_args_list[0][1]["batch_size"] == 1
 
 
+@patch("instructlab.model.evaluate.validate_model")
 @patch(
     "instructlab.model.evaluate.launch_server",
     return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
 )
-def test_invalid_taxonomy_mt_bench_branch(launch_server_mock, cli_runner: CliRunner):
+def test_invalid_taxonomy_mt_bench_branch(launch_server_mock, _, cli_runner: CliRunner):
     result = cli_runner.invoke(
         lab.ilab,
         [
@@ -469,11 +500,12 @@ def test_invalid_taxonomy_mt_bench_branch(launch_server_mock, cli_runner: CliRun
     assert result.exit_code != 0
 
 
+@patch("instructlab.model.evaluate.validate_model")
 @patch(
     "instructlab.model.evaluate.launch_server",
     return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
 )
-def test_invalid_branch_mt_bench_branch(launch_server_mock, cli_runner: CliRunner):
+def test_invalid_branch_mt_bench_branch(launch_server_mock, _, cli_runner: CliRunner):
     setup_taxonomy("taxonomy")
     result = cli_runner.invoke(
         lab.ilab,
@@ -502,7 +534,12 @@ def test_invalid_branch_mt_bench_branch(launch_server_mock, cli_runner: CliRunne
     assert result.exit_code != 0
 
 
-def test_invalid_tasks_dir(cli_runner: CliRunner):
+@patch("instructlab.model.evaluate.validate_model")
+@patch(
+    "instructlab.model.evaluate.launch_server",
+    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
+)
+def test_invalid_tasks_dir(_, __, cli_runner: CliRunner):
     result = cli_runner.invoke(
         lab.ilab,
         [
@@ -539,7 +576,7 @@ def test_invalid_model_path_mmlu(cli_runner: CliRunner, tmp_path):
         ],
     )
     assert (
-        "MMLU and MMLUBranch can currently only be used with a safetensors directory"
+        "Evaluate '--model' needs to be passed either a safetensors directory or a GGUF file"
         in result.output
     )
     assert result.exit_code != 0
@@ -561,13 +598,14 @@ def test_invalid_model_path_mt_bench(cli_runner: CliRunner, tmp_path):
         ],
     )
     assert (
-        "MTBench and MTBenchBranch need to be passed either a safetensors directory or a GGUF file"
+        "Evaluate '--model' needs to be passed either a safetensors directory or a GGUF file"
         in result.output
     )
     assert result.exit_code != 0
 
 
-def test_vllm_args_null(cli_runner: CliRunner):
+@patch("instructlab.model.evaluate.validate_model")
+def test_vllm_args_null(_, cli_runner: CliRunner):
     fname = common.setup_gpus_config(section_path="serve", vllm_args=lambda: None)
     args = common.vllm_setup_test(
         cli_runner,
