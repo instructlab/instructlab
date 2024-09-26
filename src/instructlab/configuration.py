@@ -307,9 +307,9 @@ class _mtbench(BaseModel):
         default_factory=lambda: DEFAULTS.EVAL_DATA_DIR,
         description="Directory where evaluation results are stored.",
     )
-    max_workers: int = Field(
-        default=16,
-        description="Number of workers to use for evaluation.",
+    max_workers: str | int = Field(
+        default="auto",
+        description="Number of workers to use for evaluation with mt_bench or mt_bench_branch. Must be a positive integer or 'auto'.",
     )
 
 

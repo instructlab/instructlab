@@ -5,7 +5,6 @@ from pathlib import Path
 import enum
 import functools
 import logging
-import multiprocessing
 import os
 import pathlib
 import pprint
@@ -801,7 +800,7 @@ def _mtbench(
     import torch
 
     # First Party
-    from instructlab.model.evaluate import launch_server
+    from instructlab.model.evaluate import get_gpus, get_model_name, launch_server
 
     # hard-override for local insecure vLLM serving
     ctx.params["tls_client_cert"] = None
@@ -809,48 +808,66 @@ def _mtbench(
     ctx.params["tls_client_passwd"] = None
     ctx.params["tls_insecure"] = True
 
+    explicit_gpus = None
+    gpus, effective_gpus = get_gpus(ctx, ctx.obj.evaluate.gpus)
+    if gpus and gpus > 0:
+        # gpus are specified in config for evaluate
+        logger.debug("Using gpus from config")
+        explicit_gpus = gpus
+    elif effective_gpus > 0:
+        # tensor-parallel size specified in serving config
+        logger.debug("Using gpus from --tensor-parallel-size in config")
+    else:
+        # TODO: Should be parameterized by the user specific for training
+        explicit_gpus = torch.cuda.device_count()
+        effective_gpus = explicit_gpus
+
+    model_name = get_model_name(str(model))
+    judge_model_name = get_model_name(str(mtbench_judge))
+
     evaluator = MTBenchEvaluator(
-        model_name=str(model),
-        judge_model_name=str(mtbench_judge),
+        model_name=model_name,
+        judge_model_name=judge_model_name,
         output_dir=str(eval_cache),
         merge_system_user_message=True,  # TODO: expose this to the user
     )
-
-    # TODO: Below, gpus=device_count() and max_workers=cpu_count() should be parameterized
-    #   by the user.
 
     server = None
     model_serve_url = None
     try:
         logger.debug("Starting model server for mt-bench answer generation")
-        server, model_serve_url = launch_server(
+        server, model_serve_url, effective_gpus = launch_server(
             ctx=ctx,
             model=str(model),
-            model_name=str(model),
-            gpus=torch.cuda.device_count(),
-            max_workers=multiprocessing.cpu_count(),
+            model_name=model_name,
+            gpus=explicit_gpus,
+            max_workers="auto",
             enable_serving_output=enable_serving_output,
             backend=backends.VLLM,
         )
         logger.debug("Generating mt-bench answers")
-        evaluator.gen_answers(model_serve_url)
+        evaluator.gen_answers(
+            model_serve_url, max_workers="auto", serving_gpus=effective_gpus
+        )
     finally:
         if server is not None:
             server.shutdown()
 
     try:
         logger.debug("Starting model server for mt-bench answer judgment")
-        server, model_serve_url = launch_server(
+        server, model_serve_url, effective_gpus = launch_server(
             ctx=ctx,
             model=str(mtbench_judge),
-            model_name=str(mtbench_judge),
-            gpus=torch.cuda.device_count(),
-            max_workers=multiprocessing.cpu_count(),
+            model_name=judge_model_name,
+            gpus=explicit_gpus,
+            max_workers="auto",
             backend=backends.VLLM,
             enable_serving_output=enable_serving_output,
         )
         logger.debug("Judging mt-bench answers")
-        mt_bench_results: tuple = evaluator.judge_answers(model_serve_url)
+        mt_bench_results: tuple = evaluator.judge_answers(
+            model_serve_url, max_workers="auto", serving_gpus=effective_gpus
+        )
         ckpt_score: float = mt_bench_results[0]
     finally:
         if server is not None:
