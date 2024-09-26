@@ -32,8 +32,9 @@ import httpx
 import yaml
 
 # Local
-from .default import DEFAULTS
 from .configuration import read_config
+from .default import DEFAULTS
+
 
 logger = logging.getLogger(__name__)
 
