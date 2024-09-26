@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: Apache-2.0
+
+name: Status Checks Reusable Workflow
+
+on:
+  workflow_call:
+    inputs:
+      job_ids:
+        description: 'Space-separated job ids to wait on for status checks'
+        required: true
+        type: string
+      delay:
+        description: 'Period in seconds to wait before first poll of GitHub Check Runs'
+        required: false
+        type: number
+        default: 10
+      interval:
+        description: 'Interval or period in seconds between polling GitHub Check Runs'
+        required: false
+        type: number
+        default: 10
+      timeout:
+        description: 'Timeout in seconds to complete polling GitHub Check Runs'
+        required: false
+        type: number
+        default: 3600
+
+env:
+  LC_ALL: en_US.UTF-8
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  checks: read
+
+jobs:
+  status-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Harden Runner"
+        uses: step-security/harden-runner@91182cccc01eb5e619899d80e4e971d6181294a7 # v2.10.1
+        with:
+          egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
+
+      - name: "Set status check variables"
+        id: set_variables
+        run: |
+          jq -nr '[$ARGS.positional[] | split("\\s"; null) | map(select(. != ""))] | flatten | join("|") | ("match_pattern=^(" + . + ")$")' --args "${{ inputs.job_ids }}" >> "$GITHUB_OUTPUT"
+
+      - name: "Wait for status checks"
+        uses: poseidon/wait-for-status-checks@6988432d64ad3f9c2608db4ca16fded1b7d36ead # v0.5.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          match_pattern: ${{ steps.set_variables.outputs.match_pattern }}
+          ignore_pattern: '/ ${{ github.job }}' # use pattern to ignore this nested job
+          delay: ${{ inputs.delay }}
+          interval: ${{ inputs.interval }}
+          timeout: ${{ inputs.timeout }}

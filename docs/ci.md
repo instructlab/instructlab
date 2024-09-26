@@ -24,15 +24,16 @@ This script takes arguments that control which features are used to allow
 varying test coverage based on the resources available on a given test runner.
 
 There is currently a ["small" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml)
-that runs automatically on all PRs and after commits merge to `main` or release
-branches.
+that is run when the [E2E starter job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-starter.yml) successfully completes.
+The starter job runs automatically on all PRs and after commits merge to `main` or release
+branches. Its successful completion depends upon the successful completion of any linting type jobs.
 
 There is also a ["medium" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) and ["large" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x4.yml) that can be triggered manually on the [actions
 page](https://github.com/instructlab/instructlab/actions) for the repository.
 These run on a variety of instance types and can be run at the discretion of
 repo maintainers.
 
-The "large" t-shirt size E2E job also runs automatically against the `main` branch at 8AM and 8PM UTC every day.
+The "large" t-shirt size E2E job also runs automatically against the `main` branch at 11AM every day.
 
 ### E2E Test Coverage Options
 
