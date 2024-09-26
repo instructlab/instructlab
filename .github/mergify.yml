@@ -47,19 +47,17 @@ pull_request_rules:
         - -files=.github/workflows/e2e-starter.yml
         - -files=.github/workflows/e2e-nvidia-t4-x1.yml
 
-    # lint and test must pass if files change that would trigger this job
+    # test workflow
     - or:
       - and:
-        - check-success=lint-workflow-complete
+        # note this should match the triggering criteria in 'test.yml'
         - check-success=test-workflow-complete
         - or:
-          # see .github/workflows/lint.yml and test.yml
           - files~=\.py$
           - files=pyproject.toml
           - files~=^requirements.*\.txt$
           - files=tox.ini
           - files~=^scripts/[^/]+\.sh$
-          - files=.github/workflows/lint.yml
           - files=.github/workflows/test.yml
       - and:
         - -files~=\.py$
@@ -67,8 +65,29 @@ pull_request_rules:
         - -files~=^requirements.*\.txt$
         - -files=tox.ini
         - -files~=^scripts/[^/]+\.sh$
-        - -files=.github/workflows/lint.yml
         - -files=.github/workflows/test.yml
+
+    # code lint workflow
+    - or:
+      - and:
+        # note this should match the triggering criteria in 'lint.yml'
+        - check-success=lint-workflow-complete
+        - or:
+          - files~=\.py$
+          - files=pyproject.toml
+          - files~=^requirements.*\.txt$
+          - files=tox.ini
+          - files=.pylintrc
+          - files~=^scripts/[^/]+\.sh$
+          - files=.github/workflows/lint.yml
+      - and:
+        - -files~=\.py$
+        - -files=pyproject.toml
+        - -files~=^requirements.*\.txt$
+        - -files=tox.ini
+        - -files=.pylintrc
+        - -files~=^scripts/[^/]+\.sh$
+        - -files=.github/workflows/lint.yml
 
     - or:
       - and:
