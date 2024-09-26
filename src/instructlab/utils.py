@@ -33,7 +33,7 @@ import yaml
 
 # Local
 from .configuration import read_config
-from .default import DEFAULTS
+from .defaults import DEFAULTS
 
 logger = logging.getLogger(__name__)
 
