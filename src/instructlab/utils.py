@@ -35,7 +35,6 @@ import yaml
 from .configuration import read_config
 from .default import DEFAULTS
 
-
 logger = logging.getLogger(__name__)
 
 
