@@ -17,23 +17,24 @@ The functional test script is Shell-based and can be found at `scripts/functiona
 
 ## End-to-end (E2E) tests
 
-End-to-end (E2E) tests are designed to test the InstructLab workflow from end-to-end, mimicking real user behavior.
-
-The E2E test script is Shell-based and can be found at `scripts/basic-workflow-tests.sh`.
+There are two test scripts. The first can be found at `scripts/basic-workflow-tests.sh`.
 This script takes arguments that control which features are used to allow
 varying test coverage based on the resources available on a given test runner.
+
+The second can be found at `scripts/e2e.sh`. This script is designed to test the
+InstructLab workflow from end-to-end, mimicking real user behavior.
 
 There is currently a ["small" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml)
 that is run when the [E2E starter job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-starter.yml) successfully completes.
 The starter job runs automatically on all PRs and after commits merge to `main` or release
 branches. Its successful completion depends upon the successful completion of any linting type jobs.
 
-There is also a ["medium" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) and ["large" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x4.yml) that can be triggered manually on the [actions
+There is also a ["medium" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) and ["large" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) that can be triggered manually on the [actions
 page](https://github.com/instructlab/instructlab/actions) for the repository.
 These run on a variety of instance types and can be run at the discretion of
 repo maintainers.
 
-The "large" t-shirt size E2E job also runs automatically against the `main` branch at 11AM every day.
+The "large" t-shirt size E2E job also runs automatically against the `main` branch at 11AM UTC every day.
 
 ### E2E Test Coverage Options
 
@@ -55,38 +56,44 @@ the E2E job configuration files found
 | `P` | Use the phased training within the 'full' training library |
 | `v` | Run with vLLM for serving |
 
+You can specify the following flag to test the large t-shirt size with the `e2e.sh`
+script. Support for the recommended workflow for other t-shirt sizes will be added to
+this script in the future.
+
+| Flag | Feature |
+| --- | --- |
+| `l` | Run the e2e workflow for the large t-shirt size of hardware |
+
 ### Current E2E Jobs
 
-| Name | T-Shirt Size | Runner Host | Instance Type | OS | GPU Type | Script flags | Runs when? | Slack reporting? |
+| Name | T-Shirt Size | Runner Host | Instance Type | OS | GPU Type | Script | Flags | Runs when? | Slack reporting? |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | Small | AWS | [`g4dn.2xlarge`](https://aws.amazon.com/ec2/instance-types/g4/) | CentOS Stream 9 | 1 x NVIDIA Tesla T4 w/ 16 GB VRAM | `msq` | Pull Requests, Push to `main` or `release-*` branch | No |
 | [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | Medium | AWS |[`g5.4xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | CentOS Stream 9 | 1 x NVIDIA A10G w/ 24 GB VRAM | `mf` | Manually by Maintainers | No |
-| [`e2e-nvidia-a10g-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x4.yml) | Large | AWS |[`g5.12xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | CentOS Stream 9 | 4 x NVIDIA A10G w/ 24 GB VRAM (98 GB) | `mevFMa` | Manually by Maintainers, Automatically against `main` branch at 8AM/8PM UTC | Yes |
+| [`e2e-nvidia-l40s-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) | Large | AWS |[`g6e.12xlarge`](https://aws.amazon.com/ec2/instance-types/g6e/) | CentOS Stream 9 | 4 x NVIDIA L40S w/ 48 GB VRAM (192 GB) | `e2e.sh` | `l` | Manually by Maintainers, Automatically against `main` branch at 11AM UTC | Yes |
 
 ### E2E Test Coverage Matrix
 
-| Area | Feature | [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | [`e2e-nvidia-a10g-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x4.yml) |
+| Area | Feature | [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | [`e2e-nvidia-l40s-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) |
 | --- | --- | --- | --- | --- |
-| **Serving**  | llama-cpp                |✅|✅|✅ (temporary)|
+| **Serving**  | llama-cpp                |✅|✅|⎯|
 |              | vllm                     |⎯|⎯|✅|
 | **Generate** | simple                   |✅|✅|⎯|
 |              | full                     |⎯|⎯|✅|
 | **Training** | simple                   |✅(*1)|⎯|⎯|
 |              | full                     |⎯ |✅|⎯|
-|              | accelerated              |⎯|⎯|✅(*2)|
-| **Eval**     | eval                     |⎯|❌(*3)|✅|
+|              | accelerated              |⎯|⎯|✅|
+| **Eval**     | eval                     |⎯|❌|✅|
 
 Points of clarification (*):
 
 1. The `simple` training pipeline uses 4-bit-quantization.
-2. The `accelerated` testing is not using the output of the Generate step. <https://github.com/instructlab/instructlab/issues/1655>
-3. The `eval` testing is not evaluating the output of the Training step. <https://github.com/instructlab/instructlab/issues/1642>
 
 ### Current E2E Status against `main`
 
 ![`e2e-nvidia-t4-x1.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-t4-x1.yml/badge.svg?branch=main)
 ![`e2e-nvidia-a10g-x1.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-a10g-x1.yml/badge.svg?branch=main)
-![`e2e-nvidia-a10g-x4.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-a10g-x4.yml/badge.svg?branch=main)
+![`e2e-nvidia-l40s-x4.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-l40s-x4.yml/badge.svg?branch=main)
 
 ### Slack reporting
 
