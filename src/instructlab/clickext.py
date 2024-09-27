@@ -3,6 +3,7 @@
 
 # Standard
 from importlib import metadata
+import enum
 import functools
 import json
 import logging
@@ -197,6 +198,15 @@ class ConfigOption(click.Option):
         value, source = super().consume_value(ctx, opts)
         # fix parameter source for config section that are mis-reported
         # as DEFAULT source instead of DEFAULT_MAP source.
+
+        # ensuring that if we encounter any enums, we extract the underlying
+        # value out before returning
+        # not doing this can lead to serialization issues
+        # with the enum key getting extracted instead of actual
+        # value
+        if isinstance(value, enum.Enum):
+            value = value.value
+
         if (
             source == ParameterSource.DEFAULT
             and self.config_sections

@@ -14,6 +14,7 @@ import typing
 # pylint: disable=ungrouped-imports
 from instructlab.training import (
     DeepSpeedOptions,
+    DistributedBackend,
     FSDPOptions,
     LoraOptions,
     TorchrunArgs,
@@ -41,6 +42,16 @@ from .defaults import CONFIG_VERSION, DEFAULTS, MODEL_FAMILIES, MODEL_FAMILY_MAP
 # Initialize ruamel.yaml
 yaml = YAML()
 yaml.indent(mapping=2, sequence=4, offset=2)
+
+
+# Define a custom representer for DistributedBackend
+def _distributed_backend_representer(dumper, data):
+    # Convert DistributedBackend object to a string or any serializable format
+    return dumper.represent_scalar("tag:yaml.org,2002:str", data.value)
+
+
+# Register the custom representer
+yaml.representer.add_representer(DistributedBackend, _distributed_backend_representer)
 
 
 class ConfigException(Exception):
@@ -419,6 +430,10 @@ class _train(BaseModel):
     )
     fsdp_cpu_offload_optimizer: bool = Field(
         default=False, description="Allow CPU offload for FSDP optimizer."
+    )
+    distributed_training_backend: DistributedBackend = Field(
+        default=DistributedBackend.DEEPSPEED.value,
+        description="Pick a distributed training backend framework for GPU accelerated full fine-tuning.",
     )
     lora_rank: int | None = Field(
         default=4,
@@ -1287,6 +1302,9 @@ def map_train_to_library(ctx, params):
 
     train_args.deepspeed_options = ds_args
     train_args.fsdp_options = fsdp_args
+    train_args.distributed_backend = DistributedBackend(
+        params["distributed_training_backend"]
+    )
     train_args.lora = lora_args
     if params["pipeline"] == "full":
         train_args.disable_flash_attn = True
