@@ -71,7 +71,6 @@ def train(train_args, device):
             effective_batch_size=train_args.effective_batch_size,
             max_batch_len_per_gpu=train_args.max_batch_len,
             is_padding=train_args.is_padding_free,
-            pad_id=tokenizer.pad_token_id,
             dataset=dataset,
             seed=47,
         )
