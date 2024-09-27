@@ -268,6 +268,9 @@ train:
   # are updated.
   # Default: 3840
   effective_batch_size: 3840
+  # Allow CPU offload for FSDP optimizer.
+  # Default: False
+  fsdp_cpu_offload_optimizer: false
   # Boolean to indicate if the model being trained is a padding-free transformer
   # model such as Granite.
   # Default: False
