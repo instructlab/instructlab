@@ -659,9 +659,17 @@ def evaluate(
                 for i, evaluator in enumerate(evaluators):
                     branch = branches[i]
                     print(f"Evaluating answers for branch {branch}...")
-                    qa_pairs, error_rate = evaluator.judge_answers(
+                    judgement = evaluator.judge_answers(
                         api_base, max_workers=max_workers, serving_gpus=effective_gpus
                     )
+
+                    if len(judgement) == 3:
+                        qa_pairs = judgement[1]
+                        error_rate = judgement[2]
+                    else:
+                        qa_pairs = judgement[0]
+                        error_rate = judgement[1]
+
                     qa_pairs_and_errors.append((qa_pairs, error_rate))
             finally:
                 if server is not None:
