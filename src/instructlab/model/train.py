@@ -474,10 +474,8 @@ def train(
         shutil.copy(test_files[0], test_file)
 
     if (
-        pipeline == "full"
-        or pipeline == "accelerated"
-        or strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value
-    ):
+        pipeline in ("full", "accelerated")
+    ) and strategy != SupportedTrainingStrategies.LAB_MULTIPHASE.value:
         if not os.path.isfile(data_path):
             ctx.fail(
                 f"Data path must be to a valid .jsonl file. Value given: {data_path}"
@@ -501,6 +499,13 @@ def train(
             raise FileNotFoundError(
                 "Data for both phase1 and phase2 must be specified for phased training."
             )
+
+        # pull the trainrandom.randinting and torch args from the flags
+        # the flags are populated from the config as a base.
+        train_args, torch_args = map_train_to_library(ctx, ctx.params)
+        logger.debug(
+            "Rendered training arguments:\n%s", pprint.pformat(train_args.model_dump())
+        )
 
         mt_bench_judge: pathlib.Path
         if phased_mt_bench_judge is None:
@@ -838,7 +843,7 @@ def _mtbench(
     ctx.params["tls_insecure"] = True
 
     explicit_gpus = None
-    gpus, effective_gpus = get_gpus(ctx, ctx.obj.evaluate.gpus)
+    gpus, effective_gpus = get_gpus(ctx, ctx.obj.config.evaluate.gpus)
     if gpus and gpus > 0:
         # gpus are specified in config for evaluate
         logger.debug("Using gpus from config")
