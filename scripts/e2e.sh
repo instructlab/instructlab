@@ -90,7 +90,7 @@ test_init() {
     step Setting train-profile for GPU accelerated training
 
     if [ "$LARGE" -eq 1 ]; then
-      ilab config init --non-interactive --train-profile="${SCRIPTDIR}/test-data/train-profile-l40sx4.yaml"
+      ilab config init --non-interactive --train-profile="${SCRIPTDIR}/test-data/train-profile-l40s-x4.yaml"
 
       # setting large size eval specific config
       python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" evaluate.gpus 4
