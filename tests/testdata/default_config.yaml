@@ -332,6 +332,9 @@ train:
   # Number of samples the model should see before saving a checkpoint.
   # Default: 250000
   save_samples: 250000
+  # Optional path to a yaml file that tracks the progress of multiphase training.
+  # Default: None
+  training_journal:
 # Configuration file structure version.
 # Default: 1.0.0
 version: 1.0.0

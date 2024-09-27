@@ -483,6 +483,10 @@ class _train(BaseModel):
         default_factory=lambda: DEFAULTS.PHASED_DIR,
         description="Base directory for organization of end-to-end intermediate outputs.",
     )
+    training_journal: str | None = Field(
+        default=None,
+        description="Optional path to a yaml file that tracks the progress of multiphase training.",
+    )
 
 
 class Config(BaseModel):
