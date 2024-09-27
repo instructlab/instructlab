@@ -24,6 +24,7 @@ defaults:
 
 permissions:
   contents: read
+  statuses: write
 
 jobs:
   start-runner:
@@ -34,6 +35,8 @@ jobs:
       label: ${{ steps.start-ec2-runner.outputs.label }}
       ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
       number: ${{ steps.starter.outputs.number }}
+      statuses_url: ${{ steps.starter.outputs.statuses_url }}
+      target_url: ${{ steps.starter.outputs.target_url }}
     steps:
       - name: "Download Starter Metadata artifact"
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
@@ -45,8 +48,17 @@ jobs:
       - name: "Get Starter Metadata"
         id: starter
         run: |
+          # shellcheck disable=SC2129
           jq -r '"number=" + .number' starter.json >> "$GITHUB_OUTPUT"
           jq -r '"ref=" + .ref' starter.json >> "$GITHUB_OUTPUT"
+          jq -r '"statuses_url=${{ github.api_url }}/repos/${{ github.repository }}/statuses/" + (.event.pull_request.head.sha // .event.after)' starter.json >> "$GITHUB_OUTPUT"
+          jq -r '"target_url=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}&pr=" + .number' starter.json >> "$GITHUB_OUTPUT"
+
+      - name: "Create commit status"
+        run: |
+          gh api -X POST ${{ steps.starter.outputs.statuses_url }} -f "context=E2E Test" -f "state=pending" -f "description=This check has started..." -f "target_url=${{ steps.starter.outputs.target_url }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
@@ -131,6 +143,12 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ always() }}
     steps:
+      - name: "Update commit status"
+        run: |
+          gh api -X POST ${{ needs.start-runner.outputs.statuses_url }} -f "context=E2E Test" -f "state=${{ needs.e2e.result == 'success' && 'success' || 'failure' }}" -f "description=${{ needs.e2e.result == 'success' && 'Successful' || 'Failed' }}" -f "target_url=${{ needs.start-runner.outputs.target_url }}"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
