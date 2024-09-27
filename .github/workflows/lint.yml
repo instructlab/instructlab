@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
-name: Lint, Format, and MyPy
+name: Lint
 
 on:
   push:
@@ -41,7 +41,8 @@ permissions:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    name: "${{ matrix.lint.name }}"
+    # Start name with 'lint:' for lint-workflow-complete job_ids
+    name: "lint: ${{ matrix.lint.name }}"
     strategy:
       fail-fast: false
       matrix:
@@ -103,8 +104,9 @@ jobs:
           python -m pip cache remove llama_cpp_python
 
   lint-workflow-complete:
-    needs: ["lint"]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Lint Workflow Complete
-        run: echo "Lint Workflow Complete"
+    permissions:
+      checks: read
+    uses: ./.github/workflows/status-checks.yml
+    with:
+      job_ids: >- # Space-separated job ids to wait on for status checks
+        lint:
