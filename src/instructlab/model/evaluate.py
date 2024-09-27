@@ -703,21 +703,19 @@ def evaluate(
 
         elif benchmark == Benchmark.MMLU:
             # Third Party
-            from instructlab.eval.mmlu import MMLUEvaluator
+            from instructlab.eval.mmlu import MMLU_TASKS, MMLUEvaluator
 
-            min_tasks = os.environ.get("INSTRUCTLAB_EVAL_MMLU_MIN_TASKS")
-            if min_tasks is not None:
-                tasks = ["mmlu_abstract_algebra", "mmlu_anatomy", "mmlu_astronomy"]
-                evaluator = MMLUEvaluator(
-                    model,
-                    tasks=tasks,
-                    few_shots=few_shots,
-                    batch_size=batch_size,
-                )
-            else:
-                evaluator = MMLUEvaluator(
-                    model, few_shots=few_shots, batch_size=batch_size
-                )
+            tasks = MMLU_TASKS
+            if os.environ.get("INSTRUCTLAB_EVAL_MMLU_MIN_TASKS") is not None:
+                tasks = tasks[:4]
+
+            evaluator = MMLUEvaluator(
+                model,
+                tasks=tasks,
+                few_shots=few_shots,
+                batch_size=batch_size,
+            )
+
             server = None
             try:
                 server, api_base, _ = launch_server(
