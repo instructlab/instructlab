@@ -146,16 +146,26 @@ def sort_score(pairing: tuple[str, float, float, float]) -> float:
     return pairing[1]
 
 
+def get_benchmark_max_score(benchmark: Benchmark) -> str:
+    # total score for Benchmark.MT_BENCH_BRANCH
+    max_score = "10.0"
+    if benchmark == Benchmark.MMLU_BRANCH:
+        max_score = "1.0"
+    return max_score
+
+
 def display_models_and_scores(
-    model, base_model, model_overall_score, base_model_overall_score
+    benchmark, model, base_model, model_overall_score, base_model_overall_score
 ) -> None:
     """prints the base_model and model with a header"""
+    max_score = get_benchmark_max_score(benchmark)
+
     base_model_overall_score = round(base_model_overall_score, 2)
     model_overall_score = round(model_overall_score, 2)
     print("## BASE MODEL (SCORE)")
-    print(f"{base_model} ({base_model_overall_score})")
+    print(f"{base_model} ({base_model_overall_score}/{max_score})")
     print("\n## MODEL (SCORE)")
-    print(f"{model} ({model_overall_score})")
+    print(f"{model} ({model_overall_score}/{max_score})")
 
 
 def display_model(model) -> None:
@@ -172,6 +182,7 @@ def display_error_rate(error_rate) -> None:
 
 
 def display_branch_eval_summary(
+    benchmark: Benchmark,
     improvements: list[tuple[str, float, float, float]],
     regressions: list[tuple[str, float, float, float]],
     no_changes: list[tuple[str, float]],
@@ -180,37 +191,36 @@ def display_branch_eval_summary(
     """takes in results lists from mt_bench_branch benchmark evaluation
     prints out diff between the branches to the user
     """
+    # total score for MT-BENCH-BRANCH
+    max_score = get_benchmark_max_score(benchmark)
+
     if len(improvements) > 0:
         improvements.sort(key=sort_score, reverse=True)
-        print("\n### IMPROVEMENTS:")
+        print(f"\n### IMPROVEMENTS (0.0 to {max_score}):")
         for index, improvement in enumerate(improvements):
             task, delta, base_score, new_score = improvement
             base_score = round(base_score, 2)
             new_score = round(new_score, 2)
-            print(
-                f"{index+1}. {task} (+{delta}) (BASE MODEL: {base_score} -> NEW MODEL: {new_score})"
-            )
+            print(f"{index+1}. {task}: {base_score} -> {new_score} (+{delta})")
 
     if len(regressions) > 0:
         regressions.sort(key=sort_score)
-        print("\n### REGRESSIONS:")
+        print(f"\n### REGRESSIONS (0.0 to {max_score}):")
         for index, regression in enumerate(regressions):
             task, delta, base_score, new_score = regression
             base_score = round(base_score, 2)
             new_score = round(new_score, 2)
-            print(
-                f"{index+1}. {task} ({delta}) (BASE MODEL: {base_score} -> NEW MODEL: {new_score})"
-            )
+            print(f"{index+1}. {task}: {base_score} -> {new_score} ({delta})")
 
     if len(no_changes) > 0:
-        print("\n### NO CHANGE:")
+        print(f"\n### NO CHANGE (0.0 to {max_score}):")
         for index, entry in enumerate(no_changes):
             task, avg_score = entry
             avg_score = round(avg_score, 2)
             print(f"{index+1}. {task} ({avg_score})")
 
     if new is not None and len(new) > 0:
-        print("\n### NEW:")
+        print(f"\n### NEW (0.0 to {max_score}):")
         for index, entry in enumerate(new):
             qna, avg_score = entry
             avg_score = round(avg_score, 2)
@@ -692,7 +702,11 @@ def evaluate(
 
             print("# SKILL EVALUATION REPORT\n")
             display_models_and_scores(
-                model, base_model, overall_score, base_overall_score
+                Benchmark.MT_BENCH_BRANCH,
+                model,
+                base_model,
+                overall_score,
+                base_overall_score,
             )
 
             improvements, regressions, no_changes, new_qnas = [], [], [], []
@@ -723,7 +737,13 @@ def evaluate(
                     new_qnas.append((qna, avg_score))
 
             # display summary of evaluation before exiting
-            display_branch_eval_summary(improvements, regressions, no_changes, new_qnas)
+            display_branch_eval_summary(
+                Benchmark.MT_BENCH_BRANCH,
+                improvements,
+                regressions,
+                no_changes,
+                new_qnas,
+            )
             display_error_rate((error_rate + base_error_rate) / 2)
 
         elif benchmark == Benchmark.MMLU:
@@ -817,7 +837,11 @@ def evaluate(
 
             print("# KNOWLEDGE EVALUATION REPORT\n")
             display_models_and_scores(
-                model, base_model, overall_score, base_overall_score
+                Benchmark.MMLU_BRANCH,
+                model,
+                base_model,
+                overall_score,
+                base_overall_score,
             )
 
             print("\n### AVERAGE:")
@@ -843,7 +867,9 @@ def evaluate(
                     no_changes.append((task, s))
 
             # display summary of evaluation before exiting
-            display_branch_eval_summary(improvements, regressions, no_changes)
+            display_branch_eval_summary(
+                Benchmark.MMLU_BRANCH, improvements, regressions, no_changes
+            )
     except EvalError as ee:
         print(ee.message)
         raise click.exceptions.Exit(1)
