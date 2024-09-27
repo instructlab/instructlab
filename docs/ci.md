@@ -46,20 +46,22 @@ the E2E job configuration files found
 | --- | --- |
 | `e` | Run model evaluation |
 | `F` | Run "fullsize" SDG |
-| `L` | Run legacy training |
+| `q` | Run the 'simple' training pipeline with 4 bit quantization |
+| `s` | Run the 'simple' training pipeline |
+| `f` | Use the 'full' training pipeline optimized for CPU and MPS rather than simple training |
+| `a` | Use the 'accelerated' training library rather than simple or full training |
 | `m` | Run minimal configuration (lower number of instructions and training epochs) |
 | `M` | Use Mixtral model (4-bit quantized) instead of Merlinite (4-bit quantized) |
 | `P` | Use the phased training within the 'full' training library |
-| `T` | Use the 'full' training library rather than legacy training |
 | `v` | Run with vLLM for serving |
 
 ### Current E2E Jobs
 
 | Name | T-Shirt Size | Runner Host | Instance Type | OS | GPU Type | Script flags | Runs when? | Slack reporting? |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | Small | AWS | [`g4dn.2xlarge`](https://aws.amazon.com/ec2/instance-types/g4/) | CentOS Stream 9 | 1 x NVIDIA Tesla T4 w/ 16 GB VRAM | `m` | Pull Requests, Push to `main` or `release-*` branch | No |
-| [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | Medium | AWS |[`g5.2xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | CentOS Stream 9 | 1 x NVIDIA A10G w/ 24 GB VRAM | `mf` | Manually by Maintainers | No |
-| [`e2e-nvidia-a10g-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x4.yml) | Large | AWS |[`g5.12xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | CentOS Stream 9 | 4 x NVIDIA A10G w/ 24 GB VRAM (98 GB) | `mevFMT` | Manually by Maintainers, Automatically against `main` branch at 8AM/8PM UTC | Yes |
+| [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | Small | AWS | [`g4dn.2xlarge`](https://aws.amazon.com/ec2/instance-types/g4/) | CentOS Stream 9 | 1 x NVIDIA Tesla T4 w/ 16 GB VRAM | `msq` | Pull Requests, Push to `main` or `release-*` branch | No |
+| [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | Medium | AWS |[`g5.4xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | CentOS Stream 9 | 1 x NVIDIA A10G w/ 24 GB VRAM | `mf` | Manually by Maintainers | No |
+| [`e2e-nvidia-a10g-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x4.yml) | Large | AWS |[`g5.12xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | CentOS Stream 9 | 4 x NVIDIA A10G w/ 24 GB VRAM (98 GB) | `mevFMa` | Manually by Maintainers, Automatically against `main` branch at 8AM/8PM UTC | Yes |
 
 ### E2E Test Coverage Matrix
 
@@ -69,15 +71,16 @@ the E2E job configuration files found
 |              | vllm                     |⎯|⎯|✅|
 | **Generate** | simple                   |✅|✅|⎯|
 |              | full                     |⎯|⎯|✅|
-| **Training** | legacy+Linux             |⎯|❌|⎯|
-|              | legacy+Linux+4-bit-quant |✅|⎯|⎯|
-|              | training-lib             |⎯|⎯|✅|
-| **Eval**     | eval                     |⎯|❌(*2)|✅|
+| **Training** | simple                   |✅(*1)|⎯|⎯|
+|              | full                     |⎯ |✅|⎯|
+|              | accelerated              |⎯|⎯|✅(*2)|
+| **Eval**     | eval                     |⎯|❌(*3)|✅|
 
 Points of clarification (*):
 
-1. The `training-lib` testing is not testing using the output of the Generate step. <https://github.com/instructlab/instructlab/issues/1655>
-2. The `eval` testing is not evaluating the output of the Training step. <https://github.com/instructlab/instructlab/issues/1642>
+1. The `simple` training pipeline uses 4-bit-quantization.
+2. The `accelerated` testing is not using the output of the Generate step. <https://github.com/instructlab/instructlab/issues/1655>
+3. The `eval` testing is not evaluating the output of the Training step. <https://github.com/instructlab/instructlab/issues/1642>
 
 ### Current E2E Status against `main`
 

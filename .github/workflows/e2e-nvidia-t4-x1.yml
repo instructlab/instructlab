@@ -121,7 +121,7 @@ jobs:
       - name: Run e2e test
         run: |
           . venv/bin/activate
-          ./scripts/basic-workflow-tests.sh -m
+          ./scripts/basic-workflow-tests.sh -msq
 
   stop-runner:
     name: Stop external EC2 runner
