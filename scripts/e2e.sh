@@ -63,12 +63,8 @@ init_e2e_tests() {
     	mkdir -p "${dir}"
     done
 
-    E2E_PATH_DIR="${HOME}/bin"
     E2E_LOG_DIR="${HOME}/log"
-    mkdir -p "${E2E_PATH_DIR}"
     mkdir -p "${E2E_LOG_DIR}"
-    PATH=${E2E_PATH_DIR}:$PATH
-    wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O "${E2E_PATH_DIR}/yq" && chmod +x "${E2E_PATH_DIR}/yq"
 }
 
 
@@ -97,19 +93,19 @@ test_init() {
       ilab config init --non-interactive --train-profile="${SCRIPTDIR}/test-data/train-profile-l40sx4.yaml"
 
       # setting large size eval specific config
-      yq e -i '.evaluate.gpus = 8' "${CONFIG_HOME}/instructlab/config.yaml"
-      PROMETHEUS_8X7B_MODEL_PATH="${CACHE_HOME}/instructlab/models/${PROMETHEUS_8X7B_MODEL}" yq e -i '.evaluate.mt_bench.judge_model = strenv(PROMETHEUS_8X7B_MODEL_PATH)' "${CONFIG_HOME}/instructlab/config.yaml"
+      python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" evaluate.gpus 4
+      python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" evaluate.mt_bench.judge_model "${CACHE_HOME}/instructlab/models/${PROMETHEUS_8X7B_MODEL}"
 
       # setting large size SDG specific config
-      yq e -i '.generate.pipeline = "full"' "${CONFIG_HOME}/instructlab/config.yaml"
-      MIXTRAL_8X7B_MODEL_PATH="${CACHE_HOME}/instructlab/models/${MIXTRAL_8X7B_MODEL}" yq e -i '.generate.teacher.model_path = strenv(MIXTRAL_8X7B_MODEL_PATH)' "${CONFIG_HOME}/instructlab/config.yaml"
-      yq e -i '.generate.teacher.vllm.gpus = 8' "${CONFIG_HOME}/instructlab/config.yaml"
-      yq e -i '.generate.teacher.vllm.llm_family = "mixtral"' "${CONFIG_HOME}/instructlab/config.yaml"
+      python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.pipeline full
+      python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.model_path "${CACHE_HOME}/instructlab/models/${MIXTRAL_8X7B_MODEL}"
+      python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.vllm.gpus 4
+      python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.vllm.llm_family mixtral
 
       # setting large size training specific config
-      TRAINING_CHECKPOINT_DIR="${DATA_HOME}/instructlab/checkpoints" yq e -i '.train.ckpt_output_dir = strenv(TRAINING_CHECKPOINT_DIR)' "${CONFIG_HOME}/instructlab/config.yaml"
-      PROMETHEUS_8X7B_MODEL_PATH="${CACHE_HOME}/instructlab/models/${PROMETHEUS_8X7B_MODEL}" yq e -i '.train.phased_mt_bench_judge = strenv(PROMETHEUS_8X7B_MODEL_PATH)' "${CONFIG_HOME}/instructlab/config.yaml"
-      GRANITE_7B_MODEL_PATH="${CACHE_HOME}/instructlab/models/${GRANITE_7B_MODEL}" yq e -i '.train.model_path = strenv(GRANITE_7B_MODEL_PATH)' "${CONFIG_HOME}/instructlab/config.yaml"
+      python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.ckpt_output_dir "${CACHE_HOME}/instructlab/checkpoints"
+      python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.phased_mt_bench_judge "${CACHE_HOME}/instructlab/models/${PROMETHEUS_8X7B_MODEL}"
+      python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.model_path "${CACHE_HOME}/instructlab/models/${GRANITE_7B_MODEL}"
     fi
     task ilab Initializing Complete
 }
