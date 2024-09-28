@@ -9,6 +9,7 @@ import typing
 
 # Third Party
 import click
+import psutil
 
 # First Party
 from instructlab import clickext
@@ -25,6 +26,7 @@ def _platform_info() -> typing.Dict[str, typing.Any]:
         "platform.node": platform.node(),
         "platform.python_version": platform.python_version(),
     }
+
     if sys.platform == "linux":
         os_release = platform.freedesktop_os_release()
         for key in ["ID", "VERSION_ID", "PRETTY_NAME"]:
@@ -41,6 +43,11 @@ def _platform_info() -> typing.Dict[str, typing.Any]:
             d["platform.cpu_brand"] = cpu_info
         except subprocess.CalledProcessError:
             d["platform.cpu_brand"] = "Unknown"
+
+    memory_info = psutil.virtual_memory()
+    d["memory.total"] = f"{(memory_info.total / 1024**3):.2f} GB"
+    d["memory.available"] = f"{(memory_info.available / 1024**3):.2f} GB"
+    d["memory.used"] = f"{(memory_info.used / 1024**3):.2f} GB"
     return d
 
 
@@ -146,21 +153,38 @@ def _instructlab_info():
     return {f"{name}.version": ver for name, ver in pkgs}
 
 
-def get_sysinfo() -> typing.Dict[str, typing.Any]:
-    """Get system information"""
-    d = {}
-    d.update(_platform_info())
-    d.update(_instructlab_info())
-    d.update(_torch_info())
-    d.update(_torch_cuda_info())
-    d.update(_torch_hpu_info())
-    d.update(_llama_cpp_info())
-    return d
+def add_to_category(
+    categories: dict[str, list[tuple[str, typing.Any]]],
+    display_name: str,
+    data: dict,
+):
+    """Add data to the correct category with the specified display name."""
+    if display_name not in categories:
+        categories[display_name] = []
+    categories[display_name].extend(data.items())
+
+
+def get_sysinfo_by_category() -> typing.Dict[str, list[tuple[str, typing.Any]]]:
+    """Get system information and categorize it directly"""
+    categories: dict[str, list[tuple[str, typing.Any]]] = {}
+    add_to_category(categories, "Platform", _platform_info())
+    add_to_category(categories, "InstructLab", _instructlab_info())
+    add_to_category(categories, "Torch", _torch_info())
+    add_to_category(categories, "Torch", _torch_cuda_info())
+    add_to_category(categories, "Torch", _torch_hpu_info())
+    add_to_category(categories, "llama_cpp_python", _llama_cpp_info())
+    return categories
 
 
 @click.command()
 @clickext.display_params
 def info():
     """Print system information"""
-    for key, value in get_sysinfo().items():
-        print(f"{key}: {value}")
+    categories = get_sysinfo_by_category()
+
+    for idx, (category, items) in enumerate(categories.items()):
+        if idx > 0:
+            print()
+        print(f"{category}:")
+        for key, value in items:
+            print(f"  {key}: {value}")
