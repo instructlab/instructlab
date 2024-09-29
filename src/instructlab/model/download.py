@@ -253,15 +253,13 @@ class OCIDownloader(Downloader):
 @click.command()
 @click.option(
     "--repository",
-    default=DEFAULTS.MERLINITE_GGUF_REPO,  # TODO: add to config.yaml
-    show_default=True,
-    help="Hugging Face or OCI repository of the model to download.",
+    type=click.STRING,
+    cls=clickext.ConfigOption,
 )
 @click.option(
     "--release",
-    default="main",  # TODO: add to config.yaml
-    show_default=True,
-    help="The revision of the model to download - e.g. a branch, tag, or commit hash for Hugging Face repositories and tag or commit hash for OCI repositories.",
+    type=click.STRING,
+    cls=clickext.ConfigOption,
 )
 @click.option(
     "--filename",
