@@ -426,7 +426,7 @@ class _train(BaseModel):
     fsdp_cpu_offload_optimizer: bool = Field(
         default=False, description="Allow CPU offload for FSDP optimizer."
     )
-    distributed_training_backend: DistributedBackend = Field(
+    distributed_backend: DistributedBackend = Field(
         default=DistributedBackend.DEEPSPEED,
         description="Pick a distributed training backend framework for GPU accelerated full fine-tuning.",
         validate_default=True,  # ensures that the 'use_enum_values' flag takes effect on the default value
@@ -1301,9 +1301,7 @@ def map_train_to_library(ctx, params):
 
     train_args.deepspeed_options = ds_args
     train_args.fsdp_options = fsdp_args
-    train_args.distributed_backend = DistributedBackend(
-        params["distributed_training_backend"]
-    )
+    train_args.distributed_backend = DistributedBackend(params["distributed_backend"])
     train_args.lora = lora_args
     if params["pipeline"] == "full":
         train_args.disable_flash_attn = True
