@@ -19,7 +19,9 @@ class TestUtils:
 
     @patch(
         "instructlab.utils.git_clone_checkout",
-        return_value=Mock(spec=git.Repo, working_dir="tests/testdata/temp_repo"),
+        return_value=Mock(
+            spec=git.Repo, working_dir="tests/testdata/temp_taxonomy_repo"
+        ),
     )
     def test_validate_documents(self, git_clone_checkout):
         with open(

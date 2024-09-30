@@ -257,22 +257,54 @@ class SourceDict(TypedDict):
     patterns: List[str]
 
 
+def is_valid_document(file_path: str, file_info: dict) -> bool:
+    """Try to open a file with the provided file_info."""
+    try:
+        logger.debug("Opening %s file: %s", file_info["description"], file_path)
+        with open(file_path, file_info["mode"], encoding=file_info["encoding"]):
+            logger.debug("%s File opened successfully", file_info["description"])
+        return True
+    except Exception as e:
+        logger.error(
+            "Failed to open %s file: %s. Error %s",
+            file_info["description"],
+            file_path,
+            e,
+        )
+        raise TaxonomyReadingException(
+            f"Error reading {file_info['description']} file: {file_path}"
+        ) from e
+
+
 def _validate_documents(
     source: SourceDict,
     skip_checkout: bool = False,
 ) -> None:
     """
-    Validate that we can retrieve the content of files from a Git repository.
+    Validate that we can retrieve the content of files from a Git repository specified in qna.yaml.
 
     Args:
         source (dict): Source info containing repository URL, commit hash, and list of file patterns.
+        skip_checkout (bool, optional): If True, skips checking out the specific commit. Defaults to False.
+
+    Raises:
+        TaxonomyReadingException: If no knowledge documents could be opened.
+        OSError, GitCommandError, FileNotFoundError: If an error occurs during Git operations or file access.
 
     Returns:
-         None
-    """ ""
+        None
+    """
     repo_url = source.get("repo", "")
     commit_hash = source.get("commit", "")
     file_patterns = source.get("patterns", [])
+
+    #  Supported file types and their respective open modes
+    file_types = {
+        ".md": {"mode": "r", "encoding": "utf-8", "description": "Markdown"},
+        ".pdf": {"mode": "rb", "encoding": None, "description": "PDF"},
+        # Add other file types when supported here.
+    }
+
     with tempfile.TemporaryDirectory() as temp_dir:
         try:
             repo = git_clone_checkout(
@@ -286,16 +318,29 @@ def _validate_documents(
             opened_files = False
             for pattern in file_patterns:
                 for file_path in glob.glob(os.path.join(repo.working_dir, pattern)):
-                    if os.path.isfile(file_path) and file_path.endswith(".md"):
-                        with open(file_path, "r", encoding="utf-8"):
-                            # Success! we could open the file.
-                            # We don't actually care about the contents, though.
+                    logger.debug("Checking file: %s", file_path)
+                    if os.path.isfile(file_path):
+                        file_extension = os.path.splitext(file_path)[1]
+                        file_info = file_types.get(file_extension)
+
+                        if not isinstance(file_info, dict):
+                            click.secho(
+                                "Unsupported file format for knowledge docs", fg="red"
+                            )
+                            raise click.exceptions.Exit(1)
+
+                        # Attempt to open the file
+                        if is_valid_document(file_path, file_info):
                             opened_files = True
 
             if not opened_files:
-                raise TaxonomyReadingException("Couldn't find knowledge documents")
+                raise TaxonomyReadingException(
+                    "Couldn't find any valid knowledge documents."
+                )
+
         except (OSError, exc.GitCommandError, FileNotFoundError) as e:
-            raise e
+            click.secho(f"Error validating documents: {str(e)}", fg="red")
+            raise click.exceptions.Exit(1)
 
 
 def git_clone_checkout(
