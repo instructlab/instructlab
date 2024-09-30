@@ -28,7 +28,7 @@ pull_request_rules:
     # e2e workflow
     - or:
       - and:
-        # note this should match the triggering criteria in 'e2e-starter.yml'
+        # note this should match the triggering criteria in 'e2e-nvidia-t4-x1.yml'
         - check-success~=e2e-workflow-complete
         - or:
           - files~=\.py$
@@ -36,7 +36,6 @@ pull_request_rules:
           - files~=^requirements.*\.txt$
           - files=scripts/basic-workflow-tests.sh
           - files~=^scripts/test-data/
-          - files=.github/workflows/e2e-starter.yml
           - files=.github/workflows/e2e-nvidia-t4-x1.yml
       - and:
         - -files~=\.py$
@@ -44,7 +43,6 @@ pull_request_rules:
         - -files~=^requirements.*\.txt$
         - -files=scripts/basic-workflow-tests.sh
         - -files~=^scripts/test-data/
-        - -files=.github/workflows/e2e-starter.yml
         - -files=.github/workflows/e2e-nvidia-t4-x1.yml
 
     # test workflow

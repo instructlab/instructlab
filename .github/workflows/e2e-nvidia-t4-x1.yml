@@ -2,17 +2,28 @@
 
 name: E2E (NVIDIA Tesla T4 x1)
 
-run-name: ${{ github.event.workflow_run.display_title || github.workflow }}
-
 on:
-  workflow_run:
-    workflows:
-      - 'E2E Starter'
-    types:
-      - completed
+  # run against every merge commit to 'main' and release branches
+  push:
+    branches:
+      - main
+      - release-*
+  # only run on PRs that touch certain regex paths
+  pull_request_target:
+    branches:
+      - main
+      - release-*
+    paths:
+      # note this should match the merging criteria in 'mergify.yml'
+      - '**.py'
+      - 'pyproject.toml'
+      - 'requirements**.txt'
+      - 'scripts/basic-workflow-tests.sh' # Used by this workflow
+      - 'scripts/test-data/**'
+      - '.github/workflows/e2e-nvidia-t4-x1.yml' # This workflow
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.workflow_run.event }}-${{ github.event.workflow_run.display_title || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
   cancel-in-progress: true
 
 env:
@@ -26,28 +37,27 @@ permissions:
   contents: read
 
 jobs:
-  start-runner:
-    name: Start external EC2 runner
+  e2e-workflow-ready:
+    permissions:
+      checks: read
+    uses: ./.github/workflows/status-checks.yml
+    with:
+      job_ids: >- # Space-separated job ids to wait on for status checks
+        DCO
+        actionlint
+        markdown-lint
+        shellcheck
+        spellcheck
+        lint-workflow-complete
+
+  start-ec2-runner:
+    needs:
+      - e2e-workflow-ready
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     outputs:
       label: ${{ steps.start-ec2-runner.outputs.label }}
       ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
-      number: ${{ steps.starter.outputs.number }}
     steps:
-      - name: "Download Starter Metadata artifact"
-        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4.1.8
-        with:
-          name: e2e-starter
-          run-id: ${{ github.event.workflow_run.id }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: "Get Starter Metadata"
-        id: starter
-        run: |
-          jq -r '"number=" + .number' starter.json >> "$GITHUB_OUTPUT"
-          jq -r '"ref=" + .ref' starter.json >> "$GITHUB_OUTPUT"
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
@@ -70,17 +80,17 @@ jobs:
             [
               {"Key": "Name", "Value": "instructlab-ci-github-small-runner"},
               {"Key": "GitHubRepository", "Value": "${{ github.repository }}"},
-              {"Key": "GitHubRef", "Value": "${{ steps.starter.outputs.ref }}"},
-              {"Key": "GitHubPR", "Value": "${{ steps.starter.outputs.number }}"}
+              {"Key": "GitHubRef", "Value": "${{ github.ref }}"},
+              {"Key": "GitHubPR", "Value": "${{ github.event.number }}"}
             ]
 
-  e2e:
-    name: E2E Test
-    needs: start-runner
-    runs-on: ${{ needs.start-runner.outputs.label }}
+  e2e-test:
+    needs:
+      - start-ec2-runner
+    runs-on: ${{ needs.start-ec2-runner.outputs.label }}
 
     # It is important that this job has no write permissions and has
-    # no access to any secrets. This part (e2e) is where we are running
+    # no access to any secrets. This part (e2e-test) is where we are running
     # untrusted code from PRs.
     permissions: {}
 
@@ -97,11 +107,10 @@ jobs:
           fetch-depth: 0
 
       - name: Fetch and checkout PR
-        id: fetch_pr
-        if: ${{ github.event.workflow_run.event == 'pull_request' }}
+        if: ${{ github.event_name == 'pull_request_target' }}
         run: |
-          git fetch origin pull/${{ needs.start-runner.outputs.number }}/head:pr-${{ needs.start-runner.outputs.number }}
-          git checkout pr-${{ needs.start-runner.outputs.number }}
+          git fetch origin pull/${{ github.event.number }}/head:pr-${{ github.event.number }}
+          git checkout pr-${{ github.event.number }}
 
       - name: Install ilab
         run: |
@@ -123,11 +132,10 @@ jobs:
           . venv/bin/activate
           ./scripts/basic-workflow-tests.sh -msq
 
-  stop-runner:
-    name: Stop external EC2 runner
+  stop-ec2-runner:
     needs:
-      - start-runner
-      - e2e
+      - start-ec2-runner
+      - e2e-test
     runs-on: ubuntu-latest
     if: ${{ always() }}
     steps:
@@ -142,14 +150,17 @@ jobs:
         with:
           mode: stop
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          label: ${{ needs.start-runner.outputs.label }}
-          ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
+          label: ${{ needs.start-ec2-runner.outputs.label }}
+          ec2-instance-id: ${{ needs.start-ec2-runner.outputs.ec2-instance-id }}
 
   e2e-workflow-complete:
     # we don't want to block PRs on failed EC2 cleanup
-    # so not requiring "stop-runner" as well
-    needs: ["start-runner", "e2e"]
-    runs-on: ubuntu-latest
-    steps:
-      - name: E2E Workflow Complete
-        run: echo "E2E Workflow Complete"
+    # so not requiring "stop-ec2-runner" as well
+    permissions:
+      checks: read
+    uses: ./.github/workflows/status-checks.yml
+    with:
+      job_ids: >- # Space-separated job ids to wait on for status checks
+        e2e-workflow-ready
+        start-ec2-runner
+        e2e-test
