@@ -457,9 +457,9 @@ class _train(BaseModel):
     # TODO: could move into its own object.
     # Not strictly necessary for a correct training object.
     phased_phase1_num_epochs: int | None = Field(
-        default=10,
+        default=7,
         gt=0,
-        description="Number of epochs to run training for during phase1.",
+        description="Number of epochs to run training for during phase1 (experimentally optimal number is 7).",
     )
     # anything greater than 0 enables samples_per_save for the phase.
     phased_phase1_samples_per_save: int = Field(

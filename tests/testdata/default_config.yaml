@@ -316,9 +316,10 @@ train:
   # Phased phase1 effective batch size.
   # Default: 128
   phased_phase1_effective_batch_size: 128
-  # Number of epochs to run training for during phase1.
-  # Default: 10
-  phased_phase1_num_epochs: 10
+  # Number of epochs to run training for during phase1 (experimentally optimal
+  # number is 7).
+  # Default: 7
+  phased_phase1_num_epochs: 7
   # Number of samples the model should see before saving a checkpoint during phase1.
   # Disabled when set to 0.
   # Default: 0
