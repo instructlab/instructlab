@@ -147,31 +147,31 @@ def sort_score(pairing: tuple[str, float, float, float]) -> float:
 
 
 def get_benchmark_max_score(benchmark: Benchmark) -> str:
-    # total score for Benchmark.MT_BENCH_BRANCH
+    # total score for Benchmark.MT_BENCH_BRANCH or Benchmark.MT_Bench
     max_score = "10.0"
-    if benchmark == Benchmark.MMLU_BRANCH:
+    if benchmark in (Benchmark.MMLU_BRANCH, Benchmark.MMLU):
         max_score = "1.0"
     return max_score
 
 
 def display_models_and_scores(
-    benchmark, model, base_model, model_overall_score, base_model_overall_score
+    benchmark, model, base_model, model_score, base_model_score
 ) -> None:
     """prints the base_model and model with a header"""
     max_score = get_benchmark_max_score(benchmark)
 
-    base_model_overall_score = round(base_model_overall_score, 2)
-    model_overall_score = round(model_overall_score, 2)
+    base_model_score = round(base_model_score, 2)
+    model_score = round(model_score, 2)
     print("## BASE MODEL (SCORE)")
-    print(f"{base_model} ({base_model_overall_score}/{max_score})")
+    display_model(base_model, base_model_score, max_score)
     print("\n## MODEL (SCORE)")
-    print(f"{model} ({model_overall_score}/{max_score})")
+    display_model(model, model_score, max_score)
 
 
-def display_model(model) -> None:
+def display_model(model, model_score, max_score) -> None:
     """prints the given model with a header"""
-    print("\n## MODEL")
-    print(model)
+    model_score = round(model_score, 2)
+    print(f"{model} ({model_score}/{max_score})")
 
 
 def display_error_rate(error_rate) -> None:
@@ -603,13 +603,13 @@ def evaluate(
                 if server is not None:
                     server.shutdown()
 
+            max_score = get_benchmark_max_score(Benchmark.MT_BENCH)
             print("# SKILL EVALUATION REPORT")
-            display_model(model)
-            print("\n### AVERAGE:")
-            print(f"{round(overall_score, 2)} (across {len(qa_pairs)})")
-            print("\n### TURN ONE:")
+            print("\n## MODEL (SCORE)")
+            display_model(model, overall_score, max_score)
+            print(f"\n### TURN ONE (0.0 to {max_score}):")
             print(round(turn_scores[0], 2))
-            print("\n### TURN TWO:")
+            print(f"\n### TURN TWO (0.0 to {max_score}):")
             turn2_score = turn_scores[1]
             if isinstance(turn2_score, float):
                 turn2_score = round(turn2_score, 2)
@@ -777,12 +777,12 @@ def evaluate(
                 if server is not None:
                     server.shutdown()
 
+            max_score = get_benchmark_max_score(Benchmark.MMLU)
             print("# KNOWLEDGE EVALUATION REPORT")
-            display_model(model)
-            print("\n### AVERAGE:")
-            print(f"{round(overall_score, 2)} (across {len(individual_scores)})\n")
+            print("\n## MODEL (SCORE)")
+            display_model(model, overall_score, max_score)
 
-            print("### SCORES:")
+            print(f"\n### SCORES (0.0 to {max_score}):")
             for task, score in individual_scores.items():
                 s = round(score["score"], 2)
                 print(f"{task} - {s}")
@@ -843,15 +843,6 @@ def evaluate(
                 overall_score,
                 base_overall_score,
             )
-
-            print("\n### AVERAGE:")
-            delta = round(overall_score - base_overall_score, 2)
-            if delta >= 0:
-                delta_display = f"+{delta}"
-            else:
-                delta_display = delta
-
-            print(f"{delta_display} (across {len(individual_scores)})")
 
             improvements, regressions, no_changes = [], [], []
             for task, score in individual_scores.items():

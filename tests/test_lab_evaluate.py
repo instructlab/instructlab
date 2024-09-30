@@ -111,16 +111,13 @@ def run_mt_bench(cli_runner, error_rate):
         Evaluating answers...
         # SKILL EVALUATION REPORT
 
-        ## MODEL
-        instructlab/granite-7b-lab
+        ## MODEL (SCORE)
+        instructlab/granite-7b-lab (1.5/10.0)
 
-        ### AVERAGE:
-        1.5 (across 2)
-
-        ### TURN ONE:
+        ### TURN ONE (0.0 to 10.0):
         1.0
 
-        ### TURN TWO:
+        ### TURN TWO (0.0 to 10.0):
         2
         """
     )
@@ -299,13 +296,10 @@ def test_evaluate_mmlu(
         """\
         # KNOWLEDGE EVALUATION REPORT
 
-        ## MODEL
-        instructlab/granite-7b-lab
+        ## MODEL (SCORE)
+        instructlab/granite-7b-lab (0.5/1.0)
 
-        ### AVERAGE:
-        0.5 (across 2)
-
-        ### SCORES:
+        ### SCORES (0.0 to 1.0):
         task1 - 0.1
         task2 - 0.9
         """
@@ -357,9 +351,6 @@ def test_evaluate_mmlu_branch(
 
         ## MODEL (SCORE)
         instructlab/granite-7b-lab (0.5/1.0)
-
-        ### AVERAGE:
-        -0.1 (across 5)
 
         ### IMPROVEMENTS (0.0 to 1.0):
         1. task1: 0.1 -> 0.2 (+0.1)
