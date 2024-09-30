@@ -30,6 +30,7 @@
 * Multi-phase training with `ilab model train --strategy lab-multiphase` is now resumeable! In the case of a machine failure or an incidental stop, progress is tracked in a new `journal` file, rendered in yaml.
   Upon restarting training, the user can confirm whether they would like to proceed with a pre-existing training run (one that might have only evaluated a few checkpoints of the first eval phase, for instance)
   or restart from scratch.
+* Allow users to pick a distributed training backend framework for GPU accelerated training between 'fsdp' and 'deepspeed'. Also add support for FSDP specific configuration options.
 
 ## v0.18.1
 

@@ -12,7 +12,7 @@ import shutil
 import typing
 
 # Third Party
-from instructlab.training import TorchrunArgs, TrainingArgs
+from instructlab.training import DistributedBackend, TorchrunArgs, TrainingArgs
 
 # pylint: disable=ungrouped-imports
 import click
@@ -220,6 +220,11 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     type=bool,
     cls=clickext.ConfigOption,
 )
+@click.option(
+    "--distributed-training-backend",
+    type=str,
+    cls=clickext.ConfigOption,
+)
 # below flags are invalid if lora == false
 @click.option(
     "--lora-rank",
@@ -415,6 +420,7 @@ def train(
     pipeline: str,
     training_journal: pathlib.Path | None,
     force_clear_phased_cache: bool,
+    distributed_training_backend,
     **kwargs,
 ):
     """
@@ -507,7 +513,16 @@ def train(
             )
 
     if strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value:
-        # pull the training and torch args from the flags
+        if (
+            distributed_training_backend
+            and distributed_training_backend
+            not in DistributedBackend._value2member_map_
+        ):
+            raise ctx.fail(
+                f"Invalid training backend option '{distributed_training_backend}' specified. Please specify either `fsdp` or `deepspeed`"
+            )
+
+        # pull the trainrandom.randinting and torch args from the flags
         # the flags are populated from the config as a base.
         train_args, torch_args = map_train_to_library(ctx, ctx.params)
         logger.debug(
