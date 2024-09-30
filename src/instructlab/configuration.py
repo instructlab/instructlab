@@ -4,6 +4,7 @@
 from os import path
 from re import match
 from typing import Any, Optional, Union
+import enum
 import logging
 import os
 import sys
@@ -42,16 +43,6 @@ from .defaults import CONFIG_VERSION, DEFAULTS, MODEL_FAMILIES, MODEL_FAMILY_MAP
 # Initialize ruamel.yaml
 yaml = YAML()
 yaml.indent(mapping=2, sequence=4, offset=2)
-
-
-# Define a custom representer for DistributedBackend
-def _distributed_backend_representer(dumper, data):
-    # Convert DistributedBackend object to a string or any serializable format
-    return dumper.represent_scalar("tag:yaml.org,2002:str", data.value)
-
-
-# Register the custom representer
-yaml.representer.add_representer(DistributedBackend, _distributed_backend_representer)
 
 
 class ConfigException(Exception):
@@ -386,7 +377,11 @@ class _train(BaseModel):
     """Class describing configuration of the 'train' sub-command."""
 
     # model configuration
-    model_config = ConfigDict(extra="ignore", protected_namespaces=())
+    model_config = ConfigDict(
+        extra="ignore",
+        protected_namespaces=(),
+        use_enum_values=True,  # populate models with the value property of enums, rather than the raw enum.
+    )
     model_path: str = Field(
         default=DEFAULTS.MODEL_REPO,
         description="Directory where the model to be trained is stored.",
@@ -432,8 +427,9 @@ class _train(BaseModel):
         default=False, description="Allow CPU offload for FSDP optimizer."
     )
     distributed_training_backend: DistributedBackend = Field(
-        default=DistributedBackend.DEEPSPEED.value,
+        default=DistributedBackend.DEEPSPEED,
         description="Pick a distributed training backend framework for GPU accelerated full fine-tuning.",
+        validate_default=True,  # ensures that the 'use_enum_values' flag takes effect on the default value
     )
     lora_rank: int | None = Field(
         default=4,
@@ -971,6 +967,9 @@ def config_to_commented_map(
             if default_value is PydanticUndefined:
                 if default_factory is not None and callable(default_factory):
                     default_value = default_factory()
+            # When the default value's type is an Enum or Enum value, convert it to a string
+            elif isinstance(default_value, enum.Enum):
+                default_value = default_value.value
             set_comment(
                 cm, field_name, description, default_value, deprecated, examples, indent
             )

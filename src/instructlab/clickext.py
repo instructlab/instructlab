@@ -170,6 +170,8 @@ class ConfigOption(click.Option):
             default_string = "<None>"
         elif isinstance(default_value, (list, tuple)):
             default_string = ", ".join(str(d) for d in default_value)
+        elif isinstance(default_value, enum.Enum):
+            default_string = default_value.value
         else:
             default_string = str(default_value)
 
@@ -198,15 +200,6 @@ class ConfigOption(click.Option):
         value, source = super().consume_value(ctx, opts)
         # fix parameter source for config section that are mis-reported
         # as DEFAULT source instead of DEFAULT_MAP source.
-
-        # ensuring that if we encounter any enums, we extract the underlying
-        # value out before returning
-        # not doing this can lead to serialization issues
-        # with the enum key getting extracted instead of actual
-        # value
-        if isinstance(value, enum.Enum):
-            value = value.value
-
         if (
             source == ParameterSource.DEFAULT
             and self.config_sections
