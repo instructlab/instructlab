@@ -267,7 +267,7 @@ train:
   # Pick a distributed training backend framework for GPU accelerated full fine-
   # tuning.
   # Default: deepspeed
-  distributed_training_backend: deepspeed
+  distributed_backend: deepspeed
   # The number of samples in a batch that the model should see before its parameters
   # are updated.
   # Default: 3840

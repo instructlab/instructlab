@@ -221,7 +221,7 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     cls=clickext.ConfigOption,
 )
 @click.option(
-    "--distributed-training-backend",
+    "--distributed-backend",
     type=str,
     cls=clickext.ConfigOption,
 )
@@ -420,7 +420,7 @@ def train(
     pipeline: str,
     training_journal: pathlib.Path | None,
     force_clear_phased_cache: bool,
-    distributed_training_backend,
+    distributed_backend,
     **kwargs,
 ):
     """
@@ -514,12 +514,11 @@ def train(
 
     if strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value:
         if (
-            distributed_training_backend
-            and distributed_training_backend
-            not in DistributedBackend._value2member_map_
+            distributed_backend
+            and distributed_backend not in DistributedBackend._value2member_map_
         ):
             raise ctx.fail(
-                f"Invalid training backend option '{distributed_training_backend}' specified. Please specify either `fsdp` or `deepspeed`"
+                f"Invalid training backend option '{distributed_backend}' specified. Please specify either `fsdp` or `deepspeed`"
             )
 
         # pull the trainrandom.randinting and torch args from the flags
