@@ -34,7 +34,7 @@ jobs:
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
           ec2-image-id: ami-03f6686697972e40a
           ec2-instance-type: g6e.12xlarge
-          subnet-id: subnet-02d230cffd9385bd4
+          subnet-id: subnet-024298cefa3bedd61
           security-group-id: sg-06300447c4a5fbef3
           iam-role-name: instructlab-ci-runner
           aws-resource-tags: >
