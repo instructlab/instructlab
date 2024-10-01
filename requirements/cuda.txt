@@ -1,2 +1,2 @@
 # Extra dependencies for NVIDIA CUDA
-instructlab-training[cuda]>=0.5.0a0
+instructlab-training[cuda]>=0.5.0
