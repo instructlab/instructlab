@@ -559,6 +559,14 @@ def train(
         # try to load journal. May be empty.
         journal = TrainingJournal(journalfile=training_journal)
         click.secho("\n\n~~~~~~~~~~~~~STARTING MULTI-PHASE TRAINING~~~~~~~~~~~~~")
+
+        # experimental preference.
+        if phased_phase1_num_epochs != 7:
+            click.secho(
+                f"Running phased training with '{phased_phase1_num_epochs}' epochs.\nNote: 7 epochs is the recommended amount for optimal performance.",
+                fg="yellow",
+            )
+
         if journal.was_loaded:
             click.secho(
                 f"There was an existing training journal at: '{str(training_journal)}'"
@@ -1094,42 +1102,42 @@ def _run_phased_training(
 
         phase_model.ended_at_utc = TrainingJournal.now_utc()
 
-        journal.current_phase = TrainingPhases.EVAL1
+        journal.current_phase = TrainingPhases.TRAIN2
         journal.commit()
 
         logger.debug("Finished training #1\n%s", journal.print_model_rich())
     else:
         click.secho("SKIPPING: Training Phase 1/2; already in Journal", fg="cyan")
 
-    if journal.current_phase == TrainingPhases.EVAL1:
-        click.secho("MMLU evaluation for Phase 1...", fg="cyan")
+    # if journal.current_phase == TrainingPhases.EVAL1:
+    #     click.secho("MMLU evaluation for Phase 1...", fg="cyan")
 
-        # NOTE: requires hf_format sub-directory. Training sets this up.
-        phase1_checkpoints_dir = phase1_checkpoints_dir / "hf_format"
+    # NOTE: requires hf_format sub-directory. Training sets this up.
+    # phase1_checkpoints_dir = phase1_checkpoints_dir / "hf_format"
 
-        phase_model = journal.journal.eval_1
-        if phase_model is None:
-            # if it's not None, it already exists and may have 'results', so we shouldn't overwrite it.
-            phase_model = EvalPhaseModel(
-                checkpoints=list(phase1_checkpoints_dir.iterdir())
-            )
-            journal.journal.eval_1 = phase_model
-        journal.commit()
+    # phase_model = journal.journal.eval_1
+    # if phase_model is None:
+    #     # if it's not None, it already exists and may have 'results', so we shouldn't overwrite it.
+    #     phase_model = EvalPhaseModel(
+    #         checkpoints=list(phase1_checkpoints_dir.iterdir())
+    #     )
+    #     journal.journal.eval_1 = phase_model
+    # journal.commit()
 
-        best_checkpoint = _evaluate_dir_of_checkpoints(
-            eval_func=_mmlu, phase_model=phase_model, journal=journal
-        )
+    # best_checkpoint = _evaluate_dir_of_checkpoints(
+    #     eval_func=_mmlu, phase_model=phase_model, journal=journal
+    # )
 
-        phase_model.best_checkpoint = best_checkpoint
-        phase_model.ended_at_utc = TrainingJournal.now_utc()
+    # phase_model.best_checkpoint = best_checkpoint
+    # phase_model.ended_at_utc = TrainingJournal.now_utc()
 
-        journal.current_phase = TrainingPhases.TRAIN2
-        journal.commit()
-        logger.debug("Finished eval #1\n%s", journal.print_model_rich())
-    else:
-        click.secho(
-            "SKIPPING: MMLU evaluation for Phase 1; already in Journal", fg="cyan"
-        )
+    #     journal.current_phase = TrainingPhases.TRAIN2
+    #     journal.commit()
+    #     logger.debug("Finished eval #1\n%s", journal.print_model_rich())
+    # else:
+    #     click.secho(
+    #         "SKIPPING: MMLU evaluation for Phase 1; already in Journal", fg="cyan"
+    #     )
 
     if journal.current_phase == TrainingPhases.TRAIN2:
         click.secho("Training Phase 2/2...", fg="cyan")
@@ -1140,17 +1148,37 @@ def _run_phased_training(
             journal.journal.train_2 = phase_model
         journal.commit()
 
-        if journal.journal.eval_1 is None:
-            raise RuntimeError(
-                "Training journal field 'eval_1' cannot be None for phase 'train_2'"
+        # if journal.journal.eval_1 is None:
+        #     raise RuntimeError(
+        #         "Training journal field 'eval_1' cannot be None for phase 'train_2'"
+        #     )
+
+        # NOTE:
+        # this is a recent change, implemented to ignore MMLU. We just look at the checkpoints
+        # from the phase 1 training and take the most recent one.
+        phase1_checkpoints_dir_hf = phase1_checkpoints_dir / "hf_format"
+        if not phase1_checkpoints_dir_hf.exists():
+            raise FileNotFoundError(
+                f"{phase1_checkpoints_dir_hf} doesn't exist. This likely means that no checkpoints were saved from phase 1."
             )
+
+        phase1_checkpoints = sorted(
+            list(phase1_checkpoints_dir_hf.iterdir()), reverse=True
+        )
+
+        if len(phase1_checkpoints) == 0:
+            raise FileNotFoundError(
+                f"{phase1_checkpoints_dir_hf} Has no checkpoints. This likely means that no checkpoints were saved from phase 1."
+            )
+
+        next_checkpoint = phase1_checkpoints[0]
 
         _training_phase(
             train_args=train_args.model_copy(deep=True),
             torch_args=torch_args,
             data_path=phase2_data,
             checkpoint_dir=phase2_checkpoints_dir,
-            model_override=journal.journal.eval_1.best_checkpoint.checkpoint,  # type: ignore
+            model_override=next_checkpoint,  # type: ignore
             num_epochs=phase2_num_epochs,
             samples_per_save=phase2_samples_per_save,
             effective_batch_size=phased_phase2_effective_batch_size,
