@@ -28,8 +28,10 @@ pull_request_rules:
     # e2e workflow
     - or:
       - and:
-        # note this should match the triggering criteria in 'e2e-nvidia-t4-x1.yml'
-        - check-success~=e2e-workflow-complete
+        # note this should match the triggering criteria in
+        # 'e2e-nvidia-t4-x1.yml' and 'e2e-nvidia-a10g-x1.yml'
+        - check-success~=e2e-small-workflow-complete
+        - check-success~=e2e-medium-workflow-complete
         - or:
           - files~=\.py$
           - files=pyproject.toml
