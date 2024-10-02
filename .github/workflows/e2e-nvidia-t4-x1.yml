@@ -18,7 +18,7 @@ on:
       - '**.py'
       - 'pyproject.toml'
       - 'requirements**.txt'
-      - 'scripts/basic-workflow-tests.sh' # Used by this workflow
+      - 'scripts/e2e-ci.sh' # Used by this workflow
       - 'scripts/test-data/**'
       - '.github/workflows/e2e-nvidia-t4-x1.yml' # This workflow
 
@@ -37,7 +37,7 @@ permissions:
   contents: read
 
 jobs:
-  e2e-workflow-ready:
+  e2e-small-workflow-ready:
     permissions:
       checks: read
     uses: ./.github/workflows/status-checks.yml
@@ -50,9 +50,9 @@ jobs:
         spellcheck
         lint-workflow-complete
 
-  start-ec2-runner:
+  start-small-ec2-runner:
     needs:
-      - e2e-workflow-ready
+      - e2e-small-workflow-ready
     runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.start-ec2-runner.outputs.label }}
@@ -84,10 +84,10 @@ jobs:
               {"Key": "GitHubPR", "Value": "${{ github.event.number }}"}
             ]
 
-  e2e-test:
+  e2e-small-test:
     needs:
-      - start-ec2-runner
-    runs-on: ${{ needs.start-ec2-runner.outputs.label }}
+      - start-small-ec2-runner
+    runs-on: ${{ needs.start-small-ec2-runner.outputs.label }}
 
     # It is important that this job has no write permissions and has
     # no access to any secrets. This part (e2e-test) is where we are running
@@ -136,10 +136,10 @@ jobs:
           . venv/bin/activate
           ./scripts/basic-workflow-tests.sh -msq
 
-  stop-ec2-runner:
+  stop-small-ec2-runner:
     needs:
-      - start-ec2-runner
-      - e2e-test
+      - start-small-ec2-runner
+      - e2e-small-test
     runs-on: ubuntu-latest
     if: ${{ always() }}
     steps:
@@ -154,17 +154,17 @@ jobs:
         with:
           mode: stop
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          label: ${{ needs.start-ec2-runner.outputs.label }}
-          ec2-instance-id: ${{ needs.start-ec2-runner.outputs.ec2-instance-id }}
+          label: ${{ needs.start-small-ec2-runner.outputs.label }}
+          ec2-instance-id: ${{ needs.start-small-ec2-runner.outputs.ec2-instance-id }}
 
-  e2e-workflow-complete:
+  e2e-small-workflow-complete:
     # we don't want to block PRs on failed EC2 cleanup
-    # so not requiring "stop-ec2-runner" as well
+    # so not requiring "stop-small-ec2-runner" as well
     permissions:
       checks: read
     uses: ./.github/workflows/status-checks.yml
     with:
       job_ids: >- # Space-separated job ids to wait on for status checks
-        e2e-workflow-ready
-        start-ec2-runner
-        e2e-test
+        e2e-small-workflow-ready
+        start-small-ec2-runner
+        e2e-small-test
