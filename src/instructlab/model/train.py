@@ -1163,7 +1163,11 @@ def _run_phased_training(
             )
 
         phase1_checkpoints = sorted(
-            list(phase1_checkpoints_dir_hf.iterdir()), reverse=True
+            list(phase1_checkpoints_dir_hf.iterdir()),
+            reverse=True,
+            # XXX(osilkin): This line takes the checkpoint name "samples_NNN" and tells sorted
+            #               to use the last NNN string as an integer
+            key=lambda x: int(str(x).rsplit("_", maxsplit=1)[-1]),
         )
 
         if len(phase1_checkpoints) == 0:
