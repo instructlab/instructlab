@@ -24,10 +24,9 @@ varying test coverage based on the resources available on a given test runner.
 The second can be found at `scripts/e2e.sh`. This script is designed to test the
 InstructLab workflow from end-to-end, mimicking real user behavior.
 
-There is currently a ["small" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml)
-that is run when the [E2E starter job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-starter.yml) successfully completes.
-The starter job runs automatically on all PRs and after commits merge to `main` or release
-branches. Its successful completion depends upon the successful completion of any linting type jobs.
+There is currently a ["small" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml).
+This job runs automatically on all PRs and after commits merge to `main` or release
+branches. It depends upon the successful completion of any linting type jobs.
 
 There is also a ["medium" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) and ["large" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) that can be triggered manually on the [actions
 page](https://github.com/instructlab/instructlab/actions) for the repository.
