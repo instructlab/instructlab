@@ -114,6 +114,11 @@ def serve(
     vLLm parameters are documented at
     https://docs.vllm.ai/en/stable/serving/openai_compatible_server.html
     """
+    # If a log file is specified, write logs to the file
+    root_logger = logging.getLogger()
+    if log_file:
+        log.add_file_handler_to_logger(root_logger, log_file)
+
     # First Party
     from instructlab.model.backends import llama_cpp, vllm
 
@@ -124,11 +129,6 @@ def serve(
     except (ValueError, AttributeError) as e:
         click.secho(f"Failed to determine backend: {e}", fg="red")
         raise click.exceptions.Exit(1)
-
-    # Redirect server stdout and stderr to the logger
-    log.stdout_stderr_to_logger(
-        logger=logger, log_file=log_file, fmt=ctx.obj.config.general.log_format
-    )
 
     if chat_template is None:
         chat_template = ctx.obj.config.serve.chat_template
@@ -153,6 +153,7 @@ def serve(
             gpu_layers=gpu_layers,
             max_ctx_size=max_ctx_size,
             num_threads=num_threads,
+            log_file=log_file,
         )
     elif backend == backends.VLLM:
         # First Party
@@ -196,6 +197,7 @@ def serve(
             vllm_args=vllm_args,
             host=host,
             port=port,
+            log_file=log_file,
         )
     else:
         click.secho(f"Unknown backend: {backend}", fg="red")

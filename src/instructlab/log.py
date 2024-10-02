@@ -4,7 +4,9 @@
 import logging
 import os
 import pathlib
-import sys
+
+# Local
+from .defaults import LOG_FORMAT
 
 
 class CustomFormatter(logging.Formatter):
@@ -18,39 +20,61 @@ class CustomFormatter(logging.Formatter):
 
 
 class LoggerWriter:
-    def __init__(self, level):
+    def __init__(self, logger, level):
+        self.logger = logger
         self.level = level
-        self.buffer = ""
 
     def write(self, message):
-        self.buffer += message
-        if message == "\n":  # Flush the buffer when an empty line is encountered
-            self.flush()
+        if message.strip():
+            self.logger.log(self.level, message)
 
     def flush(self):
-        if self.buffer:
-            self.level(self.buffer.strip())
-            self.buffer = ""
-
-    def isatty(self):
-        return False
+        pass
 
 
-def stdout_stderr_to_logger(
-    logger: logging.Logger, log_file: pathlib.Path | None, fmt: str
-):
-    if log_file:
-        # Use the existing log file if it exists and append to it
-        mode = "a"
-        # Create file handler
-        file_handler = logging.FileHandler(log_file, mode, encoding="utf-8")
-        logger.addHandler(file_handler)
-        # Create formatter and add it to the handler
-        formatter = CustomFormatter(fmt)
-        file_handler.setFormatter(formatter)
+def add_file_handler_to_logger(
+    logger: logging.Logger, log_file: pathlib.Path | None
+) -> None:
+    """
+    Adds a file handler to the specified logger to write log messages to a file.
 
-    sys.stdout = LoggerWriter(logger.info)
-    sys.stderr = LoggerWriter(logger.error)
+    This function checks if a file handler for the specified log file already exists in the logger.
+    If it does, the function does nothing. Otherwise, it creates a new file handler that appends
+    log messages to the specified file and adds it to the logger.
+
+    Args:
+        logger (logging.Logger): The logger to which the file handler should be added.
+        log_file (pathlib.Path): The path to the log file where log messages should be written.
+    """
+
+    if log_file is None:
+        return
+
+    log_file_path = os.path.abspath(log_file)
+    logger.debug(f"Checking for existing file handler for log file: {log_file}")
+
+    # Check if a file handler for the specified log file already exists
+    for handler in logger.handlers:
+        if isinstance(handler, logging.FileHandler):
+            if handler.baseFilename == log_file_path:
+                logger.debug(
+                    f"Log file already exists in handler: {log_file}, doing nothing!"
+                )
+                return
+    logger.debug(f"No file handler found for log file: {log_file}, adding one!")
+
+    # Use the "append" mode
+    mode = "a"
+
+    # Create file handler and add it to the logger
+    file_handler = logging.FileHandler(log_file, mode, encoding="utf-8")
+    logger.debug(f"Adding file handler for log file: {log_file}")
+    logger.addHandler(file_handler)
+
+    # Create formatter and set it
+    formatter = CustomFormatter(LOG_FORMAT)
+    file_handler.setFormatter(formatter)
+    logger.debug(f"Added file handler for log file: {log_file}")
 
 
 def configure_logging(

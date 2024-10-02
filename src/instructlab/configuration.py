@@ -38,7 +38,13 @@ import click
 
 # Local
 from . import log
-from .defaults import CONFIG_VERSION, DEFAULTS, MODEL_FAMILIES, MODEL_FAMILY_MAPPINGS
+from .defaults import (
+    CONFIG_VERSION,
+    DEFAULTS,
+    LOG_FORMAT,
+    MODEL_FAMILIES,
+    MODEL_FAMILY_MAPPINGS,
+)
 
 # Initialize ruamel.yaml
 yaml = YAML()
@@ -59,7 +65,7 @@ class _general(BaseModel):
     log_level: StrictStr = Field(default="INFO", description="Log level for logging.")
     debug_level: int = Field(default=0, description="Debug level for logging.")
     log_format: StrictStr = Field(
-        default="%(levelname)s %(asctime)s %(name)s:%(lineno)d: %(message)s",
+        default=LOG_FORMAT,
         description="Log format. https://docs.python.org/3/library/logging.html#logrecord-attributes",
         validate_default=True,
     )
