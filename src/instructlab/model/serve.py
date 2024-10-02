@@ -196,6 +196,7 @@ def serve(
             vllm_args=vllm_args,
             host=host,
             port=port,
+            vllm_path=ctx.obj.config.serve.vllm.vllm_path,
         )
     else:
         click.secho(f"Unknown backend: {backend}", fg="red")

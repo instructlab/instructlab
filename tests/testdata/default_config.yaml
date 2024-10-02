@@ -183,6 +183,9 @@ generate:
       #   - ['--dtype', 'auto']
       #   - ['--lora-alpha', '32']
       vllm_args: []
+      # Path to the vLLM virtual environment.
+      # Default: None
+      vllm_path:
 # Serve configuration section.
 serve:
   # Serving backend to use to host the model.
@@ -240,6 +243,9 @@ serve:
     #   - ['--dtype', 'auto']
     #   - ['--lora-alpha', '32']
     vllm_args: []
+    # Path to the vLLM virtual environment.
+    # Default: None
+    vllm_path:
 # Train configuration section.
 train:
   # Additional arguments to pass to the training script. These arguments are passed

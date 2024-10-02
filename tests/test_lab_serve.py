@@ -18,9 +18,8 @@ from . import common
 
 
 def assert_vllm_args(args):
-    assert "python" in args[0]
-    assert args[1] == "-m"
-    assert args[2] == "vllm.entrypoints.openai.api_server"
+    assert "vllm" in args[0]
+    assert args[1] == "serve"
 
 
 def assert_template(args, expect_chat, path_chat, chat_value):

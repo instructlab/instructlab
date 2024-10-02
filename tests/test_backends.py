@@ -5,7 +5,6 @@ import json
 import os
 import pathlib
 import socket
-import sys
 
 # Third Party
 from click.testing import CliRunner
@@ -195,6 +194,7 @@ def test_ilab_vllm_args(
         vllm_args=["--enable_lora"],
         host="127.0.0.1",
         port=8000,
+        vllm_path=None,
     )
 
 
@@ -239,15 +239,13 @@ def test_build_vllm_cmd_with_defaults(tmp_path: pathlib.Path):
     chat_template.touch()
     vllm_args: list[str] = []
     expected_cmd = [
-        sys.executable,
-        "-m",
-        "vllm.entrypoints.openai.api_server",
+        "vllm",
+        "serve",
+        str(model_path),
         "--host",
         host,
         "--port",
         str(port),
-        "--model",
-        str(model_path),
         "--chat-template",
         str(chat_template),
         "--distributed-executor-backend",
@@ -269,14 +267,13 @@ def test_build_vllm_cmd_with_args_provided(tmp_path: pathlib.Path):
     vllm_args = [
         "--port",
         str(8001),
-        "--model=/path/to/other/model",
         "--distributed-executor-backend",
         "ray",
     ]
     expected_cmd = [
-        sys.executable,
-        "-m",
-        "vllm.entrypoints.openai.api_server",
+        "vllm",
+        "serve",
+        os.fspath(model_path),
         "--host",
         host,
         "--chat-template",
@@ -298,15 +295,13 @@ def test_build_vllm_cmd_with_bnb_quant(tmp_path: pathlib.Path):
     chat_template.touch()
     vllm_args: list[str] = []
     expected_cmd = [
-        sys.executable,
-        "-m",
-        "vllm.entrypoints.openai.api_server",
+        "vllm",
+        "serve",
+        str(model_path),
         "--host",
         host,
         "--port",
         str(port),
-        "--model",
-        str(model_path),
         "--chat-template",
         str(chat_template),
         "--quantization",
