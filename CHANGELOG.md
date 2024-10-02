@@ -1,3 +1,9 @@
+## v0.20
+
+### Breaking Changes
+
+* llama-cpp-python has been updated to 0.3.1, which dropped some accelerators (cuBLAS, clBLAS) and added others (OpenBLAS).
+
 ## v0.19
 
 ### Breaking Changes
@@ -17,7 +23,6 @@
 * Intel Gaudi software has been updated to 1.17.1 with Python 3.11 and
   Torch 2.3.1 support.
 * `--legacy` has been removed and replaced with `--pipeline=simple` in `ilab model train`
-* llama-cpp-python has been updated to 0.3.1, which dropped some accelerators (cuBLAS, clBLAS) and added others (OpenBLAS).
 
 ### Features
 

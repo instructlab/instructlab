@@ -47,6 +47,7 @@ NVidia
 Nvidia
 OCI
 OOM
+OpenBLAS
 PEFT
 Pareja
 PlantUML
@@ -94,6 +95,7 @@ backends
 backport
 backported
 chatlogs
+clBLAS
 cli
 codebase
 compositional
