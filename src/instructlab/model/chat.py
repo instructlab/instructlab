@@ -27,7 +27,7 @@ import openai
 from instructlab import clickext
 from instructlab import client as ilabclient
 from instructlab import configuration as cfg
-from instructlab.utils import HttpClientParams
+from instructlab.utils import is_openai_server_and_serving_model
 
 # Local
 from ..utils import get_sysprompt, http_client
@@ -64,22 +64,6 @@ PROMPT_HISTORY_FILEPATH = os.path.expanduser("~/.local/chat-cli.history")
 PROMPT_PREFIX = ">>> "
 
 DEFAULT_ENDPOINT = cfg._serve().api_base()
-
-
-def is_openai_server_and_serving_model(
-    endpoint: str, api_key: str, http_params: HttpClientParams
-) -> bool:
-    """
-    Given an endpoint, returns whether or not the server is OpenAI-compatible
-    and is actively serving at least one model.
-    """
-    try:
-        models = ilabclient.list_models(
-            endpoint, api_key=api_key, http_client=http_client(http_params)
-        )
-        return len(models.data) > 0
-    except ilabclient.ClientException:
-        return False
 
 
 @click.command()
