@@ -91,10 +91,19 @@ pip install .[cpu]
 ### Testing
 
 Before pushing changes to GitHub, you need to run the tests as shown below. They can be run individually as shown in each sub-section
-or can be run with the one command:
+or can be run with the one command (use `-v` for more detailed output):
 
 ```shell
 tox
+```
+
+If you need to configure a proxy or a trusted host for pip while using tox, add the `PIP_PROXY` and `PIP_TRUSTED_HOST` environment variables in the `setenv` directive within the `[testenv]` section of `tox.ini`, for example:
+
+```shell
+[testenv]
+setenv =
+    PIP_PROXY = http://proxy.example.com:3128
+    PIP_TRUSTED_HOST = pypi.org download.pytorch.org
 ```
 
 #### Unit tests
