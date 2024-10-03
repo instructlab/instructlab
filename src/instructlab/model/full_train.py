@@ -64,7 +64,7 @@ def train(train_args, device):
     )
 
     # based on the length of the dataset, figure out the max batch len
-    packing_max_batch_len, _ = (
+    packing_max_batch_len, accum = (
         multipack_sampler.find_packing_max_batch_len_and_grad_accum(
             num_gpus=1,
             avg_sample_len=dataset.get_lengths().mean(),
@@ -99,6 +99,9 @@ def train(train_args, device):
     )
     dataloader.multiprocessing_context = "spawn"
 
+    logger.info(
+        f"avg_sample_len: {dataset.get_lengths().mean()}\n effective_batch_size: {train_args.effective_batch_size}\n max_batch_len: {train_args.max_batch_len}\n packing_max_batch_len: {packing_max_batch_len} \n grad_accum: {accum}\n  num_batches: {len(dataloader)}\n avg_samples_per_batch: {len(dataset) / len(dataloader)}"
+    )
     # set device based off argument given
     dev = torch.device(device)
     # auto model based on model path
@@ -151,20 +154,18 @@ def train(train_args, device):
     total_ram = memory_info.total / (1024**3)  # Convert to GB
     logger.info(f"Total RAM: {total_ram:.2f} GB")
     # if RAM is <= 16, we need to use fp16 not fp32. This will yield a worse model but will allow the full pipeline to run
-    accum = 1
     if total_ram <= 16:
         # if <= 16GB ram, use gradinent accum and hald precision
         logger.warning(
             f"Your system has {total_ram:.2f} GB of RAM. This is below our reccomendation of 32GB for this type of training. Using half precision."
         )
         model = model.to(dev).half()  # Convert model to float16
-        accum = 4
     else:
         model = model.to(dev)
 
     # adafactor and gradient checkpointing are memory friendly, we opt to use these in the CPU/MPS loop to fit 7b models.
     optimizer = Adafactor(
-        model.parameters(), lr=1e-5, scale_parameter=True, relative_step=False
+        model.parameters(), lr=2e-5, scale_parameter=False, relative_step=False
     )
     model.gradient_checkpointing_enable()
 
