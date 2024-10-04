@@ -111,6 +111,20 @@ class _general(BaseModel):
         return self
 
 
+class _chat_prompts(BaseModel):
+    """Class describing prompts for different chat contexts."""
+
+    default: str = Field(
+        default=DEFAULTS.SYS_PROMPT,
+        description="Default prompt to be used if no specific context is provided.",
+    )
+
+    cli_helper: str = Field(
+        default=DEFAULTS.CLI_HELPER_PROMPT,
+        description="Prompt to be used when acting as a CLI helper.",
+    )
+
+
 class _chat(BaseModel):
     """Class describing configuration of the 'chat' sub-command."""
 
@@ -129,6 +143,10 @@ class _chat(BaseModel):
     context: str = Field(
         default="default",
         description="Predefined setting or environment that influences the behavior and responses of the chat assistant. Each context is associated with a specific prompt that guides the assistant on how to respond to user inputs.",
+    )
+    prompts: _chat_prompts = Field(
+        default_factory=_chat_prompts,
+        description="Prompts for various contexts in the chat assistant.",
     )
     session: typing.Optional[str] = Field(
         default=None, description="Filepath of a dialog session file."
@@ -506,15 +524,6 @@ class _train(BaseModel):
     )
 
 
-class _prompts(BaseModel):
-    """Class describing configuration for prompts."""
-
-    system_prompt: str = Field(
-        default=DEFAULTS.SYS_PROMPT,
-        description="System prompt used to guide the chat assistant behavior.",
-    )
-
-
 class Config(BaseModel):
     """Configuration for the InstructLab CLI.
     Config options are defined by the respective subclasses and are loaded into a single 'Config' object here
@@ -553,10 +562,6 @@ class Config(BaseModel):
         default=CONFIG_VERSION,
         description="Configuration file structure version.",
         frozen=True,  # don't allow this to be changed anywhere in the code
-    )
-    # system prompt configuration
-    prompts: _prompts = Field(
-        default_factory=_prompts, description="Prompt configuration section."
     )
 
 

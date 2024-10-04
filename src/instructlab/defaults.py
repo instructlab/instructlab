@@ -92,6 +92,7 @@ class _InstructlabDefaults:
 
     # System Prompt
     SYS_PROMPT = common.SYS_PROMPT
+    CLI_HELPER_PROMPT = common.CLI_HELPER_PROMPT
 
     def __init__(self):
         self._reset()
