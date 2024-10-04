@@ -4,6 +4,7 @@
 from os import path
 from re import match
 from typing import Any, Optional, Union
+import enum
 import logging
 import os
 import sys
@@ -14,6 +15,8 @@ import typing
 # pylint: disable=ungrouped-imports
 from instructlab.training import (
     DeepSpeedOptions,
+    DistributedBackend,
+    FSDPOptions,
     LoraOptions,
     TorchrunArgs,
     TrainingArgs,
@@ -35,7 +38,13 @@ import click
 
 # Local
 from . import log
-from .defaults import CONFIG_VERSION, DEFAULTS, MODEL_FAMILIES, MODEL_FAMILY_MAPPINGS
+from .defaults import (
+    CONFIG_VERSION,
+    DEFAULTS,
+    LOG_FORMAT,
+    MODEL_FAMILIES,
+    MODEL_FAMILY_MAPPINGS,
+)
 
 # Initialize ruamel.yaml
 yaml = YAML()
@@ -56,7 +65,7 @@ class _general(BaseModel):
     log_level: StrictStr = Field(default="INFO", description="Log level for logging.")
     debug_level: int = Field(default=0, description="Debug level for logging.")
     log_format: StrictStr = Field(
-        default="%(levelname)s %(asctime)s %(name)s:%(lineno)d: %(message)s",
+        default=LOG_FORMAT,
         description="Log format. https://docs.python.org/3/library/logging.html#logrecord-attributes",
         validate_default=True,
     )
@@ -307,9 +316,9 @@ class _mtbench(BaseModel):
         default_factory=lambda: DEFAULTS.EVAL_DATA_DIR,
         description="Directory where evaluation results are stored.",
     )
-    max_workers: int = Field(
-        default=16,
-        description="Number of workers to use for evaluation.",
+    max_workers: str | int = Field(
+        default="auto",
+        description="Number of workers to use for evaluation with mt_bench or mt_bench_branch. Must be a positive integer or 'auto'.",
     )
 
 
@@ -374,7 +383,11 @@ class _train(BaseModel):
     """Class describing configuration of the 'train' sub-command."""
 
     # model configuration
-    model_config = ConfigDict(extra="ignore", protected_namespaces=())
+    model_config = ConfigDict(
+        extra="ignore",
+        protected_namespaces=(),
+        use_enum_values=True,  # populate models with the value property of enums, rather than the raw enum.
+    )
     model_path: str = Field(
         default=DEFAULTS.MODEL_REPO,
         description="Directory where the model to be trained is stored.",
@@ -416,6 +429,14 @@ class _train(BaseModel):
     deepspeed_cpu_offload_optimizer: bool = Field(
         default=False, description="Allow CPU offload for deepspeed optimizer."
     )
+    fsdp_cpu_offload_optimizer: bool = Field(
+        default=False, description="Allow CPU offload for FSDP optimizer."
+    )
+    distributed_backend: DistributedBackend = Field(
+        default=DistributedBackend.DEEPSPEED,
+        description="Pick a distributed training backend framework for GPU accelerated full fine-tuning.",
+        validate_default=True,  # ensures that the 'use_enum_values' flag takes effect on the default value
+    )
     lora_rank: int | None = Field(
         default=4,
         description="Rank of low rank matrices to be used during training.",
@@ -442,9 +463,9 @@ class _train(BaseModel):
     # TODO: could move into its own object.
     # Not strictly necessary for a correct training object.
     phased_phase1_num_epochs: int | None = Field(
-        default=10,
+        default=7,
         gt=0,
-        description="Number of epochs to run training for during phase1.",
+        description="Number of epochs to run training for during phase1 (experimentally optimal number is 7).",
     )
     # anything greater than 0 enables samples_per_save for the phase.
     phased_phase1_samples_per_save: int = Field(
@@ -478,6 +499,10 @@ class _train(BaseModel):
     phased_base_dir: str | None = Field(
         default_factory=lambda: DEFAULTS.PHASED_DIR,
         description="Base directory for organization of end-to-end intermediate outputs.",
+    )
+    training_journal: str | None = Field(
+        default=None,
+        description="Optional path to a yaml file that tracks the progress of multiphase training.",
     )
 
 
@@ -961,6 +986,9 @@ def config_to_commented_map(
             if default_value is PydanticUndefined:
                 if default_factory is not None and callable(default_factory):
                     default_value = default_factory()
+            # When the default value's type is an Enum or Enum value, convert it to a string
+            elif isinstance(default_value, enum.Enum):
+                default_value = default_value.value
             set_comment(
                 cm, field_name, description, default_value, deprecated, examples, indent
             )
@@ -1261,6 +1289,10 @@ def map_train_to_library(ctx, params):
         ],
     )
 
+    fsdp_args = FSDPOptions(
+        cpu_offload_params=params["fsdp_cpu_offload_optimizer"],
+    )
+
     lora_args = LoraOptions(rank=0)
     lora_enabled = False
     lora_options = False
@@ -1287,7 +1319,11 @@ def map_train_to_library(ctx, params):
         click.secho("LoRA is disabled (rank=0), ignoring all additional LoRA args")
 
     train_args.deepspeed_options = ds_args
+    train_args.fsdp_options = fsdp_args
+    train_args.distributed_backend = DistributedBackend(params["distributed_backend"])
     train_args.lora = lora_args
+    if params["pipeline"] == "full":
+        train_args.disable_flash_attn = True
 
     return train_args, torch_args
 

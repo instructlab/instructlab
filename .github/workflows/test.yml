@@ -38,8 +38,23 @@ permissions:
   contents: read
 
 jobs:
+  test-workflow-ready:
+    permissions:
+      checks: read
+    uses: ./.github/workflows/status-checks.yml
+    with:
+      job_ids: >- # Space-separated job ids to wait on for status checks
+        DCO
+        actionlint
+        markdown-lint
+        shellcheck
+        spellcheck
+        lint-workflow-complete
+
   test:
-    name: "${{ matrix.python }} on ${{ matrix.platform }}"
+    # Start name with 'test:' for test-workflow-complete job_ids
+    name: "test: ${{ matrix.python }} on ${{ matrix.platform }}"
+    needs: ["test-workflow-ready"]
     runs-on: "${{ matrix.platform }}"
     strategy:
       matrix:
@@ -144,6 +159,7 @@ jobs:
           pip cache remove llama_cpp_python
 
   docs:
+    needs: ["test-workflow-ready"]
     runs-on: ubuntu-latest
     steps:
       - name: "Harden Runner"
@@ -209,8 +225,11 @@ jobs:
           pip cache remove llama_cpp_python
 
   test-workflow-complete:
-    needs: ["test", "docs"]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Test Workflow Complete
-        run: echo "Test Workflow Complete"
+    permissions:
+      checks: read
+    uses: ./.github/workflows/status-checks.yml
+    with:
+      job_ids: >- # Space-separated job ids to wait on for status checks
+        test-workflow-ready
+        test:
+        docs

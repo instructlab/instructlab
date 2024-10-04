@@ -201,7 +201,8 @@ def train_model(
         # Save adapter weights if needed
         if (it + 1) % save_every == 0:
             mx.savez(adapter_file, **dict(tree_flatten(model.trainable_parameters())))
-            a, b = adapter_file.split(".")
+            # Update the split function to based on the last occurence of "." since the file path now includes . in MacOs.
+            a, b = adapter_file.rsplit(".", 1)
             fn = f"{a}-{it+1:03d}.{b}"
             mx.savez(fn, **dict(tree_flatten(model.trainable_parameters())))
             print(f"Iter {it + 1}: Saved adapter weights to {fn}.")

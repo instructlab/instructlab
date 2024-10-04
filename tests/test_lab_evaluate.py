@@ -111,16 +111,13 @@ def run_mt_bench(cli_runner, error_rate):
         Evaluating answers...
         # SKILL EVALUATION REPORT
 
-        ## MODEL
-        instructlab/granite-7b-lab
+        ## MODEL (SCORE)
+        instructlab/granite-7b-lab (1.5/10.0)
 
-        ### AVERAGE:
-        1.5 (across 2)
-
-        ### TURN ONE:
+        ### TURN ONE (0.0 to 10.0):
         1.0
 
-        ### TURN TWO:
+        ### TURN TWO (0.0 to 10.0):
         2
         """
     )
@@ -169,25 +166,25 @@ def run_mt_bench_branch(cli_runner, error_rate):
         Evaluating answers for branch main...
         # SKILL EVALUATION REPORT
 
-        ## BASE MODEL
-        instructlab/granite-7b-lab
+        ## BASE MODEL (SCORE)
+        instructlab/granite-7b-lab (0/10.0)
 
-        ## MODEL
-        instructlab/granite-7b-lab
+        ## MODEL (SCORE)
+        instructlab/granite-7b-lab (0/10.0)
 
-        ### IMPROVEMENTS:
-        1. category1/qna.yaml (+0.1)
-        2. category3/qna.yaml (+0.1)
+        ### IMPROVEMENTS (0.0 to 10.0):
+        1. category1/qna.yaml: 0.1 -> 0.2 (+0.1)
+        2. category3/qna.yaml: 0.1 -> 0.2 (+0.1)
 
-        ### REGRESSIONS:
-        1. category2/qna.yaml (-0.1)
-        2. category4/qna.yaml (-0.1)
+        ### REGRESSIONS (0.0 to 10.0):
+        1. category2/qna.yaml: 0.4 -> 0.3 (-0.1)
+        2. category4/qna.yaml: 0.4 -> 0.3 (-0.1)
 
-        ### NO CHANGE:
-        1. category5/qna.yaml
+        ### NO CHANGE (0.0 to 10.0):
+        1. category5/qna.yaml (0.5)
 
-        ### NEW:
-        1. category6/qna.yaml
+        ### NEW (0.0 to 10.0):
+        1. category6/qna.yaml (0.6)
         """
     )
     if error_rate > 0:
@@ -204,7 +201,7 @@ def run_mt_bench_branch(cli_runner, error_rate):
 @patch("instructlab.model.evaluate.validate_model")
 @patch(
     "instructlab.model.evaluate.launch_server",
-    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
+    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1", 1),
 )
 @patch("instructlab.eval.mt_bench.MTBenchEvaluator.gen_answers")
 @patch(
@@ -236,16 +233,16 @@ def test_evaluate_mt_bench(
 @patch("instructlab.model.evaluate.validate_model")
 @patch(
     "instructlab.model.evaluate.launch_server",
-    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
+    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1", 1),
 )
 @patch("instructlab.eval.mt_bench.MTBenchBranchEvaluator.gen_answers")
 @patch(
     "instructlab.eval.mt_bench.MTBenchBranchEvaluator.judge_answers",
     side_effect=[
-        (gen_qa_pairs(True), 0),
-        (gen_qa_pairs(False), 0),
-        (gen_qa_pairs(True), 0.4567),
-        (gen_qa_pairs(False), 0.4567),
+        (0, gen_qa_pairs(True), 0),
+        (0, gen_qa_pairs(False), 0),
+        (0, gen_qa_pairs(True), 0.4567),
+        (0, gen_qa_pairs(False), 0.4567),
     ],
 )
 def test_evaluate_mt_bench_branch(
@@ -270,7 +267,7 @@ def test_evaluate_mt_bench_branch(
 @patch("instructlab.model.evaluate.validate_model")
 @patch(
     "instructlab.model.evaluate.launch_server",
-    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
+    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1", 1),
 )
 @patch(
     "instructlab.eval.mmlu.MMLUEvaluator.run",
@@ -299,13 +296,10 @@ def test_evaluate_mmlu(
         """\
         # KNOWLEDGE EVALUATION REPORT
 
-        ## MODEL
-        instructlab/granite-7b-lab
+        ## MODEL (SCORE)
+        instructlab/granite-7b-lab (0.5/1.0)
 
-        ### AVERAGE:
-        0.5 (across 2)
-
-        ### SCORES:
+        ### SCORES (0.0 to 1.0):
         task1 - 0.1
         task2 - 0.9
         """
@@ -316,7 +310,7 @@ def test_evaluate_mmlu(
 @patch("instructlab.model.evaluate.validate_model")
 @patch(
     "instructlab.model.evaluate.launch_server",
-    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
+    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1", 1),
 )
 @patch(
     "instructlab.eval.mmlu.MMLUBranchEvaluator.run",
@@ -352,25 +346,22 @@ def test_evaluate_mmlu_branch(
         """\
         # KNOWLEDGE EVALUATION REPORT
 
-        ## BASE MODEL
-        instructlab/granite-7b-lab
+        ## BASE MODEL (SCORE)
+        instructlab/granite-7b-lab (0.6/1.0)
 
-        ## MODEL
-        instructlab/granite-7b-lab
+        ## MODEL (SCORE)
+        instructlab/granite-7b-lab (0.5/1.0)
 
-        ### AVERAGE:
-        -0.1 (across 5)
+        ### IMPROVEMENTS (0.0 to 1.0):
+        1. task1: 0.1 -> 0.2 (+0.1)
+        2. task3: 0.1 -> 0.2 (+0.1)
 
-        ### IMPROVEMENTS:
-        1. task1 (+0.1)
-        2. task3 (+0.1)
+        ### REGRESSIONS (0.0 to 1.0):
+        1. task2: 0.4 -> 0.3 (-0.1)
+        2. task4: 0.4 -> 0.3 (-0.1)
 
-        ### REGRESSIONS:
-        1. task2 (-0.1)
-        2. task4 (-0.1)
-
-        ### NO CHANGE:
-        1. task5
+        ### NO CHANGE (0.0 to 1.0):
+        1. task5 (0.5)
         """
     )
     assert result.output == expected
@@ -427,6 +418,30 @@ def test_invalid_model_mt_bench(cli_runner: CliRunner):
     assert result.exit_code != 0
 
 
+@patch("instructlab.model.evaluate.validate_model")
+def test_invalid_max_workers(_, cli_runner: CliRunner):
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "mt_bench",
+            "--model",
+            "instructlab/granite-7b-lab",
+            "--judge-model",
+            "instructlab/merlinite-7b-lab",
+            "--max-workers",
+            "invalid",
+        ],
+    )
+    assert (
+        "max-workers must be specified as a positive integer or 'auto'" in result.output
+    )
+    assert result.exit_code != 0
+
+
 def test_invalid_model_mmlu(cli_runner: CliRunner):
     result = cli_runner.invoke(
         lab.ilab,
@@ -470,7 +485,7 @@ def test_int_batchsize_mmlu(mmlu_mock, _, cli_runner: CliRunner):
 @patch("instructlab.model.evaluate.validate_model")
 @patch(
     "instructlab.model.evaluate.launch_server",
-    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
+    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1", 1),
 )
 def test_invalid_taxonomy_mt_bench_branch(launch_server_mock, _, cli_runner: CliRunner):
     result = cli_runner.invoke(
@@ -503,7 +518,7 @@ def test_invalid_taxonomy_mt_bench_branch(launch_server_mock, _, cli_runner: Cli
 @patch("instructlab.model.evaluate.validate_model")
 @patch(
     "instructlab.model.evaluate.launch_server",
-    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
+    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1", 1),
 )
 def test_invalid_branch_mt_bench_branch(launch_server_mock, _, cli_runner: CliRunner):
     setup_taxonomy("taxonomy")
@@ -537,7 +552,7 @@ def test_invalid_branch_mt_bench_branch(launch_server_mock, _, cli_runner: CliRu
 @patch("instructlab.model.evaluate.validate_model")
 @patch(
     "instructlab.model.evaluate.launch_server",
-    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1"),
+    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1", 1),
 )
 def test_invalid_tasks_dir(_, __, cli_runner: CliRunner):
     result = cli_runner.invoke(

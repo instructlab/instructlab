@@ -17,10 +17,12 @@ NUM_INSTRUCTIONS=5
 GENERATE_ARGS=("--num-cpus" "$(nproc)" --taxonomy-path='./taxonomy')
 DIFF_ARGS=("--taxonomy-path" "./taxonomy")
 TRAIN_ARGS=()
-LEGACYTRAIN=0
 PHASED_TRAINING=0
-TRAIN_LIBRARY=0
 BACKEND="llama-cpp"
+FOUR_BIT_QUANT=0
+SIMPLE_TRAIN=0
+FULL_TRAIN=0
+ACCELERATED_TRAIN=0
 HF_TOKEN=${HF_TOKEN:-}
 SDG_PIPELINE="simple"
 SKIP_TRAIN=${SKIP_TRAIN:-0}
@@ -97,15 +99,14 @@ set_defaults() {
         exit 1
     fi
 
-    if [ "${PHASED_TRAINING}" -eq 1 ] && [ "${TRAIN_LIBRARY}" -eq 0 ]; then
-        echo "ERROR: You have -P set. It requires -T."
+    if [ "${PHASED_TRAINING}" -eq 1 ] && [ "${ACCELERATED_TRAIN}" -eq 0 ]; then
+        echo "ERROR: You have -P set. It requires -a."
         exit 1
     fi
 
     if [ "$MINIMAL" -eq 1 ]; then
         # Minimal settings to run in less time
         NUM_INSTRUCTIONS=1
-        TRAIN_ARGS+=("--num-epochs" "1")
     fi
 }
 
@@ -116,14 +117,8 @@ test_smoke() {
 
 test_init() {
     task Initializing ilab
-
-    if [ "$LEGACYTRAIN" -eq 1 ]; then
-        # TODO Only cuda for now
-        step Setting train-profile for GPU accelerated training
-        ilab config init --non-interactive --train-profile="${SCRIPTDIR}/test-data/train-profile-a10.yaml"
-    else
-        ilab config init --non-interactive
-    fi
+    
+    ilab config init --non-interactive
 
     step Replace model in config.yaml
     if [ "${BACKEND}" == "vllm" ]; then
@@ -283,29 +278,36 @@ test_generate() {
 test_train() {
     task Train the model
 
-    if [ "$TRAIN_LIBRARY" -eq 1 ]; then
-        local data
-        data=$(find "${DATA_HOME}"/instructlab/datasets -name 'messages_*' | head -n 1)
+    local data
+    data=$(find "${DATA_HOME}"/instructlab/datasets -name 'skills_train_msgs_*' | head -n 1)
+
+    # simple, full, and accelerated, are different workflows
+    # To mimic a real user e2e scenario, only one of these should be run on a given system
+    # The `small` worker can manage `simple`, The medium worker can handle `full` and the large worker can handle `accelerated`
+    if [ "$ACCELERATED_TRAIN" -eq 1 ]; then
         # TODO Only cuda for now
         # the train profile specified in test_init overrides the majority of TRAIN_ARGS, including things like num_epochs. While it looks like much of those settings are being lost, they just have different values here.
-        TRAIN_ARGS=("--device=cuda" "--model-path=${GRANITE_SAFETENSOR_REPO}" "--data-path=${data}" "--lora-quantize-dtype=nf4" "--4-bit-quant" "--effective-batch-size=4" "--is-padding-free=False")
+        TRAIN_ARGS=("--pipeline=accelerated" "--device=cuda" "--model-path=${GRANITE_SAFETENSOR_REPO}" "--data-path=${data}" "--lora-quantize-dtype=nf4" "--4-bit-quant" "--effective-batch-size=4" "--is-padding-free=False")
         if [ "${BACKEND}" != "vllm" ]; then
             TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}")
         fi
-
-        ilab model train "${TRAIN_ARGS[@]}"
-    else
-        # TODO Only cuda for now
-        TRAIN_ARGS+=("--legacy" "--device=cuda")
-        if [ "$LEGACYTRAIN" -eq 0 ]; then
+    fi
+    if [ "$SIMPLE_TRAIN" -eq 1 ]; then
+        if [ "$FOUR_BIT_QUANT" -eq 1 ]; then
             TRAIN_ARGS+=("--4-bit-quant")
         fi
+        # TODO Only cuda for now
+        TRAIN_ARGS+=("--pipeline=simple" "--device=cuda" "--num-epochs=1")
         if [ "${BACKEND}" != "vllm" ]; then
             TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}")
         fi
-
-        ilab model train "${TRAIN_ARGS[@]}"
     fi
+    if [ "$FULL_TRAIN" -eq 1 ]; then
+        # test training on a CPU not the GPU
+        TRAIN_ARGS=("--num-epochs=1" "--pipeline=full" "--model-path=${GRANITE_SAFETENSOR_REPO}" "--data-path=${data}" "--effective-batch-size=4" --device=cpu)
+    fi
+
+    ilab model train "${TRAIN_ARGS[@]}"
 }
 
 test_phased_train() {
@@ -451,15 +453,18 @@ test_exec() {
     # When we run training with --4-bit-quant, we can't convert the result to a gguf
     # https://github.com/instructlab/instructlab/issues/579
     # so we skip trying to test the result
-    if [ "$LEGACYTRAIN" -eq 1 ]; then
+    if [ "$FULL_TRAIN" -eq 1 ]; then
         # When you run this --
         #   `ilab model convert` is only implemented for macOS with M-series chips for now
         #test_convert
-    
-        test_serve trained "${DATA_HOME}/instructlab/checkpoints/model.gguf"
+
+        # when using full train, choose any GGUF from any of the checkpoints dirs
+        model_dir=$(find "${DATA_HOME}"/instructlab/checkpoints/hf_format -name 'samples_*' | head -n 1)
+
+        test_serve trained "${model_dir}/pytorch_model-Q4_K_M.gguf"
         PID=$!
 
-        test_chat
+        ilab model chat -qq --model "${model_dir}/pytorch_model-Q4_K_M.gguf" --endpoint-url http://localhost:8000/v1 'Say "Hello" and nothing else\n'
 
         # Kill the serve process
         task Stopping the ilab model serve for trained model
@@ -508,21 +513,21 @@ wait_for_server() {
 usage() {
     echo "Usage: $0 [-m] [-h]"
     echo "  -e  Run model evaluation"
-    echo "  -T  Use the 'full' training library rather than legacy training"
+    echo "  -q  Use 4-bit-quant when training"
+    echo "  -a  Use the 'full' training library rather than legacy training"
+    echo "  -s  Run the simple training using the SFTTainer rather than the custom training loop"
     echo "  -f  Run the fullsize training instead of --4-bit-quant"
     echo "  -F  Use the 'full' SDG pipeline instead of the default 'simple' pipeline"
     echo "  -h  Show this help text"
-    echo "  -L  Run legacy training with 4-bit quantization"
     echo "  -m  Run minimal configuration with lower number of instructions and training epochs (run quicker when you have no GPU)"
     echo "  -M  Use the mixtral model (4-bit quantized) instead of merlinite model (4-bit quantized)."
     echo "  -P  Run multi-phase training"
-    echo "  -T  Use the 'full' training library rather than legacy training"
     echo "  -v  Use the vLLM backend for serving"
 }
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "eFhLmMPTv" opt; do
+while getopts "eFhqasfmMPv" opt; do
     case $opt in
         e)
             EVAL=1
@@ -536,10 +541,6 @@ while getopts "eFhLmMPTv" opt; do
             usage
             exit 0
             ;;
-        L)
-            LEGACYTRAIN=1
-            step "Running legacy training with 4-bit quantization."
-            ;;
         m)
             MINIMAL=1
             step "Running minimal configuration."
@@ -552,13 +553,25 @@ while getopts "eFhLmMPTv" opt; do
             PHASED_TRAINING=1
             step "Running multi-phase training."
             ;;
-        T)
-            TRAIN_LIBRARY=1
-            step "Running with training library."
-            ;;
         v)
             BACKEND=vllm
             step "Running with vLLM backend."
+            ;;
+        q)
+            FOUR_BIT_QUANT=1
+            step "Running training using 4-bit-quantization."
+            ;;
+        s)
+            SIMPLE_TRAIN=1
+            step "Running the simple training pipeline"
+            ;;
+        f)
+            FULL_TRAIN=1
+            step "Running the full training pipeline"
+            ;;
+        a)
+            ACCELERATED_TRAIN=1
+            step "Running using the training library"
             ;;
         \?)
             echo "Invalid option: -$opt" >&2

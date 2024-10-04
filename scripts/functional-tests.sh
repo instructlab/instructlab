@@ -69,11 +69,10 @@ cleanup() {
     local original_model_filename="merlinite-7b-lab-Q4_K_M.gguf"
     local temporary_model_filename='foo.gguf'
     mv "${ILAB_CACHE_DIR}/models/${temporary_model_filename}" "${ILAB_CACHE_DIR}/models/${original_model_filename}" || true
-    rm -f serve.log "${ILAB_CACHE_DIR}/models/${temporary_model_filename}"
+    rm -f "${ILAB_CONFIG_FILE}.bak" serve.log "${ILAB_CACHE_DIR}/models/${temporary_model_filename}" chat.log
 
     # reset config file and re-init defaults
     init_config
-
     set -e
 }
 
@@ -237,11 +236,11 @@ test_ctx_size(){
     wait_for_server
 
     # SHOULD SUCCEED: ilab model chat will trim the SYS_PROMPT then take the second message
-    ${chat_shot} "Hello"
+    "${chat_shot[@]}" "Hello"
 
     # SHOULD FAIL: ilab model chat will trim the SYS_PROMPT AND the second message, then raise an error
     # The errors from failures will be written into the serve log and chat log files
-    ${chat_shot} "hello, I am a ci message that should not finish because I am too long for the context window, tell me about your day please?
+    "${chat_shot[@]}" "hello, I am a ci message that should not finish because I am too long for the context window, tell me about your day please?
     How many tokens could you take today. Could you tell me about the time you could only take twenty five tokens" &> "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" &
     PID_CHAT=$!
 
@@ -420,9 +419,15 @@ test_server_welcome_message(){
 
     if ! timeout 10 bash -c '
         until test -s serve.log; do
-        echo "waiting for server log file to be created"
-        sleep 1
-    done
+            echo "waiting for server log file to be created"
+            sleep 1
+        done
+        if ! grep instructlab.model.backends.llama_cpp serve.log; then
+            echo "server log file does not contain serving message"
+            exit 1
+        else
+            cat serve.log
+        fi
     '; then
         echo "server log file was not created"
         exit 1
@@ -548,6 +553,29 @@ test_server_chat_template() {
     test_server_template_value "$SCRIPTDIR/test-data/mock-template.txt" 3
 }
 
+test_ilab_chat_server_logs(){
+    sed -i.bak '/max_ctx_size: 4096/s/4096/1/' "${ILAB_CONFIG_FILE}"
+
+    chat_shot+=("--serving-log-file" "chat.log")
+    "${chat_shot[@]}" "Hello"
+
+    if ! timeout 3 bash -c '
+        until test -s chat.log; do
+            echo "waiting for chat log file to be created"
+            sleep 1
+        done
+        if ! grep "exceed context window of" chat.log; then
+            echo "chat log file does not contain serving message"
+            exit 1
+        else
+            cat chat.log
+        fi
+    '; then
+        echo "chat log file was not created"
+        exit 1
+    fi
+}
+
 #########
 # SETUP #
 #########
@@ -592,7 +620,7 @@ done
 PID_SERVE=
 PID_CHAT=
 
-chat_shot="ilab model chat -qq"
+chat_shot=("ilab" "model" "chat" "-qq")
 
 init_test_script
 trap 'cleanup "${?}"; test -z "${TEST_DIR_SET_BY_CALLER}" && rm -rf "${TEST_DIR}"' EXIT QUIT INT TERM
@@ -615,6 +643,8 @@ ilab model download
 # MAIN #
 ########
 # call cleanup in-between each test so they can run without conflicting with the server/chat process
+test_ilab_chat_server_logs
+cleanup
 test_oci_model_download_with_vllm_backend
 cleanup
 test_bind_port

@@ -195,13 +195,25 @@ def test_ilab_vllm_args(
         vllm_args=["--enable_lora"],
         host="127.0.0.1",
         port=8000,
+        log_file=None,
     )
 
 
+@pytest.mark.parametrize(
+    "log_file_flag, expected_log_file",
+    [
+        (None, None),
+        ("--log-file", pathlib.Path("test.log")),
+    ],
+)
 @mock.patch("instructlab.model.backends.llama_cpp.Server")
 @mock.patch("instructlab.model.backends.backends.get", return_value=backends.LLAMA_CPP)
 def test_ilab_llama_cpp_args(
-    m_backends_get: mock.Mock, m_server: mock.Mock, cli_runner: CliRunner
+    m_backends_get: mock.Mock,
+    m_server: mock.Mock,
+    cli_runner: CliRunner,
+    log_file_flag,
+    expected_log_file,
 ):
     gguf = pathlib.Path("test.gguf")
     cmd = [
@@ -214,6 +226,9 @@ def test_ilab_llama_cpp_args(
         "--backend",
         backends.LLAMA_CPP,
     ]
+    if log_file_flag:
+        cmd.extend([log_file_flag, str(expected_log_file)])
+
     result = cli_runner.invoke(lab.ilab, cmd)
     assert result.exit_code == 0, result.stdout
     m_backends_get.assert_called_once_with(gguf, backends.LLAMA_CPP)
@@ -227,6 +242,7 @@ def test_ilab_llama_cpp_args(
         max_ctx_size=4096,
         num_threads=None,
         chat_template=None,
+        log_file=expected_log_file,
     )
 
 

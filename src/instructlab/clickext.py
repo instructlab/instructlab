@@ -3,6 +3,7 @@
 
 # Standard
 from importlib import metadata
+import enum
 import functools
 import json
 import logging
@@ -169,6 +170,8 @@ class ConfigOption(click.Option):
             default_string = "<None>"
         elif isinstance(default_value, (list, tuple)):
             default_string = ", ".join(str(d) for d in default_value)
+        elif isinstance(default_value, enum.Enum):
+            default_string = default_value.value
         else:
             default_string = str(default_value)
 

@@ -1,9 +1,5 @@
 ## v0.19
 
-### Features
-
-* Add `log_format` to the `config.yaml` file to allow for customizing the log format.
-
 ### Breaking Changes
 
 * InstructLab now uses XDG-based directories on macOS, similar to Linux.
@@ -20,10 +16,21 @@
   * `test`
 * Intel Gaudi software has been updated to 1.17.1 with Python 3.11 and
   Torch 2.3.1 support.
+* `--legacy` has been removed and replaced with `--pipeline=simple` in `ilab model train`
 
 ### Features
 
 * `ilab config init` now auto detects your hardware when running on Nvidia enabled systems and chooses the best train profile. It does this by checking first if your system directly matches one of our supported train profiles and then attempts to match the vRAM for each profile to the total vRAM on your system.
+* Add `log_format` to the `config.yaml` file to allow for customizing the log format.
+* `ilab model evaluate --max-workers=auto` is now supported and is the default option. When
+  auto is specified, the optimal value is determined based on your GPUs, CPUs, and
+  configuration.
+* `ilab model train` now supports `--pipeline`. The supported pipelines are `simple`, `full`, and `accelerated`. Simple preserves the functionality found in `--legacy` and current MacOS training. Full introduces a new training loop optimized for CPU and MacOS performance. `accelerated` allows users with dedicated graphics cards to run the full fine tuning and multi-phase training found in our training library.
+* `--device` in `ilab model train` now supports `mps` which stands for Metal Performance Shaders. This is a PyTorch device for MacOS training that allows us to utilize the same code path for Linux and MacOS.
+* Multi-phase training with `ilab model train --strategy lab-multiphase` is now resumeable! In the case of a machine failure or an incidental stop, progress is tracked in a new `journal` file, rendered in yaml.
+  Upon restarting training, the user can confirm whether they would like to proceed with a pre-existing training run (one that might have only evaluated a few checkpoints of the first eval phase, for instance)
+  or restart from scratch.
+* Allow users to pick a distributed training backend framework for GPU accelerated training between 'fsdp' and 'deepspeed'. Also add support for FSDP specific configuration options.
 
 ## v0.18.1
 

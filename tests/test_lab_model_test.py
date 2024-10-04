@@ -13,7 +13,7 @@ import pytest
 
 # First Party
 from instructlab import lab
-from instructlab.model.backends.server import BackendServer
+from instructlab.model.backends.server import BackendServer, ServerConfig
 
 
 @pytest.mark.usefixtures("mock_mlx_package")
@@ -23,7 +23,15 @@ class TestLabModelTest:
     class ServerMock(BackendServer):
         # py lint: disable=W0613
         def __init__(self):
-            super().__init__("", "", "", "", "", 0)
+            sc = ServerConfig("", None)
+            super().__init__(
+                model_family="",
+                model_path="",
+                chat_template="",
+                host="",
+                port=0,
+                config=sc,
+            )
 
         def run_detached(
             self,

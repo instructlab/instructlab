@@ -66,9 +66,10 @@ evaluate:
     # Judge model for mt_bench and mt_bench_branch.
     # Default: prometheus-eval/prometheus-8x7b-v2.0
     judge_model: prometheus-eval/prometheus-8x7b-v2.0
-    # Number of workers to use for evaluation.
-    # Default: 16
-    max_workers: 16
+    # Number of workers to use for evaluation with mt_bench or mt_bench_branch. Must
+    # be a positive integer or 'auto'.
+    # Default: auto
+    max_workers: auto
     # Directory where evaluation results are stored.
     # Default: /data/instructlab/internal/eval_data
     output_dir: /data/instructlab/internal/eval_data
@@ -263,10 +264,17 @@ train:
   # Allow CPU offload for deepspeed optimizer.
   # Default: False
   deepspeed_cpu_offload_optimizer: false
+  # Pick a distributed training backend framework for GPU accelerated full fine-
+  # tuning.
+  # Default: deepspeed
+  distributed_backend: deepspeed
   # The number of samples in a batch that the model should see before its parameters
   # are updated.
   # Default: 3840
   effective_batch_size: 3840
+  # Allow CPU offload for FSDP optimizer.
+  # Default: False
+  fsdp_cpu_offload_optimizer: false
   # Boolean to indicate if the model being trained is a padding-free transformer
   # model such as Granite.
   # Default: False
@@ -308,9 +316,10 @@ train:
   # Phased phase1 effective batch size.
   # Default: 128
   phased_phase1_effective_batch_size: 128
-  # Number of epochs to run training for during phase1.
-  # Default: 10
-  phased_phase1_num_epochs: 10
+  # Number of epochs to run training for during phase1 (experimentally optimal
+  # number is 7).
+  # Default: 7
+  phased_phase1_num_epochs: 7
   # Number of samples the model should see before saving a checkpoint during phase1.
   # Disabled when set to 0.
   # Default: 0
@@ -328,6 +337,9 @@ train:
   # Number of samples the model should see before saving a checkpoint.
   # Default: 250000
   save_samples: 250000
+  # Optional path to a yaml file that tracks the progress of multiphase training.
+  # Default: None
+  training_journal:
 # Configuration file structure version.
 # Default: 1.0.0
 version: 1.0.0

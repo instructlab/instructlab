@@ -9,7 +9,6 @@ import logging
 import multiprocessing
 import os
 import pathlib
-import typing
 
 # Third Party
 import click
@@ -20,10 +19,6 @@ from instructlab.model.backends import backends
 
 # Local
 from ..utils import http_client
-
-if typing.TYPE_CHECKING:
-    # Third Party
-    from instructlab.eval.evaluator import Evaluator
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +31,7 @@ class Benchmark(str, enum.Enum):
     MT_BENCH_BRANCH = "mt_bench_branch"
 
 
-def get_evaluator(
+def validate_options(
     model,
     base_model,
     benchmark,
@@ -49,11 +44,9 @@ def get_evaluator(
     few_shots,
     batch_size,
     tasks_dir,
-    merge_system_user_message,
-) -> "Evaluator":
+):
     """takes in arguments from the CLI and uses 'benchmark' to validate other arguments
-    if all needed configuration is present, returns the appropriate Evaluator class for the benchmark
-    otherwise raises an exception for the missing values
+    if all needed configuration is present, raises an exception for the missing values
     """
 
     # ensure skills benchmarks have proper arguments if selected
@@ -68,6 +61,7 @@ def get_evaluator(
             "model",
             "judge-model",
         ]
+
         if benchmark == Benchmark.MT_BENCH_BRANCH:
             required_args.append(taxonomy_path)
             required_args.append(branch)
@@ -86,32 +80,17 @@ def get_evaluator(
 
         validate_model(model)
         validate_model(judge_model, "--judge-model")
-        if benchmark == Benchmark.MT_BENCH:
-            # Third Party
-            from instructlab.eval.mt_bench import MTBenchEvaluator
+        if benchmark == Benchmark.MT_BENCH_BRANCH:
+            validate_model(base_model, "--base-model")
 
-            return MTBenchEvaluator(
-                get_model_name(model),
-                get_model_name(judge_model),
-                output_dir,
-                max_workers,
-                merge_system_user_message=merge_system_user_message,
+        if (isinstance(max_workers, str) and max_workers != "auto") or (
+            isinstance(max_workers, int) and max_workers < 1
+        ):
+            click.secho(
+                "max-workers must be specified as a positive integer or 'auto'",
+                fg="red",
             )
-
-        validate_model(base_model, "--base-model")
-
-        # Third Party
-        from instructlab.eval.mt_bench import MTBenchBranchEvaluator
-
-        return MTBenchBranchEvaluator(
-            get_model_name(model),
-            get_model_name(judge_model),
-            taxonomy_path,
-            branch,
-            output_dir,
-            max_workers,
-            merge_system_user_message=merge_system_user_message,
-        )
+            raise click.exceptions.Exit(1)
 
     # ensure knowledge benchmarks have proper arguments if selected
     if benchmark in [Benchmark.MMLU, Benchmark.MMLU_BRANCH]:
@@ -130,37 +109,8 @@ def get_evaluator(
             raise click.exceptions.Exit(1)
 
         validate_model(model)
-        if benchmark == Benchmark.MMLU:
-            # Third Party
-            from instructlab.eval.mmlu import MMLUEvaluator
-
-            min_tasks = os.environ.get("INSTRUCTLAB_EVAL_MMLU_MIN_TASKS")
-            if min_tasks is not None:
-                tasks = ["mmlu_abstract_algebra", "mmlu_anatomy", "mmlu_astronomy"]
-                evaluator = MMLUEvaluator(
-                    model,
-                    tasks=tasks,
-                    few_shots=few_shots,
-                    batch_size=batch_size,
-                )
-            else:
-                evaluator = MMLUEvaluator(
-                    model, few_shots=few_shots, batch_size=batch_size
-                )
-            return evaluator
-
-        validate_model(base_model, "--base-model")
-
-        # Third Party
-        from instructlab.eval.mmlu import MMLUBranchEvaluator
-
-        return MMLUBranchEvaluator(
-            model,
-            tasks_dir,
-            ["mmlu_pr"],
-            few_shots=few_shots,
-            batch_size=batch_size,
-        )
+        if benchmark == Benchmark.MMLU_BRANCH:
+            validate_model(base_model, "--base-model")
 
 
 def validate_model(model: str, model_arg: str = "--model"):
@@ -189,24 +139,39 @@ def validate_model(model: str, model_arg: str = "--model"):
         raise click.exceptions.Exit(1)
 
 
-def sort_score(pairing: tuple[str, float]) -> float:
+def sort_score(pairing: tuple[str, float, float, float]) -> float:
     """helper func for display_branch_eval_summary
     takes a tuple pairing and returns just the score
     """
     return pairing[1]
 
 
-def display_models(model, base_model) -> None:
+def get_benchmark_max_score(benchmark: Benchmark) -> str:
+    # total score for Benchmark.MT_BENCH_BRANCH or Benchmark.MT_Bench
+    max_score = "10.0"
+    if benchmark in (Benchmark.MMLU_BRANCH, Benchmark.MMLU):
+        max_score = "1.0"
+    return max_score
+
+
+def display_models_and_scores(
+    benchmark, model, base_model, model_score, base_model_score
+) -> None:
     """prints the base_model and model with a header"""
-    print("## BASE MODEL")
-    print(base_model)
-    display_model(model)
+    max_score = get_benchmark_max_score(benchmark)
+
+    base_model_score = round(base_model_score, 2)
+    model_score = round(model_score, 2)
+    print("## BASE MODEL (SCORE)")
+    display_model(base_model, base_model_score, max_score)
+    print("\n## MODEL (SCORE)")
+    display_model(model, model_score, max_score)
 
 
-def display_model(model) -> None:
+def display_model(model, model_score, max_score) -> None:
     """prints the given model with a header"""
-    print("\n## MODEL")
-    print(model)
+    model_score = round(model_score, 2)
+    print(f"{model} ({model_score}/{max_score})")
 
 
 def display_error_rate(error_rate) -> None:
@@ -217,37 +182,49 @@ def display_error_rate(error_rate) -> None:
 
 
 def display_branch_eval_summary(
-    improvements: list[tuple[str, float]],
-    regressions: list[tuple[str, float]],
-    no_changes: list[str],
+    benchmark: Benchmark,
+    improvements: list[tuple[str, float, float, float]],
+    regressions: list[tuple[str, float, float, float]],
+    no_changes: list[tuple[str, float]],
     new=None,
 ):
     """takes in results lists from mt_bench_branch benchmark evaluation
     prints out diff between the branches to the user
     """
+    # total score for MT-BENCH-BRANCH
+    max_score = get_benchmark_max_score(benchmark)
+
     if len(improvements) > 0:
         improvements.sort(key=sort_score, reverse=True)
-        print("\n### IMPROVEMENTS:")
+        print(f"\n### IMPROVEMENTS (0.0 to {max_score}):")
         for index, improvement in enumerate(improvements):
-            task, delta = improvement
-            print(f"{index+1}. {task} (+{delta})")
+            task, delta, base_score, new_score = improvement
+            base_score = round(base_score, 2)
+            new_score = round(new_score, 2)
+            print(f"{index+1}. {task}: {base_score} -> {new_score} (+{delta})")
 
     if len(regressions) > 0:
         regressions.sort(key=sort_score)
-        print("\n### REGRESSIONS:")
+        print(f"\n### REGRESSIONS (0.0 to {max_score}):")
         for index, regression in enumerate(regressions):
-            task, delta = regression
-            print(f"{index+1}. {task} ({delta})")
+            task, delta, base_score, new_score = regression
+            base_score = round(base_score, 2)
+            new_score = round(new_score, 2)
+            print(f"{index+1}. {task}: {base_score} -> {new_score} ({delta})")
 
     if len(no_changes) > 0:
-        print("\n### NO CHANGE:")
-        for index, task in enumerate(no_changes):
-            print(f"{index+1}. {task}")
+        print(f"\n### NO CHANGE (0.0 to {max_score}):")
+        for index, entry in enumerate(no_changes):
+            task, avg_score = entry
+            avg_score = round(avg_score, 2)
+            print(f"{index+1}. {task} ({avg_score})")
 
     if new is not None and len(new) > 0:
-        print("\n### NEW:")
-        for index, qna in enumerate(new):
-            print(f"{index+1}. {qna}")
+        print(f"\n### NEW (0.0 to {max_score}):")
+        for index, entry in enumerate(new):
+            qna, avg_score = entry
+            avg_score = round(avg_score, 2)
+            print(f"{index+1}. {qna} ({avg_score})")
 
 
 def qa_pairs_to_qna_to_avg_scores(qa_pairs: list[dict]) -> dict[str, float]:
@@ -274,6 +251,7 @@ def get_model_name(model_path):
 
 
 def get_cpu_count():
+    """Returns the available cpu count to this process"""
     try:
         # Not available on all platforms
         return len(os.sched_getaffinity(0))  # type: ignore[attr-defined]
@@ -281,58 +259,77 @@ def get_cpu_count():
         return multiprocessing.cpu_count()
 
 
+def get_gpus(ctx, gpus=None) -> tuple[int | None, int]:
+    """Return the number of gpus explicitly selected through --gpus or config
+    The second value in the tuple is the effective gpus that will be used by
+    serving. If gpus is specified, the two values will be the same. 0 is the min
+    value for effective_gpus.
+    """
+    # First Party
+    from instructlab.model.backends.vllm import get_argument
+
+    eval_serve = ctx.obj.config.serve
+    gpus = gpus or eval_serve.vllm.gpus
+
+    effective_gpus = gpus
+    if effective_gpus is None:
+        try:
+            tps = get_argument("--tensor-parallel-size", eval_serve.vllm.vllm_args)
+            if tps is not None:
+                effective_gpus = int(tps)
+        except ValueError:
+            logger.warning("Invalid --tensor-parallel-size found in serve vllm_args")
+    effective_gpus = effective_gpus or 0
+    return gpus, effective_gpus
+
+
+def get_backend(backend, model):
+    """Return the backend based on specified backend and model detection"""
+    if backend is None:
+        try:
+            return backends.get(pathlib.Path(model), backend)
+        except ValueError as e:
+            click.secho(f"Failed to determine backend: {e}", fg="red")
+            raise click.exceptions.Exit(1)
+    return backend
+
+
 def launch_server(
     ctx: click.Context,
     model: str,
     model_name: str,
-    max_workers: int | None,
+    max_workers: str | int | None,
     gpus: int | None,
     backend: str | None,
     enable_serving_output: bool,
 ) -> tuple:
     eval_serve = deepcopy(ctx.obj.config.serve)
-    if backend is None:
-        try:
-            backend = eval_serve.backend = backends.get(pathlib.Path(model), backend)
-        except ValueError as e:
-            click.secho(f"Failed to determine backend: {e}", fg="red")
-            raise click.exceptions.Exit(1)
+    eval_serve.backend = backend = get_backend(backend, model)
 
+    effective_gpus = 0
     if backend == backends.VLLM:
-        # First Party
-        from instructlab.model.backends.vllm import contains_argument, get_argument
-
         eval_serve.vllm.vllm_args = eval_serve.vllm.vllm_args or []
         eval_serve.vllm.vllm_args.extend(["--served-model-name", model_name])
 
-        tps_prefix = "--tensor-parallel-size"
-        gpus = gpus or eval_serve.vllm.gpus
+        # First Party
+        from instructlab.model.backends.vllm import contains_argument
+
+        gpus, effective_gpus = get_gpus(ctx, gpus)
         if gpus:
+            tps_prefix = "--tensor-parallel-size"
             if contains_argument(tps_prefix, eval_serve.vllm.vllm_args):
                 click.secho(
-                    "Using gpus from --gpus or evaluate config and ignoring --tensor-parallel-size configured in serve vllm_args",
+                    "Using gpus from --gpus or config and ignoring --tensor-parallel-size configured in serve vllm_args",
                     fg="yellow",
                 )
             eval_serve.vllm.vllm_args.extend([tps_prefix, str(gpus)])
 
-        effective_gpus = gpus
-        if effective_gpus is None:
-            try:
-                tps = get_argument(tps_prefix, eval_serve.vllm.vllm_args)
-                if tps is not None:
-                    effective_gpus = int(tps)
-            except ValueError:
-                logger.warning(
-                    "Invalid --tensor-parallel-size found in serve vllm_args"
-                )
-        effective_gpus = effective_gpus or 1
-
-        if max_workers is not None:
+        if max_workers is not None and isinstance(max_workers, int):
             # Recommend max-workers based on hardware configuration: min(#GPUs being used * 10, #CPU cores) +- 50%
             # Edge cases:
             # - Many GPUs, not many CPUs: Unlikely, workers might not be able to keep the GPUs busy but recommendation can be ignored.
             # - Many CPUs, not many GPUs: More likely, 10 workers per GPU should still be reasonable.
-            target_max_workers = min(effective_gpus * 10, get_cpu_count())
+            target_max_workers = min(max(effective_gpus, 1) * 10, get_cpu_count())
             recommended_min_workers = max(target_max_workers // 2, 1)
             recommended_max_workers = max(int(target_max_workers // 0.5), 1)
             if (
@@ -348,8 +345,8 @@ def launch_server(
             logger.debug(
                 "Evaluate requires a context size of >= 5120, ignoring serve configuration for max_ctx_size"
             )
-        # llama-cpp fails fast on too many incoming requests and returns errors to client
-        if max_workers is not None:
+        if max_workers is not None and isinstance(max_workers, int):
+            # llama-cpp fails fast on too many incoming requests and returns errors to client
             recommended_workers = max(get_cpu_count() // 2, 1)
             if max_workers > recommended_workers:
                 logger.warning(
@@ -379,7 +376,7 @@ def launch_server(
     except Exception as exc:
         click.secho(f"Failed to start server: {exc}", fg="red")
         raise click.exceptions.Exit(1)
-    return backend_instance, api_base
+    return backend_instance, api_base, effective_gpus
 
 
 @click.command()
@@ -414,7 +411,7 @@ def launch_server(
 )
 @click.option(
     "--max-workers",
-    type=click.INT,
+    type=click.STRING,
     cls=clickext.ConfigOption,
     config_sections="mt_bench",
 )
@@ -511,12 +508,12 @@ def evaluate(
     benchmark,
     judge_model,
     output_dir,
-    max_workers,
+    max_workers: str | int,
     taxonomy_path,
     branch,
     base_branch,
     few_shots,
-    batch_size,
+    batch_size: str | int,
     tasks_dir,
     gpus,
     merge_system_user_message,
@@ -530,73 +527,89 @@ def evaluate(
 ):
     """Evaluates a trained model"""
 
-    with contextlib.suppress(ValueError):
-        batch_size = int(batch_size)
-
-    # get appropriate evaluator class from Eval lib
-    evaluator = get_evaluator(
-        model,
-        base_model,
-        benchmark,
-        judge_model,
-        output_dir,
-        max_workers,
-        taxonomy_path,
-        branch,
-        base_branch,
-        few_shots,
-        batch_size,
-        tasks_dir,
-        merge_system_user_message,
-    )
-
     # Third Party
     from instructlab.eval.exceptions import EvalError
 
+    with contextlib.suppress(ValueError):
+        max_workers = int(max_workers)
+    with contextlib.suppress(ValueError):
+        batch_size = int(batch_size)
+
     try:
+        # get appropriate evaluator class from Eval lib
+        validate_options(
+            model,
+            base_model,
+            benchmark,
+            judge_model,
+            output_dir,
+            max_workers,
+            taxonomy_path,
+            branch,
+            base_branch,
+            few_shots,
+            batch_size,
+            tasks_dir,
+        )
+
         if benchmark == Benchmark.MT_BENCH:
+            # Third Party
+            from instructlab.eval.mt_bench import MTBenchEvaluator
+
+            model_name = get_model_name(model)
+            judge_model_name = get_model_name(judge_model)
+            evaluator = MTBenchEvaluator(
+                model_name,
+                judge_model_name,
+                output_dir,
+                merge_system_user_message=merge_system_user_message,
+            )
             print("Generating answers...")
             server = None
             try:
-                server, api_base = launch_server(
+                server, api_base, effective_gpus = launch_server(
                     ctx,
                     model,
-                    get_model_name(model),
+                    model_name,
                     max_workers,
                     gpus,
                     backend,
                     enable_serving_output,
                 )
-                evaluator.gen_answers(api_base)
+                evaluator.gen_answers(
+                    api_base, max_workers=max_workers, serving_gpus=effective_gpus
+                )
             finally:
                 if server is not None:
                     server.shutdown()
 
             print("Evaluating answers...")
             try:
-                server, api_base = launch_server(
+                server, api_base, effective_gpus = launch_server(
                     ctx,
                     judge_model,
-                    get_model_name(judge_model),
+                    judge_model_name,
                     max_workers,
                     gpus,
                     judge_backend,
                     enable_serving_output,
                 )
                 overall_score, qa_pairs, turn_scores, error_rate = (
-                    evaluator.judge_answers(api_base)
+                    evaluator.judge_answers(
+                        api_base, max_workers=max_workers, serving_gpus=effective_gpus
+                    )
                 )
             finally:
                 if server is not None:
                     server.shutdown()
 
+            max_score = get_benchmark_max_score(Benchmark.MT_BENCH)
             print("# SKILL EVALUATION REPORT")
-            display_model(model)
-            print("\n### AVERAGE:")
-            print(f"{round(overall_score, 2)} (across {len(qa_pairs)})")
-            print("\n### TURN ONE:")
+            print("\n## MODEL (SCORE)")
+            display_model(model, overall_score, max_score)
+            print(f"\n### TURN ONE (0.0 to {max_score}):")
             print(round(turn_scores[0], 2))
-            print("\n### TURN TWO:")
+            print(f"\n### TURN TWO (0.0 to {max_score}):")
             turn2_score = turn_scores[1]
             if isinstance(turn2_score, float):
                 turn2_score = round(turn2_score, 2)
@@ -607,21 +620,30 @@ def evaluate(
             # Third Party
             from instructlab.eval.mt_bench import MTBenchBranchEvaluator
 
+            model_name = get_model_name(model)
+            base_model_name = get_model_name(base_model)
+            judge_model_name = get_model_name(judge_model)
             evaluators = [
-                evaluator,
                 MTBenchBranchEvaluator(
-                    get_model_name(base_model),
-                    get_model_name(judge_model),
+                    model_name,
+                    judge_model_name,
+                    taxonomy_path,
+                    branch,
+                    output_dir,
+                    merge_system_user_message=merge_system_user_message,
+                ),
+                MTBenchBranchEvaluator(
+                    base_model_name,
+                    judge_model_name,
                     taxonomy_path,
                     base_branch,
                     output_dir,
-                    max_workers,
                     merge_system_user_message=merge_system_user_message,
                 ),
             ]
             branches = [branch, base_branch]
             m_paths = [model, base_model]
-            m_names = [get_model_name(model), get_model_name(base_model)]
+            m_names = [model_name, base_model_name]
             qa_pairs_and_errors = []
             server = None
 
@@ -634,7 +656,7 @@ def evaluate(
                     f"Generating questions and reference answers from qna files for branch {branch}..."
                 )
                 try:
-                    server, api_base = launch_server(
+                    server, api_base, effective_gpus = launch_server(
                         ctx,
                         m_path,
                         m_name,
@@ -643,14 +665,16 @@ def evaluate(
                         backend,
                         enable_serving_output,
                     )
-                    evaluator.gen_answers(api_base)
+                    evaluator.gen_answers(
+                        api_base, max_workers=max_workers, serving_gpus=effective_gpus
+                    )
                 finally:
                     if server is not None:
                         server.shutdown()
 
             try:
                 # Share the judge model server for the two model evaluations
-                server, api_base = launch_server(
+                server, api_base, effective_gpus = launch_server(
                     ctx,
                     judge_model,
                     get_model_name(judge_model),
@@ -662,42 +686,84 @@ def evaluate(
                 for i, evaluator in enumerate(evaluators):
                     branch = branches[i]
                     print(f"Evaluating answers for branch {branch}...")
-                    qa_pairs, error_rate = evaluator.judge_answers(api_base)
-                    qa_pairs_and_errors.append((qa_pairs, error_rate))
+                    overall_score, qa_pairs, error_rate = evaluator.judge_answers(
+                        api_base, max_workers=max_workers, serving_gpus=effective_gpus
+                    )
+                    qa_pairs_and_errors.append((overall_score, qa_pairs, error_rate))
             finally:
                 if server is not None:
                     server.shutdown()
 
-            qa_pairs, error_rate = qa_pairs_and_errors[0]
-            base_qa_pairs, base_error_rate = qa_pairs_and_errors[1]
+            overall_score, qa_pairs, error_rate = qa_pairs_and_errors[0]
+            base_overall_score, base_qa_pairs, base_error_rate = qa_pairs_and_errors[1]
 
             qna_to_avg_scores = qa_pairs_to_qna_to_avg_scores(qa_pairs)
             base_qna_to_avg_scores = qa_pairs_to_qna_to_avg_scores(base_qa_pairs)
 
             print("# SKILL EVALUATION REPORT\n")
-            display_models(model, base_model)
+            display_models_and_scores(
+                Benchmark.MT_BENCH_BRANCH,
+                model,
+                base_model,
+                overall_score,
+                base_overall_score,
+            )
 
             improvements, regressions, no_changes, new_qnas = [], [], [], []
             for qna, avg_score in qna_to_avg_scores.items():
                 base_avg_score = base_qna_to_avg_scores.get(qna)
                 if base_avg_score is not None:
                     if avg_score > base_avg_score:
-                        improvements.append((qna, round(avg_score - base_avg_score, 2)))
+                        improvements.append(
+                            (
+                                qna,
+                                round(avg_score - base_avg_score, 2),
+                                base_avg_score,
+                                avg_score,
+                            )
+                        )
                     elif avg_score == base_avg_score:
-                        no_changes.append(qna)
+                        no_changes.append((qna, avg_score))
                     else:
-                        regressions.append((qna, round(avg_score - base_avg_score, 2)))
+                        regressions.append(
+                            (
+                                qna,
+                                round(avg_score - base_avg_score, 2),
+                                base_avg_score,
+                                avg_score,
+                            )
+                        )
                 else:
-                    new_qnas.append((qna))
+                    new_qnas.append((qna, avg_score))
 
             # display summary of evaluation before exiting
-            display_branch_eval_summary(improvements, regressions, no_changes, new_qnas)
+            display_branch_eval_summary(
+                Benchmark.MT_BENCH_BRANCH,
+                improvements,
+                regressions,
+                no_changes,
+                new_qnas,
+            )
             display_error_rate((error_rate + base_error_rate) / 2)
 
         elif benchmark == Benchmark.MMLU:
+            # Third Party
+            from instructlab.eval.mmlu import MMLU_TASKS, MMLUEvaluator
+
+            tasks = MMLU_TASKS
+            if os.environ.get("INSTRUCTLAB_EVAL_MMLU_MIN_TASKS") is not None:
+                tasks = tasks[:4]
+
+            evaluator = MMLUEvaluator(
+                model,
+                tasks=tasks,
+                few_shots=few_shots,
+                batch_size=batch_size,
+            )
+
             server = None
             try:
-                server, api_base = launch_server(
+                server, api_base, _ = launch_server(
                     ctx,
                     model,
                     model,
@@ -711,12 +777,12 @@ def evaluate(
                 if server is not None:
                     server.shutdown()
 
+            max_score = get_benchmark_max_score(Benchmark.MMLU)
             print("# KNOWLEDGE EVALUATION REPORT")
-            display_model(model)
-            print("\n### AVERAGE:")
-            print(f"{round(overall_score, 2)} (across {len(individual_scores)})\n")
+            print("\n## MODEL (SCORE)")
+            display_model(model, overall_score, max_score)
 
-            print("### SCORES:")
+            print(f"\n### SCORES (0.0 to {max_score}):")
             for task, score in individual_scores.items():
                 s = round(score["score"], 2)
                 print(f"{task} - {s}")
@@ -726,7 +792,13 @@ def evaluate(
             from instructlab.eval.mmlu import MMLUBranchEvaluator
 
             evaluators = [
-                evaluator,
+                MMLUBranchEvaluator(
+                    model,
+                    tasks_dir,
+                    ["mmlu_pr"],
+                    few_shots=few_shots,
+                    batch_size=batch_size,
+                ),
                 MMLUBranchEvaluator(
                     base_model,
                     tasks_dir,
@@ -738,13 +810,14 @@ def evaluate(
             m_paths = [model, base_model]
             overall_scores = []
             individual_scores_list = []
-            for evaluator in evaluators:
+            for i, evaluator in enumerate(evaluators):
+                m_path = m_paths[i]
                 server = None
                 try:
-                    server, api_base = launch_server(
+                    server, api_base, _ = launch_server(
                         ctx,
-                        model,
-                        model,
+                        m_path,
+                        m_path,
                         None,
                         gpus,
                         backend,
@@ -763,16 +836,13 @@ def evaluate(
             base_individual_scores = individual_scores_list[1]
 
             print("# KNOWLEDGE EVALUATION REPORT\n")
-            display_models(model, base_model)
-
-            print("\n### AVERAGE:")
-            delta = round(overall_score - base_overall_score, 2)
-            if delta >= 0:
-                delta_display = f"+{delta}"
-            else:
-                delta_display = delta
-
-            print(f"{delta_display} (across {len(individual_scores)})")
+            display_models_and_scores(
+                Benchmark.MMLU_BRANCH,
+                model,
+                base_model,
+                overall_score,
+                base_overall_score,
+            )
 
             improvements, regressions, no_changes = [], [], []
             for task, score in individual_scores.items():
@@ -781,14 +851,16 @@ def evaluate(
                 b_s = base_score["score"]
                 d = round(s - b_s, 2)
                 if s > b_s:
-                    improvements.append((task, d))
+                    improvements.append((task, d, b_s, s))
                 elif b_s > s:
-                    regressions.append((task, d))
+                    regressions.append((task, d, b_s, s))
                 else:
-                    no_changes.append(task)
+                    no_changes.append((task, s))
 
             # display summary of evaluation before exiting
-            display_branch_eval_summary(improvements, regressions, no_changes)
+            display_branch_eval_summary(
+                Benchmark.MMLU_BRANCH, improvements, regressions, no_changes
+            )
     except EvalError as ee:
         print(ee.message)
         raise click.exceptions.Exit(1)

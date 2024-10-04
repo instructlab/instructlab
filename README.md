@@ -26,8 +26,10 @@
   - [📜 List and validate your new data](#-list-and-validate-your-new-data)
   - [🚀 Generate a synthetic dataset](#-generate-a-synthetic-dataset)
   - [👩‍🏫 Training the model](#-training-the-model)
-    - [Train the model locally on Linux](#train-the-model-locally-on-linux)
-    - [Train the model locally on M-series Macs](#train-the-model-locally-on-an-m-series-mac)
+    - [InstructLab training pipelines](#ilab-model-training-pipelines)
+    - [Train the model locally](#train-the-model-locally)
+    - [Train the model locally on an M-Series Mac or on Linux using the full pipeline](#train-the-model-locally-on-an-m-series-mac-or-on-linux-using-the-full-pipeline)
+    - [Train the model locally on an M-Series Mac or on Linux using the simple pipeline](#train-the-model-locally-on-an-m-series-mac-or-on-linux-using-the-simple-pipeline)
     - [Train the model locally with GPU acceleration](#train-the-model-locally-with-gpu-acceleration)
     - [Train the model in the cloud](#train-the-model-in-the-cloud)
   - [📜 Test the newly trained model](#-test-the-newly-trained-model)
@@ -109,7 +111,9 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    cd instructlab
    ```
 
-   > **NOTE:** The following steps in this document use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. However, if you use another tool such as [pyenv](https://github.com/pyenv/pyenv) or [Conda Miniforge](https://github.com/conda-forge/miniforge) for managing Python environments on your machine continue to use that tool instead. Otherwise, you may have issues with packages that are installed but not found in `venv`.
+   > **NOTE:** The following steps in this document use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. However, if you use another tool such as [pyenv](https://github.com/pyenv/pyenv) or [Conda Miniforge](https://github.com/conda-forge/miniforge) for managing Python environments on your machine continue to use that tool instead. Otherwise, you may have issues with packages that are installed but not found in your virtual environment.
+   <!-- -->
+   > **NOTE:** Some Python version management tools that build Python (instead of using a pre-built binary) may not by default build libraries implemented in C, and CPython when installing a Python version. This can therefore result in the following error when running the `ilab data generate` command: `ModuleNotFoundError: No module named '_lzma'`. This can be resolved by building CPython during the Python installation with the `--enable-framework`. For example for `pyenv` on MacOS: `PYTHON_CONFIGURE_OPTS="--enable-framework" pyenv install 3.x`. You may need to recreate you virtual environment after reinstalling Python.
 
 3. There are a few ways you can locally install the `ilab` CLI. Select your preferred installation method from the following instructions. You can then install `ilab` and activate your `venv` environment.
 
@@ -613,7 +617,15 @@ There are many options for training the model with your synthetic data-enhanced 
 
 > **Note:** **Every** `ilab` command needs to run from within your Python virtual environment.
 
-#### Train the model locally on Linux
+#### ilab model training pipelines
+
+`ilab model train` has three pipelines: `simple`, `full`, and `accelerated`. The default is `accelerated`.
+
+1. `simple` uses an SFT Trainer on Linux and MLX on MacOS. This type of training takes roughly an hour and produces the lowest fidelity model but should indicate if your data is being picked up by the training process.
+2. `full` uses a custom training loop and data processing funcions for the granite family of models. This loop is optimizied for CPU and MPS functionality. Please use `--pipeline=full` in combination with `--device=cpu` (Linux) or `--device=mps` (MacOS). You can also use `--device=cpu` on a MacOS machine. However, MPS is optimized for better performance on these systems.
+3. `accelerated` uses the instructlab-training library which supports GPU accelerated and distributed training. The `full` loop and data processing functions are either pulled directly from or based off of the work in this library.
+
+#### Train the model locally
 
 ```shell
 ilab model train
@@ -621,43 +633,81 @@ ilab model train
 
 > **NOTE:** ⏳ This step can potentially take **several hours** to complete depending on your computing resources. Please stop `ilab model chat` and `ilab model serve` first to free resources.
 
-If you are using `ilab model train --legacy` or are on MacOS:
+If you are using `ilab model train --pipeline=simple` on Linux:
 
 `ilab model train` outputs a brand-new model that can be served in the `models` directory called `ggml-model-f16.gguf`.
 
-If you are using `ilab model train` with a GPU enabled system:
+If you are using `ilab model train --pipeline=simple` on MacOS:
+
+`ilab model train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory.
+
+If you are using `ilab model train --pipeline=full` on Linux or MacOS:
+
+`ilab model train` outputs brand-new `.bin` and `.gguf` models in the `~/.local/share/instructlab/checkpoints/hf_format` directory. in each `samples_*` directory you will find two GGUF models. One is quantized and one is full precision, the quantized one has a Q4-M-K suffix.
+
+If you are using `ilab model train --pipeline=accelerated` on Linux:
 
 `ilab model train` outputs brand-new models that can be served in the `~/.local/share/instructlab/checkpoints` directory.  These models can be run through `ilab model evaluate` to choose the best one.
 
-If you are using `ilab model train --strategy lab-multiphase`
+If you are using `ilab model train --strategy lab-multiphase` on Linux:
 
-#### Train the model locally on an M-series Mac
+`ilab model train` outputs brand-new models that can be served in `~/.local/share/instructlab/phased/phase1/checkpoints` and `~/.local/share/instructlab/phased/phase2/checkpoints`. Phase 1 correlates to knowledge training and phase 2 correlates to skills training.
 
-To train the model locally on your M-Series Mac is as easy as running:
+When running multi phase training evaluation is run on each phase, we will tell you which checkpoint in this folder performs the best.
+
+#### Train the model locally on an M-series Mac or on Linux using the full pipeline
+
+To train the model locally on your M-Series Mac using our full pipeline and MPS or on your Linux laptop/deskop using CPU:
 
 ```shell
-ilab model train
+ilab model train --pipeline full --device mps
+```
+
+```shell
+ilab model train --pipeline full --device cpu
+```
+
+> **Note:** ⏳ This process will take a while to complete. If you run for ~8 epochs it will take several hours.
+
+`ilab model train` outputs a directory for each epoch that resembles the following structure:
+
+```shell
+$ ls ~/.local/share/instructlab/checkpoints/hf_format/samples_0/
+added_tokens.json  pytorch_model.bin   special_tokens_map.json   tokenizer.json
+config.json        pytorch_model.gguf  pytorch_model-Q4_K_M.gguf tokenizer_config.json    tokenizer.model
+```
+
+this entire folder can be served on a system that supports vLLM using the .bin model. However, on most laptops you can serve either the full precision gguf: `pytorch_model.gguf` or the 4-bit-quantized one: `pytorch_model-Q4_K_M.gguf`.
+
+#### Train the model locally on an M-series Mac or on Linux using the simple pipeline
+
+To train the model locally on your M-Series Mac using our simple pipeline and MLX or on your Linux laptop/deskop using an SFT Trainer:
+
+```shell
+ilab model train --pipeline simple
 ```
 
 > **Note:** ⏳ This process will take a little while to complete (time can vary based on hardware
 and output of `ilab data generate` but on the order of 5 to 15 minutes)
 
-`ilab model train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory called `adapters.npz` (in `Numpy` compressed array format). For example:
+on a Mac `ilab model train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory called `adapters.npz` (in `Numpy` compressed array format). For example:
 
 ```shell
 (venv) $ ls instructlab-merlinite-7b-lab-mlx-q
 adapters-010.npz        adapters-050.npz        adapters-090.npz        config.json             tokenizer.model
 adapters-020.npz        adapters-060.npz        adapters-100.npz        model.safetensors       tokenizer_config.json
 adapters-030.npz        adapters-070.npz        adapters.npz            special_tokens_map.json
-adapters-040.npz        adapters-080.npz        added_tokens.json       tokenizer.jso
+adapters-040.npz        adapters-080.npz        added_tokens.json       tokenizer.json
 ```
+
+on Linux `ilab model train` outputs a brand-new model that can be served in the `models` directory called `ggml-model-f16.gguf`.
 
 #### Train the model locally with GPU acceleration
 
 Training has experimental support for GPU acceleration with Nvidia CUDA or AMD ROCm. Please see [the GPU acceleration documentation](./docs/gpu-acceleration.md) for more details. At present, hardware acceleration requires a data center GPU or high-end consumer GPU with at least 18 GB free memory.
 
 ```shell
-ilab model train --device=cuda
+ilab model train --pipeline accelerated --device cuda
 ```
 
 This version of `ilab model train` outputs brand-new models that can be served in the `~/.local/share/instructlab/checkpoints` directory.  These models can be run through `ilab model evaluate` to choose the best one.
