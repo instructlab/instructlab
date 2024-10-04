@@ -32,8 +32,8 @@ import httpx
 import yaml
 
 # Local
-from .configuration import read_config
-from .defaults import DEFAULTS
+# Local
+from . import common
 
 logger = logging.getLogger(__name__)
 
@@ -362,8 +362,7 @@ def get_sysprompt(model=None):
     Returns:
         str: The system prompt for the model being used
     """
-    config = read_config(DEFAULTS.CONFIG_FILE)
-    return config.prompts.system_prompt
+    return common.SYS_PROMPT
 
 
 # pylint: disable=broad-exception-caught
