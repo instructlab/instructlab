@@ -32,7 +32,6 @@ import httpx
 import yaml
 
 # Local
-# Local
 from . import common
 
 logger = logging.getLogger(__name__)
