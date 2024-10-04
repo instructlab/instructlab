@@ -1356,7 +1356,7 @@ def storage_dirs_exist() -> bool:
 
 # {"GPU Name": ({ "gpu_count": NUM_GPUS, "vram_and_config": {"vram": TOTAL_VRAM, "config": TRAIN_CONFIG}})...}
 PROFILE_MAPPINGS = {
-    "L40s": (
+    "L40S": (
         {"gpu_count": 1, "vram_and_config": {"vram": 80, "config": SINGLE_L40}},
         {
             "gpu_count": 4,
