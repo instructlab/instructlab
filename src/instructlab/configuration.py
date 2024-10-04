@@ -838,6 +838,16 @@ SINGLE_A100_H100 = _train(
 )
 
 
+TRAIN_DIR_EXPECTED_FILES = {
+    "A100_H100_x8.yaml",
+    "A100_H100_x4.yaml",
+    "A100_H100_x2.yaml",
+    "L40_x8.yaml",
+    "L40_x4.yaml",
+    "L4_x8.yaml",
+}
+
+
 def get_default_config() -> Config:
     """Generates default configuration for CLI"""
     return Config()
@@ -1125,15 +1135,6 @@ def ensure_storage_directories_exist() -> bool:
 
 # recreate_train_profiles creates all train profiles in the proper directory and takes an argument, overwrite, which will write to the files even if they already exist
 def recreate_train_profiles(overwrite: bool = False) -> bool:
-    TRAIN_DIR_EXPECTED_FILES = {
-        "A100_H100_x8.yaml",
-        "A100_H100_x4.yaml",
-        "A100_H100_x2.yaml",
-        "L40_x8.yaml",
-        "L40_x4.yaml",
-        "L4_x8.yaml",
-    }
-
     fresh_install = False
     profile_dir = os.environ.get(DEFAULTS.ILAB_TRAIN_PROFILE_DIR)
     if profile_dir != "" and profile_dir is not None:
@@ -1348,52 +1349,91 @@ def storage_dirs_exist() -> bool:
     return all(os.path.exists(dirpath) for dirpath in dirs_to_check)
 
 
+# get_profile_mappings reads the profiles from disk where necessary and returns a mapping of the following format
 # {"GPU Name": ({ "gpu_count": NUM_GPUS, "vram_and_config": {"vram": TOTAL_VRAM, "config": TRAIN_CONFIG}})...}
-PROFILE_MAPPINGS = {
-    "L40s": (
-        {"gpu_count": 1, "vram_and_config": {"vram": 80, "config": SINGLE_L40}},
-        {
-            "gpu_count": 4,
-            "vram_and_config": {"vram": 192, "config": FOUR_L_FORTY_GPU},
-        },
-        {
-            "gpu_count": 8,
-            "vram_and_config": {"vram": 384, "config": EIGHT_L_FORTY_GPU},
-        },
-    ),
-    "L4": (
-        {"gpu_count": 1, "vram_and_config": {"vram": 24, "config": SINGLE_L4}},
-        {
-            "gpu_count": 8,
-            "vram_and_config": {"vram": 192, "config": EIGHT_L_FOUR_GPU},
-        },
-    ),
-    "A100": (
-        {
-            "gpu_count": 2,
-            "vram_and_config": {"vram": 160, "config": TWO_GPU_TRAIN_AH},
-        },
-        {
-            "gpu_count": 4,
-            "vram_and_config": {"vram": 320, "config": FOUR_GPU_TRAIN_AH},
-        },
-        {
-            "gpu_count": 8,
-            "vram_and_config": {"vram": 640, "config": EIGHT_GPU_TRAIN_AH},
-        },
-    ),
-    "H100": (
-        {
-            "gpu_count": 2,
-            "vram_and_config": {"vram": 160, "config": TWO_GPU_TRAIN_AH},
-        },
-        {
-            "gpu_count": 4,
-            "vram_and_config": {"vram": 320, "config": FOUR_GPU_TRAIN_AH},
-        },
-        {
-            "gpu_count": 8,
-            "vram_and_config": {"vram": 640, "config": EIGHT_GPU_TRAIN_AH},
-        },
-    ),
-}
+def get_profile_mappings() -> dict[str, tuple[dict[str, object], ...]]:
+    # read the train cfg from disk, and use what is here to build the mappings.
+    profile_names_and_configs = {}
+    for file in TRAIN_DIR_EXPECTED_FILES:
+        cfg_file = os.path.join(DEFAULTS.TRAIN_PROFILE_DIR, file)
+        train_cfg = read_train_profile(cfg_file)
+        # make a dict mapping file names to train cfgs
+        # we need to do this so that if the user overrode the contents of the profiles using the ENV var, we apply that when auto detecting
+        profile_names_and_configs[file] = train_cfg
+
+    profile_mappings = {
+        "L40s": (
+            {"gpu_count": 1, "vram_and_config": {"vram": 80, "config": SINGLE_L40}},
+            {
+                "gpu_count": 4,
+                "vram_and_config": {
+                    "vram": 192,
+                    "config": profile_names_and_configs["L40_x4.yaml"],
+                },
+            },
+            {
+                "gpu_count": 8,
+                "vram_and_config": {
+                    "vram": 384,
+                    "config": profile_names_and_configs["L40_x8.yaml"],
+                },
+            },
+        ),
+        "L4": (
+            {"gpu_count": 1, "vram_and_config": {"vram": 24, "config": SINGLE_L4}},
+            {
+                "gpu_count": 8,
+                "vram_and_config": {
+                    "vram": 192,
+                    "config": profile_names_and_configs["L4_x8.yaml"],
+                },
+            },
+        ),
+        "A100": (
+            {
+                "gpu_count": 2,
+                "vram_and_config": {
+                    "vram": 160,
+                    "config": profile_names_and_configs["A100_H100_x2.yaml"],
+                },
+            },
+            {
+                "gpu_count": 4,
+                "vram_and_config": {
+                    "vram": 320,
+                    "config": profile_names_and_configs["A100_H100_x4.yaml"],
+                },
+            },
+            {
+                "gpu_count": 8,
+                "vram_and_config": {
+                    "vram": 640,
+                    "config": profile_names_and_configs["A100_H100_x8.yaml"],
+                },
+            },
+        ),
+        "H100": (
+            {
+                "gpu_count": 2,
+                "vram_and_config": {
+                    "vram": 160,
+                    "config": profile_names_and_configs["A100_H100_x2.yaml"],
+                },
+            },
+            {
+                "gpu_count": 4,
+                "vram_and_config": {
+                    "vram": 320,
+                    "config": profile_names_and_configs["A100_H100_x4.yaml"],
+                },
+            },
+            {
+                "gpu_count": 8,
+                "vram_and_config": {
+                    "vram": 640,
+                    "config": profile_names_and_configs["A100_H100_x8.yaml"],
+                },
+            },
+        ),
+    }
+    return profile_mappings
