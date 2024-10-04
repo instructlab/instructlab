@@ -220,7 +220,7 @@ def hw_auto_detect() -> tuple[str | None, int | None, _train, bool]:
     gpu_name = ""
     edited_cfg = False
     # try nvidia
-    if torch.cuda.is_available():
+    if torch.cuda.is_available() and torch.version.hip is None:
         click.echo("Detecting Hardware...")
         gpus = torch.cuda.device_count()
         for i in range(gpus):
