@@ -41,7 +41,8 @@ Help / TL;DR
 - `/q`: **q**uit
 - `/h`: show **h**elp
 - `/a assistant`: **a**mend **a**ssistant (i.e., model)
-- `/c context`: **c**hange **c**ontext
+- `/c context`: **c**hange **c**ontext (available contexts: default, cli_helper)
+- `/lc`: **l**ist **c**ontexts
 - `/m`: toggle **m**ultiline (for the next session only)
 - `/M`: toggle **m**ultiline
 - `/n`: **n**ew session
@@ -577,6 +578,13 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         message = {"role": role, "content": content}
         self.info["messages"].append(message)
 
+    def _handle_list_contexts(self, _):
+        context_list = "\n\n".join(
+            [f"**{key}**:\n{value}" for key, value in CONTEXTS.items()]
+        )
+        self._sys_print(Markdown(f"**Available contexts:**\n\n{context_list}"))
+        raise KeyboardInterrupt
+
     def start_prompt(
         self,
         logger,  # pylint: disable=redefined-outer-name
@@ -597,6 +605,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             "/md": self._handle_markdown,
             "/s": self._handle_save_session,
             "/l": self._handle_load_session,
+            "/lc": self._handle_list_contexts,
         }
 
         if content is None:
