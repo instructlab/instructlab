@@ -388,6 +388,10 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     is_flag=True,
     help="Clear phased cache (journal, checkpoints, metadata). Helpful paired with '--skip-user-confirm'",
 )
+@click.option(
+    "--lora-enabled",
+    is_flag=True,
+)
 @click.pass_context
 @clickext.display_params
 def train(
@@ -421,6 +425,7 @@ def train(
     training_journal: pathlib.Path | None,
     force_clear_phased_cache: bool,
     distributed_backend,
+    lora_enabled_flag: bool,
     **kwargs,
 ):
     """
@@ -735,6 +740,7 @@ def train(
                     iters=iters,
                     save_every=10,
                     steps_per_eval=10,
+                    lora_enabled=lora_enabled_flag
                 )
             else:
                 # Local
