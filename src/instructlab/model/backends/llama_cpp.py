@@ -24,7 +24,6 @@ import uvicorn
 # Local
 from ...client import check_api_base
 from ...configuration import get_api_base
-from .backends import is_temp_server_running
 from .common import (
     API_ROOT_WELCOME_MESSAGE,
     CHAT_TEMPLATE_AUTO,
@@ -33,6 +32,7 @@ from .common import (
     ServerException,
     free_tcp_ipv4_port,
     get_model_template,
+    is_temp_server_running,
     verify_template_exists,
 )
 from .server import BackendServer, ServerConfig

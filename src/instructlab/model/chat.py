@@ -195,7 +195,7 @@ def chat(
     """Runs a chat using the modified model"""
     # pylint: disable=import-outside-toplevel
     # First Party
-    from instructlab.model.backends.backends import is_temp_server_running
+    from instructlab.model.backends.common import is_temp_server_running
 
     users_endpoint_url = cfg.get_api_base(ctx.obj.config.serve.host_port)
 
