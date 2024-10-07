@@ -50,7 +50,7 @@ jobs:
           jq -nr '[$ARGS.positional[] | split("\\s"; null) | map(select(. != ""))] | flatten | join("|") | ("match_pattern=(" + . + ")")' --args "${{ inputs.job_ids }}" >> "$GITHUB_OUTPUT"
 
       - name: "Wait for status checks"
-        uses: poseidon/wait-for-status-checks@6988432d64ad3f9c2608db4ca16fded1b7d36ead # v0.5.0
+        uses: bjhargrave/wait-for-status-checks@dce002a192e8eeb4c5b622283216263577ffd5d4 # v0.5.0_1
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           match_pattern: ${{ steps.set_variables.outputs.match_pattern }}
