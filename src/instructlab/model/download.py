@@ -13,6 +13,7 @@ from huggingface_hub import hf_hub_download, list_repo_files
 from huggingface_hub import logging as hf_logging
 from huggingface_hub import snapshot_download
 from packaging import version
+from urllib3.exceptions import IncompleteRead
 import click
 
 # First Party
@@ -110,22 +111,39 @@ class HFDownloader(Downloader):
             raise click.exceptions.Exit(1)
 
     def download_entire_hf_repo(self) -> None:
-        try:
-            local_dir = os.path.join(self.download_dest, self.repository)
-            os.makedirs(name=local_dir, exist_ok=True)
-
-            snapshot_download(
-                token=self.hf_token,
-                repo_id=self.repository,
-                revision=self.release,
-                local_dir=local_dir,
-            )
-        except Exception as exc:
-            click.secho(
-                f"Downloading safetensors model failed with the following Hugging Face Hub error: {exc}",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
+        local_dir = os.path.join(self.download_dest, self.repository)
+        os.makedirs(name=local_dir, exist_ok=True)
+        fail_count = 0
+        while True:
+            try:
+                snapshot_download(
+                    token=self.hf_token,
+                    repo_id=self.repository,
+                    revision=self.release,
+                    local_dir=local_dir,
+                )
+                break
+            # if failure was due to connection issue, retry up to 3 times
+            except IncompleteRead as exc:
+                if fail_count < 3:
+                    fail_count += 1
+                    click.secho(
+                        f"Downloading safetensors model failed with the following Hugging Face Hub network error: {exc}\nRetrying... (attempt {fail_count} of 3)",
+                        fg="yellow",
+                    )
+                    continue
+                click.secho(
+                    f"Downloading safetensors model failed with the following Hugging Face Hub network error: {exc}\nExiting...",
+                    fg="red",
+                )
+                raise click.exceptions.Exit(1)
+            # exit if failure was not connection related
+            except Exception as exc:
+                click.secho(
+                    f"Downloading safetensors model failed with the following Hugging Face Hub error: {exc}",
+                    fg="red",
+                )
+                raise click.exceptions.Exit(1)
 
 
 class OCIDownloader(Downloader):

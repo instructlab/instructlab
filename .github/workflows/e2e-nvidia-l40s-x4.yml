@@ -138,10 +138,7 @@ jobs:
           python3.11 -m pip install packaging wheel setuptools-scm
           python3.11 -m pip install .[cuda] -r requirements-vllm-cuda.txt
 
-      - name: ilab system info
-        run: |
-          . venv/bin/activate
-          ilab system info
+          df -h
 
       - name: Run e2e test
         env:
