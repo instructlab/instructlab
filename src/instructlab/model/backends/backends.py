@@ -4,7 +4,6 @@
 from typing import Optional, Tuple
 import json
 import logging
-import multiprocessing
 import pathlib
 import struct
 import sys
@@ -185,11 +184,6 @@ def get(model_path: pathlib.Path, backend: str | None) -> str:
             )
 
     return backend
-
-
-def is_temp_server_running():
-    """Check if the temp server is running."""
-    return multiprocessing.current_process().name != "MainProcess"
 
 
 def select_backend(

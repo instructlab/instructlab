@@ -2,6 +2,7 @@
 from typing import Tuple
 import contextlib
 import logging
+import multiprocessing
 import pathlib
 import socket
 import typing
@@ -55,6 +56,11 @@ def get_model_template(
                 bos_token = "<s>"
 
     return template, eos_token, bos_token
+
+
+def is_temp_server_running():
+    """Check if the temp server is running."""
+    return multiprocessing.current_process().name != "MainProcess"
 
 
 def verify_template_exists(path):
