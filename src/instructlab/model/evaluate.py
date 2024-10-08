@@ -2,7 +2,6 @@
 
 # pylint: disable=ungrouped-imports
 # Standard
-from copy import deepcopy
 import contextlib
 import enum
 import logging
@@ -15,6 +14,7 @@ import click
 
 # First Party
 from instructlab import clickext
+from instructlab.configuration import _serve
 from instructlab.model.backends import backends
 
 # Local
@@ -259,7 +259,7 @@ def get_cpu_count():
         return multiprocessing.cpu_count()
 
 
-def get_gpus(ctx, gpus=None) -> tuple[int | None, int]:
+def get_gpus(eval_serve, gpus=None) -> tuple[int | None, int]:
     """Return the number of gpus explicitly selected through --gpus or config
     The second value in the tuple is the effective gpus that will be used by
     serving. If gpus is specified, the two values will be the same. 0 is the min
@@ -268,7 +268,7 @@ def get_gpus(ctx, gpus=None) -> tuple[int | None, int]:
     # First Party
     from instructlab.model.backends.vllm import get_argument
 
-    eval_serve = ctx.obj.config.serve
+    # eval_serve = ctx.obj.config.serve
     gpus = gpus or eval_serve.vllm.gpus
 
     effective_gpus = gpus
@@ -295,7 +295,11 @@ def get_backend(backend, model):
 
 
 def launch_server(
-    ctx: click.Context,
+    eval_serve: _serve,
+    tls_client_cert: str,
+    tls_client_key: str,
+    tls_client_passwd: str,
+    tls_insecure: bool,
     model: str,
     model_name: str,
     max_workers: str | int | None,
@@ -303,7 +307,7 @@ def launch_server(
     backend: str | None,
     enable_serving_output: bool,
 ) -> tuple:
-    eval_serve = deepcopy(ctx.obj.config.serve)
+    # eval_serve = deepcopy(ctx.obj.config.serve)
     eval_serve.backend = backend = get_backend(backend, model)
 
     effective_gpus = 0
@@ -314,7 +318,7 @@ def launch_server(
         # First Party
         from instructlab.model.backends.vllm import contains_argument
 
-        gpus, effective_gpus = get_gpus(ctx, gpus)
+        gpus, effective_gpus = get_gpus(eval_serve, gpus)
         if gpus:
             tps_prefix = "--tensor-parallel-size"
             if contains_argument(tps_prefix, eval_serve.vllm.vllm_args):
@@ -340,7 +344,7 @@ def launch_server(
                     f"Based on your hardware configuration, when using vLLM, we recommend setting max-workers between {recommended_min_workers} and {recommended_max_workers} for optimal performance"
                 )
     elif backend == backends.LLAMA_CPP:
-        if ctx.obj.config.serve.llama_cpp.max_ctx_size < 5120:
+        if eval_serve.llama_cpp.max_ctx_size < 5120:
             eval_serve.llama_cpp.max_ctx_size = 5120
             logger.debug(
                 "Evaluate requires a context size of >= 5120, ignoring serve configuration for max_ctx_size"
@@ -363,10 +367,10 @@ def launch_server(
         api_base = backend_instance.run_detached(
             http_client(
                 {
-                    "tls_client_cert": ctx.params["tls_client_cert"],
-                    "tls_client_key": ctx.params["tls_client_key"],
-                    "tls_client_passwd": ctx.params["tls_client_passwd"],
-                    "tls_insecure": ctx.params["tls_insecure"],
+                    "tls_client_cert": tls_client_cert,
+                    "tls_client_key": tls_client_key,
+                    "tls_client_passwd": tls_client_passwd,
+                    "tls_insecure": tls_insecure,
                 }
             ),
             background=not enable_serving_output,
