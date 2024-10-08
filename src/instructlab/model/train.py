@@ -425,7 +425,7 @@ def train(
     training_journal: pathlib.Path | None,
     force_clear_phased_cache: bool,
     distributed_backend,
-    lora_enabled_flag: bool,
+    lora_enabled_flag: bool | None,
     **kwargs,
 ):
     """
