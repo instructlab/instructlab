@@ -10,7 +10,7 @@ on:
     paths:
       - '**.py'
       - 'pyproject.toml'
-      - 'requirements*.txt'
+      - 'requirements**.txt'
       - 'tox.ini'
       - .pylintrc
       - '.github/workflows/lint.yml' # This workflow
@@ -21,7 +21,7 @@ on:
     paths:
       - '**.py'
       - 'pyproject.toml'
-      - 'requirements*.txt'
+      - 'requirements**.txt'
       - 'tox.ini'
       - .pylintrc
       - '.github/workflows/lint.yml' # This workflow
