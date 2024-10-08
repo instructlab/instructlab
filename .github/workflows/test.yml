@@ -11,7 +11,7 @@ on:
     paths:
       - '**.py'
       - 'pyproject.toml'
-      - 'requirements*.txt'
+      - 'requirements**.txt'
       - 'tox.ini'
       - 'scripts/*.sh' # Used by this workflow
       - '.github/workflows/test.yml' # This workflow
@@ -22,7 +22,7 @@ on:
     paths:
       - '**.py'
       - 'pyproject.toml'
-      - 'requirements*.txt'
+      - 'requirements**.txt'
       - 'tox.ini'
       - 'scripts/*.sh' # Used by this workflow
       - '.github/workflows/test.yml' # This workflow
