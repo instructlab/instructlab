@@ -42,7 +42,7 @@ jobs:
         with:
           mode: start
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          ec2-image-id: ami-00c51d9c1374eda97
+          ec2-image-id: ami-01a89eee1adde309c
           ec2-instance-type: ${{ github.event.inputs.instance_type }}
           subnet-id: subnet-02d230cffd9385bd4
           security-group-id: sg-06300447c4a5fbef3
@@ -138,6 +138,10 @@ jobs:
           CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3.11 -m pip install --force-reinstall --no-binary llama_cpp_python -c constraints.txt llama_cpp_python
           python3.11 -m pip install bitsandbytes
           python3.11 -m pip install ${{ github.event.inputs.ilab_install_target }}
+
+      - name: Check disk
+        run: |
+          df -h
 
       - name: Run e2e test
         run: |

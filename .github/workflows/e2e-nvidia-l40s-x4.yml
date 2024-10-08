@@ -32,7 +32,7 @@ jobs:
         with:
           mode: start
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          ec2-image-id: ami-03f6686697972e40a
+          ec2-image-id: ami-01a89eee1adde309c
           ec2-instance-type: g6e.12xlarge
           subnet-id: subnet-024298cefa3bedd61
           security-group-id: sg-06300447c4a5fbef3
@@ -138,10 +138,9 @@ jobs:
           python3.11 -m pip install packaging wheel setuptools-scm
           python3.11 -m pip install .[cuda] -r requirements-vllm-cuda.txt
 
-      - name: ilab system info
+      - name: Check disk
         run: |
-          . venv/bin/activate
-          ilab system info
+          df -h
 
       - name: Run e2e test
         env:
