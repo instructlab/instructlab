@@ -210,6 +210,12 @@ test_generate() {
     task Synthetic data generation Complete
 }
 
+test_data_list() {
+    task Output data list
+    ilab data list
+    task Data list Complete
+}
+
 test_train() {
     task Train the model
 
@@ -336,6 +342,7 @@ test_exec() {
     # sdg tests
     test_taxonomy
     test_generate
+    test_data_list
 
     # train tests
     if [ "$LARGE" -eq 1 ]; then
