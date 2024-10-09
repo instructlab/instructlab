@@ -415,6 +415,12 @@ test_config_show() {
     task Config show Complete
 }
 
+test_data_list() {
+    task Output data list
+    ilab data list
+    task Data list Complete
+}
+
 test_exec() {
     # The list of actual tests to run through in workflow order
     test_smoke
@@ -442,6 +448,8 @@ test_exec() {
     test_generate
     test_taxonomy 3
     test_generate
+
+    test_data_list
 
     # Kill the serve process
     task Stopping the ilab model serve for the teacher model
