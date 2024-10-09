@@ -755,6 +755,7 @@ You can use the `ilab model evaluate` command to evaluate the models you are tra
 
 > [!NOTE]
 > Evaluation must be used with local models (safetensors or GGUF format). Using models directly from Hugging Face without downloading them is unsupported.
+> GGUF models are not yet supported for mmlu and mmlu_branch evaluations
 > MTBench and MTBenchBranch use [prometheus-8x7b-v2.0](https://huggingface.co/prometheus-eval/prometheus-8x7b-v2.0) as the judge model by
 default. While you do not need to use this model as your judge, it is strongly recommended to do so if you have the necessary hardware
 resources. You can download it via `ilab model download`.
