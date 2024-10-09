@@ -123,15 +123,30 @@ class _InstructlabDefaults:
 
     @property
     def DEFAULT_MODEL_GGUF(self) -> str:
-        return path.join(self.MODELS_DIR, self.HUGGINGFACE_DOMAIN, self.MERLINITE_GGUF_REPO,  self.DEFAULT_MODEL_BRANCH, self.GGUF_MODEL_NAME)
+        return path.join(
+            self.MODELS_DIR,
+            self.HUGGINGFACE_DOMAIN,
+            self.MERLINITE_GGUF_REPO,
+            self.DEFAULT_MODEL_BRANCH,
+        )
 
     @property
     def DEFAULT_MODEL(self) -> str:
-        return path.join(self.MODELS_DIR, self.HUGGINGFACE_DOMAIN, self.GRANITE_MODEL_REPO,  self.DEFAULT_MODEL_BRANCH)
+        return path.join(
+            self.MODELS_DIR,
+            self.HUGGINGFACE_DOMAIN,
+            self.GRANITE_MODEL_REPO,
+            self.DEFAULT_MODEL_BRANCH,
+        )
 
     @property
     def DEFAULT_JUDGE_MODEL(self) -> str:
-        return path.join(self.MODELS_DIR, self.HUGGINGFACE_DOMAIN, self.JUDGE_MODEL_MT, self.DEFAULT_MODEL_BRANCH)
+        return path.join(
+            self.MODELS_DIR,
+            self.HUGGINGFACE_DOMAIN,
+            self.JUDGE_MODEL_MT,
+            self.DEFAULT_MODEL_BRANCH,
+        )
 
     @property
     def TAXONOMY_DIR(self) -> str:

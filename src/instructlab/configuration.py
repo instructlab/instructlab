@@ -350,7 +350,7 @@ class _evaluate(BaseModel):
         description="Model to be evaluated",
     )
     base_model: str = Field(
-        default=DEFAULTS.DEFAULT_MODEL,
+        default_factory=lambda: DEFAULTS.DEFAULT_MODEL,
         description="Base model to compare with 'model' for mt_bench_branch and mmlu_branch.",
     )
     branch: Optional[str] = Field(
@@ -389,7 +389,7 @@ class _train(BaseModel):
         use_enum_values=True,  # populate models with the value property of enums, rather than the raw enum.
     )
     model_path: str = Field(
-        default=DEFAULTS.DEFAULT_MODEL,
+        default_factory=lambda: DEFAULTS.DEFAULT_MODEL,
         description="Directory where the model to be trained is stored.",
     )
     data_path: str = Field(

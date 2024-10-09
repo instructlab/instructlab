@@ -27,10 +27,19 @@ HF_TOKEN=${HF_TOKEN:-}
 SDG_PIPELINE="simple"
 SKIP_TRAIN=${SKIP_TRAIN:-0}
 EVAL=0
+
+HUGGINGFACE_DIR="huggingface.co"
+
 MIXTRAL_GGUF_MODEL="mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf"
-GRANITE_GGUF_MODEL="granite-7b-lab-Q4_K_M.gguf"
+MIXTRAL_GGUF_REPO="TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF"
+
+MERLINITE_GGUF_REPO="instructlab/merlinite-7b-lab-GGUF"
 MERLINITE_GGUF_MODEL="merlinite-7b-lab-Q4_K_M.gguf"
+
 GRANITE_SAFETENSOR_REPO="instructlab/granite-7b-lab"
+GRANITE_GGUF_REPO="instructlab/granite-7b-lab-GGUF"
+GRANITE_GGUF_MODEL="granite-7b-lab-Q4_K_M.gguf"
+
 
 export GREP_COLORS='mt=1;33'
 BOLD='\033[1m'
@@ -70,6 +79,7 @@ function init_e2e_tests() {
     CONFIG_HOME=$(python -c 'import platformdirs; print(platformdirs.user_config_dir())')
     DATA_HOME=$(python -c 'import platformdirs; print(platformdirs.user_data_dir())')
     CACHE_HOME=$(python -c 'import platformdirs; print(platformdirs.user_cache_dir())')
+    MODEL_CACHE="${CACHE_HOME}/instructlab/models"
     STATE_HOME=$(python -c 'import platformdirs; print(platformdirs.user_state_dir())')
     # ensure that our mock e2e dirs exist
     for dir in "${CONFIG_HOME}" "${DATA_HOME}" "${STATE_HOME}" "${CACHE_HOME}"; do
@@ -158,13 +168,13 @@ test_list() {
 
     if [ "$GRANITE" -eq 1 ]; then
         step Listing the granite GGUF model only
-        ilab model list | grep granite-7b-lab-Q4_K_M.gguf
+        ilab model list | grep ${GRANITE_GGUF_REPO}
     elif [ "$MIXTRAL" -eq 1 ]; then
         step Listing the mixtral model only
-        ilab model list | grep mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
+        ilab model list | grep ${MIXTRAL_GGUF_REPO}
     else
         step Listing the merlinite GGUF model only
-        ilab model list | grep merlinite-7b-lab-Q4_K_M.gguf4
+        ilab model list | grep ${MERLINITE_GGUF_REPO}
     fi
 
     # regardless, download merl safetensors to test that capability
@@ -181,16 +191,16 @@ test_serve() {
     serve_args=()
     if [ "${model_type}" == "base" ]; then
         if [ "${BACKEND}" == "vllm" ]; then
-            model_path="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}/main/"
+            model_path="${MODEL_CACHE}/${HUGGINGFACE_DIR}/${GRANITE_SAFETENSOR_REPO}/main/"
         else    # if not using vLLM, use the GGUF for llama-cpp
-            model_path="${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab-GGUF/main/${GRANITE_GGUF_MODEL}"
+            model_path="${MODEL_CACHE}/${HUGGINGFACE_DIR}/${GRANITE_GGUF_REPO}/main/"
         fi
     elif [ "$model_type" == "teacher" ]; then
         if [ "${MIXTRAL}" -eq 1 ]; then
-            model_path="${CACHE_HOME}/instructlab/models/TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF/main/${MIXTRAL_GGUF_MODEL}"
-            SERVE_ARGS+=("--model-family" "mixtral")
+            model_path="${MODEL_CACHE}/${HUGGINGFACE_DIR}/${MIXTRAL_GGUF_REPO}/main/"
+            serve_args+=("--model-family" "mixtral")
         else
-            model_path="${CACHE_HOME}/instructlab/models/instructlab/merlinite-7b-lab-GGUF/main/${MERLINITE_GGUF_MODEL}"
+            model_path="${MODEL_CACHE}/${HUGGINGFACE_DIR}/${MERLINITE_GGUF_REPO}/main/"
         fi
     elif [ "$model_type" == "trained" ]; then
         model_path="${2:-}"

@@ -46,7 +46,7 @@ def determine_backend(model_path: pathlib.Path) -> Tuple[str, str]:
                 "If you want to run the model on a different system (e.g. macOS), please use a GGUF file."
             )
         # Check if the model is a GGUF model
-        elif is_model_gguf(model_path):
+        if is_model_gguf(model_path):
             logger.debug(f"Model is of GGUF format, using {LLAMA_CPP} backend.")
             return LLAMA_CPP, "model is of GGUF format."
 

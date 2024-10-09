@@ -28,12 +28,8 @@ logger = logging.getLogger(__name__)
 class ModelMetadata:
     """ "Definition for metadata that is stored for downloaded models"""
 
-    version: str
-    SHA: str
-    size: int
-
-    def __init__(self, version: str = "", SHA: str = "", size: int = 0) -> None:
-        self.version = version
+    def __init__(self, v: str = "", SHA: str = "", size: int = 0) -> None:
+        self.version = v
         self.SHA = SHA
         self.size = size
 
@@ -53,22 +49,24 @@ class Downloader(ABC):
         self.release = release
         self.download_dest = download_dest
         self.metadata = ModelMetadata()
+        self.metadata_filename = "metadata.json"
 
     @abstractmethod
     def download(self) -> None:
         """Downloads model from specified repo/release and stores it into download_dest"""
-        pass
 
     @abstractmethod
     def get_metadata(self) -> None:
         """Retrieves metadata for model to be downloaded"""
-        pass
 
     def dump_metadata(self, dest: Path) -> None:
         """Dumps metadata for downloaded model onto disk"""
-        print("@@@@@@@@@@@@")
-        with open(dest / "metadata.json", "w") as f:
-            json.dump(self.metadata.__dict__, f)
+        try:
+            with open(dest / self.metadata_filename, "w", encoding="utf-8") as f:
+                json.dump(self.metadata.__dict__, f)
+        except OSError as e:
+            # not blocking on failure to dump model metadata to disk
+            logger.error(f"Failed to dump model metadata for {dest}: {e}")
 
 
 class HFDownloader(Downloader):
@@ -91,12 +89,18 @@ class HFDownloader(Downloader):
         self.hf_prefix = "huggingface.co"
 
     @staticmethod
-    def _is_huggingface_repo(repo_name: str) -> bool:
-        repo_name = repo_name.removeprefix("huggingface.co/")
+    def _is_huggingface_repo(repo_name: str) -> tuple[bool, str]:
+        """
+        Checks if a provided repository follows the huggingface URL syntax, and extracts
+        the repository path if it does
+        """
         # allow alphanumerics, underscores, hyphens and periods in huggingface repo names
-        # repo name should be of the format <owner>/<model>
-        pattern = r"^[\w.-]+\/[\w.-]+$"
-        return re.match(pattern, repo_name) is not None
+        # repo name should be of the format <owner>/<model> or huggingface.co/<owner>/<model>
+        pattern = r"^(huggingface\.co\/)?([\w.-]+\/[\w.-]+)$"
+        match = re.search(pattern, repo_name)
+        if match:
+            return True, match.group(2)
+        return False, ""
 
     def get_metadata(self) -> None:
         self.metadata.version = self.release
@@ -118,20 +122,19 @@ class HFDownloader(Downloader):
             if self.filename is not None and self.filename == sibling.rfilename:
                 model_size = sibling.size
                 break
-            else:
-                model_size += sibling.size
+            model_size += sibling.size
 
         self.metadata.size = model_size
 
     def download(self):
-        # allow/encourage users to prefix HF model URLs with "huggingface.co" for consistency with other
-        # model source URLs and to align with the storage directory structure, but strip it off before making HF API calls
-        self.repository = self.repository.removeprefix(f"{self.hf_prefix}/")
-        self.get_metadata()
-
         """
         Download specified model from Hugging Face
         """
+        # allow/encourage users to prefix HF model URLs with "huggingface.co" for consistency with other
+        # model source URLs and to align with the storage directory structure, but strip it off before making HF API calls
+        _, self.repository = HFDownloader._is_huggingface_repo(self.repository)
+        self.get_metadata()
+
         click.echo(
             f"Downloading model from Hugging Face: {self.repository}@{self.release} to {self.download_dest}..."
         )
@@ -165,7 +168,6 @@ class HFDownloader(Downloader):
             raise click.exceptions.Exit(1)
 
     def download_gguf(self, destination: str) -> None:
-        print("********&&&&&^^^^^%%%%")
         try:
             hf_hub_download(
                 token=self.hf_token,
@@ -209,8 +211,10 @@ class OCIDownloader(Downloader):
     def get_metadata(self) -> None:
         self.metadata.version = self.release
 
-        # Run skopeo inspect to retrieve raw OCI manifest
+        # Check if skopeo is installed and the version is at least 1.9
         check_skopeo_version()
+
+        # Run skopeo inspect to retrieve raw OCI manifest
         command = [
             "skopeo",
             "inspect",
@@ -220,7 +224,7 @@ class OCIDownloader(Downloader):
         logger.debug(f"Running skopeo command: {command}")
 
         try:
-            result = subprocess.run(command, stdout=subprocess.PIPE)
+            result = subprocess.run(command, stdout=subprocess.PIPE, check=True)
         except subprocess.CalledProcessError as e:
             click.secho(
                 f"Failed to run skopeo command: {e}.\nstdout: {e.stdout}.\nstderr: {e.stderr}",
@@ -241,14 +245,19 @@ class OCIDownloader(Downloader):
         self.metadata.size = model_size
 
     @staticmethod
-    def _is_oci_repo(repo_url: str) -> bool:
+    def _is_oci_repo(repo_url: str) -> tuple[bool, str]:
         """
-        Checks if a provided repository follows the OCI registry URL syntax
+        Checks if a provided repository follows the OCI registry URL syntax, and extracts
+        the repository path if it does
         """
 
         # TODO: flesh this out and make it a more robust check
-        oci_url_prefix = "docker://"
-        return repo_url.startswith(oci_url_prefix)
+        # Define the regular expression to match "docker://" and extract the repo path
+        pattern = r"^docker://([^:]+)"
+        match = re.search(pattern, repo_url)
+        if match:
+            return True, match.group(1)
+        return False, ""
 
     @staticmethod
     def _extract_sha(sha: str):
@@ -312,9 +321,9 @@ class OCIDownloader(Downloader):
         # Try to isolate the path to where the model is stored via the URL and replicate that structure locally
         # If unable to do that for whatever reason, just use the model name and create a folder out of that
         model_sub_dirs = []
-        match = re.search("docker://(.*)", self.repository)
-        if match:
-            model_sub_dirs = match.group(1).split("/")
+        _, repo = OCIDownloader._is_oci_repo(self.repository)
+        if repo != "":
+            model_sub_dirs = repo.split("/")
             model_dest_dir = os.path.join(
                 self.download_dest, *model_sub_dirs, self.release
             )
@@ -325,9 +334,6 @@ class OCIDownloader(Downloader):
             oci_dir = f"{DEFAULTS.OCI_DIR}/{model_name}/{self.release}"
         os.makedirs(model_dest_dir, exist_ok=True)
         os.makedirs(oci_dir, exist_ok=True)
-
-        # Check if skopeo is installed and the version is at least 1.9
-        check_skopeo_version()
 
         command = [
             "skopeo",
@@ -413,27 +419,26 @@ def download(ctx, repository, release, filename, model_dir, hf_token):
     """Downloads model from a specified repository"""
     downloader = None
 
-    print("********&&&&&^^^^^%%%%")
-
     # raise an exception if user specified tag/SHA embedded in repository that conflicts with --release
-    match = re.search(r"^(?:[^:]*:){2}(.*)$", repository)
+    match = re.search(r"(.*):(\w+)$", repository)
     if match:
-        if release is not None and release != match.group(1):
+        if release is not None and release != match.group(2):
             click.secho(
-                f"Conflicting versions supplied: '{match.group(1)}' and {release}. Pkease specify one or the other.",
+                f"Conflicting versions supplied: '{match.group(2)}' and {release}. Pkease specify one or the other.",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
-        else:
-            release = match.group(1)
+        release = match.group(2)
+        repository = match.group(1)
     elif release is None:
+        logger.debug("no release specified, defaulting to 'main' ")
         release = "main"
 
-    if OCIDownloader._is_oci_repo(repository):
+    if OCIDownloader._is_oci_repo(repository)[0]:
         downloader = OCIDownloader(
             ctx=ctx, repository=repository, release=release, download_dest=model_dir
         )
-    elif HFDownloader._is_huggingface_repo(repository):
+    elif HFDownloader._is_huggingface_repo(repository)[0]:
         downloader = HFDownloader(
             ctx=ctx,
             repository=repository,

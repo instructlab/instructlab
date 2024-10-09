@@ -654,6 +654,7 @@ def print_table(headers: List[str], data: List[Tuple[str, ...]] | List[List[str]
     +--------+--------+-----+
     ```
     """
+
     column_widths = [
         max(len(str(row[i])) for row in data + [headers]) for i in range(len(headers))
     ]
@@ -665,27 +666,18 @@ def print_table(headers: List[str], data: List[Tuple[str, ...]] | List[List[str]
     for header, width in zip(headers, column_widths, strict=False):
         outputs.append(f" {header:{width}} ")
     print("|" + "|".join(outputs) + "|")
-    print(joining_line)
     for row in data:
+        # only print the joining line before a new model is printed
+        # if row[0] is empty it means we are printing information for
+        # a different version of a previously displayed model, so
+        # skip the joining line
+        if row[0] != "":
+            print(joining_line)
         outputs = []
         for item, width in zip(row, column_widths, strict=False):
             outputs.append(f" {item:{width}} ")
         print("|" + "|".join(outputs) + "|")
     print(joining_line)
-
-
-def get_size(target: Path) -> int:
-    """Returns the size in bytes for any specified file or folder"""
-    if os.path.isfile(target):
-        return Path(target).stat(follow_symlinks=True).st_size
-
-    # For directories, calculate the total size recursively
-    total_size = 0
-    for dirpath, _, filenames in os.walk(target):
-        for filename in filenames:
-            file_path = Path(dirpath) / filename
-            total_size += file_path.stat(follow_symlinks=True).st_size
-    return total_size
 
 
 def convert_bytes_to_proper_mag(f_size: int) -> Tuple[float, str]:
@@ -798,84 +790,89 @@ def is_model_gguf(model_path: pathlib.Path) -> bool:
                 )
                 return False
             except OSError as e:
-                logger.debug(f"An unexpected error occurred while processing {model_path}: {e}")
-                return False
-
-
-def _analyze_gguf(entry: Path) -> AnalyzeModelResult:
-    # stat the gguf, add it to the table
-    stat = Path(entry.absolute()).stat(follow_symlinks=False)
-    f_size = stat.st_size
-    adjusted_size, magnitude = convert_bytes_to_proper_mag(f_size)
-    # add to table
-    modification_time = os.path.getmtime(entry.absolute())
-    modification_time_readable = time.strftime(
-        "%Y-%m-%d %H:%M:%S", time.localtime(modification_time)
-    )
-    return (entry.name, modification_time_readable, f"{adjusted_size:.1f} {magnitude}")
-
-
-def _analyze_dir(
-    entry: Path, list_checkpoints: bool, directory: Path
-) -> List[AnalyzeModelResult]:
-    actual_model_name = ""
-    all_files_sizes = 0
-    add_model = False
-    models: List[AnalyzeModelResult] = []
-    # walk entire dir.
-    for root, _, files in os.walk(entry.as_posix()):
-        normalized_path = os.path.normpath(root)
-        # Split the path into its components
-        parts = normalized_path.split(os.sep)
-        # Get the last two or three (for checkpoints) parts and join them back into a path
-        printed_parts = os.path.join(parts[-2], parts[-1])
-        if directory == Path(DEFAULTS.CHECKPOINTS_DIR):
-            printed_parts = os.path.join(parts[-3], parts[-2], parts[-1])
-        # if this is a dir it could be:
-        # top level repo dir `instructlab/`
-        # top level model dir `instructlab/granite-7b-lab`
-        # checkpoint top level dir `step-19`
-        # any lower level dir: `instructlab/granite-7b-lab/.huggingface/download.....`
-        # so, check if model is valid Safetensor, GGUF, or list it regardless w/ `--list-checkpoints`
-        # if --list-checkpoints is specified, we will list all checkpoints in the checkpoints dir regardless of the validity
-        if is_model_safetensors(Path(normalized_path)) or is_model_gguf(
-            Path(normalized_path)
-        ):
-            actual_model_name = printed_parts
-            all_files_sizes = 0
-            add_model = True
-        else:
-            if list_checkpoints and directory is DEFAULTS.CHECKPOINTS_DIR:
-                logging.debug("Including model regardless of model validity")
-            else:
-                continue
-        for f in files:
-            # stat each file in the dir, add the size in Bytes, then convert to proper magnitude
-            full_file = os.path.join(root, f)
-            # do not follow symlinks, we only want to list the models dir ones
-            stat = Path(full_file).stat(follow_symlinks=True)
-            all_files_sizes += stat.st_size
-        adjusted_all_sizes, magnitude = convert_bytes_to_proper_mag(all_files_sizes)
-        if add_model:
-            # add to table
-            modification_time = os.path.getmtime(entry.absolute())
-            modification_time_readable = time.strftime(
-                "%Y-%m-%d %H:%M:%S", time.localtime(modification_time)
-            )
-            models.append(
-                (
-                    actual_model_name,
-                    modification_time_readable,
-                    f"{adjusted_all_sizes:.1f} {magnitude}",
+                logger.debug(
+                    f"An unexpected error occurred while processing {model_path}: {e}"
                 )
-            )
-    return models
+                return False
+    return True
+
+
+def get_size(target: Path) -> int:
+    """Returns the size in bytes for any specified file or folder"""
+    if os.path.isfile(target):
+        return Path(target).stat(follow_symlinks=True).st_size
+
+    # For directories, calculate the total size recursively
+    total_size = 0
+    for dirpath, _, filenames in os.walk(target):
+        for filename in filenames:
+            file_path = Path(dirpath) / filename
+            total_size += file_path.stat(follow_symlinks=True).st_size
+    return total_size
+
+
+def get_model_metadata(model_path: Path) -> dict:
+    """Iterates through a provided model directory to find a metadata.json file if present.
+    If found, it reads the file and extracts the version, SHA, size and last modified timestamp
+    of the model and returns it as a dict
+
+    Args:
+        model_path (Path): the path where the model directory is stored
+    Returns:
+        dict: Contains the version, SHA, size and last modified timestamp of the model
+    """
+    metadata: dict[str, str] = {}
+
+    try:
+        files = list(model_path.iterdir())
+    except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
+        logger.debug("Failed to read directory: %s", e)
+        return metadata
+
+    if not is_model_gguf(model_path) or is_model_safetensors(model_path):
+        logger.debug(f"Supplied model path {model_path} is not a valid model")
+        return metadata
+
+    last_modified = time.strftime(
+        "%Y-%m-%d %H:%M:%S", time.localtime(os.path.getmtime(model_path.absolute()))
+    )
+
+    # check if metadata.json file is present in supplied directory
+    basenames = {file.name for file in files}
+    required_files = {
+        "metadata.json",
+    }
+    diff = required_files.difference(basenames)
+    if diff:
+        logger.debug(
+            "no metadata file found for %s. Version information will not be available",
+            model_path,
+        )
+        metadata["version"] = "unknown"
+        metadata["SHA"] = "unknown"
+        metadata["size"] = str(get_size(model_path))
+        metadata["last_modified"] = last_modified
+        return metadata
+
+    try:
+        with open(model_path / "metadata.json", "r", encoding="utf-8") as metadata_file:
+            metadata.update(dict(json.load(metadata_file)))
+            metadata["last_modified"] = last_modified
+    except OSError as e:
+        logger.error(f"failed to load metadata file at {model_path}: {e}")
+        metadata["version"] = "unknown"
+        metadata["SHA"] = "unknown"
+        metadata["size"] = str(get_size(model_path))
+        metadata["last_modified"] = last_modified
+        return metadata
+
+    return metadata
 
 
 def list_models(
     model_dirs: List[Path], list_checkpoints: bool
-) -> List[AnalyzeModelResult]:
-    """Goes through a set of directories and returns all of the model
+) -> List[Tuple[str, str]]:
+    """Goes through a set of directories and returns all of the models
     found, including checkpoints if selected.
 
 
@@ -884,17 +881,20 @@ def list_models(
         list_checkpoints (bool): Whether or not we should include trained checkpoints.
 
     Returns:
-        List[AnalyzeResult]: Results of the listing operation.
+        List[Tuple[str, str]]: List of tuples representing all valid models found.
+        The tuples follow the format [<model's aboslute path>, <supplied root directory containing model>]
     """
+
+    valid_models: List[Tuple[str, str]] = []
+
     # if we want to list checkpoints, add that dir to our list
     if list_checkpoints:
         model_dirs.append(Path(DEFAULTS.CHECKPOINTS_DIR))
-    data: List[AnalyzeModelResult] = []
+
     for directory in model_dirs:
-        for entry in Path(directory).iterdir():
-            # if file, just tally the size. This must be a GGUF.
-            if entry.is_file() and is_model_gguf(entry):
-                data.append(_analyze_gguf(entry))
-            elif entry.is_dir():
-                data.extend(_analyze_dir(entry, list_checkpoints, directory))
-    return data
+        for root, _, _ in os.walk(directory.as_posix()):
+            if is_model_safetensors(Path(root)) or is_model_gguf(Path(root)):
+                valid_models.append((str(root), str(directory)))
+                continue
+
+    return valid_models
