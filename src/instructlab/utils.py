@@ -14,8 +14,10 @@ import pathlib
 import platform
 import re
 import shutil
+import struct
 import subprocess
 import tempfile
+import time
 
 # Third Party
 from git import Repo, exc
@@ -33,8 +35,11 @@ import yaml
 
 # Local
 from . import common
+from .defaults import DEFAULTS
 
 logger = logging.getLogger(__name__)
+
+AnalyzeModelResult = Tuple[str, str, str]
 
 
 class SDGTokens:
@@ -650,7 +655,7 @@ def load_json(file_path: Path):
         raise ValueError("unexpected error occurred") from e
 
 
-def print_table(headers: list[str], data: list[list[str]]):
+def print_table(headers: List[str], data: List[Tuple[str, ...]] | List[List[str]]):
     """
     Given a set of headers and corresponding dataset where the
     number of headers matches the length of each item in the given dataset.
@@ -709,3 +714,178 @@ def clear_directory(path: pathlib.Path) -> None:
     if path.exists():
         shutil.rmtree(path)
     os.makedirs(path)
+
+
+def is_model_safetensors(model_path: pathlib.Path) -> bool:
+    """Check if model_path is a valid safe tensors directory
+
+    Check if provided path to model represents directory containing a safetensors representation
+    of a model. Directory must contain a specific set of files to qualify as a safetensors model directory
+    Args:
+        model_path (Path): The path to the model directory
+    Returns:
+        bool: True if the model is a safetensors model, False otherwise.
+    """
+    try:
+        files = list(model_path.iterdir())
+    except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
+        logger.debug("Failed to read directory: %s", e)
+        return False
+
+    # directory should contain either .safetensors or .bin files to be considered valid
+    if not any(file.suffix in (".safetensors", ".bin") for file in files):
+        logger.debug("'%s' has no *.safetensors or *.bin files", model_path)
+        return False
+
+    basenames = {file.name for file in files}
+    requires_files = {
+        "config.json",
+        "tokenizer.json",
+        "tokenizer_config.json",
+    }
+    diff = requires_files.difference(basenames)
+    if diff:
+        logger.debug("'%s' is missing %s", model_path, diff)
+        return False
+
+    for file in model_path.glob("*.json"):
+        try:
+            with file.open(encoding="utf-8") as f:
+                json.load(f)
+        except (PermissionError, json.JSONDecodeError) as e:
+            logger.debug("'%s' is not a valid JSON file: e", file, e)
+            return False
+
+    # TODO: add check for safetensors file header (?)
+    return True
+
+
+def is_model_gguf(model_path: pathlib.Path) -> bool:
+    """
+    Check if the file is a GGUF file.
+    Args:
+        model_path (Path): The path to the file.
+    Returns:
+        bool: True if the file is a GGUF file, False otherwise.
+    """
+    # Third Party
+    from gguf.constants import GGUF_MAGIC
+
+    try:
+        with model_path.open("rb") as f:
+            first_four_bytes = f.read(4)
+
+        # Convert the first four bytes to an integer
+        first_four_bytes_int = int(struct.unpack("<I", first_four_bytes)[0])
+
+        return first_four_bytes_int == GGUF_MAGIC
+    except struct.error as e:
+        logger.debug(
+            f"Failed to unpack the first four bytes of {model_path}. "
+            f"The file might not be a valid GGUF file or is corrupted: {e}"
+        )
+        return False
+    except IsADirectoryError as e:
+        logger.debug(f"GGUF Path {model_path} is a directory, returning {e}")
+        return False
+    except OSError as e:
+        logger.debug(f"An unexpected error occurred while processing {model_path}: {e}")
+        return False
+
+
+def _analyze_gguf(entry: Path) -> AnalyzeModelResult:
+    # stat the gguf, add it to the table
+    stat = Path(entry.absolute()).stat(follow_symlinks=False)
+    f_size = stat.st_size
+    adjusted_size, magnitude = convert_bytes_to_proper_mag(f_size)
+    # add to table
+    modification_time = os.path.getmtime(entry.absolute())
+    modification_time_readable = time.strftime(
+        "%Y-%m-%d %H:%M:%S", time.localtime(modification_time)
+    )
+    return (entry.name, modification_time_readable, f"{adjusted_size:.1f} {magnitude}")
+
+
+def _analyze_dir(
+    entry: Path, list_checkpoints: bool, directory: Path
+) -> List[AnalyzeModelResult]:
+    actual_model_name = ""
+    all_files_sizes = 0
+    add_model = False
+    models: List[AnalyzeModelResult] = []
+    # walk entire dir.
+    for root, _, files in os.walk(entry.as_posix()):
+        normalized_path = os.path.normpath(root)
+        # Split the path into its components
+        parts = normalized_path.split(os.sep)
+        # Get the last two or three (for checkpoints) parts and join them back into a path
+        printed_parts = os.path.join(parts[-2], parts[-1])
+        if directory == Path(DEFAULTS.CHECKPOINTS_DIR):
+            printed_parts = os.path.join(parts[-3], parts[-2], parts[-1])
+        # if this is a dir it could be:
+        # top level repo dir `instructlab/`
+        # top level model dir `instructlab/granite-7b-lab`
+        # checkpoint top level dir `step-19`
+        # any lower level dir: `instructlab/granite-7b-lab/.huggingface/download.....`
+        # so, check if model is valid Safetensor, GGUF, or list it regardless w/ `--list-checkpoints`
+        # if --list-checkpoints is specified, we will list all checkpoints in the checkpoints dir regardless of the validity
+        if is_model_safetensors(Path(normalized_path)) or is_model_gguf(
+            Path(normalized_path)
+        ):
+            actual_model_name = printed_parts
+            all_files_sizes = 0
+            add_model = True
+        else:
+            if list_checkpoints and directory is DEFAULTS.CHECKPOINTS_DIR:
+                logging.debug("Including model regardless of model validity")
+            else:
+                continue
+        for f in files:
+            # stat each file in the dir, add the size in Bytes, then convert to proper magnitude
+            full_file = os.path.join(root, f)
+            # do not follow symlinks, we only want to list the models dir ones
+            stat = Path(full_file).stat(follow_symlinks=True)
+            all_files_sizes += stat.st_size
+        adjusted_all_sizes, magnitude = convert_bytes_to_proper_mag(all_files_sizes)
+        if add_model:
+            # add to table
+            modification_time = os.path.getmtime(entry.absolute())
+            modification_time_readable = time.strftime(
+                "%Y-%m-%d %H:%M:%S", time.localtime(modification_time)
+            )
+            models.append(
+                (
+                    actual_model_name,
+                    modification_time_readable,
+                    f"{adjusted_all_sizes:.1f} {magnitude}",
+                )
+            )
+    return models
+
+
+def list_models(
+    model_dirs: List[Path], list_checkpoints: bool
+) -> List[AnalyzeModelResult]:
+    """Goes through a set of directories and returns all of the model
+    found, including checkpoints if selected.
+
+
+    Args:
+        model_dirs (List[Path]): List of base directories to search through.
+        list_checkpoints (bool): Whether or not we should include trained checkpoints.
+
+    Returns:
+        List[AnalyzeResult]: Results of the listing operation.
+    """
+    # if we want to list checkpoints, add that dir to our list
+    if list_checkpoints:
+        model_dirs.append(Path(DEFAULTS.CHECKPOINTS_DIR))
+    data: List[AnalyzeModelResult] = []
+    for directory in model_dirs:
+        for entry in Path(directory).iterdir():
+            # if file, just tally the size. This must be a GGUF.
+            if entry.is_file() and is_model_gguf(entry):
+                data.append(_analyze_gguf(entry))
+            elif entry.is_dir():
+                data.extend(_analyze_dir(entry, list_checkpoints, directory))
+    return data
