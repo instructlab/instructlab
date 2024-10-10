@@ -508,6 +508,10 @@ class _train(BaseModel):
         default=None,
         description="Optional path to a yaml file that tracks the progress of multiphase training.",
     )
+    lora_enabled: bool | None = Field(
+        default=False,
+        description="Enable or disable LoRA optimization during training phase",
+    )
 
 
 class Config(BaseModel):
@@ -571,6 +575,7 @@ EIGHT_GPU_TRAIN_AH = _train(
     deepspeed_cpu_offload_optimizer=False,
     is_padding_free=True,
     num_epochs=8,
+    lora_enabled = False,
     model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
@@ -594,6 +599,7 @@ FOUR_GPU_TRAIN_AH = _train(
     deepspeed_cpu_offload_optimizer=False,
     is_padding_free=True,
     num_epochs=8,
+    lora_enabled = False,
     model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
@@ -619,6 +625,7 @@ TWO_GPU_TRAIN_AH = _train(
     deepspeed_cpu_offload_optimizer=True,
     is_padding_free=True,
     num_epochs=8,
+    lora_enabled = False,
     model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
@@ -642,6 +649,7 @@ EIGHT_L_FORTY_GPU = _train(
     deepspeed_cpu_offload_optimizer=False,
     is_padding_free=True,
     num_epochs=8,
+    lora_enabled = False,
     model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
@@ -667,6 +675,7 @@ FOUR_L_FORTY_GPU = _train(
     num_epochs=8,
     deepspeed_cpu_offload_optimizer=True,
     is_padding_free=True,
+    lora_enabled = False,
     model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
@@ -692,6 +701,7 @@ EIGHT_L_FOUR_GPU = _train(
     num_epochs=8,
     deepspeed_cpu_offload_optimizer=True,
     is_padding_free=True,
+    lora_enabled = False,
     model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
@@ -717,6 +727,7 @@ SINGLE_SERVER_GPU_TRAIN = _train(
     deepspeed_cpu_offload_optimizer=True,
     is_padding_free=True,
     num_epochs=8,
+    lora_enabled = False,
     model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
@@ -742,6 +753,7 @@ SINGLE_CONSUMER_GPU_TRAIN = _train(
     deepspeed_cpu_offload_optimizer=True,
     is_padding_free=True,
     num_epochs=5,
+    lora_enabled = False,
     model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
@@ -768,6 +780,7 @@ MULTI_CONSUMER_GPU_TRAIN = _train(
     deepspeed_cpu_offload_optimizer=True,
     is_padding_free=True,
     num_epochs=5,
+    lora_enabled = False,
     model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
@@ -794,6 +807,7 @@ SINGLE_L4 = _train(
     deepspeed_cpu_offload_optimizer=True,
     is_padding_free=True,
     num_epochs=5,
+    lora_enabled = False,
     model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
@@ -819,6 +833,7 @@ SINGLE_L40 = _train(
     deepspeed_cpu_offload_optimizer=True,
     is_padding_free=True,
     num_epochs=5,
+    lora_enabled = False,
     model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
@@ -844,6 +859,7 @@ SINGLE_A100_H100 = _train(
     deepspeed_cpu_offload_optimizer=True,
     is_padding_free=True,
     num_epochs=8,
+    lora_enabled = False,
     model_path=os.path.join(DEFAULTS._cache_home, "models/instructlab/granite-7b-lab"),
 )
 
@@ -1286,10 +1302,9 @@ def map_train_to_library(ctx, params):
     )
 
     lora_args = LoraOptions(rank=0)
-    lora_enabled = False
+    lora_enabled = params["lora_enabled"]
     lora_options = False
     if params["lora_rank"]:
-        lora_enabled = True
         lora_args.rank = params["lora_rank"]
     if params["lora_alpha"] is not None:
         lora_options = True
