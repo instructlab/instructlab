@@ -58,11 +58,11 @@ You'll want to add a few options to ensure it gets installed over the
 existing package, has the desired backend, and the correct version.
 
 ```shell
-pip install --force-reinstall --no-deps llama_cpp_python==0.2.79 -C cmake.args="-DLLAMA_$BACKEND=on"
+pip install --force-reinstall --no-deps llama_cpp_python==0.2.79 -C cmake.args="-DGGML_$BACKEND=on"
 ```
 
 where `$BACKEND` is one of `HIPBLAS` (ROCm), `CUDA`, `METAL`
-(Apple Silicon MPS), `CLBLAST` (OpenCL), or another backend listed in
+(Apple Silicon MPS), or another backend listed in
 llama-cpp-python's documentation.
 
 ### Nvidia/CUDA
@@ -126,7 +126,7 @@ export PATH=$PATH:$CUDA_HOME/bin
 
 # Recompile llama-cpp-python using CUDA
 pip cache remove llama_cpp_python
-pip install --force-reinstall --no-deps llama_cpp_python==0.2.79 -C cmake.args="-DLLAMA_CUDA=on"
+pip install --force-reinstall --no-deps llama_cpp_python==0.2.79 -C cmake.args="-DGGML_CUDA=on"
 
 # Re-install InstructLab
 pip install ./instructlab[cuda]
@@ -139,7 +139,7 @@ supports GCC v14.1+.
 ```shell
 # Recompile llama-cpp-python using CUDA
 sudo dnf install clang17
-CUDAHOSTCXX=$(which clang++-17) pip install --force-reinstall llama_cpp_python==0.2.79 -C cmake.args="-DLLAMA_CUDA=on"
+CUDAHOSTCXX=$(which clang++-17) pip install --force-reinstall llama_cpp_python==0.2.79 -C cmake.args="-DGGML_CUDA=on"
 ```
 
 Proceed to the `Initialize` section of
@@ -224,14 +224,14 @@ we'll include that in our build command as follows:
 ```shell
 export PATH=/opt/rocm/llvm/bin:$PATH
 pip cache remove llama_cpp_python
-CMAKE_ARGS="-DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER='/opt/rocm/llvm/bin/clang' -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ -DCMAKE_PREFIX_PATH=/opt/rocm -DAMDGPU_TARGETS=gfx1100" FORCE_CMAKE=1 pip install --force-reinstall llama_cpp_python==0.2.79
+CMAKE_ARGS="-DGGML_HIPBLAS=on -DCMAKE_C_COMPILER='/opt/rocm/llvm/bin/clang' -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ -DCMAKE_PREFIX_PATH=/opt/rocm -DAMDGPU_TARGETS=gfx1100" FORCE_CMAKE=1 pip install --force-reinstall llama_cpp_python==0.2.79
 ```
 
 > **Note:** This is explicitly forcing the build to use the ROCm compilers and
 > prefix path for dependency resolution in the CMake build.  This works around
 > an issue in the CMake and ROCm version in Fedora 39 and below and is fixed in
 > Fedora 40.  With Fedora 40's ROCm packages, use
-> `CMAKE_ARGS="-DLLAMA_HIPBLAS=on -DCMAKE_C_COMPILER=/usr/bin/clang
+> `CMAKE_ARGS="-DGGML_HIPBLAS=on -DCMAKE_C_COMPILER=/usr/bin/clang
 > -DCMAKE_CXX_COMPILER=/usr/bin/clang++ -DAMDGPU_TARGETS=gfx1100"` instead.
 
 Once that package is installed, recompile `ilab` with `pip install .[rocm]`.  You also
@@ -246,13 +246,13 @@ to use use supported `gfx1030` version.  The environment variable
 
 Now you can skip to the `Testing` section.
 
-#### CLBlast (OpenCL)
+#### OpenBLAS (CPU)
 
-Your final command should look like so (this uses `CLBlast`):
+Your final command should look like so (this uses `OpenBLAS`):
 
 ```shell
 pip cache remove llama_cpp_python
-pip install --force-reinstall llama_cpp_python==0.2.79 -C cmake.args="-DLLAMA_CLBLAST=on"
+pip install --force-reinstall llama_cpp_python==0.2.79 -C cmake.args="-DGGML_BLAS=on -DGGML_BLAS_VENDOR=OpenBLAS"
 ```
 
 Once that package is installed, recompile `ilab` with `pip install .` and skip
@@ -272,7 +272,7 @@ add a few options to ensure it gets installed over the existing package:
 
 ```shell
 pip cache remove llama_cpp_python
-pip install --force-reinstall llama_cpp_python==0.2.79 -C cmake.args="-DLLAMA_METAL=on"
+pip install --force-reinstall llama_cpp_python==0.2.79 -C cmake.args="-DGGML_METAL=on"
 ```
 
 Once that package is installed, recompile `ilab` with `pip install .[mps]` and skip
