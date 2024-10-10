@@ -459,6 +459,28 @@ def test_invalid_model_mmlu(cli_runner: CliRunner):
     assert result.exit_code != 0
 
 
+def test_invalid_gguf_model_mmlu(cli_runner: CliRunner):
+    with open("model.gguf", "w", encoding="utf-8") as gguf_file:
+        gguf_file.write("")
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "mmlu",
+            "--model",
+            "model.gguf",
+        ],
+    )
+    assert (
+        "MMLU and MMLUBranch can currently only be used with a safetensors directory"
+        in result.output
+    )
+    assert result.exit_code != 0
+
+
 @patch("instructlab.model.evaluate.validate_model")
 @patch(
     "instructlab.eval.mmlu.MMLUEvaluator",
