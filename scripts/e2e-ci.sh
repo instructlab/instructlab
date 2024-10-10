@@ -11,6 +11,7 @@ set -xeuf
 # generic globals
 BOLD='\033[1m'
 NC='\033[0m' # No Color
+PRESERVE=0
 
 # path and token globals
 SCRIPTDIR=$(dirname "$0")
@@ -401,12 +402,13 @@ usage() {
     echo "Usage: $0 [-m] [-l] [-h]"
     echo "  -m  Run medium t-shirt size job"
     echo "  -l  Run large t-shirt size job"
+    echo "  -p  Preserve the E2E_TEST_DIR for debugging"
     echo "  -h  Show this help text"
 }
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "mlh" opt; do
+while getopts "mlph" opt; do
     case $opt in
         m)
             MEDIUM=1
@@ -415,6 +417,10 @@ while getopts "mlh" opt; do
         l)
             LARGE=1
             step "Run large T-shirt size job."
+            ;;
+        p)
+            PRESERVE=1
+            step "Preserve the E2E_TEST_DIR for debugging."
             ;;
         h)
             usage
@@ -430,5 +436,7 @@ done
 
 check_flags
 init_e2e_tests
-trap 'rm -rf "${E2E_TEST_DIR}"' EXIT
+if [ "$PRESERVE" -eq 0 ]; then
+    trap 'rm -rf "${E2E_TEST_DIR}"' EXIT
+fi
 test_exec

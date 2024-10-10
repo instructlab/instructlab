@@ -64,6 +64,7 @@ script. Support for the recommended workflow for the small t-shirt size will be 
 | --- | --- |
 | `m` | Run the e2e workflow for the medium t-shirt size of hardware |
 | `l` | Run the e2e workflow for the large t-shirt size of hardware |
+| `p` | Preserve the E2E_TEST_DIR for debugging |
 
 ### Current E2E Jobs
 
