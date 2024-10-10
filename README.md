@@ -140,6 +140,8 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       > that the build is done without Apple M-series GPU support.
       >
       > `(venv) $ CMAKE_ARGS="-DLLAMA_METAL=off" pip install ...`
+      >
+      > You can also quickly install using [setup script for MacOS](https://raw.githubusercontent.com/instructlab/instructlab/refs/heads/main/scripts/setup-ilab-mac.sh).
 
    #### Install with AMD ROCm
 
@@ -172,6 +174,8 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       pip cache remove llama_cpp_python
       pip install 'instructlab[mps]'
       ```
+
+      You can also quickly install using [setup script for MacOS](https://raw.githubusercontent.com/instructlab/instructlab/refs/heads/main/scripts/setup-ilab-mac.sh).
 
    #### Install with Nvidia CUDA
 
