@@ -53,7 +53,10 @@ check_flags() {
 
 init_e2e_tests() {
     E2E_TEST_DIR=$(mktemp -d)
-    HOME="${E2E_TEST_DIR}"  # update the HOME directory used to resolve paths
+    # Setting the value of $HOME must be done via `export`.
+    # Without setting $HOME with `export`, the new value of $HOME
+    # might not be seen by platformdirs in python
+    export HOME="${E2E_TEST_DIR}"  # update the HOME directory used to resolve paths
 
     CONFIG_HOME=$(python -c 'import platformdirs; print(platformdirs.user_config_dir())')
     DATA_HOME=$(python -c 'import platformdirs; print(platformdirs.user_data_dir())')
