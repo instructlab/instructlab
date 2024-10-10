@@ -126,18 +126,18 @@ jobs:
       - name: Install Packages
         run: |
           cat /etc/os-release
-          sudo dnf install -y gcc gcc-c++ make git python3.11 python3.11-devel
+          sudo dnf install -y gcc gcc-c++ make git python3.12 python3.12-devel
 
       - name: Install ilab
         run: |
           export PATH="/home/ec2-user/.local/bin:/usr/local/cuda/bin:$PATH"
-          python3.11 -m venv --upgrade-deps venv
+          python3.12 -m venv --upgrade-deps venv
           . venv/bin/activate
           sed 's/\[.*\]//' requirements.txt > constraints.txt
-          python3.11 -m pip cache remove llama_cpp_python
-          CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3.11 -m pip install --force-reinstall --no-binary llama_cpp_python -c constraints.txt llama_cpp_python
-          python3.11 -m pip install bitsandbytes
-          python3.11 -m pip install ${{ github.event.inputs.ilab_install_target }}
+          python3.12 -m pip cache remove llama_cpp_python
+          CMAKE_ARGS="-DLLAMA_CUBLAS=on" python3.12 -m pip install --force-reinstall --no-binary llama_cpp_python -c constraints.txt llama_cpp_python
+          python3.12 -m pip install bitsandbytes
+          python3.12 -m pip install ${{ github.event.inputs.ilab_install_target }}
 
       - name: Check disk
         run: |

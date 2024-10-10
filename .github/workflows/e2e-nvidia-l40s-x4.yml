@@ -119,24 +119,24 @@ jobs:
       - name: Install Packages
         run: |
           cat /etc/os-release
-          sudo dnf install -y gcc gcc-c++ make git python3.11 python3.11-devel
+          sudo dnf install -y gcc gcc-c++ make git python3.12 python3.12-devel
 
       - name: Install ilab
         run: |
           export CUDA_HOME="/usr/local/cuda"
           export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64"
           export PATH="$PATH:$CUDA_HOME/bin"
-          python3.11 -m venv --upgrade-deps venv
+          python3.12 -m venv --upgrade-deps venv
           . venv/bin/activate
           nvidia-smi
-          python3.11 -m pip cache remove llama_cpp_python
+          python3.12 -m pip cache remove llama_cpp_python
 
-          CMAKE_ARGS="-DLLAMA_CUDA=on" python3.11 -m pip install .
+          CMAKE_ARGS="-DLLAMA_CUDA=on" python3.12 -m pip install .
 
           # https://github.com/instructlab/instructlab/issues/1821
           # install with Torch and build dependencies installed
-          python3.11 -m pip install packaging wheel setuptools-scm
-          python3.11 -m pip install .[cuda] -r requirements-vllm-cuda.txt
+          python3.12 -m pip install packaging wheel setuptools-scm
+          python3.12 -m pip install .[cuda] -r requirements-vllm-cuda.txt
 
       - name: Check disk
         run: |

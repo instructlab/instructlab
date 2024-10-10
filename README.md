@@ -85,7 +85,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 - **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora).
   We anticipate support for more operating systems in the future.
 - C++ compiler
-- Python 3.10 or Python 3.11
+- Python 3.10 or Python 3.11 or Python 3.12
 - Approximately 60GB disk space (entire process)
 
 > **NOTE:** Python 3.12 is currently not supported, because some dependencies don't work on Python 3.12, yet.
@@ -96,10 +96,10 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 ### 🧰 Installing `ilab`
 
-1. When installing on Fedora Linux, install C++, Python 3.10 or 3.11, and other necessary tools by running the following command:
+1. When installing on Fedora Linux, install C++, Python 3.10 or 3.11 or 3.12, and other necessary tools by running the following command:
 
    ```shell
-   sudo dnf install gcc gcc-c++ make git python3.11 python3.11-devel
+   sudo dnf install gcc gcc-c++ make git python3.12 python3.12-devel
    ```
 
    If you are running on macOS, this installation is not necessary and you can begin your process with the following step.
@@ -117,7 +117,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 3. There are a few ways you can locally install the `ilab` CLI. Select your preferred installation method from the following instructions. You can then install `ilab` and activate your `venv` environment.
 
-   > **NOTE**: ⏳ The `python3` binary shown in the following steps is the Python version that you installed in the above step. The command can also be `python3.11` or `python3.10` instead of `python3`. You can check Python's version by `python3 -V`.
+   > **NOTE**: ⏳ The `python3` binary shown in the following steps is the Python version that you installed in the above step. The command can also be `python3.12` or `python3.10` instead of `python3`. You can check Python's version by `python3 -V`.
    >
    > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection. In case installation fails with error ``unsupported instruction `vpdpbusd'``, append `-C cmake.args="-DLLAMA_NATIVE=off"` to `pip install` command.
 
@@ -560,7 +560,7 @@ Before following these instructions, ensure the existing model you are adding sk
    ```shell
    (venv) $ ilab data generate
    INFO 2024-07-30 19:57:44,093 numexpr.utils:161: NumExpr defaulting to 8 threads.
-   INFO 2024-07-30 19:57:44,452 datasets:58: PyTorch version 2.3.1 available.
+   INFO 2024-07-30 19:57:44,452 datasets:58: PyTorch version 2.4.1 available.
    Generating synthetic data using 'simple' pipeline, '$HOME/.cache/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf' model, './taxonomy' taxonomy, against http://localhost:8000/v1 server
    INFO 2024-07-30 19:57:45,084 instructlab.sdg:375: Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help.
    INFO 2024-07-30 19:57:45,090 instructlab.sdg.pipeline:153: Running pipeline single-threaded

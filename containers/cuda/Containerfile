@@ -13,7 +13,7 @@ ARG CUDA_VERSION=12.4.1
 ARG CUDA_DASHED_VERSION=12-4
 ARG CUDA_MAJOR_VERSION=12
 ARG CUDA_MINOR_VERSION=12.4
-ARG CUDNN_MAJOR_VERSION=8
+ARG CUDNN_MAJOR_VERSION=9
 
 # /opt/app-root structure (same as s2i-core and ubi9/python-311)
 ENV APP_ROOT=/opt/app-root \
@@ -21,7 +21,7 @@ ENV APP_ROOT=/opt/app-root \
     PATH=/opt/app-root/src/bin:/opt/app-root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Python, pip, and virtual env settings
-ARG PYTHON_VERSION=3.11
+ARG PYTHON_VERSION=3.12
 ENV PYTHON_VERSION=${PYTHON_VERSION} \
     PYTHON=python${PYTHON_VERSION} \
     PIP_NO_CACHE_DIR=off \
@@ -128,7 +128,7 @@ RUN dnf install -y --nodocs \
         cuda-compat-${CUDA_DASHED_VERSION} \
         cuda-minimal-build-${CUDA_DASHED_VERSION} \
         cuda-toolkit-${CUDA_DASHED_VERSION} \
-        libcudnn${CUDNN_MAJOR_VERSION} \
+        libcudnn${CUDNN_MAJOR_VERSION}-cuda-${CUDA_MAJOR_VERSION} \
         libnccl \
         libcutensor2 \
     && dnf clean all \
@@ -186,7 +186,7 @@ RUN source ${VIRTUAL_ENV}/bin/activate \
     && pip install torch psutil \
     && pip install flash_attn --no-build-isolation \
     && pip install "${INSTRUCTLAB_PKG}" -C cmake.args="-DLLAMA_CUDA=on" -C cmake.args="-DLLAMA_NATIVE=off" \
-    && pip install vllm@git+https://github.com/opendatahub-io/vllm@2024.08.01
+    && pip install vllm@git+https://github.com/opendatahub-io/vllm@v0.6.2
 
 ENV TORCH_HOME="${VIRTUAL_ENV}/lib64/${PYTHON}/site-packages/torch"
 ENV PYTORCH_HOME="${VIRTUAL_ENV}/lib64/${PYTHON}/site-packages/torch"
