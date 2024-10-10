@@ -155,7 +155,6 @@ def report_hpu_device(args_device: torch.device) -> None:
 
 
 def linux_train(
-    ctx: click.Context,
     train_file: Path,
     test_file: Path,
     model_name: str,
@@ -169,15 +168,21 @@ def linux_train(
     try:
         device = torch.device(train_device)
     except RuntimeError as e:
-        ctx.fail(str(e))
+        click.secho(
+            str(e),
+            fg="red",
+        )
+        raise click.exceptions.Exit(1)
 
     # Detect CUDA/ROCm device
     if device.type == "cuda":
         if not torch.cuda.is_available():
-            ctx.fail(
+            click.secho(
                 f"{device.type}: Torch has no CUDA/ROCm support or could not detect "
-                "a compatible device."
+                "a compatible device.",
+                fg="red",
             )
+            raise click.exceptions.Exit(1)
         # map unqualified 'cuda' to current device
         if device.index is None:
             device = torch.device(device.type, torch.cuda.current_device())
@@ -191,7 +196,8 @@ def linux_train(
         )
 
     if four_bit_quant and device.type != "cuda":
-        ctx.fail("'--4-bit-quant' option requires '--device=cuda'")
+        click.secho("'--4-bit-quant' option requires '--device=cuda'", fg="red")
+        raise click.exceptions.Exit(1)
 
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", num_epochs)
     print("LINUX_TRAIN.PY: TRAIN FILE IS: ", train_file)
@@ -209,9 +215,12 @@ def linux_train(
         report_cuda_device(device, min_vram)
     elif device.type == "hpu":
         if htcore is None:
-            ctx.fail("habana_framework package is not installed.")
+            click.secho("habana_framework package is not installed.", fg="red")
+            raise click.exceptions.Exit(1)
         if not hpu.is_available():
-            ctx.fail("habana_framework is unable to detect HPUs.")
+            click.secho("habana_framework is unable to detect HPUs.", fg="red")
+            raise click.exceptions.Exit(1)
+
         hpu.init()
         report_hpu_device(device)
 
@@ -226,7 +235,8 @@ def linux_train(
         train_dataset = ensure_legacy_dataset(train_dataset)
         test_dataset = ensure_legacy_dataset(test_dataset)
     except ValueError as e:
-        ctx.fail(f"Failed to parse dataset: {e}")
+        click.secho(f"Failed to parse dataset: {e}", fg="red")
+        raise click.exceptions.Exit(1)
 
     train_dataset.to_pandas().head()
 
