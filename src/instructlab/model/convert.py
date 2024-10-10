@@ -93,9 +93,6 @@ def convert(
         )
         raise click.exceptions.Exit(1)
 
-    logger.info(f"deleting {source_model_dir}...")
-    shutil.rmtree(source_model_dir)
-
     model_dir_fused_pt = f"{model_name}-trained"
     # this converts MLX to PyTorch
     convert_between_mlx_and_pytorch(
@@ -124,3 +121,6 @@ def convert(
 
     logger.info(f"deleting {model_dir_fused_pt}/{model_name}.gguf...")
     os.remove(os.path.join(model_dir_fused_pt, f"{model_name}.gguf"))
+
+    logger.info(f"deleting {source_model_dir}...")
+    shutil.rmtree(source_model_dir)
