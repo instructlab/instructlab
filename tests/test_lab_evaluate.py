@@ -129,7 +129,7 @@ def run_mt_bench(cli_runner, error_rate):
             {round(error_rate, 2)}
             """
         )
-    assert result.output == expected
+    assert expected.endswith(result.output)
 
 
 def run_mt_bench_branch(cli_runner, error_rate):
@@ -195,7 +195,7 @@ def run_mt_bench_branch(cli_runner, error_rate):
             {round(error_rate, 2)}
             """
         )
-    assert result.output == expected
+    assert expected.endswith(result.output)
 
 
 @patch("instructlab.model.evaluate.validate_model")
@@ -304,7 +304,7 @@ def test_evaluate_mmlu(
         task2 - 0.9
         """
     )
-    assert result.output == expected
+    assert expected.endswith(result.output)
 
 
 @patch("instructlab.model.evaluate.validate_model")
@@ -364,7 +364,7 @@ def test_evaluate_mmlu_branch(
         1. task5 (0.5)
         """
     )
-    assert result.output == expected
+    assert expected.endswith(result.output)
 
 
 @patch("instructlab.model.evaluate.validate_model")
@@ -380,8 +380,8 @@ def test_no_model_mt_bench(_, cli_runner: CliRunner):
         ],
     )
     assert (
-        result.output
-        == "Benchmark mt_bench requires the following args to be set: ['model', 'judge-model']\n"
+        "Benchmark mt_bench requires the following args to be set: ['model', 'judge-model']\n"
+        in result.output
     )
     assert result.exit_code != 0
 
@@ -639,3 +639,31 @@ def test_vllm_args_null(_, cli_runner: CliRunner):
         ],
     )
     common.assert_tps(args, "4")
+
+
+@patch(
+    "instructlab.eval.mmlu.MMLUEvaluator.run",
+    return_value=(0.5, {"task1": {"score": 0.1}, "task2": {"score": 0.9}}),
+)
+def test_no_gpu_warning(run_mock, cli_runner: CliRunner):
+    fname = common.setup_gpus_config(section_path="serve", vllm_args=lambda: None)
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            f"--config={fname}",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "mmlu",
+            "--model",
+            "instructlab/granite-7b-lab",
+            "--backend",
+            "vllm",
+        ],
+    )
+    run_mock.assert_called_once()
+    assert result.exit_code == 0
+    assert (
+        "Evaluate is currently not configured to use GPUs. If you are on a GPU-enabled system edit your config or pass the number of GPUs you would like to use with '--gpus'"
+        in result.output
+    )
