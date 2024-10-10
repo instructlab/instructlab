@@ -11,26 +11,25 @@ and `llama-cpp-python`. In short, you'll need to replace the default versions of
 these packages with versions that have been compiled for GPU-specific support,
 recompile `ilab`, then run it.
 
-## Python 3.11 (Linux only)
+## Python 3.12 (Linux only)
 
 > **NOTE:** This section may be outdated. At least AMD ROCm works fine with
-> Python 3.12 and Torch 2.2.1+rocm5.7 binaries.
+> Python 3.12 and Torch 2.4.1+rocm6.1 binaries.
 
-Unfortunately, at the time of writing, `torch` does not have GPU-specific
-support for the latest Python (3.12), so if you're on Linux, it's recommended
-to set up a Python 3.11-specific `venv` and install `ilab` to that to minimize
-issues. (MacOS ships Python 3.9, so this step shouldn't be necessary.) Here's
+To avoid unexpected conflict with your operating system Python, it's recommended
+to set up a Python 3.12-specific `venv` and install `ilab` to that. (MacOS ships
+Python 3.9, so this step shouldn't be necessary.) Here's
 how to do that on Fedora with `dnf`:
 
   ```shell
-  # Install Python 3.11
-  sudo dnf install python3.11 python3.11-devel
+  # Install Python 3.12
+  sudo dnf install python3.12 python3.12-devel
 
   # Remove old venv from instructlab/ directory (if it exists)
   rm -r venv
 
-  # Create and activate new Python 3.11 venv
-  python3.11 -m venv venv
+  # Create and activate new Python 3.12 venv
+  python3.12 -m venv venv
   source venv/bin/activate
 
   # Install lab (assumes a locally-cloned repo)
@@ -40,7 +39,7 @@ how to do that on Fedora with `dnf`:
   pip install ./instructlab[cuda]
   ```
 
-With Python 3.11 installed, it's time to replace some packages!
+With Python 3.12 installed, it's time to replace some packages!
 
 ### llama-cpp-python backends
 
@@ -50,9 +49,9 @@ the [supported backends](https://github.com/abetlen/llama-cpp-python/tree/v0.2.7
 Whichever backend you choose, you'll see a `pip install` command. First
 you have to purge pip's wheel cache to force a rebuild of llama-cpp-python:
 
- ```shell
- pip cache remove llama_cpp_python
- ```
+```shell
+pip cache remove llama_cpp_python
+```
 
 You'll want to add a few options to ensure it gets installed over the
 existing package, has the desired backend, and the correct version.
@@ -168,10 +167,10 @@ The most convenient approach is the [ROCm toolbox container](amd-rocm.md). The c
 
 Visit [PyTorch "Get Started Locally" page](https://pytorch.org/get-started/locally/)
 and use the matrix installer tool to find the ROCm package. `Stable, Linux, Pip,
-Python, ROCm 5.7` in the matrix installer spits out the following command:
+Python, ROCm 6.1` in the matrix installer spits out the following command:
 
 ```shell
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.0
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.1
 ```
 
 You don't need `torchvision` or `torchaudio`, so get rid of those. You also want
@@ -181,7 +180,7 @@ that doesn't have GPU support, so you should add these options:
 Run it to install the new version of `torch`.
 
 ```shell
-pip install torch --force-reinstall --no-cache-dir --index-url https://download.pytorch.org/whl/rocm6.0
+pip install torch --force-reinstall --no-cache-dir --index-url https://download.pytorch.org/whl/rocm6.1
 ```
 
 With that done, it's time to move on to `llama-cpp-python`.
@@ -192,10 +191,7 @@ If using hipBLAS you may need to install additional ROCm and hipBLAS
 Dependencies:
 
 ```shell
-# Optionally enable repo.radeon.com repository, available through AMD documentation or Radeon Software for Linux for RHEL 9.3 at https://www.amd.com/en/support/linux-drivers
-# The above will get you the latest 6.x drivers, and will not work with rocm5.7 pytorch
-# to grab rocm 5.7 drivers: https://repo.radeon.com/amdgpu-install/23.30.3/rhel/9.2/
-# ROCm Dependencies
+# Optionally enable repo.radeon.com repository, available through AMD documentation or Radeon Software for Linux for RHEL 9.4 at https://www.amd.com/en/support/linux-drivers
 sudo dnf install rocm-dev rocm-utils rocm-llvm rocminfo
 
 # hipBLAS dependencies
@@ -309,7 +305,7 @@ True
 ```python
 >>> import llama
 >>> llama_cpp.__version__
-'0.2.56'
+'0.2.79'
 >>> llama_cpp.llama_supports_gpu_offload()
 True
 >>> llama_cpp.llama_backend_init()

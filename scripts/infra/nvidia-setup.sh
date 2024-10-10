@@ -46,7 +46,7 @@ WantedBy=multi-user.target
 FILEEOF
 
 rm -rf yum-packaging-precompiled-kmod
-dnf install libicu podman skopeo git rpm-build make openssl elfutils-libelf-devel python3.11 python3.11-devel -y
+dnf install libicu podman skopeo git rpm-build make openssl elfutils-libelf-devel python3.12 python3.12-devel -y
 if [ "${KERNEL_VERSION}" == "" ]; then \
       RELEASE=$(dnf info --installed kernel-core | awk -F: '/^Release/{print $2}' | tr -d '[:blank:]') \
       && VERSION=$(dnf info --installed kernel-core | awk -F: '/^Version/{print $2}' | tr -d '[:blank:]') \
