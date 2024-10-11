@@ -867,4 +867,5 @@ def evaluate(
             )
     except EvalError as ee:
         print(ee.message)
+        logger.debug("Traceback", exc_info=True)
         raise click.exceptions.Exit(1)
