@@ -3,16 +3,56 @@
 name: E2E (NVIDIA A10G x1)
 
 on:
-  workflow_dispatch:
-    inputs:
-      pr_or_branch:
-        description: 'pull request number or branch name'
-        required: true
-        default: 'main'
+  # run against every merge commit to 'main' and release branches
+  push:
+    branches:
+      - main
+      - release-*
+  # only run on PRs that touch certain regex paths
+  pull_request_target:
+    branches:
+      - main
+      - release-*
+    paths:
+      # note this should match the merging criteria in 'mergify.yml'
+      - '**.py'
+      - 'pyproject.toml'
+      - 'requirements**.txt'
+      - 'scripts/e2e-ci.sh' # Used by this workflow
+      - 'scripts/test-data/**'
+      - '.github/workflows/e2e-nvidia-a10g-x1.yml' # This workflow
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  LC_ALL: en_US.UTF-8
+
+defaults:
+  run:
+    shell: bash
+
+permissions:
+  contents: read
 
 jobs:
-  start-runner:
-    name: Start external EC2 runner
+  e2e-medium-workflow-ready:
+    permissions:
+      checks: read
+    uses: ./.github/workflows/status-checks.yml
+    with:
+      job_ids: >- # Space-separated job ids to wait on for status checks
+        DCO
+        actionlint
+        markdown-lint
+        shellcheck
+        spellcheck
+        lint-workflow-complete
+
+  start-medium-ec2-runner:
+    needs:
+      - e2e-medium-workflow-ready
     runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.start-ec2-runner.outputs.label }}
@@ -24,6 +64,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Start EC2 runner
         id: start-ec2-runner
         uses: machulav/ec2-github-runner@fcfb31a5760dad1314a64a0e172b78ec6fc8a17e # v2.3.6
@@ -43,80 +84,33 @@ jobs:
               {"Key": "GitHubPR", "Value": "${{ github.event.number }}"}
             ]
 
-  e2e:
-    name: E2E Test
-    needs: start-runner
-    runs-on: ${{ needs.start-runner.outputs.label }}
+  e2e-medium-test:
+    needs:
+      - start-medium-ec2-runner
+    runs-on: ${{ needs.start-medium-ec2-runner.outputs.label }}
 
-    permissions:
-      pull-requests: write
+    # It is important that this job has no write permissions and has
+    # no access to any secrets. This part (e2e-test) is where we are running
+    # untrusted code from PRs.
+    permissions: {}
 
     steps:
+      - name: Install Packages
+        run: |
+          cat /etc/os-release
+          sudo dnf install -y gcc gcc-c++ make git python3.11 python3.11-devel
+
       - name: Checkout
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
 
-      - name: Determine if pr_or_branch is a PR number
-        id: check_pr
-        run: |
-          nvidia-smi
-          if [[ "${{ github.event.inputs.pr_or_branch }}" =~ ^[0-9]+$ ]]; then
-            echo "is_pr=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "is_pr=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Check if gh cli is installed
-        id: gh_cli
-        run: |
-          if command -v gh &> /dev/null ; then
-            echo "gh_cli_installed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "gh_cli_installed=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Install gh CLI
-        if: steps.gh_cli.outputs.gh_cli_installed == 'false'
-        run: |
-          sudo dnf install 'dnf-command(config-manager)' -y
-          sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
-          sudo dnf install gh --repo gh-cli -y
-
-      - name: test gh CLI
-        run: |
-          gh --version
-
-      - name: set default repo
-        run: |
-          gh repo set-default ${{ github.server_url }}/${{ github.repository }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Add comment to PR
-        if: steps.check_pr.outputs.is_pr == 'true'
-        run: |
-          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "${{ github.workflow }} workflow launched on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Fetch and checkout PR
-        if: steps.check_pr.outputs.is_pr == 'true'
+        if: ${{ github.event_name == 'pull_request_target' }}
         run: |
-          gh pr checkout ${{ github.event.inputs.pr_or_branch }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Checkout branch
-        if: steps.check_pr.outputs.is_pr == 'false'
-        run: |
-          git checkout ${{ github.event.inputs.pr_or_branch }}
-
-      - name: Install Packages
-        run: |
-          cat /etc/os-release
-          sudo dnf install -y gcc gcc-c++ make git python3.11 python3.11-devel
+          git fetch origin pull/${{ github.event.number }}/head:pr-${{ github.event.number }}
+          git checkout pr-${{ github.event.number }}
 
       - name: Install ilab
         run: |
@@ -141,44 +135,13 @@ jobs:
 
       - name: Run e2e test
         run: |
-          nvidia-smi
-          # This env variable is used on GPUs with less vRAM. It only allows cuda to alloc small chunks of vRAM at a time, usually helping to avoid OOM errors.
-          # This is not a good solution for production code, as setting ENV variables for users isn't best practice. However, it is a helpful manual workaround.
-          export PYTORCH_CUDA_ALLOC_CONF=garbage_collection_threshold:0.6,max_split_size_mb:128
           . venv/bin/activate
-          # TODO: for some reason we need to reinstall DS in order to get fused adam support
-          # This means we need to manually rm and re-install a bunch of packages. Investigate why this is.
-          python3.11 -m pip uninstall -y deepspeed
+          ./scripts/e2e-ci.sh -m
 
-          python3.11 -m pip cache purge
-
-          DS_BUILD_CPU_ADAM=1 BUILD_UTILS=1 python3.11 -m pip install deepspeed
-
-          nvidia-smi
-
-          python3.11 -m pip show nvidia-nccl-cu12
-          
-          ./scripts/basic-workflow-tests.sh -mf
-
-      - name: Add comment to PR if the workflow failed
-        if: failure() && steps.check_pr.outputs.is_pr == 'true'
-        run: |
-          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "e2e workflow failed on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), please investigate."
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Add comment to PR if the workflow succeeded
-        if: success() && steps.check_pr.outputs.is_pr == 'true'
-        run: |
-          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "e2e workflow succeeded on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), congrats!"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  stop-runner:
-    name: Stop external EC2 runner
+  stop-medium-ec2-runner:
     needs:
-      - start-runner
-      - e2e
+      - start-medium-ec2-runner
+      - e2e-medium-test
     runs-on: ubuntu-latest
     if: ${{ always() }}
     steps:
@@ -193,5 +156,17 @@ jobs:
         with:
           mode: stop
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          label: ${{ needs.start-runner.outputs.label }}
-          ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
+          label: ${{ needs.start-medium-ec2-runner.outputs.label }}
+          ec2-instance-id: ${{ needs.start-medium-ec2-runner.outputs.ec2-instance-id }}
+
+  e2e-medium-workflow-complete:
+    # we don't want to block PRs on failed EC2 cleanup
+    # so not requiring "stop-medium-ec2-runner" as well
+    permissions:
+      checks: read
+    uses: ./.github/workflows/status-checks.yml
+    with:
+      job_ids: >- # Space-separated job ids to wait on for status checks
+        e2e-medium-workflow-ready
+        start-medium-ec2-runner
+        e2e-medium-test

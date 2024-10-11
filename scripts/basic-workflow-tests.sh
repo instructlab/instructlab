@@ -14,7 +14,7 @@ set -xeuf
 MINIMAL=0
 MIXTRAL=0
 NUM_INSTRUCTIONS=5
-GENERATE_ARGS=("--num-cpus" "$(nproc)" --taxonomy-path='./taxonomy')
+GENERATE_ARGS=("--endpoint-url" "http://localhost:8000/v1" "--num-cpus" "$(nproc)" --taxonomy-path='./taxonomy')
 DIFF_ARGS=("--taxonomy-path" "./taxonomy")
 TRAIN_ARGS=()
 PHASED_TRAINING=0
@@ -75,6 +75,9 @@ function init_e2e_tests() {
     for dir in "${CONFIG_HOME}" "${DATA_HOME}" "${STATE_HOME}" "${CACHE_HOME}"; do
     	mkdir -p "${dir}"
     done
+
+    E2E_LOG_DIR="${HOME}/log"
+    mkdir -p "${E2E_LOG_DIR}"
 }
 
 
@@ -111,8 +114,9 @@ set_defaults() {
 }
 
 test_smoke() {
-    task Smoke test InstructLab
+    task InstructLab smoke test
     ilab | grep --color 'Usage: ilab'
+    task InstructLab smoke test Complete
 }
 
 test_init() {
@@ -129,7 +133,7 @@ test_init() {
 }
 
 test_download() {
-    task Download the model
+    task Download models
 
     if [ "${BACKEND}" == "vllm" ]; then
         step Downloading the model granite .safetensors model
@@ -151,6 +155,8 @@ test_download() {
         step Downloading merlinite .safetensors model to use in evaluation as the judge model
         ilab model download --repository instructlab/merlinite-7b-lab
     fi
+
+    task Downloading models Complete
 }
 
 test_list() {
@@ -253,8 +259,7 @@ test_taxonomy() {
 
 test_generate() {
     task Generate synthetic data
-    
-    GENERATE_ARGS+=("--endpoint-url" "http://localhost:8000/v1")
+
     if [ "$MIXTRAL" -eq 1 ]; then
         GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/${MIXTRAL_GGUF_MODEL}")
     else
@@ -273,6 +278,8 @@ test_generate() {
 
     # NUM_INSTRUCTIONS is '1' if MINIMAL is set, '5' otherwise
     ilab data generate --num-instructions ${NUM_INSTRUCTIONS} "${GENERATE_ARGS[@]}"
+
+    task Synthetic data generation Complete
 }
 
 test_train() {
@@ -396,20 +403,28 @@ test_evaluate() {
 
 }
 
-test_sysinfo() {
+test_system_info() {
     task Output system info
     ilab system info
+    task System info output complete
 }
 
 test_config_show() {
     task Output active config
     ilab config show
+    task Config show Complete
+}
+
+test_data_list() {
+    task Output data list
+    ilab data list
+    task Data list Complete
 }
 
 test_exec() {
     # The list of actual tests to run through in workflow order
     test_smoke
-    test_sysinfo
+    test_system_info
     test_init
     test_config_show
     test_download
@@ -433,6 +448,8 @@ test_exec() {
     test_generate
     test_taxonomy 3
     test_generate
+
+    test_data_list
 
     # Kill the serve process
     task Stopping the ilab model serve for the teacher model

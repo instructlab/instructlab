@@ -1,5 +1,7 @@
 # CI for InstructLab
 
+![InstructLab CI Ecosystem](images/instructlab-ci-ecosystem.png)
+
 ## Unit tests
 
 Unit tests are designed to test specific InstructLab components or features in isolation. In CI, these tests are run on Python 3.11 and Python 3.10 on CPU-only Ubuntu
@@ -21,7 +23,7 @@ There are two test scripts. The first can be found at `scripts/basic-workflow-te
 This script takes arguments that control which features are used to allow
 varying test coverage based on the resources available on a given test runner.
 
-The second can be found at `scripts/e2e.sh`. This script is designed to test the
+The second can be found at `scripts/e2e-ci.sh`. This script is designed to test the
 InstructLab workflow from end-to-end, mimicking real user behavior.
 
 There is currently a ["small" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml).
@@ -55,44 +57,40 @@ the E2E job configuration files found
 | `P` | Use the phased training within the 'full' training library |
 | `v` | Run with vLLM for serving |
 
-You can specify the following flag to test the large t-shirt size with the `e2e.sh`
-script. Support for the recommended workflow for other t-shirt sizes will be added to
-this script in the future.
+You can specify the following flags to test the medium and large t-shirt sizes with the `e2e-ci.sh`
+script. Support for the recommended workflow for the small t-shirt size will be added to this script in the future.
 
 | Flag | Feature |
 | --- | --- |
+| `m` | Run the e2e workflow for the medium t-shirt size of hardware |
 | `l` | Run the e2e workflow for the large t-shirt size of hardware |
+| `p` | Preserve the E2E_TEST_DIR for debugging |
 
 ### Current E2E Jobs
 
 | Name | T-Shirt Size | Runner Host | Instance Type | OS | GPU Type | Script | Flags | Runs when? | Slack reporting? |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | Small | AWS | [`g4dn.2xlarge`](https://aws.amazon.com/ec2/instance-types/g4/) | CentOS Stream 9 | 1 x NVIDIA Tesla T4 w/ 16 GB VRAM | `msq` | Pull Requests, Push to `main` or `release-*` branch | No |
-| [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | Medium | AWS |[`g5.4xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | CentOS Stream 9 | 1 x NVIDIA A10G w/ 24 GB VRAM | `mf` | Manually by Maintainers | No |
-| [`e2e-nvidia-l40s-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) | Large | AWS |[`g6e.12xlarge`](https://aws.amazon.com/ec2/instance-types/g6e/) | CentOS Stream 9 | 4 x NVIDIA L40S w/ 48 GB VRAM (192 GB) | `e2e.sh` | `l` | Manually by Maintainers, Automatically against `main` branch at 11AM UTC | Yes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | Small | AWS | [`g4dn.2xlarge`](https://aws.amazon.com/ec2/instance-types/g4/) | CentOS Stream 9 | 1 x NVIDIA Tesla T4 w/ 16 GB VRAM | `basic-workflow-tests.sh` | `msq` | Pull Requests, Push to `main` or `release-*` branch | No |
+| [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | Medium | AWS |[`g5.4xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | CentOS Stream 9 | 1 x NVIDIA A10G w/ 24 GB VRAM | `e2e-ci.sh` | `m` | Pull Requests, Push to `main` or `release-*` branch | No |
+| [`e2e-nvidia-l40s-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) | Large | AWS |[`g6e.12xlarge`](https://aws.amazon.com/ec2/instance-types/g6e/) | CentOS Stream 9 | 4 x NVIDIA L40S w/ 48 GB VRAM (192 GB) | `e2e-ci.sh` | `l` | Manually by Maintainers, Automatically against `main` branch at 11AM UTC | Yes |
 
 ### E2E Test Coverage Matrix
 
 | Area | Feature | [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | [`e2e-nvidia-l40s-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) |
 | --- | --- | --- | --- | --- |
-| **Serving**  | llama-cpp                |✅|✅|⎯|
-|              | vllm                     |⎯|⎯|✅|
-| **Generate** | simple                   |✅|✅|⎯|
-|              | full                     |⎯|⎯|✅|
-| **Training** | simple                   |✅(*1)|⎯|⎯|
-|              | full                     |⎯ |✅|⎯|
-|              | accelerated              |⎯|⎯|✅|
-| **Eval**     | eval                     |⎯|❌|✅|
+| **Serving**  | llama-cpp                 |✅|✅|⎯|
+|              | vllm                      |⎯|✅|✅|
+| **Generate** | simple                    |✅|✅|⎯|
+|              | full                      |⎯|⎯|✅|
+| **Training** | simple                    |✅(*1)|⎯|⎯|
+|              | full                      |⎯ |✅|⎯|
+|              | accelerated (multi-phase) |⎯|⎯|✅|
+| **Eval**     | eval                      |⎯|✅(*2)|✅|
 
 Points of clarification (*):
 
 1. The `simple` training pipeline uses 4-bit-quantization.
-
-### Current E2E Status against `main`
-
-![`e2e-nvidia-t4-x1.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-t4-x1.yml/badge.svg?branch=main)
-![`e2e-nvidia-a10g-x1.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-a10g-x1.yml/badge.svg?branch=main)
-![`e2e-nvidia-l40s-x4.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-l40s-x4.yml/badge.svg?branch=main)
+2. `MMLU Branch` is not run due to the `simple` SDG pipeline not outputting all the needed files in the tasks directory.
 
 ### Slack reporting
 
