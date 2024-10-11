@@ -862,5 +862,5 @@ def evaluate(
                 Benchmark.MMLU_BRANCH, improvements, regressions, no_changes
             )
     except EvalError as ee:
-        print(ee.message)
+        logger.info(msg=ee.message, exc_info=True)
         raise click.exceptions.Exit(1)
