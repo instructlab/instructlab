@@ -722,7 +722,7 @@ def validate_safetensors_file(file_path: pathlib.Path) -> bool:
     from safetensors import safe_open
 
     try:
-        with safe_open(file_path, framework="pt") as f:
+        with safe_open(file_path, framework="pt") as f: # type: ignore
             # Check if at least one tensor exists
             first_tensor_name = f.keys()
             if not first_tensor_name:
