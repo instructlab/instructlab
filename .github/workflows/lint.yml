@@ -84,6 +84,7 @@ jobs:
       - name: Remove llama-cpp-python from cache
         run: |
           python -m pip cache remove llama_cpp_python
+          python -m pip cache remove flash_attn
 
       - name: "Install tox"
         run: |
@@ -100,6 +101,7 @@ jobs:
         if: always()
         run: |
           python -m pip cache remove llama_cpp_python
+          python -m pip cache remove flash_attn
 
   lint-workflow-complete:
     permissions:
