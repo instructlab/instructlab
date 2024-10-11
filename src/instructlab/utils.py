@@ -720,6 +720,7 @@ def validate_safetensors_file(file_path: pathlib.Path) -> bool:
     """Validate the .safetensors file"""
     # Third Party
     from safetensors import safe_open
+
     try:
         with safe_open(file_path, framework="pt") as f:
             # Check if at least one tensor exists
