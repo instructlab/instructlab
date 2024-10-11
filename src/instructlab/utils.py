@@ -716,6 +716,25 @@ def clear_directory(path: pathlib.Path) -> None:
     os.makedirs(path)
 
 
+def validate_safetensors_file(file_path: pathlib.Path) -> bool:
+    """Validate the .safetensors file"""
+    # Third Party
+    from safetensors import safe_open
+
+    try:
+        with safe_open(file_path, framework="pt") as f:  # type: ignore
+            # Check if at least one tensor exists
+            tensor_list = f.keys()
+            if not tensor_list:
+                logger.debug(f"No tensors found in {file_path}")
+                return False
+    # pylint: disable=broad-exception-caught
+    except Exception as e:
+        logger.debug(f"Error while processing {file_path}: {e}")
+        return False
+    return True
+
+
 def is_model_safetensors(model_path: pathlib.Path) -> bool:
     """Check if model_path is a valid safe tensors directory
 
@@ -733,9 +752,23 @@ def is_model_safetensors(model_path: pathlib.Path) -> bool:
         return False
 
     # directory should contain either .safetensors or .bin files to be considered valid
-    if not any(file.suffix in (".safetensors", ".bin") for file in files):
-        logger.debug("'%s' has no *.safetensors or *.bin files", model_path)
+    has_bin_file = False
+    safetensors_files: List[pathlib.Path] = []
+
+    for file in files:
+        if file.suffix == ".safetensors":
+            safetensors_files.append(file)
+        elif file.suffix == ".bin":
+            has_bin_file = True
+
+    if not safetensors_files and not has_bin_file:
+        logger.debug("'%s' has no .safetensors or .bin files", model_path)
         return False
+
+    if safetensors_files:
+        for safetensors_file in safetensors_files:
+            if not validate_safetensors_file(safetensors_file):
+                return False
 
     basenames = {file.name for file in files}
     requires_files = {
@@ -756,7 +789,6 @@ def is_model_safetensors(model_path: pathlib.Path) -> bool:
             logger.debug("'%s' is not a valid JSON file: e", file, e)
             return False
 
-    # TODO: add check for safetensors file header (?)
     return True
 
 
