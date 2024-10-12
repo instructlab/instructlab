@@ -355,17 +355,12 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 After running `ilab config init` your directories will look like the following on a Linux system:
 
-```shell
-├─ ~/.cache/instructlab/models/ (1)
-├─ ~/.local/share/instructlab/datasets (2)
-├─ ~/.local/share/instructlab/taxonomy (3)
-├─ ~/.local/share/instructlab/checkpoints (4)
-```
-
- 1. `~/.cache/instructlab/models/`: Contains all downloaded large language models, including the saved output of ones you generate with ilab.
- 2. `~/.local/share/instructlab/datasets/`: Contains data output from the SDG phase, built on modifications to the taxonomy repository.
- 3. `~/.local/share/instructlab/taxonomy/`: Contains the skill and knowledge data.
- 4. `~/.local/share/instructlab/checkpoints/`: Contains the output of the training process
+| **Directory**                              | **Description**                                                                 |
+|--------------------------------------------|---------------------------------------------------------------------------------|
+| `~/.cache/instructlab/models/`             | Contains all downloaded large language models, including the saved output of ones you generate with ilab.|
+| `~/.local/share/instructlab/datasets/`     | Contains data output from the SDG phase, built on modifications to the taxonomy repository.   |
+| `~/.local/share/instructlab/taxonomy/`     | Contains the skill and knowledge data.                                              |
+| `~/.local/share/instructlab/checkpoints/`  | Contains the output of the training process.                                |
 
 ### 📥 Download the model
 
@@ -584,13 +579,25 @@ Before following these instructions, ensure the existing model you are adding sk
 
    ```shell
    (venv) $ ls datasets/
-   node_datasets_2024-08-12T20_31_15                          test_mixtral-8x7b-instruct-v0-1_2024-08-12T20_23_06.jsonl
-   knowledge_recipe_2024-08-12T20_31_15.yaml                      node_datasets_2024-08-13T19_51_48                          test_mixtral-8x7b-instruct-v0-1_2024-08-12T20_31_15.jsonl
-   knowledge_recipe_2024-08-13T19_51_48.yaml                      skills_recipe_2024-08-12T20_31_15.yaml                     test_mixtral-8x7b-instruct-v0-1_2024-08-13T19_47_59.jsonl
-   knowledge_train_msgs_2024-08-12T20_31_15.jsonl                 skills_recipe_2024-08-13T19_51_48.yaml                     test_mixtral-8x7b-instruct-v0-1_2024-08-13T19_51_48.jsonl
-   knowledge_train_msgs_2024-08-13T19_51_48.jsonl                 skills_train_msgs_2024-08-12T20_31_15.jsonl                train_mixtral-8x7b-instruct-v0-1_2024-08-12T20_31_15.jsonl
-   messages_mixtral-8x7b-instruct-v0-1_2024-08-12T20_31_15.jsonl  skills_train_msgs_2024-08-13T19_51_48.jsonl                train_mixtral-8x7b-instruct-v0-1_2024-08-13T19_51_48.jsonl
-   messages_mixtral-8x7b-instruct-v0-1_2024-08-13T19_51_48.jsonl  test_mixtral-8x7b-instruct-v0-1_2024-08-12T20_13_21.jsonl
+   ├── node_datasets_2024-08-12T20_31_15
+   ├── node_datasets_2024-08-13T19_51_48
+   ├── knowledge_recipe_2024-08-12T20_31_15.yaml
+   ├── knowledge_recipe_2024-08-13T19_51_48.yaml
+   ├── knowledge_train_msgs_2024-08-12T20_31_15.jsonl
+   ├── knowledge_train_msgs_2024-08-13T19_51_48.jsonl
+   ├── skills_recipe_2024-08-12T20_31_15.yaml
+   ├── skills_recipe_2024-08-13T19_51_48.yaml
+   ├── skills_train_msgs_2024-08-12T20_31_15.jsonl
+   ├── skills_train_msgs_2024-08-13T19_51_48.jsonl
+   ├── messages_mixtral-8x7b-instruct-v0-1_2024-08-12T20_31_15.jsonl
+   ├── messages_mixtral-8x7b-instruct-v0-1_2024-08-13T19_51_48.jsonl
+   ├── test_mixtral-8x7b-instruct-v0-1_2024-08-12T20_13_21.jsonl
+   ├── test_mixtral-8x7b-instruct-v0-1_2024-08-12T20_23_06.jsonl
+   ├── test_mixtral-8x7b-instruct-v0-1_2024-08-12T20_31_15.jsonl
+   ├── test_mixtral-8x7b-instruct-v0-1_2024-08-13T19_47_59.jsonl
+   ├── test_mixtral-8x7b-instruct-v0-1_2024-08-13T19_51_48.jsonl
+   ├── train_mixtral-8x7b-instruct-v0-1_2024-08-12T20_31_15.jsonl
+   └── train_mixtral-8x7b-instruct-v0-1_2024-08-13T19_51_48.jsonl
    ```
 
    **Optional**: It is also possible to run the generate step against a different model via an
@@ -628,25 +635,15 @@ ilab model train
 
 > **NOTE:** ⏳ This step can potentially take **several hours** to complete depending on your computing resources. Please stop `ilab model chat` and `ilab model serve` first to free resources.
 
-If you are using `ilab model train --pipeline=simple` on Linux:
+After running `ilab model train`, the output locations depend on the chosen pipeline or strategy:
 
-`ilab model train` outputs a brand-new model that can be served in the `models` directory called `ggml-model-f16.gguf`.
-
-If you are using `ilab model train --pipeline=simple` on MacOS:
-
-`ilab model train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory.
-
-If you are using `ilab model train --pipeline=full` on Linux or MacOS:
-
-`ilab model train` outputs brand-new `.bin` and `.gguf` models in the `~/.local/share/instructlab/checkpoints/hf_format` directory. in each `samples_*` directory you will find two GGUF models. One is quantized and one is full precision, the quantized one has a Q4-M-K suffix.
-
-If you are using `ilab model train --pipeline=accelerated` on Linux:
-
-`ilab model train` outputs brand-new models that can be served in the `~/.local/share/instructlab/checkpoints` directory.  These models can be run through `ilab model evaluate` to choose the best one.
-
-If you are using `ilab model train --strategy lab-multiphase` on Linux:
-
-`ilab model train` outputs brand-new models that can be served in `~/.local/share/instructlab/phased/phase1/checkpoints` and `~/.local/share/instructlab/phased/phase2/checkpoints`. Phase 1 correlates to knowledge training and phase 2 correlates to skills training.
+| **Pipeline/Strategy**              | **Operating System** | **Output Location/Details**                                                                                             |
+|------------------------------------|----------------------|--------------------------------------------------------------------------------------------------------------------------|
+| `simple`                           | Linux                | Model saved in `models` directory as `ggml-model-f16.gguf`.                                                              |
+|                                    | MacOS                | Model saved in `<model_name>-mlx-q` directory.                                                                           |
+| `full`                             | Linux & MacOS        | `.bin` and `.gguf` models saved in `~/.local/share/instructlab/checkpoints/hf_format` directory. Two models in each `sample_*` directory: one quantized (`Q4-M-K` suffix) and one full precision. |
+| `accelerated`                      | Linux                | Models saved in `~/.local/share/instructlab/checkpoints`. Can be evaluated with `ilab model evaluate` to choose the best one. |
+| `lab-multiphase`                   | Linux                | Phase 1 models saved in `~/.local/share/instructlab/phased/phase1/checkpoints` (Knowledge training). Phase 2 models saved in `~/.local/share/instructlab/phased/phase2/checkpoints` (Skills training). Evaluation is run for both phases to identify the best checkpoint. |
 
 When running multi phase training evaluation is run on each phase, we will tell you which checkpoint in this folder performs the best.
 
@@ -668,8 +665,15 @@ ilab model train --pipeline full --device cpu
 
 ```shell
 $ ls ~/.local/share/instructlab/checkpoints/hf_format/samples_0/
-added_tokens.json  pytorch_model.bin   special_tokens_map.json   tokenizer.json
-config.json        pytorch_model.gguf  pytorch_model-Q4_K_M.gguf tokenizer_config.json    tokenizer.model
+├── added_tokens.json
+├── config.json
+├── pytorch_model.bin
+├── pytorch_model.gguf
+├── pytorch_model-Q4_K_M.gguf
+├── special_tokens_map.json
+├── tokenizer.json
+├── tokenizer_config.json
+└── tokenizer.model
 ```
 
 this entire folder can be served on a system that supports vLLM using the .bin model. However, on most laptops you can serve either the full precision gguf: `pytorch_model.gguf` or the 4-bit-quantized one: `pytorch_model-Q4_K_M.gguf`.
@@ -688,11 +692,25 @@ and output of `ilab data generate` but on the order of 5 to 15 minutes)
 on a Mac `ilab model train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory called `adapters.npz` (in `Numpy` compressed array format). For example:
 
 ```shell
-(venv) $ ls instructlab-merlinite-7b-lab-mlx-q
-adapters-010.npz        adapters-050.npz        adapters-090.npz        config.json             tokenizer.model
-adapters-020.npz        adapters-060.npz        adapters-100.npz        model.safetensors       tokenizer_config.json
-adapters-030.npz        adapters-070.npz        adapters.npz            special_tokens_map.json
-adapters-040.npz        adapters-080.npz        added_tokens.json       tokenizer.json
+(venv) $ ls instructlab-merlinite-7b-lab-mlx-q/
+├── adapters-010.npz
+├── adapters-020.npz
+├── adapters-030.npz
+├── adapters-040.npz
+├── adapters-050.npz
+├── adapters-060.npz
+├── adapters-070.npz
+├── adapters-080.npz
+├── adapters-090.npz
+├── adapters-100.npz
+├── adapters.npz
+├── added_tokens.json
+├── config.json
+├── model.safetensors
+├── special_tokens_map.json
+├── tokenizer.json
+├── tokenizer.model
+└── tokenizer_config.json
 ```
 
 on Linux `ilab model train` outputs a brand-new model that can be served in the `models` directory called `ggml-model-f16.gguf`.
