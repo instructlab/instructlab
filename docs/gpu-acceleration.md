@@ -14,7 +14,7 @@ recompile `ilab`, then run it.
 ## Python 3.11 (Linux only)
 
 > **NOTE:** This section may be outdated. At least AMD ROCm works fine with
-> Python 3.12 and Torch 2.2.1+rocm5.7 binaries.
+> Python 3.12 and Torch 2.4.1+rocm6.1 binaries.
 
 Unfortunately, at the time of writing, `torch` does not have GPU-specific
 support for the latest Python (3.12), so if you're on Linux, it's recommended
@@ -168,10 +168,10 @@ The most convenient approach is the [ROCm toolbox container](amd-rocm.md). The c
 
 Visit [PyTorch "Get Started Locally" page](https://pytorch.org/get-started/locally/)
 and use the matrix installer tool to find the ROCm package. `Stable, Linux, Pip,
-Python, ROCm 5.7` in the matrix installer spits out the following command:
+Python, ROCm 6.1` in the matrix installer spits out the following command:
 
 ```shell
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.0
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/rocm6.1
 ```
 
 You don't need `torchvision` or `torchaudio`, so get rid of those. You also want
@@ -181,7 +181,7 @@ that doesn't have GPU support, so you should add these options:
 Run it to install the new version of `torch`.
 
 ```shell
-pip install torch --force-reinstall --no-cache-dir --index-url https://download.pytorch.org/whl/rocm6.0
+pip install torch --force-reinstall --no-cache-dir --index-url https://download.pytorch.org/whl/rocm6.1
 ```
 
 With that done, it's time to move on to `llama-cpp-python`.
@@ -192,10 +192,7 @@ If using hipBLAS you may need to install additional ROCm and hipBLAS
 Dependencies:
 
 ```shell
-# Optionally enable repo.radeon.com repository, available through AMD documentation or Radeon Software for Linux for RHEL 9.3 at https://www.amd.com/en/support/linux-drivers
-# The above will get you the latest 6.x drivers, and will not work with rocm5.7 pytorch
-# to grab rocm 5.7 drivers: https://repo.radeon.com/amdgpu-install/23.30.3/rhel/9.2/
-# ROCm Dependencies
+# Optionally enable repo.radeon.com repository, available through AMD documentation or Radeon Software for Linux for RHEL 9.4 at https://www.amd.com/en/support/linux-drivers
 sudo dnf install rocm-dev rocm-utils rocm-llvm rocminfo
 
 # hipBLAS dependencies
@@ -309,7 +306,7 @@ True
 ```python
 >>> import llama
 >>> llama_cpp.__version__
-'0.2.56'
+'0.2.79'
 >>> llama_cpp.llama_supports_gpu_offload()
 True
 >>> llama_cpp.llama_backend_init()
