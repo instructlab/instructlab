@@ -30,12 +30,13 @@ PROMETHEUS_8X7B_MODEL="prometheus-eval/prometheus-8x7b-v2.0"
 MERLINITE_GGUF_MODEL="merlinite-7b-lab-Q4_K_M.gguf"
 
 # t-shirt size globals
+SMALL=0
 MEDIUM=0
 LARGE=0
 
 check_flags() {
-    if [ "${MEDIUM}" -ne 1 ] && [ "${LARGE}" -ne 1 ]; then
-         echo "ERROR: Must specify a flag when invoking this script."
+    if [ "${SMALL}" -ne 1 ] && [ "${MEDIUM}" -ne 1 ] && [ "${LARGE}" -ne 1 ]; then
+         echo "ERROR: Must specify a size flag when invoking this script."
          usage
          exit 1
     fi
@@ -97,7 +98,27 @@ test_system_info() {
 
 test_init() {
     task Initializing InstructLab
-    if [ "$MEDIUM" -eq 1 ]; then
+    if [ "$SMALL" -eq 1 ]; then
+        # We do not use a train profile here because the 'full' train pipeline does not use a GPU
+        ilab config init --non-interactive
+
+        step Setting small-size SDG-specific config
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.pipeline simple
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.model_path "${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}"
+
+        step Setting small-size Training-specific config
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.ckpt_output_dir "${DATA_HOME}/instructlab/checkpoints"
+        #TODO(nweinber): Uncomment below line when 'pipeline' is added to train config
+        #python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.pipeline simple
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.model_path "${CACHE_HOME}/instructlab/models/${GRANITE_7B_MODEL}"
+        #TODO(nweinber): Uncomment below line when 'device' is added to train config
+        #python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.device cuda
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.num_epochs 1
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.effective_batch_size 4
+
+        # We do not set any Eval-specific config here as the 'small' E2E workflow does not run evaluation
+
+    elif [ "$MEDIUM" -eq 1 ]; then
         # We do not use a train profile here because the 'full' train pipeline does not use a GPU
         ilab config init --non-interactive
 
@@ -153,7 +174,7 @@ test_config_show() {
 
 test_download() {
     task Download models
-    if [ "$MEDIUM" -eq 1 ]; then
+    if [ "$SMALL" -eq 1 ] || [ "$MEDIUM" -eq 1 ]; then
         step Downloading the merlinite-7b-lab GGUF model as the teacher model for SDG
         ilab model download --repository instructlab/merlinite-7b-lab-GGUF --filename ${MERLINITE_GGUF_MODEL}
         step Downloading granite-7b-lab model to train and as the judge model for evaluation
@@ -224,9 +245,15 @@ test_train() {
     local skill_data_path
     skill_data_path=$(find "${DATA_HOME}"/instructlab/datasets -name 'skills_train_msgs*' | head -n 1)
     knowledge_data_path=$(find "${DATA_HOME}"/instructlab/datasets -name 'knowledge_train_msgs*' | head -n 1)
-    #TODO: Remove extra args when 'init' is fixed
-    #ilab model train --data-path "${skill_data_path}"
-    ilab model train --data-path "${skill_data_path}" --device=cpu --pipeline=full
+    #TODO(nweinber): Replace with commented-out lines below when 'init' is fixed
+    if [ "$SMALL" -eq 1 ]; then
+        ilab model train --4-bit-quant --device=cuda --pipeline=simple
+        #ilab model train --4-bit-quant
+    elif [ "$MEDIUM" -eq 1 ]; then
+        ilab model train --data-path "${skill_data_path}" --device=cpu --pipeline=full
+        #ilab model train --data-path "${skill_data_path}"
+    fi
+
     TRAINED_MODEL_PATH="${DATA_HOME}/instructlab/checkpoints/hf_format/samples_0"
 
     task Model training Complete
@@ -263,8 +290,13 @@ test_serve() {
     task Serve the model
 
     local model_path
-    # use gguf for medium-size job
-    if [ "$MEDIUM" -eq 1 ]; then
+    # When we run training with --4-bit-quant, we can't convert the result to a gguf
+    # https://github.com/instructlab/instructlab/issues/579
+    # so we skip trying to test the result and just ensure that serve works in general
+    if [ "$SMALL" -eq 1 ]; then
+        model_path="${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}"
+    # use trained gguf for medium-size job
+    elif [ "$MEDIUM" -eq 1 ]; then
         model_path="${TRAINED_MODEL_PATH}/pytorch_model-Q4_K_M.gguf"
     # use safetensors for large-size job
     elif [ "$LARGE" -eq 1 ]; then
@@ -303,17 +335,17 @@ test_evaluate() {
     ilab model evaluate --model "${model_path}" --benchmark mmlu
 
     if [ "$LARGE" -eq 1 ]; then
+        step Running MMLU Branch
         local mmlu_branch_tasks_dir
         mmlu_branch_tasks_dir=$(find "${DATA_HOME}"/instructlab/datasets -name 'node_datasets_*' | head -n 1)
-        step Running MMLU_BRANCH
         ilab model evaluate --model "${model_path}" --benchmark mmlu_branch --tasks-dir "${mmlu_branch_tasks_dir}" --base-model "${base_model_path}"
     fi
 
     export INSTRUCTLAB_EVAL_FIRST_N_QUESTIONS=20
-    step Running MT_Bench
+    step Running MT Bench
     ilab model evaluate --model "${model_path}" --benchmark mt_bench
 
-    step Running MT_Bench_Branch
+    step Running MT Bench Branch
     cd "${DATA_HOME}/instructlab/taxonomy"
     git branch rc
     ilab model evaluate \
@@ -362,7 +394,10 @@ test_exec() {
     wait_for_server shutdown $PID
 
     # evaluate tests
-    test_evaluate
+    # note we do not run eval on the small runner due to a lack of GPU resources
+    if [ "$SMALL" -eq 0 ]; then
+        test_evaluate
+    fi
 
     task E2E success!
     exit 0
@@ -399,7 +434,8 @@ wait_for_server() {
 
 # NOTE: If you add additional or modify existing options, please document them in 'docs/ci.md'
 usage() {
-    echo "Usage: $0 [-m] [-l] [-h]"
+    echo "Usage: $0 [-s] [-m] [-l] [-h]"
+    echo "  -s  Run small t-shirt size job"
     echo "  -m  Run medium t-shirt size job"
     echo "  -l  Run large t-shirt size job"
     echo "  -p  Preserve the E2E_TEST_DIR for debugging"
@@ -408,8 +444,12 @@ usage() {
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "mlph" opt; do
+while getopts "smlph" opt; do
     case $opt in
+        s)
+            SMALL=1
+            step "Run small T-shirt size job."
+            ;;
         m)
             MEDIUM=1
             step "Run medium T-shirt size job."
