@@ -282,10 +282,16 @@ def match_profile_based_on_vram(vram) -> tuple[int | None, str | None, _train]:
             ):
                 click.secho("Unable to retrieve train profiles", fg="red")
                 raise click.exceptions.Exit(1)
+            # we want to match based off if our vRAM is >= the Profile vRAM. However,
+            # you do not want to overdo this and match a profile that has hundreds of GB less than your system
+            # only match if the profile has 30GB less than our system.
             if (
                 chosen_vram is None
                 or chosen_vram > gpu_count_configs["vram_and_config"]["vram"]
-            ) and vram < gpu_count_configs["vram_and_config"]["vram"]:
+            ) and (
+                vram >= gpu_count_configs["vram_and_config"]["vram"]
+                and vram - gpu_count_configs["vram_and_config"]["vram"] <= 30
+            ):
                 # set our return values
                 gpus = gpu_count_configs["gpu_count"]
                 chosen_profile_name = f"Nvidia {gpus}x {group_gpu_name}"
