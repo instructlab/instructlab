@@ -428,8 +428,8 @@ def train(
     if is_high_fidelity(device=device) and pipeline == "accelerated":
         train_args, torch_args = map_train_to_library(ctx, ctx.params)
 
-        # Local
-        from . import accelerated_train
+        # First Party
+        from instructlab.model import accelerated_train
 
         try:
             accelerated_train.accelerated_train(
@@ -462,8 +462,8 @@ def train(
         import torch
 
         torch.set_autocast_enabled(False)
-        # Local
-        from . import full_train
+        # First Party
+        from instructlab.model import full_train
 
         train_args, torch_args = map_train_to_library(ctx, ctx.params)
         # if on CPU or MPS, execute full train, which is based
@@ -471,8 +471,8 @@ def train(
         # to fit on most consumer laptops
         full_train.train(train_args=train_args, device=device)
     elif pipeline == "simple":
-        # Local
-        from . import simple_train
+        # First Party
+        from instructlab.model import simple_train
 
         try:
             simple_train.simple_train(
