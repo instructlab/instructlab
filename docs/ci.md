@@ -19,30 +19,35 @@ The functional test script is Shell-based and can be found at `scripts/functiona
 
 ## End-to-end (E2E) tests
 
-There are two test scripts. The first can be found at `scripts/e2e-custom.sh`.
-This script takes arguments that control which features are used to allow
-varying test coverage based on the resources available on a given test runner.
+There are two E2E test scripts.
 
-The second can be found at `scripts/e2e-ci.sh`. This script is designed to test the
-InstructLab workflow from end-to-end, mimicking real user behavior.
+The first can be found at `scripts/e2e-ci.sh`. This script is designed to test the InstructLab workflow from end-to-end, mimicking real user behavior,
+across three different "t-shirt sizes" of systems. Most E2E CI jobs use this script.
 
-There is currently a ["small" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml).
-This job runs automatically on all PRs and after commits merge to `main` or release
-branches. It depends upon the successful completion of any linting type jobs.
+The second can be found at `scripts/e2e-custom.sh`. This script takes arguments that control which features are used to allow
+varying test coverage based on the resources available on a given test runner. The "custom" E2E CI job uses this script.
 
-There is also a ["medium" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) and ["large" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) that can be triggered manually on the [actions
-page](https://github.com/instructlab/instructlab/actions) for the repository.
-These run on a variety of instance types and can be run at the discretion of
-repo maintainers.
+There is currently a ["small" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) and a
+["medium" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml).
+These jobs runs automatically on all PRs and after commits merge to `main` or release branches. They depend upon the successful completion of any linting type jobs.
 
-The "large" t-shirt size E2E job also runs automatically against the `main` branch at 11AM UTC every day.
+There is also a ["large" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) that can be triggered manually on the [actions page](https://github.com/instructlab/instructlab/actions) for the repository.
+It also runs automatically against the `main` branch at 11AM UTC every day.
 
 ### E2E Test Coverage Options
 
+You can specify the following flags to test the small, medium, and large t-shirt sizes with the `e2e-ci.sh`
+script.
+
+| Flag | Feature |
+| --- | --- |
+| `s` | Run the e2e workflow for the small t-shirt size of hardware |
+| `m` | Run the e2e workflow for the medium t-shirt size of hardware |
+| `l` | Run the e2e workflow for the large t-shirt size of hardware |
+| `p` | Preserve the E2E_TEST_DIR for debugging |
+
 You can specify the following flags to test various features of `ilab` with the
-`e2e-custom.sh` script - you can see examples of these being used within
-the E2E job configuration files found
-[here](https://github.com/instructlab/instructlab/blob/main/.github/workflows/).
+`e2e-custom.sh` script.
 
 | Flag | Feature |
 | --- | --- |
@@ -57,20 +62,11 @@ the E2E job configuration files found
 | `P` | Use the phased training within the 'full' training library |
 | `v` | Run with vLLM for serving |
 
-You can specify the following flags to test the medium and large t-shirt sizes with the `e2e-ci.sh`
-script. Support for the recommended workflow for the small t-shirt size will be added to this script in the future.
-
-| Flag | Feature |
-| --- | --- |
-| `m` | Run the e2e workflow for the medium t-shirt size of hardware |
-| `l` | Run the e2e workflow for the large t-shirt size of hardware |
-| `p` | Preserve the E2E_TEST_DIR for debugging |
-
 ### Current E2E Jobs
 
 | Name | T-Shirt Size | Runner Host | Instance Type | OS | GPU Type | Script | Flags | Runs when? | Slack reporting? |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | Small | AWS | [`g4dn.2xlarge`](https://aws.amazon.com/ec2/instance-types/g4/) | CentOS Stream 9 | 1 x NVIDIA Tesla T4 w/ 16 GB VRAM | `e2e-custom.sh` | `msq` | Pull Requests, Push to `main` or `release-*` branch | No |
+| [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | Small | AWS | [`g4dn.2xlarge`](https://aws.amazon.com/ec2/instance-types/g4/) | CentOS Stream 9 | 1 x NVIDIA Tesla T4 w/ 16 GB VRAM | `e2e-ci.sh` | `s` | Pull Requests, Push to `main` or `release-*` branch | No |
 | [`e2e-nvidia-a10g-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml) | Medium | AWS |[`g5.4xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | CentOS Stream 9 | 1 x NVIDIA A10G w/ 24 GB VRAM | `e2e-ci.sh` | `m` | Pull Requests, Push to `main` or `release-*` branch | No |
 | [`e2e-nvidia-l40s-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) | Large | AWS |[`g6e.12xlarge`](https://aws.amazon.com/ec2/instance-types/g6e/) | CentOS Stream 9 | 4 x NVIDIA L40S w/ 48 GB VRAM (192 GB) | `e2e-ci.sh` | `l` | Manually by Maintainers, Automatically against `main` branch at 11AM UTC | Yes |
 
@@ -89,8 +85,8 @@ script. Support for the recommended workflow for the small t-shirt size will be 
 
 Points of clarification (*):
 
-1. The `simple` training pipeline uses 4-bit-quantization.
-2. `MMLU Branch` is not run due to the `simple` SDG pipeline not outputting all the needed files in the tasks directory.
+1. The `simple` training pipeline uses 4-bit-quantization. We cannot use the trained model here due to [#579](https://github.com/instructlab/instructlab/issues/579)
+2. `MMLU Branch` is not run due to the `simple` SDG pipeline not creating all the needed files in the tasks directory.
 
 ### Slack reporting
 
