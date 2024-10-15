@@ -25,7 +25,8 @@ The first can be found at `scripts/e2e-ci.sh`. This script is designed to test t
 across three different "t-shirt sizes" of systems. Most E2E CI jobs use this script.
 
 The second can be found at `scripts/e2e-custom.sh`. This script takes arguments that control which features are used to allow
-varying test coverage based on the resources available on a given test runner. The "custom" E2E CI job uses this script.
+varying test coverage based on the resources available on a given test runner. The "custom" E2E CI job uses this script (though you can specify to use
+another script such as `e2e-ci.sh` if you want to test changes to a different code path that doesn't automatically run against a pull request).
 
 There is currently a ["small" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) and a
 ["medium" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml).
