@@ -13,8 +13,12 @@ on:
         description: 'EC2 instance type'
         required: true
         default: 'g6.2xlarge'
+      e2e_script:
+        description: 'Script to use in e2e job'
+        required: true
+        default: 'e2e-custom.sh'
       e2e_script_args:
-        description: 'Arguments to pass to the e2e script (e2e-custom.sh)'
+        description: 'Arguments to pass to the e2e script'
         required: true
         default: '-m'
       ilab_install_target:
@@ -146,7 +150,7 @@ jobs:
       - name: Run e2e test
         run: |
           . venv/bin/activate
-          ./scripts/e2e-custom.sh ${{ github.event.inputs.e2e_script_args }}
+          ./scripts/${{ github.event.inputs.e2e_script }} ${{ github.event.inputs.e2e_script_args }}
 
       - name: Add comment to PR if the workflow failed
         if: failure() && steps.check_pr.outputs.is_pr == 'true'
