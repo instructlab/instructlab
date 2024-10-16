@@ -375,10 +375,7 @@ def clickpath_setup(is_dir: bool) -> click.Path:
 @click.option(
     "--pipeline",
     type=click.Choice(["simple", "full", "accelerated"]),
-    default="accelerated",
-    help="Model fidelity pipeline for training: 'simple' uses SFTTrainer on Linux or MLX on MacOS, producing low-fidelity models quickly for rapid prototyping."
-    "'full' employs CPU and MPS optimized InstructLab fine-tuning, generating medium-fidelity models over a longer period."
-    "'accelerated' utilizes GPU acceleration and distributed training, yielding high-fidelity models but requiring more time. Choose based on your hardware, time constraints, and desired model quality",
+    cls=clickext.ConfigOption,
 )
 @click.option(
     "--training-journal",

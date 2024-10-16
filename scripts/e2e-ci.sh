@@ -99,7 +99,7 @@ test_system_info() {
 test_init() {
     task Initializing InstructLab
     if [ "$SMALL" -eq 1 ]; then
-        # We do not use a train profile here because the 'full' train pipeline does not use a GPU
+        # We do not use a train profile here because the 'simple' train pipeline does not use a GPU
         ilab config init --non-interactive
 
         step Setting small-size SDG-specific config
@@ -108,8 +108,7 @@ test_init() {
 
         step Setting small-size Training-specific config
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.ckpt_output_dir "${DATA_HOME}/instructlab/checkpoints"
-        #TODO(nweinber): Uncomment below line when 'pipeline' is added to train config
-        #python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.pipeline simple
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.pipeline simple
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.model_path "${CACHE_HOME}/instructlab/models/${GRANITE_7B_MODEL}"
         #TODO(nweinber): Uncomment below line when 'device' is added to train config
         #python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.device cuda
@@ -128,8 +127,7 @@ test_init() {
 
         step Setting medium-size Training-specific config
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.ckpt_output_dir "${DATA_HOME}/instructlab/checkpoints"
-        #TODO(nweinber): Uncomment below line when 'pipeline' is added to train config
-        #python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.pipeline full
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.pipeline full
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.model_path "${CACHE_HOME}/instructlab/models/${GRANITE_7B_MODEL}"
         #TODO(nweinber): Uncomment below line when 'device' is added to train config
         #python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.device cpu
@@ -247,10 +245,10 @@ test_train() {
     knowledge_data_path=$(find "${DATA_HOME}"/instructlab/datasets -name 'knowledge_train_msgs*' | head -n 1)
     #TODO(nweinber): Replace with commented-out lines below when 'init' is fixed
     if [ "$SMALL" -eq 1 ]; then
-        ilab model train --4-bit-quant --device=cuda --pipeline=simple
+        ilab model train --4-bit-quant --device=cuda
         #ilab model train --4-bit-quant
     elif [ "$MEDIUM" -eq 1 ]; then
-        ilab model train --data-path "${skill_data_path}" --device=cpu --pipeline=full
+        ilab model train --data-path "${skill_data_path}" --device=cpu
         #ilab model train --data-path "${skill_data_path}"
     fi
 

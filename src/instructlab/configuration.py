@@ -388,6 +388,12 @@ class _train(BaseModel):
         protected_namespaces=(),
         use_enum_values=True,  # populate models with the value property of enums, rather than the raw enum.
     )
+    pipeline: str = Field(
+        default="full",
+        description="Training pipeline to use. Simple is for systems with limited resources, full is for more capable consumer systems (64 GB of RAM), and accelerated is for systems with a dedicated GPU.",
+        examples=["simple", "full", "accelerated"],
+        pattern="simple|full|accelerated",
+    )
     model_path: str = Field(
         default=DEFAULTS.MODEL_REPO,
         description="Directory where the model to be trained is stored.",
