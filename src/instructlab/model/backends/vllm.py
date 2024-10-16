@@ -16,6 +16,9 @@ import typing
 # Third Party
 import httpx
 
+# First Party
+from instructlab.utils import contains_argument
+
 # Local
 from ...client import check_api_base
 from ...configuration import get_api_base
@@ -205,11 +208,6 @@ def format_template(model_family: str, model_path: pathlib.Path) -> str:
         prefix = '{}{{% set bos_token = "{}" %}}\n'.format(prefix, bos_token)
 
     return prefix + template
-
-
-def contains_argument(prefix: str, args: typing.Iterable[str]) -> bool:
-    # Either --foo value or --foo=value
-    return any(s == prefix or s.startswith(prefix + "=") for s in args)
 
 
 def get_argument(prefix: str, args: typing.List[str]):

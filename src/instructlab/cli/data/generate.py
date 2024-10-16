@@ -7,14 +7,12 @@ import os.path
 
 # Third Party
 import click
-import openai
 
 # First Party
 from instructlab import clickext
 from instructlab.configuration import DEFAULTS
-
-# Local
-from ..utils import http_client
+from instructlab.data.generate_data import gen_data  # type: ignore
+from instructlab.utils import HttpClientParams, contains_argument
 
 logger = logging.getLogger(__name__)
 
@@ -177,10 +175,6 @@ def generate(
     gpus,
 ):
     """Generates synthetic data to enhance your example data"""
-    # pylint: disable=import-outside-toplevel
-    # Third Party
-    from instructlab.sdg.generate_data import generate_data
-    from instructlab.sdg.utils import GenerateException
 
     # if --pipeline is not used, pipeline defaults to the value of ctx.obj.config.generate.pipeline
     # set in the config file. A user could intentionally set this to 'null' in the config file
@@ -206,107 +200,56 @@ def generate(
     if batch_size is None:
         batch_size = 8
 
-    backend_instance = None
-    if endpoint_url:
-        api_base = endpoint_url
-    else:
-        # First Party
-        from instructlab.model.backends import backends
-        from instructlab.model.backends.llama_cpp import Server as llama_cpp_server
-        from instructlab.model.backends.vllm import contains_argument
-
-        # TODO (cdoern): we really should not edit the cfg object
-        gen_cfg = copy.deepcopy(ctx.obj.config)
-        gen_cfg.generate.teacher.llama_cpp.llm_family = (
-            model_family or gen_cfg.generate.teacher.llama_cpp.llm_family
-        )
-        gen_cfg.generate.teacher.vllm.llm_family = (
-            model_family or gen_cfg.generate.teacher.vllm.llm_family
-        )
-        gen_cfg.generate.teacher.vllm.vllm_args = (
-            gen_cfg.generate.teacher.vllm.vllm_args or []
-        )
-        if gpus is not None:
-            tps_prefix = "--tensor-parallel-size"
-            if contains_argument(tps_prefix, gen_cfg.generate.teacher.vllm.vllm_args):
-                click.secho(
-                    "Using gpus from --gpus. Ignoring --tensor-parallel-size configured in generate.teacher vllm_args",
-                    fg="yellow",
-                )
-            gen_cfg.generate.teacher.vllm.vllm_args.extend([tps_prefix, str(gpus)])
-        backend_instance = backends.select_backend(
-            cfg=gen_cfg.generate.teacher, model_path=model_path
-        )
-        if (
-            backend_instance.get_backend_type() is not backends.VLLM
-            and gpus is not None
-        ):
-            logger.debug(
-                "Cannot specify '--gpus' with a llama-cpp backend, ignoring this flag."
-            )
-
-        try:
-            # Run the backend server
-            api_base = backend_instance.run_detached(
-                http_client(
-                    {
-                        "tls_client_cert": tls_client_cert,
-                        "tls_client_key": tls_client_key,
-                        "tls_client_passwd": tls_client_passwd,
-                        "tls_insecure": tls_insecure,
-                    }
-                ),
-                background=not enable_serving_output,
-                foreground_allowed=True,
-                max_startup_retries=1,
-            )
-        except Exception as exc:
-            click.secho(f"Failed to start server: {exc}", fg="red")
-            raise click.exceptions.Exit(1)
-
-        # disable batching when running with the local llama.cpp server
-        if isinstance(backend_instance, llama_cpp_server):
-            if batch_size is not None:
-                logger.warning(
-                    "Disabling SDG batching - unsupported with llama.cpp serving"
-                )
-            batch_size = 0
-    client = openai.OpenAI(
-        base_url=api_base, api_key=api_key, http_client=http_client(ctx.params)
-    )
-
     # Specify checkpoint dir if batching is enabled
     checkpoint_dir = None
     if batch_size > 0:
         checkpoint_dir = os.path.join(output_dir, "checkpoints")
 
+    serve_cfg = copy.deepcopy(ctx.obj.config.generate.teacher)
+    serve_cfg.llama_cpp.llm_family = model_family or serve_cfg.llama_cpp.llm_family
+    serve_cfg.vllm.llm_family = model_family or serve_cfg.vllm.llm_family
+    serve_cfg.vllm.vllm_args = serve_cfg.vllm.vllm_args or []
+    if gpus is not None:
+        tps_prefix = "--tensor-parallel-size"
+        if contains_argument(tps_prefix, serve_cfg.vllm.vllm_args):
+            click.secho(
+                "Using gpus from --gpus. Ignoring --tensor-parallel-size configured in generate.teacher vllm_args",
+                fg="yellow",
+            )
+        serve_cfg.vllm.vllm_args.extend([tps_prefix, str(gpus)])
+
+    http_client_params = HttpClientParams(
+        {
+            "tls_client_cert": tls_client_cert,
+            "tls_client_key": tls_client_key,
+            "tls_client_passwd": tls_client_passwd,
+            "tls_insecure": tls_insecure,
+        }
+    )
+
     try:
-        click.echo(
-            f"Generating synthetic data using '{pipeline}' pipeline, '{model_path}' model, '{taxonomy_path}' taxonomy, against {api_base} server"
+        gen_data(
+            serve_cfg,
+            model_path,
+            num_cpus,
+            sdg_scale_factor,
+            taxonomy_path,
+            taxonomy_base,
+            output_dir,
+            quiet,
+            endpoint_url,
+            api_key,
+            yaml_rules,
+            chunk_word_count,
+            server_ctx_size,
+            http_client_params,
+            model_family,
+            pipeline,
+            enable_serving_output,
+            batch_size,
+            gpus,
+            checkpoint_dir,
         )
-        generate_data(
-            client=client,
-            model_family=model_family,
-            model_name=model_path,
-            num_cpus=num_cpus,
-            num_instructions_to_generate=sdg_scale_factor,
-            taxonomy=taxonomy_path,
-            taxonomy_base=taxonomy_base,
-            output_dir=output_dir,
-            console_output=not quiet,
-            yaml_rules=yaml_rules,
-            chunk_word_count=chunk_word_count,
-            server_ctx_size=server_ctx_size,
-            pipeline=pipeline,
-            batch_size=batch_size,
-            checkpoint_dir=checkpoint_dir,
-        )
-    except GenerateException as exc:
-        click.secho(
-            f"Generating dataset failed with the following error: {exc}",
-            fg="red",
-        )
+    except Exception as exc:
+        click.secho(f"failed to generate data with exception: {exc}", fg="red")
         raise click.exceptions.Exit(1)
-    finally:
-        if backend_instance is not None:
-            backend_instance.shutdown()

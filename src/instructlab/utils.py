@@ -18,6 +18,7 @@ import struct
 import subprocess
 import tempfile
 import time
+import typing
 
 # Third Party
 from git import Repo, exc
@@ -921,3 +922,8 @@ def list_models(
             elif entry.is_dir():
                 data.extend(_analyze_dir(entry, list_checkpoints, directory))
     return data
+
+
+def contains_argument(prefix: str, args: typing.Iterable[str]) -> bool:
+    # Either --foo value or --foo=value
+    return any(s == prefix or s.startswith(prefix + "=") for s in args)

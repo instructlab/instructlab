@@ -157,7 +157,7 @@ def serve(
         )
     elif backend == backends.VLLM:
         # First Party
-        from instructlab.model.backends.vllm import contains_argument
+        from instructlab.utils import contains_argument
 
         # Warn if unsupported backend parameters are passed
         warn_for_unsupported_backend_param(ctx)

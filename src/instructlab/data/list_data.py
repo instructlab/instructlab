@@ -2,50 +2,40 @@
 
 # Standard
 from pathlib import Path
-from typing import List, TypedDict
+from typing import List
 import logging
 import time
 
-# Third Party
-import click
-
 # First Party
-from instructlab import clickext
-from instructlab.configuration import DEFAULTS
-from instructlab.utils import convert_bytes_to_proper_mag, print_table
+from instructlab.utils import convert_bytes_to_proper_mag
 
 logger = logging.getLogger(__name__)
 
 
-class DatasetListing(TypedDict):
+def list_data(dataset_dirs: list[str]) -> List[List[str]]:
     """
-    Represents a single dataset listing.
+    Recursively lists all JSONL files in the given directories and gathers their metadata.
+
+    Args:
+        dataset_dirs (list[Path]): A list of paths to directories where JSONL files are searched for.
+
+    Returns:
+        List[List[Path]]: A list of lists, where each inner list contains three strings:
+            - The relative file path of the `.jsonl` file.
+            - The creation timestamp of the file (format: 'YYYY-MM-DD HH:MM:SS').
+            - The formatted size of the file with appropriate units (e.g., '12.34 MB').
+
+    Raises:
+        OSError: If any directory in `dataset_dirs` does not exist.
     """
 
-    filename: str
-    created_at: str
-    file_size: str
-
-
-@click.command(name="list")
-@clickext.display_params
-@click.option(
-    "--dataset-dirs",
-    help="Base directories where datasets are stored.",
-    multiple=True,
-    default=[DEFAULTS.DATASETS_DIR],
-    show_default=True,
-)
-@click.pass_context
-def list_data(ctx, dataset_dirs: list[str]):
-    """lists datasets"""
     data: List[List[str]] = []
     for directory in dataset_dirs:
         dirpath = Path(directory)
         directories: List[Path] = [dirpath]
         top_level_dir = dirpath
         if not dirpath.exists():
-            ctx.fail(f"directory does not exist: {dirpath}")
+            raise OSError(f"directory does not exist: {dirpath}")
         while len(directories) > 0:
             current_dir = directories.pop()
             for entry in current_dir.iterdir():
@@ -73,5 +63,4 @@ def list_data(ctx, dataset_dirs: list[str]):
                     ]
                 )
 
-    headers = ["Dataset", "Created At", "File size"]
-    print_table(headers, data)
+    return data
