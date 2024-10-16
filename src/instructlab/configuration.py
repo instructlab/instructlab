@@ -1373,7 +1373,7 @@ def get_profile_mappings() -> dict[str, tuple[dict[str, object], ...]]:
 
     profile_mappings = {
         "L40s": (
-            {"gpu_count": 1, "vram_and_config": {"vram": 80, "config": SINGLE_L40}},
+            {"gpu_count": 1, "vram_and_config": {"vram": 48, "config": SINGLE_L40}},
             {
                 "gpu_count": 4,
                 "vram_and_config": {
@@ -1400,6 +1400,10 @@ def get_profile_mappings() -> dict[str, tuple[dict[str, object], ...]]:
             },
         ),
         "A100": (
+            {
+                "gpu_count": 1,
+                "vram_and_config": {"vram": 80, "config": SINGLE_A100_H100},
+            },
             {
                 "gpu_count": 2,
                 "vram_and_config": {
