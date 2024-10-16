@@ -185,7 +185,7 @@ RUN source ${VIRTUAL_ENV}/bin/activate \
     fi \
     && pip install torch psutil \
     && pip install flash_attn --no-build-isolation \
-    && pip install "${INSTRUCTLAB_PKG}" -C cmake.args="-DLLAMA_CUDA=on" -C cmake.args="-DLLAMA_NATIVE=off" \
+    && pip install "${INSTRUCTLAB_PKG}" -C cmake.args="-DGGML_CUDA=on" -C cmake.args="-DGGML_NATIVE=off" \
     && pip install vllm@git+https://github.com/opendatahub-io/vllm@v0.6.2
 
 ENV TORCH_HOME="${VIRTUAL_ENV}/lib64/${PYTHON}/site-packages/torch"
