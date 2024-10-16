@@ -997,7 +997,6 @@ def list_models(
     return valid_models
 
 
-
 def contains_argument(prefix: str, args: typing.Iterable[str]) -> bool:
     # Either --foo value or --foo=value
     return any(s == prefix or s.startswith(prefix + "=") for s in args)
