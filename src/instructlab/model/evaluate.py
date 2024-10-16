@@ -18,7 +18,7 @@ from instructlab import clickext
 from instructlab.model.backends import backends
 
 # Local
-from ..utils import http_client, is_model_gguf, is_model_safetensors
+from ..utils import contains_argument, http_client, is_model_gguf, is_model_safetensors
 
 logger = logging.getLogger(__name__)
 
@@ -317,9 +317,6 @@ def launch_server(
     if backend == backends.VLLM:
         eval_serve.vllm.vllm_args = eval_serve.vllm.vllm_args or []
         eval_serve.vllm.vllm_args.extend(["--served-model-name", model_name])
-
-        # First Party
-        from instructlab.model.backends.vllm import contains_argument
 
         gpus, effective_gpus = get_gpus(ctx, gpus)
         if gpus:

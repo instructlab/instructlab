@@ -38,7 +38,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 # command entry points
 [project.entry-points."instructlab.command"]
 "config" = "instructlab.config.config:config"
-"data" = "instructlab.data.data:data"
+"data" = "instructlab.cli.data.data:data"
 "model" = "instructlab.model.model:model"
 "system" = "instructlab.system.system:system"
 "taxonomy" = "instructlab.taxonomy.taxonomy:taxonomy"
@@ -49,8 +49,8 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "show" = "instructlab.config.show:show"
 
 [project.entry-points."instructlab.command.data"]
-"generate" = "instructlab.data.generate:generate"
-"list" = "instructlab.data.list:list_data"
+"generate" = "instructlab.cli.data.generate:generate"
+"list" = "instructlab.cli.data.list:list_datasets"
 
 [project.entry-points."instructlab.command.model"]
 "chat" = "instructlab.model.chat:chat"
@@ -70,7 +70,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 
 [project.entry-points."instructlab.command.alias"]
 "chat" = "instructlab.model.chat:chat"
-"generate" = "instructlab.data.generate:generate"
+"generate" = "instructlab.cli.data.generate:generate"
 "serve" = "instructlab.model.serve:serve"
 "train" = "instructlab.model.train:train"
 
