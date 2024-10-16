@@ -720,63 +720,107 @@ def validate_safetensors_file(file_path: pathlib.Path) -> bool:
 
 
 def is_model_safetensors(model_path: pathlib.Path) -> bool:
-    """Check if model_path is a valid safe tensors directory
+    """Check if model_path is a valid safetensors directory.
 
-    Check if provided path to model represents directory containing a safetensors representation
-    of a model. Directory must contain a specific set of files to qualify as a safetensors model directory
+    Check if provided path to model represents a directory containing a safetensors representation
+    of a model. Directory must contain a specific set of files to qualify as a safetensors model directory.
+
     Args:
-        model_path (Path): The path to the model directory
+        model_path (Path): The path to the model directory.
+
     Returns:
         bool: True if the model is a safetensors model, False otherwise.
     """
-    try:
-        files = list(model_path.iterdir())
-    except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
-        logger.debug("Failed to read directory: %s", e)
-        return False
 
-    # directory should contain either .safetensors or .bin files to be considered valid
-    has_bin_file = False
-    safetensors_files: List[pathlib.Path] = []
+    valid_model = True
 
-    for file in files:
-        if file.suffix == ".safetensors":
-            safetensors_files.append(file)
-        elif file.suffix == ".bin":
-            has_bin_file = True
+    if not os.path.isdir(model_path):
+        logger.debug(f"Supplied model {model_path} is not a directory, so it cannot be considered a safetensors model")
+        valid_model = False
 
-    if not safetensors_files and not has_bin_file:
-        logger.debug("'%s' has no .safetensors or .bin files", model_path)
-        return False
+    if valid_model:
+        try:
+            files = list(model_path.iterdir())
+        except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
+            logger.debug("Failed to read directory: %s", e)
+            valid_model = False
 
-    if safetensors_files:
+    if valid_model:
+        has_bin_file = False
+        safetensors_files: List[pathlib.Path] = []
+
+        for file in files:
+            if file.suffix == ".safetensors":
+                safetensors_files.append(file)
+            elif file.suffix == ".bin":
+                has_bin_file = True
+
+        if not safetensors_files and not has_bin_file:
+            logger.debug("'%s' has no .safetensors or .bin files", model_path)
+            valid_model = False
+
+    if valid_model and safetensors_files:
         for safetensors_file in safetensors_files:
             if not validate_safetensors_file(safetensors_file):
-                return False
+                valid_model = False
+                break
 
-    basenames = {file.name for file in files}
-    requires_files = {
-        "config.json",
-        "tokenizer.json",
-        "tokenizer_config.json",
-    }
-    diff = requires_files.difference(basenames)
-    if diff:
-        logger.debug("'%s' is missing %s", model_path, diff)
-        return False
+    if valid_model:
+        basenames = {file.name for file in files}
+        required_files = {"config.json", "tokenizer.json", "tokenizer_config.json"}
+        diff = required_files.difference(basenames)
+        if diff:
+            logger.debug("'%s' is missing %s", model_path, diff)
+            valid_model = False
 
-    for file in model_path.glob("*.json"):
-        try:
-            with file.open(encoding="utf-8") as f:
-                json.load(f)
-        except (PermissionError, json.JSONDecodeError) as e:
-            logger.debug("'%s' is not a valid JSON file: e", file, e)
-            return False
+    if valid_model:
+        for file in model_path.glob("*.json"):
+            try:
+                with file.open(encoding="utf-8") as f:
+                    json.load(f)
+            except (PermissionError, json.JSONDecodeError) as e:
+                logger.debug("'%s' is not a valid JSON file: %s", file, e)
+                valid_model = False
+                break
 
-    return True
+    return valid_model
 
 
 def is_model_gguf(model_path: pathlib.Path) -> bool:
+    """Check if model_path is a valid GGUF directory or GGUF file
+
+    Check if provided path to model represents a GGUF model.
+    If it is a directory, it must contain a specific set of files to
+    qualify as a GGUF model directory
+
+    Args:
+        model_path (Path): The path to the model directory/file
+    Returns:
+        bool: True if the model is a GGUF model, False otherwise.
+    """
+
+    if os.path.isdir(model_path):
+        try:
+            items = list(model_path.iterdir())
+        except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
+            logger.debug("Failed to read directory: %s", e)
+            return False
+
+        # directory should contain .gguf files to be considered valid GGUF model
+        if not any(item.suffix.endswith(".gguf") for item in items):
+            logger.debug("'%s' has no *.gguf files", model_path)
+            return False
+        logger.debug("found *.gguf files in '%s'", model_path)
+
+        for item in items:
+            if os.path.isfile(item) and item.suffix.endswith(".gguf"):
+                return _is_file_gguf_model(model_path / Path(item))
+    elif os.path.isfile(model_path):
+        return _is_file_gguf_model(model_path)
+    return False
+
+
+def _is_file_gguf_model(model_path: pathlib.Path) -> bool:
     """
     Check if the file is a GGUF file.
     Args:
@@ -786,6 +830,10 @@ def is_model_gguf(model_path: pathlib.Path) -> bool:
     """
     # Third Party
     from gguf.constants import GGUF_MAGIC
+
+    if not model_path.suffix.endswith(".gguf"):
+        logger.debug(f"Supplied model {model_path} does not have a .gguf suffix")
+        return False
 
     try:
         with model_path.open("rb") as f:

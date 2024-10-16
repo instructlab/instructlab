@@ -32,6 +32,14 @@ MERLINITE_GGUF_MODEL="merlinite-7b-lab-Q4_K_M.gguf"
 MISTRAL_GGUF_REPO="TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
 MISTRAL_GGUF_MODEL="mistral-7b-instruct-v0.2.Q4_K_M.gguf"
 
+HUGGINGFACE_DIR="huggingface.co"
+
+MERLINITE_GGUF_REPO="instructlab/merlinite-7b-lab-GGUF"
+MERLINITE_GGUF_MODEL="merlinite-7b-lab-Q4_K_M.gguf"
+
+CACHE_HOME=$(python -c 'import platformdirs; print(platformdirs.user_cache_dir())')
+MODEL_CACHE="${CACHE_HOME}/instructlab/models"
+
 # t-shirt size globals
 SMALL=0
 MEDIUM=0
@@ -107,7 +115,7 @@ test_init() {
 
         step Setting small-size SDG-specific config
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.pipeline simple
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.model_path "${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}"
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.model_path "${MODEL_CACHE}/${HUGGINGFACE_DIR}/${MERLINITE_GGUF_REPO}/main/"
 
         step Setting small-size Training-specific config
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.ckpt_output_dir "${DATA_HOME}/instructlab/checkpoints"
@@ -197,10 +205,14 @@ test_list() {
     task List the Downloaded Models
     if [ "$SMALL" -eq 1 ]; then
         ilab model list | grep ${GRANITE_7B_MODEL}
+<<<<<<< HEAD
         ilab model list | grep ${MERLINITE_GGUF_MODEL}    
     elif [ "$MEDIUM" -eq 1 ]; then
         ilab model list | grep ${GRANITE_7B_MODEL}
         ilab model list | grep ${MISTRAL_GGUF_MODEL}
+=======
+        ilab model list | grep ${MERLINITE_GGUF_REPO}
+>>>>>>> fe46fd8 (update GGUF check to allow folders)
     elif [ "$LARGE" -eq 1 ]; then
         ilab model list | grep ${GRANITE_7B_MODEL}
         ilab model list | grep ${PROMETHEUS_8X7B_MODEL}
@@ -297,7 +309,7 @@ test_serve() {
     # https://github.com/instructlab/instructlab/issues/579
     # so we skip trying to test the result and just ensure that serve works in general
     if [ "$SMALL" -eq 1 ]; then
-        model_path="${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}"
+        model_path="${MODEL_CACHE}/${HUGGINGFACE_DIR}/${MERLINITE_GGUF_REPO}/main/"
     # use trained gguf for medium-size job
     elif [ "$MEDIUM" -eq 1 ]; then
         model_path="${TRAINED_MODEL_PATH}/pytorch_model-Q4_K_M.gguf"
