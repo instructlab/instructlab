@@ -655,6 +655,7 @@ def print_table(headers: List[str], data: List[Tuple[str, ...]] | List[List[str]
     +--------+--------+-----+
     ```
     """
+
     column_widths = [
         max(len(str(row[i])) for row in data + [headers]) for i in range(len(headers))
     ]
@@ -666,8 +667,13 @@ def print_table(headers: List[str], data: List[Tuple[str, ...]] | List[List[str]
     for header, width in zip(headers, column_widths, strict=False):
         outputs.append(f" {header:{width}} ")
     print("|" + "|".join(outputs) + "|")
-    print(joining_line)
     for row in data:
+        # only print the joining line before a new model is printed
+        # if row[0] is empty it means we are printing information for
+        # a different version of a previously displayed model, so
+        # skip the joining line
+        if row[0] != "":
+            print(joining_line)
         outputs = []
         for item, width in zip(row, column_widths, strict=False):
             outputs.append(f" {item:{width}} ")
@@ -960,21 +966,33 @@ def list_models(
         list_checkpoints (bool): Whether or not we should include trained checkpoints.
 
     Returns:
-        List[AnalyzeResult]: Results of the listing operation.
+        List[Tuple[str, str]]: List of tuples representing all valid models found.
+        The tuples follow the format [<model's aboslute path>, <supplied root directory containing model>]
     """
+
+    valid_models: List[Tuple[str, str]] = []
+
     # if we want to list checkpoints, add that dir to our list
     if list_checkpoints:
         model_dirs.append(Path(DEFAULTS.CHECKPOINTS_DIR))
-    data: List[AnalyzeModelResult] = []
-    for directory in model_dirs:
-        for entry in Path(directory).iterdir():
-            # if file, just tally the size. This must be a GGUF.
-            if entry.is_file() and is_model_gguf(entry):
-                data.append(_analyze_gguf(entry))
-            elif entry.is_dir():
-                data.extend(_analyze_dir(entry, list_checkpoints, directory))
-    return data
 
+    for directory in model_dirs:
+        for root, folders, _ in os.walk(directory.as_posix()):
+            # Excluding files here since GGUF model files present inside
+            # folders end up getting counted twice - once as a folder and
+            # the second time as the file itself. Excluding files in our
+            # traversal ensures they only get counted once as folders.
+            # The downside is that we will be ignoring any loose  GGUF
+            # files previously downloaded and present at the top level
+            for item in folders:
+                cur_item = Path(f"{root}/{item}")
+                if is_model_safetensors(Path(cur_item)) or is_model_gguf(
+                    Path(cur_item)
+                ):
+                    valid_models.append((str(cur_item), str(directory)))
+                    continue
+
+    return valid_models
 
 def contains_argument(prefix: str, args: typing.Iterable[str]) -> bool:
     # Either --foo value or --foo=value
