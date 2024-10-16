@@ -741,7 +741,9 @@ def is_model_safetensors(model_path: pathlib.Path) -> bool:
     valid_model = True
 
     if not os.path.isdir(model_path):
-        logger.debug(f"Supplied model {model_path} is not a directory, so it cannot be considered a safetensors model")
+        logger.debug(
+            f"Supplied model {model_path} is not a directory, so it cannot be considered a safetensors model"
+        )
         valid_model = False
 
     if valid_model:
@@ -993,6 +995,7 @@ def list_models(
                     continue
 
     return valid_models
+
 
 def contains_argument(prefix: str, args: typing.Iterable[str]) -> bool:
     # Either --foo value or --foo=value

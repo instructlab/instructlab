@@ -137,6 +137,7 @@ test_init() {
 
         step Setting medium-size Training-specific config
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.ckpt_output_dir "${DATA_HOME}/instructlab/checkpoints"
+
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.pipeline full
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.model_path "${CACHE_HOME}/instructlab/models/${GRANITE_7B_MODEL}"
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.device cpu
@@ -145,7 +146,7 @@ test_init() {
 
         step Setting medium-size Eval-specific config
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" evaluate.gpus 1
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" evaluate.mt_bench.judge_model "${CACHE_HOME}/instructlab/models/${GRANITE_7B_MODEL}"
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" evaluate.mt_bench.judge_model "${MODEL_CACHE}/${HUGGINGFACE_DIR}/${GRANITE_7B_MODEL}/main/"
 
     elif [ "$LARGE" -eq 1 ]; then
         step Initalizing ilab with l40s-x4 train profile
@@ -156,7 +157,7 @@ test_init() {
 
         step Setting large-size SDG-specific config
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.pipeline full
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.model_path "${CACHE_HOME}/instructlab/models/${MIXTRAL_8X7B_MODEL}"
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.model_path "${MODEL_CACHE}/${HUGGINGFACE_DIR}/${MIXTRAL_8X7B_MODEL}/main/"
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.vllm.gpus 4
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.vllm.llm_family mixtral
 
@@ -167,7 +168,7 @@ test_init() {
 
         step Setting large-size Eval-specific config
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" evaluate.gpus 4
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" evaluate.mt_bench.judge_model "${CACHE_HOME}/instructlab/models/${PROMETHEUS_8X7B_MODEL}"
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" evaluate.mt_bench.judge_model "${MODEL_CACHE}/${HUGGINGFACE_DIR}/${PROMETHEUS_8X7B_MODEL}/main/"
     fi
     task InstructLab initialization Complete
 }
@@ -205,14 +206,10 @@ test_list() {
     task List the Downloaded Models
     if [ "$SMALL" -eq 1 ]; then
         ilab model list | grep ${GRANITE_7B_MODEL}
-<<<<<<< HEAD
-        ilab model list | grep ${MERLINITE_GGUF_MODEL}    
+        ilab model list | grep ${MERLINITE_GGUF_MODEL}
     elif [ "$MEDIUM" -eq 1 ]; then
         ilab model list | grep ${GRANITE_7B_MODEL}
         ilab model list | grep ${MISTRAL_GGUF_MODEL}
-=======
-        ilab model list | grep ${MERLINITE_GGUF_REPO}
->>>>>>> fe46fd8 (update GGUF check to allow folders)
     elif [ "$LARGE" -eq 1 ]; then
         ilab model list | grep ${GRANITE_7B_MODEL}
         ilab model list | grep ${PROMETHEUS_8X7B_MODEL}
