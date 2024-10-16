@@ -2,7 +2,8 @@
 chat:
   # Predefined setting or environment that influences the behavior and responses of
   # the chat assistant. Each context is associated with a specific prompt that
-  # guides the assistant on how to respond to user inputs.
+  # guides the assistant on how to respond to user inputs. Available contexts:
+  # default, cli_helper.
   # Default: default
   context: default
   # Sets temperature to 0 if enabled, leading to more deterministic responses.

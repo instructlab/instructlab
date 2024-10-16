@@ -128,7 +128,7 @@ class _chat(BaseModel):
     )
     context: str = Field(
         default="default",
-        description="Predefined setting or environment that influences the behavior and responses of the chat assistant. Each context is associated with a specific prompt that guides the assistant on how to respond to user inputs.",
+        description="Predefined setting or environment that influences the behavior and responses of the chat assistant. Each context is associated with a specific prompt that guides the assistant on how to respond to user inputs. Available contexts: default, cli_helper.",
     )
     session: typing.Optional[str] = Field(
         default=None, description="Filepath of a dialog session file."
