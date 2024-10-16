@@ -9,7 +9,9 @@ import sys
 
 # Third Party
 from click.testing import CliRunner
+from safetensors.torch import save_file
 import pytest
+import torch
 
 # First Party
 from instructlab import lab
@@ -34,8 +36,15 @@ def create_safetensors_or_bin_model_files(
         with open(model_path / file, "a+", encoding="UTF-8") as f:
             f.write(json_object)
 
-    with open(model_path / f"model.{model_file_type}", "a+", encoding="UTF-8"):
-        pass
+    if model_file_type == "safetensors":
+        tensors = {
+            "tensor1": torch.randn(3, 3),
+            "tensor2": torch.randn(5, 5),
+        }
+        save_file(tensors, model_path / f"model.{model_file_type}")
+    else:
+        with open(model_path / f"model.{model_file_type}", "a+", encoding="UTF-8"):
+            pass
     if valid:
         with open(model_path / "config.json", "a+", encoding="UTF-8") as f:
             f.write(json_object)
