@@ -265,6 +265,16 @@ train:
   # Allow CPU offload for deepspeed optimizer.
   # Default: False
   deepspeed_cpu_offload_optimizer: false
+  # PyTorch device to use. Use 'cpu' for 'simple' and 'full' training on Linux. Use
+  # 'mps' for 'full' training on MacOS Metal Performance Shader. Use 'cuda' for
+  # Nvidia CUDA / AMD ROCm GPUs. Use 'hpu' for Intel Gaudi GPUs.
+  # Default: cpu
+  # Examples:
+  #   - cpu
+  #   - mps
+  #   - cuda
+  #   - hpu
+  device: cpu
   # Whether or not we should disable the use of flash-attention during training.
   # This is useful when using older GPUs.
   # Default: False

@@ -134,13 +134,7 @@ def clickpath_setup(is_dir: bool) -> click.Path:
 @click.option(
     "--device",
     type=click.Choice(["cpu", "cuda", "hpu", "mps"]),
-    show_default=True,
-    default="cpu",
-    help=(
-        "PyTorch device for full training. Use 'cuda' "
-        "for NVidia CUDA / AMD ROCm GPU, to use specific GPU, set visible GPU before run train command."
-        "use 'cpu' for laptop CPU training and 'mps' for MacOS Metal Performance Shader training."
-    ),
+    cls=clickext.ConfigOption,
 )
 @click.option(
     "--4-bit-quant",
