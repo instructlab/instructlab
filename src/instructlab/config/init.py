@@ -5,6 +5,7 @@ from math import floor
 from os import listdir
 from os.path import dirname, exists, join
 import pathlib
+import shutil
 import typing
 
 # Third Party
@@ -113,11 +114,11 @@ def init(
     )
     if overwrite_profile:
         click.echo(
-            f"Generating `{DEFAULTS.CONFIG_FILE}` and `{DEFAULTS.TRAIN_PROFILE_DIR}`..."
+            f"Generating config file and profiles:\n    {DEFAULTS.CONFIG_FILE}\n    {DEFAULTS.TRAIN_PROFILE_DIR}\n"
         )
         recreate_train_profiles(overwrite=True)
     else:
-        click.echo(f"Generating `{DEFAULTS.CONFIG_FILE}`...")
+        click.echo(f"Generating config file:\n    {DEFAULTS.CONFIG_FILE}\n")
     if train_profile is not None:
         cfg.train = read_train_profile(train_profile)
     elif interactive:
@@ -202,8 +203,10 @@ def init(
         cfg.evaluate.mt_bench_branch.taxonomy_path = taxonomy_path
     write_config(cfg)
 
+    ready_text = "  You're ready to start using `ilab`. Enjoy!"
+    separator = get_separator(ready_text)
     click.secho(
-        "Initialization completed successfully, you're ready to start using `ilab`. Enjoy!",
+        f"\n{separator}\n    Initialization completed successfully!\n{ready_text}\n{separator}",
         fg="green",
     )
 
@@ -221,7 +224,7 @@ def hw_auto_detect() -> tuple[str | None, int | None, _train, bool]:
     edited_cfg = False
     # try nvidia
     if torch.cuda.is_available() and torch.version.hip is None:
-        click.echo("Detecting Hardware...")
+        click.echo("\nDetecting Hardware...")
         gpus = torch.cuda.device_count()
         for i in range(gpus):
             properties = torch.cuda.get_device_properties(i)
@@ -320,14 +323,16 @@ def match_profile_based_on_gpu_count(
 
 def check_if_configs_exist(fresh_install) -> bool:
     if exists(DEFAULTS.CONFIG_FILE):
-        overwrite = click.confirm(
-            f"Found {DEFAULTS.CONFIG_FILE}, do you still want to continue?"
-        )
+        click.echo(f"Existing config file was found in:\n    {DEFAULTS.CONFIG_FILE}")
+        overwrite = click.confirm("Do you still want to continue?")
         if not overwrite:
             raise click.exceptions.Exit(0)
     if exists(DEFAULTS.TRAIN_PROFILE_DIR) and not fresh_install:
+        click.echo(
+            f"\nExisting training profiles were found in:\n    {DEFAULTS.TRAIN_PROFILE_DIR}"
+        )
         return click.confirm(
-            f"Existing training profiles were found in {DEFAULTS.TRAIN_PROFILE_DIR}\nDo you want to restore these profiles to the default values?"
+            "Do you want to restore these profiles to the default values?"
         )
     # default behavior should be do NOT overwrite files that could have just been created
     return False
@@ -359,8 +364,10 @@ def get_params(
         cfg = read_config(config)
     clone_taxonomy_repo = True
     if interactive:
+        guide_text = "  This guide will help you to setup your environment."
+        separator = get_separator(guide_text)
         click.echo(
-            "Welcome to InstructLab CLI. This guide will help you to setup your environment."
+            f"\n{separator}\n         Welcome to InstructLab CLI.\n{guide_text}\n{separator}\n"
         )
         click.echo(
             "Please provide the following values to initiate the "
@@ -378,8 +385,9 @@ def get_params(
     if taxonomy_contents:
         clone_taxonomy_repo = False
     elif interactive and param_source != click.core.ParameterSource.ENVIRONMENT:
+        click.echo(f"`{taxonomy_path}` seems to not exist or is empty.")
         clone_taxonomy_repo = click.confirm(
-            f"`{taxonomy_path}` seems to not exist or is empty. Should I clone {repository} for you?",
+            f"Should I clone {repository} for you?",
             default=True,
         )
 
@@ -412,3 +420,14 @@ def get_params(
         )
 
     return model_path, taxonomy_path, cfg
+
+
+def get_separator(text: str) -> str:
+    text_length = len(text)
+    try:
+        terminal_width = shutil.get_terminal_size().columns
+    except Exception:  # pylint: disable=broad-exception-caught
+        # Exception can occur in non-interactive scenarios where no terminal is associated with the process
+        terminal_width = text_length
+    separator_length = min(text_length, terminal_width)
+    return "-" * separator_length
