@@ -411,7 +411,7 @@ class OCIDownloader(Downloader):
     "--filename",
     "filenames",
     multiple=True,
-    default=[DEFAULTS.GGUF_MODEL_NAME, DEFAULTS.MISTRAL_GGUF_MODEL_NAME],
+    default=[DEFAULTS.MERLINITE_GGUF_MODEL_NAME, DEFAULTS.MISTRAL_GGUF_MODEL_NAME],
     show_default="The default model location in the instructlab data directory.",
     help="Name of the model file to download from the Hugging Face repository.",
 )

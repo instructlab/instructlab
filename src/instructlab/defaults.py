@@ -53,12 +53,15 @@ class _InstructlabDefaults:
     ILAB_TRAIN_PROFILE_DIR = "ILAB_TRAIN_PROFILE_DIR"
 
     # TODO: Consolidate --model and --model-path into one --model-path flag since we always need a path now
+    DEFAULT_MODEL_BRANCH = "main"
+    HUGGINGFACE_DOMAIN = "huggingface.co"
     MODEL_NAME_OLD = "merlinite-7b-lab-Q4_K_M"
     MERLINITE_GGUF_REPO = "instructlab/merlinite-7b-lab-GGUF"
     MISTRAL_GGUF_REPO = "TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
-    GGUF_MODEL_NAME = "merlinite-7b-lab-Q4_K_M.gguf"
+    MERLINITE_GGUF_MODEL_NAME = "merlinite-7b-lab-Q4_K_M.gguf"
     MISTRAL_GGUF_MODEL_NAME = "mistral-7b-instruct-v0.2.Q4_K_M.gguf"
     MODEL_REPO = "instructlab/granite-7b-lab"
+    GRANITE_MODEL_REPO = "instructlab/granite-7b-lab"
     JUDGE_MODEL_MT = "prometheus-eval/prometheus-8x7b-v2.0"
     TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
     TAXONOMY_BASE = "origin/main"
@@ -123,15 +126,48 @@ class _InstructlabDefaults:
 
     @property
     def DEFAULT_CHAT_MODEL(self) -> str:
-        return path.join(self.MODELS_DIR, self.GGUF_MODEL_NAME)
+        return path.join(
+            self.MODELS_DIR,
+            self.HUGGINGFACE_DOMAIN,
+            self.MERLINITE_GGUF_REPO,
+            self.DEFAULT_MODEL_BRANCH,
+        )
+
+    @property
+    def DEFAULT_MODEL_GGUF(self) -> str:
+        return path.join(
+            self.MODELS_DIR,
+            self.HUGGINGFACE_DOMAIN,
+            self.MERLINITE_GGUF_REPO,
+            self.DEFAULT_MODEL_BRANCH,
+        )
+
+    @property
+    def DEFAULT_MODEL(self) -> str:
+        return path.join(
+            self.MODELS_DIR,
+            self.HUGGINGFACE_DOMAIN,
+            self.GRANITE_MODEL_REPO,
+            self.DEFAULT_MODEL_BRANCH,
+        )
 
     @property
     def DEFAULT_TEACHER_MODEL(self) -> str:
-        return path.join(self.MODELS_DIR, self.MISTRAL_GGUF_MODEL_NAME)
+        return path.join(
+            self.MODELS_DIR,
+            self.HUGGINGFACE_DOMAIN,
+            self.MISTRAL_GGUF_REPO,
+            self.DEFAULT_MODEL_BRANCH,
+        )
 
     @property
     def DEFAULT_JUDGE_MODEL(self) -> str:
-        return path.join(self.MODELS_DIR, self.JUDGE_MODEL_MT)
+        return path.join(
+            self.MODELS_DIR,
+            self.HUGGINGFACE_DOMAIN,
+            self.JUDGE_MODEL_MT,
+            self.DEFAULT_MODEL_BRANCH,
+        )
 
     @property
     def TAXONOMY_DIR(self) -> str:

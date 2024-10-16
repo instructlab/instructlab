@@ -97,8 +97,9 @@ generate:
   # Default: 1000
   chunk_word_count: 1000
   # Teacher model that will be used to synthetically generate training data.
-  # Default: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
-  model: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
+  # Default: /cache/instructlab/models/huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/main
+  model: 
+    /cache/instructlab/models/huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/main
   # Number of CPU cores to use for generation.
   # Default: 10
   num_cpus: 10
@@ -161,8 +162,9 @@ generate:
       # Default: 4096
       max_ctx_size: 4096
     # Directory where model to be served is stored.
-    # Default: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
-    model_path: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
+    # Default: /cache/instructlab/models/huggingface.co/instructlab/merlinite-7b-lab-GGUF/main
+    model_path: 
+      /cache/instructlab/models/huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/main
     # vLLM serving settings.
     vllm:
       # Number of GPUs to use.
@@ -327,7 +329,7 @@ train:
   phased_base_dir: /data/instructlab/phased
   # Judge model path for phased MT-Bench evaluation.
   # Default: /cache/instructlab/models/huggingface.co/prometheus-eval/prometheus-8x7b-v2.0/main
-  phased_mt_bench_judge:
+  phased_mt_bench_judge: 
     /cache/instructlab/models/huggingface.co/prometheus-eval/prometheus-8x7b-v2.0/main
   # Phased phase1 effective batch size.
   # Default: 128

@@ -31,8 +31,10 @@ class TestConfig:
         internal_dirname = "internal"
         cache_dir = os.path.join(xdg_cache_home(), package_name)
         data_dir = os.path.join(xdg_data_home(), package_name)
-        default_chat_model = f"{cache_dir}/models/merlinite-7b-lab-Q4_K_M.gguf"
-        default_sdg_model = f"{cache_dir}/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
+        default_chat_model = (
+            f"{cache_dir}/models/huggingface.co/instructlab/merlinite-7b-lab-GGUF/main"
+        )
+        default_sdg_model = f"{cache_dir}/models/huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/main"
 
         assert cfg.general is not None
         assert cfg.version is not None
@@ -91,7 +93,12 @@ class TestConfig:
     def _assert_model_defaults(self, cfg):
         package_name = "instructlab"
         cache_dir = os.path.join(xdg_cache_home(), package_name)
-        default_chat_model = f"{cache_dir}/models/merlinite-7b-lab-Q4_K_M.gguf"
+        default_chat_model = (
+            f"{cache_dir}/models/huggingface.co/instructlab/merlinite-7b-lab-GGUF/main"
+        )
+        base_model = (
+            f"{cache_dir}/models/huggingface.co/instructlab/granite-7b-lab/main"
+        )
 
         assert cfg.chat is not None
         assert cfg.chat.model == default_chat_model
