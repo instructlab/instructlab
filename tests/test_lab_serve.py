@@ -10,8 +10,8 @@ import click
 import pytest
 
 # First Party
+from instructlab.cli.model.serve import warn_for_unsupported_backend_param
 from instructlab.model.backends.vllm import get_max_stable_vram_wait
-from instructlab.model.serve import warn_for_unsupported_backend_param
 
 # Local
 from . import common
@@ -317,7 +317,7 @@ def test_max_stable_vram_wait():
     ],
 )
 def test_warn_for_unsupported_backend_param(param, expected_call_count):
-    with patch("instructlab.model.serve.logger.warning") as mock_warning:
+    with patch("instructlab.cli.model.serve.logger.warning") as mock_warning:
         # Create a mock click.Context object
         ctx = MagicMock()
 

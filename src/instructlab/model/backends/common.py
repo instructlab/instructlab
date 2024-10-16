@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 API_ROOT_WELCOME_MESSAGE = "Hello from InstructLab! Visit us at https://instructlab.ai"
 CHAT_TEMPLATE_AUTO = "auto"
 CHAT_TEMPLATE_TOKENIZER = "tokenizer"
-LLAMA_CPP = "llama-cpp"
+LLAMA_CPP = "llama_cpp"
 VLLM = "vllm"
 templates = [
     {
