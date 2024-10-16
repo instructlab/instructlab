@@ -234,6 +234,8 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
    #### Bash (version 4.4 or newer)
 
+   > **NOTE**: To use Bash version 4.4 or higher on macOS (default is 3.2.57), ensure your login shell is set to the updated version. You can verify this with `echo $SHELL`. If you encounter the error `bash: complete: nosort: invalid option name`, check your terminal or configuration files (e.g., ~/.bash_profile, ~/.bashrc, ~/.profile) to see whether they are referencing the old version for login.
+
    Enable tab completion in `bash` with the following command:
 
    ```sh
