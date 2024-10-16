@@ -110,8 +110,7 @@ test_init() {
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.ckpt_output_dir "${DATA_HOME}/instructlab/checkpoints"
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.pipeline simple
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.model_path "${CACHE_HOME}/instructlab/models/${GRANITE_7B_MODEL}"
-        #TODO(nweinber): Uncomment below line when 'device' is added to train config
-        #python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.device cuda
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.device cuda
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.num_epochs 1
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.effective_batch_size 4
 
@@ -129,8 +128,7 @@ test_init() {
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.ckpt_output_dir "${DATA_HOME}/instructlab/checkpoints"
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.pipeline full
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.model_path "${CACHE_HOME}/instructlab/models/${GRANITE_7B_MODEL}"
-        #TODO(nweinber): Uncomment below line when 'device' is added to train config
-        #python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.device cpu
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.device cpu
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.num_epochs 1
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.effective_batch_size 4
 
@@ -154,8 +152,7 @@ test_init() {
         step Setting large-size Training-specific config
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.phased_mt_bench_judge "${CACHE_HOME}/instructlab/models/${PROMETHEUS_8X7B_MODEL}"
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.model_path "${CACHE_HOME}/instructlab/models/${GRANITE_7B_MODEL}"
-        #TODO(nweinber): Uncomment below line when 'device' is added to train config
-        #python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.device cuda
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.device cuda
 
         step Setting large-size Eval-specific config
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" evaluate.gpus 4
@@ -243,13 +240,10 @@ test_train() {
     local skill_data_path
     skill_data_path=$(find "${DATA_HOME}"/instructlab/datasets -name 'skills_train_msgs*' | head -n 1)
     knowledge_data_path=$(find "${DATA_HOME}"/instructlab/datasets -name 'knowledge_train_msgs*' | head -n 1)
-    #TODO(nweinber): Replace with commented-out lines below when 'init' is fixed
     if [ "$SMALL" -eq 1 ]; then
-        ilab model train --4-bit-quant --device=cuda
-        #ilab model train --4-bit-quant
+        ilab model train --4-bit-quant
     elif [ "$MEDIUM" -eq 1 ]; then
-        ilab model train --data-path "${skill_data_path}" --device=cpu
-        #ilab model train --data-path "${skill_data_path}"
+        ilab model train --data-path "${skill_data_path}"
     fi
 
     TRAINED_MODEL_PATH="${DATA_HOME}/instructlab/checkpoints/hf_format/samples_0"

@@ -27,3 +27,4 @@ phased_phase2_num_epochs: 2
 phased_phase2_samples_per_save: 0
 distributed_backend: fsdp
 pipeline: accelerated
+device: cuda

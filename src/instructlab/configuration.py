@@ -398,6 +398,12 @@ class _train(BaseModel):
         default=DEFAULTS.MODEL_REPO,
         description="Directory where the model to be trained is stored.",
     )
+    device: str = Field(
+        default="cpu",
+        description="PyTorch device to use. Use 'cpu' for 'simple' and 'full' training on Linux. Use 'mps' for 'full' training on MacOS Metal Performance Shader. Use 'cuda' for Nvidia CUDA / AMD ROCm GPUs. Use 'hpu' for Intel Gaudi GPUs.",
+        examples=["cpu", "mps", "cuda", "hpu"],
+        pattern="cpu|mps|cuda|hpu",
+    )
     data_path: str = Field(
         default_factory=lambda: DEFAULTS.DATASETS_DIR,
         description="For the training library (primary training method), this specifies the path to the dataset file. For legacy training (MacOS/Linux), this specifies the path to the directory.",
