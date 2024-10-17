@@ -111,6 +111,20 @@ class _general(BaseModel):
         return self
 
 
+class _chat_prompts(BaseModel):
+    """Class describing prompts for different chat contexts."""
+
+    default: str = Field(
+        default=DEFAULTS.SYS_PROMPT,
+        description="Default prompt to be used if no specific context is provided.",
+    )
+
+    cli_helper: str = Field(
+        default=DEFAULTS.CLI_HELPER_PROMPT,
+        description="Prompt to be used when acting as a CLI helper.",
+    )
+
+
 class _chat(BaseModel):
     """Class describing configuration of the 'chat' sub-command."""
 
@@ -129,6 +143,10 @@ class _chat(BaseModel):
     context: str = Field(
         default="default",
         description="Predefined setting or environment that influences the behavior and responses of the chat assistant. Each context is associated with a specific prompt that guides the assistant on how to respond to user inputs. Available contexts: default, cli_helper.",
+    )
+    prompts: _chat_prompts = Field(
+        default_factory=_chat_prompts,
+        description="Prompts for various contexts in the chat assistant.",
     )
     session: typing.Optional[str] = Field(
         default=None, description="Filepath of a dialog session file."
