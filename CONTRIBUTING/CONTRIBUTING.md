@@ -91,10 +91,19 @@ pip install .[cpu]
 ### Testing
 
 Before pushing changes to GitHub, you need to run the tests as shown below. They can be run individually as shown in each sub-section
-or can be run with the one command:
+or can be run with the one command (use `-v` for more detailed output):
 
 ```shell
 tox
+```
+
+If you need to configure a proxy or a trusted host for pip while using tox, add the `PIP_PROXY` and `PIP_TRUSTED_HOST` environment variables in the `setenv` directive within the `[testenv]` section of `tox.ini`, for example:
+
+```shell
+[testenv]
+setenv =
+    PIP_PROXY = http://proxy.example.com:3128
+    PIP_TRUSTED_HOST = pypi.org download.pytorch.org
 ```
 
 #### Unit tests
@@ -129,7 +138,7 @@ Cli follows the python [`pep8`](https://peps.python.org/pep-0008/) coding style.
 
 We use [pre-commit](https://pre-commit.com/) to enforce coding style using [`black`](https://github.com/psf/black), and [`isort`](https://pycqa.github.io/isort/).
 
-You can invoke formatting with:
+You can invoke formatting with (use `--` followed by a single file):
 
 ```shell
 tox -e ruff
@@ -137,10 +146,50 @@ tox -e ruff
 
 In addition, we use [`pylint`](https://www.pylint.org) to perform static code analysis of the code.
 
-You can invoke the linting with the following command
+You can invoke the linting with the following command (use `--` followed by a single file):
 
 ```shell
 tox -e lint
+```
+
+### Type Checking
+
+This project uses [`mypy`](https://mypy.readthedocs.io/en/stable/) for static type checking. It helps catch bugs early by ensuring type correctness.
+
+You can invoke type checking using the following command (use `--` followed by a single file):
+
+```shell
+tox -e mypy
+```
+
+### Spell Checking
+
+We use [`pyspelling`](https://facelessuser.github.io/pyspelling/) and [`aspell`](http://aspell.net/) to check for spelling errors in the documentation and code comments.
+
+You can invoke the spell check using:
+
+```shell
+tox -e spellcheck
+```
+
+### Documentation
+
+We use [Sphinx](https://docs.readthedocs.io/en/stable/intro/sphinx.html) to generate documentation. It's crucial to keep the documentation up-to-date when making changes to the codebase.
+
+You can generate the HTML documentation locally by running the following command:
+
+```shell
+tox -e docs
+```
+
+#### TOML File Linting
+
+We use a `Makefile`-based process to lint and format the `pyproject.toml` file to ensure it follows a consistent style.
+
+You can run the linting and formatting process with:
+
+```shell
+tox -e tomllint
 ```
 
 ## Your First Code Contribution
