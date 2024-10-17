@@ -144,7 +144,7 @@ def train(train_args, device):
         )
         model.config.eos_token_id = tokenizer.eos_token_id
 
-    model = utils.convert_loss_to_reduce_sum(model, False)
+    model = utils.convert_loss_to_reduce_sum(model)
     model = utils.add_noisy_embeddings(model, noise_alpha=None)
 
     # Get virtual memory statistics
