@@ -77,8 +77,8 @@ You can specify the following flags to test various features of `ilab` with the
 | --- | --- | --- | --- | --- |
 | **Serving**  | llama-cpp                 |✅|✅|⎯|
 |              | vllm                      |⎯|✅|✅|
-| **Generate** | simple                    |✅|✅|⎯|
-|              | full                      |⎯|⎯|✅|
+| **Generate** | simple                    |✅|⎯|⎯|
+|              | full                      |⎯|✅|✅|
 | **Training** | simple                    |✅(*1)|⎯|⎯|
 |              | full                      |⎯ |✅|⎯|
 |              | accelerated (multi-phase) |⎯|⎯|✅|
