@@ -334,6 +334,15 @@ train:
   # Disabled when set to 0.
   # Default: 0
   phased_phase2_samples_per_save: 0
+  # Training pipeline to use. Simple is for systems with limited resources, full is
+  # for more capable consumer systems (64 GB of RAM), and accelerated is for systems
+  # with a dedicated GPU.
+  # Default: full
+  # Examples:
+  #   - simple
+  #   - full
+  #   - accelerated
+  pipeline: full
   # Number of samples the model should see before saving a checkpoint.
   # Default: 250000
   save_samples: 250000
