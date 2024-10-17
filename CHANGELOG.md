@@ -1,3 +1,10 @@
+## v0.20
+
+### Breaking Changes
+
+* Intel Gaudi software has been updated to 1.18.0 with Python 3.11 and
+  Torch 2.4.0.
+
 ## v0.19
 
 ### Breaking Changes

@@ -124,6 +124,7 @@ jobs:
       - name: Remove llama-cpp-python from cache
         run: |
           pip cache remove llama_cpp_python
+          pip cache remove flash_attn
 
       - name: Cache huggingface
         uses: actions/cache@3624ceb22c1c5a301c8db4169662070a689d9ea8 # v4.1.1
@@ -157,6 +158,7 @@ jobs:
         if: always()
         run: |
           pip cache remove llama_cpp_python
+          pip cache remove  flash_attn
 
   docs:
     needs: ["test-workflow-ready"]
@@ -185,6 +187,7 @@ jobs:
       - name: Remove llama-cpp-python from cache
         run: |
           pip cache remove llama_cpp_python
+          pip cache remove flash_attn
 
       - name: Run tox docs target (expect failure since tox is not present)
         run: |
@@ -223,6 +226,7 @@ jobs:
         if: always()
         run: |
           pip cache remove llama_cpp_python
+          pip cache remove flash_attn
 
   test-workflow-complete:
     permissions:
