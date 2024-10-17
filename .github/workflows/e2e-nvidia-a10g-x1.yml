@@ -134,6 +134,8 @@ jobs:
           df -h
 
       - name: Run e2e test
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           . venv/bin/activate
           ./scripts/e2e-ci.sh -m
