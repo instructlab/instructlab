@@ -24,10 +24,13 @@ class TestLabDownload:
                 "--config=DEFAULT",
                 "model",
                 "download",
+                "--hf-token=foo",
             ],
         )
-        assert result.exit_code == 0, "command finished with an unexpected exit code"
-        mock_hf_hub_download.assert_called_once()
+        assert (
+            result.exit_code == 0
+        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert mock_hf_hub_download.call_count == 2
 
     @patch(
         "instructlab.model.download.hf_hub_download",

@@ -52,6 +52,7 @@ class _InstructlabDefaults:
     # TODO: Consolidate --model and --model-path into one --model-path flag since we always need a path now
     MODEL_NAME_OLD = "merlinite-7b-lab-Q4_K_M"
     MERLINITE_GGUF_REPO = "instructlab/merlinite-7b-lab-GGUF"
+    MISTRAL_GGUF_REPO = "TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
     GGUF_MODEL_NAME = "merlinite-7b-lab-Q4_K_M.gguf"
     MISTRAL_GGUF_MODEL_NAME = "mistral-7b-instruct-v0.2.Q4_K_M.gguf"
     MODEL_REPO = "instructlab/granite-7b-lab"
