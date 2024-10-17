@@ -70,7 +70,7 @@ def train(train_args, device):
             avg_sample_len=dataset.get_lengths().mean(),
             effective_batch_size=train_args.effective_batch_size,
             max_batch_len_per_gpu=train_args.max_batch_len,
-            is_padding=train_args.is_padding_free,
+            is_padding=True,
             dataset=dataset,
             seed=47,
         )
@@ -144,7 +144,7 @@ def train(train_args, device):
         )
         model.config.eos_token_id = tokenizer.eos_token_id
 
-    model = utils.convert_loss_to_reduce_sum(model, is_granite=False)
+    model = utils.convert_loss_to_reduce_sum(model, False)
     model = utils.add_noisy_embeddings(model, noise_alpha=None)
 
     # Get virtual memory statistics
