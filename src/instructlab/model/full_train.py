@@ -70,7 +70,7 @@ def train(train_args, device):
             avg_sample_len=dataset.get_lengths().mean(),
             effective_batch_size=train_args.effective_batch_size,
             max_batch_len_per_gpu=train_args.max_batch_len,
-            is_padding=True,
+            is_padding=False,
             dataset=dataset,
             seed=47,
         )
