@@ -253,7 +253,12 @@ class OCIDownloader(Downloader):
 @click.command()
 @click.option(
     "--repository",
-    default=DEFAULTS.MERLINITE_GGUF_REPO,  # TODO: add to config.yaml
+    "repositories",
+    multiple=True,
+    default=[
+        DEFAULTS.MERLINITE_GGUF_REPO,
+        DEFAULTS.MISTRAL_GGUF_REPO,
+    ],  # TODO: add to config.yaml
     show_default=True,
     help="Hugging Face or OCI repository of the model to download.",
 )
@@ -265,7 +270,9 @@ class OCIDownloader(Downloader):
 )
 @click.option(
     "--filename",
-    default=DEFAULTS.GGUF_MODEL_NAME,
+    "filenames",
+    multiple=True,
+    default=[DEFAULTS.GGUF_MODEL_NAME, DEFAULTS.MISTRAL_GGUF_MODEL_NAME],
     show_default="The default model location in the instructlab data directory.",
     help="Name of the model file to download from the Hugging Face repository.",
 )
@@ -283,38 +290,47 @@ class OCIDownloader(Downloader):
 )
 @click.pass_context
 @clickext.display_params
-def download(ctx, repository, release, filename, model_dir, hf_token):
+def download(ctx, repositories, release, filenames, model_dir, hf_token):
     """Downloads model from a specified repository"""
     downloader = None
 
-    if is_oci_repo(repository):
-        downloader = OCIDownloader(
-            ctx=ctx, repository=repository, release=release, download_dest=model_dir
-        )
-    elif is_huggingface_repo(repository):
-        downloader = HFDownloader(
-            ctx=ctx,
-            repository=repository,
-            release=release,
-            download_dest=model_dir,
-            filename=filename,
-            hf_token=hf_token,
-        )
-    else:
-        click.secho(
-            f"repository {repository} matches neither Hugging Face nor OCI registry format. Please supply a valid repository",
-            fg="red",
-        )
-        raise click.exceptions.Exit(1)
+    # strict = false ensures that if you just give --repository <some_safetensor> we won't error because len(filenames) is greater due to the defaults
+    for repository, filename in zip(repositories, filenames, strict=False):
+        if is_oci_repo(repository):
+            downloader = OCIDownloader(
+                ctx=ctx, repository=repository, release=release, download_dest=model_dir
+            )
+        elif is_huggingface_repo(repository):
+            downloader = HFDownloader(
+                ctx=ctx,
+                repository=repository,
+                release=release,
+                download_dest=model_dir,
+                filename=filename,
+                hf_token=hf_token,
+            )
+        else:
+            click.secho(
+                f"repository {repository} matches neither Hugging Face nor OCI registry format. Please supply a valid repository",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
 
-    try:
-        downloader.download()
-    except Exception as exc:
-        click.secho(
-            f"Downloading model failed with the following error: {exc}",
-            fg="red",
-        )
-        raise click.exceptions.Exit(1)
+        try:
+            downloader.download()
+        # pylint: disable=broad-exception-caught
+        except (ValueError, Exception) as exc:
+            if isinstance(exc, ValueError) and "HF_TOKEN" in str(exc):
+                click.secho(
+                    f"{downloader.repository} requires a HF Token to be set. Please use '--hf-token' or 'export HF_TOKEN' to download all necessary models",
+                    fg="yellow",
+                )
+            else:
+                click.secho(
+                    f"Downloading model failed with the following error: {exc}",
+                    fg="red",
+                )
+                raise click.exceptions.Exit(1)
 
 
 _RECOMMENDED_SCOPEO_VERSION = "1.9.0"
