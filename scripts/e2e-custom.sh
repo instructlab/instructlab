@@ -24,7 +24,7 @@ SIMPLE_TRAIN=0
 FULL_TRAIN=0
 ACCELERATED_TRAIN=0
 HF_TOKEN=${HF_TOKEN:-}
-SDG_PIPELINE="simple"
+SDG_PIPELINE="full"
 SKIP_TRAIN=${SKIP_TRAIN:-0}
 EVAL=0
 MIXTRAL_GGUF_MODEL="mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf"
@@ -261,9 +261,9 @@ test_generate() {
         GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}")
     fi
 
-    # default arg for '--pipeline' is "simple"
-    if [ "$SDG_PIPELINE" = "full" ]; then
-        GENERATE_ARGS+=("--pipeline" "full")
+    # default arg for '--pipeline' is "full"
+    if [ "$SDG_PIPELINE" = "simple" ]; then
+        GENERATE_ARGS+=("--pipeline" "simple")
     fi
 
     # Disable batching with llama-cpp. See https://github.com/instructlab/instructlab/issues/1892
@@ -517,7 +517,7 @@ usage() {
     echo "  -a  Use the 'full' training library rather than legacy training"
     echo "  -s  Run the simple training using the SFTTainer rather than the custom training loop"
     echo "  -f  Run the fullsize training instead of --4-bit-quant"
-    echo "  -F  Use the 'full' SDG pipeline instead of the default 'simple' pipeline"
+    echo "  -S  Use the 'simple' SDG pipeline instead of the default 'full' pipeline"
     echo "  -h  Show this help text"
     echo "  -m  Run minimal configuration with lower number of instructions and training epochs (run quicker when you have no GPU)"
     echo "  -M  Use the mixtral model (4-bit quantized) instead of merlinite model (4-bit quantized)."
@@ -527,15 +527,15 @@ usage() {
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "eFhqasfmMPv" opt; do
+while getopts "eShqasfmMPv" opt; do
     case $opt in
         e)
             EVAL=1
             step "Run model evaluation."
             ;;
-        F)
-            SDG_PIPELINE="full"
-            step "Using full SDG pipeline."
+        S)
+            SDG_PIPELINE="simple"
+            step "Using simple SDG pipeline."
             ;;
         h)
             usage
