@@ -82,12 +82,11 @@ You can specify the following flags to test various features of `ilab` with the
 | **Training** | simple                    |✅(*1)|⎯|⎯|
 |              | full                      |⎯ |✅|⎯|
 |              | accelerated (multi-phase) |⎯|⎯|✅|
-| **Eval**     | eval                      |⎯|✅(*2)|✅|
+| **Eval**     | eval                      |⎯|✅|✅|
 
 Points of clarification (*):
 
 1. The `simple` training pipeline uses 4-bit-quantization. We cannot use the trained model here due to [#579](https://github.com/instructlab/instructlab/issues/579)
-2. `MMLU Branch` is not run due to the `simple` SDG pipeline not creating all the needed files in the tasks directory.
 
 ### Slack reporting
 
