@@ -125,7 +125,7 @@ test_init() {
 
         step Setting medium-size SDG-specific config
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.pipeline full
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.model_path "${CACHE_HOME}/instructlab/models/${MISTRAL_GGUF_REPO}"
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.model_path "${CACHE_HOME}/instructlab/models/${MISTRAL_GGUF_MODEL}"
 
         step Setting medium-size Training-specific config
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.ckpt_output_dir "${DATA_HOME}/instructlab/checkpoints"
@@ -337,12 +337,10 @@ test_evaluate() {
     step Running MMLU
     ilab model evaluate --model "${model_path}" --benchmark mmlu
 
-    if [ "$LARGE" -eq 1 ]; then
-        step Running MMLU Branch
-        local mmlu_branch_tasks_dir
-        mmlu_branch_tasks_dir=$(find "${DATA_HOME}"/instructlab/datasets -name 'node_datasets_*' | head -n 1)
-        ilab model evaluate --model "${model_path}" --benchmark mmlu_branch --tasks-dir "${mmlu_branch_tasks_dir}" --base-model "${base_model_path}"
-    fi
+    step Running MMLU Branch
+    local mmlu_branch_tasks_dir
+    mmlu_branch_tasks_dir=$(find "${DATA_HOME}"/instructlab/datasets -name 'node_datasets_*' | head -n 1)
+    ilab model evaluate --model "${model_path}" --benchmark mmlu_branch --tasks-dir "${mmlu_branch_tasks_dir}" --base-model "${base_model_path}"
 
     export INSTRUCTLAB_EVAL_FIRST_N_QUESTIONS=20
     step Running MT Bench
