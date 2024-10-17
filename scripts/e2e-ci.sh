@@ -27,7 +27,10 @@ HF_TOKEN=${HF_TOKEN:-}
 GRANITE_7B_MODEL="instructlab/granite-7b-lab"
 MIXTRAL_8X7B_MODEL="mistralai/Mixtral-8x7B-Instruct-v0.1"
 PROMETHEUS_8X7B_MODEL="prometheus-eval/prometheus-8x7b-v2.0"
+MERLINITE_GGUF_REPO="instructlab/merlinite-7b-lab-GGUF"
 MERLINITE_GGUF_MODEL="merlinite-7b-lab-Q4_K_M.gguf"
+MISTRAL_GGUF_REPO="TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
+MISTRAL_GGUF_MODEL="mistral-7b-instruct-v0.2.Q4_K_M.gguf"
 
 # t-shirt size globals
 SMALL=0
@@ -121,8 +124,8 @@ test_init() {
         ilab config init --non-interactive
 
         step Setting medium-size SDG-specific config
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.pipeline simple
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.model_path "${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}"
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.pipeline full
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.model_path "${CACHE_HOME}/instructlab/models/${MISTRAL_GGUF_REPO}"
 
         step Setting medium-size Training-specific config
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.ckpt_output_dir "${DATA_HOME}/instructlab/checkpoints"
@@ -169,9 +172,14 @@ test_config_show() {
 
 test_download() {
     task Download models
-    if [ "$SMALL" -eq 1 ] || [ "$MEDIUM" -eq 1 ]; then
+    if [ "$SMALL" -eq 1 ]; then
         step Downloading the merlinite-7b-lab GGUF model as the teacher model for SDG
-        ilab model download --repository instructlab/merlinite-7b-lab-GGUF --filename ${MERLINITE_GGUF_MODEL}
+        ilab model download --repository ${MERLINITE_GGUF_REPO} --filename ${MERLINITE_GGUF_MODEL}
+        step Downloading granite-7b-lab model to train and as the judge model for evaluation
+        ilab model download --repository ${GRANITE_7B_MODEL}
+    elif [ "$MEDIUM" -eq 1 ]; then
+        step Downloading the mistral-7b-instruct GGUF model as the teacher model for SDG
+        ilab model download --repository ${MISTRAL_GGUF_REPO} --filename ${MISTRAL_GGUF_MODEL} --hf-token "${HF_TOKEN}"
         step Downloading granite-7b-lab model to train and as the judge model for evaluation
         ilab model download --repository ${GRANITE_7B_MODEL}
     elif [ "$LARGE" -eq 1 ]; then
@@ -187,9 +195,12 @@ test_download() {
 
 test_list() {
     task List the Downloaded Models
-    if [ "$MEDIUM" -eq 1 ]; then
+    if [ "$SMALL" -eq 1 ]; then
         ilab model list | grep ${GRANITE_7B_MODEL}
-        ilab model list | grep ${MERLINITE_GGUF_MODEL}
+        ilab model list | grep ${MERLINITE_GGUF_MODEL}    
+    elif [ "$MEDIUM" -eq 1 ]; then
+        ilab model list | grep ${GRANITE_7B_MODEL}
+        ilab model list | grep ${MISTRAL_GGUF_MODEL}
     elif [ "$LARGE" -eq 1 ]; then
         ilab model list | grep ${GRANITE_7B_MODEL}
         ilab model list | grep ${PROMETHEUS_8X7B_MODEL}
