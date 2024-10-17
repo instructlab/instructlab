@@ -31,7 +31,8 @@ class TestConfig:
         internal_dirname = "internal"
         cache_dir = os.path.join(xdg_cache_home(), package_name)
         data_dir = os.path.join(xdg_data_home(), package_name)
-        default_model = f"{cache_dir}/models/merlinite-7b-lab-Q4_K_M.gguf"
+        default_chat_model = f"{cache_dir}/models/merlinite-7b-lab-Q4_K_M.gguf"
+        default_sdg_model = f"{cache_dir}/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
 
         assert cfg.general is not None
         assert cfg.version is not None
@@ -39,7 +40,7 @@ class TestConfig:
         assert cfg.general.debug_level == 0
 
         assert cfg.chat is not None
-        assert cfg.chat.model == default_model
+        assert cfg.chat.model == default_chat_model
         assert not cfg.chat.vi_mode
         assert cfg.chat.visible_overflow
         assert cfg.chat.context == "default"
@@ -53,7 +54,7 @@ class TestConfig:
         assert cfg.general.log_level == "INFO"
 
         assert cfg.generate is not None
-        assert cfg.generate.teacher.model_path == default_model
+        assert cfg.generate.teacher.model_path == default_sdg_model
         assert cfg.generate.teacher.llama_cpp is not None
         assert cfg.generate.teacher.llama_cpp.gpu_layers == -1
         assert cfg.generate.teacher.llama_cpp.max_ctx_size == 4096
@@ -63,8 +64,8 @@ class TestConfig:
         assert cfg.generate.teacher.host_port == "127.0.0.1:8000"
         assert cfg.generate.teacher.backend is None
         assert cfg.generate.teacher.chat_template is None
-        assert cfg.generate.pipeline == "simple"
-        assert cfg.generate.model == default_model
+        assert cfg.generate.pipeline == "full"
+        assert cfg.generate.model == default_sdg_model
         assert cfg.generate.taxonomy_path == f"{data_dir}/taxonomy"
         assert cfg.generate.taxonomy_base == "origin/main"
         assert cfg.generate.num_cpus == 10
@@ -76,7 +77,7 @@ class TestConfig:
         )
 
         assert cfg.serve is not None
-        assert cfg.serve.model_path == default_model
+        assert cfg.serve.model_path == default_chat_model
         assert cfg.serve.llama_cpp is not None
         assert cfg.serve.llama_cpp.gpu_layers == -1
         assert cfg.serve.llama_cpp.max_ctx_size == 4096
@@ -90,19 +91,19 @@ class TestConfig:
     def _assert_model_defaults(self, cfg):
         package_name = "instructlab"
         cache_dir = os.path.join(xdg_cache_home(), package_name)
-        default_model = f"{cache_dir}/models/merlinite-7b-lab-Q4_K_M.gguf"
+        default_chat_model = f"{cache_dir}/models/merlinite-7b-lab-Q4_K_M.gguf"
 
         assert cfg.chat is not None
-        assert cfg.chat.model == default_model
+        assert cfg.chat.model == default_chat_model
 
         assert cfg.evaluate is not None
         assert cfg.evaluate.base_model == "instructlab/granite-7b-lab"
 
         assert cfg.generate is not None
-        assert cfg.generate.model == DEFAULTS.DEFAULT_MODEL
+        assert cfg.generate.model == DEFAULTS.DEFAULT_TEACHER_MODEL
 
         assert cfg.serve is not None
-        assert cfg.serve.model_path == DEFAULTS.DEFAULT_MODEL
+        assert cfg.serve.model_path == DEFAULTS.DEFAULT_CHAT_MODEL
 
         assert cfg.train is not None
         assert cfg.train.model_path == "instructlab/granite-7b-lab"
