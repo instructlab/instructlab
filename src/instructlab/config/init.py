@@ -193,8 +193,6 @@ def init(
     # we should not override all paths with the serve model if special ENV vars exist
     if param_source != click.core.ParameterSource.ENVIRONMENT:
         cfg.chat.model = model_path
-        cfg.generate.model = model_path
-        cfg.generate.teacher.model_path = model_path
         cfg.serve.model_path = model_path
         cfg.evaluate.model = model_path
         cfg.generate.taxonomy_base = taxonomy_base
