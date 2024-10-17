@@ -130,7 +130,7 @@ jobs:
       - name: Run e2e test
         run: |
           . venv/bin/activate
-          ./scripts/basic-workflow-tests.sh -msq
+          ./scripts/e2e-custom.sh -msq
 
   stop-ec2-runner:
     needs:
