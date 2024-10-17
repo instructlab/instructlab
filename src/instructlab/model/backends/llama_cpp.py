@@ -7,6 +7,7 @@ from types import FrameType
 from typing import Optional, cast
 import logging
 import multiprocessing
+import os
 import pathlib
 import signal
 
@@ -186,11 +187,25 @@ def server(
     log_level: int = logging.INFO,
 ):
     """Start OpenAI-compatible server"""
+
+    model_file_path = None
+    if os.path.isdir(model_path):
+        # supplied model_path is a directory. Augment model_path with the exact
+        # gguf file name before serving it
+        items = list(model_path.iterdir())
+        for item in items:
+            if os.path.isfile(item) and item.suffix.endswith(".gguf"):
+                model_file_path = model_path / item
+                break
+
     verbose = log_level == logging.DEBUG
     settings = Settings(
         host=host,
         port=port,
-        model=model_path.as_posix(),
+        model=model_file_path.as_posix()
+        if model_file_path is not None
+        else model_path.as_posix(),
+        model_alias=model_path.as_posix(),
         n_ctx=max_ctx_size,
         n_gpu_layers=gpu_layers,
         verbose=verbose,
