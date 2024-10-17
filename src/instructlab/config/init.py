@@ -38,7 +38,7 @@ from instructlab.utils import convert_bytes_to_proper_mag
 @click.option(
     "--model-path",
     type=click.Path(),
-    default=lambda: DEFAULTS.DEFAULT_MODEL,
+    default=lambda: DEFAULTS.DEFAULT_CHAT_MODEL,
     show_default="The instructlab data files location per the user's system.",
     help="Path to the model used during generation.",
 )
