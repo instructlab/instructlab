@@ -96,8 +96,8 @@ generate:
   # Default: 1000
   chunk_word_count: 1000
   # Teacher model that will be used to synthetically generate training data.
-  # Default: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
-  model: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+  # Default: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
+  model: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
   # Number of CPU cores to use for generation.
   # Default: 10
   num_cpus: 10
@@ -111,8 +111,8 @@ generate:
   # Data generation pipeline to use. Available: 'simple', 'full', or a valid path to
   # a directory of pipeline workflow YAML files. Note that 'full' requires a larger
   # teacher model, Mixtral-8x7b.
-  # Default: simple
-  pipeline: simple
+  # Default: full
+  pipeline: full
   # The total number of instructions to be generated.
   # Default: 30
   sdg_scale_factor: 30
@@ -161,7 +161,7 @@ generate:
       max_ctx_size: 4096
     # Directory where model to be served is stored.
     # Default: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
-    model_path: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+    model_path: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
     # vLLM serving settings.
     vllm:
       # Number of GPUs to use.

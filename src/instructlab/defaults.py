@@ -56,6 +56,7 @@ class _InstructlabDefaults:
     MODEL_NAME_OLD = "merlinite-7b-lab-Q4_K_M"
     MERLINITE_GGUF_REPO = "instructlab/merlinite-7b-lab-GGUF"
     GGUF_MODEL_NAME = "merlinite-7b-lab-Q4_K_M.gguf"
+    MISTRAL_GGUF_MODEL_NAME = "mistral-7b-instruct-v0.2.Q4_K_M.gguf"
     MODEL_REPO = "instructlab/granite-7b-lab"
     JUDGE_MODEL_MT = "prometheus-eval/prometheus-8x7b-v2.0"
     TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
@@ -67,7 +68,7 @@ class _InstructlabDefaults:
     CONNECTION_TIMEOUT = httpx.Timeout(timeout=30.0)
     # use spawn start method, fork is not thread-safe
     MULTIPROCESSING_START_METHOD = "spawn"
-    SDG_PIPELINE = "simple"
+    SDG_PIPELINE = "full"
     SDG_SCALE_FACTOR = 30
 
     # When otherwise unknown, ilab uses this as the default family
@@ -120,8 +121,12 @@ class _InstructlabDefaults:
         return path.join(self._cache_home, STORAGE_DIR_NAMES.MODELS)
 
     @property
-    def DEFAULT_MODEL(self) -> str:
+    def DEFAULT_CHAT_MODEL(self) -> str:
         return path.join(self.MODELS_DIR, self.GGUF_MODEL_NAME)
+
+    @property
+    def DEFAULT_TEACHER_MODEL(self) -> str:
+        return path.join(self.MODELS_DIR, self.MISTRAL_GGUF_MODEL_NAME)
 
     @property
     def DEFAULT_JUDGE_MODEL(self) -> str:

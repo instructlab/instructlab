@@ -117,7 +117,7 @@ class _chat(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore")
     model: str = Field(
-        default_factory=lambda: DEFAULTS.DEFAULT_MODEL,
+        default_factory=lambda: DEFAULTS.DEFAULT_CHAT_MODEL,
         description="Model to be used for chatting with.",
     )
     # additional fields with defaults
@@ -206,7 +206,7 @@ class _serve(BaseModel):
         description="llama-cpp serving settings.",
     )
     model_path: StrictStr = Field(
-        default_factory=lambda: DEFAULTS.DEFAULT_MODEL,
+        default_factory=lambda: DEFAULTS.DEFAULT_CHAT_MODEL,
         description="Directory where model to be served is stored.",
     )
     # additional fields with defaults
@@ -245,7 +245,7 @@ class _generate(BaseModel):
         description="Data generation pipeline to use. Available: 'simple', 'full', or a valid path to a directory of pipeline workflow YAML files. Note that 'full' requires a larger teacher model, Mixtral-8x7b.",
     )
     model: StrictStr = Field(
-        default_factory=lambda: DEFAULTS.DEFAULT_MODEL,
+        default_factory=lambda: DEFAULTS.DEFAULT_TEACHER_MODEL,
         description="Teacher model that will be used to synthetically generate training data.",
     )
     taxonomy_path: StrictStr = Field(
@@ -257,7 +257,10 @@ class _generate(BaseModel):
         description="Branch of taxonomy used to calculate diff against.",
     )
     # additional fields with defaults
-    teacher: _serve = Field(default_factory=_serve, description="Teacher configuration")
+    teacher: _serve = Field(
+        default_factory=lambda: _serve(model_path=DEFAULTS.DEFAULT_TEACHER_MODEL),
+        description="Teacher configuration",
+    )
     num_cpus: PositiveInt = Field(
         default=DEFAULTS.NUM_CPUS,
         description="Number of CPU cores to use for generation.",
