@@ -2,8 +2,10 @@
 
 # pylint: disable=ungrouped-imports
 # Standard
+from datetime import datetime
 import contextlib
 import enum
+import json
 import logging
 import multiprocessing
 import os
@@ -14,7 +16,7 @@ import click
 
 # First Party
 from instructlab import clickext
-from instructlab.configuration import _serve
+from instructlab.configuration import DEFAULTS, _serve
 from instructlab.model.backends import backends
 
 # Local
@@ -301,6 +303,15 @@ def get_backend(backend, model):
     return backend
 
 
+def dump_results_to_json(benchmark: str, results: dict, output_dir):
+    """dump the given results dictionary from benchmark into a JSON file"""
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    filepath = os.path.join(output_dir, f"{benchmark}_{timestamp}.json")
+    with open(filepath, "w", encoding="utf-8") as fp:
+        json.dump(results, fp)
+    logger.info(f"{benchmark} results dumped to {filepath}")
+
+
 def launch_server(
     eval_serve: _serve,
     tls_client_cert: str | None,
@@ -515,6 +526,11 @@ def launch_server(
     is_flag=True,
     help="Print serving engine logs.",
 )
+@click.option(
+    "--format",
+    type=click.Choice(["text", "json"]),
+    cls=clickext.ConfigOption,
+)
 @click.pass_context
 @clickext.display_params
 def evaluate(
@@ -540,6 +556,7 @@ def evaluate(
     tls_client_key,  # pylint: disable=unused-argument
     tls_client_passwd,  # pylint: disable=unused-argument
     enable_serving_output,
+    format,  # pylint: disable=redefined-builtin
 ):
     """Evaluates a trained model"""
 
@@ -628,17 +645,34 @@ def evaluate(
                     server.shutdown()
 
             max_score = get_benchmark_max_score(Benchmark.MT_BENCH)
-            print("# SKILL EVALUATION REPORT")
-            print("\n## MODEL (SCORE)")
-            display_model(model, overall_score, max_score)
-            print(f"\n### TURN ONE (0.0 to {max_score}):")
-            print(round(turn_scores[0], 2))
-            print(f"\n### TURN TWO (0.0 to {max_score}):")
+            turn1_score = turn_scores[0]
             turn2_score = turn_scores[1]
-            if isinstance(turn2_score, float):
-                turn2_score = round(turn2_score, 2)
-            print(turn2_score)
-            display_error_rate(error_rate)
+            turn1_score_rounded = round(turn1_score, 2)
+            turn2_score_rounded = round(turn2_score, 2)
+            if format == "json":
+                json_data = {
+                    "model": model,
+                    "overall_score": overall_score,
+                    "max_score": max_score,
+                    "turn1_score": turn1_score,
+                    "turn1_score_rounded": turn1_score_rounded,
+                    "turn2_score": turn2_score,
+                    "turn2_score_rounded": turn2_score_rounded,
+                    "error_rate": error_rate,
+                }
+                dump_results_to_json(benchmark, json_data, output_dir)
+
+            else:
+                print("# SKILL EVALUATION REPORT")
+                print("\n## MODEL (SCORE)")
+                display_model(model, overall_score, max_score)
+                print(f"\n### TURN ONE (0.0 to {max_score}):")
+                print(round(turn1_score, 2))
+                print(f"\n### TURN TWO (0.0 to {max_score}):")
+                if isinstance(turn2_score, float):
+                    turn2_score = round(turn2_score, 2)
+                print(turn2_score)
+                display_error_rate(error_rate)
 
         elif benchmark == Benchmark.MT_BENCH_BRANCH:
             # Third Party
@@ -732,15 +766,6 @@ def evaluate(
             qna_to_avg_scores = qa_pairs_to_qna_to_avg_scores(qa_pairs)
             base_qna_to_avg_scores = qa_pairs_to_qna_to_avg_scores(base_qa_pairs)
 
-            print("# SKILL EVALUATION REPORT\n")
-            display_models_and_scores(
-                Benchmark.MT_BENCH_BRANCH,
-                model,
-                base_model,
-                overall_score,
-                base_overall_score,
-            )
-
             improvements, regressions, no_changes, new_qnas = [], [], [], []
             for qna, avg_score in qna_to_avg_scores.items():
                 base_avg_score = base_qna_to_avg_scores.get(qna)
@@ -768,15 +793,36 @@ def evaluate(
                 else:
                     new_qnas.append((qna, avg_score))
 
-            # display summary of evaluation before exiting
-            display_branch_eval_summary(
-                Benchmark.MT_BENCH_BRANCH,
-                improvements,
-                regressions,
-                no_changes,
-                new_qnas,
-            )
-            display_error_rate((error_rate + base_error_rate) / 2)
+            if format == "json":
+                json_data = {
+                    "model": model,
+                    "base_model": base_model,
+                    "overall_score": overall_score,
+                    "base_overall_score": base_overall_score,
+                    "improvements": improvements,
+                    "regressions": regressions,
+                    "no_changes": no_changes,
+                    "new_qnas": new_qnas,
+                }
+                dump_results_to_json(benchmark, json_data, output_dir)
+            else:
+                print("# SKILL EVALUATION REPORT\n")
+                display_models_and_scores(
+                    Benchmark.MT_BENCH_BRANCH,
+                    model,
+                    base_model,
+                    overall_score,
+                    base_overall_score,
+                )
+                # display summary of evaluation before exiting
+                display_branch_eval_summary(
+                    Benchmark.MT_BENCH_BRANCH,
+                    improvements,
+                    regressions,
+                    no_changes,
+                    new_qnas,
+                )
+                display_error_rate((error_rate + base_error_rate) / 2)
 
         elif benchmark == Benchmark.MMLU:
             # Third Party
@@ -814,14 +860,23 @@ def evaluate(
                     server.shutdown()
 
             max_score = get_benchmark_max_score(Benchmark.MMLU)
-            print("# KNOWLEDGE EVALUATION REPORT")
-            print("\n## MODEL (SCORE)")
-            display_model(model, overall_score, max_score)
+            if format == "json":
+                json_data = {
+                    "model": model,
+                    "overall_score": overall_score,
+                    "max_score": max_score,
+                    "individual_scores": individual_scores,
+                }
+                dump_results_to_json(benchmark, json_data, output_dir)
+            else:
+                print("# KNOWLEDGE EVALUATION REPORT")
+                print("\n## MODEL (SCORE)")
+                display_model(model, overall_score, max_score)
 
-            print(f"\n### SCORES (0.0 to {max_score}):")
-            for task, score in individual_scores.items():
-                s = round(score["score"], 2)
-                print(f"{task} - {s}")
+                print(f"\n### SCORES (0.0 to {max_score}):")
+                for task, score in individual_scores.items():
+                    s = round(score["score"], 2)
+                    print(f"{task} - {s}")
 
         elif benchmark == Benchmark.MMLU_BRANCH:
             # Third Party
@@ -875,15 +930,6 @@ def evaluate(
             individual_scores = individual_scores_list[0]
             base_individual_scores = individual_scores_list[1]
 
-            print("# KNOWLEDGE EVALUATION REPORT\n")
-            display_models_and_scores(
-                Benchmark.MMLU_BRANCH,
-                model,
-                base_model,
-                overall_score,
-                base_overall_score,
-            )
-
             improvements, regressions, no_changes = [], [], []
             for task, score in individual_scores.items():
                 base_score = base_individual_scores[task]
@@ -897,10 +943,30 @@ def evaluate(
                 else:
                     no_changes.append((task, s))
 
-            # display summary of evaluation before exiting
-            display_branch_eval_summary(
-                Benchmark.MMLU_BRANCH, improvements, regressions, no_changes
-            )
+            if format == "json":
+                json_data = {
+                    "model": model,
+                    "base_model": base_model,
+                    "overall_score": overall_score,
+                    "base_overall_score": base_overall_score,
+                    "improvements": improvements,
+                    "regressions": regressions,
+                    "no_changes": no_changes,
+                }
+                dump_results_to_json(benchmark, json_data, output_dir)
+            else:
+                print("# KNOWLEDGE EVALUATION REPORT\n")
+                display_models_and_scores(
+                    Benchmark.MMLU_BRANCH,
+                    model,
+                    base_model,
+                    overall_score,
+                    base_overall_score,
+                )
+                # display summary of evaluation before exiting
+                display_branch_eval_summary(
+                    Benchmark.MMLU_BRANCH, improvements, regressions, no_changes
+                )
     except EvalError as ee:
         print(ee.message)
         logger.debug("Traceback", exc_info=True)
