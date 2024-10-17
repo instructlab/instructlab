@@ -11,7 +11,7 @@ import pytest
 
 # First Party
 from instructlab.model.backends.vllm import get_max_stable_vram_wait
-from instructlab.model.serve import warn_for_unsupported_backend_param
+from instructlab.model.serve_backend import warn_for_unsupported_backend_param
 
 # Local
 from . import common
