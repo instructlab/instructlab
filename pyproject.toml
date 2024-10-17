@@ -37,16 +37,16 @@ issues = "https://github.com/instructlab/instructlab/issues"
 
 # command entry points
 [project.entry-points."instructlab.command"]
-"config" = "instructlab.config.config:config"
+"config" = "instructlab.cli.config.config:config"
 "data" = "instructlab.cli.data.data:data"
 "model" = "instructlab.model.model:model"
 "system" = "instructlab.system.system:system"
 "taxonomy" = "instructlab.taxonomy.taxonomy:taxonomy"
 
 [project.entry-points."instructlab.command.config"]
-"edit" = "instructlab.config.edit:edit"
-"init" = "instructlab.config.init:init"
-"show" = "instructlab.config.show:show"
+"edit" = "instructlab.cli.config.edit:edit"
+"init" = "instructlab.cli.config.init:init"
+"show" = "instructlab.cli.config.show:show"
 
 [project.entry-points."instructlab.command.data"]
 "generate" = "instructlab.cli.data.generate:generate"
