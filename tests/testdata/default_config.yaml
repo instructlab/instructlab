@@ -270,8 +270,8 @@ train:
   distributed_backend: deepspeed
   # The number of samples in a batch that the model should see before its parameters
   # are updated.
-  # Default: 3840
-  effective_batch_size: 3840
+  # Default: 64
+  effective_batch_size: 64
   # Allow CPU offload for FSDP optimizer.
   # Default: False
   fsdp_cpu_offload_optimizer: false
@@ -286,13 +286,13 @@ train:
   #   - nf4
   lora_quantize_dtype: nf4
   # Rank of low rank matrices to be used during training.
-  # Default: 4
-  lora_rank: 4
+  # Default: 0
+  lora_rank: 0
   # Maximum tokens per gpu for each batch that will be handled in a single step. If
   # running into out-of-memory errors, this value can be lowered but not below the
   # `max_seq_len`.
-  # Default: 10000
-  max_batch_len: 10000
+  # Default: 5000
+  max_batch_len: 5000
   # Maximum sequence length to be included in the training set. Samples exceeding
   # this length will be dropped.
   # Default: 4096
