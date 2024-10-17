@@ -421,14 +421,14 @@ class _train(BaseModel):
         description="Maximum sequence length to be included in the training set. Samples exceeding this length will be dropped.",
     )
     max_batch_len: int = Field(
-        default=10000,
+        default=5000,
         description="Maximum tokens per gpu for each batch that will be handled in a single step. If running into out-of-memory errors, this value can be lowered but not below the `max_seq_len`.",
     )
     num_epochs: int = Field(
         default=10, description="Number of epochs to run training for."
     )
     effective_batch_size: int = Field(
-        default=3840,
+        default=64,
         description="The number of samples in a batch that the model should see before its parameters are updated.",
     )
     save_samples: int = Field(
@@ -450,7 +450,7 @@ class _train(BaseModel):
         validate_default=True,  # ensures that the 'use_enum_values' flag takes effect on the default value
     )
     lora_rank: int | None = Field(
-        default=4,
+        default=0,
         description="Rank of low rank matrices to be used during training.",
     )
     lora_quantize_dtype: str | None = Field(
