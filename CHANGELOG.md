@@ -17,6 +17,7 @@
 * Intel Gaudi software has been updated to 1.17.1 with Python 3.11 and
   Torch 2.3.1 support.
 * `--legacy` has been removed and replaced with `--pipeline=simple` in `ilab model train`
+* `ilab data generate` now defaults to `--pipeline full` and uses the  `TheBloke/Mistral-7B-Instruct-v0.2-GGUF/mistral-7b-instruct-v0.2.Q4_K_M.gguf` model as the teacher. This provides increased performance and better generated data.
 
 ### Features
 
