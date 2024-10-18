@@ -59,7 +59,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "evaluate" = "instructlab.model.evaluate:evaluate"
 "serve" = "instructlab.model.serve:serve"
 "test" = "instructlab.model.test:test"
-"train" = "instructlab.model.train:train"
+"train" = "instructlab.cli.model.train:train"
 "list" = "instructlab.model.list:model_list"
 
 [project.entry-points."instructlab.command.system"]
@@ -72,7 +72,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "chat" = "instructlab.model.chat:chat"
 "generate" = "instructlab.cli.data.generate:generate"
 "serve" = "instructlab.model.serve:serve"
-"train" = "instructlab.model.train:train"
+"train" = "instructlab.cli.model.train:train"
 
 [tool.setuptools_scm]
 version_file = "src/instructlab/_version.py"
@@ -96,6 +96,8 @@ include = [
   "instructlab",
   "instructlab.chat",
   "instructlab.generator",
+  "instructlab.cli",
+  "instructlab.cli.model",
   "instructlab.train",
   "instructlab.train.lora_mlx",
   "instructlab.train.lora_mlx.models",
