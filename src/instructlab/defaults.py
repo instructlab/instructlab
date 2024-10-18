@@ -163,6 +163,9 @@ class _InstructlabDefaults:
     def EVAL_DATA_DIR(self) -> str:
         return path.join(self.INTERNAL_DIR, "eval_data")
 
+    @property 
+    def SYSTEM_PROFILE_DIR(self) -> str:
+        return path.join(self.INTERNAL_DIR, "system_profiles")
     @property
     def TRAIN_CONFIG_DIR(self) -> str:
         return path.join(self.INTERNAL_DIR, "train_configuration")

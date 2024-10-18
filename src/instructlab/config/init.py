@@ -116,6 +116,7 @@ def init(
             f"Generating `{DEFAULTS.CONFIG_FILE}` and `{DEFAULTS.TRAIN_PROFILE_DIR}`..."
         )
         recreate_train_profiles(overwrite=True)
+        recreate_system_profiles(overwrite=True)
     else:
         click.echo(f"Generating `{DEFAULTS.CONFIG_FILE}`...")
     if train_profile is not None:
