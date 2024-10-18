@@ -23,6 +23,7 @@ from instructlab.configuration import (
     read_config,
     read_train_profile,
     recreate_train_profiles,
+    recreate_system_profiles,
     write_config,
 )
 from instructlab.utils import convert_bytes_to_proper_mag
@@ -115,7 +116,7 @@ def init(
         click.echo(
             f"Generating `{DEFAULTS.CONFIG_FILE}` and `{DEFAULTS.TRAIN_PROFILE_DIR}`..."
         )
-        recreate_train_profiles(overwrite=True)
+        recreate_system_profiles(overwrite=True)
     else:
         click.echo(f"Generating `{DEFAULTS.CONFIG_FILE}`...")
     if train_profile is not None:
@@ -325,9 +326,9 @@ def check_if_configs_exist(fresh_install) -> bool:
         )
         if not overwrite:
             raise click.exceptions.Exit(0)
-    if exists(DEFAULTS.TRAIN_PROFILE_DIR) and not fresh_install:
+    if exists(DEFAULTS.SYSTEM_PROFILE_DIR) and not fresh_install:
         return click.confirm(
-            f"Existing training profiles were found in {DEFAULTS.TRAIN_PROFILE_DIR}\nDo you want to restore these profiles to the default values?"
+            f"Existing system profiles were found in {DEFAULTS.SYSTEM_PROFILE_DIR}\nDo you want to restore these profiles to the default values?"
         )
     # default behavior should be do NOT overwrite files that could have just been created
     return False
