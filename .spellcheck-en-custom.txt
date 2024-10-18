@@ -68,6 +68,7 @@ SHA
 Safetensor
 Safetensors
 Salawu
+SFT
 Shaders
 Shivchander
 Srivastava
@@ -93,7 +94,9 @@ backend
 backends
 backport
 backported
+bashrc
 chatlogs
+chatbot
 cli
 codebase
 compositional
@@ -111,9 +114,11 @@ ditaa
 dr
 env
 eval
+freeform
 frontend
 fsdp
 fullsize
+gguf
 gpu
 gpus
 habana
@@ -125,6 +130,7 @@ init
 instructlab
 ip
 journald
+jsonl
 kaggle
 keypair
 lignment
@@ -143,6 +149,7 @@ pre
 preceeds
 preprint
 pretraining
+prometheus
 pyenv
 pytest
 qlora
@@ -151,6 +158,7 @@ quantized
 repo
 resumeable
 runtime
+safetensors
 sexualized
 sshkey
 subcommand
