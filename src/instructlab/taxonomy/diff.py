@@ -82,12 +82,14 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
     # validate new or changed taxonomy files
     try:
         validate_taxonomy(taxonomy_path, taxonomy_base, yaml_rules)
-    except (TaxonomyReadingException, yaml.YAMLError) as exc:
+    except (TaxonomyReadingException, GitError, yaml.YAMLError) as exc:
         if not quiet:
             click.secho(
                 f"Reading taxonomy failed with the following error: {exc}",
                 fg="red",
             )
+        else:
+            logger.error(f"Reading taxonomy failed with the following error: {exc}")
         raise SystemExit(1) from exc
     if not quiet:
         click.secho(
