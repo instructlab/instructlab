@@ -1189,6 +1189,7 @@ def read_and_create_system_profiles(profiles_dir: str, overwrite: bool) -> bool:
 
 # recreate_system_profiles writes all profile directories found in src/instructlab to disk
 # the location is ~/.local/share/instructlab/internal/system_profiles
+# pylint: disable=broad-exception-caught
 def recreate_system_profiles(overwrite: bool = False) -> bool:
     """
     recreate_system_profiles writes all profile directories found in src/instructlab to disk
