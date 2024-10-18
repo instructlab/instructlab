@@ -57,9 +57,15 @@ Help / TL;DR
 Press Alt (or Meta) and Enter or Esc Enter to end multiline input.
 """
 
+cfg_data = cfg.read_config(cfg.DEFAULTS.CONFIG_FILE)
+
 CONTEXTS = {
-    "default": get_sysprompt(),
-    "cli_helper": "You are an expert for command line interface and know all common commands. Answer the command to execute as it without any explanation.",
+    "default": cfg_data.chat.prompts.default
+    if cfg_data.chat.prompts.default
+    else get_sysprompt(),
+    "cli_helper": cfg_data.chat.prompts.cli_helper
+    if cfg_data.chat.prompts.cli_helper
+    else cfg.DEFAULTS.CLI_HELPER_PROMPT,
 }
 
 PROMPT_HISTORY_FILEPATH = os.path.expanduser("~/.local/chat-cli.history")
