@@ -253,6 +253,7 @@ class OCIDownloader(Downloader):
 @click.command()
 @click.option(
     "--repository",
+    "-rp",
     "repositories",
     multiple=True,
     default=[
@@ -264,7 +265,13 @@ class OCIDownloader(Downloader):
 )
 @click.option(
     "--release",
-    default="main",  # TODO: add to config.yaml
+    "-rl",
+    "releases",
+    multiple=True,
+    default=[
+        "main",
+        "main",
+    ],  # TODO: add to config.yaml
     show_default=True,
     help="The revision of the model to download - e.g. a branch, tag, or commit hash for Hugging Face repositories and tag or commit hash for OCI repositories.",
 )
@@ -290,12 +297,14 @@ class OCIDownloader(Downloader):
 )
 @click.pass_context
 @clickext.display_params
-def download(ctx, repositories, release, filenames, model_dir, hf_token):
+def download(ctx, repositories, releases, filenames, model_dir, hf_token):
     """Downloads model from a specified repository"""
     downloader = None
 
     # strict = false ensures that if you just give --repository <some_safetensor> we won't error because len(filenames) is greater due to the defaults
-    for repository, filename in zip(repositories, filenames, strict=False):
+    for repository, filename, release in zip(
+        repositories, filenames, releases, strict=False
+    ):
         if is_oci_repo(repository):
             downloader = OCIDownloader(
                 ctx=ctx, repository=repository, release=release, download_dest=model_dir
