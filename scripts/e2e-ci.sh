@@ -101,6 +101,8 @@ test_init() {
     if [ "$SMALL" -eq 1 ]; then
         # We do not use a train profile here because the 'simple' train pipeline does not use a GPU
         ilab config init --non-interactive
+        step Setting small-size log level to DEBUG
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" general.log_level DEBUG
 
         step Setting small-size SDG-specific config
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.pipeline simple
@@ -119,6 +121,8 @@ test_init() {
     elif [ "$MEDIUM" -eq 1 ]; then
         # We do not use a train profile here because the 'full' train pipeline does not use a GPU
         ilab config init --non-interactive
+        step Setting medium-size log level to DEBUG
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" general.log_level DEBUG
 
         step Setting medium-size SDG-specific config
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.pipeline simple
@@ -139,6 +143,9 @@ test_init() {
     elif [ "$LARGE" -eq 1 ]; then
         step Initalizing ilab with l40s-x4 train profile
         ilab config init --non-interactive --train-profile="${SCRIPTDIR}/test-data/train-profile-l40s-x4.yaml"
+
+        step Setting large-size log level to DEBUG
+        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" general.log_level DEBUG
 
         step Setting large-size Serve-specific config
         python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" serve.vllm.gpus 4
