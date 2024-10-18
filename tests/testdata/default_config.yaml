@@ -28,6 +28,19 @@ chat:
   # Renders vertical overflow if enabled, displays ellipses otherwise.
   # Default: True
   visible_overflow: true
+# Download configuration section.
+download:
+  # The revision of the model to download, e.g. a branch, tag, or commit hash for
+  # Hugging Face repositories and tag or commit hash for OCI repositories.
+  # Default: ['main', 'main']
+  releases:
+    - main
+    - main
+  # Hugging Face or OCI repository of the model to download
+  # Default: ['instructlab/merlinite-7b-lab-GGUF', 'TheBloke/Mistral-7B-Instruct-v0.2-GGUF']
+  repositories:
+    - instructlab/merlinite-7b-lab-GGUF
+    - TheBloke/Mistral-7B-Instruct-v0.2-GGUF
 # Evaluate configuration section.
 evaluate:
   # Base taxonomy branch

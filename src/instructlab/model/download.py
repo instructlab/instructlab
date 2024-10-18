@@ -256,24 +256,14 @@ class OCIDownloader(Downloader):
     "-rp",
     "repositories",
     multiple=True,
-    default=[
-        DEFAULTS.MERLINITE_GGUF_REPO,
-        DEFAULTS.MISTRAL_GGUF_REPO,
-    ],  # TODO: add to config.yaml
-    show_default=True,
-    help="Hugging Face or OCI repository of the model to download.",
+    cls=clickext.ConfigOption,
 )
 @click.option(
     "--release",
     "-rl",
     "releases",
     multiple=True,
-    default=[
-        "main",
-        "main",
-    ],  # TODO: add to config.yaml
-    show_default=True,
-    help="The revision of the model to download - e.g. a branch, tag, or commit hash for Hugging Face repositories and tag or commit hash for OCI repositories.",
+    cls=clickext.ConfigOption,
 )
 @click.option(
     "--filename",

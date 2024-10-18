@@ -3,7 +3,7 @@
 # Standard
 from os import path
 from re import match
-from typing import Any, Optional, Union
+from typing import Any, List, Optional, Union
 import enum
 import logging
 import os
@@ -525,6 +525,19 @@ class _train(BaseModel):
     )
 
 
+class _download(BaseModel):
+    """Class describing configuration of the 'download' sub-command."""
+
+    repositories: List[str] = Field(
+        default=[DEFAULTS.MERLINITE_GGUF_REPO, DEFAULTS.MISTRAL_GGUF_REPO],
+        description="Hugging Face or OCI repository of the model to download",
+    )
+    releases: List[str] = Field(
+        default=["main", "main"],
+        description="The revision of the model to download, e.g. a branch, tag, or commit hash for Hugging Face repositories and tag or commit hash for OCI repositories.",
+    )
+
+
 class Config(BaseModel):
     """Configuration for the InstructLab CLI.
     Config options are defined by the respective subclasses and are loaded into a single 'Config' object here
@@ -563,6 +576,10 @@ class Config(BaseModel):
         default=CONFIG_VERSION,
         description="Configuration file structure version.",
         frozen=True,  # don't allow this to be changed anywhere in the code
+    )
+    # download configuration
+    download: _download = Field(
+        default_factory=_download, description="Download configuration section."
     )
 
 
