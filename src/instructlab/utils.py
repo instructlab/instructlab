@@ -432,12 +432,15 @@ def validate_taxonomy(
         else:
             # Gather the new or changed YAMLs using git diff, including untracked files
             taxonomy_files = get_taxonomy_diff(taxonomy, taxonomy_base)
+        if not taxonomy_files:
+            raise TaxonomyReadingException(
+                yaml.YAMLError(f"Taxonomy directory {taxonomy} empty.")
+            )
         total_errors = 0
         total_warnings = 0
-        if taxonomy_files:
-            logger.debug("Found new taxonomy files:")
-            for e in taxonomy_files:
-                logger.debug("* %s", e)
+        logger.debug("Found new taxonomy files:")
+        for e in taxonomy_files:
+            logger.debug("* %s", e)
         for f in taxonomy_files:
             file_path = os.path.join(taxonomy, f)
             warnings, errors = validate_taxonomy_file(file_path, yamllint_config)
