@@ -61,6 +61,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "test" = "instructlab.model.test:test"
 "train" = "instructlab.model.train:train"
 "list" = "instructlab.model.list:model_list"
+"remove" = "instructlab.model.remove:remove_model"
 
 [project.entry-points."instructlab.command.system"]
 "info" = "instructlab.system.info:info"
