@@ -1148,6 +1148,7 @@ def ensure_storage_directories_exist() -> bool:
         DEFAULTS.TRAIN_PROFILE_DIR,
         DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_DIR,
         DEFAULTS.PHASED_DIR,
+        DEFAULTS.SYSTEM_PROFILE_DIR,
     ]
 
     for dirpath in dirs_to_make:
@@ -1205,6 +1206,66 @@ def recreate_train_profiles(overwrite: bool = False) -> bool:
                     loaded = yaml.load(d)
                     yaml.dump(loaded, outfile)
     return fresh_install
+
+
+# read_and_create_system_profiles walks the given dir, reads the templated files and writes them into
+# the DEFAULTS.SYSTEM_PROFILE_DIR preserving their arch, processor name, and yaml file name
+# pylint: disable=broad-exception-caught
+def read_and_create_system_profiles(profiles_dir: str, overwrite: bool) -> bool:
+    """
+     read_and_create_system_profiles walks the given dir, reads the templated files and writes them into
+     the DEFAULTS.SYSTEM_PROFILE_DIR preserving their arch, processor name, and yaml file name
+    """
+    fresh_install = False
+    for dirpath, _dirnames, filenames in os.walk(profiles_dir):
+        for filename in filenames:
+            # open file on disk
+            file_path = os.path.join(dirpath, filename)
+            try:
+                # read system profile from disk
+                with open(file_path, "r", encoding="utf-8") as file:
+                    content = yaml.load(file)
+                # ensure that the profile is a valid cfg before
+                try:
+                    _ = Config(**content)
+                except Exception as exc:
+                    raise ValueError(
+                        f"System Profile: {file_path} is not a valid config {exc}"
+                    ) from exc
+                # get just the arch/name/profile_name
+                relative_path = os.path.relpath(file_path, profiles_dir)
+                # new file is the DEFAULTS.SYSTEM_PROFILE_DIR/arch/name/profile_name.yaml
+                new_file = os.path.join(DEFAULTS.SYSTEM_PROFILE_DIR, relative_path)
+                fresh_install = not os.path.exists(new_file)
+                directory = os.path.dirname(new_file)
+
+                # Create directories if they don't exist
+                if directory:
+                    os.makedirs(directory, exist_ok=True)
+                if not os.path.isfile(new_file) or overwrite:
+                    with open(new_file, "w", encoding="utf-8") as outfile:
+                        yaml.dump(content, outfile)
+            except Exception as e:
+                print(f"Error reading file {file_path}: {e}")
+    return fresh_install
+
+# recreate_system_profiles writes all profile directories found in src/instructlab to disk
+# the location is ~/.local/share/instructlab/internal/system_profiles
+def recreate_system_profiles(overwrite: bool = False) -> bool:
+    """
+    recreate_system_profiles writes all profile directories found in src/instructlab to disk
+    the location is ~/.local/share/instructlab/internal/system_profiles
+    """
+    profile_dir = os.environ.get(DEFAULTS.ILAB_SYSTEM_PROFILE_DIR)
+    if profile_dir != "" and profile_dir is not None:
+        return read_and_create_system_profiles(profile_dir, overwrite)
+    # else, we aren't reading from disk, so we need to find where we are
+    # Get the directory where we are
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # Compute the path to the 'profiles' directory relative to the current file
+    profile_dir = os.path.join(current_dir, "profiles")
+
+    return read_and_create_system_profiles(profile_dir, overwrite)
 
 
 class Lab:
@@ -1378,6 +1439,7 @@ def storage_dirs_exist() -> bool:
         DEFAULTS.TRAIN_PROFILE_DIR,
         DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_DIR,
         DEFAULTS.PHASED_DIR,
+        DEFAULTS.SYSTEM_PROFILE_DIR,
     ]
     return all(os.path.exists(dirpath) for dirpath in dirs_to_check)
 
