@@ -325,7 +325,7 @@ def check_if_configs_exist(fresh_install) -> bool:
             raise click.exceptions.Exit(0)
     if exists(DEFAULTS.TRAIN_PROFILE_DIR) and not fresh_install:
         return click.confirm(
-            f"Existing training profiles were found in {DEFAULTS.TRAIN_PROFILE_DIR}\nDo you also want to restore these profiles to the default values?"
+            f"Existing training profiles were found in {DEFAULTS.TRAIN_PROFILE_DIR}\nDo you want to restore these profiles to the default values?"
         )
     # default behavior should be do NOT overwrite files that could have just been created
     return False
