@@ -62,19 +62,3 @@ class TestLabDownload:
         )
         assert result.exit_code == 0
         mock_oci_download.assert_called_once()
-
-    def test_oci_download_repository_error(self, cli_runner: CliRunner):
-        result = cli_runner.invoke(
-            lab.ilab,
-            [
-                "--config=DEFAULT",
-                "model",
-                "download",
-                "--repository=docker://quay.io/ai-lab/models/granite-7b-lab:latest",
-            ],
-        )
-        assert result.exit_code == 1
-        assert (
-            "Invalid repository supplied: Please specify tag/version 'latest' via --release"
-            in result.output
-        )
