@@ -220,10 +220,10 @@ class OCIDownloader(Downloader):
         logger.debug(f"Running skopeo command: {command}")
 
         try:
-            subprocess.run(command, check=True, capture_output=True, text=True)
+            subprocess.run(command, check=True, text=True)
         except subprocess.CalledProcessError as e:
             click.secho(
-                f"Failed to run skopeo command: {e}.\nstdout: {e.stdout}.\nstderr: {e.stderr}",
+                f"Failed to run skopeo command: {e}. \nstderr: {e.stderr}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
