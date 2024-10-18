@@ -1414,30 +1414,7 @@ def get_profile_mappings() -> dict[str, tuple[dict[str, object], ...]]:
                 },
             },
         ),
-        "A100": (
-            {
-                "gpu_count": 2,
-                "vram_and_config": {
-                    "vram": 160,
-                    "config": profile_names_and_configs["A100_H100_x2.yaml"],
-                },
-            },
-            {
-                "gpu_count": 4,
-                "vram_and_config": {
-                    "vram": 320,
-                    "config": profile_names_and_configs["A100_H100_x4.yaml"],
-                },
-            },
-            {
-                "gpu_count": 8,
-                "vram_and_config": {
-                    "vram": 640,
-                    "config": profile_names_and_configs["A100_H100_x8.yaml"],
-                },
-            },
-        ),
-        "H100": (
+        "A100/H100": (
             {
                 "gpu_count": 2,
                 "vram_and_config": {
