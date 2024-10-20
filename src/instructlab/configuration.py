@@ -907,6 +907,10 @@ def read_config(
     try:
         with open(config_file, "r", encoding="utf-8") as yamlfile:
             content = yaml.load(yamlfile)
+            if not isinstance(content, dict):
+                raise ConfigException(
+                    f"Expected a dictionary but got {type(content).__name__} in file {config_file}."
+                )
             _expand_paths(content)
             return Config(**content)
     except ValidationError as exc:
@@ -922,6 +926,10 @@ def read_config(
                 + "\n"
             )
         raise ConfigException(msg) from exc
+    except TypeError as exc:
+        raise ConfigException(
+            f"Failed to load config from {config_file}: {exc}"
+        ) from exc
 
 
 def _expand_paths(content: dict | list):
