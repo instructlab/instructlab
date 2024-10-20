@@ -1,8 +1,12 @@
-# Contributing
+# Contributing to the InstructLab CLI
 
 👍🎉 First off, thank you for taking the time to contribute! 🎉👍
 
-The following is a set of guidelines for contributing. These are just guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request. Please read the [community contribution guide](https://github.com/instructlab/community/blob/main/CONTRIBUTING.md) first for general practices for the InstructLab 🥼 community.
+The following is a set of guidelines for contributing. These are just guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request. Please read the [community contribution guide](https://github.com/instructlab/community/blob/main/CONTRIBUTING.md) first for general practices for the 🐶 InstructLab community.
+
+> [!IMPORTANT]
+> InstructLab is a fast-paced project under rapid development. Please expect the codebase to undergo significant changes from release to release. If you don't have
+> prior experience contributing to an early-stage open source project, you might want to consider [contributing skills and knowledge to the model](https://docs.instructlab.ai/adding-data-to-model/creating_new_knowledge_or_skills/) instead.
 
 ## What Should I Know Before I Get Started?
 
