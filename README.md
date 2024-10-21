@@ -123,7 +123,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
    > **NOTE**: ⏳ The `python3` binary shown in the following steps is the Python version that you installed in the above step. The command can also be `python3.11` or `python3.10` instead of `python3`. You can check Python's version by `python3 -V`.
    >
-   > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection. In case installation fails with error ``unsupported instruction `vpdpbusd'``, append `-C cmake.args="-DLLAMA_NATIVE=off"` to `pip install` command.
+   > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection. In case installation fails with error ``unsupported instruction `vpdpbusd'``, prepend `CMAKE_ARGS="-DLLAMA_NATIVE=off"` to `pip install` command.
 
    See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for how to
    to enable hardware acceleration for interaction and training on AMD ROCm,
@@ -151,14 +151,14 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       pip cache remove llama_cpp_python
-      pip install 'instructlab[rocm]' \
-         --extra-index-url https://download.pytorch.org/whl/rocm6.0 \
-         -C cmake.args="-DLLAMA_HIPBLAS=on" \
-         -C cmake.args="-DAMDGPU_TARGETS=all" \
-         -C cmake.args="-DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang" \
-         -C cmake.args="-DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++" \
-         -C cmake.args="-DCMAKE_PREFIX_PATH=/opt/rocm" \
-         -C cmake.args="-DLLAMA_NATIVE=off"
+      CMAKE_ARGS="-DLLAMA_HIPBLAS=on \
+         -DAMDGPU_TARGETS=all \
+         -DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang \
+         -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ \
+         -DCMAKE_PREFIX_PATH=/opt/rocm \
+         -DLLAMA_NATIVE=off" \
+         pip install 'instructlab[rocm]' \
+         --extra-index-url https://download.pytorch.org/whl/rocm6.0
       ```
 
       On Fedora 40+, use `-DCMAKE_C_COMPILER=clang-17` and `-DCMAKE_CXX_COMPILER=clang++-17`.
@@ -185,9 +185,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       python3 -m venv --upgrade-deps venv
       source venv/bin/activate
       pip cache remove llama_cpp_python
-      pip install 'instructlab[cuda]' \
-         -C cmake.args="-DLLAMA_CUDA=on" \
-         -C cmake.args="-DLLAMA_NATIVE=off"
+      CMAKE_ARGS="-DLLAMA_CUDA=on -DLLAMA_NATIVE=off" pip install 'instructlab[cuda]'
       pip install vllm@git+https://github.com/opendatahub-io/vllm@2024.08.01
    ```
 
