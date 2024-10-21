@@ -29,6 +29,7 @@ class Benchmark(str, enum.Enum):
     MMLU_BRANCH = "mmlu_branch"
     MT_BENCH = "mt_bench"
     MT_BENCH_BRANCH = "mt_bench_branch"
+    UNITXT = "unitxt"
 
 
 def validate_options(
@@ -44,11 +45,30 @@ def validate_options(
     few_shots,
     batch_size,
     tasks_dir,
+    unitxt_recipe,
 ):
     """takes in arguments from the CLI and uses 'benchmark' to validate other arguments
     if all needed configuration is present, raises an exception for the missing values
     """
-
+    if benchmark == Benchmark.UNITXT:
+        required_args = [
+            model,
+            unitxt_recipe,
+        ]
+        required_arg_names = [
+            "model",
+            "unitxt_recipe"
+        ]
+        
+        if None in required_args:
+            click.secho(
+                f"Benchmark {benchmark} requires the following args to be set: {required_arg_names}",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
+        
+        validate_model(model)
+        
     # ensure skills benchmarks have proper arguments if selected
     if benchmark in {Benchmark.MT_BENCH, Benchmark.MT_BENCH_BRANCH}:
         required_args = [
@@ -61,7 +81,6 @@ def validate_options(
             "model",
             "judge-model",
         ]
-
         if benchmark == Benchmark.MT_BENCH_BRANCH:
             required_args.append(taxonomy_path)
             required_args.append(branch)
