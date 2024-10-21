@@ -134,7 +134,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    python<version> -m venv --upgrade-deps venv
    source venv/bin/activate
    pip cache remove llama_cpp_python
-   pip install 'instructlab[mps]'
+   pip install instructlab
    ```
 
    📋 Make sure your system Python build is `Mach-O 64-bit executable arm64` by using `file -b $(command -v python)`, or if your system is setup with [pyenv](https://github.com/pyenv/pyenv) by using the `file -b $(pyenv which python)` command.
@@ -349,6 +349,13 @@ After running `ilab config init` your directories will look like the following o
 | `~/.local/share/instructlab/datasets/`     | Contains data output from the SDG phase, built on modifications to the taxonomy repository.   |
 | `~/.local/share/instructlab/taxonomy/`     | Contains the skill and knowledge data.                                              |
 | `~/.local/share/instructlab/checkpoints/`  | Contains the output of the training process.                                |
+| `~/.config/instructlab/config.yaml`        | Contains the `config.yaml` file |
+
+You can view your `config.yaml` file with the following command: 
+
+```
+ilab config show
+```
 
 ### 📥 Download the model
 
@@ -361,13 +368,18 @@ After running `ilab config init` your directories will look like the following o
    *Example output*
 
    ```shell
-   (venv) $ ilab model download
-   Downloading model from Hugging Face: instructlab/merlinite-7b-lab-GGUF@main to /home/user/.cache/instructlab/models...
-   ...
-   INFO 2024-08-01 15:05:48,464 huggingface_hub.file_download:1893: Download complete. Moving file to /home/user/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+   Downloading model from Hugging Face: instructlab/merlinite-7b-lab-GGUF@main to /Users/<user>/.cache/instructlab/models...
+   Downloading model from Hugging Face: TheBloke/Mistral-7B-Instruct-v0.2-GGUF@main to /Users/<user>/.cache/instructlab/models...
+   TheBloke/Mistral-7B-Instruct-v0.2-GGUF requires a HF Token to be set. Please use '--hf-token' or 'export HF_TOKEN' to download all necessary models
+   ```
+
+   You may be prompted to use your Hugging Face token to download the `Mistral-7B-Instruct-v0.2-GGUF` model.
+
+   ```shell
+   ilab model download --hf-token <your-huggingface-token>
    ```
   
-   ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
+   If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
 
 #### Downloading a specific model from a Hugging Face repository
 
