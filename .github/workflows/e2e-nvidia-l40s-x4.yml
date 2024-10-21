@@ -13,8 +13,7 @@ on:
         default: 'main'
 
 jobs:
-  start-runner:
-    name: Start external EC2 runner
+  start-large-ec2-runner:
     runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.start-ec2-runner.outputs.label }}
@@ -26,6 +25,7 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Start EC2 runner
         id: start-ec2-runner
         uses: machulav/ec2-github-runner@fcfb31a5760dad1314a64a0e172b78ec6fc8a17e # v2.3.6
@@ -45,19 +45,24 @@ jobs:
               {"Key": "GitHubPR", "Value": "${{ github.event.number }}"}
             ]
 
-  e2e:
-    name: E2E Test
-    needs: start-runner
-    runs-on: ${{ needs.start-runner.outputs.label }}
+  e2e-large-test:
+    needs:
+      - start-large-ec2-runner
+    runs-on: ${{ needs.start-large-ec2-runner.outputs.label }}
 
     permissions:
       pull-requests: write
 
     steps:
+      - name: Install Packages
+        run: |
+          cat /etc/os-release
+          sudo dnf install -y gcc gcc-c++ make git python3.11 python3.11-devel
+
       - name: Checkout
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
         with:
-           # https://github.com/actions/checkout/issues/249
+          # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
 
       - name: Determine if pr_or_branch is a PR number
@@ -116,11 +121,6 @@ jobs:
         run: |
           git checkout ${{ steps.check_pr.outputs.pr_or_branch }}
 
-      - name: Install Packages
-        run: |
-          cat /etc/os-release
-          sudo dnf install -y gcc gcc-c++ make git python3.11 python3.11-devel
-
       - name: Install ilab
         run: |
           export CUDA_HOME="/usr/local/cuda"
@@ -171,7 +171,7 @@ jobs:
           # Slack channel id, channel name, or user id to post message.
           # See also: https://api.slack.com/methods/chat.postMessage#channels
           # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
-          channel-id: 'cli-e2e-results'
+          channel-id: 'e2e-ci-results'
           slack-message: "*e2e-nvidia-l40s-x4* job in *${{ github.repository }}* running on branch `${{ steps.check_pr.outputs.pr_or_branch }}` completed *with failures* :meow_sad-rain: | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SON_OF_JEEVES_TOKEN }}
@@ -184,16 +184,15 @@ jobs:
           # Slack channel id, channel name, or user id to post message.
           # See also: https://api.slack.com/methods/chat.postMessage#channels
           # You can pass in multiple channels to post to by providing a comma-delimited list of channel IDs.
-          channel-id: 'cli-e2e-results'
+          channel-id: 'e2e-ci-results'
           slack-message: "*e2e-nvidia-l40s-x4* job in *${{ github.repository }}* running on branch `${{ steps.check_pr.outputs.pr_or_branch }}` completed *successfully* :meow_party: | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SON_OF_JEEVES_TOKEN }}
 
-  stop-runner:
-    name: Stop external EC2 runner
+  stop-large-ec2-runner:
     needs:
-      - start-runner
-      - e2e
+      - start-large-ec2-runner
+      - e2e-large-test
     runs-on: ubuntu-latest
     if: ${{ always() }}
     steps:
@@ -203,10 +202,11 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Stop EC2 runner
         uses: machulav/ec2-github-runner@fcfb31a5760dad1314a64a0e172b78ec6fc8a17e # v2.3.6
         with:
           mode: stop
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          label: ${{ needs.start-runner.outputs.label }}
-          ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
+          label: ${{ needs.start-large-ec2-runner.outputs.label }}
+          ec2-instance-id: ${{ needs.start-large-ec2-runner.outputs.ec2-instance-id }}
