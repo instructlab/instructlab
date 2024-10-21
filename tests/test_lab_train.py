@@ -424,7 +424,7 @@ class TestLabTrain:
         assert linux_train_mock.call_args[1]["num_epochs"] == 10
         assert linux_train_mock.call_args[1]["train_device"] is not None
         assert not linux_train_mock.call_args[1]["four_bit_quant"]
-        assert len(linux_train_mock.call_args[1]) == 7
+        assert len(linux_train_mock.call_args[1]) == 6
         is_macos_with_m_chip_mock.assert_called_once()
         assert not os.path.isfile(LINUX_GGUF_FILE)
 
@@ -496,7 +496,7 @@ class TestLabTrain:
             assert linux_train_mock.call_args[1]["num_epochs"] == 10
             assert linux_train_mock.call_args[1]["train_device"] is not None
             assert not linux_train_mock.call_args[1]["four_bit_quant"]
-            assert len(linux_train_mock.call_args[1]) == 7
+            assert len(linux_train_mock.call_args[1]) == 6
             is_macos_with_m_chip_mock.assert_called_once()
             assert not os.path.isfile(LINUX_GGUF_FILE)
 
@@ -534,7 +534,7 @@ class TestLabTrain:
             assert linux_train_mock.call_args[1]["num_epochs"] == 10
             assert linux_train_mock.call_args[1]["train_device"] is not None
             assert not linux_train_mock.call_args[1]["four_bit_quant"]
-            assert len(linux_train_mock.call_args[1]) == 7
+            assert len(linux_train_mock.call_args[1]) == 6
             assert not os.path.isfile(LINUX_GGUF_FILE)
 
     @patch("instructlab.utils.is_macos_with_m_chip", return_value=False)

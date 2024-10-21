@@ -30,7 +30,6 @@ from transformers import (
 # Transformer Reinforcement Learning
 # https://huggingface.co/docs/trl/index
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
-import click
 import torch
 
 # First Party
@@ -39,6 +38,7 @@ from instructlab.utils import ensure_legacy_dataset
 # Local
 from ..model.chat import CONTEXTS
 
+logger = logging.getLogger(__name__)
 # TODO CPU: Look into using these extensions
 # import intel_extension_for_pytorch as ipex
 
@@ -155,7 +155,6 @@ def report_hpu_device(args_device: torch.device) -> None:
 
 
 def linux_train(
-    ctx: click.Context,
     train_file: Path,
     test_file: Path,
     model_name: str,
@@ -169,29 +168,25 @@ def linux_train(
     try:
         device = torch.device(train_device)
     except RuntimeError as e:
-        ctx.fail(str(e))
-
+        raise RuntimeError(f"Error getting Torch Device {str(e)}") from e
     # Detect CUDA/ROCm device
     if device.type == "cuda":
         if not torch.cuda.is_available():
-            ctx.fail(
-                f"{device.type}: Torch has no CUDA/ROCm support or could not detect "
-                "a compatible device."
+            raise RuntimeError(
+                f"{device.type}: Torch has no CUDA/ROCm support or could not detect a compatible device."
             )
         # map unqualified 'cuda' to current device
         if device.index is None:
             device = torch.device(device.type, torch.cuda.current_device())
 
     if device.type == "hpu":
-        click.secho(
+        logger.warning(
             "WARNING: HPU support is experimental, unstable, and not "
             "optimized, yet.",
-            fg="red",
-            bold=True,
         )
 
     if four_bit_quant and device.type != "cuda":
-        ctx.fail("'--4-bit-quant' option requires '--device=cuda'")
+        raise RuntimeError("'--4-bit-quant' option requires '--device=cuda'")
 
     print("LINUX_TRAIN.PY: NUM EPOCHS IS: ", num_epochs)
     print("LINUX_TRAIN.PY: TRAIN FILE IS: ", train_file)
@@ -209,9 +204,10 @@ def linux_train(
         report_cuda_device(device, min_vram)
     elif device.type == "hpu":
         if htcore is None:
-            ctx.fail("habana_framework package is not installed.")
+            raise RuntimeError("habana_framework package is not installed.")
         if not hpu.is_available():
-            ctx.fail("habana_framework is unable to detect HPUs.")
+            raise RuntimeError("habana_framework is unable to detect HPUs.")
+
         hpu.init()
         report_hpu_device(device)
 
@@ -226,7 +222,7 @@ def linux_train(
         train_dataset = ensure_legacy_dataset(train_dataset)
         test_dataset = ensure_legacy_dataset(test_dataset)
     except ValueError as e:
-        ctx.fail(f"Failed to parse dataset: {e}")
+        raise ValueError(f"Failed to parse dataset: {e}") from e
 
     train_dataset.to_pandas().head()
 
