@@ -10,6 +10,8 @@ import os
 import sys
 import textwrap
 import typing
+import glob
+import pathlib
 
 # Third Party
 # pylint: disable=ungrouped-imports
@@ -1196,6 +1198,47 @@ def recreate_train_profiles(overwrite: bool = False) -> bool:
                     d = train_cfg.model_dump_json()
                     loaded = yaml.load(d)
                     yaml.dump(loaded, outfile)
+    return fresh_install
+
+def recreate_system_profiles(overwrite: bool = False) -> bool:
+    fresh_install = False
+    profile_dir = os.environ.get(DEFAULTS.ILAB_TRAIN_PROFILE_DIR)
+    if profile_dir != "" and profile_dir is not None:
+        # WIP
+        print("Place custom system prof")
+    else:
+        # Get the directory where we are
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        
+        # Compute the path to the 'profiles' directory relative to the current file
+        profiles_dir = os.path.join(current_dir, 'profiles')
+        
+        # Normalize the path
+        profiles_dir = os.path.normpath(profiles_dir)
+
+        to_write = {}
+        # List all YAML files in the 'profiles' directory
+        yaml_files = glob.glob(os.path.join(profiles_dir, "*.yaml"))
+        for file in yaml_files:
+            full_file = pathlib.Path(file)
+            
+            # I want to strip the arch/type/profile_name.yaml
+            # Then I want to place this profile into system_profiles/arch/type/profiles_name.yaml
+            relative_path = os.path.relpath(full_file, profiles_dir)
+            to_write[relative_path] = full_file
+        # read all profiles, write them to system profile_dir
+        for new_file, profile_file in to_write.items():
+            if not os.path.isfile(new_file) or overwrite:
+                fresh_install = True
+                with open(profile_file, "r", encoding="utf-8") as yamlfile:
+                    content = yaml.load(yamlfile)
+                    # ensure that the profile is a valid cfg before 
+                    try:
+                        _ = Config(**content)
+                    except Exception as exc:
+                        raise ValueError(f"System Profile: {new_file} is not a valid config {exc}") from exc
+                    with open(new_file, "w", encoding="utf-8") as outfile:
+                        yaml.dump(content, outfile)
     return fresh_install
 
 
