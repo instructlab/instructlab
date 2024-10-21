@@ -547,6 +547,7 @@ def evaluate(
     tls_client_key,  # pylint: disable=unused-argument
     tls_client_passwd,  # pylint: disable=unused-argument
     enable_serving_output,
+    unitxt_recipe,
 ):
     """Evaluates a trained model"""
 
@@ -573,6 +574,7 @@ def evaluate(
             few_shots,
             batch_size,
             tasks_dir,
+            unitxt_recipe,
         )
 
         if benchmark == Benchmark.MT_BENCH:
@@ -884,6 +886,37 @@ def evaluate(
             display_branch_eval_summary(
                 Benchmark.MMLU_BRANCH, improvements, regressions, no_changes
             )
+        
+        elif benchmark == Benchmark.UNITXT:
+            # Third Party
+            from instructlab.eval.unitxt import UnitxtEvaluator
+
+            evaluator = UnitxtEvaluator(
+                model,
+                unitxt_recipe,
+            )
+
+            server = None
+            try:
+                server, api_base, _ = launch_server(
+                    ctx,
+                    model,
+                    model,
+                    None,
+                    gpus,
+                    backend,
+                    enable_serving_output,
+                )
+                overall_scores, individual_scores = evaluator.run(api_base)
+            finally:
+                if server is not None:
+                    server.shutdown()
+            
+            print("# KNOWLEDGE EVALUATION REPORT\n")
+            print("\n## MODEL (SCORES)")
+            [print(score) for score in overall_scores]
+
+
     except EvalError as ee:
         print(ee.message)
         logger.debug("Traceback", exc_info=True)
