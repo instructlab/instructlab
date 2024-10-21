@@ -631,10 +631,11 @@ def is_oci_repo(repo_url: str) -> bool:
     """
     Checks if a provided repository follows the OCI registry URL syntax
     """
-
-    # TODO: flesh this out and make it a more robust check
-    oci_url_prefix = "docker://"
-    return repo_url.startswith(oci_url_prefix)
+    oci_url_regex = r"^docker://([a-zA-Z0-9\-_.]+(:[0-9]+)?)(/[a-zA-Z0-9\-_.]+)+(@[a-zA-Z0-9]+|:[a-zA-Z0-9\-_.]+)?$"
+    if not re.match(oci_url_regex, repo_url):
+        logger.warning(f"Invalid OCI repository URL: {repo_url}")
+        return False
+    return True
 
 
 def is_huggingface_repo(repo_name: str) -> bool:
