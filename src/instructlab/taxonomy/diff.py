@@ -46,6 +46,7 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
     """
     # pylint: disable=import-outside-toplevel
     # Third Party
+    from instructlab.schema.taxonomy import DEFAULT_TAXONOMY_FOLDERS as TAXONOMY_FOLDERS
     from instructlab.schema.taxonomy import TaxonomyReadingException
 
     # Local
@@ -56,6 +57,17 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
         taxonomy_base = ctx.obj.config.generate.taxonomy_base
     if not taxonomy_path:
         taxonomy_path = ctx.obj.config.generate.taxonomy_path
+
+    # Check if the taxonomy_path is a directory and contains the required taxonomy directory
+    if os.path.isdir(taxonomy_path):
+        required_dir = [d for d in os.listdir(taxonomy_path) if d in TAXONOMY_FOLDERS]
+        if not required_dir:
+            message = f"Taxonomy directory {taxonomy_path} is missing required directory ({', '.join(TAXONOMY_FOLDERS)})."
+            if quiet:
+                logger.debug(message)
+            else:
+                click.secho(message, fg="yellow")
+            return
 
     # get all new or changed taxonomy files to be validated and output to user
     if not quiet:
@@ -81,16 +93,21 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
 
     # validate new or changed taxonomy files
     try:
-        validate_taxonomy(taxonomy_path, taxonomy_base, yaml_rules)
+        valid = validate_taxonomy(taxonomy_path, taxonomy_base, yaml_rules)
     except (TaxonomyReadingException, yaml.YAMLError) as exc:
         if not quiet:
             click.secho(
                 f"Reading taxonomy failed with the following error: {exc}",
                 fg="red",
             )
+        else:
+            logger.debug(f"Reading taxonomy failed with the following error: {exc}")
         raise SystemExit(1) from exc
     if not quiet:
-        click.secho(
-            f"Taxonomy in {taxonomy_path} is valid :)",
-            fg="green",
-        )
+        if valid:
+            click.secho(f"Taxonomy in {taxonomy_path} is valid :)", fg="green")
+        else:
+            click.secho(
+                f"No new or changed qna.yaml files compared to the base branch {taxonomy_base}.",
+                fg="yellow",
+            )

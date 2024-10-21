@@ -170,6 +170,8 @@ class TestLabDiff:
 
     def test_diff_invalid_base(self, cli_runner: CliRunner):
         taxonomy_base = "invalid"
+        untracked_file = "compositional_skills/new/qna.yaml"
+        self.taxonomy.create_untracked(untracked_file)
         result = cli_runner.invoke(
             lab.ilab,
             [
@@ -405,7 +407,10 @@ class TestLabDiff:
                 self.taxonomy.root,
             ],
         )
-        assert f"Taxonomy in {self.taxonomy.root} is valid :)" in result.output
+        assert (
+            f"No new or changed qna.yaml files compared to the base branch {TAXONOMY_BASE}."
+            in result.output
+        )
         assert result.exit_code == 0
 
     def test_diff_invalid_yaml_filename_quiet(
