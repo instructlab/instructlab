@@ -80,6 +80,13 @@ evaluate:
     # Path to where base taxonomy is stored.
     # Default: /data/instructlab/taxonomy
     taxonomy_path: /data/instructlab/taxonomy
+  # Format of evaluation results. Defaults to 'text' which prints to stdout, also
+  # allows for 'json' to dump to a JSON file.
+  # Default: text
+  # Examples:
+  #   - text
+  #   - json
+  results: text
 # General configuration section.
 general:
   # Debug level for logging.
