@@ -25,14 +25,17 @@ The first can be found at `scripts/e2e-ci.sh`. This script is designed to test t
 across three different "t-shirt sizes" of systems. Most E2E CI jobs use this script.
 
 The second can be found at `scripts/e2e-custom.sh`. This script takes arguments that control which features are used to allow
-varying test coverage based on the resources available on a given test runner. The "custom" E2E CI job uses this script (though you can specify to use
-another script such as `e2e-ci.sh` if you want to test changes to a different code path that doesn't automatically run against a pull request).
+varying test coverage based on the resources available on a given test runner. The
+["custom" E2E CI job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-aws-custom.yml) uses this script,
+though you can specify to use another script such as `e2e-ci.sh` if you want to test changes to a different code path that doesn't automatically run
+against a pull request.
 
 There is currently a ["small" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) and a
 ["medium" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-a10g-x1.yml).
 These jobs runs automatically on all PRs and after commits merge to `main` or release branches. They depend upon the successful completion of any linting type jobs.
 
-There is also a ["large" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) that can be triggered manually on the [actions page](https://github.com/instructlab/instructlab/actions) for the repository.
+There is also a ["large" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) that can be
+[triggered manually on the actions page](#triggering-an-e2e-job-via-github-web-ui) for the repository.
 It also runs automatically against the `main` branch at 11AM UTC every day.
 
 ### E2E Test Coverage Options
@@ -87,7 +90,7 @@ You can specify the following flags to test various features of `ilab` with the
 Points of clarification (*):
 
 1. The `simple` training pipeline uses 4-bit-quantization. We cannot use the trained model here due to [#579](https://github.com/instructlab/instructlab/issues/579)
-2. `MMLU Branch` is not run due to the `simple` SDG pipeline not creating all the needed files in the tasks directory.
+2. `MMLU Branch` is not run as the `full` SDG pipeline does not create the needed files in the tasks directory when only training against a skill.
 
 ### Slack reporting
 
