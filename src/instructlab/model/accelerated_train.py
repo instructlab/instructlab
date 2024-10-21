@@ -193,7 +193,59 @@ def accelerated_train(
             run_training,  # pylint: disable=no-name-in-module
         )
 
-        run_training(train_args=train_args, torch_args=torch_args)
+        try:
+            run_training(train_args=train_args, torch_args=torch_args)
+        except (RuntimeError, KeyboardInterrupt, Exception) as e:
+            if not isinstance(e, KeyboardInterrupt):
+                logger.error("Failed during training loop: ", e)
+            raise click.exceptions.Exit(1) from e
+
+
+def _run_phase(
+    train_args: TrainingArgs,
+    torch_args: TorchrunArgs,
+    data_path: pathlib.Path,
+    checkpoint_dir: pathlib.Path,
+    num_epochs: int | None,
+    samples_per_save: int | None,
+    effective_batch_size: int | None,
+    journal: TrainingJournal,
+    phase_model: TrainPhaseModel | EvalPhaseModel,
+    next_phase: TrainingPhases,
+    model_override: pathlib.Path | None = None,
+):
+    """Runs a single phase of the multi-phase training pipeline and capture any errors.
+
+    Raises:
+        click.exceptions.Exit: Raises a click exception in lieu of a system exit.
+    """
+    exception = None
+    try:
+        _training_phase(
+            train_args=train_args.model_copy(deep=True),
+            torch_args=torch_args,
+            data_path=data_path,
+            checkpoint_dir=checkpoint_dir,
+            num_epochs=num_epochs,
+            samples_per_save=samples_per_save,
+            effective_batch_size=effective_batch_size,
+            model_override=model_override,
+            # model override not necessary because we expect model to come from ctx.params.model_path.
+        )
+    # pylint: disable=broad-except # training library emits a general Exception in lieu of a more specific one.
+    except (RuntimeError, KeyboardInterrupt, Exception) as e:
+        if not isinstance(e, KeyboardInterrupt):
+            logger.error("Failed during training loop: ", e)
+        exception = e
+    else:
+        # progress onto the next phase on success
+        journal.current_phase = next_phase
+    finally:
+        phase_model.ended_at_utc = TrainingJournal.now_utc()
+        journal.commit()
+
+    if exception:
+        raise click.exceptions.Exit(1) from exception
 
 
 def _run_phased_training(
@@ -236,21 +288,18 @@ def _run_phased_training(
             journal.journal.train_1 = phase_model
         journal.commit()
 
-        _training_phase(
-            train_args=train_args.model_copy(deep=True),
+        _run_phase(
+            train_args=train_args,
             torch_args=torch_args,
             data_path=phase1_data,
             checkpoint_dir=phase1_checkpoints_dir,
             num_epochs=phase1_num_epochs,
             samples_per_save=phase1_samples_per_save,
             effective_batch_size=phased_phase1_effective_batch_size,
-            # model override not necessary because we expect model to come from ctx.params.model_path.
+            journal=journal,
+            phase_model=phase_model,
+            next_phase=TrainingPhases.TRAIN2,
         )
-
-        phase_model.ended_at_utc = TrainingJournal.now_utc()
-
-        journal.current_phase = TrainingPhases.TRAIN2
-        journal.commit()
 
         logger.debug("Finished training #1\n%s", journal.print_model_rich())
     else:
@@ -323,22 +372,19 @@ def _run_phased_training(
             )
 
         next_checkpoint = phase1_checkpoints[0]
-
-        _training_phase(
-            train_args=train_args.model_copy(deep=True),
+        _run_phase(
+            train_args=train_args,
             torch_args=torch_args,
             data_path=phase2_data,
             checkpoint_dir=phase2_checkpoints_dir,
-            model_override=next_checkpoint,  # type: ignore
             num_epochs=phase2_num_epochs,
             samples_per_save=phase2_samples_per_save,
             effective_batch_size=phased_phase2_effective_batch_size,
+            journal=journal,
+            phase_model=phase_model,
+            next_phase=TrainingPhases.EVAL2,
+            model_override=next_checkpoint,
         )
-
-        phase_model.ended_at_utc = TrainingJournal.now_utc()
-
-        journal.current_phase = TrainingPhases.EVAL2
-        journal.commit()
         logger.debug("Finished training #2\n%s", journal.print_model_rich())
     else:
         click.secho("SKIPPING: Training Phase 2/2; already in Journal", fg="cyan")
