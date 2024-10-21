@@ -94,7 +94,7 @@ Points of clarification (*):
 
 ### Slack reporting
 
-Some E2E jobs send their results to the InstructLab Slack workspace channel `#cli-e2e-results` via the `Son of Jeeves` bot. This has been implemented
+Some E2E jobs send their results to the InstructLab Slack workspace channel `#e2e-ci-results` via the `Son of Jeeves` bot. This has been implemented
 via [the official Slack GitHub Action](https://github.com/slackapi/slack-github-action?tab=readme-ov-file#technique-2-slack-app). You can see which jobs currently have reporting via the "Current E2E Jobs" table above.
 
 ### Triggering an E2E job via GitHub Web UI
