@@ -525,6 +525,20 @@ class _train(BaseModel):
     )
 
 
+class _prompts(BaseModel):
+    """Class describing prompts for different contexts."""
+
+    sys_prompt: str = Field(
+        default=DEFAULTS.SYS_PROMPT,
+        description="Default system prompt to be used if no specific context is provided.",
+    )
+
+    cli_helper: str = Field(
+        default=DEFAULTS.CLI_HELPER_PROMPT,
+        description="Prompt to be used when acting as a CLI helper.",
+    )
+
+
 class Config(BaseModel):
     """Configuration for the InstructLab CLI.
     Config options are defined by the respective subclasses and are loaded into a single 'Config' object here
@@ -563,6 +577,11 @@ class Config(BaseModel):
         default=CONFIG_VERSION,
         description="Configuration file structure version.",
         frozen=True,  # don't allow this to be changed anywhere in the code
+    )
+    # prompts configuration
+    prompts: _prompts = Field(
+        default_factory=_prompts,
+        description="Prompts for various contexts.",
     )
 
 

@@ -32,6 +32,7 @@ from instructlab import log
 from instructlab.utils import HttpClientParams
 
 # Local
+from ..configuration import read_config
 from ..utils import get_sysprompt, http_client
 
 logger = logging.getLogger(__name__)
@@ -59,7 +60,7 @@ Press Alt (or Meta) and Enter or Esc Enter to end multiline input.
 
 CONTEXTS = {
     "default": get_sysprompt(),
-    "cli_helper": "You are an expert for command line interface and know all common commands. Answer the command to execute as it without any explanation.",
+    "cli_helper": read_config().prompts.cli_helper,
 }
 
 PROMPT_HISTORY_FILEPATH = os.path.expanduser("~/.local/chat-cli.history")
