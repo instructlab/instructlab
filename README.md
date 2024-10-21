@@ -177,6 +177,8 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       pip install 'instructlab[mps]'
       ```
 
+      You can also quickly install using [setup script for MacOS](https://raw.githubusercontent.com/instructlab/instructlab/refs/heads/main/scripts/setup-ilab-mac.sh).
+
    #### Install with Nvidia CUDA
 
      For the best CUDA experience, installing vLLM is necessary to serve Safetensors format models.
