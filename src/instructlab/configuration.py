@@ -1213,8 +1213,8 @@ def recreate_train_profiles(overwrite: bool = False) -> bool:
 # pylint: disable=broad-exception-caught
 def read_and_create_system_profiles(profiles_dir: str, overwrite: bool) -> bool:
     """
-     read_and_create_system_profiles walks the given dir, reads the templated files and writes them into
-     the DEFAULTS.SYSTEM_PROFILE_DIR preserving their arch, processor name, and yaml file name
+    read_and_create_system_profiles walks the given dir, reads the templated files and writes them into
+    the DEFAULTS.SYSTEM_PROFILE_DIR preserving their arch, processor name, and yaml file name
     """
     fresh_install = False
     for dirpath, _dirnames, filenames in os.walk(profiles_dir):
@@ -1248,6 +1248,7 @@ def read_and_create_system_profiles(profiles_dir: str, overwrite: bool) -> bool:
             except Exception as e:
                 print(f"Error reading file {file_path}: {e}")
     return fresh_install
+
 
 # recreate_system_profiles writes all profile directories found in src/instructlab to disk
 # the location is ~/.local/share/instructlab/internal/system_profiles

@@ -1,10 +1,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+from copy import copy
 from math import floor
 from os import listdir
-from os.path import dirname, exists, join
+from os.path import dirname, exists
+import os
 import pathlib
+import re
 import shutil
 import typing
 
@@ -122,75 +125,9 @@ def init(
     if train_profile is not None:
         cfg.train = read_train_profile(train_profile)
     elif interactive:
-        (
-            chosen_profile,
-            chosen_vram,
-            detected_train_profile,
-            edited_cfg,
-        ) = hw_auto_detect()
-        yn = None
-        if chosen_vram is not None and chosen_profile is not None:
-            click.echo(
-                f"We chose {chosen_profile} as your designated training profile. This is for systems with {chosen_vram} GB of vRAM."
-            )
-            if edited_cfg:
-                click.echo(
-                    "This profile is the best approximation for your system based off of the amount of vRAM. We modified it to match the number of GPUs you have."
-                )
-            yn = click.confirm("Is this profile correct?", default=True)
-        if yn is None or not yn:
-            train_profile_filenames = sorted(listdir(DEFAULTS.TRAIN_PROFILE_DIR))
-            # generate human-friendly text out of train profile filenames
-            profile_options = []
-            for filename in train_profile_filenames:
-                # one gpu type
-                split_filename = filename.split("_")
-                if len(split_filename) == 2:
-                    gputype1 = split_filename[0]
-                    num_gpu = split_filename[1].split(".")[0]
-                    profile_options.append(f"Nvidia {gputype1} {num_gpu} ({filename})")
-                # two gpu types
-                elif len(split_filename) == 3:
-                    gputype1 = split_filename[0]
-                    gputype2 = split_filename[1]
-                    num_gpu = split_filename[2].split(".")[0]
-                    profile_options.append(
-                        f"Nvidia {gputype1}/{gputype2} {num_gpu} ({filename})"
-                    )
-            click.echo(
-                "Please choose a train profile to use.\nTrain profiles assist with the complexity of configuring InstructLab training for specific GPU hardware.\nYou can still take advantage of hardware acceleration for training even if your hardware is not listed."
-            )
-            click.echo("[0] No profile (CPU, Apple Metal, AMD ROCm)")
-            for i, value in enumerate(profile_options):
-                click.echo(f"[{i+1}] {value}")
-            train_profile_selection = click.prompt(
-                "Enter the number of your choice [hit enter for hardware defaults]",
-                type=int,
-                default=0,
-            )
-            if 1 <= train_profile_selection <= len(profile_options):
-                click.echo(
-                    f"You selected: {profile_options[train_profile_selection - 1]}"
-                )
-                cfg.train = read_train_profile(
-                    join(
-                        DEFAULTS.TRAIN_PROFILE_DIR,
-                        train_profile_filenames[train_profile_selection - 1],
-                    )
-                )
-            elif train_profile_selection == 0:
-                click.echo(
-                    "No profile selected - any hardware acceleration for training must be configured manually."
-                )
-            else:
-                click.secho(
-                    "Invalid selection. Please select a valid train profile option.",
-                    fg="red",
-                )
-                raise click.exceptions.Exit(1)
-        else:
-            cfg.train = detected_train_profile
-
+        new_cfg = walk_and_print_system_profiles()
+        if new_cfg is not None:
+            cfg = new_cfg
     # we should not override all paths with the serve model if special ENV vars exist
     if param_source != click.core.ParameterSource.ENVIRONMENT:
         cfg.chat.model = model_path
@@ -207,6 +144,115 @@ def init(
         f"\n{separator}\n    Initialization completed successfully!\n{ready_text}\n{separator}",
         fg="green",
     )
+
+
+# walk_and_print_system_profiles prints interactive prompts asking the user to choose
+# their hardware vendor and system profile
+def walk_and_print_system_profiles() -> Config | None:
+    """
+    walk_and_print_system_profiles prints interactive prompts asking the user to choose
+    their hardware vendor and system profile
+    """
+    cfg = None
+    system_profile_files = []
+    arch_family_processors: dict[str, list[list[str]]] = {}
+    for dirpath, _dirnames, filenames in os.walk(DEFAULTS.SYSTEM_PROFILE_DIR):
+        for filename in filenames:
+            system_profile_files.append(os.path.join(dirpath, filename))
+            arch_family_processor = os.path.relpath(
+                os.path.join(dirpath, filename), DEFAULTS.SYSTEM_PROFILE_DIR
+            ).split("/", 3)
+            arch_family_processors.setdefault(arch_family_processor[0], []).append(
+                arch_family_processor
+            )
+
+    click.echo(
+        click.style(
+            "Please choose a system profile.\n Profiles set hardware-specific defaults for all commands and sections of the configuration.",
+            fg="green",
+        )
+    )
+    # print info like APPLE, AMD, INTEL and have them select
+    click.echo(
+        click.style(
+            "First, please select the hardware vendor your system falls into",
+            bg="blue",
+            fg="white",
+        )
+    )
+    keys = list(arch_family_processors.keys())
+    for idx, key in enumerate(keys, 1):
+        print(f"[{idx}] {key.upper()}")
+
+    system_profile_selection = click.prompt(
+        "Enter the number of your choice",
+        type=int,
+        default=0,
+    )
+
+    # now print all choices in the selected hw vendor and have user choose
+    if 1 <= system_profile_selection <= len(keys):
+        key = keys[system_profile_selection - 1]
+        click.echo(f"You selected: {key.upper()}")
+        click.echo(
+            click.style(
+                "Next, please select the specific hardware configuration that most closely matches your system.",
+                bg="blue",
+                fg="white",
+            )
+        )
+        click.echo("[0] No system profile")
+        i = 1
+        for arch_family_processor in arch_family_processors[key]:
+            # the following logic is specifically for printing the name
+            # we still want to preserve the arch_family_processor for when we open the file
+            # if the last entry has an _, split that out. This follows the format like m2_max.yaml, we just want max.
+            # Copy for preservation when working with printed names
+            printed_arch_family_processor = copy(arch_family_processor)
+            # Process the last element, extracting text after "_" if present, removing ".yaml"
+            printed_arch_family_processor[-1] = re.sub(
+                r".*_(\w+)\.yaml$|^(\w+)\.yaml$",
+                lambda m: m.group(1) if m.group(1) else m.group(2),
+                printed_arch_family_processor[-1],
+            )
+            # removes dupes in the case of `APPLE M2 M2` (the above logic is written to change things like M2_MAX.yaml into M2 MAX)
+            printed_arch_family_processor = list(
+                dict.fromkeys(printed_arch_family_processor)
+            )
+
+            # now echo it in all caps
+            click.echo(
+                f"[{i}] {' '.join(map(str, printed_arch_family_processor)).upper()}"
+            )
+            i += 1
+
+        system_profile_selection = click.prompt(
+            "Enter the number of your choice [hit enter for hardware defaults]",
+            type=int,
+            default=0,
+        )
+
+        # the file is SYSTEM_PROFILE_DIR/arch_family_procesors[key][selection-1]
+        if 1 <= system_profile_selection <= len(system_profile_files):
+            file = os.path.join(
+                DEFAULTS.SYSTEM_PROFILE_DIR,
+                "/".join(
+                    map(str, arch_family_processors[key][system_profile_selection - 1])
+                ),
+            )
+            click.echo(click.style(f"You selected: {file}", fg="green"))
+            cfg = read_config(file)
+        elif system_profile_selection == 0:
+            click.echo(
+                "No profile selected - any hardware acceleration for training must be configured manually."
+            )
+        else:
+            click.secho(
+                "Invalid selection. Please select a valid system profile option.",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
+    return cfg
 
 
 def hw_auto_detect() -> tuple[str | None, int | None, _train, bool]:
