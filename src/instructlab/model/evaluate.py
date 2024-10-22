@@ -478,6 +478,13 @@ def launch_server(
     help="Number of GPUs to utilize for evaluation (not applicable to llama-cpp)",
 )
 @click.option(
+    "--unitxt_recipe",
+    type=click.STRING,
+    help="Entire configuration for unitxt evaluation as a unitxt recipe (for unitxt benchmark)"
+    cls=clickext.ConfigOption,
+    config_sections="unitxt",
+)
+@click.option(
     "--merge-system-user-message",
     is_flag=True,
     help="Indicates whether to merge system and user message for mt_bench and mt_bench_branch (required for Mistral based judges)",
