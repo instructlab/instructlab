@@ -259,9 +259,9 @@ def chat(
         if (
             # We need to get the base name of the model because the model path is a full path and
             # the once from the config is just the model name
-            os.path.basename(model) == cfg.DEFAULTS.GGUF_MODEL_NAME
+            os.path.basename(model) == cfg.DEFAULTS.MERLINITE_GGUF_MODEL_NAME
             and os.path.basename(ctx.obj.config.chat.model)
-            == cfg.DEFAULTS.GGUF_MODEL_NAME
+            == cfg.DEFAULTS.MERLINITE_GGUF_MODEL_NAME
             and api_base == ctx.obj.config.serve.api_base()
         ):
             logger.debug(
