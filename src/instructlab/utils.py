@@ -412,7 +412,19 @@ def validate_taxonomy(
         yaml_rules_path = Path(yaml_rules)
         if yaml_rules_path.is_file():  # file was found, use specified config
             logger.debug("Using YAML rules from %s", yaml_rules)
-            yamllint_config = yaml_rules_path.read_text(encoding="utf-8")
+            try:
+                yamllint_config = yaml_rules_path.read_text(encoding="utf-8")
+                # Check if the file content is empty
+                if not yamllint_config.strip():
+                    logger.debug(
+                        f"YAML rules file {yaml_rules} is empty. Using default rules."
+                    )
+                    yamllint_config = None
+            except (OSError, yaml.YAMLError) as err:
+                logger.debug(
+                    f"Error reading YAML rules file {yaml_rules}: {err}. Using default rules."
+                )
+                yamllint_config = None
         else:
             logger.debug("Cannot find %s. Using default rules.", yaml_rules)
 
