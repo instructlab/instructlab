@@ -21,7 +21,7 @@ ADDITIONAL_ARGUMENTS = "additional_args"
 
 
 class SupportedTrainingStrategies(enum.Enum):
-    """Available advanced training stratefies"""
+    """Available advanced training strategies"""
 
     LAB_MULTIPHASE: str = "lab-multiphase"
 
