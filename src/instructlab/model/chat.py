@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+from subprocess import CalledProcessError
 import datetime
 import json
 import logging
@@ -20,12 +21,11 @@ from rich.live import Live
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.text import Text
-import click
 import httpx
 import openai
+import requests
 
 # First Party
-from instructlab import clickext
 from instructlab import client_utils as ilabclient
 from instructlab import configuration as cfg
 from instructlab import log
@@ -37,6 +37,10 @@ from ..utils import get_cli_helper_sysprompt, get_model_arch, get_sysprompt
 from .backends import backends
 
 logger = logging.getLogger(__name__)
+
+# ANSI escape sequence for red text
+RED = "\033[31m"
+RESET = "\033[0m"
 
 HELP_MD = """
 Help / TL;DR
@@ -67,263 +71,6 @@ CONTEXTS = {
 PROMPT_HISTORY_FILEPATH = os.path.expanduser("~/.local/chat-cli.history")
 
 PROMPT_PREFIX = ">>> "
-
-DEFAULT_ENDPOINT = cfg._serve().api_base()
-
-
-def is_openai_server_and_serving_model(
-    endpoint: str, api_key: str, http_params: HttpClientParams
-) -> bool:
-    """
-    Given an endpoint, returns whether or not the server is OpenAI-compatible
-    and is actively serving at least one model.
-    """
-    try:
-        models = ilabclient.list_models(
-            endpoint, api_key=api_key, http_client=http_client(http_params)
-        )
-        return len(models.data) > 0
-    except ilabclient.ClientException:
-        return False
-
-
-@click.command()
-@click.argument(
-    "question",
-    nargs=-1,
-    type=click.UNPROCESSED,
-)
-@click.option(
-    "-m",
-    "--model",
-    cls=clickext.ConfigOption,
-    required=True,  # default from config
-)
-@click.option(
-    "-c",
-    "--context",
-    cls=clickext.ConfigOption,
-    required=True,  # default from config
-)
-@click.option(
-    "-s",
-    "--session",
-    type=click.File("r"),
-    cls=clickext.ConfigOption,
-)
-@click.option(
-    "-qq",
-    "--quick-question",
-    is_flag=True,
-    help="Exit after answering question.",
-)
-@click.option(
-    "--max-tokens",
-    type=click.INT,
-    cls=clickext.ConfigOption,
-)
-@click.option(
-    "--endpoint-url",
-    type=click.STRING,
-    help="Custom URL endpoint for OpenAI-compatible API. Defaults to the `ilab model serve` endpoint.",
-)
-@click.option(
-    "--api-key",
-    type=click.STRING,
-    default=cfg.DEFAULTS.API_KEY,  # Note: do not expose default API key
-    help="API key for API endpoint. [default: config.DEFAULT_API_KEY]",
-)
-@click.option(
-    "--tls-insecure",
-    is_flag=True,
-    help="Disable TLS verification.",
-)
-@click.option(
-    "--tls-client-cert",
-    type=click.Path(),
-    default="",
-    show_default=True,
-    help="Path to the TLS client certificate to use.",
-)
-@click.option(
-    "--tls-client-key",
-    type=click.Path(),
-    default="",
-    show_default=True,
-    help="Path to the TLS client key to use.",
-)
-@click.option(
-    "--tls-client-passwd",
-    type=click.STRING,
-    default="",
-    help="TLS client certificate password.",
-)
-@click.option(
-    "--model-family",
-    help="Force model family to use when picking a chat template",
-)
-@click.option(
-    "--serving-log-file",
-    type=click.Path(path_type=pathlib.Path),
-    required=False,
-    help="Log file path to write server logs to.",
-)
-@click.option(
-    "-t",
-    "--temperature",
-    cls=clickext.ConfigOption,
-)
-@click.pass_context
-@clickext.display_params
-def chat(
-    ctx,
-    question,
-    model,
-    context,
-    session,
-    quick_question,
-    max_tokens,
-    endpoint_url,
-    api_key,
-    tls_insecure,
-    tls_client_cert,
-    tls_client_key,
-    tls_client_passwd,
-    model_family,
-    serving_log_file,
-    temperature,
-):
-    """Runs a chat using the modified model"""
-    # pylint: disable=import-outside-toplevel
-    # First Party
-    from instructlab.model.backends.common import is_temp_server_running
-
-    max_ctx_size = None
-    backend_type = ctx.obj.config.serve.server.backend_type
-    serve_server = ctx.obj.config.serve.server
-    users_endpoint_url = cfg.get_api_base(serve_server.host, serve_server.port)
-
-    # we prefer the given endpoint when one is provided, else we check if the user
-    # is actively serving something before falling back to serving our own model
-    backend_instance = None
-    if endpoint_url:
-        api_base = endpoint_url
-    elif is_openai_server_and_serving_model(
-        users_endpoint_url,
-        api_key,
-        http_params={
-            "tls_client_cert": tls_client_cert,
-            "tls_client_key": tls_client_key,
-            "tls_client_passwd": tls_client_passwd,
-            "tls_insecure": tls_insecure,
-        },
-    ):
-        api_base = users_endpoint_url
-        if serving_log_file:
-            logger.warning(
-                "Setting serving log file (--serving-log-file) is not supported when the server is already running"
-            )
-        max_ctx_size = ctx.obj.config.serve.server.current_max_ctx_size
-
-    else:
-        # If a log file is specified, write logs to the file
-        root_logger = logging.getLogger()
-        if serving_log_file:
-            log.add_file_handler_to_logger(root_logger, serving_log_file)
-
-        ctx.obj.config.serve.llama_cpp.llm_family = model_family
-        backend_instance = backends.select_backend(
-            ctx.obj.config.serve,
-            model_path=model,
-            log_file=serving_log_file,
-        )
-        backend_type = backend_instance.get_backend_type()
-        # if max tokens is the default, read from the serve cfg in case that has been overriden
-        # if serve has a different max_ctx_size, that is what we use.
-        if max_ctx_size is None and backend_type == backends.LLAMA_CPP:
-            max_ctx_size = ctx.obj.config.serve.llama_cpp.max_ctx_size
-        try:
-            # Run the llama server
-            api_base = backend_instance.run_detached(http_client(ctx.params))
-        except Exception as exc:
-            click.secho(f"Failed to start server: {exc}", fg="red")
-            raise click.exceptions.Exit(1)
-
-    # if only the chat is running (`ilab model chat`) and the temp server is not, the chat interacts
-    # in server mode (`ilab model serve` is running somewhere, or we are talking to another
-    # OpenAI compatible endpoint).
-    if not is_temp_server_running():
-        # Try to get the model name right if we know we're talking to a local `ilab model serve`.
-        #
-        # If the model from the CLI and the one in the config are the same, use the one from the
-        # server if they are different else let's use what the user provided
-        #
-        # 'model' will always get a value and never be None so it's hard to distinguish whether
-        # the value came from the user input or the default value.
-        # We can only assume that if the value is the same as the default value and the value
-        # from the config is the same as the default value, then the user didn't provide a value
-        # we then compare it with the value from the server to see if it's different
-        if (
-            # We need to get the base name of the model because the model path is a full path and
-            # the once from the config is just the model name
-            os.path.basename(model) == cfg.DEFAULTS.GRANITE_GGUF_MODEL_NAME
-            and os.path.basename(ctx.obj.config.chat.model)
-            == cfg.DEFAULTS.GRANITE_GGUF_MODEL_NAME
-            and api_base == ctx.obj.config.serve.api_base()
-        ):
-            logger.debug(
-                "No model was provided by the user as a CLI argument or in the config, will use the model from the server"
-            )
-            try:
-                models = ilabclient.list_models(
-                    api_base=api_base,
-                    http_client=http_client(ctx.params),
-                )
-
-                # Currently, we only present a single model so we can safely assume that the first model
-                server_model = models.data[0].id if models is not None else None
-                # override 'model' with the first returned model if not provided so that the chat print
-                # the model used by the server
-                model = (
-                    server_model
-                    if server_model is not None
-                    and server_model != ctx.obj.config.chat.model
-                    else model
-                )
-                logger.debug(f"Using model from server {model}")
-            except ilabclient.ClientException as exc:
-                click.secho(
-                    f"Failed to list models from {api_base}. Please check the API key and endpoint.",
-                    fg="red",
-                )
-                # Right now is_temp_server() does not check if a subprocessed vllm is up
-                # shut it down just in case an exception is raised in the try
-                # TODO: revise is_temp_server to check if a vllm server is running
-                if backend_instance is not None:
-                    backend_instance.shutdown()
-                raise click.exceptions.Exit(1) from exc
-
-    try:
-        chat_cli(
-            ctx,
-            api_base=api_base,
-            config=ctx.obj.config.chat,
-            question=question,
-            model=model,
-            context=context,
-            session=session,
-            qq=quick_question,
-            max_tokens=max_tokens,
-            max_ctx_size=max_ctx_size,
-            temperature=temperature,
-            backend_type=backend_type,
-        )
-    except ChatException as exc:
-        click.secho(f"Executing chat failed with: {exc}", fg="red")
-        raise click.exceptions.Exit(1)
-    finally:
-        if backend_instance is not None:
-            backend_instance.shutdown()
 
 
 class ChatException(Exception):
@@ -789,10 +536,176 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self._update_conversation(response_content.plain, "assistant")
 
 
-def chat_cli(
-    ctx,
+def chat_model(
+    question,
+    model,
+    context,
+    session,
+    quick_question,
+    max_tokens,
+    endpoint_url,
+    api_key,
+    tls_insecure,
+    tls_client_cert,
+    tls_client_key,
+    tls_client_passwd,
+    model_family,
+    serving_log_file,
+    temperature,
+    backend_type,
+    host,
+    port,
+    current_max_ctx_size,
+    params,
+    backend_name,
+    chat_template,
     api_base,
-    config,
+    gpu_layers,
+    max_ctx_size,
+    vllm_model_family,
+    vllm_args,
+    max_startup_attempts,
+    logs_dir,
+    vi_mode,
+    visible_overflow,
+):
+    """Runs a chat using the modified model"""
+    # pylint: disable=import-outside-toplevel
+    # First Party
+    from instructlab.model.backends.common import is_temp_server_running
+
+    users_endpoint_url = cfg.get_api_base(host, port)
+
+    # we prefer the given endpoint when one is provided, else we check if the user
+    # is actively serving something before falling back to serving our own model
+    backend_instance = None
+    if endpoint_url:
+        api_base = endpoint_url
+    elif is_openai_server_and_serving_model(
+        users_endpoint_url,
+        api_key,
+        http_params={
+            "tls_client_cert": tls_client_cert,
+            "tls_client_key": tls_client_key,
+            "tls_client_passwd": tls_client_passwd,
+            "tls_insecure": tls_insecure,
+        },
+    ):
+        api_base = users_endpoint_url
+        if serving_log_file:
+            logger.warning(
+                "Setting serving log file (--serving-log-file) is not supported when the server is already running"
+            )
+        max_ctx_size = current_max_ctx_size
+    else:
+        # If a log file is specified, write logs to the file
+        root_logger = logging.getLogger()
+        if serving_log_file:
+            log.add_file_handler_to_logger(root_logger, serving_log_file)
+
+        backend_instance = backends.get_backend_from_values(
+            host=host,
+            port=port,
+            model_path=model,
+            backend_name=backend_name,
+            chat_template=chat_template,
+            api_base=api_base,
+            gpu_layers=gpu_layers,
+            max_ctx_size=max_ctx_size,
+            model_family=model_family,
+            log_file=serving_log_file,
+            vllm_model_family=vllm_model_family,
+            vllm_args=vllm_args,
+            max_startup_attempts=max_startup_attempts,
+        )
+
+        backend_type = backend_instance.get_backend_type()
+        try:
+            # Run the llama server
+            api_base = backend_instance.run_detached(http_client(params))
+        except (requests.RequestException, CalledProcessError, OSError) as exc:
+            print(f"Failed to start server: {exc}", file=sys.stderr)
+            sys.exit(1)
+
+    # if only the chat is running (`ilab model chat`) and the temp server is not, the chat interacts
+    # in server mode (`ilab model serve` is running somewhere, or we are talking to another
+    # OpenAI compatible endpoint).
+    if not is_temp_server_running():
+        # Try to get the model name right if we know we're talking to a local `ilab model serve`.
+        #
+        # If the model from the CLI and the one in the config are the same, use the one from the
+        # server if they are different else let's use what the user provided
+        #
+        # 'model' will always get a value and never be None so it's hard to distinguish whether
+        # the value came from the user input or the default value.
+        # We can only assume that if the value is the same as the default value and the value
+        # from the config is the same as the default value, then the user didn't provide a value
+        # we then compare it with the value from the server to see if it's different
+        if (
+            # We need to get the base name of the model because the model path is a full path and
+            # the once from the config is just the model name
+            os.path.basename(model) == cfg.DEFAULTS.GRANITE_GGUF_MODEL_NAME
+            and os.path.basename(model) == cfg.DEFAULTS.GRANITE_GGUF_MODEL_NAME
+        ):
+            logger.debug(
+                "No model was provided by the user as a CLI argument or in the config, will use the model from the server"
+            )
+            try:
+                models = ilabclient.list_models(
+                    api_base=api_base,
+                    http_client=http_client(params),
+                )
+
+                # Currently, we only present a single model so we can safely assume that the first model
+                server_model = models.data[0].id if models is not None else None
+
+                # override 'model' with the first returned model if not provided so that the chat print
+                # the model used by the server
+                model = (
+                    server_model
+                    if server_model is not None and server_model != model
+                    else model
+                )
+                logger.debug(f"Using model from server {model}")
+            except ilabclient.ClientException:
+                print(
+                    f"Failed to list models from {api_base}. Please check the API key and endpoint.",
+                    file=sys.stderr,
+                )
+                # Right now is_temp_server() does not check if a subprocessed vllm is up
+                # shut it down just in case an exception is raised in the try
+                # TODO: revise is_temp_server to check if a vllm server is running
+                if backend_instance is not None:
+                    backend_instance.shutdown()
+                sys.exit(1)
+
+    try:
+        chat_cli(
+            api_base=api_base,
+            logs_dir=logs_dir,
+            vi_mode=vi_mode,
+            visible_overflow=visible_overflow,
+            question=question,
+            model=model,
+            context=context,
+            session=session,
+            qq=quick_question,
+            max_tokens=max_tokens,
+            max_ctx_size=max_ctx_size,
+            temperature=temperature,
+            backend_type=backend_type,
+            params=params,
+        )
+    except ChatException as exc:
+        print(f"{RED}Executing chat failed with: {exc}{RESET}")
+        sys.exit(1)
+    finally:
+        if backend_instance is not None:
+            backend_instance.shutdown()
+
+
+def chat_cli(
+    api_base,
     question,
     model,
     context,
@@ -802,13 +715,17 @@ def chat_cli(
     max_ctx_size,
     temperature,
     backend_type,
+    logs_dir,
+    vi_mode,
+    visible_overflow,
+    params,
 ):
     """Starts a CLI-based chat with the server"""
     client = OpenAI(
         base_url=api_base,
-        api_key=ctx.params["api_key"],
+        api_key=params["api_key"],
         timeout=cfg.DEFAULTS.CONNECTION_TIMEOUT,
-        http_client=http_client(ctx.params),
+        http_client=http_client(params),
     )
     # ensure the model specified exists on the server. with backends like vllm, this is crucial.
     try:
@@ -850,24 +767,24 @@ def chat_cli(
             ) from exc
 
     log_file = None
-    if config.logs_dir:
+    if logs_dir:
         date_suffix = (
             datetime.datetime.now().replace(microsecond=0).isoformat().replace(":", "_")
         )
-        os.makedirs(config.logs_dir, exist_ok=True)
-        log_file = f"{config.logs_dir}/chat_{date_suffix}.log"
+        os.makedirs(logs_dir, exist_ok=True)
+        log_file = f"{logs_dir}/chat_{date_suffix}.log"
 
     # Initialize chat bot
     ccb = ConsoleChatBot(
-        config.model if model is None else model,
+        model if model is None else model,
         client=client,
-        vi_mode=config.vi_mode,
+        vi_mode=vi_mode,
         log_file=log_file,
         prompt=not qq,
-        vertical_overflow=("visible" if config.visible_overflow else "ellipsis"),
+        vertical_overflow=("visible" if visible_overflow else "ellipsis"),
         loaded=loaded,
-        temperature=(temperature if temperature is not None else config.temperature),
-        max_tokens=(max_tokens if max_tokens else config.max_tokens),
+        temperature=(temperature if temperature is not None else temperature),
+        max_tokens=(max_tokens if max_tokens else max_tokens),
         max_ctx_size=max_ctx_size,
         backend_type=backend_type,
     )
@@ -907,3 +824,19 @@ def chat_cli(
             raise ChatException("Connection to the server was closed") from exc
         except (ChatQuitException, EOFError):
             return
+
+
+def is_openai_server_and_serving_model(
+    endpoint: str, api_key: str, http_params: HttpClientParams
+) -> bool:
+    """
+    Given an endpoint, returns whether or not the server is OpenAI-compatible
+    and is actively serving at least one model.
+    """
+    try:
+        models = ilabclient.list_models(
+            endpoint, api_key=api_key, http_client=http_client(http_params)
+        )
+        return len(models.data) > 0
+    except ilabclient.ClientException:
+        return False
