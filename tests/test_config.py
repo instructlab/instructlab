@@ -437,6 +437,7 @@ def test_read_train_profile(
             if profile_data[k] is not None:
                 assert v == profile_data[k]
 
+
 class NestedConfig(BaseModel):
     nested_field: str = Field(
         default="nested_default", description="Nested field description"
