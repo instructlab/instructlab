@@ -403,6 +403,7 @@ def train(
     Takes synthetic data generated locally with `ilab data generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
+    print("This is my print statement. There are many like it, but this one is mine.")
     if (
         pipeline in ("full", "simple")
         and strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value
