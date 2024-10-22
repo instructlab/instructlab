@@ -2,6 +2,7 @@
 
 # Standard
 from copy import copy
+from math import floor
 from os import listdir
 from os.path import dirname, exists
 import os
@@ -160,6 +161,97 @@ def walk_and_print_system_profiles() -> Config | None:
             arch_family_processors.setdefault(arch_family_processor[0], []).append(
                 arch_family_processor
             )
+
+    click.echo(
+        click.style(
+            "Please choose a system profile.\n Profiles set hardware-specific defaults for all commands and sections of the configuration.",
+            fg="green",
+        )
+    )
+    # print info like APPLE, AMD, INTEL and have them select
+    click.echo(
+        click.style(
+            "First, please select the hardware vendor your system falls into",
+            bg="blue",
+            fg="white",
+        )
+    )
+    keys = list(arch_family_processors.keys())
+    for idx, key in enumerate(keys, 1):
+        print(f"[{idx}] {key.upper()}")
+
+    system_profile_selection = click.prompt(
+        "Enter the number of your choice",
+        type=int,
+        default=0,
+    )
+
+    # now print all choices in the selected hw vendor and have user choose
+    if 1 <= system_profile_selection <= len(keys):
+        key = keys[system_profile_selection - 1]
+        click.echo(f"You selected: {key.upper()}")
+        click.echo(
+            click.style(
+                "Next, please select the specific hardware configuration that most closely matches your system.",
+                bg="blue",
+                fg="white",
+            )
+        )
+        click.echo("[0] No system profile")
+        i = 1
+        for arch_family_processor in arch_family_processors[key]:
+            # the following logic is specifically for printing the name
+            # we still want to preserve the arch_family_processor for when we open the file
+            # if the last entry has an _, split that out. This follows the format like m2_max.yaml, we just want max.
+            # Copy for preservation when working with printed names
+            printed_arch_family_processor = copy(arch_family_processor)
+            # Process the last element, extracting text after "_" if present, removing ".yaml"
+            printed_arch_family_processor[-1] = re.sub(
+                r"_(\w+)\.yaml$|\.yaml$", r" \1", printed_arch_family_processor[-1]
+            )
+            # removes dupes in the case of `APPLE M2 M2` (the above logic is written to change things like M2_MAX.yaml into M2 MAX)
+            printed_arch_family_processor = list(
+                dict.fromkeys(printed_arch_family_processor)
+            )
+
+            # now echo it in all caps
+            click.echo(
+                f"[{i}] {' '.join(map(str, printed_arch_family_processor)).upper()}"
+            )
+            i += 1
+
+        system_profile_selection = click.prompt(
+            "Enter the number of your choice [hit enter for hardware defaults]",
+            type=int,
+            default=0,
+        )
+
+        # the file is SYSTEM_PROFILE_DIR/arch_family_procesors[key][selection-1]
+        if 1 <= system_profile_selection <= len(system_profile_files):
+            file = os.path.join(
+                DEFAULTS.SYSTEM_PROFILE_DIR,
+                "/".join(
+                    map(str, arch_family_processors[key][system_profile_selection - 1])
+                ),
+            )
+            click.echo(click.style(f"You selected: {file}", fg="green"))
+            cfg = read_config(file)
+        elif system_profile_selection == 0:
+            click.echo(
+                "No profile selected - any hardware acceleration for training must be configured manually."
+            )
+        else:
+            click.secho(
+                "Invalid selection. Please select a valid system profile option.",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
+    return cfg
+
+
+def hw_auto_detect() -> tuple[str | None, int | None, _train, bool]:
+    # Third Party
+    import torch
 
     click.echo(
         click.style(
