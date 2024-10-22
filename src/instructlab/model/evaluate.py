@@ -480,7 +480,7 @@ def launch_server(
 @click.option(
     "--unitxt_recipe",
     type=click.STRING,
-    help="Entire configuration for unitxt evaluation as a unitxt recipe (for unitxt benchmark)"
+    help="Entire configuration for unitxt evaluation as a unitxt recipe (for unitxt benchmark)",
     cls=clickext.ConfigOption,
     config_sections="unitxt",
 )
