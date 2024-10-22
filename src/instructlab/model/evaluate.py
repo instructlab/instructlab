@@ -480,8 +480,7 @@ def launch_server(
 @click.option(
     "--unitxt_recipe",
     type=click.STRING,
-    help="Entire configuration for unitxt evaluation as a unitxt recipe (for unitxt benchmark)",
-    cls=clickext.ConfigOption,
+     cls=clickext.ConfigOption,
     config_sections="unitxt",
 )
 @click.option(
@@ -919,10 +918,9 @@ def evaluate(
                 if server is not None:
                     server.shutdown()
             
-            print("# KNOWLEDGE EVALUATION REPORT\n")
-            print("\n## MODEL (SCORES)")
-            [print(score) for score in overall_scores]
-
+            print("# KNOWLEDGE EVALUATION REPORT")
+            print("\n## MODEL (SCORES)\n")
+            print(overall_scores)
 
     except EvalError as ee:
         print(ee.message)
