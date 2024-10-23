@@ -448,7 +448,7 @@ class _train(BaseModel):
         default=False, description="Allow CPU offload for FSDP optimizer."
     )
     distributed_backend: DistributedBackend = Field(
-        default=DistributedBackend.DEEPSPEED,
+        default=DistributedBackend.FSDP,
         description="Pick a distributed training backend framework for GPU accelerated full fine-tuning.",
         validate_default=True,  # ensures that the 'use_enum_values' flag takes effect on the default value
     )
