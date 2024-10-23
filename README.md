@@ -186,7 +186,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
       source venv/bin/activate
       pip cache remove llama_cpp_python
       CMAKE_ARGS="-DLLAMA_CUDA=on -DLLAMA_NATIVE=off" pip install 'instructlab[cuda]'
-      pip install vllm@git+https://github.com/opendatahub-io/vllm@2024.08.01
+      pip install vllm@git+https://github.com/opendatahub-io/vllm@v0.6.2
    ```
 
 4. From your `venv` environment, verify `ilab` is installed correctly, by running the `ilab` command.
@@ -455,7 +455,7 @@ After running `ilab config init` your directories will look like the following o
    If it is not, please run:
 
    ```shell
-   pip install vllm@git+https://github.com/opendatahub-io/vllm@2024.08.01
+   pip install vllm@git+https://github.com/opendatahub-io/vllm@v0.6.2
    ```
 
    ```shell
