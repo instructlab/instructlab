@@ -137,6 +137,9 @@ fi \
         libcufft-${CUDA_DASHED_VERSION} \
         libcurand-${CUDA_DASHED_VERSION} \
         libnvjitlink-${CUDA_DASHED_VERSION} \
+        cudnn9-cuda-${CUDA_DASHED_VERSION} \
+        cuda-nvrtc-${CUDA_DASHED_VERSION} \
+        cuda-nvrtc-devel-${CUDA_DASHED_VERSION} \
         ${NCCL_PACKAGE} \
         libcudnn8 \
         nvidia-persistenced-${DRIVER_VERSION} \
