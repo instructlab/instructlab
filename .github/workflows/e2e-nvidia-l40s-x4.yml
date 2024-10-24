@@ -130,6 +130,7 @@ jobs:
           . venv/bin/activate
           nvidia-smi
           python3.11 -m pip cache remove llama_cpp_python
+          python3.11 -m pip cache remove flash_attn
 
           CMAKE_ARGS="-DLLAMA_CUDA=on" python3.11 -m pip install .
 

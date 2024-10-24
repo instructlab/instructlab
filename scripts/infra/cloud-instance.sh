@@ -390,6 +390,7 @@ pip_install_with_nvidia() {
         "pushd instructlab && source venv/bin/activate; \
          export PATH=\$PATH:/usr/local/cuda/bin; \
          pip cache remove llama_cpp_python \
+         && pip cache remove flash_attn \
          && CMAKE_ARGS='-DLLAMA_CUBLAS=on' pip install --force-reinstall --no-binary \
             llama_cpp_python -c constraints.txt llama_cpp_python \
          && pip install wheel packaging torch -c constraints.txt \
@@ -400,7 +401,9 @@ pip_install_with_nvidia() {
 
 pip_install_with_amd() {
     local cloud_type=$1
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && source venv/bin/activate && pip cache remove llama_cpp_python && \
+    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && source venv/bin/activate \
+    && pip cache remove llama_cpp_python \
+    && pip cache remove flash_attn && \
     pip install -e .[rocm] --extra-index-url https://download.pytorch.org/whl/rocm6.0 \
    -C cmake.args='-DLLAMA_HIPBLAS=on' \
    -C cmake.args='-DAMDGPU_TARGETS=all' \
@@ -543,4 +546,3 @@ else
     show_usage
     exit 1
 fi
-
