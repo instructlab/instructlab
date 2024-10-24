@@ -1,0 +1,118 @@
+# SPDX-License-Identifier: Apache-2.0
+
+# Standard
+import logging
+import pathlib
+import signal
+
+# Third Party
+import click
+
+# First Party
+from instructlab import clickext
+from instructlab.model.serve_backend import serve_backend, signal_handler
+
+logger = logging.getLogger(__name__)
+
+# Register the signal handler for SIGTERM
+signal.signal(signal.SIGTERM, signal_handler)
+
+
+def warn_for_unsupported_backend_param(ctx):
+    for param in ["gpu_layers", "num_threads", "max_ctx_size"]:
+        if ctx.get_parameter_source(param) == click.core.ParameterSource.COMMANDLINE:
+            logger.warning(
+                f"Option '--{param.replace('_','-')}' not supported by the backend."
+            )
+
+
+@click.command(
+    context_settings={"allow_extra_args": True, "ignore_unknown_options": False},
+)
+@click.option(
+    "--model-path",
+    type=click.Path(path_type=pathlib.Path),
+    cls=clickext.ConfigOption,
+    required=True,  # default from config
+)
+@click.option(
+    "--gpu-layers",
+    type=click.INT,
+    cls=clickext.ConfigOption,
+    config_sections="llama_cpp",
+    required=True,  # default from config
+)
+@click.option(
+    "--num-threads",
+    type=click.INT,
+    required=False,
+    help="The number of CPU threads to use.",
+)
+@click.option(
+    "--max-ctx-size",
+    type=click.INT,
+    cls=clickext.ConfigOption,
+    config_sections="llama_cpp",
+)
+@click.option(
+    "--model-family",
+    type=str,
+    help="Model family is used to specify which chat template to serve with",
+)
+@click.option(
+    "--log-file",
+    type=click.Path(path_type=pathlib.Path),
+    required=False,
+    help="Log file path to write server logs to.",
+)
+@click.option(
+    "--chat-template",
+    type=str,
+    cls=clickext.ConfigOption,
+)
+@click.option(
+    "--backend",
+    type=click.Choice(("llama_cpp", "vllm")),  # use supported backends
+    cls=clickext.ConfigOption,
+    required=False,  # auto-detect
+)
+@click.option(
+    "--gpus",
+    type=click.IntRange(min=0),
+    cls=clickext.ConfigOption,
+    config_sections="vllm",
+)
+@click.pass_context
+@clickext.display_params
+def serve(
+    ctx: click.Context,
+    model_path: pathlib.Path,
+    gpu_layers: int,
+    num_threads: int | None,
+    max_ctx_size: int,
+    model_family,
+    log_file: pathlib.Path | None,
+    backend: str | None,
+    chat_template: str | None,
+    gpus: int | None,
+) -> None:
+    """Starts a local server"""
+
+    warn_for_unsupported_backend_param(ctx)
+
+    serve_backend(
+        ctx,
+        model_path,
+        gpu_layers,
+        num_threads,
+        max_ctx_size,
+        model_family,
+        log_file,
+        backend,
+        chat_template,
+        gpus,
+    )
+
+
+if __name__ == "__main__":
+    serve()

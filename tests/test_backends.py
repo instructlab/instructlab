@@ -80,7 +80,7 @@ def test_get_backend_auto_detection_success_gguf(
 ):
     tmp_gguf = tmp_path / "test.gguf"
     backend = backends.get(tmp_gguf, None)
-    assert backend == "llama-cpp"
+    assert backend == "llama_cpp"
     m_is_model_gguf.assert_called_once_with(tmp_gguf)
 
 
