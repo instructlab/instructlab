@@ -281,8 +281,8 @@ train:
   disable_flash_attn: false
   # Pick a distributed training backend framework for GPU accelerated full fine-
   # tuning.
-  # Default: deepspeed
-  distributed_backend: deepspeed
+  # Default: fsdp
+  distributed_backend: fsdp
   # The number of samples in a batch that the model should see before its parameters
   # are updated.
   # Default: 64
