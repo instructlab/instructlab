@@ -238,10 +238,13 @@ class OCIDownloader(Downloader):
 
         blob_dir = f"{oci_dir}/blobs/sha256/"
         for name, dest in file_map.items():
-            dest_model_path = os.path.join(self.download_dest, model_name, dest)
+            dest_model_path = Path(self.download_dest) / model_name / str(dest)
             # unlink any existing version of the file
-            if os.path.exists(dest_model_path):
-                os.unlink(dest_model_path)
+            if dest_model_path.exists():
+                dest_model_path.unlink()
+
+            if not dest_model_path.parent.exists():
+                dest_model_path.parent.mkdir(parents=True)
 
             # create symlink to files in cache to avoid redownloading if model has been downloaded before
             os.symlink(
