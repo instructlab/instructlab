@@ -164,7 +164,7 @@ test_oci_model_download_with_vllm_backend(){
     shopt -s globstar
 
     # Run the ilab model download command with REGISTRY_AUTH_FILE
-    REGISTRY_AUTH_FILE=$HOME/auth.json ilab model download --repository docker://quay.io/ai-lab/models/granite-7b-lab --release latest --model-dir models/instructlab
+    REGISTRY_AUTH_FILE=$HOME/auth.json ilab model download --repository docker://quay.io/instructlab/granite-7b-lab --release latest --model-dir models/instructlab
 
     patterns=(
         "models/instructlab/granite-7b-lab/config.json"
