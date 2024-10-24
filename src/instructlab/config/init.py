@@ -3,7 +3,8 @@
 # Standard
 from math import floor
 from os import listdir
-from os.path import dirname, exists, join
+from os.path import dirname, exists
+import os
 import pathlib
 import typing
 
@@ -22,7 +23,7 @@ from instructlab.configuration import (
     get_profile_mappings,
     read_config,
     read_train_profile,
-    recreate_train_profiles,
+    recreate_system_profiles,
     write_config,
 )
 from instructlab.utils import convert_bytes_to_proper_mag
@@ -115,7 +116,7 @@ def init(
         click.echo(
             f"Generating `{DEFAULTS.CONFIG_FILE}` and `{DEFAULTS.TRAIN_PROFILE_DIR}`..."
         )
-        recreate_train_profiles(overwrite=True)
+        recreate_system_profiles(overwrite=True)
     else:
         click.echo(f"Generating `{DEFAULTS.CONFIG_FILE}`...")
     if train_profile is not None:
@@ -138,55 +139,58 @@ def init(
                 )
             yn = click.confirm("Is this profile correct?", default=True)
         if yn is None or not yn:
-            train_profile_filenames = sorted(listdir(DEFAULTS.TRAIN_PROFILE_DIR))
-            # generate human-friendly text out of train profile filenames
-            profile_options = []
-            for filename in train_profile_filenames:
-                # one gpu type
-                split_filename = filename.split("_")
-                if len(split_filename) == 2:
-                    gputype1 = split_filename[0]
-                    num_gpu = split_filename[1].split(".")[0]
-                    profile_options.append(f"Nvidia {gputype1} {num_gpu} ({filename})")
-                # two gpu types
-                elif len(split_filename) == 3:
-                    gputype1 = split_filename[0]
-                    gputype2 = split_filename[1]
-                    num_gpu = split_filename[2].split(".")[0]
-                    profile_options.append(
-                        f"Nvidia {gputype1}/{gputype2} {num_gpu} ({filename})"
-                    )
-            click.echo(
-                "Please choose a train profile to use.\nTrain profiles assist with the complexity of configuring InstructLab training for specific GPU hardware.\nYou can still take advantage of hardware acceleration for training even if your hardware is not listed."
-            )
-            click.echo("[0] No profile (CPU, Apple Metal, AMD ROCm)")
-            for i, value in enumerate(profile_options):
-                click.echo(f"[{i+1}] {value}")
-            train_profile_selection = click.prompt(
-                "Enter the number of your choice [hit enter for hardware defaults]",
-                type=int,
-                default=0,
-            )
-            if 1 <= train_profile_selection <= len(profile_options):
-                click.echo(
-                    f"You selected: {profile_options[train_profile_selection - 1]}"
-                )
-                cfg.train = read_train_profile(
-                    join(
-                        DEFAULTS.TRAIN_PROFILE_DIR,
-                        train_profile_filenames[train_profile_selection - 1],
-                    )
-                )
-            elif train_profile_selection == 0:
-                click.echo(
-                    "No profile selected - any hardware acceleration for training must be configured manually."
-                )
-            else:
-                click.secho(
-                    "Invalid selection. Please select a valid train profile option.",
-                    fg="red",
-                )
-                raise click.exceptions.Exit(1)
+            new_cfg = walk_and_print_system_profiles()
+            if new_cfg is not None:
+                cfg = new_cfg
+            # train_profile_filenames = sorted(listdir(DEFAULTS.SYSTEM_PROFILE_DIR))
+            # # generate human-friendly text out of train profile filenames
+            # profile_options = []
+            # for filename in train_profile_filenames:
+            #     # one gpu type
+            #     split_filename = filename.split("_")
+            #     if len(split_filename) == 2:
+            #         gputype1 = split_filename[0]
+            #         num_gpu = split_filename[1].split(".")[0]
+            #         profile_options.append(f"Nvidia {gputype1} {num_gpu} ({filename})")
+            #     # two gpu types
+            #     elif len(split_filename) == 3:
+            #         gputype1 = split_filename[0]
+            #         gputype2 = split_filename[1]
+            #         num_gpu = split_filename[2].split(".")[0]
+            #         profile_options.append(
+            #             f"Nvidia {gputype1}/{gputype2} {num_gpu} ({filename})"
+            #         )
+            # click.echo(
+            #     "Please choose a train profile to use.\nTrain profiles assist with the complexity of configuring InstructLab training for specific GPU hardware.\nYou can still take advantage of hardware acceleration for training even if your hardware is not listed."
+            # )
+            # click.echo("[0] No profile (CPU, Apple Metal, AMD ROCm)")
+            # for i, value in enumerate(profile_options):
+            #     click.echo(f"[{i+1}] {value}")
+            # train_profile_selection = click.prompt(
+            #     "Enter the number of your choice [hit enter for hardware defaults]",
+            #     type=int,
+            #     default=0,
+            # )
+            # if 1 <= train_profile_selection <= len(profile_options):
+            #     click.echo(
+            #         f"You selected: {profile_options[train_profile_selection - 1]}"
+            #     )
+            #     cfg.train = read_train_profile(
+            #         join(
+            #             DEFAULTS.TRAIN_PROFILE_DIR,
+            #             train_profile_filenames[train_profile_selection - 1],
+            #         )
+            #     )
+            # elif train_profile_selection == 0:
+            #     click.echo(
+            #         "No profile selected - any hardware acceleration for training must be configured manually."
+            #     )
+            # else:
+            #     click.secho(
+            #         "Invalid selection. Please select a valid train profile option.",
+            #         fg="red",
+            #     )
+            #     raise click.exceptions.Exit(1)
         else:
             cfg.train = detected_train_profile
 
@@ -204,6 +208,59 @@ def init(
         "Initialization completed successfully, you're ready to start using `ilab`. Enjoy!",
         fg="green",
     )
+
+
+def walk_and_print_system_profiles() -> Config | None:
+    cfg = None
+    click.echo(
+        "Please choose a train profile to use.\nTrain profiles assist with the complexity of configuring InstructLab training for specific GPU hardware.\nYou can still take advantage of hardware acceleration for training even if your hardware is not listed."
+    )
+    click.echo("[0] No system profile")
+    i = 1
+    system_profile_files = []
+    for dirpath, _dirnames, filenames in os.walk(DEFAULTS.SYSTEM_PROFILE_DIR):
+        for filename in filenames:
+            system_profile_files.append(os.path.join(dirpath, filename))
+            arch_family_processor = os.path.relpath(
+                os.path.join(dirpath, filename), DEFAULTS.SYSTEM_PROFILE_DIR
+            ).split("/", 3)
+            print(arch_family_processor[len(arch_family_processor) - 1])
+
+            # if the last entry has an _, split that out. This follows the format like m2_max.yaml, we just want max.
+            if "_" in arch_family_processor[len(arch_family_processor) - 1]:
+                arch_family_processor[len(arch_family_processor) - 1] = (
+                    arch_family_processor[len(arch_family_processor) - 1].split("_")[1]
+                )
+
+            # remove the .yaml so now we have something like "apple m2 pro"
+            arch_family_processor[len(arch_family_processor) - 1] = (
+                arch_family_processor[len(arch_family_processor) - 1].split(".")[0]
+            )
+
+            # now echo it in all caps
+            click.echo(f"[{i}] {' '.join(map(str, arch_family_processor)).upper()}")
+            i += 1
+    system_profile_selection = click.prompt(
+        "Enter the number of your choice [hit enter for hardware defaults]",
+        type=int,
+        default=0,
+    )
+    if 1 <= system_profile_selection <= len(system_profile_files):
+        click.echo(
+            f"You selected: {system_profile_files[system_profile_selection - 1]}"
+        )
+        cfg = read_config(system_profile_files[system_profile_selection - 1])
+    elif system_profile_selection == 0:
+        click.echo(
+            "No profile selected - any hardware acceleration for training must be configured manually."
+        )
+    else:
+        click.secho(
+            "Invalid selection. Please select a valid system profile option.",
+            fg="red",
+        )
+        raise click.exceptions.Exit(1)
+    return cfg
 
 
 def hw_auto_detect() -> tuple[str | None, int | None, _train, bool]:
@@ -323,9 +380,9 @@ def check_if_configs_exist(fresh_install) -> bool:
         )
         if not overwrite:
             raise click.exceptions.Exit(0)
-    if exists(DEFAULTS.TRAIN_PROFILE_DIR) and not fresh_install:
+    if exists(DEFAULTS.SYSTEM_PROFILE_DIR) and not fresh_install:
         return click.confirm(
-            f"Existing training profiles were found in {DEFAULTS.TRAIN_PROFILE_DIR}\nDo you want to restore these profiles to the default values?"
+            f"Existing system profiles were found in {DEFAULTS.SYSTEM_PROFILE_DIR}\nDo you want to restore these profiles to the default values?"
         )
     # default behavior should be do NOT overwrite files that could have just been created
     return False
