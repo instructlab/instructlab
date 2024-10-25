@@ -1,3 +1,9 @@
+## v0.20
+
+### Breaking Changes
+
+* vLLM has been upgraded to [v0.6.2](https://github.com/opendatahub-io/vllm/releases/tag/v0.6.2) and will need to be reinstalled if you are upgrading `ilab` from an older version
+
 ## v0.19
 
 ### Breaking Changes
