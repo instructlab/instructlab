@@ -45,7 +45,7 @@ class TestConfig:
         assert cfg.chat.context == "default"
         assert cfg.chat.session is None
         assert cfg.chat.logs_dir == f"{data_dir}/chatlogs"
-        assert not cfg.chat.greedy_mode
+        assert cfg.chat.temperature is not None
 
         assert cfg.evaluate is not None
 

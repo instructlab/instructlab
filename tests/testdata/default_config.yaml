@@ -6,9 +6,6 @@ chat:
   # default, cli_helper.
   # Default: default
   context: default
-  # Sets temperature to 0 if enabled, leading to more deterministic responses.
-  # Default: False
-  greedy_mode: false
   # Directory where chat logs are stored.
   # Default: /data/instructlab/chatlogs
   logs_dir: /data/instructlab/chatlogs
@@ -22,6 +19,9 @@ chat:
   # Filepath of a dialog session file.
   # Default: None
   session:
+  # Controls the randomness of the model's responses.
+  # Default: 1.0
+  temperature: 1.0
   # Enable vim keybindings for chat.
   # Default: False
   vi_mode: false
