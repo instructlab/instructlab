@@ -114,11 +114,11 @@ def init(
     )
     if overwrite_profile:
         click.echo(
-            f"Generating config file and profiles:\n    {DEFAULTS.CONFIG_FILE}\n    {DEFAULTS.TRAIN_PROFILE_DIR}\n"
+            f"\nGenerating config file and profiles:\n    {DEFAULTS.CONFIG_FILE}\n    {DEFAULTS.TRAIN_PROFILE_DIR}\n"
         )
         recreate_train_profiles(overwrite=True)
     else:
-        click.echo(f"Generating config file:\n    {DEFAULTS.CONFIG_FILE}\n")
+        click.echo(f"\nGenerating config file:\n    {DEFAULTS.CONFIG_FILE}\n")
     if train_profile is not None:
         cfg.train = read_train_profile(train_profile)
     elif interactive:
@@ -222,7 +222,7 @@ def hw_auto_detect() -> tuple[str | None, int | None, _train, bool]:
     edited_cfg = False
     # try nvidia
     if torch.cuda.is_available() and torch.version.hip is None:
-        click.echo("\nDetecting Hardware...")
+        click.echo("Detecting hardware...")
         gpus = torch.cuda.device_count()
         for i in range(gpus):
             properties = torch.cuda.get_device_properties(i)
@@ -362,10 +362,10 @@ def get_params(
         cfg = read_config(config)
     clone_taxonomy_repo = True
     if interactive:
-        guide_text = "  This guide will help you to setup your environment."
+        guide_text = "  This guide will help you to setup your environment"
         separator = get_separator(guide_text)
         click.echo(
-            f"\n{separator}\n         Welcome to InstructLab CLI.\n{guide_text}\n{separator}\n"
+            f"\n{separator}\n         Welcome to the InstructLab CLI\n{guide_text}\n{separator}\n"
         )
         click.echo(
             "Please provide the following values to initiate the "
