@@ -290,7 +290,11 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    *Example output*
 
    ```shell
-   Welcome to InstructLab CLI. This guide will help you set up your environment.
+   ----------------------------------------------------
+            Welcome to the InstructLab CLI
+   This guide will help you to setup your environment
+   ----------------------------------------------------
+
    Please provide the following values to initiate the environment [press Enter for defaults]:
    Path to taxonomy repo [taxonomy]: <ENTER>
    ```
@@ -304,11 +308,8 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    *Example output after initializing `ilab`*
 
    ```shell
-   (venv) $ ilab config init
-   Welcome to InstructLab CLI. This guide will help you set up your environment.
-   Please provide the following values to initiate the environment [press Enter for defaults]:
-   Path to taxonomy repo [taxonomy]: <ENTER>
-   `taxonomy` seems to not exists or is empty. Should I clone https://github.com/instructlab/taxonomy.git for you? [y/N]: y
+   `taxonomy` seems to not exists or is empty. 
+   Should I clone https://github.com/instructlab/taxonomy.git for you? [y/N]: y
    Cloning https://github.com/instructlab/taxonomy.git...
    ```
 
@@ -317,23 +318,25 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 4. When prompted, provide the path to your default model. Otherwise, the default of a quantized [Merlinite](https://huggingface.co/instructlab/merlinite-7b-lab-GGUF) model will be used - you can download this model with `ilab model download` (see below).
 
    ```shell
-   (venv) $ ilab config init
-   Welcome to InstructLab CLI. This guide will help you set up your environment.
-   Please provide the following values to initiate the environment [press Enter for defaults]:
-   Path to taxonomy repo [taxonomy]: <ENTER>
-   `taxonomy` seems to not exists or is empty. Should I clone https://github.com/instructlab/taxonomy.git for you? [y/N]: y
-   Cloning https://github.com/instructlab/taxonomy.git...
    Path to your model [/home/user/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf]: <ENTER>
    ```
 
 5. When prompted, please choose a train profile. Train profiles are GPU specific profiles that enable accelerated training behavior. If you are on MacOS or a Linux machine without a dedicated GPU, please choose `No Profile (CPU, Apple Metal, AMD ROCm)` by hitting Enter. There are various flags you can utilize with individual `ilab` commands that allow you to utilize your GPU if applicable.
 
    ```shell
-   Welcome to InstructLab CLI. This guide will help you to setup your environment.
+   ----------------------------------------------------
+            Welcome to the InstructLab CLI
+   This guide will help you to setup your environment
+   ----------------------------------------------------
+
    Please provide the following values to initiate the environment [press Enter for defaults]:
    Path to taxonomy repo [/home/user/.local/share/instructlab/taxonomy]:
    Path to your model [/home/user/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf]:
-   Generating `/home/user/.config/instructlab/config.yaml` and `/home/user/.local/share/instructlab/internal/train_configuration/profiles`...
+
+   Generating config file and profiles:
+       /home/user/.config/instructlab/config.yaml
+       /home/user/.local/share/instructlab/internal/train_configuration/profiles
+
    Please choose a train profile to use.
    Train profiles assist with the complexity of configuring specific GPU hardware with the InstructLab Training library.
    You can still take advantage of hardware acceleration for training even if your hardware is not listed.
@@ -346,7 +349,11 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    [6] Nvidia L4 x8 (L4_x8.yaml)
    Enter the number of your choice [hit enter for no profile] [0]:
    No profile selected - any hardware acceleration for training must be configured manually.
-   Initialization completed successfully, you're ready to start using `ilab`. Enjoy!
+
+   --------------------------------------------
+      Initialization completed successfully!
+   You're ready to start using `ilab`. Enjoy!
+   --------------------------------------------
    ```
 
    The GPU profiles are listed by GPU type and number of GPUs present. If you happen to have a GPU configuration with a similar amount of vRAM as any of the above profiles, feel free to try them out!
