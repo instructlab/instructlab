@@ -296,6 +296,23 @@ test_phased_train() {
     task Multi-phase training Complete
 }
 
+test_phased_train_resume() {
+    task Train the model with LAB multi-phase training resume
+
+    # 'Declare and assign separately to avoid masking return values' <-- error.
+    local knowledge_data_path
+    local skills_data_path
+    knowledge_data_path=$(find "${DATA_HOME}"/instructlab/datasets -name 'knowledge_train_msgs*' | head -n 1)
+    skills_data_path=$(find "${DATA_HOME}"/instructlab/datasets -name 'skills_train_msgs*' | head -n 1)
+
+    export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true
+    export HF_DATASETS_TRUST_REMOTE_CODE=true
+
+    python "${SCRIPTDIR}"/phased_training_resume.py --knowledge-data-path "${knowledge_data_path}" --skills-data-path "${skills_data_path}" --data-path "${DATA_HOME}" --config "${CONFIG_HOME}/instructlab/config.yaml"  2>&1 | tee "${E2E_TEST_DIR}"/multiphase_training_resume.log
+
+    task Multi-phase training resume Complete
+}
+
 test_serve() {
     task Serve the model
 
@@ -389,6 +406,9 @@ test_exec() {
 
     # train tests
     if [ "$LARGE" -eq 1 ]; then
+      # Validate a single epoch per phase with resumption
+      test_phased_train_resume
+      # Validate the phased training happy path
       test_phased_train
     else
       test_train
