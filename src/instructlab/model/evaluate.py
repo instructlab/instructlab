@@ -55,20 +55,17 @@ def validate_options(
             model,
             unitxt_recipe,
         ]
-        required_arg_names = [
-            "model",
-            "unitxt_recipe"
-        ]
-        
+        required_arg_names = ["model", "unitxt_recipe"]
+
         if None in required_args:
             click.secho(
                 f"Benchmark {benchmark} requires the following args to be set: {required_arg_names}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
-        
+
         validate_model(model)
-        
+
     # ensure skills benchmarks have proper arguments if selected
     if benchmark in {Benchmark.MT_BENCH, Benchmark.MT_BENCH_BRANCH}:
         required_args = [
@@ -480,7 +477,7 @@ def launch_server(
 @click.option(
     "--unitxt_recipe",
     type=click.STRING,
-     cls=clickext.ConfigOption,
+    cls=clickext.ConfigOption,
     config_sections="unitxt",
 )
 @click.option(
@@ -892,7 +889,7 @@ def evaluate(
             display_branch_eval_summary(
                 Benchmark.MMLU_BRANCH, improvements, regressions, no_changes
             )
-        
+
         elif benchmark == Benchmark.UNITXT:
             # Third Party
             from instructlab.eval.unitxt import UnitxtEvaluator
@@ -917,7 +914,7 @@ def evaluate(
             finally:
                 if server is not None:
                     server.shutdown()
-            
+
             print("# KNOWLEDGE EVALUATION REPORT")
             print("\n## MODEL (SCORES)\n")
             print(overall_scores)
