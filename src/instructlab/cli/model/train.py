@@ -493,6 +493,11 @@ def train(
         except Exception as exc:
             click.secho(f"{exc}", fg="red")
             raise click.exceptions.Exit(1)
+    else:
+        click.secho(
+            f"Unable to train with device={device} and pipeline={pipeline}", fg="red"
+        )
+        raise click.exceptions.Exit(1)
 
 
 # chooses which type of training to run depending on the device provided
