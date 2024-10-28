@@ -2,12 +2,12 @@
 #
 
 optimum>=1.21.0
-optimum-habana>=1.13.1
-# Habana Labs 1.16.2 has PyTorch 2.2.2a0+gitxxx pre-release
-torch>=2.3.1a0,<2.4.0
+optimum-habana>=1.13.2
+# Habana Labs 1.18.0 has 2.4.0a0+git74cd574 pre-release
+torch>=2.4.0a0,<2.5.0
 # Habana Labs frameworks
-habana-torch-plugin>=1.17.1
-habana_gpu_migration>=1.17.1
+habana-torch-plugin>=1.18.0
+habana_gpu_migration>=1.18.0
 # additional Habana Labs packages (installed, but not used)
 #habana-media-loader
 #habana-pyhlml

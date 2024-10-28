@@ -1,5 +1,5 @@
-ARG HABANA_VERSION=1.17.1
-ARG BASEIMAGE=vault.habana.ai/gaudi-docker/${HABANA_VERSION}/rhel9.4/habanalabs/pytorch-installer-2.3.1
+ARG HABANA_VERSION=1.18.0
+ARG BASEIMAGE=vault.habana.ai/gaudi-docker/${HABANA_VERSION}/rhel9.4/habanalabs/pytorch-installer-2.4.0
 
 FROM ${BASEIMAGE} AS runtime
 # base image has PyTorch fork with Habana plugins in self-compiled Python 3.10
@@ -32,12 +32,12 @@ RUN CMAKE_ARGS="-DLLAMA_NATIVE=off" \
 
 # install Intel Gaudi fork of DeepSpeed
 RUN ${VIRTUAL_ENV}/bin/pip uninstall -y deepspeed && \
-    ${VIRTUAL_ENV}/bin/pip install --no-build-isolation git+https://github.com/HabanaAI/DeepSpeed.git@1.17.1 && \
+    ${VIRTUAL_ENV}/bin/pip install --no-build-isolation git+https://github.com/HabanaAI/DeepSpeed.git@1.18.0 && \
     find ${VIRTUAL_ENV} -name __pycache__ | xargs rm -rf
 
 # install Intel Gaudi fork of vLLM
 RUN VLLM_TARGET_DEVICE=hpu \
-        ${VIRTUAL_ENV}/bin/pip install --no-build-isolation git+https://github.com/HabanaAI/vllm-fork.git@v0.5.3.post1-Gaudi-1.17.0 && \
+        ${VIRTUAL_ENV}/bin/pip install --no-build-isolation git+https://github.com/HabanaAI/vllm-fork.git@v0.5.3.post1-Gaudi-1.18.0 && \
     pip list && \
     find ${VIRTUAL_ENV} -name __pycache__ | xargs rm -rf
 
