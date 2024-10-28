@@ -384,7 +384,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         )
         self._sys_print(
             Markdown(
-                f"Welcome to InstructLab Chat w/ **{self.model_name.upper()}**"
+                f"Welcome to the InstructLab Chat w/ **{self.model_name.upper()}**"
                 + side_info_str
             )
         )
