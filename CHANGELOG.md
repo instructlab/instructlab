@@ -3,6 +3,8 @@
 ### Breaking Changes
 
 * vLLM has been upgraded to [v0.6.2](https://github.com/opendatahub-io/vllm/releases/tag/v0.6.2) and will need to be reinstalled if you are upgrading `ilab` from an older version
+* Intel Gaudi software has been updated to 1.18.0 with Python 3.11 and
+  Torch 2.4.0.
 
 ## v0.19
 
