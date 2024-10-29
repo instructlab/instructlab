@@ -25,7 +25,6 @@ from instructlab.configuration import (
     get_default_config,
     get_profile_mappings,
     read_config,
-    read_train_profile,
     recreate_system_profiles,
     write_config,
 )
@@ -73,10 +72,10 @@ from instructlab.utils import convert_bytes_to_proper_mag
     "using the same taxonomy repository. ",
 )
 @click.option(
-    "--train-profile",
+    "--profile",
     type=click.Path(),
     default=None,
-    help="Overwrite the default training values in the generated config.yaml by passing in an existing training-specific yaml.",
+    help="Overwrite the default values in the generated config.yaml by passing in an existing configuration yaml.",
 )
 @click.option(
     "--config",
@@ -97,7 +96,7 @@ def init(
     taxonomy_base,
     repository,
     min_taxonomy,
-    train_profile,
+    profile,
     config_file,
 ):
     """Initializes environment for InstructLab"""
@@ -122,8 +121,8 @@ def init(
         recreate_system_profiles(overwrite=True)
     else:
         click.echo(f"\nGenerating config file:\n    {DEFAULTS.CONFIG_FILE}\n")
-    if train_profile is not None:
-        cfg.train = read_train_profile(train_profile)
+    if profile is not None:
+        cfg = read_config(profile)
     elif interactive:
         new_cfg = walk_and_print_system_profiles()
         if new_cfg is not None:
