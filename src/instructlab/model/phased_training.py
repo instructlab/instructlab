@@ -25,7 +25,7 @@ class TrainingPhases(enum.Enum):
 
 
 AutoDatetimeField = pydantic.Field(
-    default_factory=lambda: datetime.datetime.now(datetime.UTC)
+    default_factory=lambda: datetime.datetime.now(datetime.timezone.utc)
 )
 
 
@@ -181,7 +181,7 @@ class TrainingJournal:
     @staticmethod
     def now_utc() -> datetime.datetime:
         """Static helper method for current time in UTC"""
-        return datetime.datetime.now(datetime.UTC)
+        return datetime.datetime.now(datetime.timezone.utc)
 
     @staticmethod
     def best_checkpoint(phase_model: EvalPhaseModel) -> EvalResult:

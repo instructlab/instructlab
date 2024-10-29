@@ -73,7 +73,8 @@ def accelerated_train(
         # pull the trainrandom.randinting and torch args from the flags
         # the flags are populated from the config as a base.
         logger.debug(
-            "Rendered training arguments:\n%s", pprint.pformat(train_args.model_dump())
+            "Rendered training arguments:\n%s",
+            pprint.pformat(train_args),
         )
 
         if not (phased_phase1_data and phased_phase2_data):

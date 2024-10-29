@@ -3,6 +3,7 @@
 
 # Standard
 from pathlib import Path
+from unittest import mock
 from unittest.mock import patch
 import json
 import os
@@ -30,6 +31,7 @@ FINAL_RESULTS_DIR = TRAINING_RESULTS_DIR + "/" + FINAL_RESULTS_DIR_NAME
 LINUX_GGUF_FILE = FINAL_RESULTS_DIR + "/ggml-model-f16.gguf"
 MODEL_DIR = "model"
 ENCODING = "UTF-8"
+TRAINING_FAILURE_MESSAGE = "INTENTIONAL TRAINING FAILURE"
 
 
 def setup_input_dir(root: typing.Optional[str] = None):
@@ -71,6 +73,35 @@ def mock_convert_llama_to_gguf(model, pad_vocab):
     with open(LINUX_GGUF_FILE, "w", encoding="utf-8") as fp:
         fp.write(str(model) + str(pad_vocab))
     return LINUX_GGUF_FILE
+
+
+def run_default_phased_train(cli_runner):
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "train",
+            "--pipeline",
+            "accelerated",
+            "--strategy",
+            "lab-multiphase",
+            "--phased-phase1-data",
+            "knowledge_data_path",
+            "--phased-phase2-data",
+            "skills_data_path",
+            "--phased-mt-bench-judge",
+            "mt_bench_judge",
+            "--phased-phase1-num-epochs",
+            "1",
+            "--phased-phase2-num-epochs",
+            "1",
+            "--device",
+            "cuda",
+            "--skip-user-confirm",
+        ],
+    )
+    return result
 
 
 @pytest.mark.usefixtures("mock_mlx_package")
@@ -592,3 +623,51 @@ class TestLabTrain:
         assert result.exception is not None
         assert result.exit_code == 2
         assert "'two' is not a valid integer" in result.output
+
+    def test_phased_train_failures(
+        self,
+        cli_runner: CliRunner,
+    ):
+        for f_path in [
+            "knowledge_data_path",
+            "skills_data_path",
+        ]:
+            with open(f_path, "w", encoding=ENCODING) as f:
+                f.write("{}")
+        os.makedirs("mt_bench_judge")
+
+        # Run phased training and fail on the first call to train
+        run_training_patch = patch(
+            "instructlab.training.run_training",
+            new=mock.MagicMock(side_effect=Exception(TRAINING_FAILURE_MESSAGE)),
+        )
+        run_training_patch.start()
+        result = run_default_phased_train(cli_runner)
+        run_training_patch.stop()
+        assert TRAINING_FAILURE_MESSAGE in result.output
+        assert "Training Phase 1/2..." in result.output
+        assert result.exit_code == 1
+
+        # Run phased training and let it succeed on the first train and store that in the journal
+        run_training_patch = patch(
+            "instructlab.training.run_training", new=mock.MagicMock(return_value=None)
+        )
+        run_training_patch.start()
+        result = run_default_phased_train(cli_runner)
+        run_training_patch.stop()
+        assert (
+            "This likely means that no checkpoints were saved from phase 1"
+            in result.output
+        )
+        assert result.exit_code == 1
+
+        # Make sure it picks up on the second phase
+        result = run_default_phased_train(cli_runner)
+        assert "SKIPPING: Training Phase 1/2; already in Journal" in result.output
+        assert "Training Phase 2/2..." in result.output
+        # We didn't actually run training so this is expected
+        assert (
+            "This likely means that no checkpoints were saved from phase 1"
+            in result.output
+        )
+        assert result.exit_code == 1
