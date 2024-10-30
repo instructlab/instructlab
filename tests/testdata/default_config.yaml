@@ -184,6 +184,17 @@ generate:
       #   - ['--dtype', 'auto']
       #   - ['--lora-alpha', '32']
       vllm_args: []
+# Prompts for various contexts.
+prompts:
+  # Prompt to be used when acting as a CLI helper.
+  # Default: You are an expert for command line interface and know all common commands. Answer the command to execute as it without any explanation.
+  cli_helper: You are an expert for command line interface and know all common commands.
+    Answer the command to execute as it without any explanation.
+  # Default system prompt to be used if no specific context is provided.
+  # Default: I am, Red Hat® Instruct Model based on Granite 7B, an AI language model developed by Red Hat and IBM Research, based on the Granite-7b-base language model. My primary function is to be a chat assistant.
+  sys_prompt: I am, Red Hat® Instruct Model based on Granite 7B, an AI language model
+    developed by Red Hat and IBM Research, based on the Granite-7b-base language model.
+    My primary function is to be a chat assistant.
 # Serve configuration section.
 serve:
   # Serving backend to use to host the model.
