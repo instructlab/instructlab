@@ -25,7 +25,7 @@ class TestLabInit:
         assert result.exit_code == 0, result.stdout
         convert_bytes_to_proper_mag_mock.assert_called_once()
         assert (
-            "We chose Nvidia 1x L40s as your designated training profile. This is for systems with 80 GB of vRAM"
+            "We chose Nvidia 1x A100 as your designated training profile. This is for systems with 80 GB of vRAM"
             in result.stdout
         )
 
