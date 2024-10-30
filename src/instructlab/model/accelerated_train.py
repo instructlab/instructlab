@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 class SupportedTrainingStrategies(enum.Enum):
-    """Available advanced training stratefies"""
+    """Available advanced training strategies"""
 
     LAB_MULTIPHASE: str = "lab-multiphase"
 
@@ -70,7 +70,7 @@ def accelerated_train(
                 f"Invalid training backend option '{distributed_backend}' specified. Please specify either `fsdp` or `deepspeed`"
             )
 
-        # pull the trainrandom.randinting and torch args from the flags
+        # pull the training and torch args from the flags
         # the flags are populated from the config as a base.
         logger.debug(
             "Rendered training arguments:\n%s",
