@@ -36,7 +36,7 @@ Pre-requisites:
 
 1. Uploading the output of `ilab data generate` (a synthetic dataset created based on your hand-written prompts/responses).
 2. Checking the base model before training
-3. Setting up and training a LoRA. A LoRA uses Parameter-Efficient Fine-Tuning (PEFT) methods to fine-tune a model on a small subset of the overall parameters, allowing you to conduct fine-tuning in a fraction of the time, on a fraction of the hardware required. The resultant model should be updated and better handle your queries than the base model.
+3. Setting up and training a LoRA. A LoRA uses [Parameter-Efficient Fine-Tuning (PEFT)](https://huggingface.co/docs/peft) methods to fine-tune a model on a small subset of the overall parameters, allowing you to conduct fine-tuning in a fraction of the time, on a fraction of the hardware required. The resultant model should be updated and better handle your queries than the base model.
 4. Inspecting the output model to make sure the LoRA training had the desired effect (i.e. the output has improved).
 
 Once you have finished training and the output looks good, we encourage you go to stage [Testing the fine-tuned model](../README.md#-test-the-newly-trained-model).
