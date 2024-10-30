@@ -15,6 +15,50 @@ from instructlab.configuration import DEFAULTS, read_config
 
 
 class TestLabInit:
+    @patch(
+        "instructlab.config.init.get_gpu_or_cpu",
+        return_value=("nvidia a100 x2", False, True),
+    )
+    def test_ilab_config_init_auto_detection_nvidia(
+        self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner
+    ):
+        result = cli_runner.invoke(lab.ilab, ["config", "init", "--interactive"])
+        assert result.exit_code == 0, result.stdout
+        convert_bytes_to_proper_mag_mock.assert_called_once()
+        assert (
+            "We have detected the NVIDIA A100 X2 as an exact match for your system."
+            in result.stdout
+        )
+
+    @patch(
+        "instructlab.config.init.get_gpu_or_cpu",
+        return_value=("apple m3 max", False, True),
+    )
+    def test_ilab_config_init_auto_detection_mac(
+        self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner
+    ):
+        result = cli_runner.invoke(lab.ilab, ["config", "init", "--interactive"])
+        assert result.exit_code == 0, result.stdout
+        convert_bytes_to_proper_mag_mock.assert_called_once()
+        assert (
+            "We have detected the APPLE M3 MAX profile as an exact match for your system."
+            in result.stdout
+        )
+
+    @patch(
+        "instructlab.config.init.get_gpu_or_cpu", return_value=("amd cpu", False, True)
+    )
+    def test_ilab_config_init_auto_detection_cpu(
+        self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner
+    ):
+        result = cli_runner.invoke(lab.ilab, ["config", "init", "--interactive"])
+        assert result.exit_code == 0, result.stdout
+        convert_bytes_to_proper_mag_mock.assert_called_once()
+        assert (
+            "We have detected the AMD CPU profile as an exact match for your system."
+            in result.stdout
+        )
+
     # When using `from X import Y` you need to understand that Y becomes part
     # of your module, so you should use `my_module.Y`` to patch.
     # When using `import X`, you should use `X.Y` to patch.

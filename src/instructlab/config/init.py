@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from copy import copy
 from math import floor
 from os import listdir
 from os.path import dirname, exists
+import logging
 import os
 import pathlib
 import re
@@ -26,6 +26,9 @@ from instructlab.configuration import (
     recreate_system_profiles,
     write_config,
 )
+from instructlab.utils import convert_bytes_to_proper_mag
+
+logger = logging.getLogger(__name__)
 
 
 @click.command()
@@ -113,7 +116,7 @@ def init(
     )
     if overwrite_profile:
         click.echo(
-            f"\nGenerating config file and profiles:\n    {DEFAULTS.CONFIG_FILE}\n    {DEFAULTS.TRAIN_PROFILE_DIR}\n"
+            f"\nGenerating config file and profiles:\n    {DEFAULTS.CONFIG_FILE}\n    {DEFAULTS.SYSTEM_PROFILE_DIR}\n"
         )
         recreate_system_profiles(overwrite=True)
     else:
@@ -121,7 +124,7 @@ def init(
     if profile is not None:
         cfg = read_config(profile)
     elif interactive:
-        new_cfg = walk_and_print_system_profiles()
+        new_cfg = hw_auto_detect()
         if new_cfg is not None:
             cfg = new_cfg
     # we should not override all paths with the serve model if special ENV vars exist
@@ -142,204 +145,195 @@ def init(
     )
 
 
-# walk_and_print_system_profiles prints interactive prompts asking the user to choose
-# their hardware vendor and system profile
-def walk_and_print_system_profiles() -> Config | None:
+# prompt_user_to_choose_vendors asks the user which hardware vendor best matches their system
+def prompt_user_to_choose_vendors(arch_family_processors: dict[str, list[list[str]]]):
     """
-    walk_and_print_system_profiles prints interactive prompts asking the user to choose
-    their hardware vendor and system profile
+    prompt_user_to_choose_vendors asks the user which hardware vendor best matches their system
+    """
+    click.echo(
+        click.style(
+            "Please choose a system profile.\n Profiles set hardware-specific defaults for all commands and sections of the configuration.",
+            fg="green",
+        )
+    )
+    # print info like APPLE, AMD, INTEL and have them select
+    click.echo(
+        click.style(
+            "First, please select the hardware vendor your system falls into",
+            bg="blue",
+            fg="white",
+        )
+    )
+    keys = list(arch_family_processors.keys())
+    for idx, key in enumerate(keys, 1):
+        print(f"[{idx}] {key.upper()}")
+
+    system_profile_selection = click.prompt(
+        "Enter the number of your choice",
+        type=int,
+        default=0,
+    )
+    if 1 <= system_profile_selection <= len(keys):
+        key = keys[system_profile_selection - 1]
+        click.echo(f"You selected: {key.upper()}")
+        click.echo(
+            click.style(
+                "Next, please select the specific hardware configuration that most closely matches your system.",
+                bg="blue",
+                fg="white",
+            )
+        )
+        click.echo("[0] No system profile")
+    return key
+
+
+# prompt_user_to_choose_profile asks the user to choose which specific profile for the hardware vendor best matches their system
+def prompt_user_to_choose_profile(key, arch_family_processors) -> Config | None:
+    """
+    prompt_user_to_choose_profile asks the user to choose which specific profile for the hardware vendor best matches their system
     """
     cfg = None
-    system_profile_files = []
+    system_profile_selection = click.prompt(
+        "Enter the number of your choice [hit enter for hardware defaults]",
+        type=int,
+        default=0,
+    )
+    # the file is SYSTEM_PROFILE_DIR/arch_family_procesors[key][selection-1]
+    if 1 <= system_profile_selection <= len(arch_family_processors[key]):
+        file = os.path.join(
+            DEFAULTS.SYSTEM_PROFILE_DIR,
+            "/".join(
+                map(str, arch_family_processors[key][system_profile_selection - 1])
+            ),
+        )
+        click.secho(f"You selected: {file}", fg="green")
+        cfg = read_config(file)
+    elif system_profile_selection == 0:
+        click.echo(
+            "No profile selected - any hardware acceleration for training must be configured manually."
+        )
+    else:
+        click.secho(
+            "Invalid selection. Please select a valid system profile option.",
+            fg="red",
+        )
+        raise click.exceptions.Exit(1)
+    return cfg
+
+
+def walk_and_print_system_profiles(
+    is_linux: bool, is_cpu: bool, chip_name: str | None = None
+) -> Config | None:
+    """
+    walk_and_print_system_profiles prints interactive prompts asking the user to choose
+    their hardware vendor and system profile. If a profile is auto detected to match the
+    current hardware, that is returned before prompting to user to manually choose.
+    This returns a Config object either auto-detected for the user or manually selected by them.
+    """
+    cfg = None
     arch_family_processors: dict[str, list[list[str]]] = {}
+    printed_arch_family_processors: dict[str, list[list[str]]] = {}
     for dirpath, _dirnames, filenames in os.walk(DEFAULTS.SYSTEM_PROFILE_DIR):
         for filename in filenames:
-            system_profile_files.append(os.path.join(dirpath, filename))
+            # keep track of the file to open
+            system_profile_file = os.path.join(dirpath, filename)
             arch_family_processor = os.path.relpath(
                 os.path.join(dirpath, filename), DEFAULTS.SYSTEM_PROFILE_DIR
             ).split("/", 3)
+            # add this to a map of {arch: all_possible_cfgs}
             arch_family_processors.setdefault(arch_family_processor[0], []).append(
                 arch_family_processor
             )
-
-    click.echo(
-        click.style(
-            "Please choose a system profile.\n Profiles set hardware-specific defaults for all commands and sections of the configuration.",
-            fg="green",
-        )
-    )
-    # print info like APPLE, AMD, INTEL and have them select
-    click.echo(
-        click.style(
-            "First, please select the hardware vendor your system falls into",
-            bg="blue",
-            fg="white",
-        )
-    )
-    keys = list(arch_family_processors.keys())
-    for idx, key in enumerate(keys, 1):
-        print(f"[{idx}] {key.upper()}")
-
-    system_profile_selection = click.prompt(
-        "Enter the number of your choice",
-        type=int,
-        default=0,
-    )
-
-    # now print all choices in the selected hw vendor and have user choose
-    if 1 <= system_profile_selection <= len(keys):
-        key = keys[system_profile_selection - 1]
-        click.echo(f"You selected: {key.upper()}")
-        click.echo(
-            click.style(
-                "Next, please select the specific hardware configuration that most closely matches your system.",
-                bg="blue",
-                fg="white",
-            )
-        )
-        click.echo("[0] No system profile")
-        i = 1
-        for arch_family_processor in arch_family_processors[key]:
             # the following logic is specifically for printing the name
             # we still want to preserve the arch_family_processor for when we open the file
             # if the last entry has an _, split that out. This follows the format like m2_max.yaml, we just want max.
-            # Copy for preservation when working with printed names
-            printed_arch_family_processor = copy(arch_family_processor)
             # Process the last element, extracting text after "_" if present, removing ".yaml"
-            printed_arch_family_processor[-1] = re.sub(
-                r"_(\w+)\.yaml$|\.yaml$", r" \1", printed_arch_family_processor[-1]
-            )
-            # removes dupes in the case of `APPLE M2 M2` (the above logic is written to change things like M2_MAX.yaml into M2 MAX)
+            printed_arch_family_processor = [
+                re.sub(
+                    r".*_(\w+)\.yaml$|^(\w+)\.yaml$",
+                    lambda m: m.group(1) if m.group(1) else m.group(2),
+                    item,
+                )
+                if item.endswith(".yaml")
+                else item
+                for item in arch_family_processor
+            ]
+            # remove duplicates (apple m2 m2) - > (apple m2)
             printed_arch_family_processor = list(
                 dict.fromkeys(printed_arch_family_processor)
             )
+            printed_arch_family_processors.setdefault(
+                arch_family_processor[0], []
+            ).append(printed_arch_family_processor)
+            file = None
+            if is_cpu and is_linux and chip_name == arch_family_processor[0]:
+                # on CPU + Linux we do not care (for now) about specific processors, we only have `cpu.yaml` for Intel and AMD.
+                file = os.path.join(DEFAULTS.SYSTEM_PROFILE_DIR, system_profile_file)
+            elif chip_name == " ".join(printed_arch_family_processor):
+                # else the whole thing needs to match, so `nvidia l4 x8` for example would be the chip we detect AND the arch family processor from the list of files
+                file = os.path.join(DEFAULTS.SYSTEM_PROFILE_DIR, system_profile_file)
+            if file is not None:
+                chosen_profile = click.style(
+                    " ".join(printed_arch_family_processor).upper(),
+                    bg="blue",
+                    fg="white",
+                )
+                click.secho(
+                    f"We have detected the {chosen_profile} profile as an exact match for your system."
+                )
+                cfg = read_config(config_file=file)
+                return cfg
 
-            # now echo it in all caps
-            click.echo(
-                f"[{i}] {' '.join(map(str, printed_arch_family_processor)).upper()}"
-            )
-            i += 1
+    # if auto detection didn't work, just continue prompting as usual!
+    key = prompt_user_to_choose_vendors(arch_family_processors)
 
-        system_profile_selection = click.prompt(
-            "Enter the number of your choice [hit enter for hardware defaults]",
-            type=int,
-            default=0,
-        )
+    for i, printed_arch_family_processor in enumerate(
+        printed_arch_family_processors[key], start=1
+    ):
+        click.echo(f"[{i}] {' '.join(map(str, printed_arch_family_processor)).upper()}")
 
-        # the file is SYSTEM_PROFILE_DIR/arch_family_procesors[key][selection-1]
-        if 1 <= system_profile_selection <= len(system_profile_files):
-            file = os.path.join(
-                DEFAULTS.SYSTEM_PROFILE_DIR,
-                "/".join(
-                    map(str, arch_family_processors[key][system_profile_selection - 1])
-                ),
-            )
-            click.echo(click.style(f"You selected: {file}", fg="green"))
-            cfg = read_config(file)
-        elif system_profile_selection == 0:
-            click.echo(
-                "No profile selected - any hardware acceleration for training must be configured manually."
-            )
-        else:
-            click.secho(
-                "Invalid selection. Please select a valid system profile option.",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
-    return cfg
+    return prompt_user_to_choose_profile(key, arch_family_processors)
 
 
-def hw_auto_detect() -> tuple[str | None, int | None, _train, bool]:
+def get_gpu_or_cpu() -> tuple[str, bool, bool]:
+    """
+    get_gpu_or_cpu figures out what kind of hardware the user has and returns the name in the form of 'nvidia l4 x4' as well as if this is a CPU and if the user is on Linux
+    """
     # Third Party
     import torch
 
-    click.echo(
-        click.style(
-            "Please choose a system profile.\n Profiles set hardware-specific defaults for all commands and sections of the configuration.",
-            fg="green",
-        )
-    )
-    # print info like APPLE, AMD, INTEL and have them select
-    click.echo(
-        click.style(
-            "First, please select the hardware vendor your system falls into",
-            bg="blue",
-            fg="white",
-        )
-    )
-    keys = list(arch_family_processors.keys())
-    for idx, key in enumerate(keys, 1):
-        print(f"[{idx}] {key.upper()}")
+    gpus = 0
+    total_vram = 0
+    chip_name = ""
+    is_cpu = False
+    is_linux = False
+    # try nvidia
+    if torch.cuda.is_available() and torch.version.hip is None:
+        click.echo("Detecting hardware...")
+        gpus = torch.cuda.device_count()
+        for i in range(gpus):
+            properties = torch.cuda.get_device_properties(i)
+            chip_name = properties.name.lower()
+            chip_name = f"{chip_name} x{gpus}"
+            total_vram += properties.total_memory  # memory in B
 
-    system_profile_selection = click.prompt(
-        "Enter the number of your choice",
-        type=int,
-        default=0,
-    )
+    vram = int(floor(convert_bytes_to_proper_mag(total_vram)[0]))
+    if vram == 0:
+        # if no vRAM, try to see if we are on a CPU
+        chip_name, is_cpu, is_linux = get_chip_name()
+        # ok, now we have a chip name. this means we can walk the supported profile names and see if they match
+    return chip_name, is_cpu, is_linux
 
-    # now print all choices in the selected hw vendor and have user choose
-    if 1 <= system_profile_selection <= len(keys):
-        key = keys[system_profile_selection - 1]
-        click.echo(f"You selected: {key.upper()}")
-        click.echo(
-            click.style(
-                "Next, please select the specific hardware configuration that most closely matches your system.",
-                bg="blue",
-                fg="white",
-            )
-        )
-        click.echo("[0] No system profile")
-        i = 1
-        for arch_family_processor in arch_family_processors[key]:
-            # the following logic is specifically for printing the name
-            # we still want to preserve the arch_family_processor for when we open the file
-            # if the last entry has an _, split that out. This follows the format like m2_max.yaml, we just want max.
-            # Copy for preservation when working with printed names
-            printed_arch_family_processor = copy(arch_family_processor)
-            # Process the last element, extracting text after "_" if present, removing ".yaml"
-            printed_arch_family_processor[-1] = re.sub(
-                r".*_(\w+)\.yaml$|^(\w+)\.yaml$",
-                lambda m: m.group(1) if m.group(1) else m.group(2),
-                printed_arch_family_processor[-1],
-            )
-            # removes dupes in the case of `APPLE M2 M2` (the above logic is written to change things like M2_MAX.yaml into M2 MAX)
-            printed_arch_family_processor = list(
-                dict.fromkeys(printed_arch_family_processor)
-            )
 
-            # now echo it in all caps
-            click.echo(
-                f"[{i}] {' '.join(map(str, printed_arch_family_processor)).upper()}"
-            )
-            i += 1
+# hw_auto_detect looks at a user's GPUs or CPU configuration and chooses the system profile which matches your system
+def hw_auto_detect() -> Config | None:
+    """
+    hw_auto_detect looks at a user's GPUs or CPU configuration and chooses the system profile which matches your system
+    """
 
-        system_profile_selection = click.prompt(
-            "Enter the number of your choice [hit enter for hardware defaults]",
-            type=int,
-            default=0,
-        )
+    chip_name, is_cpu, is_linux = get_gpu_or_cpu()
 
-        # the file is SYSTEM_PROFILE_DIR/arch_family_procesors[key][selection-1]
-        if 1 <= system_profile_selection <= len(system_profile_files):
-            file = os.path.join(
-                DEFAULTS.SYSTEM_PROFILE_DIR,
-                "/".join(
-                    map(str, arch_family_processors[key][system_profile_selection - 1])
-                ),
-            )
-            click.echo(click.style(f"You selected: {file}", fg="green"))
-            cfg = read_config(file)
-        elif system_profile_selection == 0:
-            click.echo(
-                "No profile selected - any hardware acceleration for training must be configured manually."
-            )
-        else:
-            click.secho(
-                "Invalid selection. Please select a valid system profile option.",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
-    return cfg
+    return walk_and_print_system_profiles(is_linux, is_cpu, chip_name)
 
 
 def check_if_configs_exist(fresh_install) -> bool:
@@ -449,3 +443,53 @@ def get_separator(text: str) -> str:
         terminal_width = text_length
     separator_length = min(text_length, terminal_width)
     return "-" * separator_length
+
+
+def get_chip_name() -> tuple[str, bool, bool]:
+    """
+    get_chip_name returns the name of the processor on the system (Linux or Mac for now), whether the system is linux, and whether the chip is a CPU or not.
+    """
+    # Standard
+    import platform
+    import subprocess
+
+    system = platform.system()
+
+    if system == "Darwin":  # macOS
+        try:
+            # macOS: Use system_profiler for detailed hardware info
+            result = subprocess.run(
+                ["system_profiler", "SPHardwareDataType"],
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+            for line in result.stdout.splitlines():
+                if "Chip" in line or "Processor Name" in line:
+                    return line.split(":")[-1].strip().lower(), False, True
+        except subprocess.CalledProcessError:
+            return "Unsupported", False, True
+
+    elif system == "Linux":  # Linux
+        try:
+            # Linux: Read /proc/cpuinfo for CPU model information
+            with open("/proc/cpuinfo", "r", encoding="utf-8") as f:
+                for line in f:
+                    if "model name" in line:
+                        # print(line)
+                        return (
+                            line.split(":")[-1].strip().lower().split(" ")[0],
+                            True,
+                            True,
+                        )
+        except FileNotFoundError:
+            return (
+                "Unsupported",
+                True,
+                True,
+            )
+
+    logger.warning(
+        "ilab is only officially supported on Linux and MacOS with M-Series Chips"
+    )
+    return "Unsupported", False, False
