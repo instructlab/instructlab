@@ -160,11 +160,11 @@ class OCIDownloader(Downloader):
                 index_hash = match.group(1)
             else:
                 raise ValueError(
-                    f"failed to find hash in the index file: {oci_model_path}"
+                    f"Failed to find hash in the index file: {oci_model_path}"
                 )
         except Exception as exc:
             raise ValueError(
-                f"failed to extract image hash from index file: {oci_model_path}"
+                f"Failed to extract image hash from index file: {oci_model_path}"
             ) from exc
 
         blob_dir = f"{oci_model_path}/blobs/sha256"
@@ -181,7 +181,7 @@ class OCIDownloader(Downloader):
                     oci_model_file_map[blob_name] = layer["annotations"][title_ref]
         except Exception as exc:
             raise ValueError(
-                f"failed to build OCI model file mapping from: {blob_dir}/{index_hash}"
+                f"Failed to build OCI model file mapping from: {blob_dir}/{index_hash}"
             ) from exc
 
         return oci_model_file_map
