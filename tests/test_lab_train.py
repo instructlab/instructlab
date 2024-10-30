@@ -671,3 +671,26 @@ class TestLabTrain:
             in result.output
         )
         assert result.exit_code == 1
+
+    def test_invalid_train_request(
+        self,
+        cli_runner: CliRunner,
+    ):
+        result = cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "model",
+                "train",
+                "--pipeline",
+                "accelerated",
+                "--strategy",
+                "lab-multiphase",
+                "--device",
+                "cpu",
+            ],
+        )
+        assert (
+            "Unable to train with device=cpu and pipeline=accelerated" in result.output
+        )
+        assert result.exit_code == 1
