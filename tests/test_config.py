@@ -273,6 +273,7 @@ generate:
 serve:
   model_path: models/granite-7b-lab-Q4_K_M.gguf
   chat_template: tokenizer
+  backend: llama-cpp
   llama_cpp:
     gpu_layers: 1
     max_ctx_size: 2048
