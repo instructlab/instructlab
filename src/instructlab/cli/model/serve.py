@@ -10,6 +10,7 @@ import click
 
 # First Party
 from instructlab import clickext
+from instructlab.model.backends import backends
 from instructlab.model.serve_backend import serve_backend, signal_handler
 
 logger = logging.getLogger(__name__)
@@ -72,7 +73,7 @@ def warn_for_unsupported_backend_param(ctx):
 )
 @click.option(
     "--backend",
-    type=click.Choice(("llama_cpp", "vllm")),  # use supported backends
+    type=click.Choice(tuple(backends.SUPPORTED_BACKENDS)),
     cls=clickext.ConfigOption,
     required=False,  # auto-detect
 )
