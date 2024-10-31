@@ -193,6 +193,12 @@ test_oci_model_download_with_vllm_backend(){
     fi
 }
 
+test_llama_backend(){
+    ilab model serve --backend llama-cpp &
+    PID_SERVE=$!
+    wait_for_server
+}
+
 # check that ilab model serve is working
 test_bind_port(){
     local formatted_script
@@ -672,5 +678,8 @@ cleanup
 test_model_print
 cleanup
 test_log_format
+cleanup
+test_llama_backend
+cleanup
 
 exit 0
