@@ -878,27 +878,6 @@ def get_default_config() -> Config:
     return Config()
 
 
-def read_train_profile(train_file) -> _train:
-    try:
-        with open(train_file, "r", encoding="utf-8") as yamlfile:
-            content = yaml.load(yamlfile)
-            _expand_paths(content)
-            return _train(**content)
-    except ValidationError as exc:
-        msg = f"{exc.error_count()} errors in {train_file}:\n"
-        for err in exc.errors():
-            msg += (
-                "- "
-                + err.get("type", "")
-                + " "
-                + "->".join(err.get("loc", ""))  # type: ignore
-                + ": "
-                + err.get("msg", "").lower()
-                + "\n"
-            )
-        raise ConfigException(msg) from exc
-
-
 def read_config(
     config_file: str | os.PathLike[str] | None = None,
 ) -> Config:
@@ -1145,7 +1124,6 @@ def ensure_storage_directories_exist() -> bool:
         DEFAULTS.MODELS_DIR,
         DEFAULTS.TAXONOMY_DIR,
         DEFAULTS.TRAIN_CONFIG_DIR,
-        DEFAULTS.TRAIN_PROFILE_DIR,
         DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_DIR,
         DEFAULTS.PHASED_DIR,
         DEFAULTS.SYSTEM_PROFILE_DIR,
@@ -1155,7 +1133,7 @@ def ensure_storage_directories_exist() -> bool:
         if not os.path.exists(dirpath):
             os.makedirs(dirpath, exist_ok=True)
 
-    fresh_install = recreate_train_profiles()
+    fresh_install = recreate_system_profiles()
 
     # create expert_args file for users to see/edit
     if not os.path.isfile(DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE):
@@ -1164,47 +1142,6 @@ def ensure_storage_directories_exist() -> bool:
         ) as outfile:
             yaml.dump(DEFAULTS.ADDITIONAL_ARGS_DEFAULTS, outfile)
 
-    return fresh_install
-
-
-# recreate_train_profiles creates all train profiles in the proper directory and takes an argument, overwrite, which will write to the files even if they already exist
-def recreate_train_profiles(overwrite: bool = False) -> bool:
-    fresh_install = False
-    profile_dir = os.environ.get(DEFAULTS.ILAB_TRAIN_PROFILE_DIR)
-    if profile_dir != "" and profile_dir is not None:
-        # the train dir exists, read it
-        # expect only the supported cfgs.
-        for file in TRAIN_DIR_EXPECTED_FILES:
-            new_file = os.path.join(DEFAULTS.TRAIN_PROFILE_DIR, file)
-            tmpl_file = os.path.join(profile_dir, file)
-            train_cfg = read_train_profile(tmpl_file)
-            if not os.path.isfile(new_file):
-                # If any of the train profiles are missing, treat this as a new system. We do not want to
-                # prompt the user TWICE if they want to overwrite the train profiles.
-                fresh_install = True
-                with open(new_file, "w", encoding="utf-8") as outfile:
-                    d = train_cfg.model_dump_json()
-                    loaded = yaml.load(d)
-                    yaml.dump(loaded, outfile)
-    else:
-        to_write = {
-            DEFAULTS.TRAIN_A100_H100_X4_PROFILE: FOUR_GPU_TRAIN_AH,
-            DEFAULTS.TRAIN_A100_H100_X8_PROFILE: EIGHT_GPU_TRAIN_AH,
-            DEFAULTS.TRAIN_A100_H100_X2_PROFILE: TWO_GPU_TRAIN_AH,
-            DEFAULTS.TRAIN_L40_X8_PROFILE: EIGHT_L_FORTY_GPU,
-            DEFAULTS.TRAIN_L40_X4_PROFILE: FOUR_L_FORTY_GPU,
-            DEFAULTS.TRAIN_L4_X8_PROFILE: EIGHT_L_FOUR_GPU,
-        }
-
-        for file, train_cfg in to_write.items():
-            if not os.path.isfile(file) or overwrite:
-                # If any of the train profiles are missing, treat this as a new system. We do not want to
-                # prompt the user TWICE if they want to overwrite the train profiles.
-                fresh_install = True
-                with open(file, "w", encoding="utf-8") as outfile:
-                    d = train_cfg.model_dump_json()
-                    loaded = yaml.load(d)
-                    yaml.dump(loaded, outfile)
     return fresh_install
 
 
@@ -1437,103 +1374,8 @@ def storage_dirs_exist() -> bool:
         DEFAULTS.MODELS_DIR,
         DEFAULTS.TAXONOMY_DIR,
         DEFAULTS.TRAIN_CONFIG_DIR,
-        DEFAULTS.TRAIN_PROFILE_DIR,
         DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_DIR,
         DEFAULTS.PHASED_DIR,
         DEFAULTS.SYSTEM_PROFILE_DIR,
     ]
     return all(os.path.exists(dirpath) for dirpath in dirs_to_check)
-
-
-# get_profile_mappings reads the profiles from disk where necessary and returns a mapping of the following format
-# {"GPU Name": ({ "gpu_count": NUM_GPUS, "vram_and_config": {"vram": TOTAL_VRAM, "config": TRAIN_CONFIG}})...}
-def get_profile_mappings() -> dict[str, tuple[dict[str, object], ...]]:
-    # read the train cfg from disk, and use what is here to build the mappings.
-    profile_names_and_configs = {}
-    for file in TRAIN_DIR_EXPECTED_FILES:
-        cfg_file = os.path.join(DEFAULTS.TRAIN_PROFILE_DIR, file)
-        train_cfg = read_train_profile(cfg_file)
-        # make a dict mapping file names to train cfgs
-        # we need to do this so that if the user overrode the contents of the profiles using the ENV var, we apply that when auto detecting
-        profile_names_and_configs[file] = train_cfg
-
-    profile_mappings = {
-        "L40s": (
-            {"gpu_count": 1, "vram_and_config": {"vram": 48, "config": SINGLE_L40}},
-            {
-                "gpu_count": 4,
-                "vram_and_config": {
-                    "vram": 192,
-                    "config": profile_names_and_configs["L40_x4.yaml"],
-                },
-            },
-            {
-                "gpu_count": 8,
-                "vram_and_config": {
-                    "vram": 384,
-                    "config": profile_names_and_configs["L40_x8.yaml"],
-                },
-            },
-        ),
-        "L4": (
-            {"gpu_count": 1, "vram_and_config": {"vram": 24, "config": SINGLE_L4}},
-            {
-                "gpu_count": 8,
-                "vram_and_config": {
-                    "vram": 192,
-                    "config": profile_names_and_configs["L4_x8.yaml"],
-                },
-            },
-        ),
-        "A100": (
-            {
-                "gpu_count": 1,
-                "vram_and_config": {"vram": 80, "config": SINGLE_A100_H100},
-            },
-            {
-                "gpu_count": 2,
-                "vram_and_config": {
-                    "vram": 160,
-                    "config": profile_names_and_configs["A100_H100_x2.yaml"],
-                },
-            },
-            {
-                "gpu_count": 4,
-                "vram_and_config": {
-                    "vram": 320,
-                    "config": profile_names_and_configs["A100_H100_x4.yaml"],
-                },
-            },
-            {
-                "gpu_count": 8,
-                "vram_and_config": {
-                    "vram": 640,
-                    "config": profile_names_and_configs["A100_H100_x8.yaml"],
-                },
-            },
-        ),
-        "H100": (
-            {
-                "gpu_count": 2,
-                "vram_and_config": {
-                    "vram": 160,
-                    "config": profile_names_and_configs["A100_H100_x2.yaml"],
-                },
-            },
-            {
-                "gpu_count": 4,
-                "vram_and_config": {
-                    "vram": 320,
-                    "config": profile_names_and_configs["A100_H100_x4.yaml"],
-                },
-            },
-            {
-                "gpu_count": 8,
-                "vram_and_config": {
-                    "vram": 640,
-                    "config": profile_names_and_configs["A100_H100_x8.yaml"],
-                },
-            },
-        ),
-    }
-    return profile_mappings

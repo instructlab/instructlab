@@ -96,3 +96,62 @@ class TestLabInit:
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
         config = read_config(DEFAULTS.CONFIG_FILE)
         assert config.generate.taxonomy_path == "different-taxonomy"
+
+    def test_lab_init_with_profile(self, tmp_path_home, cli_runner: CliRunner):
+        config_path = tmp_path_home / "config.yaml"
+        with open(config_path, "w", encoding="utf-8") as config_file:
+            config_file.write(
+                """\
+version: 1.0.0
+chat:
+  model: models/granite-7b-lab-Q4_K_M.gguf
+generate:
+  pipeline: simple
+  model: models/granite-7b-lab-Q4_K_M.gguf
+  taxonomy_base: upstream/main
+  taxonomy_path: mytaxonomy
+  teacher:
+    model_path: models/granite-7b-lab-Q4_K_M.gguf
+    chat_template: tokenizer
+    llama_cpp:
+      gpu_layers: 1
+      max_ctx_size: 2048
+      llm_family: ''
+    vllm:
+      gpus: 8
+serve:
+  model_path: models/granite-7b-lab-Q4_K_M.gguf
+  chat_template: tokenizer
+  llama_cpp:
+    gpu_layers: 1
+    max_ctx_size: 2048
+    llm_family: ''
+  vllm:
+    gpus: 8
+    vllm_args:
+       - --dtype=auto
+       - --enable-lora
+evaluate:
+  base_model: instructlab/granite-7b-lab
+  gpus: 1
+  mmlu:
+    few_shots: 2
+    batch_size: auto
+  mmlu_branch:
+    tasks_dir: /path/to/sdg
+  mt_bench:
+    judge_model: prometheus
+    output_dir: /dir/to/output
+    max_workers: auto
+  mt_bench_branch:
+    taxonomy_path: taxonomy
+general:
+  log_level: DEBUG
+"""
+            )
+        # third invocation should again ask, but this time don't overwrite
+        result = cli_runner.invoke(
+            lab.ilab,
+            ["config", "init", "--non-interactive", f"--profile={config_path}"],
+        )
+        assert result.exit_code == 0
