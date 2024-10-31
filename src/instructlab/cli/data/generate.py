@@ -10,9 +10,10 @@ import click
 
 # First Party
 from instructlab import clickext
+from instructlab.client_utils import HttpClientParams
 from instructlab.configuration import DEFAULTS
 from instructlab.data.generate_data import gen_data  # type: ignore
-from instructlab.utils import HttpClientParams, contains_argument
+from instructlab.utils import contains_argument
 
 logger = logging.getLogger(__name__)
 

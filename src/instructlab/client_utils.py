@@ -2,6 +2,7 @@
 # pylint: disable=duplicate-code
 
 # Standard
+from typing import TypedDict
 
 # Third Party
 from openai import OpenAI, OpenAIError
@@ -15,6 +16,7 @@ class ClientException(Exception):
     """An exception raised when invoking client operations."""
 
 
+# pylint: disable=redefined-outer-name
 def list_models(
     api_base,
     api_key=DEFAULTS.API_KEY,
@@ -39,3 +41,30 @@ def check_api_base(api_base: str, http_client: httpx.Client | None = None) -> bo
         return True
     except ClientException:
         return False
+
+
+class HttpClientParams(TypedDict):
+    """
+    Types the parameters used when initializing the HTTP client.
+    """
+
+    tls_client_cert: str | None
+    tls_client_key: str | None
+    tls_client_passwd: str | None
+    tls_insecure: bool
+
+
+def get_ssl_cert_config(tls_client_cert, tls_client_key, tls_client_passwd):
+    if tls_client_cert:
+        return tls_client_cert, tls_client_key, tls_client_passwd
+
+
+def http_client(params: HttpClientParams):
+    return httpx.Client(
+        cert=get_ssl_cert_config(
+            params.get("tls_client_cert", None),
+            params.get("tls_client_key", None),
+            params.get("tls_client_passwd", None),
+        ),
+        verify=not params.get("tls_insecure", True),
+    )

@@ -18,7 +18,8 @@ from instructlab.configuration import _serve
 from instructlab.model.backends import backends
 
 # Local
-from ..utils import http_client, is_model_gguf, is_model_safetensors
+from ..client_utils import http_client
+from ..utils import is_model_gguf, is_model_safetensors
 
 logger = logging.getLogger(__name__)
 

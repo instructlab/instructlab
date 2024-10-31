@@ -29,10 +29,11 @@ from instructlab import clickext
 from instructlab import client_utils as ilabclient
 from instructlab import configuration as cfg
 from instructlab import log
-from instructlab.utils import HttpClientParams
+from instructlab.client_utils import HttpClientParams
 
 # Local
-from ..utils import get_sysprompt, http_client
+from ..client_utils import http_client
+from ..utils import get_sysprompt
 
 logger = logging.getLogger(__name__)
 

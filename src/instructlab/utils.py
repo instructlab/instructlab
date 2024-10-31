@@ -31,7 +31,6 @@ from instructlab.schema.taxonomy import (
 import click
 import git
 import gitdb
-import httpx
 import yaml
 
 # Local
@@ -83,17 +82,6 @@ class LegacyMessageSample(TypedDict):
     system: str
     user: str
     assistant: str
-
-
-class HttpClientParams(TypedDict):
-    """
-    Types the parameters used when initializing the HTTP client.
-    """
-
-    tls_client_cert: str | None
-    tls_client_key: str | None
-    tls_client_passwd: str | None
-    tls_insecure: bool
 
 
 def macos_requirement(echo_func, exit_exception):
@@ -454,22 +442,6 @@ def validate_taxonomy(
                     f"{total_errors} total errors found across {len(taxonomy_files)} taxonomy files!"
                 )
             )
-
-
-def get_ssl_cert_config(tls_client_cert, tls_client_key, tls_client_passwd):
-    if tls_client_cert:
-        return tls_client_cert, tls_client_key, tls_client_passwd
-
-
-def http_client(params: HttpClientParams):
-    return httpx.Client(
-        cert=get_ssl_cert_config(
-            params.get("tls_client_cert", None),
-            params.get("tls_client_key", None),
-            params.get("tls_client_passwd", None),
-        ),
-        verify=not params.get("tls_insecure", True),
-    )
 
 
 def split_hostport(hostport: str) -> tuple[str, int]:
