@@ -20,9 +20,9 @@ ec2() {
         exit 1
     fi
     shift
-    if [ "$(type -t "ec2__$cmdname")" = "function" ] >/dev/null 2>&1; then
+    if [ "$(type -t "ec2__${cmdname//-/_}")" = "function" ] >/dev/null 2>&1; then
         INSTANCE_NAME="$EC2_INSTANCE_NAME"
-        "ec2__$cmdname" "$@"
+        "ec2__${cmdname//-/_}" "$@"
     elif [ "$(type -t "${cmdname//-/_}")" = "function" ] >/dev/null 2>&1; then
         INSTANCE_NAME="$EC2_INSTANCE_NAME"
         handle_help_and_instance_name_opts "$@"
@@ -45,6 +45,25 @@ ec2__sync() {
     done
     ec2_calculate_instance_public_dns
     sync "ec2" "$EC2_KEY_LOCATION" "$temp_commit"
+}
+
+ec2__sync_library() {
+    local temp_commit=false
+    while getopts "${COMMON_OPTS}cl:" opt; do
+        handle_common_opts "$opt" "$OPTARG"
+        case "$opt" in
+            c)  temp_commit=true
+            ;;
+            l)  library=$OPTARG
+            ;;
+        esac
+    done
+    if [ -z "$library" ]; then
+        echo "-l is a required argument for sync-library"
+        exit 1
+    fi
+    ec2_calculate_instance_public_dns
+    sync_library "ec2" "$EC2_KEY_LOCATION" "$temp_commit" "$library"
 }
 
 ec2__launch() {
@@ -239,9 +258,9 @@ ibm() {
         exit 1
     fi
     shift
-    if [ "$(type -t "ibm__$cmdname")" = "function" ] >/dev/null 2>&1; then
+    if [ "$(type -t "ibm__${cmdname//-/_}")" = "function" ] >/dev/null 2>&1; then
         INSTANCE_NAME="$IBM_INSTANCE_NAME"
-        "ibm__$cmdname" "$@"
+        "ibm__${cmdname//-/_}" "$@"
     elif [ "$(type -t "${cmdname//-/_}")" = "function" ] >/dev/null 2>&1; then
         INSTANCE_NAME="$IBM_INSTANCE_NAME"
         handle_help_and_instance_name_opts "$@"
@@ -279,6 +298,25 @@ ibm__sync() {
     done
     ibm_calculate_instance_public_dns
     sync "ibm" "$IBM_KEY_LOCATION" "$temp_commit"
+}
+
+ibm__sync_library() {
+    local temp_commit=false
+    while getopts "${COMMON_OPTS}cl:" opt; do
+        handle_common_opts "$opt" "$OPTARG"
+        case "$opt" in
+            c)  temp_commit=true
+            ;;
+            l)  library=$OPTARG
+            ;;
+        esac
+    done
+    if [ -z "$library" ]; then
+        echo "-l is a required argument for sync-library"
+        exit 1
+    fi
+    ibm_calculate_instance_public_dns
+    sync_library "ibm" "$IBM_KEY_LOCATION" "$temp_commit" "$library"
 }
 
 ibm__launch() {
@@ -382,6 +420,20 @@ setup_rh_devenv() {
     "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && python3.11 -m venv --upgrade-deps venv"
 }
 
+setup_instructlab_library_devenvs() {
+    local cloud_type=$1
+    list=("sdg" "training" "eval")
+
+    for library in "${list[@]}"
+    do
+        "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "source instructlab/venv/bin/activate && \
+                                                               if [ ! -d ${library}.git ]; then git clone --bare https://github.com/instructlab/${library}.git && \
+                                                               git clone ${library}.git && pushd ${library} && git remote add syncrepo ../${library}.git && \
+                                                               git remote add upstream https://github.com/instructlab/${library}.git; fi && \
+                                                               pip install --no-deps -e ."
+    done
+}
+
 pip_install_with_nvidia() {
     local cloud_type=$1
     "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" \
@@ -450,6 +502,37 @@ sync() {
     "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && git fetch syncrepo && git reset --hard syncrepo/main"
 }
 
+sync_library() {
+    local cloud_type=$1
+    local key_location=$2
+    local temp_commit=$3
+    local library=$4
+    local user_name
+    user_name="$(instance_user_name "$cloud_type")"
+    local user_home
+    user_home="$(instance_user_home "$cloud_type")"
+    SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+    local repo_dir
+    repo_dir="${SCRIPT_DIR}/../../../${library}"
+    if [ -d "${repo_dir}" ]; then
+        repo_dir=$(realpath "${repo_dir}")
+        pushd "${repo_dir}"
+        local branch
+        branch="$(git symbolic-ref HEAD 2>/dev/null)"
+        branch=${branch##refs/heads/}
+        if [ "$temp_commit" = true ] && [ -n "$(git status --porcelain=v1 2>/dev/null)" ]; then
+            trap 'git reset HEAD~' EXIT
+            git add repo_dir
+            git commit -m 'Sync commit'
+        fi
+        GIT_SSH_COMMAND="ssh -o 'StrictHostKeyChecking no' -i ${key_location}" git push ssh://"$user_name"@"$PUBLIC_DNS":"$user_home"/"$library".git "$branch":main -f
+        popd
+        "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd ${library} && git fetch syncrepo && git reset --hard syncrepo/main"
+    else
+        echo "Could find repo: ${repo_dir}"
+    fi
+}
+
 handle_common_opts() {
     case "$1" in
         h)
@@ -508,6 +591,10 @@ Commands
         -n
             Name of the instance to setup (default provided in config)
 
+    setup-instructlab-library-devenvs - Initialize a development environments for the InstructLab libraries (sdg, training, eval)
+        -n
+            Name of the instance to setup (default provided in config)
+
     pip-install-with-nvidia - pip install with nvidia cuda
         -n
             Name of the instance to pip install (default provided in config)
@@ -529,6 +616,14 @@ Commands
             Name of the instance to sync to (default provided in config)
         -c
             Push uncommitted changes to the remote instance with a temporary commit
+
+    sync-library - Sync your local library repo to the instance
+        -n
+            Name of the instance to sync to (default provided in config)
+        -c
+            Push uncommitted changes to the remote instance with a temporary commit
+        -l
+            Library repo to sync that exists as a sibling of this instructlab repo (Ex: training)
 
     update-ssh-config - Update the HostIpAddress in ~/.ssh/config
         -n
