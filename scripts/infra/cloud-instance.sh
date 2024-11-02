@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 COMMON_OPTS="hn:"
+ALL_OPTS="${COMMON_OPTS}cl:t:"
 MAX_ITERS=12
 INSTRUCTLAB_CLOUD_CONFIG=${INSTRUCTLAB_CLOUD_CONFIG:-$HOME/.instructlab/cloud-config}
 
@@ -13,73 +14,12 @@ else
     exit 1
 fi
 
-ec2() {
-    local cmdname=$1
-    if [ -z "$cmdname" ]; then
-        show_usage
-        exit 1
-    fi
-    shift
-    if [ "$(type -t "ec2__${cmdname//-/_}")" = "function" ] >/dev/null 2>&1; then
-        INSTANCE_NAME="$EC2_INSTANCE_NAME"
-        "ec2__${cmdname//-/_}" "$@"
-    elif [ "$(type -t "${cmdname//-/_}")" = "function" ] >/dev/null 2>&1; then
-        INSTANCE_NAME="$EC2_INSTANCE_NAME"
-        handle_help_and_instance_name_opts "$@"
-        "${cmdname//-/_}" "ec2"
-    else
-        echo "Invalid command: $cmdname"
-        show_usage
-        exit 1
-    fi
-}
-
-ec2__sync() {
-    local temp_commit=false
-    while getopts "${COMMON_OPTS}c" opt; do
-        handle_common_opts "$opt" "$OPTARG"
-        case "$opt" in
-            c)  temp_commit=true
-            ;;
-        esac
-    done
-    ec2_calculate_instance_public_dns
-    sync "ec2" "$EC2_KEY_LOCATION" "$temp_commit"
-}
-
-ec2__sync_library() {
-    local temp_commit=false
-    while getopts "${COMMON_OPTS}cl:" opt; do
-        handle_common_opts "$opt" "$OPTARG"
-        case "$opt" in
-            c)  temp_commit=true
-            ;;
-            l)  library=$OPTARG
-            ;;
-        esac
-    done
-    if [ -z "$library" ]; then
-        echo "-l is a required argument for sync-library"
-        exit 1
-    fi
-    ec2_calculate_instance_public_dns
-    sync_library "ec2" "$EC2_KEY_LOCATION" "$temp_commit" "$library"
-}
-
 ec2__launch() {
-    while getopts "${COMMON_OPTS}t:" opt; do
-        handle_common_opts "$opt" "$OPTARG"
-        case "$opt" in
-            t)  EC2_INSTANCE_TYPE=$OPTARG
-            ;;
-        esac
-    done
-
     local instance_id
     instance_id="$(aws ec2 run-instances \
         --image-id "$EC2_AMI_ID" \
         --region "$EC2_REGION" \
-        --instance-type "$EC2_INSTANCE_TYPE" \
+        --instance-type "${INSTANCE_TYPE:-$EC2_INSTANCE_TYPE}" \
         --security-group-ids "$EC2_SECURITY_GROUP_ID" \
         --subnet-id "$EC2_SUBNET_ID" \
         --key-name "$EC2_KEY_NAME" \
@@ -120,7 +60,6 @@ ec2__launch() {
 }
 
 ec2__details() {
-    handle_help_and_instance_name_opts "$@"
     ec2_calculate_instance_id
     aws ec2 describe-instances \
         --instance-ids "$INSTANCE_ID" \
@@ -128,7 +67,6 @@ ec2__details() {
 }
 
 ec2__stop() {
-    handle_help_and_instance_name_opts "$@"
     ec2_calculate_instance_id
     aws ec2 stop-instances \
         --instance-ids "$INSTANCE_ID" \
@@ -136,7 +74,6 @@ ec2__stop() {
 }
 
 ec2__start() {
-    handle_help_and_instance_name_opts "$@"
     ec2_calculate_instance_id
     aws ec2 start-instances \
         --instance-ids "$INSTANCE_ID" \
@@ -144,7 +81,6 @@ ec2__start() {
 }
 
 ec2__terminate() {
-    handle_help_and_instance_name_opts "$@"
     ec2_calculate_instance_id
     aws ec2 terminate-instances \
         --instance-ids "$INSTANCE_ID" \
@@ -152,9 +88,9 @@ ec2__terminate() {
 }
 
 wait_ssh_listen() {
-    calculate_cloud_public_dns "$1"
-    user_name=$(instance_user_name "$1")
-    ssh_key=$(instance_key "$1")
+    calculate_cloud_public_dns
+    user_name=$(instance_user_name)
+    ssh_key=$(instance_key)
     while true; do
         echo "Waiting for ssh..."
         sleep 5
@@ -162,26 +98,6 @@ wait_ssh_listen() {
             break
         fi
     done
-}
-
-ec2__ssh() {
-    handle_help_and_instance_name_opts "$@"
-    shift $((OPTIND-1))
-
-    local user_name
-    user_name=$(instance_user_name "ec2")
-    ec2_calculate_instance_public_dns
-    ssh -o "StrictHostKeyChecking no" -i "$EC2_KEY_LOCATION" "$user_name"@"$PUBLIC_DNS" "$@"
-}
-
-ec2__scp() {
-    handle_help_and_instance_name_opts "$@"
-    shift $((OPTIND-1))
-
-    local user_name
-    user_name=$(instance_user_name "ec2")
-    ec2_calculate_instance_public_dns
-    scp -o "StrictHostKeyChecking no" -i "$EC2_KEY_LOCATION" "$@" "$user_name"@"$PUBLIC_DNS":
 }
 
 ec2_calculate_instance_id() {
@@ -198,34 +114,22 @@ ec2_calculate_instance_id() {
     fi
 }
 
-ec2_calculate_instance_public_dns() {
-    ec2_calculate_instance_id
-    PUBLIC_DNS="$(aws ec2 describe-instances \
-        --instance-ids "$INSTANCE_ID" \
-        --region "$EC2_REGION" \
-        --query "Reservations[*].Instances[*].PublicDnsName" \
-        --output text)" &> /dev/null
-    PUBLIC_DNS=$(echo "$PUBLIC_DNS" | xargs)
-}
-
 calculate_instance_public_dns() {
-    local cloud_type=$1
-    if [ "$cloud_type" = 'ec2' ]; then
+    if [ "$CLOUD_TYPE" = 'ec2' ]; then
         ec2_calculate_instance_public_dns
-    elif [ "$cloud_type" = 'ibm' ]; then
+    elif [ "$CLOUD_TYPE" = 'ibm' ]; then
         ibm_calculate_instance_public_dns
     else
-        echo "calculate_cloud_public_dns: Unknown cloud type: $cloud_type"
+        echo "calculate_cloud_public_dns: Unknown cloud type: $CLOUD_TYPE"
         exit 1
     fi
 }
 
 update_ssh_config() {
-    handle_help_and_instance_name_opts "$@"
-    calculate_instance_public_dns "$1"
+    calculate_instance_public_dns
     local ssh_config="$HOME/.ssh/config"
     local user_name
-    user_name=$(instance_user_name "$1")
+    user_name=$(instance_user_name)
 
     if ! grep -q "Host ${INSTANCE_NAME}" "$ssh_config"; then
         cat << EOF >> "$ssh_config"
@@ -233,7 +137,7 @@ update_ssh_config() {
 Host ${INSTANCE_NAME}
     HostName ${PUBLIC_DNS}
     User ${user_name}
-    IdentityFile ${EC2_KEY_LOCATION}
+    IdentityFile $(instance_key)
     StrictHostKeyChecking no
     UserKnownHostsFile /dev/null
 EOF
@@ -251,84 +155,31 @@ EOF
     fi
 }
 
-ibm() {
-    local cmdname=$1
-    if [ -z "$cmdname" ]; then
-        show_usage
-        exit 1
-    fi
-    shift
-    if [ "$(type -t "ibm__${cmdname//-/_}")" = "function" ] >/dev/null 2>&1; then
-        INSTANCE_NAME="$IBM_INSTANCE_NAME"
-        "ibm__${cmdname//-/_}" "$@"
-    elif [ "$(type -t "${cmdname//-/_}")" = "function" ] >/dev/null 2>&1; then
-        INSTANCE_NAME="$IBM_INSTANCE_NAME"
-        handle_help_and_instance_name_opts "$@"
-        "${cmdname//-/_}" "ibm"
-    else
-        echo "Invalid command: $cmdname"
-        show_usage
-        exit 1
-    fi
+ec2_calculate_instance_public_dns() {
+    ec2_calculate_instance_id
+    PUBLIC_DNS="$(aws ec2 describe-instances \
+        --instance-ids "$INSTANCE_ID" \
+        --region "$EC2_REGION" \
+        --query "Reservations[*].Instances[*].PublicDnsName" \
+        --output text)" &> /dev/null
+    PUBLIC_DNS=$(echo "$PUBLIC_DNS" | xargs)
 }
 
 ibm__stop() {
-    handle_help_and_instance_name_opts "$@"
     ibmcloud is instance-stop -f "$INSTANCE_NAME"
 }
 
 ibm__start() {
-    handle_help_and_instance_name_opts "$@"
     ibmcloud is instance-start "$INSTANCE_NAME"
 }
 
 ibm__terminate() {
-    handle_help_and_instance_name_opts "$@"
     ibmcloud is instance-delete -f "$INSTANCE_NAME"
 }
 
-ibm__sync() {
-    local temp_commit=false
-    while getopts "${COMMON_OPTS}c" opt; do
-        handle_common_opts "$opt" "$OPTARG"
-        case "$opt" in
-            c)  temp_commit=true
-            ;;
-        esac
-    done
-    ibm_calculate_instance_public_dns
-    sync "ibm" "$IBM_KEY_LOCATION" "$temp_commit"
-}
-
-ibm__sync_library() {
-    local temp_commit=false
-    while getopts "${COMMON_OPTS}cl:" opt; do
-        handle_common_opts "$opt" "$OPTARG"
-        case "$opt" in
-            c)  temp_commit=true
-            ;;
-            l)  library=$OPTARG
-            ;;
-        esac
-    done
-    if [ -z "$library" ]; then
-        echo "-l is a required argument for sync-library"
-        exit 1
-    fi
-    ibm_calculate_instance_public_dns
-    sync_library "ibm" "$IBM_KEY_LOCATION" "$temp_commit" "$library"
-}
-
 ibm__launch() {
-    while getopts "${COMMON_OPTS}t:" opt; do
-        handle_common_opts "$opt" "$OPTARG"
-        case "$opt" in
-            t)  IBM_INSTANCE_PROFILE_NAME="$OPTARG"
-            ;;
-        esac
-    done
     echo "Creating IBM Cloud VPC instance..."
-    ibmcloud is instance-create "$INSTANCE_NAME" "$IBM_VPC_ID" "$IBM_ZONE" "$IBM_INSTANCE_PROFILE_NAME" "$IBM_SUBNET_ID" --image "$IBM_IMAGE_ID" --boot-volume '{"name": "boot-vol-attachment-name", "volume": {"name": "boot-vol", "capacity": 200, "profile": {"name": "general-purpose"}}}' --keys "$IBM_KEY_NAME" --pnac-vni-name "$INSTANCE_NAME"
+    ibmcloud is instance-create "$INSTANCE_NAME" "$IBM_VPC_ID" "$IBM_ZONE" "${INSTANCE_TYPE:-$IBM_INSTANCE_PROFILE_NAME}" "$IBM_SUBNET_ID" --image "$IBM_IMAGE_ID" --boot-volume '{"name": "boot-vol-attachment-name", "volume": {"name": "boot-vol", "capacity": 200, "profile": {"name": "general-purpose"}}}' --keys "$IBM_KEY_NAME" --pnac-vni-name "$INSTANCE_NAME"
     echo "Attaching IBM Cloud VNI for new instance..."
     ibmcloud is virtual-network-interface-floating-ip-add "$INSTANCE_NAME" "$INSTANCE_NAME" "$IBM_FLOATING_IP_NAME"
     local i
@@ -351,24 +202,49 @@ ibm__launch() {
     fi
 }
 
-ibm__ssh() {
-    handle_help_and_instance_name_opts "$@"
-    shift $((OPTIND-1))
+run_cmd() {
+    local cloud_type=$1
+    local cmdname=$2
+    if [ -z "$cmdname" ]; then
+        show_usage
+        exit 1
+    fi
+    shift 2
 
-    local user_name
-    user_name="$(instance_user_name "ibm")"
-    ibm_calculate_instance_public_dns
-    ssh -o "StrictHostKeyChecking no" -i "$IBM_KEY_LOCATION" "$user_name"@"$PUBLIC_DNS" "$@"
+    cmd_name="${cmdname//-/_}"
+    CLOUD_TYPE="$cloud_type"
+    calculate_instance_name
+    handle_opts "$@"
+    if [ "$(type -t "i__${cmd_name}")" = "function" ] >/dev/null 2>&1; then
+        # i__ is used to not collide with system commands (Ex: ssh, scp)
+        "i__${cmd_name}" "$@"
+    elif [ "$(type -t "${CLOUD_TYPE}__${cmd_name}")" = "function" ] >/dev/null 2>&1; then
+        "${CLOUD_TYPE}__${cmd_name}" "$@"
+    elif [ "$(type -t "${cmd_name}")" = "function" ] >/dev/null 2>&1; then
+        "${cmd_name}" "$@"
+    else
+        echo "Invalid command: $cmdname"
+        show_usage
+        exit 1
+    fi
 }
 
-ibm__scp() {
-    handle_help_and_instance_name_opts "$@"
+i__ssh() {
     shift $((OPTIND-1))
 
     local user_name
-    user_name=$(instance_user_name "ibm")
-    ibm_calculate_instance_public_dns
-    scp -o "StrictHostKeyChecking no" -i "$IBM_KEY_LOCATION" "$@" "$user_name"@"$PUBLIC_DNS":
+    user_name=$(instance_user_name)
+    calculate_instance_public_dns
+    ssh -o "StrictHostKeyChecking no" -i "$(instance_key)" "$user_name"@"$PUBLIC_DNS" "$@"
+}
+
+i__scp() {
+    shift $((OPTIND-1))
+
+    local user_name
+    user_name=$(instance_user_name)
+    calculate_instance_public_dns
+    scp -o "StrictHostKeyChecking no" -i "$(instance_key)" "$@" "$user_name"@"$PUBLIC_DNS":
 }
 
 ibm_calculate_instance_public_dns() {
@@ -377,56 +253,57 @@ ibm_calculate_instance_public_dns() {
 }
 
 calculate_cloud_public_dns() {
-    local cloud_type=$1
-    if [ "$cloud_type" = 'ec2' ]; then
-	ec2_calculate_instance_public_dns
-    elif [ "$cloud_type" = 'ibm' ]; then
+    if [ "$CLOUD_TYPE" = 'ec2' ]; then
+	    ec2_calculate_instance_public_dns
+    elif [ "$CLOUD_TYPE" = 'ibm' ]; then
         ibm_calculate_instance_public_dns
     fi
 }
 
+calculate_instance_name() {
+    if [ "$CLOUD_TYPE" = 'ec2' ]; then
+	    INSTANCE_NAME="${INSTANCE_NAME:-$EC2_INSTANCE_NAME}"
+    elif [ "$CLOUD_TYPE" = 'ibm' ]; then
+        INSTANCE_NAME="${INSTANCE_NAME:-$IBM_INSTANCE_NAME}"
+    fi
+}
+
 instance_key() {
-    local cloud_type=$1
-    if [ "$cloud_type" = 'ec2' ]; then
+    if [ "$CLOUD_TYPE" = 'ec2' ]; then
         echo "$EC2_KEY_LOCATION"
-    elif [ "$cloud_type" = 'ibm' ]; then
+    elif [ "$CLOUD_TYPE" = 'ibm' ]; then
         echo "$IBM_KEY_LOCATION"
     fi
 }
 
 instance_user_name() {
-    local cloud_type=$1
-    if [ "$cloud_type" = 'ec2' ]; then
+    if [ "$CLOUD_TYPE" = 'ec2' ]; then
         echo "ec2-user"
-    elif [ "$cloud_type" = 'ibm' ]; then
+    elif [ "$CLOUD_TYPE" = 'ibm' ]; then
         echo "root"
     fi
 }
 
 instance_user_home() {
-    local cloud_type=$1
-    if [ "$cloud_type" = 'ec2' ]; then
+    if [ "$CLOUD_TYPE" = 'ec2' ]; then
         echo "/home/ec2-user"
-    elif [ "$cloud_type" = 'ibm' ]; then
+    elif [ "$CLOUD_TYPE" = 'ibm' ]; then
         echo "/root"
     fi
 }
 
 setup_rh_devenv() {
-    local cloud_type=$1
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf install git gcc make python3.11 python3.11-devel -y
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "sudo dnf install g++ -y || sudo dnf install gcc-c++"
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "if [ ! -d instructlab.git ]; then git clone --bare https://github.com/instructlab/instructlab.git && git clone instructlab.git && pushd instructlab && git remote add syncrepo ../instructlab.git && git remote add upstream https://github.com/instructlab/instructlab.git; fi"
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && python3.11 -m venv --upgrade-deps venv"
+    "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" sudo dnf install git gcc make python3.11 python3.11-devel -y
+    "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "sudo dnf install g++ -y || sudo dnf install gcc-c++"
+    "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "if [ ! -d instructlab.git ]; then git clone --bare https://github.com/instructlab/instructlab.git && git clone instructlab.git && pushd instructlab && git remote add syncrepo ../instructlab.git && git remote add upstream https://github.com/instructlab/instructlab.git; fi"
+    "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "pushd instructlab && python3.11 -m venv --upgrade-deps venv"
 }
 
 setup_instructlab_library_devenvs() {
-    local cloud_type=$1
-    list=("sdg" "training" "eval")
-
-    for library in "${list[@]}"
+    libraries=("sdg" "training" "eval")
+    for library in "${libraries[@]}"
     do
-        "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "source instructlab/venv/bin/activate && \
+        "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "source instructlab/venv/bin/activate && \
                                                                if [ ! -d ${library}.git ]; then git clone --bare https://github.com/instructlab/${library}.git && \
                                                                git clone ${library}.git && pushd ${library} && git remote add syncrepo ../${library}.git && \
                                                                git remote add upstream https://github.com/instructlab/${library}.git; fi && \
@@ -435,10 +312,9 @@ setup_instructlab_library_devenvs() {
 }
 
 pip_install_with_nvidia() {
-    local cloud_type=$1
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" \
+    "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" \
         "pushd instructlab && sed 's/\[.*\]//' requirements.txt > constraints.txt"
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" \
+    "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" \
         "pushd instructlab && source venv/bin/activate; \
          export PATH=\$PATH:/usr/local/cuda/bin; \
          pip cache remove llama_cpp_python \
@@ -451,8 +327,7 @@ pip_install_with_nvidia() {
 }
 
 pip_install_with_amd() {
-    local cloud_type=$1
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && source venv/bin/activate && pip cache remove llama_cpp_python && \
+    "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "pushd instructlab && source venv/bin/activate && pip cache remove llama_cpp_python && \
     pip install -e .[rocm] --extra-index-url https://download.pytorch.org/whl/rocm6.0 \
    -C cmake.args='-DLLAMA_HIPBLAS=on' \
    -C cmake.args='-DAMDGPU_TARGETS=all' \
@@ -462,78 +337,78 @@ pip_install_with_amd() {
 }
 
 update_rh_nvidia_drivers() {
-    install_rh_nvidia_drivers "$1" "true"
+    install_rh_nvidia_drivers "true"
 }
 
 install_rh_nvidia_drivers() {
-    local cloud_type=$1
-    local should_update=$2
+    local should_update=$1
     if [[ "$should_update" == "true" ]]; then
-        "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf update -y
-        "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo reboot
+        "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" sudo dnf update -y
+        "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" sudo reboot
         echo "Rebooting instance after update.."
-        wait_ssh_listen "$cloud_type"
-        "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" sudo dnf remove --oldinstallonly -y
+        wait_ssh_listen "$CLOUD_TYPE"
+        "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" sudo dnf remove --oldinstallonly -y
     fi
-    "${BASH_SOURCE[0]}" "$cloud_type" scp -n "$INSTANCE_NAME" nvidia-setup.sh
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "sudo ./nvidia-setup.sh"
-    echo "You may want to reboot even though the install is live (${BASH_SOURCE[0]} ${cloud_type} ssh sudo reboot)"
+    "${BASH_SOURCE[0]}" "$CLOUD_TYPE" scp -n "$INSTANCE_NAME" nvidia-setup.sh
+    "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "sudo ./nvidia-setup.sh"
+    echo "You may want to reboot even though the install is live (${BASH_SOURCE[0]} ${CLOUD_TYPE} ssh sudo reboot)"
 }
 
 sync() {
-    local cloud_type=$1
-    local key_location=$2
-    local temp_commit=$3
+    calculate_instance_public_dns
+
     local user_name
-    user_name="$(instance_user_name "$cloud_type")"
+    user_name="$(instance_user_name)"
     local user_home
-    user_home="$(instance_user_home "$cloud_type")"
+    user_home="$(instance_user_home)"
 
     local branch
     branch="$(git symbolic-ref HEAD 2>/dev/null)"
     branch=${branch##refs/heads/}
     SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-    if [ "$temp_commit" = true ] && [ -n "$(git status --porcelain=v1 2>/dev/null)" ]; then
+    if [ "$TEMP_COMMIT" = true ] && [ -n "$(git status --porcelain=v1 2>/dev/null)" ]; then
         trap 'git reset HEAD~' EXIT
         git add "${SCRIPT_DIR}"/../..
         git commit -m 'Sync commit'
     fi
-    GIT_SSH_COMMAND="ssh -o 'StrictHostKeyChecking no' -i ${key_location}" git push ssh://"$user_name"@"$PUBLIC_DNS":"$user_home"/instructlab.git "$branch":main -f
-    "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd instructlab && git fetch syncrepo && git reset --hard syncrepo/main"
+    GIT_SSH_COMMAND="ssh -o 'StrictHostKeyChecking no' -i $(instance_key)" git push ssh://"$user_name"@"$PUBLIC_DNS":"$user_home"/instructlab.git "$branch":main -f
+    "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "pushd instructlab && git fetch syncrepo && git reset --hard syncrepo/main"
 }
 
 sync_library() {
-    local cloud_type=$1
-    local key_location=$2
-    local temp_commit=$3
-    local library=$4
+    if [ -z "$LIBRARY" ]; then
+        echo "-l is a required argument for sync-library"
+        exit 1
+    fi
+    calculate_instance_public_dns
+
     local user_name
-    user_name="$(instance_user_name "$cloud_type")"
+    user_name="$(instance_user_name)"
     local user_home
-    user_home="$(instance_user_home "$cloud_type")"
+    user_home="$(instance_user_home)"
     SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
     local repo_dir
-    repo_dir="${SCRIPT_DIR}/../../../${library}"
+    repo_dir="${SCRIPT_DIR}/../../../${LIBRARY}"
     if [ -d "${repo_dir}" ]; then
         repo_dir=$(realpath "${repo_dir}")
         pushd "${repo_dir}"
         local branch
         branch="$(git symbolic-ref HEAD 2>/dev/null)"
         branch=${branch##refs/heads/}
-        if [ "$temp_commit" = true ] && [ -n "$(git status --porcelain=v1 2>/dev/null)" ]; then
+        if [ "$TEMP_COMMIT" = true ] && [ -n "$(git status --porcelain=v1 2>/dev/null)" ]; then
             trap 'git reset HEAD~' EXIT
             git add repo_dir
             git commit -m 'Sync commit'
         fi
-        GIT_SSH_COMMAND="ssh -o 'StrictHostKeyChecking no' -i ${key_location}" git push ssh://"$user_name"@"$PUBLIC_DNS":"$user_home"/"$library".git "$branch":main -f
+        GIT_SSH_COMMAND="ssh -o 'StrictHostKeyChecking no' -i $(instance_key)" git push ssh://"$user_name"@"$PUBLIC_DNS":"$user_home"/"$LIBRARY".git "$branch":main -f
         popd
-        "${BASH_SOURCE[0]}" "$cloud_type" ssh -n "$INSTANCE_NAME" "pushd ${library} && git fetch syncrepo && git reset --hard syncrepo/main"
+        "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "pushd ${LIBRARY} && git fetch syncrepo && git reset --hard syncrepo/main"
     else
         echo "Could find repo: ${repo_dir}"
     fi
 }
 
-handle_common_opts() {
+handle_opt() {
     case "$1" in
         h)
         show_usage
@@ -541,12 +416,18 @@ handle_common_opts() {
         ;;
         n)  INSTANCE_NAME=$2
         ;;
+        l)  LIBRARY=$2
+        ;;
+        c)  TEMP_COMMIT=true
+        ;;
+        t)  INSTANCE_TYPE=$2
+        ;;
     esac
 }
 
-handle_help_and_instance_name_opts() {
-    while getopts "${COMMON_OPTS}" opt; do
-        handle_common_opts "$opt" "$OPTARG"
+handle_opts() {
+    while getopts "${ALL_OPTS}" opt; do
+        handle_opt "$opt" "$OPTARG"
     done
 }
 
@@ -631,11 +512,10 @@ Commands
 "
 }
 
-if declare -f "$1" >/dev/null 2>&1; then
-    "$@"
+if [[ "$1" == "ibm" || "$1" == "ec2" ]]; then
+    run_cmd "$@"
 else
     echo "Invalid cloud type: $1" >&2
     show_usage
     exit 1
 fi
-
