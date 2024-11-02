@@ -87,19 +87,6 @@ ec2__terminate() {
         --region "$EC2_REGION"
 }
 
-wait_ssh_listen() {
-    calculate_cloud_public_dns
-    user_name=$(instance_user_name)
-    ssh_key=$(instance_key)
-    while true; do
-        echo "Waiting for ssh..."
-        sleep 5
-        if ssh -i "$ssh_key" -o ConnectTimeout=5 -o StrictHostKeyChecking=no -q "$user_name"@"$PUBLIC_DNS" "true"; then
-            break
-        fi
-    done
-}
-
 ec2_calculate_instance_id() {
     if [ -z "$INSTANCE_ID" ]; then
         INSTANCE_ID="$(aws ec2 describe-instances \
@@ -111,47 +98,6 @@ ec2_calculate_instance_id() {
     if [ -z "$INSTANCE_ID" ]; then
         echo "Instance named '${INSTANCE_NAME}' not found"
         exit 1
-    fi
-}
-
-calculate_instance_public_dns() {
-    if [ "$CLOUD_TYPE" = 'ec2' ]; then
-        ec2_calculate_instance_public_dns
-    elif [ "$CLOUD_TYPE" = 'ibm' ]; then
-        ibm_calculate_instance_public_dns
-    else
-        echo "calculate_cloud_public_dns: Unknown cloud type: $CLOUD_TYPE"
-        exit 1
-    fi
-}
-
-update_ssh_config() {
-    calculate_instance_public_dns
-    local ssh_config="$HOME/.ssh/config"
-    local user_name
-    user_name=$(instance_user_name)
-
-    if ! grep -q "Host ${INSTANCE_NAME}" "$ssh_config"; then
-        cat << EOF >> "$ssh_config"
-
-Host ${INSTANCE_NAME}
-    HostName ${PUBLIC_DNS}
-    User ${user_name}
-    IdentityFile $(instance_key)
-    StrictHostKeyChecking no
-    UserKnownHostsFile /dev/null
-EOF
-        echo "Added entry for ${INSTANCE_NAME} in ${ssh_config}"
-    else
-        local temp_file
-        temp_file=$(mktemp)
-        awk -v ip="$PUBLIC_DNS" '
-            $1 == "Host" && $2 == "'"${INSTANCE_NAME}"'" {found=1}
-            found && $1 == "HostName" {$0 = "    HostName " ip; found=0}
-            {print}
-        ' "$ssh_config" > "$temp_file"
-        mv "$temp_file" "$ssh_config"
-        echo "Updated HostIpAddress for ${INSTANCE_NAME} to ${PUBLIC_DNS} in ${ssh_config}"
     fi
 }
 
@@ -202,6 +148,12 @@ ibm__launch() {
     fi
 }
 
+ibm_calculate_instance_public_dns() {
+    PUBLIC_DNS=$(ibmcloud is instance "$INSTANCE_NAME" --output json | \
+    python3 -c "import sys, json; print(json.load(sys.stdin)['network_interfaces'][0]['floating_ips'][0]['address'])")
+}
+
+
 run_cmd() {
     local cloud_type=$1
     local cmdname=$2
@@ -247,11 +199,6 @@ i__scp() {
     scp -o "StrictHostKeyChecking no" -i "$(instance_key)" "$@" "$user_name"@"$PUBLIC_DNS":
 }
 
-ibm_calculate_instance_public_dns() {
-    PUBLIC_DNS=$(ibmcloud is instance "$INSTANCE_NAME" --output json | \
-    python3 -c "import sys, json; print(json.load(sys.stdin)['network_interfaces'][0]['floating_ips'][0]['address'])")
-}
-
 calculate_cloud_public_dns() {
     if [ "$CLOUD_TYPE" = 'ec2' ]; then
 	    ec2_calculate_instance_public_dns
@@ -265,6 +212,17 @@ calculate_instance_name() {
 	    INSTANCE_NAME="${INSTANCE_NAME:-$EC2_INSTANCE_NAME}"
     elif [ "$CLOUD_TYPE" = 'ibm' ]; then
         INSTANCE_NAME="${INSTANCE_NAME:-$IBM_INSTANCE_NAME}"
+    fi
+}
+
+calculate_instance_public_dns() {
+    if [ "$CLOUD_TYPE" = 'ec2' ]; then
+        ec2_calculate_instance_public_dns
+    elif [ "$CLOUD_TYPE" = 'ibm' ]; then
+        ibm_calculate_instance_public_dns
+    else
+        echo "calculate_cloud_public_dns: Unknown cloud type: $CLOUD_TYPE"
+        exit 1
     fi
 }
 
@@ -290,6 +248,19 @@ instance_user_home() {
     elif [ "$CLOUD_TYPE" = 'ibm' ]; then
         echo "/root"
     fi
+}
+
+wait_ssh_listen() {
+    calculate_cloud_public_dns
+    user_name=$(instance_user_name)
+    ssh_key=$(instance_key)
+    while true; do
+        echo "Waiting for ssh..."
+        sleep 5
+        if ssh -i "$ssh_key" -o ConnectTimeout=5 -o StrictHostKeyChecking=no -q "$user_name"@"$PUBLIC_DNS" "true"; then
+            break
+        fi
+    done
 }
 
 setup_rh_devenv() {
@@ -408,6 +379,36 @@ sync_library() {
     fi
 }
 
+update_ssh_config() {
+    calculate_instance_public_dns
+    local ssh_config="$HOME/.ssh/config"
+    local user_name
+    user_name=$(instance_user_name)
+
+    if ! grep -q "Host ${INSTANCE_NAME}" "$ssh_config"; then
+        cat << EOF >> "$ssh_config"
+
+Host ${INSTANCE_NAME}
+    HostName ${PUBLIC_DNS}
+    User ${user_name}
+    IdentityFile $(instance_key)
+    StrictHostKeyChecking no
+    UserKnownHostsFile /dev/null
+EOF
+        echo "Added entry for ${INSTANCE_NAME} in ${ssh_config}"
+    else
+        local temp_file
+        temp_file=$(mktemp)
+        awk -v ip="$PUBLIC_DNS" '
+            $1 == "Host" && $2 == "'"${INSTANCE_NAME}"'" {found=1}
+            found && $1 == "HostName" {$0 = "    HostName " ip; found=0}
+            {print}
+        ' "$ssh_config" > "$temp_file"
+        mv "$temp_file" "$ssh_config"
+        echo "Updated HostIpAddress for ${INSTANCE_NAME} to ${PUBLIC_DNS} in ${ssh_config}"
+    fi
+}
+
 handle_opt() {
     case "$1" in
         h)
@@ -472,7 +473,7 @@ Commands
         -n
             Name of the instance to setup (default provided in config)
 
-    setup-instructlab-library-devenvs - Initialize a development environments for the InstructLab libraries (sdg, training, eval)
+    setup-instructlab-library-devenvs - Initialize development environments for the InstructLab libraries (sdg, training, eval)
         -n
             Name of the instance to setup (default provided in config)
 

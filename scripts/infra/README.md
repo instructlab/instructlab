@@ -94,7 +94,7 @@ scripts/infra/cloud-instance.sh ec2 terminate
 ```bash
 # Setup the remote repos to install from on the instance
 scripts/infra/cloud-instance.sh ec2 setup-instructlab-library-devenvs
-# Sync your local repos to the remote instance (installed with `pip -e`
+# Sync your local repos to the remote instance (installed with `pip -e`)
 scripts/infra/cloud-instance.sh ec2 sync-library -c -l sdg
 scripts/infra/cloud-instance.sh ec2 sync-library -c -l training
 scripts/infra/cloud-instance.sh ec2 sync-library -c -l eval
