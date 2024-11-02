@@ -20,6 +20,8 @@ from instructlab import clickext
 from instructlab.configuration import DEFAULTS
 from instructlab.utils import is_huggingface_repo, is_oci_repo, load_json
 
+DEFAULT_INDENT = "    "
+
 logger = logging.getLogger(__name__)
 
 
@@ -66,7 +68,7 @@ class HFDownloader(Downloader):
         Download specified model from Hugging Face
         """
         click.echo(
-            f"Downloading model from Hugging Face: {self.repository}@{self.release} to {self.download_dest}..."
+            f"Downloading model from Hugging Face:\n{DEFAULT_INDENT}Model: {self.repository}@{self.release}\n{DEFAULT_INDENT}Destination: {self.download_dest}"
         )
 
         if self.hf_token == "" and "instructlab" not in self.repository:
@@ -87,7 +89,7 @@ class HFDownloader(Downloader):
 
         except Exception as exc:
             click.secho(
-                f"Downloading model failed with the following Hugging Face Hub error: {exc}",
+                f"\nDownloading model failed with the following Hugging Face Hub error:\n{DEFAULT_INDENT}{exc}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
@@ -104,7 +106,7 @@ class HFDownloader(Downloader):
 
         except Exception as exc:
             click.secho(
-                f"Downloading GGUF model failed with the following Hugging Face Hub error: {exc}",
+                f"\nDownloading GGUF model failed with the following Hugging Face Hub error:\n{DEFAULT_INDENT}{exc}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
@@ -122,7 +124,7 @@ class HFDownloader(Downloader):
             )
         except Exception as exc:
             click.secho(
-                f"Downloading safetensors model failed with the following Hugging Face Hub error: {exc}",
+                f"\nDownloading safetensors model failed with the following Hugging Face Hub error:\n{DEFAULT_INDENT}{exc}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
@@ -160,11 +162,11 @@ class OCIDownloader(Downloader):
                 index_hash = match.group(1)
             else:
                 raise ValueError(
-                    f"Failed to find hash in the index file: {oci_model_path}"
+                    f"\nFailed to find hash in the index file:\n{DEFAULT_INDENT}{oci_model_path}"
                 )
         except Exception as exc:
             raise ValueError(
-                f"Failed to extract image hash from index file: {oci_model_path}"
+                f"\nFailed to extract image hash from index file:\n{DEFAULT_INDENT}{oci_model_path}"
             ) from exc
 
         blob_dir = f"{oci_model_path}/blobs/sha256"
@@ -181,21 +183,21 @@ class OCIDownloader(Downloader):
                     oci_model_file_map[blob_name] = layer["annotations"][title_ref]
         except Exception as exc:
             raise ValueError(
-                f"Failed to build OCI model file mapping from: {blob_dir}/{index_hash}"
+                f"\nFailed to build OCI model file mapping from:\n{DEFAULT_INDENT}{blob_dir}/{index_hash}"
             ) from exc
 
         return oci_model_file_map
 
     def download(self):
         click.echo(
-            f"Downloading model from OCI registry: {self.repository}@{self.release} to {self.download_dest}..."
+            f"Downloading model from OCI registry:\n{DEFAULT_INDENT}Model: {self.repository}@{self.release}\n{DEFAULT_INDENT}Destination: {self.download_dest}"
         )
 
         # raise an exception if user specified tag/SHA embedded in repository instead of specifying --release
         match = re.search(r"^(?:[^:]*:){2}(.*)$", self.repository)
         if match:
             click.secho(
-                f"Invalid repository supplied: Please specify tag/version '{match.group(1)}' via --release",
+                f"\nInvalid repository supplied:\n{DEFAULT_INDENT}Please specify tag/version '{match.group(1)}' via --release",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
@@ -223,7 +225,7 @@ class OCIDownloader(Downloader):
             subprocess.run(command, check=True, text=True)
         except subprocess.CalledProcessError as e:
             click.secho(
-                f"Failed to run skopeo command: {e}. \nstderr: {e.stderr}",
+                f"\nFailed to run skopeo command:\n{DEFAULT_INDENT}{e}.\n{DEFAULT_INDENT}stderr: {e.stderr}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
@@ -231,7 +233,7 @@ class OCIDownloader(Downloader):
         file_map = self._build_oci_model_file_map(oci_dir)
         if not file_map:
             click.secho(
-                "Failed to find OCI image blob hashes",
+                "\nFailed to find OCI image blob hashes.",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
@@ -323,7 +325,7 @@ def download(ctx, repositories, releases, filenames, model_dir, hf_token):
             )
         else:
             click.secho(
-                f"repository {repository} matches neither Hugging Face nor OCI registry format. Please supply a valid repository",
+                f"repository {repository} matches neither Hugging Face nor OCI registry format.\nPlease supply a valid repository",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
@@ -334,12 +336,12 @@ def download(ctx, repositories, releases, filenames, model_dir, hf_token):
         except (ValueError, Exception) as exc:
             if isinstance(exc, ValueError) and "HF_TOKEN" in str(exc):
                 click.secho(
-                    f"{downloader.repository} requires a HF Token to be set. Please use '--hf-token' or 'export HF_TOKEN' to download all necessary models",
+                    f"\n{downloader.repository} requires a HF Token to be set.\nPlease use '--hf-token' or 'export HF_TOKEN' to download all necessary models",
                     fg="yellow",
                 )
             else:
                 click.secho(
-                    f"Downloading model failed with the following error: {exc}",
+                    f"\nDownloading model failed with the following error: {exc}",
                     fg="red",
                 )
                 raise click.exceptions.Exit(1)
@@ -360,7 +362,7 @@ def check_skopeo_version():
         )
     except FileNotFoundError as exc:
         click.secho(
-            f"skopeo is not installed, please install recommended version {_RECOMMENDED_SCOPEO_VERSION}",
+            f"\nskopeo is not installed.\nPlease install recommended version {_RECOMMENDED_SCOPEO_VERSION}",
             fg="red",
         )
         raise click.exceptions.Exit(1) from exc
@@ -378,7 +380,7 @@ def check_skopeo_version():
             _RECOMMENDED_SCOPEO_VERSION
         ):
             raise ValueError(
-                f"skopeo version {installed_version} is lower than {_RECOMMENDED_SCOPEO_VERSION}. Please upgrade it."
+                f"\n{DEFAULT_INDENT}skopeo version {installed_version} is lower than {_RECOMMENDED_SCOPEO_VERSION}.\n{DEFAULT_INDENT}Please upgrade it."
             )
     else:
         logger.warning(
