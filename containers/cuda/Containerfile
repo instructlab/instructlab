@@ -129,6 +129,7 @@ RUN dnf install -y --nodocs \
         cuda-minimal-build-${CUDA_DASHED_VERSION} \
         cuda-toolkit-${CUDA_DASHED_VERSION} \
         libcudnn${CUDNN_MAJOR_VERSION} \
+        libcudnn9-cuda-12 \
         libnccl \
         libcutensor2 \
     && dnf clean all \
@@ -161,7 +162,7 @@ ENV CPLUS_INCLUDE_PATH="${CUDA_HOME}/include:${CPLUS_INCLUDE_PATH}"
 ENV CMAKE_INCLUDE_PATH="${CUDA_HOME}/include:${CMAKE_INCLUDE_PATH}"
 
 # Install Intel oneAPI repository for Intel oneMKL
-COPY containers/cuda/intel-oneapi.repo /etc/yum.repos.d/oneapi.repo
+COPY intel-oneapi.repo /etc/yum.repos.d/oneapi.repo
 RUN dnf config-manager --set-enabled intel-oneapi
 
 RUN dnf -y install --nodocs \
@@ -179,12 +180,15 @@ ENV C_INCLUDE_PATH="${INTEL_MKL_HOME}/include:${C_INCLUDE_PATH}"
 ENV CPLUS_INCLUDE_PATH="${INTEL_MKL_HOME}/include:${CPLUS_INCLUDE_PATH}"
 ENV CMAKE_INCLUDE_PATH="${INTEL_MKL_HOME}/include:${CMAKE_INCLUDE_PATH}"
 
+ENV MAKEFLAGS="-j$(nproc)"
+
 RUN source ${VIRTUAL_ENV}/bin/activate \
     && if [ "${INSTRUCTLAB_VERSION}" != "" ] ; then \
         INSTRUCTLAB_PKG="${INSTRUCTLAB_PKG}==${INSTRUCTLAB_VERSION}" ; \
     fi \
-    && pip install torch psutil \
+    && pip install 'torch>=2.3.0,<2.4.0' 'psutil>=6.0.0' \
     && pip install flash_attn --no-build-isolation \
+    && pip install --no-deps llama_cpp_python[server]==0.2.79 -C cmake.args="-DLLAMA_CUDA=on" -C cmake.args="-DLLAMA_NATIVE=off" \
     && pip install "${INSTRUCTLAB_PKG}" -C cmake.args="-DLLAMA_CUDA=on" -C cmake.args="-DLLAMA_NATIVE=off" \
     && pip install vllm@git+https://github.com/opendatahub-io/vllm@v0.6.2
 
