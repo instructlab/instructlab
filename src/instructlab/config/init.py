@@ -1,10 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from math import floor
+from copy import copy
 from os import listdir
-from os.path import dirname, exists, join
+from os.path import dirname, exists
+import os
 import pathlib
+import re
 import shutil
 import typing
 
@@ -17,16 +19,12 @@ from instructlab import clickext, utils
 from instructlab.configuration import (
     DEFAULTS,
     Config,
-    _train,
     ensure_storage_directories_exist,
     get_default_config,
-    get_profile_mappings,
     read_config,
-    read_train_profile,
-    recreate_train_profiles,
+    recreate_system_profiles,
     write_config,
 )
-from instructlab.utils import convert_bytes_to_proper_mag
 
 
 @click.command()
@@ -70,10 +68,10 @@ from instructlab.utils import convert_bytes_to_proper_mag
     "using the same taxonomy repository. ",
 )
 @click.option(
-    "--train-profile",
+    "--profile",
     type=click.Path(),
     default=None,
-    help="Overwrite the default training values in the generated config.yaml by passing in an existing training-specific yaml.",
+    help="Overwrite the default values in the generated config.yaml by passing in an existing configuration yaml.",
 )
 @click.option(
     "--config",
@@ -94,7 +92,7 @@ def init(
     taxonomy_base,
     repository,
     min_taxonomy,
-    train_profile,
+    profile,
     config_file,
 ):
     """Initializes environment for InstructLab"""
@@ -116,81 +114,15 @@ def init(
         click.echo(
             f"\nGenerating config file and profiles:\n    {DEFAULTS.CONFIG_FILE}\n    {DEFAULTS.TRAIN_PROFILE_DIR}\n"
         )
-        recreate_train_profiles(overwrite=True)
+        recreate_system_profiles(overwrite=True)
     else:
         click.echo(f"\nGenerating config file:\n    {DEFAULTS.CONFIG_FILE}\n")
-    if train_profile is not None:
-        cfg.train = read_train_profile(train_profile)
+    if profile is not None:
+        cfg = read_config(profile)
     elif interactive:
-        (
-            chosen_profile,
-            chosen_vram,
-            detected_train_profile,
-            edited_cfg,
-        ) = hw_auto_detect()
-        yn = None
-        if chosen_vram is not None and chosen_profile is not None:
-            click.echo(
-                f"We chose {chosen_profile} as your designated training profile. This is for systems with {chosen_vram} GB of vRAM."
-            )
-            if edited_cfg:
-                click.echo(
-                    "This profile is the best approximation for your system based off of the amount of vRAM. We modified it to match the number of GPUs you have."
-                )
-            yn = click.confirm("Is this profile correct?", default=True)
-        if yn is None or not yn:
-            train_profile_filenames = sorted(listdir(DEFAULTS.TRAIN_PROFILE_DIR))
-            # generate human-friendly text out of train profile filenames
-            profile_options = []
-            for filename in train_profile_filenames:
-                # one gpu type
-                split_filename = filename.split("_")
-                if len(split_filename) == 2:
-                    gputype1 = split_filename[0]
-                    num_gpu = split_filename[1].split(".")[0]
-                    profile_options.append(f"Nvidia {gputype1} {num_gpu} ({filename})")
-                # two gpu types
-                elif len(split_filename) == 3:
-                    gputype1 = split_filename[0]
-                    gputype2 = split_filename[1]
-                    num_gpu = split_filename[2].split(".")[0]
-                    profile_options.append(
-                        f"Nvidia {gputype1}/{gputype2} {num_gpu} ({filename})"
-                    )
-            click.echo(
-                "Please choose a train profile to use.\nTrain profiles assist with the complexity of configuring InstructLab training for specific GPU hardware.\nYou can still take advantage of hardware acceleration for training even if your hardware is not listed."
-            )
-            click.echo("[0] No profile (CPU, Apple Metal, AMD ROCm)")
-            for i, value in enumerate(profile_options):
-                click.echo(f"[{i+1}] {value}")
-            train_profile_selection = click.prompt(
-                "Enter the number of your choice [hit enter for hardware defaults]",
-                type=int,
-                default=0,
-            )
-            if 1 <= train_profile_selection <= len(profile_options):
-                click.echo(
-                    f"You selected: {profile_options[train_profile_selection - 1]}"
-                )
-                cfg.train = read_train_profile(
-                    join(
-                        DEFAULTS.TRAIN_PROFILE_DIR,
-                        train_profile_filenames[train_profile_selection - 1],
-                    )
-                )
-            elif train_profile_selection == 0:
-                click.echo(
-                    "No profile selected - any hardware acceleration for training must be configured manually."
-                )
-            else:
-                click.secho(
-                    "Invalid selection. Please select a valid train profile option.",
-                    fg="red",
-                )
-                raise click.exceptions.Exit(1)
-        else:
-            cfg.train = detected_train_profile
-
+        new_cfg = walk_and_print_system_profiles()
+        if new_cfg is not None:
+            cfg = new_cfg
     # we should not override all paths with the serve model if special ENV vars exist
     if param_source != click.core.ParameterSource.ENVIRONMENT:
         cfg.chat.model = model_path
@@ -209,120 +141,113 @@ def init(
     )
 
 
-def hw_auto_detect() -> tuple[str | None, int | None, _train, bool]:
-    # Third Party
-    import torch
+# walk_and_print_system_profiles prints interactive prompts asking the user to choose
+# their hardware vendor and system profile
+def walk_and_print_system_profiles() -> Config | None:
+    """
+    walk_and_print_system_profiles prints interactive prompts asking the user to choose
+    their hardware vendor and system profile
+    """
+    cfg = None
+    system_profile_files = []
+    arch_family_processors: dict[str, list[list[str]]] = {}
+    for dirpath, _dirnames, filenames in os.walk(DEFAULTS.SYSTEM_PROFILE_DIR):
+        for filename in filenames:
+            system_profile_files.append(os.path.join(dirpath, filename))
+            arch_family_processor = os.path.relpath(
+                os.path.join(dirpath, filename), DEFAULTS.SYSTEM_PROFILE_DIR
+            ).split("/", 3)
+            arch_family_processors.setdefault(arch_family_processor[0], []).append(
+                arch_family_processor
+            )
 
-    gpus = 0
-    total_vram = 0
-    train = _train()
-    chosen_vram = None
-    chosen_profile_name = None
-    gpu_name = ""
-    edited_cfg = False
-    # try nvidia
-    if torch.cuda.is_available() and torch.version.hip is None:
-        click.echo("Detecting hardware...")
-        gpus = torch.cuda.device_count()
-        for i in range(gpus):
-            properties = torch.cuda.get_device_properties(i)
-            gpu_name = properties.name
-            total_vram += properties.total_memory  # memory in B
-
-    vram = int(floor(convert_bytes_to_proper_mag(total_vram)[0]))
-    if vram == 0:
-        return None, None, train, False
-    matched, chosen_vram, chosen_profile_name, train = lookup_card(
-        gpu_name=gpu_name, gpu_count=gpus, vram=vram
-    )
-    # if we used the vRAM to determine, we need to tell the user that
-    if not matched:
-        # edit nproc per node in the case that we didnt match an exact profile, so we use all GPUs on our system
-        train.nproc_per_node = gpus
-        edited_cfg = True
-    return (chosen_profile_name, chosen_vram, train, edited_cfg)
-
-
-# lookup_card checks if the user's GPU exists in our supported profile map. If not, we choose one based off of their vRAM
-def lookup_card(
-    gpu_name, gpu_count, vram
-) -> tuple[bool, int | None, str | None, _train]:
-    profiles = get_profile_mappings()
-    card_entry = profiles.get(gpu_name)
-    chosen_profile_name = None
-    if card_entry is not None:
-        chosen_profile_name = f"Nvidia {gpu_count}x {gpu_name}"
-        # it is not guaranteed we match, even if we find an entry
-        # what if the vram isn't found or what if the gpu count doesn't match
-        matched, train = match_profile_based_on_gpu_count(
-            card_entry=card_entry, gpu_count=gpu_count, vram=vram
+    click.echo(
+        click.style(
+            "Please choose a system profile.\n Profiles set hardware-specific defaults for all commands and sections of the configuration.",
+            fg="green",
         )
-        if matched:
-            return True, vram, chosen_profile_name, train
-    vram, chosen_profile_name, train = match_profile_based_on_vram(vram=vram)
-    # return False with the results of the vRAM matching to indicate we didn't find an exact match for this GPU configuration in our supported profiles
-    return False, vram, chosen_profile_name, train
+    )
+    # print info like APPLE, AMD, INTEL and have them select
+    click.echo(
+        click.style(
+            "First, please select the hardware vendor your system falls into",
+            bg="blue",
+            fg="white",
+        )
+    )
+    keys = list(arch_family_processors.keys())
+    for idx, key in enumerate(keys, 1):
+        print(f"[{idx}] {key.upper()}")
 
+    system_profile_selection = click.prompt(
+        "Enter the number of your choice",
+        type=int,
+        default=0,
+    )
 
-# match_profile_based_on_vram chooses a training profile based off the amount of vram in each profile
-# this profile will be modified to match the number of GPUs on the user's system
-def match_profile_based_on_vram(vram) -> tuple[int | None, str | None, _train]:
-    chosen_profile_name = None
-    chosen_vram = None
-    train = _train()
-    profiles = get_profile_mappings()
-    for group_gpu_name, list_of_count_vram_and_config in profiles.items():
-        for gpu_count_configs in list_of_count_vram_and_config:
-            if (
-                not isinstance(gpu_count_configs["gpu_count"], int)
-                or not isinstance(gpu_count_configs["vram_and_config"], dict)
-                or not isinstance(gpu_count_configs["vram_and_config"]["vram"], int)
-                or not isinstance(
-                    gpu_count_configs["vram_and_config"]["config"], _train
-                )
-            ):
-                click.secho("Unable to retrieve train profiles", fg="red")
-                raise click.exceptions.Exit(1)
-            # we want to match based off if our vRAM is >= the Profile vRAM. However,
-            # you do not want to overdo this and match a profile that has hundreds of GB less than your system
-            # only match if the profile has 30GB less than our system.
-            if (
-                chosen_vram is None
-                or chosen_vram > gpu_count_configs["vram_and_config"]["vram"]
-            ) and (
-                vram >= gpu_count_configs["vram_and_config"]["vram"]
-                and vram - gpu_count_configs["vram_and_config"]["vram"] <= 30
-            ):
-                # set our return values
-                gpus = gpu_count_configs["gpu_count"]
-                chosen_profile_name = f"Nvidia {gpus}x {group_gpu_name}"
-                chosen_vram = gpu_count_configs["vram_and_config"]["vram"]
-                train = gpu_count_configs["vram_and_config"]["config"]
-    return chosen_vram, chosen_profile_name, train
+    # now print all choices in the selected hw vendor and have user choose
+    if 1 <= system_profile_selection <= len(keys):
+        key = keys[system_profile_selection - 1]
+        click.echo(f"You selected: {key.upper()}")
+        click.echo(
+            click.style(
+                "Next, please select the specific hardware configuration that most closely matches your system.",
+                bg="blue",
+                fg="white",
+            )
+        )
+        click.echo("[0] No system profile")
+        i = 1
+        for arch_family_processor in arch_family_processors[key]:
+            # the following logic is specifically for printing the name
+            # we still want to preserve the arch_family_processor for when we open the file
+            # if the last entry has an _, split that out. This follows the format like m2_max.yaml, we just want max.
+            # Copy for preservation when working with printed names
+            printed_arch_family_processor = copy(arch_family_processor)
+            # Process the last element, extracting text after "_" if present, removing ".yaml"
+            printed_arch_family_processor[-1] = re.sub(
+                r".*_(\w+)\.yaml$|^(\w+)\.yaml$",
+                lambda m: m.group(1) if m.group(1) else m.group(2),
+                printed_arch_family_processor[-1],
+            )
+            # removes dupes in the case of `APPLE M2 M2` (the above logic is written to change things like M2_MAX.yaml into M2 MAX)
+            printed_arch_family_processor = list(
+                dict.fromkeys(printed_arch_family_processor)
+            )
 
+            # now echo it in all caps
+            click.echo(
+                f"[{i}] {' '.join(map(str, printed_arch_family_processor)).upper()}"
+            )
+            i += 1
 
-# match_profile_based_on_gpu_count looks for a training profile which directly matches the gpu name and count
-# this training profile will be used as is
-def match_profile_based_on_gpu_count(
-    card_entry, gpu_count, vram
-) -> tuple[bool, _train]:
-    train = _train()
-    matched = False
-    for gpu_count_configs in card_entry:
-        if not isinstance(gpu_count_configs["gpu_count"], int) or not isinstance(
-            gpu_count_configs["vram_and_config"], dict
-        ):
-            click.secho("Unable to retrieve train profiles", fg="red")
+        system_profile_selection = click.prompt(
+            "Enter the number of your choice [hit enter for hardware defaults]",
+            type=int,
+            default=0,
+        )
+
+        # the file is SYSTEM_PROFILE_DIR/arch_family_procesors[key][selection-1]
+        if 1 <= system_profile_selection <= len(system_profile_files):
+            file = os.path.join(
+                DEFAULTS.SYSTEM_PROFILE_DIR,
+                "/".join(
+                    map(str, arch_family_processors[key][system_profile_selection - 1])
+                ),
+            )
+            click.echo(click.style(f"You selected: {file}", fg="green"))
+            cfg = read_config(file)
+        elif system_profile_selection == 0:
+            click.echo(
+                "No profile selected - any hardware acceleration for training must be configured manually."
+            )
+        else:
+            click.secho(
+                "Invalid selection. Please select a valid system profile option.",
+                fg="red",
+            )
             raise click.exceptions.Exit(1)
-        # if GPU name and number matches, this is a direct match
-        if (
-            gpu_count == gpu_count_configs["gpu_count"]
-            and vram == gpu_count_configs["vram_and_config"]["vram"]
-        ):
-            train = gpu_count_configs["vram_and_config"]["config"]
-            matched = True
-            break
-    return matched, train
+    return cfg
 
 
 def check_if_configs_exist(fresh_install) -> bool:
@@ -331,12 +256,9 @@ def check_if_configs_exist(fresh_install) -> bool:
         overwrite = click.confirm("Do you still want to continue?")
         if not overwrite:
             raise click.exceptions.Exit(0)
-    if exists(DEFAULTS.TRAIN_PROFILE_DIR) and not fresh_install:
-        click.echo(
-            f"\nExisting training profiles were found in:\n    {DEFAULTS.TRAIN_PROFILE_DIR}"
-        )
+    if exists(DEFAULTS.SYSTEM_PROFILE_DIR) and not fresh_install:
         return click.confirm(
-            "Do you want to restore these profiles to the default values?"
+            f"Existing system profiles were found in {DEFAULTS.SYSTEM_PROFILE_DIR}\nDo you want to restore these profiles to the default values?"
         )
     # default behavior should be do NOT overwrite files that could have just been created
     return False

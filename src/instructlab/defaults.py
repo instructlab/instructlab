@@ -51,6 +51,7 @@ class _InstructlabDefaults:
     # generate the default config file.
     ILAB_GLOBAL_CONFIG = "ILAB_GLOBAL_CONFIG"
     ILAB_TRAIN_PROFILE_DIR = "ILAB_TRAIN_PROFILE_DIR"
+    ILAB_SYSTEM_PROFILE_DIR = "ILAB_SYSTEM_PROFILE_DIR"
 
     # TODO: Consolidate --model and --model-path into one --model-path flag since we always need a path now
     MODEL_NAME_OLD = "merlinite-7b-lab-Q4_K_M"
@@ -168,6 +169,10 @@ class _InstructlabDefaults:
     @property
     def EVAL_DATA_DIR(self) -> str:
         return path.join(self.INTERNAL_DIR, "eval_data")
+
+    @property
+    def SYSTEM_PROFILE_DIR(self) -> str:
+        return path.join(self.INTERNAL_DIR, "system_profiles")
 
     @property
     def TRAIN_CONFIG_DIR(self) -> str:

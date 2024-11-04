@@ -102,71 +102,14 @@ test_system_info() {
 test_init() {
     task Initializing InstructLab
     if [ "$SMALL" -eq 1 ]; then
-        # We do not use a train profile here because the 'simple' train pipeline does not use a GPU
-        ilab config init --non-interactive
-        step Setting small-size log level to DEBUG
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" general.log_level DEBUG
-
-        step Setting small-size SDG-specific config
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.pipeline simple
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.model_path "${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}"
-
-        step Setting small-size Training-specific config
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.ckpt_output_dir "${DATA_HOME}/instructlab/checkpoints"
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.pipeline simple
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.model_path "${CACHE_HOME}/instructlab/models/${GRANITE_7B_MODEL}"
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.device cuda
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.num_epochs 1
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.effective_batch_size 4
-
-        # We do not set any Eval-specific config here as the 'small' E2E workflow does not run evaluation
-
+        step Setting small-size system profile
+        ilab config init --non-interactive --profile "${SCRIPTDIR}/test-data/profile-t4-x1.yaml"
     elif [ "$MEDIUM" -eq 1 ]; then
-        # We do not use a train profile here because the 'full' train pipeline does not use a GPU
-        ilab config init --non-interactive
-        step Setting medium-size log level to DEBUG
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" general.log_level DEBUG
-
-        step Setting medium-size SDG-specific config
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.pipeline full
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.model_path "${CACHE_HOME}/instructlab/models/${MISTRAL_GGUF_MODEL}"
-
-        step Setting medium-size Training-specific config
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.ckpt_output_dir "${DATA_HOME}/instructlab/checkpoints"
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.pipeline full
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.model_path "${CACHE_HOME}/instructlab/models/${GRANITE_7B_MODEL}"
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.device cpu
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.num_epochs 1
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.effective_batch_size 4
-
-        step Setting medium-size Eval-specific config
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" evaluate.gpus 1
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" evaluate.mt_bench.judge_model "${CACHE_HOME}/instructlab/models/${GRANITE_7B_MODEL}"
-
+        step Setting medium-size system profile
+        ilab config init --non-interactive --profile="${SCRIPTDIR}/test-data/profile-l4-x1.yaml"
     elif [ "$LARGE" -eq 1 ]; then
-        step Initalizing ilab with l40s-x4 train profile
-        ilab config init --non-interactive --train-profile="${SCRIPTDIR}/test-data/train-profile-l40s-x4.yaml"
-
-        step Setting large-size log level to DEBUG
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" general.log_level DEBUG
-
-        step Setting large-size Serve-specific config
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" serve.vllm.gpus 4
-
-        step Setting large-size SDG-specific config
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.pipeline full
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.model_path "${CACHE_HOME}/instructlab/models/${MIXTRAL_8X7B_MODEL}"
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.vllm.gpus 4
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" generate.teacher.vllm.llm_family mixtral
-
-        step Setting large-size Training-specific config
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.phased_mt_bench_judge "${CACHE_HOME}/instructlab/models/${PROMETHEUS_8X7B_MODEL}"
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.model_path "${CACHE_HOME}/instructlab/models/${GRANITE_7B_MODEL}"
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" train.device cuda
-
-        step Setting large-size Eval-specific config
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" evaluate.gpus 4
-        python "${SCRIPTDIR}"/e2e_config_edit.py  "${CONFIG_HOME}/instructlab/config.yaml" evaluate.mt_bench.judge_model "${CACHE_HOME}/instructlab/models/${PROMETHEUS_8X7B_MODEL}"
+        step Setting large-size system profile
+        ilab config init --non-interactive --profile="${SCRIPTDIR}/test-data/profile-l40s-x4.yaml"
     fi
     task InstructLab initialization Complete
 }
