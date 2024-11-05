@@ -26,13 +26,13 @@ class TestLabInit:
         assert result.exit_code == 0, result.stdout
         convert_bytes_to_proper_mag_mock.assert_called_once()
         assert (
-            "We have detected the NVIDIA A100 X2 as an exact match for your system."
+            "We have detected the NVIDIA A100 X2 profile as an exact match for your system."
             in result.stdout
         )
 
     @patch(
         "instructlab.config.init.get_gpu_or_cpu",
-        return_value=("apple m3 max", False, True),
+        return_value=("apple m3 max", True, False),
     )
     def test_ilab_config_init_auto_detection_mac(
         self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner
@@ -46,7 +46,7 @@ class TestLabInit:
         )
 
     @patch(
-        "instructlab.config.init.get_gpu_or_cpu", return_value=("amd cpu", False, True)
+        "instructlab.config.init.get_gpu_or_cpu", return_value=("amd cpu", True, True)
     )
     def test_ilab_config_init_auto_detection_cpu(
         self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner
