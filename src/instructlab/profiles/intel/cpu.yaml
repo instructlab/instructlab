@@ -7,7 +7,7 @@ chat:
   # The maximum number of tokens that can be generated in the chat completion
   max_tokens: null
   # Directory where model to be used for chatting with is stored
-  model: ~/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+  model: ~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
   session: null
   # visual mode
   vi_mode: false
@@ -92,7 +92,7 @@ serve:
     # maximum number of tokens that can be processed by the model
     max_ctx_size: 4096
   # Path to model that will be served for inference
-  model_path: ~/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+  model_path: ~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
 train:
   # Directory where periodic training checkpoints are stored
   ckpt_output_dir: ~/.local/share/instructlab/checkpoints
