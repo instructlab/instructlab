@@ -147,6 +147,30 @@ def test_ilab_cli_help(command: Command, cli_runner: CliRunner):
     assert result.exit_code == 0, result.stdout
 
 
+def test_ilab_alias_output(cli_runner: CliRunner):
+    expected_output = """Aliases:
+  chat      model chat
+  generate  data generate
+  serve     model serve
+  train     model train"""
+    result = cli_runner.invoke(lab.ilab)
+    assert result.exit_code == 0, result.stdout
+
+    alias_section = False
+    actual_output = []
+
+    for line in result.stdout.splitlines():
+        if line.strip() == "Aliases:":
+            alias_section = True
+        if alias_section:
+            actual_output.append(line)
+
+    actual_output_str = "\n".join(actual_output).strip()
+    assert (
+        expected_output == actual_output_str
+    ), f"Expected aliases output:\n{expected_output}\n\nBut got:\n{actual_output_str}"
+
+
 def test_cli_help_matches_field_description(cli_runner: CliRunner):
     commands = get_commands()
     for prim, secondaries in commands.items():
