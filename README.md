@@ -17,9 +17,9 @@
 - [📋 Requirements](#-requirements)
 - [✅ Getting started](#-getting-started)
   - [🧰 Installing `ilab`](#-installing-ilab)
+    - [Install with Apple Metal on M1/M2/M3 Macs](#install-with-apple-metal-on-m1m2m3-macs)
     - [Install with no GPU acceleration and PyTorch without CUDA bindings](#install-using-pytorch-without-cuda-bindings-and-no-gpu-acceleration)
     - [Install with AMD ROCm](#install-with-amd-rocm)
-    - [Install with Apple Metal on M1/M2/M3 Macs](#install-with-apple-metal-on-m1m2m3-macs)
     - [Install with Nvidia CUDA](#install-with-nvidia-cuda)
   - [🏗️ Initialize `ilab`](#️-initialize-ilab)
   - [📥 Download the model](#-download-the-model)
@@ -30,7 +30,8 @@
   - [📜 List and validate your new data](#-list-and-validate-your-new-data)
   - [🚀 Generate a synthetic dataset](#-generate-a-synthetic-dataset)
   - [👩‍🏫 Training the model](#-training-the-model)
-    - [InstructLab training pipelines](#ilab-model-training-pipelines)
+    - [✋ Before you begin training](#-before-you-begin-training)
+    - [InstructLab training pipelines](#instructlab-model-training-pipelines)
     - [Train the model locally](#train-the-model-locally)
     - [Train the model locally on an M-Series Mac or on Linux using the full pipeline](#train-the-model-locally-on-an-m-series-mac-or-on-linux-using-the-full-pipeline)
     - [Train the model locally on an M-Series Mac or on Linux using the simple pipeline](#train-the-model-locally-on-an-m-series-mac-or-on-linux-using-the-simple-pipeline)
@@ -74,7 +75,6 @@ graph TD;
   add[Add new knowledge<br/>or skill to taxonomy]-->generate[generate new<br/>synthetic training data]
   generate-->train
   train[Re-train]-->|Chat with<br/>the re-trained LLM<br/>to see the results|chat
-
 ```
 
 For an overview of the full workflow, see the [workflow diagram](./docs/workflow.png).
@@ -86,107 +86,99 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 ## 📋 Requirements
 
-- **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora).
-  We anticipate support for more operating systems in the future.
+- **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora). We anticipate support for more operating systems in the future.
+
+   📋  When installing the `ilab` CLI on macOS, you may have to run the `xcode-select --install` command, installing the required packages listed.
+
 - C++ compiler
 - Python 3.10 or Python 3.11
-- Approximately 60GB disk space (entire process)
 
-> **NOTE:** Python 3.12 is currently not supported, because some dependencies don't work on Python 3.12, yet.
-<!-- -->
-> **NOTE:** When installing the `ilab` CLI on macOS, you may have to run the `xcode-select --install` command, installing the required packages previously listed.
+   📋 Python 3.12 is currently not supported. Some InstructLab dependencies don't work on Python 3.12, yet.
+
+- Minimum 250GB disk space. Approximately 500GB disk space is recommended for the entire InstructLab end-to-end process.
 
 ## ✅ Getting started
 
-### 🧰 Installing `ilab`
-
-1. When installing on Fedora Linux, install C++, Python 3.10 or 3.11, and other necessary tools by running the following command:
+- When installing on Fedora Linux, install C++, Python 3.10 or 3.11, and other necessary tools by running the following command:
 
    ```shell
    sudo dnf install gcc gcc-c++ make git python3.11 python3.11-devel
    ```
 
-   If you are running on macOS, this installation is not necessary and you can begin your process with the following step.
+   Some Python version management tools that build Python (instead of using a pre-built binary) may not by default build libraries implemented in C, and CPython when installing a Python version. This can result in the following error when running the `ilab data generate` command: `ModuleNotFoundError: No module named '_lzma'`. This can be resolved by building CPython during the Python installation with the `--enable-framework`. For example for `pyenv` on MacOS: `PYTHON_CONFIGURE_OPTS="--enable-framework" pyenv install 3.x`. You may need to recreate your virtual environment after reinstalling Python.
 
-2. Create a new directory called `instructlab` to store the files the `ilab` CLI needs when running and `cd` into the directory by running the following command:
+> [!NOTE]
+> The following steps in this document use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. However, if you use another tool such as [pyenv](https://github.com/pyenv/pyenv) or [Conda Miniforge](https://github.com/conda-forge/miniforge) for managing Python environments on your machine continue to use that tool instead. Otherwise, you may have issues with packages that are installed but not found in your virtual environment.
+
+### 🧰 Installing `ilab`
+
+1. There are a few ways you can locally install the `ilab` CLI. Select your preferred installation method from the following instructions. You can then install `ilab` and activate your `venv` environment.
+
+   ⚠️ The `python3` binary shown in the installation guides are the Python version that you installed in the above step. The command can also be `python3.11` or `python3.10` instead of `python3`. You can check Python's version by `python3 -V`.
+
+   ⏳ `pip install` may take some time, depending on your internet connection. In case the installation fails with error ``unsupported instruction `vpdpbusd'``, append `-C cmake.args="-DLLAMA_NATIVE=off"` to `pip install` command.
+
+   See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for how to to enable hardware acceleration for interaction and training on AMD ROCm, Apple Metal Performance Shaders (MPS), and Nvidia CUDA.
+
+#### Install with Apple Metal on M1/M2/M3 Macs
+
+- Install on Apple metal with:
 
    ```shell
-   mkdir instructlab
-   cd instructlab
+   python<version> -m venv --upgrade-deps venv
+   source venv/bin/activate
+   pip cache remove llama_cpp_python
+   pip install instructlab
    ```
 
-   > **NOTE:** The following steps in this document use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. However, if you use another tool such as [pyenv](https://github.com/pyenv/pyenv) or [Conda Miniforge](https://github.com/conda-forge/miniforge) for managing Python environments on your machine continue to use that tool instead. Otherwise, you may have issues with packages that are installed but not found in your virtual environment.
-   <!-- -->
-   > **NOTE:** Some Python version management tools that build Python (instead of using a pre-built binary) may not by default build libraries implemented in C, and CPython when installing a Python version. This can therefore result in the following error when running the `ilab data generate` command: `ModuleNotFoundError: No module named '_lzma'`. This can be resolved by building CPython during the Python installation with the `--enable-framework`. For example for `pyenv` on MacOS: `PYTHON_CONFIGURE_OPTS="--enable-framework" pyenv install 3.x`. You may need to recreate you virtual environment after reinstalling Python.
+   📋 Make sure your system Python build is `Mach-O 64-bit executable arm64` by using `file -b $(command -v python)`, or if your system is setup with [pyenv](https://github.com/pyenv/pyenv) by using the `file -b $(pyenv which python)` command.
 
-3. There are a few ways you can locally install the `ilab` CLI. Select your preferred installation method from the following instructions. You can then install `ilab` and activate your `venv` environment.
+#### Install using PyTorch without CUDA bindings and no GPU acceleration
 
-   > **NOTE**: ⏳ The `python3` binary shown in the following steps is the Python version that you installed in the above step. The command can also be `python3.11` or `python3.10` instead of `python3`. You can check Python's version by `python3 -V`.
-   >
-   > **NOTE**: ⏳ `pip install` may take some time, depending on your internet connection. In case installation fails with error ``unsupported instruction `vpdpbusd'``, prepend `CMAKE_ARGS="-DLLAMA_NATIVE=off"` to `pip install` command.
+- Install on a standard Linux machine with:
 
-   See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for how to
-   to enable hardware acceleration for interaction and training on AMD ROCm,
-   Apple Metal Performance Shaders (MPS), and Nvidia CUDA.
+   ```shell
+   python<version> -m venv --upgrade-deps venv
+   source venv/bin/activate
+   pip install instructlab
+   ```
 
-   #### Install using PyTorch without CUDA bindings and no GPU acceleration
+   *Additional Build Argument for Intel Macs*
+   If you have a Mac with an Intel CPU, you must add a prefix of
+   `CMAKE_ARGS="-DLLAMA_METAL=off"` to the `pip install` command to ensure
+   that the build is done without Apple M-series GPU support.
+   `(venv) $ CMAKE_ARGS="-DLLAMA_METAL=off" pip install ...`
 
-      ```shell
-      python3 -m venv --upgrade-deps venv
-      source venv/bin/activate
-      pip install instructlab
-      ```
+#### Install with AMD ROCm
 
-      > **NOTE**: *Additional Build Argument for Intel Macs*
-      >
-      > If you have an Mac with an Intel CPU, you must add a prefix of
-      > `CMAKE_ARGS="-DLLAMA_METAL=off"` to the `pip install` command to ensure
-      > that the build is done without Apple M-series GPU support.
-      >
-      > `(venv) $ CMAKE_ARGS="-DLLAMA_METAL=off" pip install ...`
+- Install on AMD ROCm with:
 
-   #### Install with AMD ROCm
+   ```shell
+   python3 -m venv --upgrade-deps venv
+   source venv/bin/activate
+   pip cache remove llama_cpp_python
+   CMAKE_ARGS="-DLLAMA_HIPBLAS=on \
+      -DAMDGPU_TARGETS=all \
+      -DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang \
+      -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ \
+      -DCMAKE_PREFIX_PATH=/opt/rocm \
+      -DLLAMA_NATIVE=off" \
+      pip install 'instructlab[rocm]' \
+      --extra-index-url https://download.pytorch.org/whl/rocm6.0
+   ```
 
-      ```shell
-      python3 -m venv --upgrade-deps venv
-      source venv/bin/activate
-      pip cache remove llama_cpp_python
-      CMAKE_ARGS="-DLLAMA_HIPBLAS=on \
-         -DAMDGPU_TARGETS=all \
-         -DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang \
-         -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ \
-         -DCMAKE_PREFIX_PATH=/opt/rocm \
-         -DLLAMA_NATIVE=off" \
-         pip install 'instructlab[rocm]' \
-         --extra-index-url https://download.pytorch.org/whl/rocm6.0
-      ```
+   On Fedora 40+, use `-DCMAKE_C_COMPILER=clang-17` and `-DCMAKE_CXX_COMPILER=clang++-17`.
 
-      On Fedora 40+, use `-DCMAKE_C_COMPILER=clang-17` and `-DCMAKE_CXX_COMPILER=clang++-17`.
+#### Install with Nvidia CUDA
 
-   #### Install with Apple Metal on M1/M2/M3 Macs
+- For the best CUDA experience, installing vLLM is necessary to serve Safetensors format models.
 
-      > **NOTE**: Make sure your system Python build is `Mach-O 64-bit executable arm64` by using `file -b $(command -v python)`,
-      > or if your system is setup with [pyenv](https://github.com/pyenv/pyenv) by using the `file -b $(pyenv which python)` command.
-      >
-      > **NOTE**: Also, ensure that both `python3 -c 'import platform; print(platform.machine())'` and `arch` return `arm64`. If `arch` returns `i386` or `python3` returns `x86_64`, it means your terminal or Python is running in Intel emulation mode, which isn't optimized for Apple Silicon. This is especially important if you have synced data from an Intel-based Mac to an Apple Silicon Mac (M1/M2/M3), as you may need to review and update your environment, especially tools like `Homebrew` or `Bash` that were previously installed under Intel.
-
-      ```shell
-      python3 -m venv --upgrade-deps venv
-      source venv/bin/activate
-      pip cache remove llama_cpp_python
-      pip install 'instructlab[mps]'
-      ```
-
-   #### Install with Nvidia CUDA
-
-     For the best CUDA experience, installing vLLM is necessary to serve Safetensors format models.
-
-      ```shell
-      python3 -m venv --upgrade-deps venv
-      source venv/bin/activate
-      pip cache remove llama_cpp_python
-      CMAKE_ARGS="-DLLAMA_CUDA=on -DLLAMA_NATIVE=off" pip install 'instructlab[cuda]'
-      pip install vllm@git+https://github.com/opendatahub-io/vllm@v0.6.2
+   ```shell
+   python3 -m venv --upgrade-deps venv
+   source venv/bin/activate
+   pip cache remove llama_cpp_python
+   CMAKE_ARGS="-DLLAMA_CUDA=on -DLLAMA_NATIVE=off" pip install 'instructlab[cuda]'
+   pip install vllm@git+https://github.com/opendatahub-io/vllm@v0.6.2
    ```
 
 4. From your `venv` environment, verify `ilab` is installed correctly, by running the `ilab` command.
@@ -226,13 +218,12 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
      train     model train
    ```
 
-   > **IMPORTANT** Every `ilab` command needs to be run from within your Python virtual environment. You can enter the Python environment by running the `source venv/bin/activate` command.
+> [!IMPORTANT]
+> Every `ilab` command needs to be run from within your Python virtual environment. You can enter the Python environment by running the `source venv/bin/activate` command.
 
-5. Optional: You can enable tab completion for the `ilab` command.
+5. *Optional:* You can enable tab completion for the `ilab` command.
 
    #### Bash (version 4.4 or newer)
-
-   > **NOTE**: To use Bash version 4.4 or higher on macOS (default is 3.2.57), ensure your login shell is set to the updated version. You can verify this with `echo $SHELL`. If you encounter the error `bash: complete: nosort: invalid option name`, check your terminal or configuration files (e.g., ~/.bash_profile, ~/.bashrc, ~/.profile) to see whether they are referencing the old version for login.
 
    Enable tab completion in `bash` with the following command:
 
@@ -247,6 +238,8 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    _ILAB_COMPLETE=bash_source ilab > ~/.ilab-complete.bash
    echo ". ~/.ilab-complete.bash" >> ~/.bashrc
    ```
+
+   📋 To use Bash version 4.4 or higher on macOS (default is 3.2.57), ensure your login shell is set to the updated version. You can verify this with `echo $SHELL`. If you encounter the error `bash: complete: nosort: invalid option name`, check your terminal or configuration files (e.g., ~/.bash_profile, ~/.bashrc, ~/.profile) to see whether they are referencing the old version for login.
 
    #### Zsh
 
@@ -315,13 +308,19 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
    `ilab` will use the default configuration file unless otherwise specified. You can override this behavior with the `--config` parameter for any `ilab` command.
 
-4. When prompted, provide the path to your default model. Otherwise, the default of a quantized [Merlinite](https://huggingface.co/instructlab/merlinite-7b-lab-GGUF) model will be used - you can download this model with `ilab model download` (see below).
+4. When prompted, provide the path to your default model. Otherwise, the default of a quantized [Merlinite](https://huggingface.co/instructlab/merlinite-7b-lab-GGUF) model is used.
+
+   *Example output of steps 1 - 3*
 
    ```shell
    Path to your model [/home/user/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf]: <ENTER>
    ```
 
+   You can download this model with `ilab model download` command as well.
+
 5. When prompted, please choose a train profile. Train profiles are GPU specific profiles that enable accelerated training behavior. If you are on MacOS or a Linux machine without a dedicated GPU, please choose `No Profile (CPU, Apple Metal, AMD ROCm)` by hitting Enter. There are various flags you can utilize with individual `ilab` commands that allow you to utilize your GPU if applicable.
+
+   *Example output of selecting a training profile*
 
    ```shell
    ----------------------------------------------------
@@ -368,45 +367,59 @@ After running `ilab config init` your directories will look like the following o
 | `~/.local/share/instructlab/datasets/`     | Contains data output from the SDG phase, built on modifications to the taxonomy repository.   |
 | `~/.local/share/instructlab/taxonomy/`     | Contains the skill and knowledge data.                                              |
 | `~/.local/share/instructlab/checkpoints/`  | Contains the output of the training process.                                |
+| `~/.config/instructlab/config.yaml`        | Contains the `config.yaml` file |
+
+You can view your `config.yaml` file with the following command:
+
+```shell
+ilab config show
+```
 
 ### 📥 Download the model
 
-- Run the `ilab model download` command.
+#### Downloading the default InstructLab models
 
-  ```shell
-  ilab model download
-  ```
+- Run the `ilab model download` command to download a compact pre-trained version of the `merlinite-7b-lab-GGUF` and `Mistral-7B-Instruct-v0.2-GGUF` models (~4.4G) from HuggingFace.
 
-  `ilab model download` downloads a compact pre-trained version of the [model](https://huggingface.co/instructlab/) (~4.4G) from HuggingFace:
+   ```shell
+   ilab model download
+   ```
 
-  ```shell
-  (venv) $ ilab model download
-  Downloading model from Hugging Face: instructlab/merlinite-7b-lab-GGUF@main to /home/user/.cache/instructlab/models...
-  ...
-  INFO 2024-08-01 15:05:48,464 huggingface_hub.file_download:1893: Download complete. Moving file to /home/user/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
-  ```
+   *Example output*
 
-  > **NOTE** ⏳ This command can take few minutes or immediately depending on your internet connection or model is cached. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
+   ```shell
+   Downloading model from Hugging Face: instructlab/merlinite-7b-lab-GGUF@main to /Users/<user>/.cache/instructlab/models...
+   Downloading model from Hugging Face: TheBloke/Mistral-7B-Instruct-v0.2-GGUF@main to /Users/<user>/.cache/instructlab/models...
+   TheBloke/Mistral-7B-Instruct-v0.2-GGUF requires a HF Token to be set. Please use '--hf-token' or 'export HF_TOKEN' to download all necessary models
+   ```
 
-  #### Downloading a specific model from a Hugging Face repository
+   You may be prompted to use your Hugging Face token to download the `Mistral-7B-Instruct-v0.2-GGUF` model.
 
-- Specify repository, model, and a Hugging Face token if necessary. More information about Hugging Face tokens can be found [here](https://huggingface.co/docs/hub/en/security-tokens)
+   ```shell
+   ilab model download --hf-token <your-huggingface-token>
+   ```
+  
+   If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
 
-  ```shell
-  HF_TOKEN=<YOUR HUGGINGFACE TOKEN GOES HERE> ilab model download --repository=TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF --filename=mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
-  ```
+#### Downloading a specific model from a Hugging Face repository
 
-  #### Downloading an entire Hugging Face repository (Safetensors Model)
+- Specify a repository, model, and a Hugging Face token if necessary. More information about Hugging Face tokens can be found [here](https://huggingface.co/docs/hub/en/security-tokens)
 
-- Specify repository, and a Hugging Face token if necessary. For example:
+   ```shell
+   ilab model download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf --hf-token <your-huggingface-token>
+   ```
 
-  ```shell
-  HF_TOKEN=<YOUR HUGGINGFACE TOKEN GOES HERE> ilab model download --repository=instructlab/granite-7b-lab
-  ```
+#### Downloading an entire Hugging Face repository (Safetensors Model)
 
-  These types of models are useful for GPU-enabled systems or anyone looking to serve a model using vLLM. InstructLab provides Safetensor versions of our Granite models on HuggingFace.
+- Specify a repository, and a Hugging Face token if necessary. For example:
 
-  #### Listing downloaded models
+   ```shell
+   ilab model download --repository instructlab/granite-7b-lab --hf-token <your-hugginface-token>
+   ```
+
+      These types of models are useful for GPU-enabled systems or anyone looking to serve a model using vLLM. InstructLab provides Safetensor versions of our Granite models on HuggingFace.
+
+#### Listing downloaded models
 
 - All downloaded models can be seen with `ilab model list`.
 
@@ -418,28 +431,23 @@ After running `ilab config init` your directories will look like the following o
 
   ```shell
   (venv) $ ilab model list
-  +------------------------------+---------------------+--------+
-  | Model Name                   | Last Modified       | Size   |
-  +------------------------------+---------------------+--------+
-  | merlinite-7b-lab-Q4_K_M.gguf | 2024-08-01 15:05:48 | 4.1 GB |
-  +------------------------------+---------------------+--------+
+  +-------------------------------------+---------------------+--------+
+  | Model Name                          | Last Modified       | Size   |
+  +-------------------------------------+---------------------+--------+
+  | merlinite-7b-lab-Q4_K_M.gguf        | 2024-08-01 15:05:48 | 4.1 GB |
+  | mistral-7b-instruct-v0.2.Q4_K_M.gguf| 2024-08-01 15:05:48 | 4.1 GB |
+  +-------------------------------------+---------------------+--------+
   ```
 
 ### 🍴 Serving the model
 
-- Serve the model by running the following command:
+- Serve the model with the `ilab model serve` command:
 
    ```shell
    ilab model serve
    ```
 
-- Serve a non-default model (e.g. Mixtral-8x7B-Instruct-v0.1):
-
-   ```shell
-   ilab model serve --model-path models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
-   ```
-
-- Once the model is served and ready, you'll see the following output:
+   *Example output of a model that is served and ready*
 
    ```shell
    (venv) $ ilab model serve
@@ -449,11 +457,19 @@ After running `ilab config init` your directories will look like the following o
    Press CTRL+C to shut down the server.
    ```
 
-   > **NOTE:** If multiple `ilab` clients try to connect to the same InstructLab server at the same time, the 1st will connect to the server while the others will start their own temporary server. This will require additional resources on the host machine.
+   📋 If multiple `ilab` clients try to connect to the same InstructLab server at the same time, the 1st will connect to the server while the others will start their own temporary server. This will require additional resources on the host machine.
 
-- Serve a non-default Safetensors model (e.g. granite-7b-lab). NOTE: this requires a GPU.
+#### Serving other models
 
-   Ensure vllm is installed:
+- You can serve a non-default model (e.g. Mixtral-8x7B-Instruct-v0.1) with the following example command:
+
+   ```shell
+   ilab model serve --model-path ~/.cache/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
+   ```
+
+- You can serve a non-default Safetensors model (e.g. granite-7b-lab). This requires a GPU.
+
+   Verify vllm is installed:
 
    ```shell
    pip show vllm
@@ -465,44 +481,54 @@ After running `ilab config init` your directories will look like the following o
    pip install vllm@git+https://github.com/opendatahub-io/vllm@v0.6.2
    ```
 
+   Then you can serve a Safetensors model:
+
    ```shell
    ilab model serve --model-path ~/.cache/instructlab/models/instructlab/granite-7b-lab
    ```
 
 ### 📣 Chat with the model (Optional)
 
-Because you're serving the model in one terminal window, you will have to create a new window and re-activate your Python virtual environment to run `ilab model chat` command:
+- Because you're serving the model in one terminal window, you will have to create a new window and re-activate your Python virtual environment to run `ilab model chat` command:
 
-```shell
-source venv/bin/activate
-ilab model chat
-```
+   ```shell
+   source venv/bin/activate
+   ilab model chat
+   ```
 
-Chat with a non-default model (e.g. Mixtral-8x7B-Instruct-v0.1):
+- Chat with a non-default model (e.g. Mixtral-8x7B-Instruct-v0.1):
 
-```shell
-source venv/bin/activate
-ilab model chat --model models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
-```
+   ```shell
+   source venv/bin/activate
+   ilab model chat --model ~/.cache/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf 
+   ```
 
-Please note that usage of `--model` necessitates that the existing server has that model. If not, you must exit the server. `--model` in `ilab model chat` has the ability to start a server on your behalf with the specified model if one is not already running on the port.
+   > [!TIP]
+   > The usage of `--model` necessitates that the existing server has that model. If not, you must exit the server. `--model` in `ilab model chat` has the ability to start a server on your behalf with the specified model if one is not already running on the port.
 
-Before you start adding new skills and knowledge to your model, you can check its baseline performance by asking it a question such as `what is the capital of Canada?`.
+   Before you start adding new skills and knowledge to your model, you can check its baseline performance by asking it a question such as `what is the capital of Canada?`.
+   The model needs to be trained with the generated synthetic data to use the new skills or knowledge
 
-> **NOTE:** the model needs to be trained with the generated synthetic data to use the new skills or knowledge
+   *Example output of chatbot*
 
-```shell
-(venv) $ ilab model chat
-╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────── system ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ Welcome to InstructLab Chat w/ GGML-MERLINITE-7B-lab-Q4_K_M (type /h for help)                                                                                                                                                             │
-╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
->>> what is the capital of Canada?                                                                                                                                                                                                [S][default]
-╭────────────────────────────────────────────────────────────────────────────────────────────────────── ggml-merlinite-7b-lab-Q4_K_M ───────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ The capital city of Canada is Ottawa. It is located in the province of Ontario, on the southern banks of the Ottawa River in the eastern portion of southern Ontario. The city serves as the political center for Canada, as it is home to │
-│ Parliament Hill, which houses the House of Commons, Senate, Supreme Court, and Cabinet of Canada. Ottawa has a rich history and cultural significance, making it an essential part of Canada's identity.                                   │
-╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── elapsed 12.008 seconds ─╯
->>>                                                                                                                                                                                                                               [S][default]
-```
+   ```shell
+   (venv) $ ilab model chat
+   ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────── system ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+   │ Welcome to InstructLab Chat w/ GGML-MERLINITE-7B-lab-Q4_K_M (type /h for help)                                                                                                                                                             │
+   ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+   >>> what is the capital of Canada?                                                                                                                                                                                                [S][default]
+   ╭────────────────────────────────────────────────────────────────────────────────────────────────────── ggml-merlinite-7b-lab-Q4_K_M ───────────────────────────────────────────────────────────────────────────────────────────────────────╮
+   │ The capital city of Canada is Ottawa. It is located in the province of Ontario, on the southern banks of the Ottawa River in the eastern portion of southern Ontario. The city serves as the political center for Canada, as it is home to │
+   │ Parliament Hill, which houses the House of Commons, Senate, Supreme Court, and Cabinet of Canada. Ottawa has a rich history and cultural significance, making it an essential part of Canada's identity.                                   │
+   ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── elapsed 12.008 seconds ─╯
+   >>>                                                                                                                                                                                                                               [S][default]
+   ```
+
+- You can also adjust the temperature settings of the model with the `--greedy-mode` flag.
+
+   ```shell
+   ilab model chat --model ~/.cache/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf --greedy-mode
+   ```
 
 ## 💻 Creating new knowledge or skills and training the model
 
@@ -517,23 +543,23 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
 
 ### 📜 List and validate your new data
 
-You can use the `ilab taxonomy diff` command to ensure `ilab` is registering your new knowledge or skills and your contributions are properly formatted. This command displays any new or modified YAML files within your taxonomy tree. For example, the following is the expected result of a valid compositional skill contribution after adding a new skill called `foo-lang` to the freeform writing subdirectory:
+- You can use the `ilab taxonomy diff` command to ensure `ilab` is registering your new knowledge or skills and your contributions are properly formatted. This command displays any new or modified YAML files within your taxonomy tree. For example, the following is the expected result of a valid compositional skill contribution after adding a new skill called `foo-lang` to the freeform writing subdirectory:
 
-```shell
-(venv) $ ilab taxonomy diff
-compositional_skills/writing/freeform/foo-lang/qna.yaml
-Taxonomy in $HOME/.local/share/instructlab/taxonomy is valid :)
-```
+   ```shell
+   (venv) $ ilab taxonomy diff
+   compositional_skills/writing/freeform/foo-lang/qna.yaml
+   Taxonomy in $HOME/.local/share/instructlab/taxonomy is valid :)
+   ```
 
-You can also validate your entire taxonomy by performing a diff against an empty base by using the `--taxonomy-base=empty` argument:
+- You can also validate your entire taxonomy by performing a diff against an empty base by using the `--taxonomy-base=empty` argument:
 
-```shell
-(venv) $ ilab taxonomy diff --taxonomy-base=empty
-compositional_skills/general/tables/empty/qna.yaml
-compositional_skills/general/tables/editing/add_remove/qna.yaml
-...
-Taxonomy in $HOME/.local/share/instructlab/taxonomy is valid :)
-```
+   ```shell
+   (venv) $ ilab taxonomy diff --taxonomy-base=empty
+   compositional_skills/general/tables/empty/qna.yaml
+   compositional_skills/general/tables/editing/add_remove/qna.yaml
+   ...
+   Taxonomy in $HOME/.local/share/instructlab/taxonomy is valid :)
+   ```
 
 ### 🚀 Generate a synthetic dataset
 
@@ -541,25 +567,31 @@ Before following these instructions, ensure the existing model you are adding sk
 
 1. To generate a synthetic dataset based on your newly added knowledge or skill set in [taxonomy](https://github.com/instructlab/taxonomy.git) repository, run the following command:
 
-   With GPU acceleration:
+   *Default SDG*
+
+    ```shell
+   ilab data generate
+   ```
+
+   *With GPU acceleration*
 
    ```shell
    ilab data generate --pipeline full --gpus <NUM_OF_GPUS>
    ```
 
-   Without GPU acceleration:
+   *Without GPU acceleration:*
 
    ```shell
    ilab data generate --pipeline simple
    ```
 
-   Use a non-default model (e.g. Mixtral-8x7B-Instruct-v0.1) to generate data, run the following command:
+   *Using a non-default model (e.g. Mixtral-8x7B-Instruct-v0.1) to generate data:*
 
    ```shell
    ilab data generate --model ~/.cache/instructlab/models/mistralai/mixtral-8x7b-instruct-v0.1 --pipeline full --gpus 4
    ```
 
-   > **NOTE:** ⏳ This can take from 15 minutes to 1+ hours to complete, depending on your computing resources.
+   ⏳ This can take from 15 minutes to 1+ hours to complete, depending on your computing resources.
 
    *Example output of `ilab data generate`*
 
@@ -567,7 +599,7 @@ Before following these instructions, ensure the existing model you are adding sk
    (venv) $ ilab data generate
    INFO 2024-07-30 19:57:44,093 numexpr.utils:161: NumExpr defaulting to 8 threads.
    INFO 2024-07-30 19:57:44,452 datasets:58: PyTorch version 2.3.1 available.
-   Generating synthetic data using 'simple' pipeline, '$HOME/.cache/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf' model, './taxonomy' taxonomy, against http://localhost:8000/v1 server
+   Generating synthetic data using 'full' pipeline, 'mistral-7b-instruct-v0.2.Q4_K_M.gguf' model, './taxonomy' taxonomy, against http://localhost:8000/v1 server
    INFO 2024-07-30 19:57:45,084 instructlab.sdg:375: Synthesizing new instructions. If you aren't satisfied with the generated instructions, interrupt training (Ctrl-C) and try adjusting your YAML files. Adding more examples may help.
    INFO 2024-07-30 19:57:45,090 instructlab.sdg.pipeline:153: Running pipeline single-threaded
    INFO 2024-07-30 19:57:47,820 instructlab.sdg.llmblock:51: LLM server supports batched inputs: False
@@ -607,14 +639,14 @@ Before following these instructions, ensure the existing model you are adding sk
    └── train_mixtral-8x7b-instruct-v0-1_2024-08-13T19_51_48.jsonl
    ```
 
-   **Optional**: It is also possible to run the generate step against a different model via an
-   OpenAI-compatible API. For example, the one spawned by `ilab model serve` or any remote or locally hosted LLM (e.g. via [`ollama`](https://ollama.com/), [`LM Studio`](https://lmstudio.ai), etc.). Run the following command:
+*Generating synthetic data on a different model:* It is also possible to run the generate step against a different model via an
+OpenAI-compatible API. For example, the one spawned by `ilab model serve` or any remote or locally hosted LLM (e.g. via [`ollama`](https://ollama.com/), [`LM Studio`](https://lmstudio.ai), etc.). Run the following command:
 
    ```shell
    ilab data generate --endpoint-url http://localhost:8000/v1
    ```
 
-Note that it is also possible to generate a synthetic dataset based on the entire contents of the taxonomy repo using the `--taxonomy-base=empty` option:
+*Generating synthetic data on the entire taxonomy repo:* You can generate a synthetic dataset based on the entire contents of the taxonomy repo using the `--taxonomy-base=empty` option:
 
    ```shell
    ilab data generate --taxonomy-base=empty
@@ -624,130 +656,157 @@ Note that it is also possible to generate a synthetic dataset based on the entir
 
 There are many options for training the model with your synthetic data-enhanced dataset.
 
-> **Note:** **Every** `ilab` command needs to run from within your Python virtual environment.
+### ✋ Before you begin training
 
-#### ilab model training pipelines
+There are a few models you need to download before running the InstructLab end-to-end workflow locally.
 
-`ilab model train` has three pipelines: `simple`, `full`, and `accelerated`. The default is `accelerated`.
+- Download the `granite-7b-lab` model for training:
+
+   ```shell
+   ilab model download --repository instructlab/granite-7b-lab 
+   ```
+
+- Download the `prometheus-8x7b-v2.0` for *multi-phase training* and *benchmark evaluation*. This model is not required for `simple` or `full` training.
+
+   ```shell
+   ilab model download --repository prometheus-eval/prometheus-8x7b-v2.0 --hf-token <your-huggingface-token> 
+   ```
+
+#### InstructLab model training pipelines
+
+`ilab model train` has three pipelines: `simple`, `full`, and `accelerated`. The default is `full`.
 
 1. `simple` uses an SFT Trainer on Linux and MLX on MacOS. This type of training takes roughly an hour and produces the lowest fidelity model but should indicate if your data is being picked up by the training process.
-2. `full` uses a custom training loop and data processing funcions for the granite family of models. This loop is optimizied for CPU and MPS functionality. Please use `--pipeline=full` in combination with `--device=cpu` (Linux) or `--device=mps` (MacOS). You can also use `--device=cpu` on a MacOS machine. However, MPS is optimized for better performance on these systems.
+2. `full` uses a custom training loop and data processing functions for the granite family of models. This loop is optimized for CPU and MPS functionality. Please use `--pipeline=full` in combination with `--device=cpu` (Linux) or `--device=mps` (MacOS). You can also use `--device=cpu` on a MacOS machine. However, MPS is optimized for better performance on these systems.
 3. `accelerated` uses the instructlab-training library which supports GPU accelerated and distributed training. The `full` loop and data processing functions are either pulled directly from or based off of the work in this library.
-
-#### Train the model locally
-
-```shell
-ilab model train
-```
-
-> **NOTE:** ⏳ This step can potentially take **several hours** to complete depending on your computing resources. Please stop `ilab model chat` and `ilab model serve` first to free resources.
 
 After running `ilab model train`, the output locations depend on the chosen pipeline or strategy:
 
 | **Pipeline/Strategy**              | **Operating System** | **Output Location/Details**                                                                                             |
 |------------------------------------|----------------------|--------------------------------------------------------------------------------------------------------------------------|
 | `simple`                           | Linux                | Model saved in `models` directory as `ggml-model-f16.gguf`.                                                              |
-|                                    | MacOS                | Model saved in `<model_name>-mlx-q` directory.                                                                           |
+| `simple`                           | MacOS                | Model saved in `<model_name>-mlx-q` directory.                                                                           |
 | `full`                             | Linux & MacOS        | `.bin` and `.gguf` models saved in `~/.local/share/instructlab/checkpoints/hf_format` directory. Two models in each `sample_*` directory: one quantized (`Q4-M-K` suffix) and one full precision. |
 | `accelerated`                      | Linux                | Models saved in `~/.local/share/instructlab/checkpoints`. Can be evaluated with `ilab model evaluate` to choose the best one. |
 | `lab-multiphase`                   | Linux                | Phase 1 models saved in `~/.local/share/instructlab/phased/phase1/checkpoints` (Knowledge training). Phase 2 models saved in `~/.local/share/instructlab/phased/phase2/checkpoints` (Skills training). Evaluation is run for both phases to identify the best checkpoint. |
+
+To limit training time, you can adjust the `num_epoch` paramater in the `config.yaml` file. The maximum number of epochs for running the InstructLab end-to-end workkflow is 10.
+
+#### Train the model locally
+
+- Train the model with your synthetic data with the `ilab model train` command:
+
+   ```shell
+   ilab model train
+   ```
+
+   ⏳ This step can potentially take **several hours** to complete depending on your computing resources. Please stop `ilab model chat` and `ilab model serve` first to free resources.
 
 When running multi phase training evaluation is run on each phase, we will tell you which checkpoint in this folder performs the best.
 
 #### Train the model locally on an M-series Mac or on Linux using the full pipeline
 
-To train the model locally on your M-Series Mac using our full pipeline and MPS or on your Linux laptop/deskop using CPU:
+- To train the model locally on your M-Series Mac using our full pipeline and MPS or on your Linux laptop/desktop using CPU:
 
-```shell
-ilab model train --pipeline full --device mps
-```
+   ```shell
+   ilab model train --pipeline full --device mps --data-path <path-to-sdg-dataset>
+   ```
 
-```shell
-ilab model train --pipeline full --device cpu
-```
+   ```shell
+   ilab model train --pipeline full --device cpu --data-path <path-to-sdg-dataset>
+   ```
 
-> **Note:** ⏳ This process will take a while to complete. If you run for ~8 epochs it will take several hours.
+   *Example command*
 
-`ilab model train` outputs a directory for each epoch that resembles the following structure:
+   ```shell
+   ilab model train --pipeline full --device cpu --data-path ~/.local/share/instructlab/datasets/knowledge_train_msgs_2024-10-23T09_14_44.jsonl
+   ```
 
-```shell
-$ ls ~/.local/share/instructlab/checkpoints/hf_format/samples_0/
-├── added_tokens.json
-├── config.json
-├── pytorch_model.bin
-├── pytorch_model.gguf
-├── pytorch_model-Q4_K_M.gguf
-├── special_tokens_map.json
-├── tokenizer.json
-├── tokenizer_config.json
-└── tokenizer.model
-```
+   ⏳ This process will take a while to complete. If you run for ~8 epochs it will take several hours.
 
-this entire folder can be served on a system that supports vLLM using the .bin model. However, on most laptops you can serve either the full precision gguf: `pytorch_model.gguf` or the 4-bit-quantized one: `pytorch_model-Q4_K_M.gguf`.
+   `ilab model train` outputs a directory for each epoch that resembles the following structure:
+
+   ```shell
+   $ ls ~/.local/share/instructlab/checkpoints/hf_format/samples_0/
+   ├── added_tokens.json
+   ├── config.json
+   ├── pytorch_model.bin
+   ├── pytorch_model.gguf
+   ├── pytorch_model-Q4_K_M.gguf
+   ├── special_tokens_map.json
+   ├── tokenizer.json
+   ├── tokenizer_config.json
+   └── tokenizer.model
+   ```
+
+   This entire folder can be served on a system that supports vLLM using the `.bin` model. However, on most laptops you can serve either the full precision gguf: `pytorch_model.gguf` or the 4-bit-quantized one: `pytorch_model-Q4_K_M.gguf`.
 
 #### Train the model locally on an M-series Mac or on Linux using the simple pipeline
 
-To train the model locally on your M-Series Mac using our simple pipeline and MLX or on your Linux laptop/deskop using an SFT Trainer:
+- To train the model locally on your M-Series Mac using our simple pipeline and MLX or on your Linux laptop/desktop using an SFT Trainer:
 
-```shell
-ilab model train --pipeline simple
-```
+   ```shell
+   ilab model train --pipeline simple
+   ```
 
-> **Note:** ⏳ This process will take a little while to complete (time can vary based on hardware
-and output of `ilab data generate` but on the order of 5 to 15 minutes)
+   ⏳ This process will take a little while to complete (time can vary based on hardware and output of `ilab data generate` but on the order of 5 to 15 minutes)
 
-on a Mac `ilab model train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory called `adapters.npz` (in `Numpy` compressed array format). For example:
+   On a Mac `ilab model train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory called `adapters.npz` (in `Numpy` compressed array format). For example:
 
-```shell
-(venv) $ ls instructlab-merlinite-7b-lab-mlx-q/
-├── adapters-010.npz
-├── adapters-020.npz
-├── adapters-030.npz
-├── adapters-040.npz
-├── adapters-050.npz
-├── adapters-060.npz
-├── adapters-070.npz
-├── adapters-080.npz
-├── adapters-090.npz
-├── adapters-100.npz
-├── adapters.npz
-├── added_tokens.json
-├── config.json
-├── model.safetensors
-├── special_tokens_map.json
-├── tokenizer.json
-├── tokenizer.model
-└── tokenizer_config.json
-```
-
-on Linux `ilab model train` outputs a brand-new model that can be served in the `models` directory called `ggml-model-f16.gguf`.
+   ```shell
+   (venv) $ ls instructlab-merlinite-7b-lab-mlx-q/
+   ├── adapters-010.npz
+   ├── adapters-020.npz
+   ├── adapters-030.npz
+   ├── adapters-040.npz
+   ├── adapters-050.npz
+   ├── adapters-060.npz
+   ├── adapters-070.npz
+   ├── adapters-080.npz
+   ├── adapters-090.npz
+   ├── adapters-100.npz
+   ├── adapters.npz
+   ├── added_tokens.json
+   ├── config.json
+   ├── model.safetensors
+   ├── special_tokens_map.json
+   ├── tokenizer.json
+   ├── tokenizer.model
+   └── tokenizer_config.json
+   ```
 
 #### Train the model locally with GPU acceleration
 
-Training has experimental support for GPU acceleration with Nvidia CUDA or AMD ROCm. Please see [the GPU acceleration documentation](./docs/gpu-acceleration.md) for more details. At present, hardware acceleration requires a data center GPU or high-end consumer GPU with at least 18 GB free memory.
+- Training has support for GPU acceleration with Nvidia CUDA or AMD ROCm. Please see [the GPU acceleration documentation](./docs/gpu-acceleration.md) for more details. At present, hardware acceleration requires a data center GPU or high-end consumer GPU with at least 18 GB free memory.
 
-```shell
-ilab model train --pipeline accelerated --device cuda
-```
+   ```shell
+   ilab model train --pipeline accelerated --device cuda --data-path <path-to-sdg-data>
+   ```
 
-This version of `ilab model train` outputs brand-new models that can be served in the `~/.local/share/instructlab/checkpoints` directory.  These models can be run through `ilab model evaluate` to choose the best one.
+   *Example command*
+
+   ```shell
+   ilab model train --pipeline full --device cpu --data-path ~/.local/share/instructlab/datasets/knowledge_train_msgs_2024-10-23T09_14_44.jsonl
+   ```
+
+   This version of `ilab model train` outputs brand-new models that can be served in the `~/.local/share/instructlab/checkpoints` directory.  These models can be run through `ilab model evaluate` to choose the best one.
 
 #### Train the model locally with multi-phase training and GPU acceleration
 
-`ilab model train` supports multi-phase training. This results in the following workflow:
+- `ilab model train` supports multi-phase training. This results in the following workflow:
 
-1. We train the model on knowledge
-2. Evaluate the trained model to find the best checkpoint
-3. We train the model on skills
-4. We evaluate the model to find the best overall checkpoint
+   1. We train the model on knowledge
+   2. Evaluate the trained model to find the best checkpoint
+   3. We train the model on skills
+   4. We evaluate the model to find the best overall checkpoint
 
-```shell
-ilab model train --strategy lab-multiphase --phased-phase1-data <knowledge train messages jsonl> --phased-phase2-data <skills train messages jsonl> -y
-```
+   ```shell
+   ilab model train --strategy lab-multiphase --phased-phase1-data <knowledge train messages jsonl> --phased-phase2-data <skills train messages jsonl> -y
+   ```
 
-This command takes in two `.jsonl` files from your `datasets` directory, one is the knowledge jsonl and the other is a skills jsonl. The `-y` flag skips an interactive prompt asking the user if they are sure they want to run multi-phase training.
+   This command takes in two `.jsonl` files from your `datasets` directory, one is the knowledge jsonl and the other is a skills jsonl. The `-y` flag skips an interactive prompt asking the user if they are sure they want to run multi-phase training.
 
-Note: this command may take 3 or more hours depending on the size of the data and number of training epochs you run.
+   ⏳ This command may take 3 or more hours depending on the size of the data and number of training epochs you run.
 
 #### Train the model in the cloud
 
@@ -791,177 +850,130 @@ resources. You can download it via `ilab model download`.
 
 #### Running MMLU
 
-Below is an example of running MMLU with a local safetensors model directory:
+- Example of running MMLU with a local safetensors model directory:
 
-```bash
-$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
-$ ilab model evaluate --benchmark mmlu --model $ILAB_MODELS_DIR/instructlab/granite-7b-test
-...
-# KNOWLEDGE EVALUATION REPORT
+   ```bash
+   $ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+   $ ilab model evaluate --benchmark mmlu --model $ILAB_MODELS_DIR/instructlab/granite-7b-test
+   ...
+   # KNOWLEDGE EVALUATION REPORT
 
-## MODEL (SCORE)
-/home/user/.cache/instructlab/models/instructlab/granite-7b-test (0.52/1.0)
+   ## MODEL (SCORE)
+   /home/user/.cache/instructlab/models/instructlab/granite-7b-test (0.52/1.0)
 
-### SCORES (0.0 to 1.0):
-mmlu_abstract_algebra - 0.31
-mmlu_anatomy - 0.46
-mmlu_astronomy - 0.52
-mmlu_business_ethics - 0.55
-mmlu_clinical_knowledge - 0.57
-mmlu_college_biology - 0.56
-mmlu_college_chemistry - 0.38
-mmlu_college_computer_science - 0.46
-mmlu_college_mathematics - 0.34
-mmlu_college_medicine - 0.49
-mmlu_college_physics - 0.27
-mmlu_computer_security - 0.66
-mmlu_conceptual_physics - 0.38
-mmlu_econometrics - 0.39
-mmlu_electrical_engineering - 0.48
-mmlu_elementary_mathematics - 0.3
-mmlu_formal_logic - 0.38
-mmlu_global_facts - 0.34
-mmlu_high_school_biology - 0.56
-mmlu_high_school_chemistry - 0.43
-mmlu_high_school_computer_science - 0.53
-mmlu_high_school_european_history - 0.63
-mmlu_high_school_geography - 0.62
-mmlu_high_school_government_and_politics - 0.74
-mmlu_high_school_macroeconomics - 0.52
-mmlu_high_school_mathematics - 0.24
-mmlu_high_school_microeconomics - 0.51
-mmlu_high_school_physics - 0.34
-mmlu_high_school_psychology - 0.72
-mmlu_high_school_statistics - 0.36
-mmlu_high_school_us_history - 0.68
-mmlu_high_school_world_history - 0.73
-mmlu_human_aging - 0.59
-mmlu_human_sexuality - 0.6
-mmlu_international_law - 0.67
-mmlu_jurisprudence - 0.56
-mmlu_logical_fallacies - 0.67
-mmlu_machine_learning - 0.3
-mmlu_management - 0.7
-mmlu_marketing - 0.79
-mmlu_medical_genetics - 0.51
-mmlu_miscellaneous - 0.7
-mmlu_moral_disputes - 0.57
-mmlu_moral_scenarios - 0.3
-mmlu_nutrition - 0.55
-mmlu_philosophy - 0.55
-mmlu_prehistory - 0.59
-mmlu_professional_accounting - 0.39
-mmlu_professional_law - 0.4
-mmlu_professional_medicine - 0.44
-mmlu_professional_psychology - 0.53
-mmlu_public_relations - 0.6
-mmlu_security_studies - 0.62
-mmlu_sociology - 0.67
-mmlu_us_foreign_policy - 0.79
-mmlu_virology - 0.42
-mmlu_world_religions - 0.68
-```
+   ### SCORES (0.0 to 1.0):
+   mmlu_abstract_algebra - 0.31
+   mmlu_anatomy - 0.46
+   mmlu_astronomy - 0.52
+   mmlu_business_ethics - 0.55
+   mmlu_clinical_knowledge - 0.57
+   mmlu_college_biology - 0.56
+   mmlu_college_chemistry - 0.38
+   mmlu_college_computer_science - 0.46
+   mmlu_college_mathematics - 0.34
+   mmlu_college_medicine - 0.49
+   mmlu_college_physics - 0.27
+   mmlu_computer_security - 0.66
+   mmlu_conceptual_physics - 0.38
+   mmlu_econometrics - 0.39
+   mmlu_electrical_engineering - 0.48
+   mmlu_elementary_mathematics - 0.3
+   ...
+   ```
+
+   The output of MMLU displays a much longer list of subjects.
 
 #### Running MMLUBranch
 
-Below is an example of running MMLUBranch with a local safetensors model directory:
+- Example of running MMLUBranch with a local safetensors model directory:
 
-```bash
-$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
-$ ilab model evaluate --benchmark mmlu_branch --model $ILAB_MODELS_DIR/instructlab/granite-7b-test --base-model $ILAB_MODELS_DIR/instructlab/granite-7b-lab
-...
-# KNOWLEDGE EVALUATION REPORT
+   ```bash
+   $ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+   $ ilab model evaluate --benchmark mmlu_branch --model $ILAB_MODELS_DIR/instructlab/granite-7b-test --base-model $ILAB_MODELS_DIR/instructlab/granite-7b-lab
+   ...
+   # KNOWLEDGE EVALUATION REPORT
 
-## BASE MODEL (SCORE)
-/home/user/.cache/instructlab/models/instructlab/granite-7b-lab (0.74/1.0)
+   ## BASE MODEL (SCORE)
+   /home/user/.cache/instructlab/models/instructlab/granite-7b-lab (0.74/1.0)
 
-## MODEL (SCORE)
-/home/user/.cache/instructlab/models/instructlab/granite-7b-test (0.78/1.0)
+   ## MODEL (SCORE)
+   /home/user/.cache/instructlab/models/instructlab/granite-7b-test (0.78/1.0)
 
-### IMPROVEMENTS (0.0 to 1.0):
-1. tonsils: 0.74 -> 0.78 (+0.04)
-```
+   ### IMPROVEMENTS (0.0 to 1.0):
+   1. tonsils: 0.74 -> 0.78 (+0.04)
+   ```
 
 #### Running MTBench
 
-Below is an example of running MTBench with a local safetensors model directory:
+- Example of running MTBench with a local safetensors model directory:
 
-```bash
-$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
-$ ilab model evaluate --benchmark mt_bench --model $ILAB_MODELS_DIR/instructlab/granite-7b-test
-...
-# SKILL EVALUATION REPORT
+   ```bash
+   $ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+   $ ilab model evaluate --benchmark mt_bench --model $ILAB_MODELS_DIR/instructlab/granite-7b-test
+   ...
+   # SKILL EVALUATION REPORT
 
-## MODEL (SCORE)
-/home/user/.cache/instructlab/models/instructlab/granite-7b-test (7.27/10.0)
+   ## MODEL (SCORE)
+   /home/user/.cache/instructlab/models/instructlab/granite-7b-test (7.27/10.0)
 
-### TURN ONE (0.0 to 10.0):
-7.48
+   ### TURN ONE (0.0 to 10.0):
+   7.48
 
-### TURN TWO (0.0 to 10.0):
-7.05
-```
+   ### TURN TWO (0.0 to 10.0):
+   7.05
+   ```
 
 #### Running MTBenchBranch
 
-Below is an example of running MTBenchBranch with a local safetensors model directory:
+- Below is an example of running MTBenchBranch with a local safetensors model directory:
 
-```bash
-$ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
-$ export ILAB_TAXONOMY_DIR=$HOME/.local/share/instructlab/taxonomy
-$ ilab model evaluate --benchmark mt_bench_branch \
-   --model $ILAB_MODELS_DIR/instructlab/granite-7b-test \
-   --base-model $ILAB_MODELS_DIR/instructlab/granite-7b-lab \
-   --taxonomy-path $ILAB_TAXONOMY_DIR \
-   --branch rc \
-   --base-branch main
-...
-# SKILL EVALUATION REPORT
+   ```bash
+   $ export ILAB_MODELS_DIR=$HOME/.local/share/instructlab/models
+   $ export ILAB_TAXONOMY_DIR=$HOME/.local/share/instructlab/taxonomy
+   $ ilab model evaluate --benchmark mt_bench_branch \
+      --model $ILAB_MODELS_DIR/instructlab/granite-7b-test \
+      --base-model $ILAB_MODELS_DIR/instructlab/granite-7b-lab \
+      --taxonomy-path $ILAB_TAXONOMY_DIR \
+      --branch rc \
+      --base-branch main
+   ...
+   # SKILL EVALUATION REPORT
 
-## BASE MODEL (SCORE)
-/home/user/.cache/instructlab/models/instructlab/granite-7b-lab (5.78/10.0)
+   ## BASE MODEL (SCORE)
+   /home/user/.cache/instructlab/models/instructlab/granite-7b-lab (5.78/10.0)
 
-## MODEL (SCORE)
-/home/user/.cache/instructlab/models/instructlab/granite-7b-test (6.00/10.0)
+   ## MODEL (SCORE)
+   /home/user/.cache/instructlab/models/instructlab/granite-7b-test (6.00/10.0)
 
-### IMPROVEMENTS (0.0 to 10.0):
-1. foundational_skills/reasoning/linguistics_reasoning/object_identification/qna.yaml: 4.0 -> 6.67 (+2.67)
-2. foundational_skills/reasoning/theory_of_mind/qna.yaml: 3.12 -> 4.0 (+0.88)
-3. foundational_skills/reasoning/linguistics_reasoning/logical_sequence_of_words/qna.yaml: 9.33 -> 10.0 (+0.67)
-4. foundational_skills/reasoning/logical_reasoning/tabular/qna.yaml: 5.67 -> 6.33 (+0.67)
-5. foundational_skills/reasoning/common_sense_reasoning/qna.yaml: 1.67 -> 2.33 (+0.67)
-6. foundational_skills/reasoning/logical_reasoning/causal/qna.yaml: 5.67 -> 6.0 (+0.33)
-7. foundational_skills/reasoning/logical_reasoning/general/qna.yaml: 6.6 -> 6.8 (+0.2)
-8. compositional_skills/writing/grounded/editing/content/qna.yaml: 6.8 -> 7.0 (+0.2)
-9. compositional_skills/general/synonyms/qna.yaml: 4.5 -> 4.67 (+0.17)
+   ### IMPROVEMENTS (0.0 to 10.0):
+   1. foundational_skills/reasoning/linguistics_reasoning/object_identification/qna.yaml: 4.0 -> 6.67 (+2.67)
+   2. foundational_skills/reasoning/theory_of_mind/qna.yaml: 3.12 -> 4.0 (+0.88)
+   3. foundational_skills/reasoning/linguistics_reasoning/logical_sequence_of_words/qna.yaml: 9.33 -> 10.0 (+0.67)
 
-### REGRESSIONS (0.0 to 10.0):
-1. foundational_skills/reasoning/unconventional_reasoning/lower_score_wins/qna.yaml: 5.67 -> 4.0 (-1.67)
-2. foundational_skills/reasoning/mathematical_reasoning/qna.yaml: 7.33 -> 6.0 (-1.33)
-3. foundational_skills/reasoning/temporal_reasoning/qna.yaml: 5.67 -> 4.67 (-1.0)
+   ### REGRESSIONS (0.0 to 10.0):
+   1. foundational_skills/reasoning/unconventional_reasoning/lower_score_wins/qna.yaml: 5.67 -> 4.0 (-1.67)
+   2. foundational_skills/reasoning/mathematical_reasoning/qna.yaml: 7.33 -> 6.0 (-1.33)
+   3. foundational_skills/reasoning/temporal_reasoning/qna.yaml: 5.67 -> 4.67 (-1.0)
 
-### NO CHANGE (0.0 to 10.0):
-1. foundational_skills/reasoning/linguistics_reasoning/odd_one_out/qna.yaml (9.33)
-2. compositional_skills/grounded/linguistics/inclusion/qna.yaml (6.5)
-```
+   ### NO CHANGE (0.0 to 10.0):
+   1. foundational_skills/reasoning/linguistics_reasoning/odd_one_out/qna.yaml (9.33)
+   2. compositional_skills/grounded/linguistics/inclusion/qna.yaml (6.5)
+   ```
 
 ### 🍴 Serve the newly trained model
 
-1. Stop the server you have running by entering `ctrl+c` keys in the terminal running the server.
+If you have a server running, stop the server you have running by entering `ctrl+c` keys in the terminal running the server.
 
-   > **IMPORTANT**:
-   - 🍎 This step is only implemented for macOS with M-series chips (for now).
+*🍎 Mac only:* Before serving the newly trained model you must convert it to work with
+the `ilab` cli. The `ilab model convert` command converts the new model into quantized [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format which is required by the server to host the model in the `ilab model serve` command.
 
-   - Before serving the newly trained model you must convert it to work with
-   the `ilab` cli. The `ilab model convert` command converts the new model into quantized [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format which is required by the server to host the model in the `ilab model serve` command.
+- Convert the newly trained model by running the following command:
 
-2. Convert the newly trained model by running the following command:
-
-   ```shell
+    ```shell
    ilab model convert
    ```
 
-3. Serve the newly trained model locally via `ilab model serve` command with the `--model-path`
+1. Serve the newly trained model locally via `ilab model serve` command with the `--model-path`
 argument to specify your new model:
 
    ```shell
