@@ -56,7 +56,7 @@ def fetch_from_hub(hf_path: str, local: bool):
             repo_id=hf_path,
             local_dir=hf_path.replace(
                 "/", "-"
-            ),  # "instructlab/merlinite-7b-lab" to "instructlab-merlinite-7b-lab"
+            ),  # e.g. "instructlab/granite-7b-lab" to "instructlab-granite-7b-lab"
             allow_patterns=["*.json", "*.safetensors", "tokenizer.model"],
         )
 
