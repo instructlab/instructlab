@@ -91,6 +91,7 @@ class _InstructlabDefaults:
         "lora_alpha": 32,
         "lora_dropout": 0.1,
         "lora_target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"],
+        "use_dolomite": False,
     }
 
     def __init__(self):
