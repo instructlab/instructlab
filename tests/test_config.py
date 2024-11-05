@@ -30,7 +30,7 @@ class TestConfig:
         internal_dirname = "internal"
         cache_dir = os.path.join(xdg_cache_home(), package_name)
         data_dir = os.path.join(xdg_data_home(), package_name)
-        default_chat_model = f"{cache_dir}/models/merlinite-7b-lab-Q4_K_M.gguf"
+        default_chat_model = f"{cache_dir}/models/granite-7b-lab-Q4_K_M.gguf"
         default_sdg_model = f"{cache_dir}/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
 
         assert cfg.general is not None
@@ -90,7 +90,7 @@ class TestConfig:
     def _assert_model_defaults(self, cfg):
         package_name = "instructlab"
         cache_dir = os.path.join(xdg_cache_home(), package_name)
-        default_chat_model = f"{cache_dir}/models/merlinite-7b-lab-Q4_K_M.gguf"
+        default_chat_model = f"{cache_dir}/models/granite-7b-lab-Q4_K_M.gguf"
 
         assert cfg.chat is not None
         assert cfg.chat.model == default_chat_model
@@ -225,14 +225,16 @@ serve:
     def test_get_model_family(self):
         good_cases = {
             # two known families
-            "merlinite": "merlinite",
+            "granite": "granite",
             "mixtral": "mixtral",
             # case insensitive
-            "MERLINiTe": "merlinite",
-            # mapping granite to merlinite
-            "granite": "merlinite",
+            "GrANiTe": "granite",
+            # mapping merlinite to granite
+            "merlinite": "granite",
+            # mapping mistral to mixtral
+            "mistral": "mixtral",
             # default empty value of model_family will use name of model in model path to guess model_family
-            "": "merlinite",
+            "": "granite",
         }
         bad_cases = [
             # unknown family

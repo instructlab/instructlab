@@ -30,7 +30,7 @@ class TestLabDownload:
         assert (
             result.exit_code == 0
         ), f"command finished with an unexpected exit code. {result.stdout}"
-        assert mock_hf_hub_download.call_count == 2
+        assert mock_hf_hub_download.call_count == 3
 
     @patch(
         "instructlab.model.download.hf_hub_download",
