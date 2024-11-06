@@ -1153,6 +1153,19 @@ def read_and_create_system_profiles(profiles_dir: str, overwrite: bool) -> bool:
     read_and_create_system_profiles walks the given dir, reads the templated files and writes them into
     the DEFAULTS.SYSTEM_PROFILE_DIR preserving their arch, processor name, and yaml file name
     """
+    # if we are overwriting, remove the existing dir. We should do this because
+    # the directory being provided, if using $ILAB_SYSTEM_PROFILE_DIR, could have a different structure.
+    # if the directory structure differs, some leftover profiles could be left behind for selection
+    if overwrite:
+        # Standard
+        import shutil
+
+        for item in os.listdir(DEFAULTS.SYSTEM_PROFILE_DIR):
+            item_path = os.path.join(DEFAULTS.SYSTEM_PROFILE_DIR, item)
+            # Check if the item is a directory
+            if os.path.isdir(item_path):
+                # Remove the directory and its contents
+                shutil.rmtree(item_path)
     fresh_install = False
     for dirpath, _dirnames, filenames in os.walk(profiles_dir):
         for filename in filenames:
