@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 COMMON_OPTS="hn:"
-ALL_OPTS="${COMMON_OPTS}cl:t:"
+ALL_OPTS="${COMMON_OPTS}fcl:t:"
 MAX_ITERS=12
 INSTRUCTLAB_CLOUD_CONFIG=${INSTRUCTLAB_CLOUD_CONFIG:-$HOME/.instructlab/cloud-config}
 
@@ -333,6 +333,8 @@ sync() {
     local user_home
     user_home="$(instance_user_home)"
 
+    check_dirty_repo instructlab
+
     local branch
     branch="$(git symbolic-ref HEAD 2>/dev/null)"
     branch=${branch##refs/heads/}
@@ -360,6 +362,9 @@ sync_library() {
     SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
     local repo_dir
     repo_dir="${SCRIPT_DIR}/../../../${LIBRARY}"
+
+    check_dirty_repo "$LIBRARY"
+
     if [ -d "${repo_dir}" ]; then
         repo_dir=$(realpath "${repo_dir}")
         pushd "${repo_dir}"
@@ -376,6 +381,17 @@ sync_library() {
         "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "pushd ${LIBRARY} && git fetch syncrepo && git reset --hard syncrepo/main"
     else
         echo "Could find repo: ${repo_dir}"
+    fi
+}
+
+check_dirty_repo() {
+    local library
+    library="$1"
+    if [ "$FORCE" != true ]; then
+        if ! "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "pushd ${library} && [ -z \"\$(git status --untracked-files=no --porcelain=v1)\" ]"; then
+            echo "Remote tree is dirty. To overwrite run with -f"
+            exit 1
+        fi
     fi
 }
 
@@ -422,6 +438,8 @@ handle_opt() {
         c)  TEMP_COMMIT=true
         ;;
         t)  INSTANCE_TYPE=$2
+        ;;
+        f)  FORCE=true
         ;;
     esac
 }
@@ -498,6 +516,8 @@ Commands
             Name of the instance to sync to (default provided in config)
         -c
             Push uncommitted changes to the remote instance with a temporary commit
+        -f
+            Overwrite local changes to instructlab repo on the remote instance
 
     sync-library - Sync your local library repo to the instance
         -n
@@ -506,6 +526,8 @@ Commands
             Push uncommitted changes to the remote instance with a temporary commit
         -l
             Library repo to sync that exists as a sibling of this instructlab repo (Ex: training)
+        -f
+            Overwrite local changes to library repo on the remote instance
 
     update-ssh-config - Update the HostIpAddress in ~/.ssh/config
         -n
