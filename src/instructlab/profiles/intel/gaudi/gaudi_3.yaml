@@ -1,0 +1,132 @@
+chat:
+  context: default
+  # Sets temperature to 0 if enabled, leading to more deterministic responses
+  greedy_mode: false
+  # Directory where chat logs are stored
+  logs_dir: ~/.local/share/instructlab/chatlogs
+  # The maximum number of tokens that can be generated in the chat completion
+  max_tokens: null
+  # Directory where model to be used for chatting with is stored
+  model: ~/.cache/instructlab/models/instructlab/granite-7b-lab
+  session: null
+  # visual mode
+  vi_mode: false
+  # renders vertical overflow if enabled, displays ellipses otherwise
+  visible_overflow: true
+evaluate:
+  # Base taxonomy branch
+  base_branch: null
+  # Directory where the model to be evaluated is stored
+  base_model: ~/.cache/instructlab/models/instructlab/granite-7b-lab
+  # Taxonomy branch containing custom skills/knowledge that should be used for evaluation runs
+  branch: null
+  # Number of GPUs to use for running evaluation
+  gpus: 8
+  # MMLU benchmarking settings
+  mmlu:
+    # batch size for evaluation.
+    # Valid values are a positive integer or 'auto' to select the largest batch size that will fit in memory
+    batch_size: auto
+    # number of question-answer pairs provided in the context preceding the question used for evaluation
+    few_shots: 5
+  # Settings to run MMLU against a branch of taxonomy containing
+  # custom skills/knowledge used for training
+  mmlu_branch:
+    # Directory where custom MMLU tasks are stored
+    tasks_dir: ~/.local/share/instructlab/datasets
+  model: null
+  # multi-turn benchmarking settings for skills
+  mt_bench:
+    # Directory where model to be used as judge is stored
+    judge_model: ~/.cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
+    max_workers: auto
+    # Directory where evaluation results are stored
+    output_dir: ~/.local/share/instructlab/internal/eval_data
+  # Settings to run MT-Bench against a branch of taxonomy containing
+  # custom skills/knowledge used for training
+  mt_bench_branch:
+    # Path to where base taxonomy is stored
+    taxonomy_path: ~/.local/share/instructlab/taxonomy
+general:
+  debug_level: 0
+  log_level: INFO
+generate:
+  # Teacher model that will be used to synthetically generate training data
+  model: ~/.cache/instructlab/models/mistralai/Mixtral-8x7B-Instruct-v0.1
+  # Number of CPU cores to use for generation
+  num_cpus: 10
+  # Directory where generated datasets are stored
+  output_dir: ~/.local/share/instructlab/datasets
+  # Directory where pipeline config files are stored
+  pipeline: full
+  # The total number of instructions to be generated
+  sdg_scale_factor: 30
+  seed_file: ~/.local/share/instructlab/internal/seed_tasks.json
+  # Branch of taxonomy used to calculate diff against
+  taxonomy_base: empty
+  # Directory where taxonomy is stored and accessed from
+  taxonomy_path: ~/.local/share/instructlab/taxonomy
+  # Teacher model specific settings
+  teacher:
+    # Serving backend to use to host the teacher model
+    backend: vllm
+    # Path to teacher model that will be used to synthetically generate training data
+    model_path: ~/.cache/instructlab/models/mistralai/Mixtral-8x7B-Instruct-v0.1
+    # vLLM serving settings
+    vllm:
+      # number of GPUs to allocate to vLLM
+      gpus: 8
+      # the family of model being served - used to determine the appropriate chat template
+      llm_family: 'mixtral'
+serve:
+  # Serving backend to use to host the model
+  backend: vllm
+  # Chat template to supply to the served model. Possible values:
+  #   - Custom chat template string
+  #   - Auto: Uses default for serving backend
+  chat_template: auto
+  # Llamacpp serving settings
+  llama_cpp:
+    # number of model layers to offload to GPU
+    # -1 means all
+    gpu_layers: -1
+    # the family of model being served - used to determine the appropriate chat template
+    llm_family: ''
+    # maximum number of tokens that can be processed by the model
+    max_ctx_size: 4096
+  # Path to model that will be served for inference
+  model_path: ~/.cache/instructlab/models/instructlab/granite-7b-lab
+  # vLLM serving settings
+  vllm:
+    gpus: 8
+    # the family of model being served - used to determine the appropriate chat template
+    llm_family: ''
+    # additional arguments to be supplied directly to vLLM
+    vllm_args: ["--tensor-parallel-size", "8"]
+train:
+  additional_args:
+    learning_rate: 2e-5
+    lora_alpha: 32
+    lora_dropout: 0.1
+    warmup_steps: 25
+  ckpt_output_dir: ~/.local/share/instructlab/checkpoints
+  data_output_dir: ~/.local/share/instructlab/internal
+  data_path: ~/.local/share/instructlab/datasets
+  deepspeed_cpu_offload_optimizer: false
+  distributed_backend: fsdp
+  effective_batch_size: 128
+  fsdp_cpu_offload_optimizer: true
+  is_padding_free: true
+  lora_quantize_dtype: null
+  lora_rank: 0
+  max_batch_len: 60000
+  max_seq_len: 4096
+  model_path: ~/.cache/instructlab/models/instructlab/granite-7b-lab
+  nproc_per_node: 8
+  num_epochs: 8
+  phased_mt_bench_judge: ~/.cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
+  phased_phase1_num_epochs: 10
+  phased_phase2_num_epochs: 10
+  checkpoint_at_epoch: true
+  save_samples: 1000
+version: 1.0.0
