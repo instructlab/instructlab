@@ -70,6 +70,14 @@ def init(
             )
             if not overwrite:
                 return
+        click.secho(
+            """
+            NOTE: ilab no longer supports Python 3.9 or Python 3.12 as of version 0.18. If you are using either of these Python versions, there is no upgrade path from ilab 0.17 to newer ilab versions.
+            Please switch to Python 3.10 or 3.11 to use the latest ilab. ilab 0.17 will receive no bug fixes or additional features.
+            You can check which Python version you are using by running `python --version`
+            """,
+            fg="yellow",
+        )
         click.echo(
             "Welcome to InstructLab CLI. This guide will help you to setup your environment."
         )
