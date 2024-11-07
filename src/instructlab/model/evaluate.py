@@ -334,6 +334,11 @@ def launch_server(
                     fg="yellow",
                 )
             eval_serve.vllm.vllm_args.extend([tps_prefix, str(gpus)])
+        elif effective_gpus < 1:
+            click.secho(
+                "Evaluate is currently not configured to use GPUs. If you are on a GPU-enabled system edit your config or pass the number of GPUs you would like to use with '--gpus'",
+                fg="yellow",
+            )
 
         if max_workers is not None and isinstance(max_workers, int):
             # Recommend max-workers based on hardware configuration: min(#GPUs being used * 10, #CPU cores) +- 50%
