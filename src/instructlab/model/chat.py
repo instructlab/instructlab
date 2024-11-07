@@ -580,8 +580,13 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self.info["messages"].append(message)
 
     def _handle_list_contexts(self, _):
+        # reconstruct contexts dict based on values passed at runtime
+        context_dict = dict.fromkeys(CONTEXTS, None)
+        context_dict["default"] = get_sysprompt(get_model_arch(pathlib.Path(self.model)))
+        context_dict["cli_helper"] = get_cli_helper_sysprompt()
+
         context_list = "\n\n".join(
-            [f"**{key}**:\n{value}" for key, value in CONTEXTS.items()]
+            [f"**{key}**:\n{value}" for key, value in context_dict.items()]
         )
         self._sys_print(Markdown(f"**Available contexts:**\n\n{context_list}"))
         raise KeyboardInterrupt
