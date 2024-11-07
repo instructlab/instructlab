@@ -66,8 +66,12 @@ class ExpandAliasesGroup(LazyEntryPointGroup):
 
     def get_alias_info(self, cmd_name: str) -> tuple[str, str]:
         ep: metadata.EntryPoint = self.alias_eps[cmd_name]
-        # assume that the second item of the module name is the group
-        return ep.module.split(".", 3)[1], ep.module.split(".", 3)[2]
+        module_parts = ep.module.split(".", 3)
+        # TODO: @aliryan revert the if else once chat split gets in bc
+        # the alias range will be consistent again
+        if len(module_parts) > 3:
+            return module_parts[2], module_parts[3]
+        return module_parts[1], module_parts[2]
 
     def get_command(self, ctx: click.Context, cmd_name: str) -> click.Command | None:
         if cmd_name in self.alias_eps.names:
