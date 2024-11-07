@@ -31,7 +31,7 @@ def make_data(data_dir: str, is_shiv: bool = False):
             data_new = []
             for obj in data:
                 obj_new = {
-                    "system": get_sysprompt(),
+                    "system": get_sysprompt("default"),
                     "user": obj["user"],
                     "assistant": obj["assistant"],
                 }
@@ -63,7 +63,7 @@ def make_data(data_dir: str, is_shiv: bool = False):
         data_new = []
         for obj in data:
             obj_new = {
-                "system": get_sysprompt(),
+                "system": get_sysprompt("default"),
                 "user": obj["inputs"],
                 "assistant": obj["targets"],
             }

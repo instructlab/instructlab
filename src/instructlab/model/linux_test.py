@@ -30,7 +30,7 @@ def response(client, user: str, create_params: dict):
     resp = client.chat.completions.create(
         **create_params,
         messages=[
-            {"role": "system", "content": get_sysprompt()},
+            {"role": "system", "content": get_sysprompt("default")},
             {"role": "user", "content": user},
         ],
     )

@@ -35,6 +35,7 @@ import yaml
 
 # Local
 from . import common
+from .common import CLI_HELPER_SYS_PROMPT, SYSTEM_PROMPTS
 from .defaults import DEFAULTS
 
 logger = logging.getLogger(__name__)
@@ -347,15 +348,23 @@ def git_clone_checkout(
 
 
 # pylint: disable=unused-argument
-def get_sysprompt(model=None):
+def get_sysprompt(arch: str):
     """
-    Gets a system prompt specific to a model
+    Gets a system prompt specific to a model's architecture.
+    For all unsupported architectures we return a default system prompt
     Args:
-        model (str): currently not implemented
+        arch (str): model architecture
     Returns:
         str: The system prompt for the model being used
     """
-    return common.SYS_PROMPT
+    return SYSTEM_PROMPTS.get(arch, common.DEFAULT_SYS_PROMPT)
+
+
+def get_cli_helper_sysprompt() -> str:
+    """
+    Returns the system prompt to put the chatbot in CLI helper mode
+    """
+    return CLI_HELPER_SYS_PROMPT
 
 
 # pylint: disable=broad-exception-caught
@@ -900,3 +909,29 @@ def list_models(
 def contains_argument(prefix: str, args: typing.Iterable[str]) -> bool:
     # Either --foo value or --foo=value
     return any(s == prefix or s.startswith(prefix + "=") for s in args)
+
+
+def get_model_arch(model_path: pathlib.Path) -> str:
+    """
+    Extract a given model's architecture from its config if available and return it
+
+    args
+        model_path (str): Path to the model, used to read the model config if available
+    returns
+        model_arch (str): The architecture of the model as expressed in the config file
+    """
+
+    # TODO: implement for GGUF models
+
+    model_arch = "default"
+    try:
+        with open(
+            pathlib.Path(model_path) / "config.json",
+            "r",
+            encoding="utf-8",
+        ) as f:
+            tcfg = json.load(f)
+        model_arch = tcfg["model_type"]
+    except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
+        logger.warning(f"Unable to read config for model: {model_path}: {e}.")
+    return model_arch

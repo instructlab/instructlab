@@ -1310,9 +1310,6 @@ def init(
 def map_train_to_library(ctx, params):
     # first do a lazy unwrap into the respective options
     train_args = TrainingArgs(**params)
-    print("~~~~~~~~~##########")
-    print(train_args)
-    os._exit(0)
     torch_args = TorchrunArgs(**params)
 
     ds_args = DeepSpeedOptions(

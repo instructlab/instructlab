@@ -197,6 +197,7 @@ class Server(BackendServer):
     def get_backend_type(self):
         return VLLM
 
+
 def get_argument(prefix: str, args: typing.List[str]):
     # Return last value in args for either --foo value or --foo=value
     # Returns True if flag --foo is provided with no value

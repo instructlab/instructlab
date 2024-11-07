@@ -51,7 +51,7 @@ def test_list_contexts_output():
 
     expected_output = (
         "Available contexts:\n\n"
-        "default: I am an AI language model. My primary role is to serve as a chat assistant.\n\n"
+        "default: I am an advanced AI language model designed to assist you with a wide range of tasks and provide helpful, clear, and accurate responses. My primary role is to serve as a chat assistant, engaging in natural, conversational dialogue, answering questions, generating ideas, and offering support across various topics.\n\n"
         "cli_helper: You are an expert for command line interface and know all common "
         "commands. Answer the command to execute as it without any explanation."
     )

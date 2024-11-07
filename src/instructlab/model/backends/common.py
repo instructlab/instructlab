@@ -61,6 +61,7 @@ class Closeable(typing.Protocol):
 class ServerException(Exception):
     """An exception raised when serving the API."""
 
+
 def get_in_memory_model_template(
     model_family: str, model_arch: str
 ) -> Tuple[str, str, str]:
@@ -76,7 +77,7 @@ def get_in_memory_model_template(
         bos_token (str): Beginning of sentence token
         eos_token (str): End of sentence token
     """
-
+    template = eos_token = bos_token = ""
 
     logger.debug(
         "Searching in-memory model templates for model family %s and arch %s",
@@ -101,6 +102,9 @@ def get_in_memory_model_template(
                 template = template_dict["template"]
                 bos_token = template_dict["special_tokens"].bos.token
                 eos_token = template_dict["special_tokens"].eos.token
+
+    logger.debug("no match found for supplied model family and architecture")
+    return template, eos_token, bos_token
 
 
 def format_template(template: str, bos_token: str, eos_token: str) -> str:
@@ -163,7 +167,7 @@ def get_model_template(
         if template == "":
             raise ValueError(
                 "Unable to find an appropriate chat template for supplied model"
-            )
+            ) from e
 
     # if present, replace token placeholders with actual tokens in the chat template
     template = format_template(
@@ -171,6 +175,7 @@ def get_model_template(
     )
 
     return template, eos_token, bos_token
+
 
 def is_temp_server_running():
     """Check if the temp server is running."""
