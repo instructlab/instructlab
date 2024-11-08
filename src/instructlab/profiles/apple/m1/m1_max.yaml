@@ -125,6 +125,8 @@ train:
   # maximum sequence length to be included in the training set
   # Samples exceeding this length will be dropped
   max_seq_len: 4096
+  # device to use for training
+  device: mps
   # Training pipeline to use
   pipeline: full
   # Directory where the model to be trained is stored

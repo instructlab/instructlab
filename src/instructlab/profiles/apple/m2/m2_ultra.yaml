@@ -117,6 +117,8 @@ train:
   effective_batch_size: 128
   # Boolean to indicate if the model being trained is a padding-free transformer model such as Granite
   is_padding_free: false
+  # device to use for training
+  device: mps
   # Training pipeline to use
   pipeline: full
   # Maximum tokens per gpu for each batch that will be handled in a single step

@@ -111,6 +111,7 @@ train:
     lora_alpha: 32
     lora_dropout: 0.1
     warmup_steps: 25
+  device: cuda
   ckpt_output_dir: ~/.local/share/instructlab/checkpoints
   data_output_dir: ~/.local/share/instructlab/internal
   data_path: ~/.local/share/instructlab/datasets
