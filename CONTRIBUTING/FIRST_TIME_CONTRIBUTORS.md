@@ -39,3 +39,9 @@ pip3 install .
 ```
 
 This will reinstall `ilab` in your Python virtual environment with the changes that you made.
+
+Or, use `-e/--editable` to install the project in editable mode, which allows changes to take effect automatically:
+
+```shell
+pip3 install -e .
+```

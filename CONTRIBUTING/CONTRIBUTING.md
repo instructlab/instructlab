@@ -95,56 +95,46 @@ pip install .[cpu]
 ### Testing
 
 Before pushing changes to GitHub, you need to run the tests as shown below. They can be run individually as shown in each sub-section
-or can be run with the one command:
+or can be run with the one command (use `-v` for more detailed output):
 
 ```shell
 tox
 ```
 
-#### Unit tests
-
-Unit tests are enforced by the CI system using [`pytest`](https://docs.pytest.org/). When making changes, run these tests before pushing the changes to avoid CI issues.
-
-Running unit tests can be done with:
+If you need to configure a proxy or a trusted host for pip while using tox, add the `PIP_PROXY` and `PIP_TRUSTED_HOST` environment variables in the `setenv` directive within the `[testenv]` section of `tox.ini`, for example:
 
 ```shell
-tox -e py3-unit
+[testenv]
+setenv =
+    PIP_PROXY = http://proxy.example.com:3128
+    PIP_TRUSTED_HOST = pypi.org download.pytorch.org
 ```
+
+#### Tools Overview
+
+| **Purpose**           | **Tool name**                                 | **Description**                                                | **Example command**         |
+|----------------------|------------------------------------------------|----------------------------------------------------------------|-----------------------------|
+| Unit tests           | [`pytest`](https://docs.pytest.org/)            | Runs unit tests for the project                                | `tox -e py3-unit`           |
+| Functional tests     | Custom Functional Tests Script                  | Executes functional tests defined in the project               | `tox -e py3-functional`     |
+| Code style           | [`ruff`](https://github.com/charliermarsh/ruff), [`black`](https://github.com/psf/black), [`isort`](https://pycqa.github.io/isort/) | Enforces [`pep8`](https://peps.python.org/pep-0008/) coding style, checks for unused imports, complexity, and other code quality issues | `tox -e ruff`               |
+|                      | [`pylint`](https://pylint.org) | `pylint` performs static code analysis | `tox -e lint`               |
+| Type Checking        | [`mypy`](https://mypy.readthedocs.io/en/stable/) | Performs static type analysis across the project to catch bugs  | `tox -e mypy`               |
+| Spell Checking       | [`pyspelling`](https://facelessuser.github.io/pyspelling/) & [`aspell`](http://aspell.net/) | Checks for spelling errors in documentation and code comments  | `tox -e spellcheck`         |
+| Documentation        | [`Sphinx`](https://docs.readthedocs.io/en/stable/intro/sphinx.html) | Generates HTML documentation for the project                   | `tox -e docs`               |
+| TOML File Linting    | Custom `Makefile` process                      | Lints and formats the `pyproject.toml` file                    | `tox -e tomllint`           |
 
 By default, all tests found within the `tests` directory are run. However, specific unit tests can run by passing filenames, classes and/or methods to `pytest` using tox positional arguments.  The following example invokes a single test method `test_diff_invalid_base` within the `TestLabDiff` class that is declared in the `tests/test_lab_diff.py` file:
 
 ```shell
-tox -e py3-unit -- tests/test_lab_diff.py::TestLabDiff::test_diff_invalid_base
+tox -e py3-unit -- tests/test_lab_diff.py:::TestLabDiff::test_diff_invalid_base
 ```
 
-#### Functional tests
-
-Functional tests are enforced by the CI system. When making changes, run the tests before pushing the changes to avoid CI issues.
-
-Running functional tests can be done with:
+Additionally, tools like `ruff`, `mypy`, and `lint` can also be used with `--` followed by a single file:
 
 ```shell
-tox -e py3-functional
-```
-
-#### Coding style
-
-Cli follows the python [`pep8`](https://peps.python.org/pep-0008/) coding style. The coding style is enforced by the CI system, and your PR will fail until the style has been applied correctly.
-
-We use [pre-commit](https://pre-commit.com/) to enforce coding style using [`black`](https://github.com/psf/black), and [`isort`](https://pycqa.github.io/isort/).
-
-You can invoke formatting with:
-
-```shell
-tox -e ruff
-```
-
-In addition, we use [`pylint`](https://www.pylint.org) to perform static code analysis of the code.
-
-You can invoke the linting with the following command
-
-```shell
-tox -e lint
+tox -e ruff -- code_file.py
+tox -e mypy -- code_file.py
+tox -e lint -- code_file.py
 ```
 
 ## Your First Code Contribution
