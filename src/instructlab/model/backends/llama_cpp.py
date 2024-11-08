@@ -22,7 +22,7 @@ import llama_cpp.server.app as llama_app
 import uvicorn
 
 # Local
-from ...client import check_api_base
+from ...client_utils import check_api_base
 from ...configuration import get_api_base
 from .common import (
     API_ROOT_WELCOME_MESSAGE,

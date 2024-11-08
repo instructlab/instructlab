@@ -26,7 +26,7 @@ import openai
 
 # First Party
 from instructlab import clickext
-from instructlab import client as ilabclient
+from instructlab import client_utils as ilabclient
 from instructlab import configuration as cfg
 from instructlab import log
 from instructlab.utils import HttpClientParams
