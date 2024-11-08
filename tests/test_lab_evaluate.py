@@ -661,3 +661,26 @@ def test_vllm_args_null(_, cli_runner: CliRunner):
         ],
     )
     common.assert_tps(args, "4")
+
+
+@patch("instructlab.model.evaluate.validate_model")
+def test_no_gpu_warning(validate_model_mock, cli_runner: CliRunner):
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "mmlu",
+            "--model",
+            "instructlab/granite-7b-lab",
+            "--backend",
+            "vllm",
+        ],
+    )
+    validate_model_mock.assert_called_once()
+    assert (
+        "Evaluate is currently not configured to use GPUs. If you are on a GPU-enabled system edit your config or pass the number of GPUs you would like to use with '--gpus'"
+        in result.output
+    )
