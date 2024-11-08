@@ -25,6 +25,7 @@
   - [📥 Download the model](#-download-the-model)
   - [🍴 Serving the model](#-serving-the-model)
   - [📣 Chat with the model (Optional)](#-chat-with-the-model-optional)
+  - [🚀 Upgrade InstructLab to latest version](#-upgrade-instructlab-to-latest-version)
 - [💻 Creating new knowledge or skills and training the model](#-creating-new-knowledge-or-skills-and-training-the-model)
   - [🎁 Contribute knowledge or compositional skills](#-contribute-knowledge-or-compositional-skills)
   - [📜 List and validate your new data](#-list-and-validate-your-new-data)
@@ -41,7 +42,6 @@
   - [🧪 Evaluate the newly trained model](#-evaluate-the-newly-trained-model)
   - [🍴 Serve the newly trained model](#-serve-the-newly-trained-model)
 - [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
-- [🚀 Upgrade InstructLab to latest version](#-upgrade-instructlab-to-latest-version)
 - [🎁 Submit your new knowledge or skills](#-submit-your-new-knowledge-or-skills)
 - [📬 Contributing](#-contributing)
 
@@ -530,6 +530,20 @@ ilab config show
    ilab model chat --model ~/.cache/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf --greedy-mode
    ```
 
+## 🚀 Upgrade InstructLab to latest version
+
+1. To upgrade InstructLab to the latest version, use the following command:
+
+   ```shell
+   pip install instructlab --upgrade
+   ```
+
+2. It is recommended to reinitialize your InstructLab environment after upgrading to the latest version.
+
+   ```shell
+   ilab config init
+   ```
+
 ## 💻 Creating new knowledge or skills and training the model
 
 ### 🎁 Contribute knowledge or compositional skills
@@ -993,14 +1007,6 @@ argument to specify your new model:
    ```
 
    If you are interested in optimizing the quality of the model's responses, please see [`TROUBLESHOOTING.md`](./TROUBLESHOOTING.md#model-fine-tuning-and-response-optimization)
-
-## 🚀 Upgrade InstructLab to latest version
-
-- To upgrade InstructLab to the latest version, use the following command:
-
-   ```shell
-   pip install instructlab --upgrade
-   ```
 
 ## 🎁 Submit your new knowledge or skills
 
