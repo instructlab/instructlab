@@ -9,7 +9,7 @@ from instructlab.sdg.utils import GenerateException
 import openai
 
 # First Party
-from instructlab.utils import HttpClientParams, http_client
+from instructlab.client_utils import HttpClientParams, http_client
 
 logger = logging.getLogger(__name__)
 

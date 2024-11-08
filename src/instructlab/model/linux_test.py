@@ -16,7 +16,8 @@ import click
 from instructlab.configuration import DEFAULTS
 
 # Local
-from ..utils import get_sysprompt, http_client
+from ..client_utils import http_client
+from ..utils import get_sysprompt
 from .backends import backends
 
 logger = logging.getLogger(__name__)

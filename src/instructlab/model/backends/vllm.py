@@ -20,7 +20,7 @@ import httpx
 from instructlab.utils import contains_argument
 
 # Local
-from ...client import check_api_base
+from ...client_utils import check_api_base
 from ...configuration import get_api_base
 from .common import (
     CHAT_TEMPLATE_AUTO,
