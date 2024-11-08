@@ -18,6 +18,9 @@ MODEL_FAMILY_MAPPINGS = {
     "granite": "merlinite",
 }
 
+# Indentation constant
+DEFAULT_INDENT = "    "
+
 # Default log format
 LOG_FORMAT = "%(levelname)s %(asctime)s %(name)s:%(lineno)d: %(message)s"
 
