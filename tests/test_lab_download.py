@@ -75,6 +75,6 @@ class TestLabDownload:
         )
         assert result.exit_code == 1
         assert (
-            "Invalid repository supplied: Please specify tag/version 'latest' via --release"
+            "\nInvalid repository supplied:\n    Please specify tag/version 'latest' via --release"
             in result.output
         )
