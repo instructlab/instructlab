@@ -381,7 +381,7 @@ class _evaluate(BaseModel):
     )
     format: Optional[str] = Field(
         default="text",
-        description="Format of evaluation results. Defaults to 'text' which prints to stdout, also allows for 'json' to dump to a JSON file.",
+        description="Format of evaluation results. Defaults to 'text' which prints to stdout with additional logging, also allows for 'json' to print to stdout without additional logging",
         examples=["text", "json"],
         pattern="text|json",
     )

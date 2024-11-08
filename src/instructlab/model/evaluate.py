@@ -5,7 +5,6 @@
 from datetime import datetime
 import contextlib
 import enum
-import json
 import logging
 import multiprocessing
 import os
@@ -15,8 +14,8 @@ import pathlib
 import click
 
 # First Party
-from instructlab import clickext
-from instructlab.configuration import DEFAULTS, _serve
+from instructlab import clickext, log
+from instructlab.configuration import _serve
 from instructlab.model.backends import backends
 
 # Local
@@ -303,15 +302,6 @@ def get_backend(backend, model):
     return backend
 
 
-def dump_results_to_json(benchmark: str, results: dict, output_dir):
-    """dump the given results dictionary from benchmark into a JSON file"""
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    filepath = os.path.join(output_dir, f"{benchmark}_{timestamp}.json")
-    with open(filepath, "w", encoding="utf-8") as fp:
-        json.dump(results, fp)
-    logger.info(f"{benchmark} results dumped to {filepath}")
-
-
 def launch_server(
     eval_serve: _serve,
     tls_client_cert: str | None,
@@ -568,6 +558,13 @@ def evaluate(
     with contextlib.suppress(ValueError):
         batch_size = int(batch_size)
 
+    # If 'json' format specified, write logs to the file for clean stdout
+    root_logger = logging.getLogger()
+    if format == "json":
+        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        filepath = os.path.join(output_dir, f"{benchmark}_{timestamp}.log")
+        log.add_file_handler_to_logger(root_logger, filepath)
+
     try:
         # get appropriate evaluator class from Eval lib
         validate_options(
@@ -660,7 +657,7 @@ def evaluate(
                     "turn2_score_rounded": turn2_score_rounded,
                     "error_rate": error_rate,
                 }
-                dump_results_to_json(benchmark, json_data, output_dir)
+                print(json_data)
 
             else:
                 print("# SKILL EVALUATION REPORT")
@@ -804,7 +801,7 @@ def evaluate(
                     "no_changes": no_changes,
                     "new_qnas": new_qnas,
                 }
-                dump_results_to_json(benchmark, json_data, output_dir)
+                print(json_data)
             else:
                 print("# SKILL EVALUATION REPORT\n")
                 display_models_and_scores(
@@ -867,7 +864,7 @@ def evaluate(
                     "max_score": max_score,
                     "individual_scores": individual_scores,
                 }
-                dump_results_to_json(benchmark, json_data, output_dir)
+                print(json_data)
             else:
                 print("# KNOWLEDGE EVALUATION REPORT")
                 print("\n## MODEL (SCORE)")
@@ -953,7 +950,7 @@ def evaluate(
                     "regressions": regressions,
                     "no_changes": no_changes,
                 }
-                dump_results_to_json(benchmark, json_data, output_dir)
+                print(json_data)
             else:
                 print("# KNOWLEDGE EVALUATION REPORT\n")
                 display_models_and_scores(
