@@ -364,6 +364,11 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     is_flag=True,
     help="Clear phased cache (journal, checkpoints, metadata). Helpful paired with '--skip-user-confirm'",
 )
+@click.option(
+    "--optimize-memory",
+    is_flag=True,
+    help="Optimize Memory Usage on CPU and MacOS. This uses the torch_dtype='auto' instead of float32",
+)
 @click.pass_context
 @clickext.display_params
 def train(
@@ -397,6 +402,7 @@ def train(
     training_journal: pathlib.Path | None,
     force_clear_phased_cache: bool,
     distributed_backend,
+    optimize_memory,
     **kwargs,
 ):
     """
@@ -469,7 +475,9 @@ def train(
         # if on CPU or MPS, execute full train, which is based
         # off of the structure of the training repo, just with different optimizers, model sizes, and special data gradient accumulation to get it
         # to fit on most consumer laptops
-        full_train.train(train_args=train_args, device=device)
+        full_train.train(
+            train_args=train_args, device=device, optimize_memory=optimize_memory
+        )
     elif pipeline == "simple":
         # First Party
         from instructlab.model import simple_train

@@ -9,17 +9,18 @@ import os
 # Third Party
 from instructlab_quantize import run_quantize
 from tqdm import tqdm
-from transformers import Adafactor, AutoModelForCausalLM
+from transformers import Adafactor, AutoConfig, AutoModelForCausalLM
 import numpy as np
 import psutil
 
 # First Party
 from instructlab.llamacpp import llamacpp_convert_to_gguf
+from instructlab.utils import is_macos_with_m_chip
 
 logger = logging.getLogger(__name__)
 
 
-def train(train_args, device):
+def train(train_args, device, optimize_memory):
     """
     train runs a CPU and MacOS optimized version of full fine tuning.
     Adafactor is the optimizer of choice and the multiprocessing method is set to spawn.
@@ -104,8 +105,22 @@ def train(train_args, device):
     )
     # set device based off argument given
     dev = torch.device(device)
+
+    # if the user specified --optimize-memory OR they are on a Mac, set dtype=auto
+    torch_dtype = "auto" if (optimize_memory or is_macos_with_m_chip()) else "float32"
+    # auto config based on model path
+    config = AutoConfig.from_pretrained(
+        train_args.model_path, torchscript=True, trust_remote_code=True
+    )
     # auto model based on model path
-    model = AutoModelForCausalLM.from_pretrained(train_args.model_path)
+    model = AutoModelForCausalLM.from_pretrained(
+        train_args.model_path,
+        torch_dtype=torch_dtype,
+        quantization_config=None,
+        config=config,
+        trust_remote_code=True,
+        low_cpu_mem_usage=True,
+    )
     if len(tokenizer) > model.config.vocab_size:
         logger.warning(
             f"WARNING: tokenizer has {len(tokenizer)} tokens but model has {model.config.vocab_size} vocab size"
@@ -153,15 +168,7 @@ def train(train_args, device):
     # Total RAM
     total_ram = memory_info.total / (1024**3)  # Convert to GB
     logger.info(f"Total RAM: {total_ram:.2f} GB")
-    # if RAM is <= 16, we need to use fp16 not fp32. This will yield a worse model but will allow the full pipeline to run
-    if total_ram <= 16:
-        # if <= 16GB ram, use gradinent accum and hald precision
-        logger.warning(
-            f"Your system has {total_ram:.2f} GB of RAM. This is below our reccomendation of 32GB for this type of training. Using half precision."
-        )
-        model = model.to(dev).half()  # Convert model to float16
-    else:
-        model = model.to(dev)
+    model = model.to(dev)
 
     # adafactor and gradient checkpointing are memory friendly, we opt to use these in the CPU/MPS loop to fit 7b models.
     optimizer = Adafactor(
@@ -185,7 +192,7 @@ def train(train_args, device):
     for epoch in range(train_args.num_epochs):
         dataloader.batch_sampler.set_epoch(epoch)
         inner_pb = tqdm(range(len(dataloader)), desc=f"Epoch {epoch}")
-        aggregated_values = torch.zeros(3, dtype=torch.float16).to(dev)
+        aggregated_values = torch.zeros(3, dtype=torch.float32).to(dev)
 
         for step, batch in enumerate(dataloader):
             aggregated_values[0] = batch.pop("num_loss_counted_tokens")
@@ -193,16 +200,9 @@ def train(train_args, device):
 
             # Move and cast batch data to device
             for k in batch:
-                if total_ram < 16:
-                    if k in ["input_ids", "attention_mask"]:
-                        # these two need to be of type long if using .half()
-                        batch[k] = batch[k].to(device=dev, dtype=torch.long)
-                    else:
-                        batch[k] = batch[k].to(device=dev, dtype=torch.float16)
-                else:
-                    batch[k] = batch[k].to(device=dev)
+                batch[k] = batch[k].to(device=dev)
 
-            output = model(**batch, use_cache=False)
+            output = model(**batch, use_cache=False, return_dict=True)
             loss = output.loss
             aggregated_values[2] = loss.item()
 
