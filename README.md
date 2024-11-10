@@ -495,7 +495,7 @@ ilab config show
 
 ### 📣 Chat with the model (Optional)
 
-- Because you're serving the model in one terminal window, you will have to create a new window and re-activate your Python virtual environment to run `ilab model chat` command:
+- Because you're serving the model in one terminal window, you will have to create a new terminal window and re-activate your Python virtual environment to run `ilab model chat` command:
 
    ```shell
    source venv/bin/activate
