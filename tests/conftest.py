@@ -103,3 +103,9 @@ def cli_runner(
 def testdata_path() -> typing.Generator[pathlib.Path, None, None]:
     """Path to local test data directory"""
     yield TESTS_PATH / "testdata"
+
+
+@pytest.fixture
+def scripts_path() -> typing.Generator[pathlib.Path, None, None]:
+    """Path to the scripts directory"""
+    yield TESTS_PATH.parent / "scripts"
