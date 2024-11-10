@@ -388,9 +388,15 @@ ilab config show
    *Example output*
 
    ```shell
-   Downloading model from Hugging Face: instructlab/merlinite-7b-lab-GGUF@main to /Users/<user>/.cache/instructlab/models...
-   Downloading model from Hugging Face: TheBloke/Mistral-7B-Instruct-v0.2-GGUF@main to /Users/<user>/.cache/instructlab/models...
-   TheBloke/Mistral-7B-Instruct-v0.2-GGUF requires a HF Token to be set. Please use '--hf-token' or 'export HF_TOKEN' to download all necessary models
+   Downloading model from Hugging Face:
+       Model: instructlab/merlinite-7b-lab-GGUF@main
+       Destination: /Users/<user>/.cache/instructlab/models
+   Downloading model from Hugging Face:
+       Model: TheBloke/Mistral-7B-Instruct-v0.2-GGUF@main
+       Destination: /Users/<user>/.cache/instructlab/models
+
+   TheBloke/Mistral-7B-Instruct-v0.2-GGUF requires a HF Token to be set.
+   Please use '--hf-token' or 'export HF_TOKEN' to download all necessary models.
    ```
 
    You may be prompted to use your Hugging Face token to download the `Mistral-7B-Instruct-v0.2-GGUF` model.
