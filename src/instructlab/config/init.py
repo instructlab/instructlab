@@ -26,6 +26,7 @@ from instructlab.configuration import (
     recreate_system_profiles,
     write_config,
 )
+from instructlab.defaults import DEFAULT_INDENT
 from instructlab.utils import convert_bytes_to_proper_mag
 
 logger = logging.getLogger(__name__)
@@ -116,11 +117,13 @@ def init(
     )
     if overwrite_profile:
         click.echo(
-            f"\nGenerating config file and profiles:\n    {DEFAULTS.CONFIG_FILE}\n    {DEFAULTS.SYSTEM_PROFILE_DIR}\n"
+            f"\nGenerating config file and profiles:\n{DEFAULT_INDENT}{DEFAULTS.CONFIG_FILE}\n{DEFAULT_INDENT}{DEFAULTS.SYSTEM_PROFILE_DIR}\n"
         )
         recreate_system_profiles(overwrite=True)
     else:
-        click.echo(f"\nGenerating config file:\n    {DEFAULTS.CONFIG_FILE}\n")
+        click.echo(
+            f"\nGenerating config file:\n{DEFAULT_INDENT}{DEFAULTS.CONFIG_FILE}\n"
+        )
     if profile is not None:
         cfg = read_config(profile)
     elif interactive:
@@ -140,7 +143,7 @@ def init(
     ready_text = "  You're ready to start using `ilab`. Enjoy!"
     separator = get_separator(ready_text)
     click.secho(
-        f"\n{separator}\n    Initialization completed successfully!\n{ready_text}\n{separator}",
+        f"\n{separator}\n{DEFAULT_INDENT}Initialization completed successfully!\n{ready_text}\n{separator}",
         fg="green",
     )
 
@@ -338,13 +341,15 @@ def hw_auto_detect() -> Config | None:
 
 def check_if_configs_exist(fresh_install) -> bool:
     if exists(DEFAULTS.CONFIG_FILE):
-        click.echo(f"Existing config file was found in:\n    {DEFAULTS.CONFIG_FILE}")
+        click.echo(
+            f"Existing config file was found in:\n{DEFAULT_INDENT}{DEFAULTS.CONFIG_FILE}"
+        )
         overwrite = click.confirm("Do you still want to continue?")
         if not overwrite:
             raise click.exceptions.Exit(0)
     if exists(DEFAULTS.SYSTEM_PROFILE_DIR) and not fresh_install:
         return click.confirm(
-            f"Existing system profiles were found in {DEFAULTS.SYSTEM_PROFILE_DIR}\nDo you want to restore these profiles to the default values?"
+            f"\nExisting system profiles were found in:\n{DEFAULT_INDENT}{DEFAULTS.SYSTEM_PROFILE_DIR}\nDo you want to restore these profiles to the default values?"
         )
     # default behavior should be do NOT overwrite files that could have just been created
     return False
