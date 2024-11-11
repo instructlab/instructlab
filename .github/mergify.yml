@@ -36,6 +36,7 @@ pull_request_rules:
           - files~=^requirements.*\.txt$
           - files=scripts/e2e-ci.sh
           - files~=^scripts/test-data/
+          - files~=^src/instructlab/profiles/
           - files=.github/workflows/e2e-nvidia-l4-x1.yml
       - and:
         - -files~=\.py$
@@ -43,6 +44,7 @@ pull_request_rules:
         - -files~=^requirements.*\.txt$
         - -files=scripts/e2e-ci.sh
         - -files~=^scripts/test-data/
+        - -files~=^src/instructlab/profiles/
         - -files=.github/workflows/e2e-nvidia-l4-x1.yml
 
     # small e2e workflow
@@ -56,6 +58,7 @@ pull_request_rules:
           - files~=^requirements.*\.txt$
           - files=scripts/e2e-ci.sh
           - files~=^scripts/test-data/
+          - files~=^src/instructlab/profiles/
           - files=.github/workflows/e2e-nvidia-t4-x1.yml
       - and:
         - -files~=\.py$
@@ -63,6 +66,7 @@ pull_request_rules:
         - -files~=^requirements.*\.txt$
         - -files=scripts/e2e-ci.sh
         - -files~=^scripts/test-data/
+        - -files~=^src/instructlab/profiles/
         - -files=.github/workflows/e2e-nvidia-t4-x1.yml
 
     # test workflow
@@ -76,6 +80,7 @@ pull_request_rules:
           - files~=^requirements.*\.txt$
           - files=tox.ini
           - files~=^scripts/[^/]+\.sh$
+          - files~=^src/instructlab/profiles/
           - files=.github/workflows/test.yml
       - and:
         - -files~=\.py$
@@ -83,6 +88,7 @@ pull_request_rules:
         - -files~=^requirements.*\.txt$
         - -files=tox.ini
         - -files~=^scripts/[^/]+\.sh$
+        - -files~=^src/instructlab/profiles/
         - -files=.github/workflows/test.yml
 
     # code lint workflow
@@ -96,6 +102,7 @@ pull_request_rules:
           - files~=^requirements.*\.txt$
           - files=tox.ini
           - files=.pylintrc
+          - files~=^src/instructlab/profiles/
           - files=.github/workflows/lint.yml
       - and:
         - -files~=\.py$
@@ -103,6 +110,7 @@ pull_request_rules:
         - -files~=^requirements.*\.txt$
         - -files=tox.ini
         - -files=.pylintrc
+        - -files~=^src/instructlab/profiles/
         - -files=.github/workflows/lint.yml
 
     - or:
