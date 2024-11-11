@@ -720,7 +720,7 @@ To limit training time, you can adjust the `num_epoch` paramater in the `config.
    ilab model train
    ```
 
-   ⏳ This step can potentially take **several hours** to complete depending on your computing resources. Please stop `ilab model chat` and `ilab model serve` first to free resources.
+   ⏳ This step can potentially take **several hours** on M-series Mac or data center grade hardware to complete depending on your computing resources. Please stop `ilab model chat` and `ilab model serve` first to free resources. Please consider using an option with GPU acceleration or in the cloud if the command shows the estimated time with **thousands of hours** with a low grade hardware.
 
 When running multi phase training evaluation is run on each phase, we will tell you which checkpoint in this folder performs the best.
 
@@ -769,7 +769,7 @@ When running multi phase training evaluation is run on each phase, we will tell 
    ilab model train --pipeline simple
    ```
 
-   ⏳ This process will take a little while to complete (time can vary based on hardware and output of `ilab data generate` but on the order of 5 to 15 minutes)
+   ⏳ This process will take a little while to complete (time can vary based on hardware and output of `ilab data generate` on the order of 5 minutes to **several hours**)
 
    On a Mac `ilab model train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory called `adapters.npz` (in `Numpy` compressed array format). For example:
 
