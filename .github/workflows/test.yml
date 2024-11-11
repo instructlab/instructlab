@@ -14,6 +14,7 @@ on:
       - 'requirements**.txt'
       - 'tox.ini'
       - 'scripts/*.sh' # Used by this workflow
+      - 'src/instructlab/profiles/**'
       - '.github/workflows/test.yml' # This workflow
   pull_request:
     branches:
@@ -25,6 +26,7 @@ on:
       - 'requirements**.txt'
       - 'tox.ini'
       - 'scripts/*.sh' # Used by this workflow
+      - 'src/instructlab/profiles/**'
       - '.github/workflows/test.yml' # This workflow
 
 env:

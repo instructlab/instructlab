@@ -13,6 +13,7 @@ on:
       - 'requirements**.txt'
       - 'tox.ini'
       - .pylintrc
+      - 'src/instructlab/profiles/**'
       - '.github/workflows/lint.yml' # This workflow
   pull_request:
     branches:
@@ -24,6 +25,7 @@ on:
       - 'requirements**.txt'
       - 'tox.ini'
       - .pylintrc
+      - 'src/instructlab/profiles/**'
       - '.github/workflows/lint.yml' # This workflow
 
 env:
