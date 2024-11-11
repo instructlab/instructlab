@@ -96,6 +96,11 @@ generate:
   # Maximum number of words per chunk.
   # Default: 1000
   chunk_word_count: 1000
+  # The maximum amount of tokens for the model to generate during knowledge
+  # generation. A lower number yields less data but a faster SDG run. It is
+  # reccomended to use this on consumer hardware
+  # Default: 4096
+  max_num_tokens: 4096
   # Teacher model that will be used to synthetically generate training data.
   # Default: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
   model: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
