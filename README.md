@@ -308,12 +308,12 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
    `ilab` will use the default configuration file unless otherwise specified. You can override this behavior with the `--config` parameter for any `ilab` command.
 
-4. When prompted, provide the path to your default model. Otherwise, the default of a quantized [Merlinite](https://huggingface.co/instructlab/merlinite-7b-lab-GGUF) model is used.
+4. When prompted, provide the path to your default model. Otherwise, the default of a quantized [Granite](https://huggingface.co/instructlab/granite-7b-lab-GGUF) model is used.
 
    *Example output of steps 1 - 3*
 
    ```shell
-   Path to your model [/home/user/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf]: <ENTER>
+   Path to your model [/home/user/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf]: <ENTER>
    ```
 
    You can download this model with `ilab model download` command as well.
@@ -330,7 +330,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
    Please provide the following values to initiate the environment [press Enter for defaults]:
    Path to taxonomy repo [/home/user/.local/share/instructlab/taxonomy]:
-   Path to your model [/home/user/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf]:
+   Path to your model [/home/user/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf]:
 
    Generating config file and profiles:
        /home/user/.config/instructlab/config.yaml
@@ -379,7 +379,7 @@ ilab config show
 
 #### Downloading the default InstructLab models
 
-- Run the `ilab model download` command to download a compact pre-trained version of the `merlinite-7b-lab-GGUF` and `Mistral-7B-Instruct-v0.2-GGUF` models (~4.4G) from HuggingFace.
+- Run the `ilab model download` command to download a compact pre-trained version of the `granite-7b-lab-GGUF`, `merlinite-7b-lab-GGUF`, and `Mistral-7B-Instruct-v0.2-GGUF` models (~4.4G each) from HuggingFace.
 
    ```shell
    ilab model download
@@ -388,6 +388,9 @@ ilab config show
    *Example output*
 
    ```shell
+   Downloading model from Hugging Face:
+       Model: instructlab/granite-7b-lab-GGUF@main
+       Destination: /Users/<user>/.cache/instructlab/models
    Downloading model from Hugging Face:
        Model: instructlab/merlinite-7b-lab-GGUF@main
        Destination: /Users/<user>/.cache/instructlab/models
@@ -440,6 +443,7 @@ ilab config show
   +-------------------------------------+---------------------+--------+
   | Model Name                          | Last Modified       | Size   |
   +-------------------------------------+---------------------+--------+
+  | granite-7b-lab-Q4_K_M.gguf          | 2024-08-01 15:05:48 | 4.1 GB |
   | merlinite-7b-lab-Q4_K_M.gguf        | 2024-08-01 15:05:48 | 4.1 GB |
   | mistral-7b-instruct-v0.2.Q4_K_M.gguf| 2024-08-01 15:05:48 | 4.1 GB |
   +-------------------------------------+---------------------+--------+
@@ -457,7 +461,7 @@ ilab config show
 
    ```shell
    (venv) $ ilab model serve
-   INFO 2024-03-02 02:21:11,352 lab.py:201 Using model 'models/ggml-merlinite-7b-lab-Q4_K_M.gguf' with -1 gpu-layers and 4096 max context size.
+   INFO 2024-03-02 02:21:11,352 lab.py:201 Using model 'models/ggml-granite-7b-lab-Q4_K_M.gguf' with -1 gpu-layers and 4096 max context size.
    Starting server process
    After application startup complete see http://127.0.0.1:8000/docs for API.
    Press CTRL+C to shut down the server.
@@ -520,10 +524,10 @@ ilab config show
    ```shell
    (venv) $ ilab model chat
    ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────── system ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-   │ Welcome to InstructLab Chat w/ GGML-MERLINITE-7B-lab-Q4_K_M (type /h for help)                                                                                                                                                             │
+   │ Welcome to InstructLab Chat w/ GGML-GRANITE-7B-lab-Q4_K_M (type /h for help)                                                                                                                                                             │
    ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
    >>> what is the capital of Canada?                                                                                                                                                                                                [S][default]
-   ╭────────────────────────────────────────────────────────────────────────────────────────────────────── ggml-merlinite-7b-lab-Q4_K_M ───────────────────────────────────────────────────────────────────────────────────────────────────────╮
+   ╭────────────────────────────────────────────────────────────────────────────────────────────────────── ggml-granite-7b-lab-Q4_K_M ───────────────────────────────────────────────────────────────────────────────────────────────────────╮
    │ The capital city of Canada is Ottawa. It is located in the province of Ontario, on the southern banks of the Ottawa River in the eastern portion of southern Ontario. The city serves as the political center for Canada, as it is home to │
    │ Parliament Hill, which houses the House of Commons, Senate, Supreme Court, and Cabinet of Canada. Ottawa has a rich history and cultural significance, making it an essential part of Canada's identity.                                   │
    ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────── elapsed 12.008 seconds ─╯
@@ -774,7 +778,7 @@ When running multi phase training evaluation is run on each phase, we will tell 
    On a Mac `ilab model train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory called `adapters.npz` (in `Numpy` compressed array format). For example:
 
    ```shell
-   (venv) $ ls instructlab-merlinite-7b-lab-mlx-q/
+   (venv) $ ls instructlab-granite-7b-lab-mlx-q/
    ├── adapters-010.npz
    ├── adapters-020.npz
    ├── adapters-030.npz
@@ -1002,7 +1006,7 @@ argument to specify your new model:
 
    Which model should you select to serve? After running the `ilab model convert` command, some files and a directory are generated. The model you will want to serve ends with an extension of `.gguf`
    and exists in a directory with the suffix `trained`. For example:
-   `instructlab-merlinite-7b-lab-trained/instructlab-merlinite-7b-lab-Q4_K_M.gguf`.
+   `instructlab-granite-7b-lab-trained/instructlab-granite-7b-lab-Q4_K_M.gguf`.
 
 ## 📣 Chat with the new model (not optional this time)
 

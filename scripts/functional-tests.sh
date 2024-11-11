@@ -66,7 +66,7 @@ cleanup() {
     rm -rf test_taxonomy
 
     # revert model name change from test_model_print()
-    local original_model_filename="merlinite-7b-lab-Q4_K_M.gguf"
+    local original_model_filename="granite-7b-lab-Q4_K_M.gguf"
     local temporary_model_filename='foo.gguf'
     mv "${ILAB_CACHE_DIR}/models/${temporary_model_filename}" "${ILAB_CACHE_DIR}/models/${original_model_filename}" || true
     rm -f "${ILAB_CONFIG_FILE}.bak" serve.log "${ILAB_CACHE_DIR}/models/${temporary_model_filename}" chat.log
@@ -337,7 +337,7 @@ EOF
     sed -i.bak -e 's/sdg_scale_factor.*/sdg_scale_factor: 1/g' "${ILAB_CONFIG_FILE}"
 
     # This should be finished in a minute or so but time it out incase it goes wrong
-    if ! timeout 20m ilab data generate --pipeline simple --model "${ILAB_CACHE_DIR}/models/merlinite-7b-lab-Q4_K_M.gguf"  --taxonomy-path test_taxonomy/compositional_skills/qna.yaml; then
+    if ! timeout 20m ilab data generate --pipeline simple --model "${ILAB_CACHE_DIR}/models/granite-7b-lab-Q4_K_M.gguf"  --taxonomy-path test_taxonomy/compositional_skills/qna.yaml; then
         echo "Error: ilab data generate command took more than 20 minutes and was cancelled"
         exit 1
     fi
@@ -356,10 +356,10 @@ test_model_train() {
     # TODO: call `ilab model train`
     if [[ "$(uname)" == Linux ]]; then
         # real `ilab model train` on Linux produces models/ggml-model-f16.gguf
-        # fake gml-model-f16.gguf the same as merlinite-7b-lab-Q4_K_M.gguf
+        # fake gml-model-f16.gguf the same as granite-7b-lab-Q4_K_M.gguf
         checkpoints_dir="${ILAB_DATA_DIR}/checkpoints/ggml-model-f16.gguf"
         test -f "${checkpoints_dir}" || \
-            ln -s "${ILAB_CACHE_DIR}/models/merlinite-7b-lab-Q4_K_M.gguf" "${checkpoints_dir}"
+            ln -s "${ILAB_CACHE_DIR}/models/granite-7b-lab-Q4_K_M.gguf" "${checkpoints_dir}"
     fi
 }
 
@@ -370,7 +370,7 @@ test_model_test() {
         timeout 20m ilab model test > model_test.out
         cat model_test.out
         grep -q '### what is 1+1' model_test.out
-        grep -q 'merlinite-7b-lab-Q4_K_M.gguf: The sum of 1 and 1 is indeed 2' model_test.out
+        grep -q 'granite-7b-lab-Q4_K_M.gguf: The sum of 1 + 1 is indeed 2' model_test.out
     fi
 }
 
@@ -464,7 +464,7 @@ test_log_format(){
 }
 
 test_model_print(){
-    local src_model="${ILAB_CACHE_DIR}/models/merlinite-7b-lab-Q4_K_M.gguf"
+    local src_model="${ILAB_CACHE_DIR}/models/granite-7b-lab-Q4_K_M.gguf"
     local target_model="${ILAB_CACHE_DIR}/models/foo.gguf"
     cp "${src_model}" "${target_model}"
     ilab model serve --model-path "${target_model}" &

@@ -154,7 +154,7 @@ class _serve_vllm(BaseModel):
     llm_family: str = Field(
         default="",  # TODO: convert to None and use a pattern to validate
         description="Large Language Model Family",
-        examples=["merlinite", "granite"],
+        examples=["granite", "mixtral"],
     )
     max_startup_attempts: int | None = Field(
         default=120,
@@ -186,7 +186,7 @@ class _serve_llama_cpp(BaseModel):
     llm_family: str = Field(
         default="",  # TODO: convert to None and use a pattern to validate
         description="Large Language Model Family",
-        examples=["merlinite", "granite"],
+        examples=["granite", "mixtral"],
     )
 
 

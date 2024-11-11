@@ -3,6 +3,7 @@
 ### Breaking Changes
 
 * train-profiles have been deprecated and replaced with system-profiles. These profiles follow the format of the config file and apply to all commands. They live in `~/.local/share/instructlab/internal/system_profiles`
+* The default model has been changed from Merlinite to Granite - see <https://github.com/instructlab/instructlab/issues/2238> for more details
 
 ### Features
 

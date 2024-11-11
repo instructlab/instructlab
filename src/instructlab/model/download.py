@@ -261,6 +261,7 @@ class OCIDownloader(Downloader):
     "repositories",
     multiple=True,
     default=[
+        DEFAULTS.GRANITE_GGUF_REPO,
         DEFAULTS.MERLINITE_GGUF_REPO,
         DEFAULTS.MISTRAL_GGUF_REPO,
     ],  # TODO: add to config.yaml
@@ -275,6 +276,7 @@ class OCIDownloader(Downloader):
     default=[
         "main",
         "main",
+        "main",
     ],  # TODO: add to config.yaml
     show_default=True,
     help="The revision of the model to download - e.g. a branch, tag, or commit hash for Hugging Face repositories and tag or commit hash for OCI repositories.",
@@ -283,7 +285,11 @@ class OCIDownloader(Downloader):
     "--filename",
     "filenames",
     multiple=True,
-    default=[DEFAULTS.GGUF_MODEL_NAME, DEFAULTS.MISTRAL_GGUF_MODEL_NAME],
+    default=[
+        DEFAULTS.GRANITE_GGUF_MODEL_NAME,
+        DEFAULTS.MERLINITE_GGUF_MODEL_NAME,
+        DEFAULTS.MISTRAL_GGUF_MODEL_NAME,
+    ],
     show_default="The default model location in the instructlab data directory.",
     help="Name of the model file to download from the Hugging Face repository.",
 )

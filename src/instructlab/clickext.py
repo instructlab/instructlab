@@ -118,7 +118,7 @@ class ConfigOption(click.Option):
     Example:
         Options:
         --model-path PATH           Path to the model used during generation.
-                                    [default: models/merlinite-7b-lab-Q4_K_M.gguf;
+                                    [default: models/granite-7b-lab-Q4_K_M.gguf;
                                     config: 'serve.model_path']
     """
 

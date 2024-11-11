@@ -11,12 +11,10 @@ CONFIG_FILENAME = "config.yaml"
 CONFIG_VERSION = "1.0.0"
 
 # Model families understood by ilab
-MODEL_FAMILIES = {"merlinite", "mixtral"}
+MODEL_FAMILIES = {"granite", "mixtral"}
 
 # Map model names to their family
-MODEL_FAMILY_MAPPINGS = {
-    "granite": "merlinite",
-}
+MODEL_FAMILY_MAPPINGS = {"merlinite": "granite", "mistral": "mixtral"}
 
 # Indentation constant
 DEFAULT_INDENT = "    "
@@ -57,10 +55,11 @@ class _InstructlabDefaults:
     ILAB_SYSTEM_PROFILE_DIR = "ILAB_SYSTEM_PROFILE_DIR"
 
     # TODO: Consolidate --model and --model-path into one --model-path flag since we always need a path now
-    MODEL_NAME_OLD = "merlinite-7b-lab-Q4_K_M"
+    GRANITE_GGUF_REPO = "instructlab/granite-7b-lab-GGUF"
     MERLINITE_GGUF_REPO = "instructlab/merlinite-7b-lab-GGUF"
     MISTRAL_GGUF_REPO = "TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
-    GGUF_MODEL_NAME = "merlinite-7b-lab-Q4_K_M.gguf"
+    GRANITE_GGUF_MODEL_NAME = "granite-7b-lab-Q4_K_M.gguf"
+    MERLINITE_GGUF_MODEL_NAME = "merlinite-7b-lab-Q4_K_M.gguf"
     MISTRAL_GGUF_MODEL_NAME = "mistral-7b-instruct-v0.2.Q4_K_M.gguf"
     MODEL_REPO = "instructlab/granite-7b-lab"
     JUDGE_MODEL_MT = "prometheus-eval/prometheus-8x7b-v2.0"
@@ -77,7 +76,7 @@ class _InstructlabDefaults:
     SDG_SCALE_FACTOR = 30
 
     # When otherwise unknown, ilab uses this as the default family
-    MODEL_FAMILY = "merlinite"
+    MODEL_FAMILY = "granite"
     ADDITIONAL_ARGS_DEFAULTS = {
         "learning_rate": 2e-5,
         "warmup_steps": 25,
@@ -127,7 +126,7 @@ class _InstructlabDefaults:
 
     @property
     def DEFAULT_CHAT_MODEL(self) -> str:
-        return path.join(self.MODELS_DIR, self.GGUF_MODEL_NAME)
+        return path.join(self.MODELS_DIR, self.GRANITE_GGUF_MODEL_NAME)
 
     @property
     def DEFAULT_TEACHER_MODEL(self) -> str:

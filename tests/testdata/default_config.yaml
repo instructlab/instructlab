@@ -17,8 +17,8 @@ chat:
   # Default: None
   max_tokens:
   # Model to be used for chatting with.
-  # Default: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
-  model: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+  # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+  model: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
   # Filepath of a dialog session file.
   # Default: None
   session:
@@ -154,14 +154,14 @@ generate:
       # Large Language Model Family
       # Default: ''
       # Examples:
-      #   - merlinite
       #   - granite
+      #   - mixtral
       llm_family: ''
       # Maximum number of tokens that can be processed by the model.
       # Default: 4096
       max_ctx_size: 4096
     # Directory where model to be served is stored.
-    # Default: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+    # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
     model_path: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
     # vLLM serving settings.
     vllm:
@@ -171,8 +171,8 @@ generate:
       # Large Language Model Family
       # Default: ''
       # Examples:
-      #   - merlinite
       #   - granite
+      #   - mixtral
       llm_family: ''
       # Maximum number of attempts to start the vLLM server.
       # Default: 120
@@ -211,15 +211,15 @@ serve:
     # Large Language Model Family
     # Default: ''
     # Examples:
-    #   - merlinite
     #   - granite
+    #   - mixtral
     llm_family: ''
     # Maximum number of tokens that can be processed by the model.
     # Default: 4096
     max_ctx_size: 4096
   # Directory where model to be served is stored.
-  # Default: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
-  model_path: /cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+  # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+  model_path: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
   # vLLM serving settings.
   vllm:
     # Number of GPUs to use.
@@ -228,8 +228,8 @@ serve:
     # Large Language Model Family
     # Default: ''
     # Examples:
-    #   - merlinite
     #   - granite
+    #   - mixtral
     llm_family: ''
     # Maximum number of attempts to start the vLLM server.
     # Default: 120

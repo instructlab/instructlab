@@ -260,9 +260,9 @@ def chat(
         if (
             # We need to get the base name of the model because the model path is a full path and
             # the once from the config is just the model name
-            os.path.basename(model) == cfg.DEFAULTS.GGUF_MODEL_NAME
+            os.path.basename(model) == cfg.DEFAULTS.GRANITE_GGUF_MODEL_NAME
             and os.path.basename(ctx.obj.config.chat.model)
-            == cfg.DEFAULTS.GGUF_MODEL_NAME
+            == cfg.DEFAULTS.GRANITE_GGUF_MODEL_NAME
             and api_base == ctx.obj.config.serve.api_base()
         ):
             logger.debug(
@@ -776,7 +776,7 @@ def chat_cli(
     for m in model_list:
         model_ids.append(m.id)
     if not any(model == m for m in model_ids):
-        if model == cfg.DEFAULTS.MODEL_NAME_OLD:
+        if model == "merlinite-7b-lab-Q4_K_M":
             logger.info(
                 f"Model {model} is not a full path. Try running ilab config init or edit your config to have the full model path for serving, chatting, and generation."
             )
