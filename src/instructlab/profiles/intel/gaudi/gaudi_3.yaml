@@ -113,6 +113,8 @@ train:
   data_output_dir: ~/.local/share/instructlab/internal
   data_path: ~/.local/share/instructlab/datasets
   deepspeed_cpu_offload_optimizer: false
+  # device to use for training
+  device: hpu
   distributed_backend: fsdp
   effective_batch_size: 128
   fsdp_cpu_offload_optimizer: true
@@ -127,6 +129,7 @@ train:
   phased_mt_bench_judge: ~/.cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
   phased_phase1_num_epochs: 10
   phased_phase2_num_epochs: 10
+  pipeline: accelerated 
   checkpoint_at_epoch: true
   save_samples: 1000
 version: 1.0.0
