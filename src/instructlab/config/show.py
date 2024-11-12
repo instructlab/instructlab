@@ -6,6 +6,7 @@ import sys
 
 # Third Party
 from ruamel.yaml import YAMLError, ruamel
+from ruamel.yaml.comments import CommentedMap
 import click
 
 # First Party
@@ -24,6 +25,14 @@ def get_nested_value(data_dict: Dict[str, Any], path: str) -> Any:
     return data_dict
 
 
+def strip_comments(config: CommentedMap) -> None:
+    """Recursively remove comments from a ruamel.yaml CommentedMap structure."""
+    config.ca.items.clear()
+    for value in config.values():
+        if isinstance(value, CommentedMap):
+            strip_comments(value)
+
+
 @click.command()
 @click.pass_context
 @click.option(
@@ -33,8 +42,16 @@ def get_nested_value(data_dict: Dict[str, Any], path: str) -> Any:
     default=None,
     help="Show only a specific section of the configuration, e.g., -k chat or -k chat.context",
 )
+@click.option(
+    "--without-comments",
+    "-wc",
+    "without_comments",
+    is_flag=True,
+    default=False,
+    help="Show the config without comments. Can be used in conjunction with -k.",
+)
 @clickext.display_params
-def show(ctx: click.Context, key_path: str) -> None:
+def show(ctx: click.Context, key_path: str, without_comments: bool) -> None:
     """Displays the current config as YAML with an option to extract a specific key."""
 
     try:
@@ -42,6 +59,10 @@ def show(ctx: click.Context, key_path: str) -> None:
         result = (
             commented_map if not key_path else get_nested_value(commented_map, key_path)
         )
+
+        if without_comments:
+            if isinstance(result, CommentedMap):
+                strip_comments(result)
 
         if isinstance(result, (dict, list)):
             yaml.dump(result, sys.stdout)
