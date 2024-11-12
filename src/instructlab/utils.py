@@ -3,7 +3,7 @@
 # Standard
 from functools import wraps
 from pathlib import Path
-from typing import List, Tuple, TypedDict
+from typing import Any, Dict, List, Tuple, TypedDict
 from urllib.parse import urlparse
 import copy
 import glob
@@ -900,3 +900,11 @@ def list_models(
 def contains_argument(prefix: str, args: typing.Iterable[str]) -> bool:
     # Either --foo value or --foo=value
     return any(s == prefix or s.startswith(prefix + "=") for s in args)
+
+
+def get_nested_value(data_dict: Dict[str, Any], path: str) -> Any:
+    """Retrieve nested value using dot-sepa"""
+    keys = path.split(".")
+    for key in keys:
+        data_dict = data_dict[key]
+    return data_dict
