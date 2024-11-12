@@ -17,7 +17,7 @@ from instructlab.configuration import DEFAULTS, read_config
 class TestLabInit:
     @patch(
         "instructlab.config.init.get_gpu_or_cpu",
-        return_value=("nvidia a100 x2", False, True),
+        return_value=("nvidia a100 x2", False, True, 0, 0),
     )
     def test_ilab_config_init_auto_detection_nvidia(
         self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner
@@ -32,7 +32,7 @@ class TestLabInit:
 
     @patch(
         "instructlab.config.init.get_gpu_or_cpu",
-        return_value=("apple m3 max", True, False),
+        return_value=("apple m3 max", True, False, 0, 0),
     )
     def test_ilab_config_init_auto_detection_mac(
         self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner
@@ -46,7 +46,8 @@ class TestLabInit:
         )
 
     @patch(
-        "instructlab.config.init.get_gpu_or_cpu", return_value=("amd cpu", True, True)
+        "instructlab.config.init.get_gpu_or_cpu",
+        return_value=("amd cpu", True, True, 0, 0),
     )
     def test_ilab_config_init_auto_detection_cpu(
         self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner
@@ -61,7 +62,7 @@ class TestLabInit:
 
     @patch(
         "instructlab.config.init.get_gpu_or_cpu",
-        return_value=("intel gaudi 3", False, True),
+        return_value=("intel gaudi 3", False, True, 0, 0),
     )
     def test_ilab_config_init_auto_detection_gaudi(
         self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner

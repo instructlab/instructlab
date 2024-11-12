@@ -233,7 +233,7 @@ def prompt_user_to_choose_profile(key, arch_family_processors) -> Config | None:
 
 
 def walk_and_print_system_profiles(
-    is_linux: bool, is_cpu: bool, chip_name: str
+    is_linux: bool, is_cpu: bool, vram: int, gpus: int, chip_name: str
 ) -> Config | None:
     """
     walk_and_print_system_profiles prints interactive prompts asking the user to choose
@@ -293,6 +293,10 @@ def walk_and_print_system_profiles(
                     f"We have detected the {chosen_profile} profile as an exact match for your system."
                 )
                 cfg = read_config(config_file=file)
+                # TODO: @cdoern remove this. We should not care about vRAM in this way.
+                # special handling for the 8x A100 @ 40GB
+                if "a100" in chip_name and vram == 320 and gpus == 8:
+                    cfg.train.max_batch_len = 10000
                 return cfg
 
     # if auto detection didn't work, just continue prompting as usual!
@@ -310,7 +314,7 @@ def walk_and_print_system_profiles(
     return cfg
 
 
-def get_gpu_or_cpu() -> tuple[str, bool, bool]:
+def get_gpu_or_cpu() -> tuple[str, bool, bool, int, int]:
     """
     get_gpu_or_cpu figures out what kind of hardware the user has and returns the name in the form of 'nvidia l4 x4' as well as if this is a CPU and if the user is on Linux
     """
@@ -337,7 +341,13 @@ def get_gpu_or_cpu() -> tuple[str, bool, bool]:
         # if no vRAM, try to see if we are on a CPU
         chip_name, is_cpu, is_linux = get_chip_name()
         # ok, now we have a chip name. this means we can walk the supported profile names and see if they match
-    return chip_name, is_cpu, is_linux
+    return (
+        chip_name,
+        is_cpu,
+        is_linux,
+        vram,
+        gpus,
+    )
 
 
 # hw_auto_detect looks at a user's GPUs or CPU configuration and chooses the system profile which matches your system
@@ -346,9 +356,15 @@ def hw_auto_detect() -> Config | None:
     hw_auto_detect looks at a user's GPUs or CPU configuration and chooses the system profile which matches your system
     """
 
-    chip_name, is_cpu, is_linux = get_gpu_or_cpu()
+    (
+        chip_name,
+        is_cpu,
+        is_linux,
+        vram,
+        gpus,
+    ) = get_gpu_or_cpu()
 
-    return walk_and_print_system_profiles(is_linux, is_cpu, chip_name)
+    return walk_and_print_system_profiles(is_linux, is_cpu, vram, gpus, chip_name)
 
 
 def check_if_configs_exist(fresh_install) -> bool:
