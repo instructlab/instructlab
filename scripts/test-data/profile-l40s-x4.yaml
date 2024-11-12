@@ -120,7 +120,7 @@ train:
   lora_rank: 0
   max_batch_len: 10000
   max_seq_len: 4096
-  model_path: instructlab/granite-7b-lab
+  model_path: ~/.cache/instructlab/models/instructlab/granite-7b-lab
   num_epochs: 1
   save_samples: 0
   is_padding_free: true
