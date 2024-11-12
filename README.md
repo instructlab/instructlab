@@ -377,7 +377,7 @@ After running `ilab config init` your directories will look like the following o
 | `~/.local/share/instructlab/checkpoints/`  | Contains the output of the training process.                                |
 | `~/.config/instructlab/config.yaml`        | Contains the `config.yaml` file |
 
-You can view your `config.yaml` file with the following command:
+You can view your `config.yaml` file with the following command (use `-k` to show a specific config section and/or `-wc` to show without comments):
 
 ```shell
 ilab config show
