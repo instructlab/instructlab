@@ -21,6 +21,21 @@ def remove_comment_indentation(yaml_output: str) -> str:
     )
 
 
+def strip_comments(yaml_output: str) -> str:
+    return "\n".join(
+        line for line in yaml_output.splitlines() if not line.lstrip().startswith("#")
+    )
+
+
+def get_expected_yaml_output() -> str:
+    cfg = configuration.get_default_config()
+    general_config_commented_map = configuration.config_to_commented_map(cfg.general)
+
+    yaml_stream = ruamel.yaml.compat.StringIO()
+    YAML().dump(general_config_commented_map, yaml_stream)
+    return yaml_stream.getvalue()
+
+
 def test_ilab_config_show(cli_runner: CliRunner) -> None:
     result = cli_runner.invoke(lab.ilab, ["--config", "DEFAULT", "config", "show"])
     assert result.exit_code == 0, result.stdout
@@ -32,12 +47,7 @@ def test_ilab_config_show(cli_runner: CliRunner) -> None:
 
 
 def test_ilab_config_show_key_general_yaml(cli_runner: CliRunner) -> None:
-    cfg = configuration.get_default_config()
-    general_config_commented_map = configuration.config_to_commented_map(cfg.general)
-
-    yaml_stream = ruamel.yaml.compat.StringIO()
-    YAML().dump(general_config_commented_map, yaml_stream)
-    expected_yaml_output = yaml_stream.getvalue()
+    expected_yaml_output = get_expected_yaml_output()
 
     # Test --key output for general in YAML
     result_key_general_yaml = cli_runner.invoke(
@@ -49,6 +59,29 @@ def test_ilab_config_show_key_general_yaml(cli_runner: CliRunner) -> None:
     actual_output = remove_comment_indentation(result_key_general_yaml.stdout)
     expected_yaml_output = remove_comment_indentation(expected_yaml_output)
     assert actual_output == expected_yaml_output
+
+
+def test_ilab_config_show_without_comments(cli_runner: CliRunner) -> None:
+    expected_yaml_output = get_expected_yaml_output()
+
+    # Test --key output for general in YAML with --remove-comments
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config",
+            "DEFAULT",
+            "config",
+            "show",
+            "--key",
+            "general",
+            "--without-comments",
+        ],
+    )
+
+    assert result.exit_code == 0
+    actual_output = result.stdout
+    expected_output_without_comments = strip_comments(expected_yaml_output)
+    assert actual_output.strip() == expected_output_without_comments.strip()
 
 
 def test_ilab_config_init_with_env_var_config(
