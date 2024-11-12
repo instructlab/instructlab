@@ -157,6 +157,7 @@ qlora
 quant
 quantized
 repo
+repos
 resumeable
 runtime
 safetensors

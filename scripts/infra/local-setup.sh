@@ -1,9 +1,11 @@
 #!/usr/bin/env -S bash -e
 # SPDX-License-Identifier: Apache-2.0
 
-rh__ensure-ibm-system-pkgs() {
+rh__ensure_ibm_system_pkgs() {
     # shellcheck source=/dev/null
-    source /etc/os-release
+    if [ -f /etc/os-release ]; then
+        source /etc/os-release
+    fi
     if [[ "$ID" == "fedora" ]] || [[ "$ID_LIKE" =~ "fedora" ]]; then
         curl -fsSL https://clis.cloud.ibm.com/install/linux | sh
     else
@@ -11,7 +13,7 @@ rh__ensure-ibm-system-pkgs() {
     fi
 }
 
-rh__ensure-aws-system-pkgs() {
+rh__ensure_aws_system_pkgs() {
     ADDN_PKGS=false
     while getopts "s" opt; do
         case "$opt" in
@@ -38,35 +40,19 @@ rh__ensure-aws-system-pkgs() {
     fi
 }
 
-rh() {
-    local cmdname=$1
+run_cmd() {
+    local system_type=$1
+    local cmdname=$2
     if [ -z "$cmdname" ]; then
         show_usage
         exit 1
     fi
-    shift
-    if [ "$(type -t "rh__$cmdname")" = "function" ] >/dev/null 2>&1; then
-        "rh__$cmdname" "$@"
-    elif [ "$(type -t "${cmdname//-/_}")" = "function" ] >/dev/null 2>&1; then
-        "${cmdname//-/_}" "rh"
-    else
-        echo "Invalid command: $cmdname"
-        show_usage
-        exit 1
-    fi
-}
-
-ibm() {
-    local cmdname=$1
-    if [ -z "$cmdname" ]; then
-        show_usage
-        exit 1
-    fi
-    shift
-    if [ "$(type -t "ibm__$cmdname")" = "function" ] >/dev/null 2>&1; then
-        "ibm__$cmdname" "$@"
-    elif [ "$(type -t "${cmdname//-/_}")" = "function" ] >/dev/null 2>&1; then
-        "${cmdname//-/_}" "ibm"
+    shift 2
+    cmd_name="${cmdname//-/_}"
+    if [ "$(type -t "${system_type}__${cmd_name}")" = "function" ] >/dev/null 2>&1; then
+        "${system_type}__${cmd_name}" "$@"
+    elif [ "$(type -t "${cmd_name}")" = "function" ] >/dev/null 2>&1; then
+        "${cmd_name}" "$@"
     else
         echo "Invalid command: $cmdname"
         show_usage
@@ -92,8 +78,8 @@ Commands
 "
 }
 
-if declare -f "$1" >/dev/null 2>&1; then
-    "$@"
+if [[ "$1" == "rh" ]]; then
+    run_cmd "$@"
 else
     echo "Invalid system type: $1" >&2
     show_usage
