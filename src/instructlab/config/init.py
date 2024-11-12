@@ -149,10 +149,13 @@ def init(
 
 
 # prompt_user_to_choose_vendors asks the user which hardware vendor best matches their system
-def prompt_user_to_choose_vendors(arch_family_processors: dict[str, list[list[str]]]):
+def prompt_user_to_choose_vendors(
+    arch_family_processors: dict[str, list[list[str]]],
+) -> str | None:
     """
     prompt_user_to_choose_vendors asks the user which hardware vendor best matches their system
     """
+    key = None
     click.echo(
         click.style(
             "Please choose a system profile.\n Profiles set hardware-specific defaults for all commands and sections of the configuration.",
@@ -167,9 +170,10 @@ def prompt_user_to_choose_vendors(arch_family_processors: dict[str, list[list[st
             fg="white",
         )
     )
+    click.echo("[0] NO SYSTEM PROFILE")
     keys = list(arch_family_processors.keys())
-    for idx, key in enumerate(keys, 1):
-        print(f"[{idx}] {key.upper()}")
+    for idx, k in enumerate(keys, 1):
+        click.echo(f"[{idx}] {k.upper()}")
 
     system_profile_selection = click.prompt(
         "Enter the number of your choice",
@@ -186,7 +190,11 @@ def prompt_user_to_choose_vendors(arch_family_processors: dict[str, list[list[st
                 fg="white",
             )
         )
-        click.echo("[0] No system profile")
+        click.echo("[0] NO SYSTEM PROFILE")
+    elif system_profile_selection == 0:
+        click.echo(
+            "No profile selected - ilab will use generic code defaults - these may not be optimized for your system."
+        )
     return key
 
 
@@ -213,7 +221,7 @@ def prompt_user_to_choose_profile(key, arch_family_processors) -> Config | None:
         cfg = read_config(file)
     elif system_profile_selection == 0:
         click.echo(
-            "No profile selected - any hardware acceleration for training must be configured manually."
+            "No profile selected - ilab will use generic code defaults - these may not be optimized for your system."
         )
     else:
         click.secho(
@@ -225,7 +233,7 @@ def prompt_user_to_choose_profile(key, arch_family_processors) -> Config | None:
 
 
 def walk_and_print_system_profiles(
-    is_linux: bool, is_cpu: bool, chip_name: str | None = None
+    is_linux: bool, is_cpu: bool, chip_name: str
 ) -> Config | None:
     """
     walk_and_print_system_profiles prints interactive prompts asking the user to choose
@@ -269,7 +277,7 @@ def walk_and_print_system_profiles(
                 arch_family_processor[0], []
             ).append(printed_arch_family_processor)
             file = None
-            if is_cpu and is_linux and chip_name == arch_family_processor[0]:
+            if is_cpu and is_linux and arch_family_processor[0] in chip_name:
                 # on CPU + Linux we do not care (for now) about specific processors, we only have `cpu.yaml` for Intel and AMD.
                 file = os.path.join(DEFAULTS.SYSTEM_PROFILE_DIR, system_profile_file)
             elif chip_name == " ".join(printed_arch_family_processor):
@@ -290,12 +298,16 @@ def walk_and_print_system_profiles(
     # if auto detection didn't work, just continue prompting as usual!
     key = prompt_user_to_choose_vendors(arch_family_processors)
 
-    for i, printed_arch_family_processor in enumerate(
-        printed_arch_family_processors[key], start=1
-    ):
-        click.echo(f"[{i}] {' '.join(map(str, printed_arch_family_processor)).upper()}")
+    if key is not None:
+        for i, printed_arch_family_processor in enumerate(
+            printed_arch_family_processors[key], start=1
+        ):
+            click.echo(
+                f"[{i}] {' '.join(map(str, printed_arch_family_processor)).upper()}"
+            )
 
-    return prompt_user_to_choose_profile(key, arch_family_processors)
+        cfg = prompt_user_to_choose_profile(key, arch_family_processors)
+    return cfg
 
 
 def get_gpu_or_cpu() -> tuple[str, bool, bool]:
