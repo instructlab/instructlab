@@ -55,6 +55,8 @@ generate:
   model: ~/.cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
   # Number of CPU cores to use for generation
   num_cpus: 10
+  # Maximum number of tokens to generate
+  max_num_tokens: 512
   # Directory where generated datasets are stored
   output_dir: ~/.local/share/instructlab/datasets
   # Directory where pipeline config files are stored

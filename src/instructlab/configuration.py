@@ -244,6 +244,10 @@ class _generate(BaseModel):
         default=DEFAULTS.SDG_PIPELINE,
         description="Data generation pipeline to use. Available: 'simple', 'full', or a valid path to a directory of pipeline workflow YAML files. Note that 'full' requires a larger teacher model, Mixtral-8x7b.",
     )
+    max_num_tokens: Optional[int] = Field(
+        default=DEFAULTS.SDG_MAX_NUM_TOKENS,
+        description="The maximum amount of tokens for the model to generate during knowledge generation. A lower number yields less data but a faster SDG run. It is reccomended to use this on consumer hardware",
+    )
     model: StrictStr = Field(
         default_factory=lambda: DEFAULTS.DEFAULT_TEACHER_MODEL,
         description="Teacher model that will be used to synthetically generate training data.",
