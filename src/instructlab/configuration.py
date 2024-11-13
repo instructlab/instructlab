@@ -50,6 +50,10 @@ from .defaults import (
 yaml = YAML()
 yaml.indent(mapping=2, sequence=4, offset=2)
 
+# Enable fast-download using external dependency "hf_transfer"
+# Used by the "ilab model download" command
+os.environ.setdefault("HF_HUB_ENABLE_HF_TRANSFER", "1")
+
 
 class ConfigException(Exception):
     """An exception that a configuration file has an error."""

@@ -9,6 +9,8 @@
 
 * `ilab` now supports system profiles. These profiles apply entire configuration files tailored to specific hardware configurations. We support a set of auto-detected profiles for CPU enabled Linux machines, M-Series Apple Silicon Chips, and Nvidia GPUs, and Intel Gaudi 3. When you run `ilab config init`, one of these profiles should be selected for you. If there is not a direct match, a menu will be displayed allowing you to choose one.
 
+* `ilab model download` uses the `hf_transfer` library for faster model downloads reducing the average download time by 60%. This only applies to models that are hosted on Hugging Face Hub. This can be disabled by setting the environment variable `HF_HUB_ENABLE_HF_TRANSFER` to `0`.
+
 ## v0.20
 
 ### Breaking Changes
