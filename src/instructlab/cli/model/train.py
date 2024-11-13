@@ -244,7 +244,7 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     "--use-dolomite",
     cls=clickext.ConfigOption,
     config_sections=ADDITIONAL_ARGUMENTS,
-    type=bool,
+    type=click.BOOL,
 )
 @click.option(
     "--gpus",

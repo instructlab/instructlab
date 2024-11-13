@@ -12,7 +12,7 @@ from instructlab.training.chat_templates import (
     ibm_generic_tmpl as granite,  # type: ignore[import-untyped]
 )
 from instructlab.training.chat_templates import (
-    ibm_legacy_tmpl as granite_legacy,  # type: ignore
+    ibm_legacy_tmpl as granite_llama,  # type: ignore
 )
 from instructlab.training.chat_templates import mistral_tmpl as mistral  # type: ignore
 
@@ -41,8 +41,8 @@ templates = [
     {
         "family": "granite",
         "arch": SupportedModelArchitectures.LLAMA,
-        "template": granite_legacy.CHAT_TEMPLATE,
-        "special_tokens": granite_legacy.SPECIAL_TOKENS,
+        "template": granite_llama.CHAT_TEMPLATE,
+        "special_tokens": granite_llama.SPECIAL_TOKENS,
     },
     {
         "family": "mixtral",
