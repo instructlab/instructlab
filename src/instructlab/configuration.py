@@ -297,6 +297,10 @@ class _generate(BaseModel):
         default_factory=lambda: DEFAULTS.SEED_FILE,
         deprecated=True,
     )
+    upsample_amount: Optional[int] = Field(
+        default=5000,
+        description="We will duplicate generated knowledge samples up to this number when mixing them in with our skills dataset.",
+    )
 
 
 class _mmlu(BaseModel):

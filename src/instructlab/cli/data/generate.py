@@ -153,6 +153,7 @@ logger = logging.getLogger(__name__)
     type=click.IntRange(min=512),
     cls=clickext.ConfigOption,
 )
+@click.option("--upsample-amount", cls=clickext.ConfigOption, type=click.INT)
 @click.pass_context
 @clickext.display_params
 def generate(
@@ -180,6 +181,7 @@ def generate(
     batch_size,
     gpus,
     max_num_tokens,
+    upsample_amount: int,
 ):
     """Generates synthetic data to enhance your example data"""
 
@@ -257,6 +259,7 @@ def generate(
             gpus,
             checkpoint_dir,
             max_num_tokens,
+            upsample_amount,
         )
     except Exception as exc:
         click.secho(f"failed to generate data with exception: {exc}", fg="red")
