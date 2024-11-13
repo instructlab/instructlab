@@ -2,10 +2,6 @@
 import logging
 
 # Third Party
-from instructlab.sdg.generate_data import generate_data
-
-# pylint: disable=ungrouped-imports
-from instructlab.sdg.utils import GenerateException
 import openai
 
 # First Party
@@ -37,6 +33,12 @@ def gen_data(
     checkpoint_dir,
 ):
     """Generates synthetic data to enhance your example data"""
+    # Third Party
+    from instructlab.sdg.generate_data import generate_data
+
+    # pylint: disable=ungrouped-imports
+    from instructlab.sdg.utils import GenerateException
+
     backend_instance = None
 
     if endpoint_url:
