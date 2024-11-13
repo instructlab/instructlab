@@ -3,6 +3,7 @@
 # Standard
 import copy
 import logging
+import os
 import os.path
 
 # Third Party
@@ -11,10 +12,14 @@ import click
 # First Party
 from instructlab import clickext
 from instructlab.client_utils import HttpClientParams
-from instructlab.common import SupportedModelArchitectures
 from instructlab.configuration import DEFAULTS
 from instructlab.data.generate_data import gen_data  # type: ignore
-from instructlab.utils import contains_argument, get_model_arch, get_sysprompt
+from instructlab.utils import (
+    contains_argument,
+    get_model_arch,
+    get_sysprompt,
+    use_legacy_pretraining_format,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -235,12 +240,16 @@ def generate(
         }
     )
 
-    # determine student model arch from train section of config and pick system prompt and pretraining format to
+    # determine student model arch from train section of config and pick system prompt to
     # pass to SDG appropriately
     student_model_arch = get_model_arch(ctx.obj.config.train.model_path)
     system_prompt = get_sysprompt(student_model_arch)
-    use_legacy_pretraining_format = (
-        student_model_arch.lower() == SupportedModelArchitectures.LLAMA
+
+    # Check if student model specifies a tokenizer config. If so, check if the special tokens specified
+    # match those of granite-7b. If so, set legacy_pretraining_format to true. If no tokenizer config is
+    # available, rely on model architecture to make that decision
+    legacy_pretraining_format = use_legacy_pretraining_format(
+        model_path, student_model_arch
     )
 
     try:
@@ -267,7 +276,7 @@ def generate(
             checkpoint_dir,
             max_num_tokens,
             system_prompt,
-            use_legacy_pretraining_format,
+            legacy_pretraining_format,
         )
     except Exception as exc:
         click.secho(f"failed to generate data with exception: {exc}", fg="red")

@@ -1,7 +1,6 @@
 # Standard
 from typing import Tuple
 import contextlib
-import json
 import logging
 import multiprocessing
 import pathlib
@@ -20,7 +19,7 @@ from instructlab.training.chat_templates import mistral_tmpl as mistral  # type:
 # First Party
 from instructlab.common import SupportedModelArchitectures
 from instructlab.configuration import get_model_family
-from instructlab.utils import get_model_arch
+from instructlab.utils import get_model_arch, get_model_template_from_tokenizer
 
 # mypy: disable_error_code="import-untyped"
 
@@ -103,11 +102,19 @@ def get_in_memory_model_template(
                 bos_token = template_dict["special_tokens"].bos.token
                 eos_token = template_dict["special_tokens"].eos.token
 
-    logger.debug("no match found for supplied model family and architecture")
+    logger.info("no match found for supplied model family and architecture")
     return template, eos_token, bos_token
 
 
 def format_template(template: str, bos_token: str, eos_token: str) -> str:
+    """
+    Replaces placeholders in a given template with provided special tokens
+
+    args
+        template (str): the chat template
+        bos_token (str): the beginning of sentence token to inject into template
+        eos_token (str): the end of sentence token to inject into template
+    """
     prefix = ""
     if eos_token:
         prefix = '{{% set eos_token = "{}" %}}\n'.format(eos_token)
@@ -138,15 +145,14 @@ def get_model_template(
 
     template = eos_token = bos_token = ""
     try:
-        with open(
-            pathlib.Path(model_path) / "tokenizer_config.json",
-            "r",
-            encoding="utf-8",
-        ) as f:
-            tcfg = json.load(f)
-        template = tcfg["chat_template"]
-        bos_token = tcfg["bos_token"]
-        eos_token = tcfg["eos_token"]
+        template, eos_token, bos_token = get_model_template_from_tokenizer(model_path)
+
+        # fallback to in-memory template if it is None for some reason
+        # like if the tokenizer config exists but does not contain the template
+        if template is None:
+            template, eos_token, bos_token = get_in_memory_model_template(
+                resolved_family, model_arch
+            )
 
         # Handle edge case: some 7b models (llama architecture) may contain a sub-optimal chat template in their
         # tokenizer configs. Check if the template accounts for generation prompt addition
@@ -157,7 +163,8 @@ def get_model_template(
                     resolved_family, model_arch
                 )
 
-    except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
+    # pylint: disable=broad-exception-caught
+    except Exception as e:
         logger.warning(
             f"Unable to read tokenizer config for model: {model_path}: {e}. Falling back to in-memory chat template mapping"
         )

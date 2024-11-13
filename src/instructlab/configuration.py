@@ -36,6 +36,9 @@ from ruamel.yaml import YAML, CommentedMap
 from typing_extensions import deprecated as Deprecated
 import click
 
+# First Party
+from instructlab.utils import get_model_arch, use_legacy_pretraining_format
+
 # Local
 from . import log
 from .defaults import (
@@ -1356,6 +1359,10 @@ def map_train_to_library(ctx, params):
     if params["pipeline"] == "full":
         train_args.disable_flash_attn = True
 
+    student_model_arch = get_model_arch(params["model_path"])
+    train_args.use_legacy_sp_tokens = use_legacy_pretraining_format(
+        params["model_path"], student_model_arch
+    )
     return train_args, torch_args
 
 
