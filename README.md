@@ -542,10 +542,10 @@ ilab config show
    >>>                                                                                                                                                                                                                               [S][default]
    ```
 
-- You can also adjust the temperature settings of the model with the `--greedy-mode` flag.
+- You can also adjust the temperature settings of the model with the `--temperature` or `-t` flag. The default is 1.0.
 
    ```shell
-   ilab model chat --model ~/.cache/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf --greedy-mode
+   ilab model chat --model ~/.cache/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf --temperature 0.5
    ```
 
 ## 🚀 Upgrade InstructLab to latest version
