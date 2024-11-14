@@ -245,6 +245,7 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     cls=clickext.ConfigOption,
     config_sections=ADDITIONAL_ARGUMENTS,
     type=click.BOOL,
+    required=True,  # default from config
 )
 @click.option(
     "--gpus",
