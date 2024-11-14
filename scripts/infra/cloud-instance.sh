@@ -373,7 +373,7 @@ sync_library() {
         branch=${branch##refs/heads/}
         if [ "$TEMP_COMMIT" = true ] && [ -n "$(git status --porcelain=v1 2>/dev/null)" ]; then
             trap 'git reset HEAD~' EXIT
-            git add repo_dir
+            git add "${repo_dir}"
             git commit -m 'Sync commit'
         fi
         GIT_SSH_COMMAND="ssh -o 'StrictHostKeyChecking no' -i $(instance_key)" git push ssh://"$user_name"@"$PUBLIC_DNS":"$user_home"/"$LIBRARY".git "$branch":main -f
