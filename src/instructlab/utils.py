@@ -980,7 +980,7 @@ def get_model_template_from_tokenizer(model_path: pathlib.Path) -> Tuple[str, st
 
     try:
         tcfg = get_config_file_from_model(model_path, "tokenizer_config.json")
-        template = tcfg["template"]
+        template = tcfg["chat_template"]
         bos_token = tcfg["bos_token"]
         eos_token = tcfg["eos_token"]
     except (FileNotFoundError, NotADirectoryError, PermissionError) as e:

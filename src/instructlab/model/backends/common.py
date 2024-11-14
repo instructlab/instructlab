@@ -102,7 +102,8 @@ def get_in_memory_model_template(
                 bos_token = template_dict["special_tokens"].bos.token
                 eos_token = template_dict["special_tokens"].eos.token
 
-    logger.info("no match found for supplied model family and architecture")
+    if template == "":
+        logger.info("no match found for supplied model family and architecture")
     return template, eos_token, bos_token
 
 
