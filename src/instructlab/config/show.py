@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from typing import Any, Dict
 import sys
 
 # Third Party
@@ -11,18 +10,11 @@ import click
 
 # First Party
 from instructlab import clickext, configuration
+from instructlab.utils import get_nested_value
 
 # Initialize ruamel.yaml
 yaml = ruamel.yaml.YAML()
 yaml.indent(mapping=2, sequence=4, offset=2)
-
-
-def get_nested_value(data_dict: Dict[str, Any], path: str) -> Any:
-    """Retrieve nested value using dot-separated path."""
-    keys = path.split(".")
-    for key in keys:
-        data_dict = data_dict[key]
-    return data_dict
 
 
 def strip_comments(config: CommentedMap) -> None:

@@ -3,6 +3,7 @@
 # Standard
 import logging
 import pathlib
+import shutil
 
 # Third Party
 from click.testing import CliRunner
@@ -132,3 +133,30 @@ def test_ilab_config_init_with_model_path(cli_runner: CliRunner) -> None:
     assert configuration.Config(**parsed).generate.model != "path/to/model"
     assert configuration.Config(**parsed).generate.teacher.model_path != "path/to/model"
     assert configuration.Config(**parsed).serve.model_path == "path/to/model"
+
+
+def test_ilab_config_edit_with_key(
+    cli_runner: CliRunner, testdata_path: pathlib.Path, tmp_path: pathlib.Path
+):
+    default_config_path = testdata_path / "default_config.yaml"
+    test_config_path = tmp_path / "test_config.yaml"
+    shutil.copy(default_config_path, test_config_path)
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config",
+            str(test_config_path),
+            "config",
+            "edit",
+            "--key",
+            "general.log_level",
+            "DEBUG",
+        ],
+    )
+
+    assert result.exit_code == 0
+    assert "Old value : INFO" in result.output
+    assert "New value : DEBUG" in result.output
+    with test_config_path.open("r", encoding="utf-8") as file:
+        config_content = file.read()
+    assert "log_level: DEBUG" in config_content
