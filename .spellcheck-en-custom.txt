@@ -136,6 +136,7 @@ keypair
 lignment
 llms
 lora
+merlinite
 md
 mlx
 mmlu
