@@ -64,16 +64,17 @@ RTX
 RX
 Radeon
 SDG
+SFT
 SHA
 Safetensor
 Safetensors
 Salawu
-SFT
 Shaders
 Shivchander
 Srivastava
 Sudalairaj
 TBD
+TOML
 Taj
 Tesla
 UI
@@ -95,8 +96,8 @@ backends
 backport
 backported
 bashrc
-chatlogs
 chatbot
+chatlogs
 cli
 codebase
 compositional
@@ -126,6 +127,7 @@ hipBLAS
 ibmcloud
 ilab
 impactful
+inferencing
 init
 instructlab
 ip
@@ -179,4 +181,3 @@ wikisql
 xcode
 xlarge
 yaml
-TOML

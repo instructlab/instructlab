@@ -28,6 +28,9 @@ from instructlab.schema.taxonomy import (
     TaxonomyParser,
     TaxonomyReadingException,
 )
+from instructlab.training.chat_templates import (
+    ibm_legacy_tmpl as granite_llama,  # type: ignore
+)
 import click
 import git
 import gitdb
@@ -35,7 +38,10 @@ import yaml
 
 # Local
 from . import common
+from .common import CLI_HELPER_SYS_PROMPT, SYSTEM_PROMPTS, SupportedModelArchitectures
 from .defaults import DEFAULTS
+
+# mypy: disable_error_code="import-untyped"
 
 logger = logging.getLogger(__name__)
 
@@ -347,15 +353,23 @@ def git_clone_checkout(
 
 
 # pylint: disable=unused-argument
-def get_sysprompt(model=None):
+def get_sysprompt(arch: str):
     """
-    Gets a system prompt specific to a model
+    Gets a system prompt specific to a model's architecture.
+    For all unsupported architectures we return a default system prompt
     Args:
-        model (str): currently not implemented
+        arch (str): model architecture
     Returns:
         str: The system prompt for the model being used
     """
-    return common.SYS_PROMPT
+    return SYSTEM_PROMPTS.get(arch, common.DEFAULT_SYS_PROMPT)
+
+
+def get_cli_helper_sysprompt() -> str:
+    """
+    Returns the system prompt to put the chatbot in CLI helper mode
+    """
+    return CLI_HELPER_SYS_PROMPT
 
 
 # pylint: disable=broad-exception-caught
@@ -900,3 +914,105 @@ def list_models(
 def contains_argument(prefix: str, args: typing.Iterable[str]) -> bool:
     # Either --foo value or --foo=value
     return any(s == prefix or s.startswith(prefix + "=") for s in args)
+
+
+def get_model_arch(model_path: pathlib.Path) -> str:
+    """
+    Extract a given model's architecture from its config if available and return it
+
+    args
+        model_path (str): Path to the model, used to read the model config if available
+    returns
+        model_arch (str): The architecture of the model as expressed in the config file
+    """
+
+    # TODO: implement for GGUF models
+
+    model_arch = "default"
+    try:
+        model_cfg = get_config_file_from_model(model_path, "config.json")
+        model_arch = model_cfg["model_type"]
+    except Exception as e:
+        logger.debug(
+            f"Unable to get model architecture from config for model: {model_path}: {e}. Falling back to default value"
+        )
+
+    return model_arch
+
+
+def get_config_file_from_model(model_path: pathlib.Path, filename: str):
+    """
+    Reads a config file from a model's directory into memory
+
+    args
+        model_path (str): path to the model
+        filename (str): name of config file to be read
+    returns
+        json loaded config dict
+    """
+    try:
+        with open(
+            pathlib.Path(model_path) / filename,
+            "r",
+            encoding="utf-8",
+        ) as f:
+            model_cfg = json.load(f)
+        return model_cfg
+    except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
+        raise ValueError(
+            f"Unable to load file {filename} from {model_path}: {e}"
+        ) from e
+
+
+def get_model_template_from_tokenizer(model_path: pathlib.Path) -> Tuple[str, str, str]:
+    """
+    Attempts to read a model's tokenizer config file and extract the template and special
+    tokens from it
+
+    args
+        model_path (str): path to the model
+    returns
+        template (str): resolved chat template
+        bos_token (str): Beginning of sentence token
+        eos_token (str): End of sentence token
+    """
+    template = eos_token = bos_token = None
+
+    try:
+        tcfg = get_config_file_from_model(model_path, "tokenizer_config.json")
+        template = tcfg["chat_template"]
+        bos_token = tcfg["bos_token"]
+        eos_token = tcfg["eos_token"]
+    except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
+        raise e
+
+    return template, eos_token, bos_token
+
+
+def use_legacy_pretraining_format(model_path: Path, model_arch: str) -> bool:
+    """
+    Checks if the provided model is carrying a tokenizer config that specifies
+    legacy special tokens. If unable to find/load the tokenizer config, falls back
+    to check the architecture of the model. This function determines if SDG and training
+    need to be instructed to also work with legacy tokens and chat templates
+
+    args
+        model_path (str): path to the model
+        model_arch (str): architecture of model
+    returns
+        (bool): True if we should use legacy pretraining format and template, false if not
+    """
+    try:
+        _, eos_token, bos_token = get_model_template_from_tokenizer(model_path)
+        if eos_token is not None and bos_token is not None:
+            if (
+                eos_token == granite_llama.SPECIAL_TOKENS.eos.token
+                and bos_token == granite_llama.SPECIAL_TOKENS.bos.token
+            ):
+                return True
+    except Exception:
+        logger.debug(
+            "unable to load tokenizer config to determine pretraining format. Checking model architecture"
+        )
+        return model_arch.lower() == SupportedModelArchitectures.LLAMA
+    return False

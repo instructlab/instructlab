@@ -33,7 +33,7 @@ from instructlab.client_utils import HttpClientParams
 
 # Local
 from ..client_utils import http_client
-from ..utils import get_sysprompt
+from ..utils import get_cli_helper_sysprompt, get_model_arch, get_sysprompt
 
 logger = logging.getLogger(__name__)
 
@@ -59,8 +59,8 @@ Press Alt (or Meta) and Enter or Esc Enter to end multiline input.
 """
 
 CONTEXTS = {
-    "default": get_sysprompt(),
-    "cli_helper": "You are an expert for command line interface and know all common commands. Answer the command to execute as it without any explanation.",
+    "default": get_sysprompt,
+    "cli_helper": get_cli_helper_sysprompt,
 }
 
 PROMPT_HISTORY_FILEPATH = os.path.expanduser("~/.local/chat-cli.history")
@@ -464,7 +464,9 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             )
             raise KeyboardInterrupt
         self.loaded["name"] = context
-        self.loaded["messages"] = [{"role": "system", "content": CONTEXTS[context]}]
+
+        sys_prompt = CONTEXTS.get(context, "default")(get_model_arch(self.model))
+        self.loaded["messages"] = [{"role": "system", "content": sys_prompt}]
         self._reset_session()
         self.greet(new=True)
         raise KeyboardInterrupt
@@ -580,8 +582,15 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self.info["messages"].append(message)
 
     def _handle_list_contexts(self, _):
+        # reconstruct contexts dict based on values passed at runtime
+        context_dict = dict.fromkeys(CONTEXTS, None)
+        context_dict["default"] = get_sysprompt(
+            get_model_arch(pathlib.Path(self.model))
+        )
+        context_dict["cli_helper"] = get_cli_helper_sysprompt()
+
         context_list = "\n\n".join(
-            [f"**{key}**:\n{value}" for key, value in CONTEXTS.items()]
+            [f"**{key}**:\n{value}" for key, value in context_dict.items()]
         )
         self._sys_print(Markdown(f"**Available contexts:**\n\n{context_list}"))
         raise KeyboardInterrupt
@@ -794,7 +803,8 @@ def chat_cli(
         logger.info(f"Context {context} not found in the config file. Using default.")
         context = "default"
     loaded["name"] = context
-    loaded["messages"] = [{"role": "system", "content": CONTEXTS[context]}]
+    sys_prompt = CONTEXTS.get(context, "default")(get_model_arch(model))
+    loaded["messages"] = [{"role": "system", "content": sys_prompt}]
 
     # Session from CLI
     if session is not None:

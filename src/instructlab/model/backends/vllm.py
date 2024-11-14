@@ -198,18 +198,6 @@ class Server(BackendServer):
         return VLLM
 
 
-def format_template(model_family: str, model_path: pathlib.Path) -> str:
-    template, eos_token, bos_token = get_model_template(model_family, model_path)
-
-    prefix = ""
-    if eos_token:
-        prefix = '{{% set eos_token = "{}" %}}\n'.format(eos_token)
-    if bos_token:
-        prefix = '{}{{% set bos_token = "{}" %}}\n'.format(prefix, bos_token)
-
-    return prefix + template
-
-
 def get_argument(prefix: str, args: typing.List[str]):
     # Return last value in args for either --foo value or --foo=value
     # Returns True if flag --foo is provided with no value
@@ -396,10 +384,10 @@ def build_vllm_cmd(
 
     if not contains_argument("--chat-template", vllm_args):
         if chat_template == CHAT_TEMPLATE_AUTO:
-            # For auto templates, the build-in in-memory template
+            # For auto templates, the chat template
             # needs to be written to a temporary file so that vLLM
             # can read it
-            template = format_template(model_family, model_path)
+            template, _, _ = get_model_template(model_family, model_path)
             file = create_tmpfile(template)
             tmp_files.append(file)
             vllm_cmd.extend(["--chat-template", file.name])

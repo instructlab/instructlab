@@ -105,7 +105,10 @@ def test(
         with open(test_data_dir, "r", encoding="utf-8") as f:
             test_data = [json.loads(line) for line in f]
 
-        print("system prompt:", utils.get_sysprompt())
+        print(
+            "system prompt:",
+            utils.get_sysprompt(utils.get_model_arch(Path(model_dir))),
+        )
         for idx, example in enumerate(test_data):
             system = example["system"]
             user = example["user"]

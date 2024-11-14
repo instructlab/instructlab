@@ -32,6 +32,8 @@ def gen_data(
     gpus,
     checkpoint_dir,
     max_num_tokens,
+    system_prompt,
+    use_legacy_pretraining_format,
 ):
     """Generates synthetic data to enhance your example data"""
     # Third Party
@@ -102,6 +104,8 @@ def gen_data(
             batch_size=batch_size,
             checkpoint_dir=checkpoint_dir,
             max_num_tokens=max_num_tokens,
+            system_prompt=system_prompt,
+            use_legacy_pretraining_format=use_legacy_pretraining_format,
         )
     except GenerateException as exc:
         raise ValueError(

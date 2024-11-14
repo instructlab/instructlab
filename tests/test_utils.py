@@ -2,6 +2,7 @@
 
 # Standard
 from unittest.mock import Mock, patch
+import pathlib
 import typing
 
 # Third Party
@@ -12,6 +13,7 @@ import yaml
 # First Party
 from instructlab import utils
 from instructlab.utils import Message, MessageSample
+from tests.test_backends import create_safetensors_or_bin_model_files
 
 
 class TestUtils:
@@ -211,3 +213,78 @@ def test_split_hostport(url, expected_host, expected_port):
 def test_split_hostport_err(url):
     with pytest.raises(ValueError):
         utils.split_hostport(url)
+
+
+def test_get_sysprompt():
+    arch = "llama"
+    assert (
+        utils.get_sysprompt(arch)
+        == "I am, Red Hat® Instruct Model based on Granite 7B, an AI language model developed by Red Hat and IBM Research, based on the Granite-7b-base language model. My primary function is to be a chat assistant."
+    )
+
+    arch = "granite"
+    assert (
+        utils.get_sysprompt(arch)
+        == "I am a Red Hat® Instruct Model, an AI language model developed by Red Hat and IBM Research based on the granite-3.0-8b-base model. My primary role is to serve as a chat assistant."
+    )
+
+    arch = "random"
+    assert (
+        utils.get_sysprompt(arch)
+        == "I am an advanced AI language model designed to assist you with a wide range of tasks and provide helpful, clear, and accurate responses. My primary role is to serve as a chat assistant, engaging in natural, conversational dialogue, answering questions, generating ideas, and offering support across various topics."
+    )
+
+
+def test_get_model_template_from_tokenizer(tmp_path: pathlib.Path):
+    model_path = tmp_path / "tmp_model"
+    create_safetensors_or_bin_model_files(model_path, "safetensors", True)
+
+    tmpl, eos, bos = utils.get_model_template_from_tokenizer(model_path)
+    assert tmpl == "test-chat-template"
+    assert eos == "<|end_of_text|>"
+    assert bos == "<|beginning_of_text|>"
+
+
+def test_use_legacy_pretraining_format(tmp_path: pathlib.Path):
+    model_path = tmp_path / "tmp_model"
+    model_arch = "llama"
+    test_json_config = {
+        "model_type": "granite",
+    }
+    test_json_tokeninzer_config = {
+        "bos_token": "<|begginingoftext|>",
+        "eos_token": "<|endoftext|>",
+    }
+    # llama tokens, should return true
+    create_safetensors_or_bin_model_files(
+        model_path,
+        "safetensors",
+        True,
+        test_config=test_json_config,
+        test_tokenizer_config=test_json_tokeninzer_config,
+    )
+    assert utils.use_legacy_pretraining_format(model_path, model_arch)
+
+    model_path = tmp_path / "tmp_model"
+    model_arch = "llama"
+    test_json_config = {
+        "model_type": "granite",
+    }
+    test_json_tokeninzer_config = {
+        "bos_token": "<|begginingoftext|>",
+    }
+    # invalid tokens, should default to checking arch and return true
+    create_safetensors_or_bin_model_files(
+        model_path,
+        "safetensors",
+        True,
+        test_config=test_json_config,
+        test_tokenizer_config=test_json_tokeninzer_config,
+    )
+    assert utils.use_legacy_pretraining_format(model_path, model_arch)
+
+    model_path = tmp_path / "tmp_model-2"
+    model_arch = "llama"
+    # granite tokens, should return false
+    create_safetensors_or_bin_model_files(model_path, "safetensors", True)
+    assert not utils.use_legacy_pretraining_format(model_path, model_arch)

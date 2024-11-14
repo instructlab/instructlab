@@ -1,2 +1,2 @@
 # Extra dependencies for AMD ROCm
-instructlab-training[rocm]>=0.5.0
+instructlab-training[rocm]>=0.6.0

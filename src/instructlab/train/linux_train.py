@@ -85,7 +85,7 @@ class StoppingCriteriaSub(StoppingCriteria):
 
 def create_prompt(
     user: str,
-    system: str = CONTEXTS["default"],
+    system: str,
 ):
     return f"""\
     <|system|>
@@ -289,7 +289,8 @@ def linux_train(
     )
 
     def model_generate(user, **kwargs):
-        text = create_prompt(user=user)
+        system_prompt = CONTEXTS["default"]("default")
+        text = create_prompt(user=user, system=system_prompt)
 
         input_ids = tokenizer(text, return_tensors="pt").input_ids.to(model.device)
         outputs = model.generate(

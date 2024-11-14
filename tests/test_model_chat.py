@@ -51,9 +51,7 @@ def test_list_contexts_output():
 
     expected_output = (
         "Available contexts:\n\n"
-        "default: I am, Red Hat® Instruct Model based on Granite 7B, an AI language model "
-        "developed by Red Hat and IBM Research, based on the Granite-7b-base language "
-        "model. My primary function is to be a chat assistant.\n\n"
+        "default: I am an advanced AI language model designed to assist you with a wide range of tasks and provide helpful, clear, and accurate responses. My primary role is to serve as a chat assistant, engaging in natural, conversational dialogue, answering questions, generating ideas, and offering support across various topics.\n\n"
         "cli_helper: You are an expert for command line interface and know all common "
         "commands. Answer the command to execute as it without any explanation."
     )
