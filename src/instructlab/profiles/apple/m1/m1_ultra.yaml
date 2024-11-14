@@ -1,7 +1,5 @@
 chat:
   context: default
-  # Sets temperature to 0 if enabled, leading to more deterministic responses
-  greedy_mode: false
   # Directory where chat logs are stored
   logs_dir: ~/.local/share/instructlab/chatlogs
   # The maximum number of tokens that can be generated in the chat completion
