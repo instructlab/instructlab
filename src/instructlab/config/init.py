@@ -158,7 +158,7 @@ def prompt_user_to_choose_vendors(
     key = None
     click.echo(
         click.style(
-            "Please choose a system profile.\n Profiles set hardware-specific defaults for all commands and sections of the configuration.",
+            "Please choose a system profile.\nProfiles set hardware-specific defaults for all commands and sections of the configuration.",
             fg="green",
         )
     )
