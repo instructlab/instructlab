@@ -1006,8 +1006,8 @@ def use_legacy_pretraining_format(model_path: Path, model_arch: str) -> bool:
         _, eos_token, bos_token = get_model_template_from_tokenizer(model_path)
         if eos_token is not None and bos_token is not None:
             if (
-                eos_token == granite_llama.SPECIAL_TOEKNS.eos.token
-                and bos_token == granite_llama.SPECIAL_TOEKNS.bos.token
+                eos_token == granite_llama.SPECIAL_TOKENS.eos.token
+                and bos_token == granite_llama.SPECIAL_TOKENS.bos.token
             ):
                 return True
     except Exception:

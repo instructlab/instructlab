@@ -19,22 +19,39 @@ from instructlab.model.backends import backends, common
 from instructlab.model.backends.vllm import build_vllm_cmd
 from instructlab.utils import is_model_safetensors
 
+test_json_config = {
+    "model_type": "granite",
+    "quantization_config": {"quant_method": "bitsandbytes"},
+}
+
+test_json_tokeninzer_config = {
+    "bos_token": "<|beginning_of_text|>",
+    "eos_token": "<|end_of_text|>",
+    "chat_template": "test-chat-template",
+}
+
 
 # helper function to create dummy valid and invalid safetensor or bin model directories
 def create_safetensors_or_bin_model_files(
-    model_path: pathlib.Path, model_file_type: str, valid: bool
+    model_path: pathlib.Path,
+    model_file_type: str,
+    valid: bool,
+    test_config=None,
+    test_tokenizer_config=None,
 ):
-    test_json_dict = {
-        "a": 1,
-        "b": 2,
-        "quantization_config": {"quant_method": "bitsandbytes"},
-    }
-    json_object = json.dumps(test_json_dict, indent=4)
+    if test_config is None:
+        test_config = test_json_config
+
+    if test_tokenizer_config is None:
+        test_tokenizer_config = test_json_tokeninzer_config
+
+    cfg_object = json.dumps(test_config, indent=4)
+    tcfg_object = json.dumps(test_tokenizer_config, indent=4)
 
     for file in ["tokenizer.json", "tokenizer_config.json"]:
         os.makedirs(os.path.dirname(model_path / file), exist_ok=True)
         with open(model_path / file, "a+", encoding="UTF-8") as f:
-            f.write(json_object)
+            f.write(tcfg_object)
 
     if model_file_type == "safetensors":
         tensors = {
@@ -47,7 +64,7 @@ def create_safetensors_or_bin_model_files(
             pass
     if valid:
         with open(model_path / "config.json", "a+", encoding="UTF-8") as f:
-            f.write(json_object)
+            f.write(cfg_object)
 
 
 def test_free_port():
@@ -348,3 +365,57 @@ def test_build_vllm_cmd_with_bnb_quant(tmp_path: pathlib.Path):
         host, port, model_family, model_path, str(chat_template), vllm_args
     )
     assert cmd == expected_cmd
+
+
+def test_get_model_template(tmp_path: pathlib.Path):
+    # test successful read from tokenizer config
+    test_tokeninzer_config = {
+        "bos_token": "<|beginning_of_text|>",
+        "eos_token": "<|end_of_text|>",
+        "chat_template": "test-chat-template. add_generation_prompt",
+    }
+
+    model_path = tmp_path / "tmp_model"
+    create_safetensors_or_bin_model_files(
+        model_path,
+        "safetensors",
+        True,
+        test_tokenizer_config=test_tokeninzer_config,
+    )
+    model_family = "granite"
+
+    tmpl, eos, bos = common.get_model_template(model_family, model_path)
+    assert (
+        tmpl
+        == '{% set eos_token = "<|end_of_text|>" %}\n{% set bos_token = "<|beginning_of_text|>" %}\ntest-chat-template. add_generation_prompt'
+    )
+    assert eos == "<|end_of_text|>"
+    assert bos == "<|beginning_of_text|>"
+
+    # test fallback to in-memory template
+    test_tokeninzer_config = {
+        "bos_token": "<|beginning_of_text|>",
+        "eos_token": "<|end_of_text|>",
+    }
+    test_config = {
+        "model_type": "llama",
+        "quantization_config": {"quant_method": "bitsandbytes"},
+    }
+
+    model_path = tmp_path / "tmp_model"
+    create_safetensors_or_bin_model_files(
+        model_path,
+        "safetensors",
+        True,
+        test_config=test_config,
+        test_tokenizer_config=test_tokeninzer_config,
+    )
+    model_family = "granite"
+
+    tmpl, eos, bos = common.get_model_template(model_family, model_path)
+    assert (
+        tmpl
+        == "{% set eos_token = \"<|endoftext|>\" %}\n{% set bos_token = \"<|begginingoftext|>\" %}\n{% for message in messages %}{% if message['role'] == 'pretraining' %}{{'<|pretrain|>' + message['content'] + '<|endoftext|>' + '<|/pretrain|>' }}{% elif message['role'] == 'system' %}{{'<|system|>'+ '\n' + message['content'] + '\n'}}{% elif message['role'] == 'user' %}{{'<|user|>' + '\n' + message['content'] + '\n'}}{% elif message['role'] == 'assistant' %}{{'<|assistant|>' + '\n' + message['content'] + '<|endoftext|>' + ('' if loop.last else '\n')}}{% endif %}{% if loop.last and add_generation_prompt %}{{ '<|assistant|>' + '\n' }}{% endif %}{% endfor %}"
+    )
+    assert eos == "<|endoftext|>"
+    assert bos == "<|begginingoftext|>"
