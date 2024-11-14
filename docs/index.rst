@@ -14,6 +14,7 @@ Welcome to InstructLab's documentation!
    demo-slides.md
    README.md
    release-strategy.md
+   instructlab_models.md
 
 
 Indices and tables
