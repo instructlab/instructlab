@@ -385,6 +385,8 @@ ilab config show
 
 ### 📥 Download the model
 
+For detailed documentation on the InstructLab LLMs and their functions, see the [InstructLab LLM guide](docs/instructlab_models.md).
+
 #### Downloading the default InstructLab models
 
 - Run the `ilab model download` command to download a compact pre-trained version of the `granite-7b-lab-GGUF`, `merlinite-7b-lab-GGUF`, and `Mistral-7B-Instruct-v0.2-GGUF` models (~4.4G each) from HuggingFace.
