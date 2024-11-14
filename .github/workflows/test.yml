@@ -59,6 +59,7 @@ jobs:
     needs: ["test-workflow-ready"]
     runs-on: "${{ matrix.platform }}"
     strategy:
+      fail-fast: false
       matrix:
         python:
           - "3.10"
