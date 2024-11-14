@@ -141,13 +141,13 @@ class _chat(BaseModel):
         default_factory=lambda: DEFAULTS.CHATLOGS_DIR,
         description="Directory where chat logs are stored.",
     )
-    greedy_mode: bool = Field(
-        default=False,
-        description="Sets temperature to 0 if enabled, leading to more deterministic responses.",
-    )
     max_tokens: typing.Optional[int] = Field(
         default=None,
         description="The maximum number of tokens that can be generated in the chat completion. Be aware that larger values use more memory.",
+    )
+    temperature: float = Field(
+        default=1.0,
+        description="Controls the randomness of the model's responses. Lower values make the output more deterministic, while higher values produce more random results.",
     )
 
 

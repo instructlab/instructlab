@@ -117,13 +117,6 @@ def is_openai_server_and_serving_model(
     help="Exit after answering question.",
 )
 @click.option(
-    "-gm",
-    "--greedy-mode",
-    is_flag=True,
-    cls=clickext.ConfigOption,
-    required=True,  # default from config
-)
-@click.option(
     "--max-tokens",
     type=click.INT,
     cls=clickext.ConfigOption,
@@ -174,6 +167,11 @@ def is_openai_server_and_serving_model(
     required=False,
     help="Log file path to write server logs to.",
 )
+@click.option(
+    "-t",
+    "--temperature",
+    cls=clickext.ConfigOption,
+)
 @click.pass_context
 @clickext.display_params
 def chat(
@@ -183,7 +181,6 @@ def chat(
     context,
     session,
     quick_question,
-    greedy_mode,
     max_tokens,
     endpoint_url,
     api_key,
@@ -193,6 +190,7 @@ def chat(
     tls_client_passwd,
     model_family,
     serving_log_file,
+    temperature,
 ):
     """Runs a chat using the modified model"""
     # pylint: disable=import-outside-toplevel
@@ -308,8 +306,8 @@ def chat(
             context=context,
             session=session,
             qq=quick_question,
-            greedy_mode=greedy_mode,
             max_tokens=max_tokens,
+            temperature=temperature,
         )
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
@@ -338,8 +336,8 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         vertical_overflow="ellipsis",
         loaded=None,
         log_file=None,
-        greedy_mode=False,
         max_tokens=None,
+        temperature=1.0,
     ):
         self.client = client
         self.model = model
@@ -347,8 +345,8 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self.vertical_overflow = vertical_overflow
         self.loaded = loaded
         self.log_file = log_file
-        self.greedy_mode = greedy_mode
         self.max_tokens = max_tokens
+        self.temperature = temperature
 
         self.console = Console()
 
@@ -645,11 +643,10 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             self.multiline_mode = 0
             self.multiline = not self.multiline
 
-        # Optional parameters
+        # Temperature parameters
         create_params = {}
-        if self.greedy_mode:
-            # https://platform.openai.com/docs/api-reference/chat/create#chat-create-temperature
-            create_params["temperature"] = 0
+        # https://platform.openai.com/docs/api-reference/chat/create#chat-create-temperature
+        create_params["temperature"] = self.temperature
 
         if self.max_tokens:
             create_params["max_tokens"] = self.max_tokens
@@ -766,8 +763,8 @@ def chat_cli(
     context,
     session,
     qq,
-    greedy_mode,
     max_tokens,
+    temperature,
 ):
     """Starts a CLI-based chat with the server"""
     client = OpenAI(
@@ -833,9 +830,7 @@ def chat_cli(
         prompt=not qq,
         vertical_overflow=("visible" if config.visible_overflow else "ellipsis"),
         loaded=loaded,
-        greedy_mode=(
-            greedy_mode if greedy_mode else config.greedy_mode
-        ),  # The CLI flag can only be used to enable
+        temperature=(temperature if temperature is not None else config.temperature),
         max_tokens=(max_tokens if max_tokens else config.max_tokens),
     )
 
