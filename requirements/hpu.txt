@@ -13,3 +13,6 @@ habana_gpu_migration>=1.18.0
 #habana-pyhlml
 #habana_quantization_toolkit
 #habana-torch-dataloader
+
+# Extra dependencies for Intel Gaudi cards
+instructlab-training[hpu]>=0.6.0
