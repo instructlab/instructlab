@@ -10,9 +10,10 @@
 
 * `ilab` now supports system profiles. These profiles apply entire configuration files tailored to specific hardware configurations. We support a set of auto-detected profiles for CPU enabled Linux machines, M-Series Apple Silicon Chips, and Nvidia GPUs, and Intel Gaudi 3. When you run `ilab config init`, one of these profiles should be selected for you. If there is not a direct match, a menu will be displayed allowing you to choose one.
 * Add support for inferencing with IBM granite architecture models.
-
 * `ilab model chat` now includes a temperature setting feature, allowing users to adjust the response generation behavior. A default temperature of 1.0 has been added to the configuration file, which can be customized for each chat session using the `--temperature` or `-t` flag. Lower values produce
 more deterministic and focused responses, while higher values increase variability.
+* the `full` training pipeline now fits on devices with 16 and 32 GB of RAM! If you are on a Mac, these optimizations are done for you. If you are on Linux try using `--optimize-memory`, results vary per CPU vendor.
+* `ilab data generate` now has `--max-num-tokens` which defaults to 4096. This flag can be used to generate less data per SDG run. Specifying a value like `512` results in a faster run with less data generated. This works well with consumer hardware and will reduce training time.
 
 ## v0.20
 
