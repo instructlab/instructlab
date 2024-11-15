@@ -617,6 +617,8 @@ def is_oci_repo(repo_url: str) -> bool:
     """
     Checks if a provided repository follows the OCI registry URL syntax
     """
+    if not repo_url.startswith("docker://"):
+        return False
     oci_url_regex = r"^docker://([a-zA-Z0-9\-_.]+(:[0-9]+)?)(/[a-zA-Z0-9\-_.]+)+(@[a-zA-Z0-9]+|:[a-zA-Z0-9\-_.]+)?$"
     if not re.match(oci_url_regex, repo_url):
         logger.warning(f"Invalid OCI repository URL: {repo_url}")
