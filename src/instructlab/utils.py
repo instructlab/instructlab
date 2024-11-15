@@ -921,21 +921,33 @@ def get_model_arch(model_path: pathlib.Path) -> str:
     Extract a given model's architecture from its config if available and return it
 
     args
-        model_path (str): Path to the model, used to read the model config if available
+        model_path (Path): Path to the model, used to read the model config if available
     returns
         model_arch (str): The architecture of the model as expressed in the config file
     """
 
-    # TODO: implement for GGUF models
-
     model_arch = "default"
-    try:
-        model_cfg = get_config_file_from_model(model_path, "config.json")
-        model_arch = model_cfg["model_type"]
-    except Exception as e:
-        logger.debug(
-            f"Unable to get model architecture from config for model: {model_path}: {e}. Falling back to default value"
-        )
+
+    if is_model_gguf(model_path):
+        # Third Party
+        from gguf import GGUFReader
+        from transformers.integrations.ggml import _gguf_parse_value
+
+        reader = GGUFReader(model_path)
+        value = reader.fields["general.architecture"]
+        model_arch = [
+            _gguf_parse_value(value.parts[_data_index], value.types)
+            for _data_index in value.data
+        ][0]
+
+    elif is_model_safetensors(model_path):
+        try:
+            model_cfg = get_config_file_from_model(model_path, "config.json")
+            model_arch = model_cfg["model_type"]
+        except Exception as e:
+            logger.debug(
+                f"Unable to get model architecture from config for model: {model_path}: {e}. Falling back to default value"
+            )
 
     return model_arch
 

@@ -5,6 +5,7 @@ import copy
 import logging
 import os
 import os.path
+import pathlib
 
 # Third Party
 import click
@@ -242,7 +243,7 @@ def generate(
 
     # determine student model arch from train section of config and pick system prompt to
     # pass to SDG appropriately
-    student_model_arch = get_model_arch(ctx.obj.config.train.model_path)
+    student_model_arch = get_model_arch(pathlib.Path(ctx.obj.config.train.model_path))
     system_prompt = get_sysprompt(student_model_arch)
 
     # Check if student model specifies a tokenizer config. If so, check if the special tokens specified

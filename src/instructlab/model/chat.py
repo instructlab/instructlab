@@ -800,7 +800,7 @@ def chat_cli(
         logger.info(f"Context {context} not found in the config file. Using default.")
         context = "default"
     loaded["name"] = context
-    sys_prompt = CONTEXTS.get(context, "default")(get_model_arch(model))
+    sys_prompt = CONTEXTS.get(context, "default")(get_model_arch(pathlib.Path(model)))
     loaded["messages"] = [{"role": "system", "content": sys_prompt}]
 
     # Session from CLI
