@@ -54,6 +54,9 @@ yaml = YAML()
 yaml.indent(mapping=2, sequence=4, offset=2)
 
 
+logger = logging.getLogger(__name__)
+
+
 class ConfigException(Exception):
     """An exception that a configuration file has an error."""
 
@@ -1142,8 +1145,20 @@ def ensure_storage_directories_exist() -> bool:
 
     fresh_install = recreate_system_profiles()
 
-    # create expert_args file for users to see/edit
-    if not os.path.isfile(DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE):
+    # open file in read mode to load current contents
+
+    train_options_dict: dict[str, Any] = {}
+    try:
+        with open(
+            DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE, "r", encoding="utf-8"
+        ) as infile:
+            train_options_dict = yaml.load(infile) or {}
+    except FileNotFoundError:
+        logger.debug("Additional Arguments internal file not found, creating now")
+
+    # check if there are new keys in defaults
+    if len(DEFAULTS.ADDITIONAL_ARGS_DEFAULTS.keys()) > len(train_options_dict.keys()):
+        # open file in write mode and update contents if there are new keys
         with open(
             DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_FILE, "w", encoding="utf-8"
         ) as outfile:
