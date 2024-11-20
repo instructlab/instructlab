@@ -15,6 +15,8 @@ more deterministic and focused responses, while higher values increase variabili
 * the `full` training pipeline now fits on devices with 16 and 32 GB of RAM! If you are on a Mac, these optimizations are done for you. If you are on Linux try using `--optimize-memory`, results vary per CPU vendor.
 * `ilab data generate` now has `--max-num-tokens` which defaults to 4096. This flag can be used to generate less data per SDG run. Specifying a value like `512` results in a faster run with less data generated. This works well with consumer hardware and will reduce training time.
 
+* `ilab model download` uses the `hf_transfer` library for faster model downloads reducing the average download time by 60%. This only applies to models that are hosted on Hugging Face Hub. This can be disabled by setting the environment variable `HF_HUB_ENABLE_HF_TRANSFER` to `0`.
+
 ## v0.20
 
 ### Breaking Changes
