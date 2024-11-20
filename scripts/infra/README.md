@@ -67,6 +67,8 @@ scripts/infra/cloud-instance.sh ec2 launch
 # Clone instructlab onto the instance and setup the development environment
 scripts/infra/cloud-instance.sh ec2 setup-rh-devenv
 # Install nvidia drivers and reboot
+# Depending on the age of your image, you may want to `sudo dnf update`, reboot your instance
+# and remove any old kernel and kernel-core packages before continuing.
 scripts/infra/cloud-instance.sh ec2 install-rh-nvidia-drivers
 scripts/infra/cloud-instance.sh ec2 ssh sudo reboot
 # Install instructlab
