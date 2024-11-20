@@ -186,7 +186,7 @@ RUN source ${VIRTUAL_ENV}/bin/activate \
     && if [ "${INSTRUCTLAB_VERSION}" != "" ] ; then \
         INSTRUCTLAB_PKG="${INSTRUCTLAB_PKG}==${INSTRUCTLAB_VERSION}" ; \
     fi \
-    && pip install 'torch>=2.3.0,<2.4.0' 'psutil>=6.0.0' \
+    && pip install torch==2.4.1 psutil==6.1.0 \
     && pip install flash_attn --no-build-isolation \
     && pip install --no-deps llama_cpp_python[server]==0.2.79 -C cmake.args="-DLLAMA_CUDA=on" -C cmake.args="-DLLAMA_NATIVE=off" \
     && pip install "${INSTRUCTLAB_PKG}" -C cmake.args="-DLLAMA_CUDA=on" -C cmake.args="-DLLAMA_NATIVE=off" \
