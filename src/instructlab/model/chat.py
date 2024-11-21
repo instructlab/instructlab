@@ -30,10 +30,16 @@ from instructlab import client_utils as ilabclient
 from instructlab import configuration as cfg
 from instructlab import log
 from instructlab.client_utils import HttpClientParams
+from instructlab.defaults import DEFAULTS
 
 # Local
 from ..client_utils import http_client
-from ..utils import get_cli_helper_sysprompt, get_model_arch, get_sysprompt
+from ..utils import (
+    get_cli_helper_sysprompt,
+    get_model_arch,
+    get_model_metadata,
+    get_sysprompt,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -390,7 +396,18 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
     @property
     def model_name(self):
-        return os.path.basename(os.path.normpath(self.model))
+        model = pathlib.Path(self.model)
+        basename = os.path.basename(os.path.normpath(model))
+        if model.is_file():
+            return basename
+        metadata, _ = get_model_metadata(model)
+        if metadata["version"] != basename:
+            # we are not in a version subfolder, return just model name
+            return basename
+        # we are in a version subforlder, return relative path with version attached
+        return (
+            f"{os.path.dirname(os.path.relpath(model, DEFAULTS.MODELS_DIR))}:{basename}"
+        )
 
     @property
     def _right_prompt(self):

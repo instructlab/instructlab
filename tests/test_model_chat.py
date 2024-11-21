@@ -1,27 +1,38 @@
 # Standard
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 import contextlib
+import os
 import re
+import shutil
 
 # Third Party
 from rich.console import Console
 import pytest
 
 # First Party
+from instructlab.defaults import DEFAULTS
 from instructlab.model.chat import ConsoleChatBot
 
 
 @pytest.mark.parametrize(
     "model_path,expected_name",
     [
-        ("/var/model/file", "file"),
-        ("/var/model/directory/", "directory"),
-        ("/var/model/directory/////", "directory"),
+        ("var/model/file", "file"),
+        ("var/model/directory/", "directory"),
+        ("var/model/directory/////", "directory"),
     ],
 )
-def test_model_name(model_path, expected_name):
+@patch(
+    "instructlab.model.chat.get_model_metadata",
+    return_value=[{"version": "unknown"}, True],
+)
+def test_model_name(get_model_metadata, model_path, expected_name):
+    model_path = f"{DEFAULTS.MODELS_DIR}/{model_path}"
+    os.makedirs(model_path, exist_ok=True)
     chatbot = ConsoleChatBot(model=model_path, client=None, loaded={})
     assert chatbot.model_name == expected_name
+    get_model_metadata.assert_called_once()
+    shutil.rmtree(model_path)
 
 
 def handle_output(output):
