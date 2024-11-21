@@ -599,6 +599,10 @@ Detailed contribution instructions can be found in the [taxonomy repository](htt
 
 Before following these instructions, ensure the existing model you are adding skills or knowledge to is still running. Alternatively, `ilab data generate` can start a server for you if you provide a fully qualified model path via `--model`.
 
+> [!IMPORTANT]
+> The `full` pipeline only works with Mixtral and Mistral Instruct Family models as the teacher model.
+> The `simple` pipeline only works with Merlinite 7b Lab as the teacher model. This is due to only supporting specific model prompt templates.
+
 1. To generate a synthetic dataset based on your newly added knowledge or skill set in [taxonomy](https://github.com/instructlab/taxonomy.git) repository, run the following command:
 
    *Default SDG*
