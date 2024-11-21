@@ -1,3 +1,16 @@
+## v0.22
+
+### Breaking Changes
+
+* `ilab model list` will not automatically show previously downloaded GGUF model files present in the directory `~/.cache/instructlab/models`. Users will need to move these GGUF files into individual folders for them to appear in `ilab model list`.
+
+### Features
+
+* `ilab model download` now creates sub-directories for each downloaded model, that match the model's repository URL. Users can now download and store multiple versions of the same model. Each model is tracked with a new metadata file that is written out to disk.
+Users can now also supply GGUF models as directories instead of files, similar to how Safetensors models are handled. Users can now also specify a tag embedded in the repository and optionally prefix Huggingface downloads with "huggingface.co/"
+(e.g.: `ilab model download --repository huggingface.co/instructlab/granite-7b-lab:main` or `ilab model download --repository docker://registry.redhat.io/rhelai1/granite-7b-redhat-lab:latest`).
+* `ilab model list` has been updated to include version and SHA information for models.
+
 ## v0.21
 
 ### Breaking Changes
