@@ -30,8 +30,10 @@ class TestConfig:
         internal_dirname = "internal"
         cache_dir = os.path.join(xdg_cache_home(), package_name)
         data_dir = os.path.join(xdg_data_home(), package_name)
-        default_chat_model = f"{cache_dir}/models/granite-7b-lab-Q4_K_M.gguf"
-        default_sdg_model = f"{cache_dir}/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf"
+        default_chat_model = (
+            f"{cache_dir}/models/huggingface.co/instructlab/merlinite-7b-lab-GGUF/main"
+        )
+        default_sdg_model = f"{cache_dir}/models/huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/main"
 
         assert cfg.general is not None
         assert cfg.version is not None
@@ -90,13 +92,18 @@ class TestConfig:
     def _assert_model_defaults(self, cfg):
         package_name = "instructlab"
         cache_dir = os.path.join(xdg_cache_home(), package_name)
-        default_chat_model = f"{cache_dir}/models/granite-7b-lab-Q4_K_M.gguf"
+        default_chat_model = (
+            f"{cache_dir}/models/huggingface.co/instructlab/merlinite-7b-lab-GGUF/main"
+        )
+        base_model = (
+            f"{cache_dir}/models/huggingface.co/instructlab/granite-7b-lab/main"
+        )
 
         assert cfg.chat is not None
         assert cfg.chat.model == default_chat_model
 
         assert cfg.evaluate is not None
-        assert cfg.evaluate.base_model == "instructlab/granite-7b-lab"
+        assert cfg.evaluate.base_model == base_model
 
         assert cfg.generate is not None
         assert cfg.generate.model == DEFAULTS.DEFAULT_TEACHER_MODEL
@@ -105,7 +112,7 @@ class TestConfig:
         assert cfg.serve.model_path == DEFAULTS.DEFAULT_CHAT_MODEL
 
         assert cfg.train is not None
-        assert cfg.train.model_path == "instructlab/granite-7b-lab"
+        assert cfg.train.model_path == base_model
 
     def test_default_config(self, cli_runner):  # pylint: disable=unused-argument
         cfg = config.get_default_config()

@@ -14,12 +14,13 @@ chat:
   # Default: None
   max_tokens:
   # Model to be used for chatting with.
-  # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
-  model: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+  # Default: /cache/instructlab/models/huggingface.co/instructlab/merlinite-7b-lab-GGUF/main
+  model: /cache/instructlab/models/huggingface.co/instructlab/merlinite-7b-lab-GGUF/main
   # Filepath of a dialog session file.
   # Default: None
   session:
-  # Controls the randomness of the model's responses.
+  # Controls the randomness of the model's responses. Lower values make the output
+  # more deterministic, while higher values produce more random results.
   # Default: 1.0
   temperature: 1.0
   # Enable vim keybindings for chat.
@@ -34,8 +35,8 @@ evaluate:
   # Default: None
   base_branch:
   # Base model to compare with 'model' for mt_bench_branch and mmlu_branch.
-  # Default: instructlab/granite-7b-lab
-  base_model: instructlab/granite-7b-lab
+  # Default: /cache/instructlab/models/huggingface.co/instructlab/granite-7b-lab/main
+  base_model: /cache/instructlab/models/huggingface.co/instructlab/granite-7b-lab/main
   # Taxonomy branch containing custom skills/knowledge that should be used for
   # evaluation runs.
   # Default: None
@@ -102,8 +103,9 @@ generate:
   # Default: 4096
   max_num_tokens: 4096
   # Teacher model that will be used to synthetically generate training data.
-  # Default: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
-  model: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
+  # Default: /cache/instructlab/models/huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/main
+  model: 
+    /cache/instructlab/models/huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/main
   # Number of CPU cores to use for generation.
   # Default: 10
   num_cpus: 10
@@ -166,8 +168,9 @@ generate:
       # Default: 4096
       max_ctx_size: 4096
     # Directory where model to be served is stored.
-    # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
-    model_path: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
+    # Default: /cache/instructlab/models/huggingface.co/instructlab/merlinite-7b-lab-GGUF/main
+    model_path: 
+      /cache/instructlab/models/huggingface.co/TheBloke/Mistral-7B-Instruct-v0.2-GGUF/main
     # vLLM serving settings.
     vllm:
       # Number of GPUs to use.
@@ -223,8 +226,8 @@ serve:
     # Default: 4096
     max_ctx_size: 4096
   # Directory where model to be served is stored.
-  # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
-  model_path: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+  # Default: /cache/instructlab/models/huggingface.co/instructlab/merlinite-7b-lab-GGUF/main
+  model_path: /cache/instructlab/models/huggingface.co/instructlab/merlinite-7b-lab-GGUF/main
   # vLLM serving settings.
   vllm:
     # Number of GPUs to use.
@@ -318,8 +321,8 @@ train:
   # Default: 4096
   max_seq_len: 4096
   # Directory where the model to be trained is stored.
-  # Default: instructlab/granite-7b-lab
-  model_path: instructlab/granite-7b-lab
+  # Default: /cache/instructlab/models/huggingface.co/instructlab/granite-7b-lab/main
+  model_path: /cache/instructlab/models/huggingface.co/instructlab/granite-7b-lab/main
   # Number of GPUs to use for training. This value is not supported in legacy
   # training or MacOS.
   # Default: 1
@@ -331,8 +334,9 @@ train:
   # Default: /data/instructlab/phased
   phased_base_dir: /data/instructlab/phased
   # Judge model path for phased MT-Bench evaluation.
-  # Default: /cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
-  phased_mt_bench_judge: /cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
+  # Default: /cache/instructlab/models/huggingface.co/prometheus-eval/prometheus-8x7b-v2.0/main
+  phased_mt_bench_judge: 
+    /cache/instructlab/models/huggingface.co/prometheus-eval/prometheus-8x7b-v2.0/main
   # Phased phase1 effective batch size.
   # Default: 128
   phased_phase1_effective_batch_size: 128
