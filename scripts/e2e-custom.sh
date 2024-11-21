@@ -27,10 +27,19 @@ HF_TOKEN=${HF_TOKEN:-}
 SDG_PIPELINE="full"
 SKIP_TRAIN=${SKIP_TRAIN:-0}
 EVAL=0
+
+HUGGINGFACE_DIR="huggingface.co"
+
 MIXTRAL_GGUF_MODEL="mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf"
-GRANITE_GGUF_MODEL="granite-7b-lab-Q4_K_M.gguf"
+MIXTRAL_GGUF_REPO="TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF"
+
+MERLINITE_GGUF_REPO="instructlab/merlinite-7b-lab-GGUF"
 MERLINITE_GGUF_MODEL="merlinite-7b-lab-Q4_K_M.gguf"
+
 GRANITE_SAFETENSOR_REPO="instructlab/granite-7b-lab"
+GRANITE_GGUF_REPO="instructlab/granite-7b-lab-GGUF"
+GRANITE_GGUF_MODEL="granite-7b-lab-Q4_K_M.gguf"
+
 
 export GREP_COLORS='mt=1;33'
 BOLD='\033[1m'
@@ -70,6 +79,7 @@ function init_e2e_tests() {
     CONFIG_HOME=$(python -c 'import platformdirs; print(platformdirs.user_config_dir())')
     DATA_HOME=$(python -c 'import platformdirs; print(platformdirs.user_data_dir())')
     CACHE_HOME=$(python -c 'import platformdirs; print(platformdirs.user_cache_dir())')
+    MODEL_CACHE="${CACHE_HOME}/instructlab/models"
     STATE_HOME=$(python -c 'import platformdirs; print(platformdirs.user_state_dir())')
     # ensure that our mock e2e dirs exist
     for dir in "${CONFIG_HOME}" "${DATA_HOME}" "${STATE_HOME}" "${CACHE_HOME}"; do
@@ -121,14 +131,14 @@ test_smoke() {
 
 test_init() {
     task Initializing ilab
-    
+
     ilab config init --non-interactive
 
     step Replace model in config.yaml
     if [ "${BACKEND}" == "vllm" ]; then
-        sed -i -e "s|merlinite.*|${GRANITE_SAFETENSOR_REPO}|" "${CONFIG_HOME}/instructlab/config.yaml"
+        sed -i -e "s|instructlab/merlinite.*|${GRANITE_SAFETENSOR_REPO}/main|" "${CONFIG_HOME}/instructlab/config.yaml"
     else
-        sed -i -e "s|merlinite.*|${GRANITE_GGUF_MODEL}|" "${CONFIG_HOME}/instructlab/config.yaml"
+        sed -i -e "s|instructlab/merlinite.*|${GRANITE_GGUF_REPO}/main|" "${CONFIG_HOME}/instructlab/config.yaml"
     fi
 }
 
@@ -164,15 +174,15 @@ test_list() {
 
     if [ "$GRANITE" -eq 1 ]; then
         step Listing the granite GGUF model only
-        ilab model list | grep granite-7b-lab-Q4_K_M.gguf
+        ilab model list | grep ${GRANITE_GGUF_REPO}
     elif [ "$MIXTRAL" -eq 1 ]; then
         step Listing the mixtral model only
-        ilab model list | grep mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
+        ilab model list | grep ${MIXTRAL_GGUF_REPO}
     else
         step Listing the merlinite GGUF model only
-        ilab model list | grep merlinite-7b-lab-Q4_K_M.gguf4
+        ilab model list | grep ${MERLINITE_GGUF_REPO}
     fi
-    
+
     # regardless, download merl safetensors to test that capability
     ilab model download --repository instructlab/merlinite-7b-lab
     ilab model list | grep instructlab/merlinite-7b-lab
@@ -187,16 +197,16 @@ test_serve() {
     serve_args=()
     if [ "${model_type}" == "base" ]; then
         if [ "${BACKEND}" == "vllm" ]; then
-            model_path="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}"
+            model_path="${MODEL_CACHE}/${HUGGINGFACE_DIR}/${GRANITE_SAFETENSOR_REPO}/main/"
         else    # if not using vLLM, use the GGUF for llama-cpp
-            model_path="${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}"
+            model_path="${MODEL_CACHE}/${HUGGINGFACE_DIR}/${GRANITE_GGUF_REPO}/main/"
         fi
     elif [ "$model_type" == "teacher" ]; then
         if [ "${MIXTRAL}" -eq 1 ]; then
-            model_path="${CACHE_HOME}/instructlab/models/${MIXTRAL_GGUF_MODEL}"
+            model_path="${MODEL_CACHE}/${HUGGINGFACE_DIR}/${MIXTRAL_GGUF_REPO}/main/"
             serve_args+=("--model-family" "mixtral")
         else
-            model_path="${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}"
+            model_path="${MODEL_CACHE}/${HUGGINGFACE_DIR}/${MERLINITE_GGUF_REPO}/main/"
         fi
     elif [ "$model_type" == "trained" ]; then
         model_path="${2:-}"
@@ -261,9 +271,9 @@ test_generate() {
     task Generate synthetic data
 
     if [ "$MIXTRAL" -eq 1 ]; then
-        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/${MIXTRAL_GGUF_MODEL}")
+        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/TheBloke/Mixtral-8x7B-Instruct-v0.1-GGUF/main/${MIXTRAL_GGUF_MODEL}")
     else
-        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}")
+        GENERATE_ARGS+=("--model" "${CACHE_HOME}/instructlab/models/instructlab/merlinite-7b-lab-GGUF/main/${MERLINITE_GGUF_MODEL}")
     fi
 
     # default arg for '--pipeline' is "full"
@@ -296,7 +306,7 @@ test_train() {
         # the train profile specified in test_init overrides the majority of TRAIN_ARGS, including things like num_epochs. While it looks like much of those settings are being lost, they just have different values here.
         TRAIN_ARGS=("--pipeline=accelerated" "--device=cuda" "--model-path=${GRANITE_SAFETENSOR_REPO}" "--data-path=${data}" "--lora-quantize-dtype=nf4" "--4-bit-quant" "--effective-batch-size=4" "--is-padding-free=False")
         if [ "${BACKEND}" != "vllm" ]; then
-            TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}")
+            TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab-GGUF/main/${GRANITE_GGUF_MODEL}")
         fi
     fi
     if [ "$SIMPLE_TRAIN" -eq 1 ]; then
@@ -306,7 +316,7 @@ test_train() {
         # TODO Only cuda for now
         TRAIN_ARGS+=("--pipeline=simple" "--device=cuda" "--num-epochs=1")
         if [ "${BACKEND}" != "vllm" ]; then
-            TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}")
+            TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/instructlab/granite-7b-lab-GGUF/main/${GRANITE_GGUF_MODEL}")
         fi
     fi
     if [ "$FULL_TRAIN" -eq 1 ]; then
@@ -345,14 +355,14 @@ test_phased_train() {
         "--phased-mt-bench-judge-dir=${model_path}" # uses base model
     )
 
-    # phase 1 args 
+    # phase 1 args
     train_args+=(
         "--phased-phase1-num-epochs=1"
         "--phased-phase1-data=${data_path}"
         "--phased-phase1-samples-per-save=1"
     )
 
-    # phase 2 args 
+    # phase 2 args
     train_args+=(
         "--phased-phase2-num-epochs=1"
         "--phased-phase2-data=${data_path}"
@@ -371,9 +381,9 @@ test_convert() {
 
 test_evaluate() {
     task Evaluate the model
-    
+
     local model_path="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}"
-    # Temporarily using merlinite as the base model to confirm the workflow executes correctly 
+    # Temporarily using merlinite as the base model to confirm the workflow executes correctly
     local base_model_path="${CACHE_HOME}/instructlab/models/instructlab/merlinite-7b-lab"
 
     export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true

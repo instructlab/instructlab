@@ -61,7 +61,7 @@ class _InstructlabDefaults:
     GRANITE_GGUF_MODEL_NAME = "granite-7b-lab-Q4_K_M.gguf"
     MERLINITE_GGUF_MODEL_NAME = "merlinite-7b-lab-Q4_K_M.gguf"
     MISTRAL_GGUF_MODEL_NAME = "mistral-7b-instruct-v0.2.Q4_K_M.gguf"
-    MODEL_REPO = "instructlab/granite-7b-lab"
+    GRANITE_MODEL_REPO = "instructlab/granite-7b-lab"
     JUDGE_MODEL_MT = "prometheus-eval/prometheus-8x7b-v2.0"
     TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
     TAXONOMY_BASE = "origin/main"
@@ -75,6 +75,9 @@ class _InstructlabDefaults:
     SDG_PIPELINE = "full"
     SDG_SCALE_FACTOR = 30
     SDG_MAX_NUM_TOKENS = 4096
+
+    HUGGINGFACE_DOMAIN = "huggingface.co"
+    DEFAULT_MODEL_BRANCH = "main"
 
     # When otherwise unknown, ilab uses this as the default family
     MODEL_FAMILY = "granite"
@@ -128,15 +131,39 @@ class _InstructlabDefaults:
 
     @property
     def DEFAULT_CHAT_MODEL(self) -> str:
-        return path.join(self.MODELS_DIR, self.GRANITE_GGUF_MODEL_NAME)
+        return path.join(
+            self.MODELS_DIR,
+            self.HUGGINGFACE_DOMAIN,
+            self.MERLINITE_GGUF_REPO,
+            self.DEFAULT_MODEL_BRANCH,
+        )
+
+    @property
+    def DEFAULT_MODEL(self) -> str:
+        return path.join(
+            self.MODELS_DIR,
+            self.HUGGINGFACE_DOMAIN,
+            self.GRANITE_MODEL_REPO,
+            self.DEFAULT_MODEL_BRANCH,
+        )
 
     @property
     def DEFAULT_TEACHER_MODEL(self) -> str:
-        return path.join(self.MODELS_DIR, self.MISTRAL_GGUF_MODEL_NAME)
+        return path.join(
+            self.MODELS_DIR,
+            self.HUGGINGFACE_DOMAIN,
+            self.MISTRAL_GGUF_REPO,
+            self.DEFAULT_MODEL_BRANCH,
+        )
 
     @property
     def DEFAULT_JUDGE_MODEL(self) -> str:
-        return path.join(self.MODELS_DIR, self.JUDGE_MODEL_MT)
+        return path.join(
+            self.MODELS_DIR,
+            self.HUGGINGFACE_DOMAIN,
+            self.JUDGE_MODEL_MT,
+            self.DEFAULT_MODEL_BRANCH,
+        )
 
     @property
     def TAXONOMY_DIR(self) -> str:

@@ -32,6 +32,9 @@ MERLINITE_GGUF_MODEL="merlinite-7b-lab-Q4_K_M.gguf"
 MISTRAL_GGUF_REPO="TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
 MISTRAL_GGUF_MODEL="mistral-7b-instruct-v0.2.Q4_K_M.gguf"
 
+HUGGINGFACE_DIR="huggingface.co"
+
+
 # t-shirt size globals
 SMALL=0
 MEDIUM=0
@@ -69,6 +72,8 @@ init_e2e_tests() {
     CONFIG_HOME=$(python -c 'import platformdirs; print(platformdirs.user_config_dir())')
     DATA_HOME=$(python -c 'import platformdirs; print(platformdirs.user_data_dir())')
     CACHE_HOME=$(python -c 'import platformdirs; print(platformdirs.user_cache_dir())')
+    MODEL_CACHE="${CACHE_HOME}/instructlab/models"
+
     # ensure that our mock e2e dirs exist
     for dir in "${CONFIG_HOME}" "${DATA_HOME}" "${CACHE_HOME}"; do
         mkdir -p "${dir}"
@@ -147,10 +152,10 @@ test_list() {
     task List the Downloaded Models
     if [ "$SMALL" -eq 1 ]; then
         ilab model list | grep ${GRANITE_7B_MODEL}
-        ilab model list | grep ${MERLINITE_GGUF_MODEL}    
+        ilab model list | grep ${MERLINITE_GGUF_REPO}
     elif [ "$MEDIUM" -eq 1 ]; then
         ilab model list | grep ${GRANITE_7B_MODEL}
-        ilab model list | grep ${MISTRAL_GGUF_MODEL}
+        ilab model list | grep ${MISTRAL_GGUF_REPO}
     elif [ "$LARGE" -eq 1 ]; then
         ilab model list | grep ${GRANITE_7B_MODEL}
         ilab model list | grep ${PROMETHEUS_8X7B_MODEL}
@@ -263,7 +268,7 @@ test_serve() {
     # https://github.com/instructlab/instructlab/issues/579
     # so we skip trying to test the result and just ensure that serve works in general
     if [ "$SMALL" -eq 1 ]; then
-        model_path="${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}"
+        model_path="${MODEL_CACHE}/${HUGGINGFACE_DIR}/${MERLINITE_GGUF_REPO}/main/"
     # use trained gguf for medium-size job
     elif [ "$MEDIUM" -eq 1 ]; then
         model_path="${TRAINED_MODEL_PATH}/pytorch_model-Q4_K_M.gguf"

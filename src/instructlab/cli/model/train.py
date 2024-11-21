@@ -91,7 +91,7 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     type=click.Path(),
     cls=clickext.ConfigOption,
     required=True,  # default from config
-    default=DEFAULTS.MODEL_REPO,
+    default=DEFAULTS.GRANITE_MODEL_REPO,
 )
 @click.option(
     "--iters",

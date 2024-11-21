@@ -613,26 +613,6 @@ def ensure_legacy_dataset(
     return convert_messages_to_legacy_dataset(dataset)  # type: ignore
 
 
-def is_oci_repo(repo_url: str) -> bool:
-    """
-    Checks if a provided repository follows the OCI registry URL syntax
-    """
-    if not repo_url.startswith("docker://"):
-        return False
-    oci_url_regex = r"^docker://([a-zA-Z0-9\-_.]+(:[0-9]+)?)(/[a-zA-Z0-9\-_.]+)+(@[a-zA-Z0-9]+|:[a-zA-Z0-9\-_.]+)?$"
-    if not re.match(oci_url_regex, repo_url):
-        logger.warning(f"Invalid OCI repository URL: {repo_url}")
-        return False
-    return True
-
-
-def is_huggingface_repo(repo_name: str) -> bool:
-    # allow alphanumerics, underscores, hyphens and periods in huggingface repo names
-    # repo name should be of the format <owner>/<model>
-    pattern = r"^[\w.-]+\/[\w.-]+$"
-    return re.match(pattern, repo_name) is not None
-
-
 def load_json(file_path: Path):
     try:
         with open(file_path, encoding="UTF-8") as f:
@@ -661,6 +641,7 @@ def print_table(headers: List[str], data: List[Tuple[str, ...]] | List[List[str]
     +--------+--------+-----+
     ```
     """
+
     column_widths = [
         max(len(str(row[i])) for row in data + [headers]) for i in range(len(headers))
     ]
@@ -672,8 +653,13 @@ def print_table(headers: List[str], data: List[Tuple[str, ...]] | List[List[str]
     for header, width in zip(headers, column_widths, strict=False):
         outputs.append(f" {header:{width}} ")
     print("|" + "|".join(outputs) + "|")
-    print(joining_line)
     for row in data:
+        # only print the joining line before a new model is printed
+        # if row[0] is empty it means we are printing information for
+        # a different version of a previously displayed model, so
+        # skip the joining line
+        if row[0] != "":
+            print(joining_line)
         outputs = []
         for item, width in zip(row, column_widths, strict=False):
             outputs.append(f" {item:{width}} ")
@@ -726,63 +712,111 @@ def validate_safetensors_file(file_path: pathlib.Path) -> bool:
 
 
 def is_model_safetensors(model_path: pathlib.Path) -> bool:
-    """Check if model_path is a valid safe tensors directory
+    """Check if model_path is a valid safetensors directory.
 
-    Check if provided path to model represents directory containing a safetensors representation
-    of a model. Directory must contain a specific set of files to qualify as a safetensors model directory
+    Check if provided path to model represents a directory containing a safetensors representation
+    of a model. Directory must contain a specific set of files to qualify as a safetensors model directory.
+
     Args:
-        model_path (Path): The path to the model directory
+        model_path (Path): The path to the model directory.
+
     Returns:
         bool: True if the model is a safetensors model, False otherwise.
     """
-    try:
-        files = list(model_path.iterdir())
-    except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
-        logger.debug("Failed to read directory: %s", e)
-        return False
 
-    # directory should contain either .safetensors or .bin files to be considered valid
-    has_bin_file = False
-    safetensors_files: List[pathlib.Path] = []
+    valid_model = True
 
-    for file in files:
-        if file.suffix == ".safetensors":
-            safetensors_files.append(file)
-        elif file.suffix == ".bin":
-            has_bin_file = True
+    if not os.path.isdir(model_path):
+        logger.debug(
+            f"Supplied model {model_path} is not a directory, so it cannot be considered a safetensors model"
+        )
+        valid_model = False
 
-    if not safetensors_files and not has_bin_file:
-        logger.debug("'%s' has no .safetensors or .bin files", model_path)
-        return False
+    if valid_model:
+        try:
+            files = list(model_path.iterdir())
+        except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
+            logger.debug("Failed to read directory: %s", e)
+            valid_model = False
 
-    if safetensors_files:
+    if valid_model:
+        has_bin_file = False
+        safetensors_files: List[pathlib.Path] = []
+
+        for file in files:
+            if file.suffix == ".safetensors":
+                safetensors_files.append(file)
+            elif file.suffix == ".bin":
+                has_bin_file = True
+
+        if not safetensors_files and not has_bin_file:
+            logger.debug("'%s' has no .safetensors or .bin files", model_path)
+            valid_model = False
+
+    if valid_model and safetensors_files:
         for safetensors_file in safetensors_files:
             if not validate_safetensors_file(safetensors_file):
-                return False
+                valid_model = False
+                break
 
-    basenames = {file.name for file in files}
-    requires_files = {
-        "config.json",
-        "tokenizer.json",
-        "tokenizer_config.json",
-    }
-    diff = requires_files.difference(basenames)
-    if diff:
-        logger.debug("'%s' is missing %s", model_path, diff)
-        return False
+    if valid_model:
+        basenames = {file.name for file in files}
+        required_files = {"config.json", "tokenizer.json", "tokenizer_config.json"}
+        diff = required_files.difference(basenames)
+        if diff:
+            logger.debug("'%s' is missing %s", model_path, diff)
+            valid_model = False
 
-    for file in model_path.glob("*.json"):
+    if valid_model:
+        for file in model_path.glob("*.json"):
+            try:
+                with file.open(encoding="utf-8") as f:
+                    json.load(f)
+            except (PermissionError, json.JSONDecodeError) as e:
+                logger.debug("'%s' is not a valid JSON file: %s", file, e)
+                valid_model = False
+                break
+
+    return valid_model
+
+
+def is_model_gguf(model_path: pathlib.Path) -> tuple[bool, pathlib.Path]:
+    """Check if model_path is a valid GGUF directory or GGUF file
+
+    Check if provided path to model represents a GGUF model.
+    If it is a directory, it must contain a specific set of files to
+    qualify as a GGUF model directory
+
+    Args:
+        model_path (Path): The path to the model directory/file
+    Returns:
+        bool: True if the model is a GGUF model, False otherwise.
+        gguf_file_path (Path): The path to the actual GGUF file in the supplied model
+    """
+
+    if os.path.isdir(model_path):
         try:
-            with file.open(encoding="utf-8") as f:
-                json.load(f)
-        except (PermissionError, json.JSONDecodeError) as e:
-            logger.debug("'%s' is not a valid JSON file: e", file, e)
-            return False
+            items = list(model_path.iterdir())
+        except (FileNotFoundError, NotADirectoryError, PermissionError) as e:
+            logger.debug("Failed to read directory: %s", e)
+            return False, model_path
 
-    return True
+        # directory should contain .gguf files to be considered valid GGUF model
+        if not any(item.suffix.endswith(".gguf") for item in items):
+            logger.debug("'%s' has no *.gguf files", model_path)
+            return False, model_path
+        logger.debug("found *.gguf files in '%s'", model_path)
+
+        for item in items:
+            if os.path.isfile(item) and item.suffix.endswith(".gguf"):
+                gguf_file_path = model_path / Path(item)
+                return _is_file_gguf_model(gguf_file_path), gguf_file_path
+    elif os.path.isfile(model_path):
+        return _is_file_gguf_model(model_path), model_path
+    return False, model_path
 
 
-def is_model_gguf(model_path: pathlib.Path) -> bool:
+def _is_file_gguf_model(model_path: pathlib.Path) -> bool:
     """
     Check if the file is a GGUF file.
     Args:
@@ -792,6 +826,10 @@ def is_model_gguf(model_path: pathlib.Path) -> bool:
     """
     # Third Party
     from gguf.constants import GGUF_MAGIC
+
+    if not model_path.suffix.endswith(".gguf"):
+        logger.debug(f"Supplied model {model_path} does not have a .gguf suffix")
+        return False
 
     try:
         with model_path.open("rb") as f:
@@ -815,80 +853,101 @@ def is_model_gguf(model_path: pathlib.Path) -> bool:
         return False
 
 
-def _analyze_gguf(entry: Path) -> AnalyzeModelResult:
-    # stat the gguf, add it to the table
-    stat = Path(entry.absolute()).stat(follow_symlinks=False)
-    f_size = stat.st_size
-    adjusted_size, magnitude = convert_bytes_to_proper_mag(f_size)
-    # add to table
-    modification_time = os.path.getmtime(entry.absolute())
-    modification_time_readable = time.strftime(
-        "%Y-%m-%d %H:%M:%S", time.localtime(modification_time)
+def get_size(target: Path) -> int:
+    """Returns the size in bytes for any specified file or folder"""
+    if os.path.isfile(target):
+        return Path(target).stat(follow_symlinks=True).st_size
+
+    # For directories, calculate the total size recursively
+    total_size = 0
+    for dirpath, _, filenames in os.walk(target):
+        for filename in filenames:
+            file_path = Path(dirpath) / filename
+            total_size += file_path.stat(follow_symlinks=True).st_size
+    return total_size
+
+
+def get_model_metadata(model_path: Path) -> tuple[dict, bool]:
+    """
+    Iterates through a provided model directory to find a metadata.json file if present.
+    If found, it reads the file and extracts the version, SHA, size, and last modified
+    timestamp of the model and returns it as a dict.
+
+    Args:
+        model_path (Path): the path where the model directory is stored
+
+    Returns:
+        dict: Contains the version, SHA, size, and last modified timestamp of the model
+        bool: Whether a metadata file was found for this model or not
+    """
+    metadata: dict[str, str] = {}
+
+    if not is_model_valid(model_path):
+        logger.debug(f"Supplied model path {model_path} is not a valid model")
+        return metadata, False
+
+    # Add common metadata info
+    metadata["size"] = str(get_size(model_path))
+    metadata["last_modified"] = get_last_modified_timestamp(model_path)
+
+    # If it's a file, version metadata information won't be available
+    if os.path.isfile(model_path):
+        return set_unknown_metadata(metadata), False
+
+    if not contains_metadata_file(model_path):
+        logger.debug(
+            f"No metadata file found for {model_path}. Version information will not be available."
+        )
+        return set_unknown_metadata(metadata), False
+
+    return load_metadata_file(model_path, metadata), True
+
+
+def is_model_valid(model_path: Path) -> bool:
+    """Checks if the model path is a valid GGUF or safetensor model."""
+    return is_model_gguf(model_path)[0] or is_model_safetensors(model_path)
+
+
+def get_last_modified_timestamp(model_path: Path) -> str:
+    """Gets the last modified timestamp of the model path."""
+    return time.strftime(
+        "%Y-%m-%d %H:%M:%S", time.localtime(os.path.getmtime(model_path.absolute()))
     )
-    return (entry.name, modification_time_readable, f"{adjusted_size:.1f} {magnitude}")
 
 
-def _analyze_dir(
-    entry: Path, list_checkpoints: bool, directory: Path
-) -> List[AnalyzeModelResult]:
-    actual_model_name = ""
-    all_files_sizes = 0
-    add_model = False
-    models: List[AnalyzeModelResult] = []
-    # walk entire dir.
-    for root, _, files in os.walk(entry.as_posix()):
-        normalized_path = os.path.normpath(root)
-        # Split the path into its components
-        parts = normalized_path.split(os.sep)
-        # Get the last two or three (for checkpoints) parts and join them back into a path
-        printed_parts = os.path.join(parts[-2], parts[-1])
-        if directory == Path(DEFAULTS.CHECKPOINTS_DIR):
-            printed_parts = os.path.join(parts[-3], parts[-2], parts[-1])
-        # if this is a dir it could be:
-        # top level repo dir `instructlab/`
-        # top level model dir `instructlab/granite-7b-lab`
-        # checkpoint top level dir `step-19`
-        # any lower level dir: `instructlab/granite-7b-lab/.huggingface/download.....`
-        # so, check if model is valid Safetensor, GGUF, or list it regardless w/ `--list-checkpoints`
-        # if --list-checkpoints is specified, we will list all checkpoints in the checkpoints dir regardless of the validity
-        if is_model_safetensors(Path(normalized_path)) or is_model_gguf(
-            Path(normalized_path)
-        ):
-            actual_model_name = printed_parts
-            all_files_sizes = 0
-            add_model = True
-        else:
-            if list_checkpoints and directory is DEFAULTS.CHECKPOINTS_DIR:
-                logging.debug("Including model regardless of model validity")
-            else:
-                continue
-        for f in files:
-            # stat each file in the dir, add the size in Bytes, then convert to proper magnitude
-            full_file = os.path.join(root, f)
-            # do not follow symlinks, we only want to list the models dir ones
-            stat = Path(full_file).stat(follow_symlinks=True)
-            all_files_sizes += stat.st_size
-        adjusted_all_sizes, magnitude = convert_bytes_to_proper_mag(all_files_sizes)
-        if add_model:
-            # add to table
-            modification_time = os.path.getmtime(entry.absolute())
-            modification_time_readable = time.strftime(
-                "%Y-%m-%d %H:%M:%S", time.localtime(modification_time)
-            )
-            models.append(
-                (
-                    actual_model_name,
-                    modification_time_readable,
-                    f"{adjusted_all_sizes:.1f} {magnitude}",
-                )
-            )
-    return models
+def set_unknown_metadata(metadata: dict) -> dict:
+    """Sets default unknown values for version and SHA in metadata."""
+    metadata["version"] = "unknown"
+    metadata["SHA"] = "unknown"
+    return metadata
+
+
+def contains_metadata_file(model_path: Path) -> bool:
+    """Checks if the model directory contains a metadata.json file."""
+    try:
+        basenames = {file.name for file in model_path.iterdir()}
+        return "metadata.json" in basenames
+    except (FileNotFoundError, PermissionError) as e:
+        logger.debug("Failed to read directory: %s", e)
+        return False
+
+
+def load_metadata_file(model_path: Path, metadata: dict) -> dict:
+    """Attempts to load metadata from metadata.json, updating the metadata dict."""
+    try:
+        with open(model_path / "metadata.json", "r", encoding="utf-8") as metadata_file:
+            metadata.update(json.load(metadata_file))
+    except OSError as e:
+        logger.error(f"Failed to load metadata file at {model_path}: {e}")
+        return set_unknown_metadata(metadata)
+
+    return metadata
 
 
 def list_models(
     model_dirs: List[Path], list_checkpoints: bool
-) -> List[AnalyzeModelResult]:
-    """Goes through a set of directories and returns all of the model
+) -> List[Tuple[str, str]]:
+    """Goes through a set of directories and returns all of the models
     found, including checkpoints if selected.
 
 
@@ -897,20 +956,34 @@ def list_models(
         list_checkpoints (bool): Whether or not we should include trained checkpoints.
 
     Returns:
-        List[AnalyzeResult]: Results of the listing operation.
+        List[Tuple[str, str]]: List of tuples representing all valid models found.
+        The tuples follow the format [<model's aboslute path>, <supplied root directory containing model>]
     """
+
+    valid_models: List[Tuple[str, str]] = []
+
     # if we want to list checkpoints, add that dir to our list
     if list_checkpoints:
         model_dirs.append(Path(DEFAULTS.CHECKPOINTS_DIR))
-    data: List[AnalyzeModelResult] = []
+
     for directory in model_dirs:
-        for entry in Path(directory).iterdir():
-            # if file, just tally the size. This must be a GGUF.
-            if entry.is_file() and is_model_gguf(entry):
-                data.append(_analyze_gguf(entry))
-            elif entry.is_dir():
-                data.extend(_analyze_dir(entry, list_checkpoints, directory))
-    return data
+        for root, folders, _ in os.walk(directory.as_posix()):
+            # Excluding files here since GGUF model files present inside
+            # folders end up getting counted twice - once as a folder and
+            # the second time as the file itself. Excluding files in our
+            # traversal ensures they only get counted once as folders.
+            # The downside is that we will be ignoring any loose  GGUF
+            # files previously downloaded and present at the top level
+            for item in folders:
+                cur_item = Path(f"{root}/{item}")
+                if (
+                    is_model_safetensors(Path(cur_item))
+                    or is_model_gguf(Path(cur_item))[0]
+                ):
+                    valid_models.append((str(cur_item), str(directory)))
+                    continue
+
+    return valid_models
 
 
 def contains_argument(prefix: str, args: typing.Iterable[str]) -> bool:
@@ -930,12 +1003,13 @@ def get_model_arch(model_path: pathlib.Path) -> str:
 
     model_arch = "default"
 
-    if is_model_gguf(model_path):
+    is_gguf, file_path = is_model_gguf(model_path)
+    if is_gguf:
         # Third Party
         from gguf import GGUFReader
         from transformers.integrations.ggml import _gguf_parse_value
 
-        reader = GGUFReader(model_path)
+        reader = GGUFReader(file_path)
         value = reader.fields["general.architecture"]
         model_arch = [
             _gguf_parse_value(value.parts[_data_index], value.types)

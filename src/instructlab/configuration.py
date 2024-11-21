@@ -368,7 +368,7 @@ class _evaluate(BaseModel):
         description="Model to be evaluated",
     )
     base_model: str = Field(
-        default=DEFAULTS.MODEL_REPO,
+        default_factory=lambda: DEFAULTS.DEFAULT_MODEL,
         description="Base model to compare with 'model' for mt_bench_branch and mmlu_branch.",
     )
     branch: Optional[str] = Field(
@@ -413,7 +413,7 @@ class _train(BaseModel):
         pattern="simple|full|accelerated",
     )
     model_path: str = Field(
-        default=DEFAULTS.MODEL_REPO,
+        default_factory=lambda: DEFAULTS.DEFAULT_MODEL,
         description="Directory where the model to be trained is stored.",
     )
     device: str = Field(
