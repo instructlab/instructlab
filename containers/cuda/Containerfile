@@ -129,6 +129,8 @@ RUN dnf install -y --nodocs \
         cuda-minimal-build-${CUDA_DASHED_VERSION} \
         cuda-toolkit-${CUDA_DASHED_VERSION} \
         libcudnn${CUDNN_MAJOR_VERSION} \
+        libcudnn9 \
+        libcudnn9-devel  \
         libnccl \
         libcutensor2 \
     && dnf clean all \
