@@ -86,19 +86,18 @@ def test_get_backend_auto_detection_fail_not_gguf(tmp_path: pathlib.Path):
         invalid_header + bytes([0] * 4093)
     )  # Fill the rest of the file with zeros
     with pytest.raises(ValueError) as exc_info:
-        backends.get(tmp_gguf, None)
-    assert "is not a GGUF format" in str(exc_info.value)
+        backends.get(tmp_path, None)
+    assert "is not a GGUF" in str(exc_info.value)
 
 
 # this test succeeds because the model_path is a valid GGUF file (is_model_gguf mocked to returns True)
-@patch("instructlab.model.backends.backends.is_model_gguf", return_value=True)
+@patch("instructlab.model.backends.backends.is_model_gguf", return_value=[True, ""])
 def test_get_backend_auto_detection_success_gguf(
     m_is_model_gguf, tmp_path: pathlib.Path
 ):
-    tmp_gguf = tmp_path / "test.gguf"
-    backend = backends.get(tmp_gguf, None)
+    backend = backends.get(tmp_path, None)
     assert backend == "llama-cpp"
-    m_is_model_gguf.assert_called_once_with(tmp_gguf)
+    m_is_model_gguf.assert_called_once_with(tmp_path)
 
 
 # this tests both cases where a valid and invalid safetensors model directory is supplied

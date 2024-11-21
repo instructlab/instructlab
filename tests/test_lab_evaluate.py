@@ -460,8 +460,10 @@ def test_invalid_model_mmlu(cli_runner: CliRunner):
 
 
 def test_invalid_gguf_model_mmlu(cli_runner: CliRunner):
-    with open("model.gguf", "w", encoding="utf-8") as gguf_file:
-        gguf_file.write("")
+    # Write a valid GGUF magic number to the file to simulate a real GGUF model
+    with open("model.gguf", "wb") as gguf_file:
+        # Writing 'gguf' as the magic number in bytes (valid GGUF header)
+        gguf_file.write(b"GGUF")
     result = cli_runner.invoke(
         lab.ilab,
         [
@@ -613,7 +615,7 @@ def test_invalid_model_path_mmlu(cli_runner: CliRunner, tmp_path):
         ],
     )
     assert (
-        "Evaluate '--model' needs to be passed either a safetensors directory or a GGUF file"
+        "Evaluate '--model' needs to be passed a valid safetensors or GGUF model"
         in result.output
     )
     assert result.exit_code != 0
@@ -635,7 +637,7 @@ def test_invalid_model_path_mt_bench(cli_runner: CliRunner, tmp_path):
         ],
     )
     assert (
-        "Evaluate '--model' needs to be passed either a safetensors directory or a GGUF file"
+        "Evaluate '--model' needs to be passed a valid safetensors or GGUF model"
         in result.output
     )
     assert result.exit_code != 0

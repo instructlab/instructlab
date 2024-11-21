@@ -9,9 +9,11 @@ import sys
 # Third Party
 import click
 
+# First Party
+from instructlab.utils import is_model_gguf, is_model_safetensors, split_hostport
+
 # Local
 from ...configuration import _serve as serve_config
-from ...utils import is_model_gguf, is_model_safetensors, split_hostport
 from .common import CHAT_TEMPLATE_AUTO, LLAMA_CPP, VLLM
 from .server import BackendServer
 
@@ -30,7 +32,8 @@ def determine_backend(model_path: pathlib.Path) -> Tuple[str, str]:
                         - The backend to use.
                         - The reason why the backend was selected.
     """
-    if model_path.is_dir() and is_model_safetensors(model_path):
+    # Check if model is safetensors or GGUF
+    if is_model_safetensors(model_path):
         if sys.platform == "linux":
             logger.debug(
                 f"Model is huggingface safetensors and system is Linux, using {VLLM} backend."
@@ -44,22 +47,13 @@ def determine_backend(model_path: pathlib.Path) -> Tuple[str, str]:
             "Using a directory with safetensors file will activate the vLLM serving backend, vLLM is only supported on Linux. "
             "If you want to run the model on a different system (e.g. macOS), please use a GGUF file."
         )
-
-    # Check if the model is a GGUF file
-    try:
-        is_gguf = is_model_gguf(model_path)
-    except Exception as e:
-        raise ValueError(
-            f"Failed to determine whether the model is a GGUF format: {e}"
-        ) from e
-
-    if is_gguf:
-        logger.debug(f"Model is a GGUF file, using {LLAMA_CPP} backend.")
-        return LLAMA_CPP, "model is a GGUF file."
+    if is_model_gguf(model_path)[0]:
+        logger.debug(f"Model is of GGUF format, using {LLAMA_CPP} backend.")
+        return LLAMA_CPP, "model is of GGUF format."
 
     raise ValueError(
-        f"The model file {model_path} is not a GGUF format nor a directory containing huggingface safetensors files. Cannot determine which backend to use. \n"
-        f"Please use a GGUF file for {LLAMA_CPP} or a directory containing huggingface safetensors files for {VLLM}. \n"
+        f"Supplied model {model_path} is not a GGUF or a huggingface safetensors format model. Cannot determine which backend to use. \n"
+        f"Please use a directory containing a GGUF file for {LLAMA_CPP} or a directory containing huggingface safetensors files for {VLLM}. \n"
         "Note that vLLM is only supported on Linux."
     )
 

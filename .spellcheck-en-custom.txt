@@ -26,6 +26,7 @@ Gmail
 HPU
 Habana
 Heimes
+Hugging Face
 ISA
 Inferencing
 JIT
@@ -124,6 +125,7 @@ gpu
 gpus
 habana
 hipBLAS
+huggingface
 ibmcloud
 ilab
 impactful

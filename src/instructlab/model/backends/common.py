@@ -166,7 +166,7 @@ def get_model_template(
 
     # pylint: disable=broad-exception-caught
     except Exception as e:
-        logger.warning(
+        logger.debug(
             f"Unable to read tokenizer config for model: {model_path}: {e}. Falling back to in-memory chat template mapping"
         )
         template, eos_token, bos_token = get_in_memory_model_template(
