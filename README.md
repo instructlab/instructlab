@@ -652,29 +652,24 @@ Before following these instructions, ensure the existing model you are adding sk
 
    The synthetic data set will be two files in the newly created in the datasets directory: `~/.local/share/instructlab/datasets`. These files will be named `skills_train_msgs_*.jsonl` and `knowledge_train_msgs_*.jsonl`.
 
-2. Verify the files have been created by running the `ls datasets` command. Note: you must be in your `XDG_DATA_HOME/instructlab` directory.
+2. Verify the files have been created by running the `ilab data list` command.
 
    ```shell
-   (venv) $ ls datasets/
-   ├── node_datasets_2024-08-12T20_31_15
-   ├── node_datasets_2024-08-13T19_51_48
-   ├── knowledge_recipe_2024-08-12T20_31_15.yaml
-   ├── knowledge_recipe_2024-08-13T19_51_48.yaml
-   ├── knowledge_train_msgs_2024-08-12T20_31_15.jsonl
-   ├── knowledge_train_msgs_2024-08-13T19_51_48.jsonl
-   ├── skills_recipe_2024-08-12T20_31_15.yaml
-   ├── skills_recipe_2024-08-13T19_51_48.yaml
-   ├── skills_train_msgs_2024-08-12T20_31_15.jsonl
-   ├── skills_train_msgs_2024-08-13T19_51_48.jsonl
-   ├── messages_mixtral-8x7b-instruct-v0-1_2024-08-12T20_31_15.jsonl
-   ├── messages_mixtral-8x7b-instruct-v0-1_2024-08-13T19_51_48.jsonl
-   ├── test_mixtral-8x7b-instruct-v0-1_2024-08-12T20_13_21.jsonl
-   ├── test_mixtral-8x7b-instruct-v0-1_2024-08-12T20_23_06.jsonl
-   ├── test_mixtral-8x7b-instruct-v0-1_2024-08-12T20_31_15.jsonl
-   ├── test_mixtral-8x7b-instruct-v0-1_2024-08-13T19_47_59.jsonl
-   ├── test_mixtral-8x7b-instruct-v0-1_2024-08-13T19_51_48.jsonl
-   ├── train_mixtral-8x7b-instruct-v0-1_2024-08-12T20_31_15.jsonl
-   └── train_mixtral-8x7b-instruct-v0-1_2024-08-13T19_51_48.jsonl
+   (venv) $ ilab data list
+   mistral-7b-instruct-v0.2.Q4_K_M 2024-11-12 02:37:38
+   +--------------------------------------------------------------------+---------------------+-----------+
+   | Dataset                                                            | Created At          | File size |
+   +--------------------------------------------------------------------+---------------------+-----------+
+   | knowledge_train_msgs_2024-11-12T02_37_38.jsonl                     | 2024-11-12 05:38:26 | 3.92 MB   |
+   | messages_mistral-7b-instruct-v0.2.Q4_K_M_2024-11-12T02_37_38.jsonl | 2024-11-12 05:38:21 | 317.08 KB |
+   | node_datasets_2024-11-12T02_37_38/compositional_skills_valid.jsonl | 2024-11-12 03:07:58 | 139.00 KB |
+   | node_datasets_2024-11-12T02_37_38/knowledge_valid_p07.jsonl        | 2024-11-12 05:38:21 | 3.84 MB   |
+   | node_datasets_2024-11-12T02_37_38/knowledge_valid_p10.jsonl        | 2024-11-12 05:38:21 | 7.25 MB   |
+   | node_datasets_2024-11-12T02_37_38/mmlubench_knowledge_valid.jsonl  | 2024-11-12 05:38:21 | 48.94 KB  |
+   | skills_train_msgs_2024-11-12T02_37_38.jsonl                        | 2024-11-12 05:38:29 | 7.36 MB   |
+   | test_mistral-7b-instruct-v0.2.Q4_K_M_2024-11-12T02_37_38.jsonl     | 2024-11-12 02:37:38 | 27.25 KB  |
+   | train_mistral-7b-instruct-v0.2.Q4_K_M_2024-11-12T02_37_38.jsonl    | 2024-11-12 05:38:21 | 272.94 KB |
+   +--------------------------------------------------------------------+---------------------+-----------+
    ```
 
 *Generating synthetic data on a different model:* It is also possible to run the generate step against a different model via an
