@@ -564,6 +564,9 @@ For detailed documentation on the InstructLab LLMs and their functions, see the 
    ilab config init
    ```
 
+> [!NOTE]
+> If you are having issues with your upgrade, you can attempt `pip install --force-reinstall --no-cache-dir instructlab` to force reinstallation of InstructLab without using the pip cache
+
 ## 💻 Creating new knowledge or skills and training the model
 
 ### 🎁 Contribute knowledge or compositional skills
