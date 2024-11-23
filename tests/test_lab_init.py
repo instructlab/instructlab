@@ -16,6 +16,52 @@ from instructlab.configuration import DEFAULTS, read_config
 
 class TestLabInit:
     @patch(
+        "torch.cuda.is_available",
+        return_value=False,
+    )
+    @patch("instructlab.config.init.is_hpu_available", return_value=True)
+    def test_is_hpu_available_true(
+        self,
+        is_hpu_available_mock,  # pylint: disable=unused-argument
+        is_cuda_available_mock,  # pylint: disable=unused-argument
+        cli_runner: CliRunner,
+    ):
+        result = cli_runner.invoke(lab.ilab, ["config", "init", "--interactive"])
+        assert result.exit_code == 0, result.stdout
+
+    @patch(
+        "torch.cuda.is_available",
+        return_value=True,
+    )
+    @patch("instructlab.config.init.is_hpu_available", return_value=False)
+    def test_is_hpu_available_false(
+        self,
+        is_hpu_available_mock,  # pylint: disable=unused-argument
+        is_cuda_available_mock,  # pylint: disable=unused-argument
+        cli_runner: CliRunner,
+    ):
+        result = cli_runner.invoke(lab.ilab, ["config", "init", "--interactive"])
+        assert result.exit_code == 0, result.stdout
+
+    @patch("instructlab.config.init.is_hpu_available", return_value=False)
+    @patch(
+        "torch.cuda.is_available",
+        return_value=True,
+    )
+    @patch(
+        "torch.version.hip",
+        "6.2.41134",
+    )
+    def test_hip_and_cuda_active(
+        self,
+        is_cuda_available_mock,  # pylint: disable=unused-argument
+        is_hpu_available_mock,  # pylint: disable=unused-argument
+        cli_runner: CliRunner,
+    ):
+        result = cli_runner.invoke(lab.ilab, ["config", "init", "--interactive"])
+        assert result.exit_code == 0, result.stdout
+
+    @patch(
         "instructlab.config.init.get_gpu_or_cpu",
         return_value=("nvidia a100 x2", False, True, 0, 0),
     )

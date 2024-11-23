@@ -312,7 +312,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
    You can download this model with `ilab model download` command as well.
 
-4. The InstructLab CLI auto-detects your hardware and select the exact system profile that matches your machine. System profiles populate the `config.yaml` file with the proper parameter values based on your detected GPU types and available vRAM.
+4. The InstructLab CLI auto-detects your hardware and select the exact system profile that matches your machine. System profiles populate the `config.yaml` file with the proper parameter values based on your detected CPU/GPU types. This system is only applicable to Apple M-Series Chips, Nvidia GPUs, and Intel/AMD CPUs.
 
    *Example output of profile auto-detection*
 
