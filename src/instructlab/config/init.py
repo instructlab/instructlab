@@ -315,6 +315,11 @@ def walk_and_print_system_profiles(
 
 
 def is_hpu_available() -> bool:
+    """
+    is_hpu_available checks if torch is built with HPU support
+    if torch has the hpu attribute or we can successfully create a torch.device for HPU, return true.
+    else, return false.
+    """
     # Third Party
     import torch
 
