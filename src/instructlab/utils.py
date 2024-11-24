@@ -3,7 +3,7 @@
 # Standard
 from functools import wraps
 from pathlib import Path
-from typing import List, Tuple, TypedDict
+from typing import List, Tuple, TypedDict, Union
 from urllib.parse import urlparse
 import copy
 import glob
@@ -1030,3 +1030,50 @@ def use_legacy_pretraining_format(model_path: Path, model_arch: str) -> bool:
         )
         return model_arch.lower() == SupportedModelArchitectures.LLAMA
     return False
+
+
+def build_command_args(**kwargs: Union[str, int, bool, None]) -> List[str]:
+    """Convert function arguments into CLI command arguments."""
+    args: List[str] = []
+    for key, value in kwargs.items():
+        if value is None:
+            continue
+        if isinstance(value, bool):
+            if value:
+                args.append(f"--{key.replace('_', '-')}")
+        else:
+            args.append(f"--{key.replace('_', '-')}")
+            args.append(str(value))
+    return args
+
+
+def run_in_background(command: str, args: List[str], log_file: str) -> int:
+    """Run a command in the background and register it as a task."""
+    # First Party
+    from instructlab.cli.process.process_manager import register_task
+
+    os.makedirs(os.path.dirname(log_file), exist_ok=True)
+    with open(log_file, "w", encoding="utf-8") as log:
+        try:
+            # Note: `with` is not used for `Popen` as the process runs in the background.
+            process = subprocess.Popen(  # pylint: disable=consider-using-with
+                [command] + args,
+                stdout=log,
+                stderr=subprocess.STDOUT,
+                start_new_session=True,
+            )
+        except Exception as e:
+            click.secho(
+                f"\nAn unexcepted error occured: {e}",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
+        # Register the prcocess
+        pgid: int = os.getpgid(process.pid)
+        register_task(
+            pid=pgid,
+            command=command,
+            args=args,
+            log_file=log_file,
+        )
+        return pgid

@@ -35,6 +35,7 @@ class STORAGE_DIR_NAMES:
     )
     CHATLOGS = "chatlogs"
     PHASED = "phased"
+    PROCESS = "process"
 
 
 class _InstructlabDefaults:
@@ -149,6 +150,10 @@ class _InstructlabDefaults:
     @property
     def PHASED_DIR(self) -> str:
         return path.join(self._data_dir, STORAGE_DIR_NAMES.PHASED)
+
+    @property
+    def PROCESS_DIR(self) -> str:
+        return path.join(self._data_dir, STORAGE_DIR_NAMES.PROCESS)
 
     @property
     def INTERNAL_DIR(self) -> str:

@@ -160,6 +160,9 @@ logger = logging.getLogger(__name__)
     type=click.IntRange(min=512),
     cls=clickext.ConfigOption,
 )
+@click.option(
+    "-dt", "--detached", is_flag=True, help="Run the process in the background."
+)
 @click.pass_context
 @clickext.display_params
 def generate(
@@ -187,8 +190,50 @@ def generate(
     batch_size,
     gpus,
     max_num_tokens,
+    detached,
 ):
     """Generates synthetic data to enhance your example data"""
+
+    if detached:
+        # First Party
+        from instructlab.defaults import DEFAULT_INDENT, DEFAULTS
+        from instructlab.utils import build_command_args, run_in_background
+
+        args = build_command_args(
+            model=model_path,
+            num_cpus=num_cpus,
+            sdg_scale_factor=sdg_scale_factor,
+            taxonomy_path=taxonomy_path,
+            taxonomy_base=taxonomy_base,
+            output_dir=output_dir,
+            quiet=quiet,
+            endpoint_url=endpoint_url,
+            api_key=api_key,
+            yaml_rules=yaml_rules,
+            chunk_word_count=chunk_word_count,
+            server_ctx_size=server_ctx_size,
+            tls_insecure=tls_insecure,
+            tls_client_cert=tls_client_cert,
+            tls_client_key=tls_client_key,
+            tls_client_passwd=tls_client_passwd,
+            model_family=model_family,
+            pipeline=pipeline,
+            enable_serving_output=enable_serving_output,
+            batch_size=batch_size,
+            gpus=gpus,
+            max_num_tokens=max_num_tokens,
+        )
+        log_file = os.path.join(DEFAULTS.PROCESS_DIR, "data_generate.log")
+        pid = run_in_background(
+            command="ilab",
+            args=["data", "generate"] + args,
+            log_file=log_file,
+        )
+        click.secho(
+            f"Task started in background:\n{DEFAULT_INDENT}PID: {pid}\n{DEFAULT_INDENT}Log: {log_file}",
+            fg="green",
+        )
+        return
 
     # if --pipeline is not used, pipeline defaults to the value of ctx.obj.config.generate.pipeline
     # set in the config file. A user could intentionally set this to 'null' in the config file
