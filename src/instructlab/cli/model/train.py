@@ -439,7 +439,7 @@ def train(
             )
     # we can use train_args locally to run lower fidelity training
     if is_high_fidelity(device=device) and pipeline == "accelerated":
-        train_args, torch_args = map_train_to_library(ctx, ctx.params)
+        train_args, torch_args = map_train_to_library(ctx.params)
 
         # First Party
         from instructlab.model import accelerated_train
@@ -478,7 +478,7 @@ def train(
         # First Party
         from instructlab.model import full_train
 
-        train_args, torch_args = map_train_to_library(ctx, ctx.params)
+        train_args, torch_args = map_train_to_library(ctx.params)
         # if on CPU or MPS, execute full train, which is based
         # off of the structure of the training repo, just with different optimizers, model sizes, and special data gradient accumulation to get it
         # to fit on most consumer laptops
