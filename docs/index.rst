@@ -15,6 +15,7 @@ Welcome to InstructLab's documentation!
    README.md
    release-strategy.md
    instructlab_models.md
+   PROMPTING-FAQ.md
 
 
 Indices and tables
