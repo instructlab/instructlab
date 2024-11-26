@@ -104,6 +104,16 @@ def run_default_phased_train(cli_runner):
     return result
 
 
+def setup_default_phased_training_dirs():
+    for f_path in [
+        "knowledge_data_path",
+        "skills_data_path",
+    ]:
+        with open(f_path, "w", encoding=ENCODING) as f:
+            f.write("{}")
+    os.makedirs("mt_bench_judge")
+
+
 @pytest.mark.usefixtures("mock_mlx_package")
 class TestLabTrain:
     """Test collection for `ilab model train` command."""
@@ -628,13 +638,7 @@ class TestLabTrain:
         self,
         cli_runner: CliRunner,
     ):
-        for f_path in [
-            "knowledge_data_path",
-            "skills_data_path",
-        ]:
-            with open(f_path, "w", encoding=ENCODING) as f:
-                f.write("{}")
-        os.makedirs("mt_bench_judge")
+        setup_default_phased_training_dirs()
 
         # Run phased training and fail on the first call to train
         run_training_patch = patch(
@@ -694,3 +698,40 @@ class TestLabTrain:
             "Unable to train with device=cpu and pipeline=accelerated" in result.output
         )
         assert result.exit_code == 1
+
+    @patch("instructlab.training.run_training", return_value=None)
+    @patch("instructlab.model.accelerated_train._evaluate_dir_of_checkpoints")
+    @patch("instructlab.model.accelerated_train._get_checkpoints", return_value=[])
+    def test_skills_only_train(
+        self,
+        get_checkpoints_mock,
+        evaluate_mock,
+        run_training_mock,
+        cli_runner: CliRunner,
+    ):
+        setup_default_phased_training_dirs()
+        result = cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "model",
+                "train",
+                "--pipeline",
+                "accelerated",
+                "--strategy",
+                "lab-skills-only",
+                "--phased-phase2-data",
+                "skills_data_path",
+                "--phased-mt-bench-judge",
+                "mt_bench_judge",
+                "--phased-phase2-num-epochs",
+                "1",
+                "--device",
+                "cuda",
+                "--skip-user-confirm",
+            ],
+        )
+        run_training_mock.assert_called_once()
+        evaluate_mock.assert_called_once()
+        get_checkpoints_mock.assert_called_once()
+        assert result.exit_code == 0
