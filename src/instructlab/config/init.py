@@ -314,6 +314,24 @@ def walk_and_print_system_profiles(
     return cfg
 
 
+def is_hpu_available() -> bool:
+    """
+    is_hpu_available checks if torch is built with HPU support
+    if torch has the hpu attribute or we can successfully create a torch.device for HPU, return true.
+    else, return false.
+    """
+    # Third Party
+    import torch
+
+    # Check for HPU availability without errors
+    try:
+        hpu_available = hasattr(torch, "hpu") and torch.device("hpu") is not None
+        return hpu_available
+    # pylint: disable=broad-exception-caught
+    except Exception:
+        return False
+
+
 def get_gpu_or_cpu() -> tuple[str, bool, bool, int, int]:
     """
     get_gpu_or_cpu figures out what kind of hardware the user has and returns the name in the form of 'nvidia l4 x4' as well as if this is a CPU and if the user is on Linux
@@ -327,7 +345,11 @@ def get_gpu_or_cpu() -> tuple[str, bool, bool, int, int]:
     is_cpu = False
     is_linux = False
     # try nvidia
-    if torch.cuda.is_available() and torch.version.hip is None:
+    if (
+        torch.cuda.is_available()
+        and torch.version.hip is None
+        and not is_hpu_available()
+    ):
         click.echo("Detecting hardware...")
         gpus = torch.cuda.device_count()
         for i in range(gpus):
@@ -337,7 +359,7 @@ def get_gpu_or_cpu() -> tuple[str, bool, bool, int, int]:
             total_vram += properties.total_memory  # memory in B
 
     vram = int(floor(convert_bytes_to_proper_mag(total_vram)[0]))
-    if vram == 0:
+    if vram == 0 and torch.version.hip is None and not is_hpu_available():
         # if no vRAM, try to see if we are on a CPU
         chip_name, is_cpu, is_linux = get_chip_name()
         # ok, now we have a chip name. this means we can walk the supported profile names and see if they match
