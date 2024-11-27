@@ -15,6 +15,7 @@ from instructlab import clickext
 from instructlab.client_utils import HttpClientParams
 from instructlab.configuration import DEFAULTS
 from instructlab.data.generate_data import gen_data  # type: ignore
+from instructlab.defaults import ILAB_PROCESS_MODES
 from instructlab.utils import (
     contains_argument,
     get_model_arch,
@@ -160,6 +161,9 @@ logger = logging.getLogger(__name__)
     type=click.IntRange(min=512),
     cls=clickext.ConfigOption,
 )
+@click.option(
+    "-dt", "--detatched", is_flag=True, help="Run ilab data generate in the background"
+)
 @click.pass_context
 @clickext.display_params
 def generate(
@@ -187,6 +191,7 @@ def generate(
     batch_size,
     gpus,
     max_num_tokens,
+    detatched,
 ):
     """Generates synthetic data to enhance your example data"""
 
@@ -253,6 +258,10 @@ def generate(
         model_path, student_model_arch
     )
 
+    process_mode = ILAB_PROCESS_MODES.ATTACHED
+    if detatched:
+        process_mode = ILAB_PROCESS_MODES.DETATCHED
+
     try:
         gen_data(
             serve_cfg,
@@ -278,6 +287,7 @@ def generate(
             max_num_tokens,
             system_prompt,
             legacy_pretraining_format,
+            process_mode=process_mode,
         )
     except Exception as exc:
         click.secho(f"failed to generate data with exception: {exc}", fg="red")
