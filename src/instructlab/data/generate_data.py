@@ -1,15 +1,13 @@
 # Standard
 import logging
 
-# Third Party
-import openai
-
 # First Party
-from instructlab.client_utils import HttpClientParams, http_client
+from instructlab.client_utils import HttpClientParams
 
 logger = logging.getLogger(__name__)
 
 
+# handler function to be used as an intermediary so we can manipulate args
 def gen_data(
     serve_cfg,
     model_path,
@@ -34,16 +32,111 @@ def gen_data(
     max_num_tokens,
     system_prompt,
     use_legacy_pretraining_format,
+    process_mode,
 ):
     """Generates synthetic data to enhance your example data"""
-    # Third Party
-    from instructlab.sdg.generate_data import generate_data
+    # First Party
+    from instructlab.defaults import ILAB_PROCESS_TYPES
+    from instructlab.process.process import add_process
 
-    # pylint: disable=ungrouped-imports
-    from instructlab.sdg.utils import GenerateException
+    print(http_client_params)
 
+    add_process(
+        process_mode=process_mode,
+        process_type=ILAB_PROCESS_TYPES.DATA_GENERATION,
+        target=create_server_and_generate,
+        extra_imports=[
+            ("instructlab.configuration", "_serve", "_serve_vllm", "_serve_llama_cpp")
+        ],
+        serve_cfg=serve_cfg,
+        model_name=model_path,
+        num_cpus=num_cpus,
+        num_instructions_to_generate=sdg_scale_factor,
+        taxonomy=taxonomy_path,
+        taxonomy_base=taxonomy_base,
+        output_dir=output_dir,
+        console_output=not quiet,
+        endpoint_url=endpoint_url,
+        api_key=api_key,
+        yaml_rules=yaml_rules,
+        chunk_word_count=chunk_word_count,
+        server_ctx_size=server_ctx_size,
+        tls_client_cert=http_client_params.get("tls_client_cert")
+        if http_client_params.get("tls_client_cert") != ""
+        else None,
+        tls_client_key=http_client_params.get("tls_client_key")
+        if http_client_params.get("tls_client_key") != ""
+        else None,
+        tls_client_passwd=http_client_params.get("tls_client_passwd")
+        if http_client_params.get("tls_client_passwd") != ""
+        else None,
+        tls_insecure=http_client_params.get("tls_insecure")
+        if http_client_params.get("tls_insecure") != ""
+        else None,
+        model_family=model_family,
+        pipeline=pipeline,
+        enable_serving_output=enable_serving_output,
+        batch_size=batch_size,
+        gpus=gpus,
+        checkpoint_dir=checkpoint_dir,
+        max_num_tokens=max_num_tokens,
+        system_prompt=system_prompt,
+        use_legacy_pretraining_format=use_legacy_pretraining_format,
+        # http_client_params=http_client_params,
+    )
+
+
+# actual generate_data function to be kicked off in its own process/eventually be REST API endpoint
+def create_server_and_generate(
+    serve_cfg,
+    model_name,
+    num_cpus,
+    num_instructions_to_generate,
+    taxonomy,
+    taxonomy_base,
+    output_dir,
+    console_output,
+    endpoint_url,
+    api_key,
+    yaml_rules,
+    chunk_word_count,
+    server_ctx_size,
+    tls_client_cert,
+    tls_client_key,
+    tls_client_passwd,
+    tls_insecure,
+    model_family,
+    pipeline,
+    enable_serving_output,
+    batch_size,
+    gpus,
+    checkpoint_dir,
+    max_num_tokens,
+    system_prompt,
+    use_legacy_pretraining_format,
+):
     backend_instance = None
 
+    # Third Party
+    import openai
+
+    # First Party
+    from instructlab.client_utils import HttpClientParams, http_client
+
+    print(tls_client_cert, tls_client_key, tls_client_passwd, tls_insecure)
+    http_client_params = HttpClientParams(
+        {
+            "tls_client_cert": tls_client_cert,
+            "tls_client_key": tls_client_key,
+            "tls_client_passwd": tls_client_passwd,
+            "tls_insecure": tls_insecure,
+        }
+    )
+
+    print(http_client_params)
+
+    # logger.info("testing")
+    # logger.debug("testing2")
     if endpoint_url:
         api_base = endpoint_url
     else:
@@ -51,7 +144,7 @@ def gen_data(
         from instructlab.model.backends import backends
         from instructlab.model.backends.llama_cpp import Server as llama_cpp_server
 
-        backend_instance = backends.select_backend(cfg=serve_cfg, model_path=model_path)
+        backend_instance = backends.select_backend(cfg=serve_cfg, model_path=model_name)
         if (
             backend_instance.get_backend_type() is not backends.VLLM
             and gpus is not None
@@ -82,21 +175,26 @@ def gen_data(
     client = openai.OpenAI(
         base_url=api_base, api_key=api_key, http_client=http_client(http_client_params)
     )
+    # Third Party
+    from instructlab.sdg.generate_data import generate_data
+
+    # pylint: disable=ungrouped-imports
+    from instructlab.sdg.utils import GenerateException
 
     try:
         logger.info(
-            f"Generating synthetic data using '{pipeline}' pipeline, '{model_path}' model, '{taxonomy_path}' taxonomy, against {api_base} server"
+            f"Generating synthetic data using '{pipeline}' pipeline, '{model_name}' model, '{taxonomy}' taxonomy, against {api_base} server"
         )
         generate_data(
             client=client,
             model_family=model_family,
-            model_name=model_path,
+            model_name=model_name,
             num_cpus=num_cpus,
-            num_instructions_to_generate=sdg_scale_factor,
-            taxonomy=taxonomy_path,
+            num_instructions_to_generate=num_instructions_to_generate,
+            taxonomy=taxonomy,
             taxonomy_base=taxonomy_base,
             output_dir=output_dir,
-            console_output=not quiet,
+            console_output=console_output,
             yaml_rules=yaml_rules,
             chunk_word_count=chunk_word_count,
             server_ctx_size=server_ctx_size,
