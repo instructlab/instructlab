@@ -6,6 +6,7 @@ from typing import Callable
 import json
 import logging
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -17,7 +18,7 @@ import psutil
 
 # First Party
 from instructlab.configuration import DEFAULTS
-from instructlab.defaults import ILAB_PROCESS_MODES, ILAB_PROCESS_TYPES
+from instructlab.defaults import ILAB_PROCESS_MODES
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,7 @@ class ProcessRegistry:
             "start_time": datetime.strptime(
                 start_time, "%Y-%m-%d %H:%M:%S"
             ).isoformat(),
+            "done": False,
         }
 
     def load_entry(self, key, value):
@@ -178,7 +180,7 @@ def start_process(cmd: str, log) -> tuple[int | None, list[int] | None]:
 
 def add_process(
     process_mode: str,
-    process_type: ILAB_PROCESS_TYPES,
+    process_type: str,
     target: Callable,
     extra_imports: list[tuple[str, ...]],
     **kwargs,
@@ -248,3 +250,76 @@ def add_process(
                 save_registry(process_registry=process_registry)
                 sys.stdout = sys.__stdout__
                 sys.stderr = sys.__stderr__
+
+
+def all_processes_running(pids: list[int]) -> bool:
+    """
+    Returns if a process and all of its children are still running
+    Args:
+        pids (list): a list of all PIDs to check
+    """
+    return all(psutil.pid_exists(pid) for pid in pids)
+
+
+def stop_process(local_uuid, remove=True):
+    """
+    Stop a running process.
+
+    Args:
+        local_uuid (str): uuid of the process to stop.
+    """
+    process_registry = load_registry()
+    # we should kill the parent process, and also children processes.
+    pid = process_registry.processes[local_uuid]["pid"]
+    children_pids = process_registry.processes[local_uuid]["children_pids"]
+    all_processes = [pid] + children_pids
+    for process in all_processes:
+        try:
+            os.kill(process, signal.SIGKILL)
+            logger.info(f"Process {process} terminated.")
+        except (ProcessLookupError, PermissionError):
+            logger.warning(
+                f"Process {process} was not running or could not be stopped."
+            )
+    if remove:
+        process_registry.processes.pop(local_uuid, None)
+    else:
+        process_registry.processes[local_uuid]["done"] = True
+    save_registry(process_registry=process_registry)
+
+
+def list_processes():
+    process_registry = load_registry()
+    if not process_registry:
+        logger.info("No processes currently in the registry.")
+        return
+
+    list_of_processes = []
+    for local_uuid, entry in process_registry.processes.items():
+        all_pids = [entry["pid"]] + entry["children_pids"]
+        if not all_processes_running(all_pids):
+            remove = entry["done"]
+            stop_process(local_uuid=local_uuid, remove=remove)
+            if remove:
+                continue
+        now = datetime.now()
+
+        # Calculate runtime
+        runtime = now - datetime.fromisoformat(entry.get("start_time"))
+        # Convert timedelta to a human-readable string (HH:MM:SS)
+        total_seconds = int(runtime.total_seconds())
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        runtime_str = f"{hours:02}:{minutes:02}:{seconds:02}"
+        list_of_processes.append(
+            (
+                entry.get("type"),
+                entry.get("pid"),
+                local_uuid,
+                entry.get("log_file"),
+                runtime_str,
+            )
+        )
+
+    return list_of_processes

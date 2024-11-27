@@ -37,11 +37,15 @@ issues = "https://github.com/instructlab/instructlab/issues"
 
 # command entry points
 [project.entry-points."instructlab.command"]
+"process" = "instructlab.cli.process.process:process"
 "config" = "instructlab.config.config:config"
 "data" = "instructlab.cli.data.data:data"
 "model" = "instructlab.model.model:model"
 "system" = "instructlab.cli.system.system:system"
 "taxonomy" = "instructlab.taxonomy.taxonomy:taxonomy"
+
+[project.entry-points."instructlab.command.process"]
+"list" = "instructlab.cli.process.list:list"
 
 [project.entry-points."instructlab.command.config"]
 "edit" = "instructlab.config.edit:edit"
@@ -100,6 +104,8 @@ include = [
   "instructlab.cli",
   "instructlab.cli.model",
   "instructlab.model",
+  "instructlab.cli.process",
+  "instructlab.process",
   "instructlab.train",
   "instructlab.train.lora_mlx",
   "instructlab.train.lora_mlx.models",
