@@ -418,7 +418,7 @@ For detailed documentation on the InstructLab LLMs and their functions, see the 
    ilab model download --hf-token <your-huggingface-token>
    ```
   
-   If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
+   Hugging Face `hf_transfer` is enabled by default for faster downloads (lacks proxy support), and can be disabled with `HF_HUB_ENABLE_HF_TRANSFER=0`. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
 
 #### Downloading a specific model from a Hugging Face repository
 
