@@ -238,5 +238,9 @@ class _InstructlabDefaults:
     def TRAIN_L4_X8_PROFILE(self) -> str:
         return path.join(self.TRAIN_PROFILE_DIR, "L4_x8.yaml")
 
+    @property
+    def REGISTRY_FILE(self) -> str:
+        return path.join(self.INTERNAL_DIR, "process_registry.json")
+
 
 DEFAULTS = _InstructlabDefaults()

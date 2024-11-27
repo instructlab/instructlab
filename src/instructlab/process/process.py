@@ -132,4 +132,34 @@ def add_process(
             f"Started subprocess with PID {p.pid} and PGID {pgid}. Logs are being written to {log_file}."
         )
         save_registry()  # Persist registry after adding process
-        return log_file, p.pidß
+        return log_file, p.pid
+
+
+def list_processes():
+    if not process_registry:
+        logger.info("No processes currently in the registry.")
+        return
+
+    list_of_processes = []
+    for local_uuid, entry in process_registry.items():
+        now = datetime.now()
+
+        # Calculate runtime
+        runtime = now - datetime.fromisoformat(entry.get("start_time"))
+        # Convert timedelta to a human-readable string (HH:MM:SS)
+        total_seconds = int(runtime.total_seconds())
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        runtime_str = f"{hours:02}:{minutes:02}:{seconds:02}"
+        list_of_processes.append(
+            (
+                entry.get("type"),
+                entry.get("pid"),
+                local_uuid,
+                entry.get("log_file"),
+                runtime_str,
+            )
+        )
+
+    return list_of_processes
