@@ -19,7 +19,8 @@ chat:
   # Filepath of a dialog session file.
   # Default: None
   session:
-  # Controls the randomness of the model's responses.
+  # Controls the randomness of the model's responses. Lower values make the output
+  # more deterministic, while higher values produce more random results.
   # Default: 1.0
   temperature: 1.0
   # Enable vim keybindings for chat.
@@ -189,6 +190,24 @@ generate:
       #   - ['--dtype', 'auto']
       #   - ['--lora-alpha', '32']
       vllm_args: []
+# Metadata pertaining to the specifics of the system which the Configuration is
+# meant to be applied to.
+metadata:
+  # Manufacturer, Family, and SKU of the system CPU, ex: Apple M3 Max
+  # Default: None
+  cpu_info:
+  # Amount of GPUs on the system, ex: 8
+  # Default: None
+  gpu_count:
+  # Family the of the system GPU, ex: H100
+  # Default: None
+  gpu_family:
+  # Manufacturer of the system GPU, ex: Nvidia
+  # Default: None
+  gpu_manufacturer:
+  # Specific SKU related information about the given GPU, ex: PCIe, NVL
+  # Default: None
+  gpu_sku:
 # Serve configuration section.
 serve:
   # Serving backend to use to host the model.
