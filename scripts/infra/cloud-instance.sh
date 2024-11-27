@@ -320,7 +320,7 @@ install_rh_nvidia_drivers() {
         wait_ssh_listen "$CLOUD_TYPE"
         "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" sudo dnf remove --oldinstallonly -y
     fi
-    "${BASH_SOURCE[0]}" "$CLOUD_TYPE" scp -n "$INSTANCE_NAME" nvidia-setup.sh
+    "${BASH_SOURCE[0]}" "$CLOUD_TYPE" scp -n "$INSTANCE_NAME" "${SCRIPT_DIR}"/nvidia-setup.sh
     "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "sudo ./nvidia-setup.sh"
     echo "You may want to reboot even though the install is live (${BASH_SOURCE[0]} ${CLOUD_TYPE} ssh sudo reboot)"
 }
@@ -338,7 +338,6 @@ sync() {
     local branch
     branch="$(git symbolic-ref HEAD 2>/dev/null)"
     branch=${branch##refs/heads/}
-    SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
     if [ "$TEMP_COMMIT" = true ] && [ -n "$(git status --porcelain=v1 2>/dev/null)" ]; then
         trap 'git reset HEAD~' EXIT
         git add "${SCRIPT_DIR}"/../..
@@ -359,7 +358,6 @@ sync_library() {
     user_name="$(instance_user_name)"
     local user_home
     user_home="$(instance_user_home)"
-    SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
     local repo_dir
     repo_dir="${SCRIPT_DIR}/../../../${LIBRARY}"
 
@@ -536,6 +534,7 @@ Commands
 }
 
 if [[ "$1" == "ibm" || "$1" == "ec2" ]]; then
+    SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
     run_cmd "$@"
 else
     echo "Invalid cloud type: $1" >&2
