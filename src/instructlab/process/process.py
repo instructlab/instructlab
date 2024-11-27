@@ -14,7 +14,7 @@ import psutil
 
 # First Party
 from instructlab.configuration import DEFAULTS
-from instructlab.defaults import ILAB_PROCESS_MODES, ILAB_PROCESS_TYPES
+from instructlab.defaults import ILAB_PROCESS_MODES
 
 logger = logging.getLogger(__name__)
 
@@ -81,9 +81,7 @@ class Tee:
             self.log.close()
 
 
-def add_process(
-    process_mode: str, process_type: ILAB_PROCESS_TYPES, target, extra_imports, **kwargs
-):
+def add_process(process_mode: str, process_type: str, target, extra_imports, **kwargs):
     """
     Start a detached process using subprocess.Popen, logging its output.
 
@@ -178,3 +176,33 @@ def add_process(
                 # Restore the original stdout and stderr after the function completes
                 sys.stdout = sys.__stdout__
                 sys.stderr = sys.__stderr__
+
+
+def list_processes():
+    if not process_registry:
+        logger.info("No processes currently in the registry.")
+        return
+
+    list_of_processes = []
+    for local_uuid, entry in process_registry.items():
+        now = datetime.now()
+
+        # Calculate runtime
+        runtime = now - datetime.fromisoformat(entry.get("start_time"))
+        # Convert timedelta to a human-readable string (HH:MM:SS)
+        total_seconds = int(runtime.total_seconds())
+        hours, remainder = divmod(total_seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        runtime_str = f"{hours:02}:{minutes:02}:{seconds:02}"
+        list_of_processes.append(
+            (
+                entry.get("type"),
+                entry.get("pid"),
+                local_uuid,
+                entry.get("log_file"),
+                runtime_str,
+            )
+        )
+
+    return list_of_processes
