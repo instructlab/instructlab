@@ -24,7 +24,7 @@ LOG_FORMAT = "%(levelname)s %(asctime)s %(name)s:%(lineno)d: %(message)s"
 
 
 class ILAB_PROCESS_MODES:
-    DETATCHED = "detatched"
+    DETACHED = "detached"
     ATTACHED = "attached"
 
 

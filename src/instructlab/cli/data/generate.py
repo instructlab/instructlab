@@ -162,7 +162,7 @@ logger = logging.getLogger(__name__)
     cls=clickext.ConfigOption,
 )
 @click.option(
-    "-dt", "--detatched", is_flag=True, help="Run ilab data generate in the background"
+    "-dt", "--detached", is_flag=True, help="Run ilab data generate in the background"
 )
 @click.pass_context
 @clickext.display_params
@@ -191,7 +191,7 @@ def generate(
     batch_size,
     gpus,
     max_num_tokens,
-    detatched,
+    detached,
 ):
     """Generates synthetic data to enhance your example data"""
 
@@ -259,8 +259,8 @@ def generate(
     )
 
     process_mode = ILAB_PROCESS_MODES.ATTACHED
-    if detatched:
-        process_mode = ILAB_PROCESS_MODES.DETATCHED
+    if detached:
+        process_mode = ILAB_PROCESS_MODES.DETACHED
 
     try:
         gen_data(
