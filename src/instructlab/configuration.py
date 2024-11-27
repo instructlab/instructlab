@@ -1209,6 +1209,7 @@ def ensure_storage_directories_exist() -> bool:
         DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_DIR,
         DEFAULTS.PHASED_DIR,
         DEFAULTS.SYSTEM_PROFILE_DIR,
+        DEFAULTS.LOGS_DIR,
     ]
 
     for dirpath in dirs_to_make:
@@ -1492,5 +1493,6 @@ def storage_dirs_exist() -> bool:
         DEFAULTS.TRAIN_ADDITIONAL_OPTIONS_DIR,
         DEFAULTS.PHASED_DIR,
         DEFAULTS.SYSTEM_PROFILE_DIR,
+        DEFAULTS.LOGS_DIR,
     ]
     return all(os.path.exists(dirpath) for dirpath in dirs_to_check)
