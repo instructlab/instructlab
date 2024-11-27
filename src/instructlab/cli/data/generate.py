@@ -293,7 +293,8 @@ def generate(
             legacy_pretraining_format,
             process_mode=process_mode,
         )
-        click.echo("ᕦ(òᴗóˇ)ᕤ Data generate completed successfully! ᕦ(òᴗóˇ)ᕤ")
+        if not detached:
+            click.echo("ᕦ(òᴗóˇ)ᕤ Data generate completed successfully! ᕦ(òᴗóˇ)ᕤ")
     except Exception as exc:
         click.secho(f"failed to generate data with exception: {exc}", fg="red")
         raise click.exceptions.Exit(1)

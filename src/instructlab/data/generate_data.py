@@ -39,14 +39,18 @@ def gen_data(
     from instructlab.defaults import ILAB_PROCESS_TYPES
     from instructlab.process.process import add_process
 
-    print(http_client_params)
-
     add_process(
         process_mode=process_mode,
         process_type=ILAB_PROCESS_TYPES.DATA_GENERATION,
         target=create_server_and_generate,
         extra_imports=[
-            ("instructlab.configuration", "_serve", "_serve_vllm", "_serve_llama_cpp")
+            (
+                "instructlab.configuration",
+                "_serve",
+                "_serve_vllm",
+                "_serve_llama_cpp",
+                "_serve_server",
+            )
         ],
         serve_cfg=serve_cfg,
         model_name=model_path,
@@ -121,7 +125,7 @@ def create_server_and_generate(
     import openai
 
     # First Party
-    from instructlab.client_utils import HttpClientParams, http_client
+    from instructlab.client_utils import http_client
 
     print(tls_client_cert, tls_client_key, tls_client_passwd, tls_insecure)
     http_client_params = HttpClientParams(
@@ -133,10 +137,6 @@ def create_server_and_generate(
         }
     )
 
-    print(http_client_params)
-
-    # logger.info("testing")
-    # logger.debug("testing2")
     if endpoint_url:
         api_base = endpoint_url
     else:
