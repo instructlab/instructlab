@@ -143,7 +143,7 @@ jobs:
           python3.11 -m pip install bitsandbytes
           python3.11 -m pip install ${{ github.event.inputs.ilab_install_target }}
 
-      - name: Check disk
+      - name: Check disk before tests
         run: |
           df -h
 
@@ -151,6 +151,10 @@ jobs:
         run: |
           . venv/bin/activate
           ./scripts/${{ github.event.inputs.e2e_script }} ${{ github.event.inputs.e2e_script_args }}
+
+      - name: Check disk after tests
+        run: |
+          df -h
 
       - name: Add comment to PR if the workflow failed
         if: failure() && steps.check_pr.outputs.is_pr == 'true'
