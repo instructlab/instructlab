@@ -130,7 +130,7 @@ jobs:
           python3.11 -m pip install -v packaging wheel setuptools-scm
           python3.11 -m pip install -v .[cuda] -r requirements-vllm-cuda.txt
 
-      - name: Check disk
+      - name: Check disk before tests
         run: |
           df -h
 
@@ -140,6 +140,10 @@ jobs:
         run: |
           . venv/bin/activate
           ./scripts/e2e-ci.sh -m
+
+      - name: Check disk after tests
+        run: |
+          df -h
 
   stop-medium-ec2-runner:
     needs:
