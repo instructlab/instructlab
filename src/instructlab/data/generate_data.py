@@ -121,7 +121,6 @@ def create_server_and_generate(
     # First Party
     from instructlab.client_utils import http_client
 
-    print(tls_client_cert, tls_client_key, tls_client_passwd, tls_insecure)
     http_client_params = HttpClientParams(
         {
             "tls_client_cert": tls_client_cert,

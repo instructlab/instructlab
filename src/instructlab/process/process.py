@@ -4,6 +4,7 @@ from multiprocessing import Manager
 import json
 import logging
 import os
+import signal
 import subprocess
 import sys
 import time
@@ -206,3 +207,75 @@ def list_processes():
         )
 
     return list_of_processes
+
+
+def attach_process(uuid):
+    """
+    Attach to a running process and display its output in real-time.
+
+    Args:
+        pid (int): PID of the process to attach to.
+        process_registry (dict): Shared process registry.
+    """
+    if uuid not in process_registry:
+        logger.warning("Process not found.")
+        return
+
+    process_info = process_registry[uuid]
+    pid = process_info["pid"]
+    children_pids = process_info["children_pids"]
+    log_file = process_info["log_file"]
+
+    if not os.path.exists(log_file):
+        logger.warning(
+            "Log file not found. The process may not have started logging yet."
+        )
+        return
+
+    logger.info(
+        f"Attaching to process {pid}. Press Ctrl+C to detach and Ctrl+D to kill."
+    )
+    try:
+        with open(log_file, "a+") as log:
+            log.seek(0, os.SEEK_END)  # Move to the end of the log file
+            while True:
+                line = log.readline()
+                # Check for non-empty and non-whitespace-only lines
+                if line.strip():
+                    print(line.strip())
+                else:
+                    time.sleep(0.1)  # Wait briefly before trying again
+    except KeyboardInterrupt:
+        logger.info("\nDetaching from and killing process.")
+        stop_process(
+            uuid=uuid,
+            pid=pid,
+            children_pids=children_pids,
+            process_registry=process_registry,
+        )
+
+
+def stop_process(uuid, pid, children_pids, process_registry):
+    """
+    Stop a running process.
+
+    Args:
+        pid (int): PID of the process to stop.
+        process_registry (dict): Shared process registry.
+    """
+    # we should kill the parent process, and also children processes.
+    all_processes = [pid] + children_pids
+    for process in all_processes:
+        try:
+            os.kill(process, signal.SIGKILL)
+            logger.info(f"Process {process} terminated.")
+        except ProcessLookupError:
+            logger.warning(f"Process {process} was not running.")
+    process_registry.pop(uuid, None)
+    save_registry()
+
+
+def get_latest_process() -> str:
+    last_key = list(process_registry.keys())[-1]
+    assert isinstance(last_key, str)
+    return last_key
