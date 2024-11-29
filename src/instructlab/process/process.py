@@ -323,3 +323,61 @@ def list_processes():
         )
 
     return list_of_processes
+
+
+def attach_process(local_uuid: str):
+    """
+    Attach to a running process and display its output in real-time.
+
+    Args:
+        local_uuid (str): UUID of the process to attach to
+    """
+    process_registry = load_registry()
+    if local_uuid not in process_registry.processes:
+        logger.warning("Process not found.")
+        return
+
+    process_info = process_registry.processes[local_uuid]
+    log_file = process_info["log_file"]
+
+    if not os.path.exists(log_file):
+        logger.warning(
+            "Log file not found. The process may not have started logging yet."
+        )
+        return
+
+    logger.info(f"Attaching to process {local_uuid}. Press Ctrl+C to detach and kill.")
+    all_pids = [process_info["pid"]] + process_info["children_pids"]
+    if not all_processes_running(all_pids):
+        return
+    try:
+        with open(log_file, "a+") as log:
+            log.seek(0, os.SEEK_END)  # Move to the end of the log file
+            while all_processes_running(all_pids):
+                line = log.readline()
+                # Check for non-empty and non-whitespace-only lines
+                if line.strip():
+                    print(line.strip())
+                else:
+                    time.sleep(0.1)  # Wait briefly before trying again
+    except KeyboardInterrupt:
+        logger.info("\nDetaching from and killing process.")
+    finally:
+        stop_process(local_uuid=local_uuid)
+
+
+def get_latest_process() -> str | None:
+    """
+    Returns the last process added to the registry to quickly allow users to attach to it.
+
+    Returns:
+        last_key (str): a string UUID to attach to
+    """
+    process_registry = load_registry()
+    keys = process_registry.processes.keys()
+    # no processes
+    if len(keys) == 0:
+        return None
+    last_key = list(process_registry.processes.keys())[-1]
+    assert isinstance(last_key, str)
+    return last_key

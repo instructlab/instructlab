@@ -46,6 +46,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 
 [project.entry-points."instructlab.command.process"]
 "list" = "instructlab.cli.process.list:list"
+"attach" = "instructlab.cli.process.attach:attach"
 
 [project.entry-points."instructlab.command.config"]
 "edit" = "instructlab.config.edit:edit"
