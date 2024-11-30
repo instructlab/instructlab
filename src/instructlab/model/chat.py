@@ -35,7 +35,50 @@ from instructlab.client_utils import HttpClientParams
 from ..client_utils import http_client
 from ..utils import get_cli_helper_sysprompt, get_model_arch, get_sysprompt
 
+# RAG
+from haystack import Pipeline
+from haystack.components.builders import PromptBuilder
+from haystack.components.embedders import SentenceTransformersTextEmbedder
+from milvus_haystack import MilvusDocumentStore
+from milvus_haystack.milvus_embedding_retriever import MilvusEmbeddingRetriever
+
+
 logger = logging.getLogger(__name__)
+
+milvus_db_uri = "../mylab/prepare_docs/milvus.db"  # Milvus Lite
+docs_collection_name = "UserDocs"
+document_store = MilvusDocumentStore(
+    connection_args={"uri": milvus_db_uri},
+    collection_name=docs_collection_name,
+    drop_old=False,
+)
+print(f"RAG document_store created {document_store}")
+
+document_retriever = MilvusEmbeddingRetriever(document_store=document_store, top_k=10)
+print(f"RAG document_retriever created {document_retriever}")
+
+text_embedder = SentenceTransformersTextEmbedder(model="sentence-transformers/all-MiniLM-L6-v2")
+print(f"RAG text_embedder created {text_embedder}")
+
+retrieval_pipeline = Pipeline()
+retrieval_pipeline.add_component("embedder", text_embedder)
+retrieval_pipeline.add_component("retriever", document_retriever)
+retrieval_pipeline.connect("embedder.embedding", "retriever.query_embedding")
+print(f"RAG pipeline created {retrieval_pipeline}")
+
+CONTEXT_QUERY="""
+You are an assistant helping refine user queries for retrieval from a vector database. 
+The goal is to extract the most relevant information for answering the user's request. 
+
+Given the user's query:
+"{user_query}"
+
+Rewrite this query to focus on the key concepts and details that will retrieve the most contextually 
+relevant results from the database. 
+Make it concise and specific, avoiding conversational context or ambiguity.
+
+Return the refined query in a single sentence.
+"""
 
 HELP_MD = """
 Help / TL;DR
@@ -172,6 +215,12 @@ def is_openai_server_and_serving_model(
     "--temperature",
     cls=clickext.ConfigOption,
 )
+@click.option(
+    "--rag",
+    type=click.BOOL,
+    is_flag=True,
+    default=False,
+)
 @click.pass_context
 @clickext.display_params
 def chat(
@@ -191,8 +240,10 @@ def chat(
     model_family,
     serving_log_file,
     temperature,
+    rag,
 ):
     """Runs a chat using the modified model"""
+    print(f"RAG chat(rag={rag})")
     # pylint: disable=import-outside-toplevel
     # First Party
     from instructlab.model.backends.common import is_temp_server_running
@@ -308,6 +359,7 @@ def chat(
             qq=quick_question,
             max_tokens=max_tokens,
             temperature=temperature,
+            rag=rag,
         )
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
@@ -331,6 +383,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self,
         model,
         client,
+        rag,
         vi_mode=False,
         prompt=True,
         vertical_overflow="ellipsis",
@@ -340,6 +393,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         temperature=1.0,
     ):
         self.client = client
+        self.rag = rag
         self.model = model
         self.vi_mode = vi_mode
         self.vertical_overflow = vertical_overflow
@@ -398,6 +452,10 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             [
                 (
                     "#3f7cac bold",
+                    "[RAG]" if self.rag else "",
+                ),  # info blue for multiple
+                (
+                    "#3f7cac bold",
                     f"[{'M' if self.multiline else 'S'}]",
                 ),  # info blue for multiple
                 *(
@@ -443,6 +501,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                 Markdown("**WARNING**: No contexts loaded from the config file.")
             )
             raise KeyboardInterrupt
+
         cs = content.split()
         if len(cs) < 2:
             self._sys_print(
@@ -593,12 +652,18 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self._sys_print(Markdown(f"**Available contexts:**\n\n{context_list}"))
         raise KeyboardInterrupt
 
+    def _handle_rag(self, _):
+        self.rag = not self.rag
+        print(f"RAG now rag is {self.rag}")
+        raise KeyboardInterrupt
+
     def start_prompt(
         self,
         logger,  # pylint: disable=redefined-outer-name
         content=None,
         box=True,
     ):
+        print(f"RAG start_prompt rag={self.rag}")
         handlers = {
             "/q": self._handle_quit,
             "quit": self._handle_quit,
@@ -614,6 +679,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             "/s": self._handle_save_session,
             "/l": self._handle_load_session,
             "/lc": self._handle_list_contexts,
+            "/r": self._handle_rag,
         }
 
         if content is None:
@@ -623,7 +689,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                 vi_mode=True,
                 multiline=self.multiline,
             )
-
+        
         # Handle empty
         if content.strip() == "":
             raise KeyboardInterrupt
@@ -634,6 +700,33 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             handler(content)
 
         self.log_message(PROMPT_PREFIX + content + "\n\n")
+
+        if self.rag:
+          print(f"RAG content={content}")
+          context_messages = [
+            {"role": "system", "content": "You are an assistant refining user queries for similarity search."},
+            {"role": "user", "content": CONTEXT_QUERY.format(user_query=content)},
+          ]
+          # print(f"RAG context_messages={context_messages}")
+          response = self.client.chat.completions.create(
+              model=self.model,
+              messages=context_messages,
+              temperature=0.7
+          )
+          # print(f"RAG response={response}")
+          refined_query = (response).choices[0].message.content
+          print(f"RAG refined_query={refined_query}")
+
+          retrieval_results = retrieval_pipeline.run({"embedder": {"text": refined_query}})
+          context = "\n".join(
+            [doc.content for doc in retrieval_results["retriever"]["documents"]]
+          )
+
+          print("-" * 10)
+          print(f"RAG context is {context}")
+          print("-" * 10)
+          content = f"{content}\n\nContext:\n{context}"
+          print(f"RAG new content is {content}")
 
         # Update message history and token counters
         self._update_conversation(content, "user")
@@ -742,6 +835,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                 if chunk_message.content:
                     response_content.append(chunk_message.content)
 
+
                 if box:
                     panel.subtitle = f"elapsed {time.time() - start_time:.3f} seconds"
             subtitle = f"elapsed {time.time() - start_time:.3f} seconds"
@@ -765,6 +859,7 @@ def chat_cli(
     qq,
     max_tokens,
     temperature,
+    rag,
 ):
     """Starts a CLI-based chat with the server"""
     client = OpenAI(
@@ -825,6 +920,7 @@ def chat_cli(
     ccb = ConsoleChatBot(
         config.model if model is None else model,
         client=client,
+        rag=rag,
         vi_mode=config.vi_mode,
         log_file=log_file,
         prompt=not qq,
@@ -844,7 +940,7 @@ def chat_cli(
         if not qq:
             print(f"{PROMPT_PREFIX}{question}")
         try:
-            ccb.start_prompt(logger, content=question, box=not qq)
+            ccb.start_prompt(logger, content=question, box=not qq, rag=rag)
         except ChatException as exc:
             raise ChatException(f"API issue found while executing chat: {exc}") from exc
         except (ChatQuitException, KeyboardInterrupt, EOFError):
