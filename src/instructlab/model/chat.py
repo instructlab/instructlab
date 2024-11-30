@@ -172,6 +172,18 @@ def is_openai_server_and_serving_model(
     "--temperature",
     cls=clickext.ConfigOption,
 )
+@click.option(
+    "-pf",
+    "--prompt-file",
+    type=click.Path(exists=True),
+    help="Path to a file containing test prompts (used with -of). Each line is treated as a separate input.",
+)
+@click.option(
+    "-of",
+    "--output-file",
+    type=click.Path(writable=True),
+    help="Path to save model responses (used with -pf).",
+)
 @click.pass_context
 @clickext.display_params
 def chat(
@@ -191,6 +203,8 @@ def chat(
     model_family,
     serving_log_file,
     temperature,
+    prompt_file,
+    output_file,
 ):
     """Runs a chat using the modified model"""
     # pylint: disable=import-outside-toplevel
@@ -308,6 +322,8 @@ def chat(
             qq=quick_question,
             max_tokens=max_tokens,
             temperature=temperature,
+            prompt_file=prompt_file,
+            output_file=output_file,
         )
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
@@ -765,6 +781,8 @@ def chat_cli(
     qq,
     max_tokens,
     temperature,
+    prompt_file,
+    output_file,
 ):
     """Starts a CLI-based chat with the server"""
     client = OpenAI(
@@ -834,6 +852,11 @@ def chat_cli(
         max_tokens=(max_tokens if max_tokens else config.max_tokens),
     )
 
+    # Handle prompts from file and output
+    if prompt_file:
+        process_prompts_from_file(ccb, prompt_file, output_file)
+        return
+
     if not qq and session is None:
         # Greet
         ccb.greet(help=True)
@@ -869,3 +892,69 @@ def chat_cli(
             raise ChatException("Connection to the server was closed") from exc
         except (ChatQuitException, EOFError):
             return
+
+
+def process_prompts_from_file(ccb, prompt_file, output_file):
+    """Processes prompts from a file and outputs to a file or console"""
+    prompts = []
+    with open(prompt_file, "r", encoding="utf-8") as file:
+        prompts = [line.strip() for line in file if line.strip()]
+
+    if not prompts:
+        click.secho(
+            f"The prompt file '{prompt_file}' is empty. Please provide a valid file with prompts (one question per line).",
+            fg="red",
+        )
+        return
+
+    click.echo("Start processing prompts...")
+    total_prompts = len(prompts)
+
+    if output_file:
+        # Save to file
+        with open(output_file, "a", encoding="utf-8") as output:
+            output.write(
+                f"--- Processing started at: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ---\n\n"
+            )
+            process_and_output(ccb, prompts, output, total_prompts)
+            click.echo(f"Finished processing prompts. Results saved to {output_file}.")
+
+            click.echo(f"Results from {output_file}:")
+            with open(output_file, "r", encoding="utf-8") as f:
+                click.echo(f.read())
+    else:
+        # If no output file, print to console
+        process_and_output(ccb, prompts, None, total_prompts)
+        click.echo("Finished processing prompts.")
+
+
+def process_prompt(ccb, prompt, output=None):
+    messages = [{"role": "system", "content": ccb.info["messages"][0]["content"]}]
+    messages.append({"role": "user", "content": prompt})
+
+    response_content = ccb.client.chat.completions.create(
+        model=ccb.model,
+        messages=messages,
+        temperature=ccb.temperature,
+        max_tokens=ccb.max_tokens,
+    )
+    response = response_content.choices[0].message.content
+
+    if output:
+        output.write(f"Q: {prompt}\nA: {response}\n\n")
+        output.flush()
+
+    return response
+
+
+def process_and_output(ccb, prompts, output, total_prompts):
+    for idx, prompt in enumerate(prompts, start=1):
+        try:
+            click.echo(f"Processing prompt {idx}/{total_prompts}...")
+            response = process_prompt(ccb, prompt, output)
+            if not output:
+                click.echo(f"Q: {prompt}\nA: {response}\n")
+            ccb._reset_session()
+        except ChatException as exc:
+            logger.error(f"Error processing prompt '{prompt}': {exc}")
+            continue
