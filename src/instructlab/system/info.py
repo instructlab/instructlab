@@ -29,10 +29,16 @@ def _platform_info() -> typing.Dict[str, typing.Any]:
 
     if sys.platform == "linux":
         os_release = platform.freedesktop_os_release()
-        for key in ["ID", "VERSION_ID", "PRETTY_NAME"]:
+        for key in ["ID", "VERSION_ID", "PRETTY_NAME", "VARIANT"]:
             value = os_release.get(key)
             if value:
                 d[f"os-release.{key}"] = value
+        variant_id = os_release.get("VARIANT_ID")
+        if variant_id:
+            product_key = f"{variant_id.upper()}_VERSION_ID"
+            product_version_id = os_release.get(product_key)
+            if product_version_id:
+                d[f"os-release.{product_key}"] = product_version_id
     elif sys.platform == "darwin":
         try:
             cpu_info = (
