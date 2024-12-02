@@ -7,7 +7,6 @@ from os.path import dirname, exists
 import logging
 import os
 import pathlib
-import re
 import shutil
 import typing
 
@@ -150,7 +149,7 @@ def init(
 
 # prompt_user_to_choose_vendors asks the user which hardware vendor best matches their system
 def prompt_user_to_choose_vendors(
-    arch_family_processors: dict[str, list[list[str]]],
+    arch_family_processors: dict[str, list[tuple[list[str], str]]],
 ) -> str | None:
     """
     prompt_user_to_choose_vendors asks the user which hardware vendor best matches their system
@@ -199,7 +198,7 @@ def prompt_user_to_choose_vendors(
 
 
 # prompt_user_to_choose_profile asks the user to choose which specific profile for the hardware vendor best matches their system
-def prompt_user_to_choose_profile(key, arch_family_processors) -> Config | None:
+def prompt_user_to_choose_profile(arch_family_processors) -> Config | None:
     """
     prompt_user_to_choose_profile asks the user to choose which specific profile for the hardware vendor best matches their system
     """
@@ -210,13 +209,8 @@ def prompt_user_to_choose_profile(key, arch_family_processors) -> Config | None:
         default=0,
     )
     # the file is SYSTEM_PROFILE_DIR/arch_family_procesors[key][selection-1]
-    if 1 <= system_profile_selection <= len(arch_family_processors[key]):
-        file = os.path.join(
-            DEFAULTS.SYSTEM_PROFILE_DIR,
-            "/".join(
-                map(str, arch_family_processors[key][system_profile_selection - 1])
-            ),
-        )
+    if 1 <= system_profile_selection <= len(arch_family_processors):
+        file = arch_family_processors[system_profile_selection - 1][1]
         click.secho(f"You selected: {file}", fg="green")
         cfg = read_config(file)
     elif system_profile_selection == 0:
@@ -233,7 +227,7 @@ def prompt_user_to_choose_profile(key, arch_family_processors) -> Config | None:
 
 
 def walk_and_print_system_profiles(
-    is_linux: bool, is_cpu: bool, vram: int, gpus: int, chip_name: str
+    vram: int, gpus: int, chip_name: str
 ) -> Config | None:
     """
     walk_and_print_system_profiles prints interactive prompts asking the user to choose
@@ -242,75 +236,87 @@ def walk_and_print_system_profiles(
     This returns a Config object either auto-detected for the user or manually selected by them.
     """
     cfg = None
-    arch_family_processors: dict[str, list[list[str]]] = {}
-    printed_arch_family_processors: dict[str, list[list[str]]] = {}
+    arch_family_processors: dict[str, list[tuple[list[str], str]]] = {}
     for dirpath, _dirnames, filenames in os.walk(DEFAULTS.SYSTEM_PROFILE_DIR):
         for filename in filenames:
             # keep track of the file to open
             system_profile_file = os.path.join(dirpath, filename)
-            arch_family_processor = os.path.relpath(
-                os.path.join(dirpath, filename), DEFAULTS.SYSTEM_PROFILE_DIR
-            ).split("/", 3)
-            # add this to a map of {arch: all_possible_cfgs}
-            arch_family_processors.setdefault(arch_family_processor[0], []).append(
-                arch_family_processor
+            sys_profile = read_config(config_file=system_profile_file)
+            full_chip_name = []
+            # see if our system matches the attributes of this metadata file. If so, this is our config
+            # the easiest way to do this is to take the combo of the manufacturer, family, gpu count, and SKU info to see if it matches.
+            if sys_profile.metadata.cpu_info is not None:
+                # keep track of name in case we need to print menu
+                full_chip_name = sys_profile.metadata.cpu_info.lower().split(" ")
+                # we are on a cpu system, that makes this easier (no SKU info)
+                if chip_name == sys_profile.metadata.cpu_info.lower():
+                    cfg = sys_profile
+                    break
+            elif (
+                sys_profile.metadata.gpu_manufacturer is not None
+                and sys_profile.metadata.gpu_family is not None
+            ):
+                # need to include the case of no SKU
+                all_gpu_skus = [""] + (
+                    sys_profile.metadata.gpu_sku
+                    if sys_profile.metadata.gpu_sku is not None
+                    else []
+                )
+                for sku_to_match in all_gpu_skus:
+                    assert isinstance(sys_profile.metadata.gpu_manufacturer, str)
+                    assert isinstance(sys_profile.metadata.gpu_family, str)
+                    # the .strip() is necessary to match the empty SKU or else we get a trailing space
+                    str_chip_name = (
+                        " ".join(
+                            [
+                                sys_profile.metadata.gpu_manufacturer,
+                                sys_profile.metadata.gpu_family,
+                                sku_to_match,
+                            ]
+                        )
+                        .strip()
+                        .lower()
+                    )
+                    # we need to re-split to not include the empty "" sku in the above list
+                    full_chip_name = str_chip_name.split(" ")
+                    full_chip_name.append(
+                        f"x{sys_profile.metadata.gpu_count}"
+                    )  # add this in so the users knows which gpu count profile this is when we choose it
+                    if (
+                        str_chip_name == chip_name
+                        and gpus == sys_profile.metadata.gpu_count
+                    ):
+                        # this is our config
+                        cfg = sys_profile
+                        break
+            if cfg is not None:
+                break
+            arch_family_processors.setdefault(full_chip_name[0], []).append(
+                (full_chip_name, system_profile_file)
             )
-            # the following logic is specifically for printing the name
-            # we still want to preserve the arch_family_processor for when we open the file
-            # if the last entry has an _, split that out. This follows the format like m2_max.yaml, we just want max.
-            # Process the last element, extracting text after "_" if present, removing ".yaml"
-            printed_arch_family_processor = [
-                re.sub(
-                    r".*_(\w+)\.yaml$|^(\w+)\.yaml$",
-                    lambda m: m.group(1) if m.group(1) else m.group(2),
-                    item,
-                )
-                if item.endswith(".yaml")
-                else item
-                for item in arch_family_processor
-            ]
-            # remove duplicates (apple m2 m2) - > (apple m2)
-            printed_arch_family_processor = list(
-                dict.fromkeys(printed_arch_family_processor)
-            )
-            printed_arch_family_processors.setdefault(
-                arch_family_processor[0], []
-            ).append(printed_arch_family_processor)
-            file = None
-            if is_cpu and is_linux and arch_family_processor[0] in chip_name:
-                # on CPU + Linux we do not care (for now) about specific processors, we only have `cpu.yaml` for Intel and AMD.
-                file = os.path.join(DEFAULTS.SYSTEM_PROFILE_DIR, system_profile_file)
-            elif chip_name == " ".join(printed_arch_family_processor):
-                # else the whole thing needs to match, so `nvidia l4 x8` for example would be the chip we detect AND the arch family processor from the list of files
-                file = os.path.join(DEFAULTS.SYSTEM_PROFILE_DIR, system_profile_file)
-            if file is not None:
-                chosen_profile = click.style(
-                    " ".join(printed_arch_family_processor).upper(),
-                    bg="blue",
-                    fg="white",
-                )
-                click.secho(
-                    f"We have detected the {chosen_profile} profile as an exact match for your system."
-                )
-                cfg = read_config(config_file=file)
-                # TODO: @cdoern remove this. We should not care about vRAM in this way.
-                # special handling for the 8x A100 @ 40GB
-                if "a100" in chip_name and vram == 320 and gpus == 8:
-                    cfg.train.max_batch_len = 10000
-                return cfg
+        if cfg is not None:
+            break
+    if cfg is not None:
+        if "a100" in chip_name and vram == 320 and gpus == 8:
+            cfg.train.max_batch_len = 10000
+        chosen_profile = click.style(
+            " ".join(full_chip_name).upper(),
+            bg="blue",
+            fg="white",
+        )
+        click.secho(
+            f"We have detected the {chosen_profile} profile as an exact match for your system."
+        )
+        return cfg
 
     # if auto detection didn't work, just continue prompting as usual!
     key = prompt_user_to_choose_vendors(arch_family_processors)
 
     if key is not None:
-        for i, printed_arch_family_processor in enumerate(
-            printed_arch_family_processors[key], start=1
-        ):
-            click.echo(
-                f"[{i}] {' '.join(map(str, printed_arch_family_processor)).upper()}"
-            )
-
-        cfg = prompt_user_to_choose_profile(key, arch_family_processors)
+        for i, arch_family_processor in enumerate(arch_family_processors[key], start=1):
+            click.echo(f"[{i}] {' '.join(map(str, arch_family_processor[0])).upper()}")
+        # pass the specific manufacturer specific list of tuples containing config names
+        cfg = prompt_user_to_choose_profile(arch_family_processors[key])
     return cfg
 
 
@@ -332,7 +338,7 @@ def is_hpu_available() -> bool:
         return False
 
 
-def get_gpu_or_cpu() -> tuple[str, bool, bool, int, int]:
+def get_gpu_or_cpu() -> tuple[str, int, int]:
     """
     get_gpu_or_cpu figures out what kind of hardware the user has and returns the name in the form of 'nvidia l4 x4' as well as if this is a CPU and if the user is on Linux
     """
@@ -342,31 +348,24 @@ def get_gpu_or_cpu() -> tuple[str, bool, bool, int, int]:
     gpus = 0
     total_vram = 0
     chip_name = ""
-    is_cpu = False
-    is_linux = False
+    no_rocm_or_hpu = torch.version.hip is None and not is_hpu_available()
     # try nvidia
-    if (
-        torch.cuda.is_available()
-        and torch.version.hip is None
-        and not is_hpu_available()
-    ):
+    if torch.cuda.is_available() and no_rocm_or_hpu:
         click.echo("Detecting hardware...")
         gpus = torch.cuda.device_count()
         for i in range(gpus):
             properties = torch.cuda.get_device_properties(i)
             chip_name = properties.name.lower()
-            chip_name = f"{chip_name} x{gpus}"
             total_vram += properties.total_memory  # memory in B
 
     vram = int(floor(convert_bytes_to_proper_mag(total_vram)[0]))
-    if vram == 0 and torch.version.hip is None and not is_hpu_available():
+    # only do this on a CUDA system ROCm and HPU can have strange results when getting CPU info.
+    if vram == 0 and no_rocm_or_hpu:
         # if no vRAM, try to see if we are on a CPU
-        chip_name, is_cpu, is_linux = get_chip_name()
+        chip_name = get_chip_name()
         # ok, now we have a chip name. this means we can walk the supported profile names and see if they match
     return (
         chip_name,
-        is_cpu,
-        is_linux,
         vram,
         gpus,
     )
@@ -380,13 +379,11 @@ def hw_auto_detect() -> Config | None:
 
     (
         chip_name,
-        is_cpu,
-        is_linux,
         vram,
         gpus,
     ) = get_gpu_or_cpu()
 
-    return walk_and_print_system_profiles(is_linux, is_cpu, vram, gpus, chip_name)
+    return walk_and_print_system_profiles(vram, gpus, chip_name)
 
 
 def check_if_configs_exist(fresh_install) -> bool:
@@ -500,9 +497,9 @@ def get_separator(text: str) -> str:
     return "-" * separator_length
 
 
-def get_chip_name() -> tuple[str, bool, bool]:
+def get_chip_name() -> str:
     """
-    get_chip_name returns the name of the processor on the system (Linux or Mac for now), whether the system is linux, and whether the chip is a CPU or not.
+    get_chip_name returns the name of the processor on the system (Linux or Mac for now).
     """
     # Standard
     import platform
@@ -521,9 +518,9 @@ def get_chip_name() -> tuple[str, bool, bool]:
             )
             for line in result.stdout.splitlines():
                 if "Chip" in line or "Processor Name" in line:
-                    return line.split(":")[-1].strip().lower(), False, True
+                    return line.split(":")[-1].strip().lower()
         except subprocess.CalledProcessError:
-            return "Unsupported", False, True
+            return "Unsupported"
 
     elif system == "Linux":  # Linux
         try:
@@ -531,20 +528,15 @@ def get_chip_name() -> tuple[str, bool, bool]:
             with open("/proc/cpuinfo", "r", encoding="utf-8") as f:
                 for line in f:
                     if "model name" in line:
-                        # print(line)
-                        return (
-                            line.split(":")[-1].strip().lower().split(" ")[0],
-                            True,
-                            True,
-                        )
+                        cpu_name = line.split(":")[-1].strip().lower().split(" ")[0]
+                        cpu_name = f"{cpu_name} cpu"
+                        if "intel" in cpu_name:
+                            # intel returns intel(r)
+                            cpu_name = "intel cpu"
         except FileNotFoundError:
-            return (
-                "Unsupported",
-                True,
-                True,
-            )
+            return "Unsupported"
 
     logger.warning(
         "ilab is only officially supported on Linux and MacOS with M-Series Chips"
     )
-    return "Unsupported", False, False
+    return "Unsupported"

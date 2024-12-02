@@ -114,5 +114,7 @@ train:
   nproc_per_node: 1
   # number of epochs to run training for
   num_epochs: 8
+metadata:
+  cpu_info: Intel CPU
 version: 1.0.0
 

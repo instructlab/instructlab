@@ -129,5 +129,7 @@ train:
   nproc_per_node: 1
   # number of epochs to run training for
   num_epochs: 8
+metadata:
+  cpu_info: Apple M2 Max
 version: 1.0.0
 
