@@ -13,7 +13,6 @@ import click
 # First Party
 from instructlab import clickext
 from instructlab.client_utils import HttpClientParams
-from instructlab import configuration as cfg
 from instructlab.configuration import DEFAULTS
 from instructlab.data.generate_data import gen_data  # type: ignore
 from instructlab.data.ingest_docs import ingest_docs  # type: ignore
@@ -196,23 +195,29 @@ def generate(
     rag_enabled = ctx.obj.config.generate.rag_ingestion.enabled
     logger.info(f"RAG state: {rag_enabled}")
     if rag_enabled:
-      rag_input = ctx.obj.config.generate.rag_ingestion.input
-      rag_output = ctx.obj.config.generate.rag_ingestion.output
-      logger.info(f"RAG input: {rag_input}")
-      logger.info(f"RAG output: {rag_output}")
+        rag_input = ctx.obj.config.generate.rag_ingestion.input
+        rag_output = ctx.obj.config.generate.rag_ingestion.output
+        logger.info(f"RAG input: {rag_input}")
+        logger.info(f"RAG output: {rag_output}")
 
-      vectordb_type = ctx.obj.config.rag.vectordb.type
-      vectordb_uri = ctx.obj.config.rag.vectordb.uri
-      logger.info(f"VectorDB type: {vectordb_type}")
-      logger.info(f"VectorDB URI: {vectordb_uri}")
-      embedding_model = ctx.obj.config.rag.embedding_model
-      logger.info(f"Embedding model: {embedding_model}")
+        vectordb_type = ctx.obj.config.rag.vectordb.type
+        vectordb_uri = ctx.obj.config.rag.vectordb.uri
+        logger.info(f"VectorDB type: {vectordb_type}")
+        logger.info(f"VectorDB URI: {vectordb_uri}")
+        embedding_model = ctx.obj.config.rag.embedding_model
+        logger.info(f"Embedding model: {embedding_model}")
 
-      transform_docs(input_dir=rag_input, output_dir=rag_output, model_path=model_path)
-      ingest_docs(output_dir=rag_output, vectordb_type=vectordb_type, vectordb_uri=vectordb_uri, embedding_model=embedding_model)
+        transform_docs(
+            input_dir=rag_input, output_dir=rag_output, model_path=model_path
+        )
+        ingest_docs(
+            output_dir=rag_output,
+            vectordb_type=vectordb_type,
+            vectordb_uri=vectordb_uri,
+            embedding_model=embedding_model,
+        )
 
-
-      return
+        return
 
     # if --pipeline is not used, pipeline defaults to the value of ctx.obj.config.generate.pipeline
     # set in the config file. A user could intentionally set this to 'null' in the config file

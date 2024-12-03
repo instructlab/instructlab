@@ -130,18 +130,18 @@ class _context_refinement(BaseModel):
         default="{user_query}", description="The context refinement prompt."
     )
 
+
 class _rag_chat(BaseModel):
     """Class describing RAG configuration of the 'chat' sub-command."""
 
-    enabled: bool = Field(
-        default=False, description="To enable the RAG chat."
-    )
+    enabled: bool = Field(default=False, description="To enable the RAG chat.")
     context_refinement: _context_refinement = Field(
         default_factory=_context_refinement,
         description="The context refinement options.",
     )
     prompt: StrictStr = Field(
-        default="\nGiven the following information, answer the question.\n\nContext:{context}\nQuestion:{user_query}\nAnswer:", description="The prompt with augmented context."
+        default="\nGiven the following information, answer the question.\n\nContext:{context}\nQuestion:{user_query}\nAnswer:",
+        description="The prompt with augmented context.",
     )
 
 
@@ -181,8 +181,7 @@ class _chat(BaseModel):
         description="Controls the randomness of the model's responses. Lower values make the output more deterministic, while higher values produce more random results.",
     )
     rag_chat: _rag_chat = Field(
-        default_factory=_rag_chat,
-        description="The RAG chat configuration"
+        default_factory=_rag_chat, description="The RAG chat configuration"
     )
 
 
@@ -272,15 +271,16 @@ class _serve(BaseModel):
         """Returns server API URL, based on the configured host and port"""
         return get_api_base(self.host_port)
 
+
 class _vectordb(BaseModel):
     """Class describing configuration of vectordb ingestion."""
 
-    uri: StrictStr = Field(
-        default="ilab_rag.db", description="The vector DB URI."
-    )
+    uri: StrictStr = Field(default="ilab_rag.db", description="The vector DB URI.")
     type: StrictStr = Field(
-        default="milvuslite", description="The vector DB type, one of: `milvuslite`, `milvus`."
+        default="milvuslite",
+        description="The vector DB type, one of: `milvuslite`, `milvus`.",
     )
+
 
 class _rag(BaseModel):
     """Class describing configuration of the 'rag ingest' sub-command."""
@@ -293,11 +293,13 @@ class _rag(BaseModel):
         default="sentence-transformers/all-MiniLM-L6-v2", description="Embedding model."
     )
 
+
 class _rag_ingestion(BaseModel):
     """Class describing configuration of RAG ingestion during data generation."""
 
     enabled: bool = Field(
-        default=False, description="To enable the RAG transformation and ingestion pipeline."
+        default=False,
+        description="To enable the RAG transformation and ingestion pipeline.",
     )
     input: str = Field(
         default="./docs",
@@ -307,6 +309,7 @@ class _rag_ingestion(BaseModel):
         default="./output",
         description="Output folder of pre-processed documents.",
     )
+
 
 class _generate(BaseModel):
     """Class describing configuration of the 'generate' sub-command."""
@@ -375,6 +378,7 @@ class _generate(BaseModel):
         default_factory=_rag_ingestion,
         description="RAG configuration",
     )
+
 
 class _mmlu(BaseModel):
     """Class describing configuration of MMLU evaluation benchmark."""
@@ -634,9 +638,7 @@ class Config(BaseModel):
         default_factory=_evaluate, description="Evaluate configuration section."
     )
     # rag configuration
-    rag: _rag = Field(
-        default_factory=_rag, description="RAG configuration section."
-    )
+    rag: _rag = Field(default_factory=_rag, description="RAG configuration section.")
     # additional fields with defaults
     general: _general = Field(
         default_factory=_general, description="General configuration section."
