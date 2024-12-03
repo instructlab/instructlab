@@ -23,7 +23,7 @@ ec2__launch() {
         --security-group-ids "$EC2_SECURITY_GROUP_ID" \
         --subnet-id "$EC2_SUBNET_ID" \
         --key-name "$EC2_KEY_NAME" \
-        --block-device-mappings '{"DeviceName": "/dev/sda1","Ebs": {"VolumeSize": 600}}' \
+        --block-device-mappings '{"DeviceName": "/dev/sda1","Ebs": {"VolumeSize": 800}}' \
         --associate-public-ip-address \
         --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME}]" \
         "ResourceType=volume,Tags=[{Key=Name,Value=$INSTANCE_NAME}]" \
