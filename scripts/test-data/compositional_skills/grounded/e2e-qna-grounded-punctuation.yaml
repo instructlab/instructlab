@@ -1,0 +1,97 @@
+created_by: kelbrown
+version: 2
+seed_examples:
+  - answer: |
+      The Boston Tea Party was an American political and mercantile
+      protest on December 16, 1773, by the Sons of Liberty in Boston
+      in colonial Massachusetts. The target was the Tea Act of May 10,
+      1773, which allowed the East India Company to sell tea from China
+      in American colonies without paying taxes apart from those imposed
+      by the Townshend Acts. The Sons of Liberty strongly opposed the
+      taxes in the Townshend Act as a violation of their rights. In
+      response, the Sons of Liberty, some disguised as Native Americans,
+      destroyed an entire shipment of tea sent by the East India Company.
+    context: |
+      The Boston Tea Party was an American political, and mercantile
+      protest on December 16, 1773 by the Sons of Liberty in Boston in
+      colonial Massachusetts. The target was the Tea Act of May 10 1773,
+      which allowed the East India Company to sell tea from China in
+      American colonies, without paying taxes apart from those imposed
+      by the Townshend Acts. The Sons of Liberty strongly opposed the 
+      taxes in the Townshend Act as a violation of their rights. In
+      response the Sons of Liberty, some disguised as Native Americans
+      destroyed an entire shipment of tea sent by the East India Company.
+    question: Return the text after correcting any punctuation errors.
+  - answer: |
+      Dolphins are widespread. Most species prefer the warm waters of the
+      tropic zones, but some, such as the right whale dolphin, prefer
+      colder climates. Dolphins feed largely on fish and squid, but a few,
+      such as the orca, feed on large mammals such as seals. Male dolphins
+      typically mate with multiple females every year, but females only
+      mate every two to three years. Calves are typically born in the
+      spring and summer months, and females bear all the responsibility
+      for raising them. Mothers of some species fast and nurse their young
+      for a relatively long period of time. Dolphins produce a variety of
+      vocalizations, usually in the form of clicks and whistles.
+    context: |
+      Dolphins are widespread. Most species prefer the warm waters of the
+      tropic zones but some, such as the right whale dolphin prefer colder
+      climates. Dolphins feed largely on fish and squid, but a few such as
+      the orca, feed on large mammals such as seals. Male dolphins typically
+      mate with multiple females every year; but females only mate every two
+      to three years. Calves are typically born in the spring and summer
+      months and females bear all the responsibility for raising them.
+      Mother's of some species fast and nurse their young for a relatively
+      long period of time. Dolphins produce a variety of vocalizations
+      usually in the form of clicks and whistles.
+    question: Return the text after correcting any punctuation errors.
+  - answer: |
+      In 2024, the Boston Celtics became the winningest team in NBA history
+      with their victory over the Dallas Mavericks in the NBA Finals! The
+      franchise locked in their 18th championship win, adding to a dynasty
+      decades long. While simultaneously being praised for their depth, the
+      team has the talent of their starting lineup to thank in part for the
+      win: Jayson Tatum, Jaylen Brown, Derrick White, Al Horford, and Jrue
+      Holiday.
+    context: |
+      In 2024 the Boston Celtics became the winningest team, in NBA history
+      with their victory over the Dallas Mavericks, in the NBA Finals! The
+      franchise locked in their 18th championship win; adding to a dynasty
+      decades long. While simultaneously being praised for their depth,
+      the team has the talent of their starting lineup to thank in part for
+      the win. Jayson Tatum, Jaylen Brown, Derrick White, Al Horford, and
+      Jrue Holiday.
+    question: Return the text after correcting any punctuation errors.
+  - answer: |
+      Have you ever seen that cat that lives down the street? He's not a
+      normal cat; he's 10 feet tall and full of colorful spots. One time,
+      I saw him drink all the water from a small pond! The people swimming
+      were upset until they saw him. It's hard to stay mad at a cat like
+      that—except for that other time that he decided to sit on someone's
+      lap. That guy was furious!
+    context: |
+      Have you ever seen that cat that lives down the street. He's not a
+      normal cat, he's 10 feet tall and full of colorful spots. One time
+      I saw him drink all the water from a small pond! The people swimming
+      were upset, until they saw him. It's hard to stay mad at a cat like
+      that except for that other time that he decided to sit on someone's
+      lap. That guy was furious!
+    question: Return the text after correcting any punctuation errors.
+  - answer: |
+      A popular variation of traditional lemonade, pink lemonade, is created
+      by adding additional fruit juices, flavors, or food coloring to the
+      recipe. Most store-bought pink lemonade is simply colored with
+      concentrated grape juice or dyes. Among those using natural colors,
+      grape is the most popular, but cranberry juice, beet juice or syrup
+      made from brightly colored fruits and vegetables such as rhubarb,
+      raspberries, strawberries, or cherries are also used.
+    context: |
+      A popular variation of traditional lemonade pink lemonade, is created
+      by adding additional fruit juices; flavors, or food coloring to the
+      recipe. Most store-bought pink lemonade is simply colored with
+      concentrated grape juice or dyes. Among those using natural colors
+      grape is the most popular, but cranberry juice, beet juice, or syrup
+      made from brightly colored fruits and vegetables such as rhubarb,
+      raspberries, strawberries or cherries are also used.
+    question: Return the text after correcting any punctuation errors.
+task_description: Teach the model how to fix punctuation errors.
