@@ -263,7 +263,7 @@ def _run_phased_training(
     phase1_num_epochs: int | None,
     phase1_samples_per_save: int | None,
     phase1_checkpoints_dir: pathlib.Path,
-    phase1_learning_rate: float| None,
+    phase1_learning_rate: float | None,
     phased_phase1_effective_batch_size: int | None,
     phase2_data: pathlib.Path,
     phase2_num_epochs: int | None,
