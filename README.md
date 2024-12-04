@@ -822,7 +822,7 @@ When running multi phase training evaluation is run on each phase, we will tell 
    *Example command*
 
    ```shell
-   ilab model train --pipeline full --device gpu --data-path ~/.local/share/instructlab/datasets/knowledge_train_msgs_2024-10-23T09_14_44.jsonl
+   ilab model train --pipeline full --device cuda --data-path ~/.local/share/instructlab/datasets/knowledge_train_msgs_2024-10-23T09_14_44.jsonl
    ```
 
    This version of `ilab model train` outputs brand-new models that can be served in the `~/.local/share/instructlab/checkpoints` directory.  These models can be run through `ilab model evaluate` to choose the best one.
