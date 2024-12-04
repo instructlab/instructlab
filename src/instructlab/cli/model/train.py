@@ -311,6 +311,11 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     type=click.IntRange(min=0),
 )
 @click.option(
+    "--phased-phase1-learning-rate",
+    cls=clickext.ConfigOption,
+    type=click.FloatRange(min=0),
+)
+@click.option(
     "--phased-phase1-effective-batch-size",
     cls=clickext.ConfigOption,
     type=click.IntRange(min=1),
@@ -329,6 +334,11 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     "--phased-phase2-samples-per-save",
     cls=clickext.ConfigOption,
     type=click.IntRange(min=0),
+)
+@click.option(
+    "--phased-phase2-learning-rate",
+    cls=clickext.ConfigOption,
+    type=click.FloatRange(min=0),
 )
 @click.option(
     "--phased-phase2-effective-batch-size",
