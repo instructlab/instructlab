@@ -87,6 +87,11 @@ task() {
     step "$@"
 }
 
+check_disk() {
+   task Check disk
+   df -h
+}
+
 test_smoke() {
     task InstructLab smoke test
     ilab | grep --color 'Usage: ilab'
@@ -345,6 +350,7 @@ test_exec() {
     test_taxonomy
     test_generate
     test_data_list
+    check_disk
 
     # train tests
     if [ "$LARGE" -eq 1 ]; then
@@ -355,6 +361,7 @@ test_exec() {
     else
       test_train
     fi
+    check_disk
 
     # serve + chat tests
     test_serve
@@ -372,6 +379,7 @@ test_exec() {
     fi
 
     task E2E success!
+    check_disk
     exit 0
 }
 
