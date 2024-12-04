@@ -36,9 +36,10 @@ MISTRAL_GGUF_MODEL="mistral-7b-instruct-v0.2.Q4_K_M.gguf"
 SMALL=0
 MEDIUM=0
 LARGE=0
+XLARGE=0
 
 check_flags() {
-    if [ "${SMALL}" -ne 1 ] && [ "${MEDIUM}" -ne 1 ] && [ "${LARGE}" -ne 1 ]; then
+    if [ "${SMALL}" -ne 1 ] && [ "${MEDIUM}" -ne 1 ] && [ "${LARGE}" -ne 1 ] && [ "${XLARGE}" -ne 1 ]; then
          echo "ERROR: Must specify a size flag when invoking this script."
          usage
          exit 1
@@ -115,6 +116,9 @@ test_init() {
     elif [ "$LARGE" -eq 1 ]; then
         step Setting large-size system profile
         ilab config init --non-interactive --profile="${SCRIPTDIR}/test-data/profile-l40s-x4.yaml"
+    elif [ "$XLARGE" -eq 1 ]; then
+        step Setting extra large-size system profile
+        ilab config init --non-interactive --profile="${SCRIPTDIR}/test-data/profile-l40s-x8.yaml"
     fi
     task InstructLab initialization Complete
 }
@@ -137,7 +141,7 @@ test_download() {
         ilab model download --repository ${MISTRAL_GGUF_REPO} --filename ${MISTRAL_GGUF_MODEL} --hf-token "${HF_TOKEN}"
         step Downloading granite-7b-lab model to train and as the judge model for evaluation
         ilab model download --repository ${GRANITE_7B_MODEL}
-    elif [ "$LARGE" -eq 1 ]; then
+    elif [ "$LARGE" -eq 1 ] || [ "$XLARGE" -eq 1 ]; then
         step Downloading the mixtral-8x7b instruct model as the teacher model for SDG
         ilab model download --repository ${MIXTRAL_8X7B_MODEL} --hf-token "${HF_TOKEN}"
         step Downloading the prometheus-8x7b model as the judge model for evaluation
@@ -156,7 +160,7 @@ test_list() {
     elif [ "$MEDIUM" -eq 1 ]; then
         ilab model list | grep ${GRANITE_7B_MODEL}
         ilab model list | grep ${MISTRAL_GGUF_MODEL}
-    elif [ "$LARGE" -eq 1 ]; then
+    elif [ "$LARGE" -eq 1 ] || [ "$XLARGE" -eq 1 ]; then
         ilab model list | grep ${GRANITE_7B_MODEL}
         ilab model list | grep ${PROMETHEUS_8X7B_MODEL}
         ilab model list | grep ${MIXTRAL_8X7B_MODEL}
@@ -167,18 +171,36 @@ test_list() {
 test_taxonomy() {
     task Update the taxonomy
 
-    step Add compositional skill to the taxonomy
-    mkdir -p "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings
-    cp "$SCRIPTDIR"/test-data/e2e-qna-freeform-skill.yaml "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings/qna.yaml
+    # Extra large will pull in multiple freeform compositional skills to test the coverage of mulitple knowledge/skill leaf node usage. All other t-shirt sizes will only have one compositional skill.
+    if [ "$XLARGE" -eq 1 ]; then
+        step Add two compositional skills to the taxomony
+        mkdir -p "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/inference/qualitative/{e2e-siblings,e2e-palindrome}
+        cp "$SCRIPTDIR"/test-data/compositional_skills/freeform/e2e-qna-freeform-siblings-skill.yaml "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings/qna.yaml
+        cp "$SCRIPTDIR"/test-data/compositional_skills/freeform/e2e-qna-freeform-palindrome-skill.yaml "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/inference/qualitative/e2e-palindrome/qna.yaml
+    else
+        step Add compositional skill to the taxomony
+        mkdir -p "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings
+        cp "$SCRIPTDIR"/test-data/compositional_skills/freeform/e2e-qna-freeform-siblings-skill.yaml "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings/qna.yaml
+    fi
 
     if [ "$LARGE" -eq 1 ]; then
         step Add knowledge to the taxonomy
         mkdir -p "$DATA_HOME"/instructlab/taxonomy/knowledge/phoenix/overview/e2e-phoenix
-        cp "$SCRIPTDIR"/test-data/e2e-qna-knowledge-phoenix.yaml "$DATA_HOME"/instructlab/taxonomy/knowledge/phoenix/overview/e2e-phoenix/qna.yaml
+        cp "$SCRIPTDIR"/test-data/knowledge/e2e-qna-knowledge-phoenix.yaml "$DATA_HOME"/instructlab/taxonomy/knowledge/phoenix/overview/e2e-phoenix/qna.yaml
 
         step Add grounded skill to the taxonomy
         mkdir -p "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no
-        cp "$SCRIPTDIR"/test-data/e2e-qna-grounded-skill.yaml "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no/qna.yaml
+        cp "$SCRIPTDIR"/test-data/compositional_skills/grounded/e2e-qna-grounded-employee-skill.yaml "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no/qna.yaml
+    elif [ "$XLARGE" -eq 1 ]; then
+        step Add two knowledge to the taxomony
+        mkdir -p "$DATA_HOME"/instructlab/taxonomy/knowledge/{phoenix/overview/e2e-phoenix,mbta/overview/e2e-mbta}
+        cp "$SCRIPTDIR"/test-data/knowledge/e2e-qna-knowledge-phoenix.yaml "$DATA_HOME"/instructlab/taxonomy/knowledge/phoenix/overview/e2e-phoenix/qna.yaml
+        cp "$SCRIPTDIR"/test-data/knowledge/e2e-qna-knowledge-mbta.yaml    "$DATA_HOME"/instructlab/taxonomy/knowledge/mbta/overview/e2e-mbta/qna.yaml
+
+        step Add two grounded skills to the taxonomy
+        mkdir -p "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/{employee,punctuation}/answerability/e2e-yes_or_no
+        cp "$SCRIPTDIR"/test-data/compositional_skills/grounded/e2e-qna-grounded-employee-skill.yaml    "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/employee/answerability/e2e-yes_or_no/qna.yaml
+        cp "$SCRIPTDIR"/test-data/compositional_skills/grounded/e2e-qna-grounded-punctuation-skill.yaml "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/punctuation/answerability/e2e-yes_or_no/qna.yaml
     fi
 
     step Verify the taxonomy
@@ -303,8 +325,8 @@ test_serve() {
     # use trained gguf for medium-size job
     elif [ "$MEDIUM" -eq 1 ]; then
         model_path="${TRAINED_MODEL_PATH}/pytorch_model-Q4_K_M.gguf"
-    # use safetensors for large-size job
-    elif [ "$LARGE" -eq 1 ]; then
+    # use safetensors for large-size and xlarge-size jobs
+    elif [ "$LARGE" -eq 1 ] || [ "$XLARGE" -eq 1 ]; then
         model_path="${TRAINED_MODEL_PATH}"
     fi
 
@@ -384,7 +406,7 @@ test_exec() {
     check_disk
 
     # train tests
-    if [ "$LARGE" -eq 1 ]; then
+    if [ "$LARGE" -eq 1 ] || [ "$XLARGE" -eq 1 ]; then
       # Validate a single epoch per phase with resumption
       test_phased_train_resume
       # Validate skills-only training
@@ -447,43 +469,46 @@ wait_for_server() {
 
 # NOTE: If you add additional or modify existing options, please document them in 'docs/ci.md'
 usage() {
-    echo "Usage: $0 [-s] [-m] [-l] [-h]"
+    echo "Usage: $0 [-s] [-m] [-l] [-xl] [-h]"
     echo "  -s  Run small t-shirt size job"
     echo "  -m  Run medium t-shirt size job"
     echo "  -l  Run large t-shirt size job"
+    echo "  -xl  Run extra large t-shirt size job"
     echo "  -p  Preserve the E2E_TEST_DIR for debugging"
     echo "  -h  Show this help text"
 }
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "smlph" opt; do
-    case $opt in
-        s)
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -s)
             SMALL=1
             step "Run small T-shirt size job."
-            ;;
-        m)
+            shift ;;
+        -m)
             MEDIUM=1
             step "Run medium T-shirt size job."
-            ;;
-        l)
+            shift ;;
+        -l)
             LARGE=1
             step "Run large T-shirt size job."
-            ;;
-        p)
+            shift ;;
+        -xl)
+            XLARGE=1
+            step "Run extra large T-shirt size job."
+            shift ;;
+        -p)
             PRESERVE=1
             step "Preserve the E2E_TEST_DIR for debugging."
-            ;;
-        h)
+            shift ;;
+        -h)
             usage
-            exit 0
-            ;;
-        \?)
-            echo "Invalid option: -$opt" >&2
+            exit 0 ;;
+        *)
+            echo "Invalid option: $1" >&2
             usage
-            exit 1
-            ;;
+            exit 1 ;;
     esac
 done
 

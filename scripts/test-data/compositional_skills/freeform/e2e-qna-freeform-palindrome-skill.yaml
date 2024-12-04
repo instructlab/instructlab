@@ -1,0 +1,32 @@
+created_by: juliadenham
+version: 2
+task_description: Teach the model about palindromes.
+seed_examples:
+  - question: |
+      A palindrome is a word, sentence, verse, or even number that reads the
+      same backward or forward. What is "kayak" reversed and is it a palindrome?
+    answer: Kayak reversed is kayak and is a palindrome.
+  - question: |
+      A palindrome is a word, sentence, verse, or even number that reads the same
+      backward or forward. What is banana reversed and is it a palindrome?
+    answer: Banana backwards is "ananab" and banana is not a palindrome.
+  - question: |
+      A palindrome is a word, sentence, verse, or even number that reads the same
+      backward or forward. What is racecar reversed and is it a palindrome?
+    answer: Racecar backwards is racecar and is a palindrome.
+  - question: |
+      A palindrome is a word, sentence, verse, or even number that reads the same
+      backward or forward. What is an example of a palindrome?
+    answer: Civic is a palindrome.
+  - question: |
+      A palindrome is a word, sentence, verse, or even number that reads the same
+      backward or forward. What is "dashed" reversed and is it a palindrome?
+    answer: "Dashed" reversed is "dehsad" and the word dashed is not a palindrome.
+  - question: |
+      A palindrome is a word, sentence, verse, or even number that reads the same
+      backward or forward. What is an example of a palindrome?
+    answer: Rotator is a palindrome.
+  - question: |
+      A palindrome is a word, sentence, verse, or even number that reads the same
+      backward or forward. What is tenet reversed and is it a palindrome?
+    answer: Tenet reversed is tenet and it is a palindrome.
