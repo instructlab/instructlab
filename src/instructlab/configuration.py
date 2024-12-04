@@ -502,6 +502,11 @@ class _train(BaseModel):
         ge=0,
         description="Number of samples the model should see before saving a checkpoint during phase1. Disabled when set to 0.",
     )
+    phased_phase1_learning_rate: float = Field(
+        default=2e-5,
+        ge=0,
+        description="Learning rate for phase1 knowledge training.",
+    )
     phased_phase1_effective_batch_size: int | None = Field(
         default=128,
         description="Phased phase1 effective batch size.",
@@ -517,6 +522,11 @@ class _train(BaseModel):
         default=0,
         ge=0,
         description="Number of samples the model should see before saving a checkpoint during phase2. Disabled when set to 0.",
+    )
+    phased_phase2_learning_rate: float = Field(
+        default=6e-6,
+        ge=0,
+        description="Learning rate for phase2 skills training.",
     )
     phased_phase2_effective_batch_size: int | None = Field(
         default=3840, description="Phased phase2 effective batch size."
