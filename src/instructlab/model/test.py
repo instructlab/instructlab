@@ -133,6 +133,7 @@ def test(
                     max_tokens=100,
                     prompt=prompt,
                 )
+        click.echo("✅ MacOS model test completed successfully!")
     else:
         logger.debug("")
         # pylint: disable=import-outside-toplevel
@@ -164,6 +165,7 @@ def test(
                     print()
                     print(f"{mod}: {answer}")
                 print()
+            click.echo("✅ Linux model test completed successfully!")
         except Exception as exc:
             click.secho(
                 f"Testing models failed with the following error: {exc}", fg="red"
