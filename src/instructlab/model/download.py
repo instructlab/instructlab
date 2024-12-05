@@ -2,10 +2,13 @@
 
 # Standard
 from pathlib import Path
+from typing import Any, Dict, Optional
 import abc
+import json
 import logging
 import os
 import re
+import shutil
 import subprocess
 
 # Third Party
@@ -14,6 +17,7 @@ from huggingface_hub import logging as hf_logging
 from huggingface_hub import snapshot_download
 from packaging import version
 import click
+import requests
 
 # First Party
 from instructlab import clickext
@@ -22,6 +26,8 @@ from instructlab.defaults import DEFAULT_INDENT
 from instructlab.utils import is_huggingface_repo, is_oci_repo, load_json
 
 logger = logging.getLogger(__name__)
+
+CHECKING_PROMPT = "\nChecking the model size and local storage..."
 
 
 class Downloader(abc.ABC):
@@ -78,6 +84,11 @@ class HFDownloader(Downloader):
             )
 
         try:
+            # Check hf model size and local available space
+            click.echo(CHECKING_PROMPT)
+            required_space_gb = get_model_size_in_gb(self.repository, self.hf_token)
+            check_space_and_proceed(required_space_gb, self.download_dest)
+
             if self.ctx.obj is not None:
                 hf_logging.set_verbosity(self.ctx.obj.config.general.log_level.upper())
             files = list_repo_files(repo_id=self.repository, token=self.hf_token)
@@ -88,7 +99,7 @@ class HFDownloader(Downloader):
 
         except Exception as exc:
             click.secho(
-                f"\nDownloading model failed with the following Hugging Face Hub error:\n{DEFAULT_INDENT}{exc}",
+                f"\nDownloading model failed with the following Hugging Face Hub error: {exc}",
                 fg="red",
             )
             raise click.exceptions.Exit(1)
@@ -208,6 +219,11 @@ class OCIDownloader(Downloader):
 
         # Check if skopeo is installed and the version is at least 1.9
         check_skopeo_version()
+
+        # Check OCI image size and local available space
+        click.echo(CHECKING_PROMPT)
+        required_space_gb = get_oci_image_size_in_gb(self.repository, self.release)
+        check_space_and_proceed(required_space_gb, self.download_dest)
 
         command = [
             "skopeo",
@@ -390,4 +406,71 @@ def check_skopeo_version():
     else:
         logger.warning(
             f"Failed to determine skopeo version. Recommended version is {_RECOMMENDED_SCOPEO_VERSION}. Downloading the model might fail."
+        )
+
+
+def get_available_space_in_gb(directory: str) -> float:
+    _, _, free = shutil.disk_usage(directory)
+    available_space: float = round((free / (1024**3)), 2)
+    return available_space
+
+
+def get_model_size_in_gb(repo_id: str, token: Optional[str] = None) -> float:
+    url = f"https://huggingface.co/api/models/{repo_id}?blobs=true"
+    headers = {"Authorization": f"Bearer {token}"} if token else {}
+
+    try:
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+    except requests.exceptions.Timeout as exc:
+        raise RuntimeError("The request timed out while fetching model info.") from exc
+    except requests.exceptions.RequestException as exc:
+        raise RuntimeError(
+            f"An error occurred while fetching model info: {exc}."
+        ) from exc
+
+    data: Dict[str, Any] = response.json()
+    files = data.get("siblings", [])
+    total_size: int = sum(file.get("size", 0) for file in files)
+    total_size_gb: float = round((total_size / (1024**3)), 2)
+    return total_size_gb
+
+
+def get_oci_image_size_in_gb(repository: str, release: str) -> float:
+    try:
+        command = ["skopeo", "inspect", "--raw", f"{repository}:{release}"]
+        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        data = json.loads(result.stdout)
+
+        if "layers" not in data:
+            raise ValueError("The image does not contain layers. Cannot compute size.")
+
+        layers = data.get("layers", [])
+        total_size: int = sum(layer["size"] for layer in layers if "size" in layer)
+
+        total_size_gb: float = round((total_size / (1024**3)), 2)
+        return total_size_gb
+
+    except subprocess.CalledProcessError as e:
+        click.secho(
+            f"\nFailed to run skopeo command:\n{DEFAULT_INDENT}{e}.\n{DEFAULT_INDENT}stderr: {e.stderr}",
+            fg="red",
+        )
+        raise click.exceptions.Exit(1)
+    except json.JSONDecodeError as e:
+        click.secho(
+            f"\nFailed to parse JSON output\n{DEFAULT_INDENT}{e}.\n{DEFAULT_INDENT}Error message: {e.msg}",
+            fg="red",
+        )
+        raise click.exceptions.Exit(1)
+
+
+def check_space_and_proceed(required_space_gb: float, download_dest: str) -> None:
+    available_space_gb = get_available_space_in_gb(download_dest)
+    click.echo(f"{DEFAULT_INDENT}Model size to download:  {required_space_gb:.2f} GB")
+    click.echo(f"{DEFAULT_INDENT}Available local storage: {available_space_gb:.2f} GB")
+
+    if required_space_gb > available_space_gb:
+        raise ValueError(
+            f"\n{DEFAULT_INDENT}Insufficient space to download the model!\n{DEFAULT_INDENT}Required: {required_space_gb:.2f} GB, Available: {available_space_gb:.2f} GB."
         )
