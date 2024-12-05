@@ -33,6 +33,7 @@ def serve_backend(
     backend: str | None,
     chat_template: str | None,
     gpus: int | None,
+    host_port: str,
 ) -> None:
     """Core server functionality to be called from the CLI"""
     # Configure logging
@@ -43,7 +44,7 @@ def serve_backend(
     # First Party
     from instructlab.model.backends import llama_cpp, vllm
 
-    host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
+    host, port = utils.split_hostport(host_port)
 
     try:
         backend = backends.get(model_path, backend)
