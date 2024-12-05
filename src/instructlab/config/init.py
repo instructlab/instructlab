@@ -438,7 +438,7 @@ def get_params(
         )
         click.echo(
             "Please provide the following values to initiate the "
-            "environment [press Enter for defaults]:"
+            "environment [press 'Enter' for default options when prompted]"
         )
         if param_source != click.core.ParameterSource.ENVIRONMENT:
             taxonomy_path = utils.expand_path(
