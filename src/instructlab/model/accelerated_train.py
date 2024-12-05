@@ -45,9 +45,11 @@ def accelerated_train(
     phased_base_dir: pathlib.Path,
     phased_phase1_num_epochs: int | None,
     phased_phase1_samples_per_save: int | None,
+    phased_phase1_learning_rate: float | None,
     phased_phase1_effective_batch_size: int | None,
     phased_phase2_num_epochs: int | None,
     phased_phase2_samples_per_save: int | None,
+    phased_phase2_learning_rate: float | None,
     phased_phase2_effective_batch_size: int | None,
     enable_serving_output: bool,
     phased_mt_bench_judge: pathlib.Path | None,
@@ -174,11 +176,13 @@ def accelerated_train(
             phase1_data=phased_phase1_data,
             phase1_num_epochs=phased_phase1_num_epochs,
             phase1_samples_per_save=phased_phase1_samples_per_save,
+            phase1_learning_rate=phased_phase1_learning_rate,
             phase1_checkpoints_dir=phased_base_dir / "phase1" / "checkpoints",
             phased_phase1_effective_batch_size=phased_phase1_effective_batch_size,
             phase2_data=phased_phase2_data,
             phase2_num_epochs=phased_phase2_num_epochs,
             phase2_samples_per_save=phased_phase2_samples_per_save,
+            phase2_learning_rate=phased_phase2_learning_rate,
             phase2_checkpoints_dir=phased_base_dir / "phase2" / "checkpoints",
             phased_phase2_effective_batch_size=phased_phase2_effective_batch_size,
             phase2_eval_cache=phased_base_dir / "phase2" / "eval_cache",
@@ -209,6 +213,7 @@ def _run_phase(
     checkpoint_dir: pathlib.Path,
     num_epochs: int | None,
     samples_per_save: int | None,
+    learning_rate: float | None,
     effective_batch_size: int | None,
     journal: TrainingJournal,
     phase_model: TrainPhaseModel | EvalPhaseModel,
@@ -229,6 +234,7 @@ def _run_phase(
             checkpoint_dir=checkpoint_dir,
             num_epochs=num_epochs,
             samples_per_save=samples_per_save,
+            learning_rate=learning_rate,
             effective_batch_size=effective_batch_size,
             model_override=model_override,
             # model override not necessary because we expect model to come from ctx.params.model_path.
@@ -257,10 +263,12 @@ def _run_phased_training(
     phase1_num_epochs: int | None,
     phase1_samples_per_save: int | None,
     phase1_checkpoints_dir: pathlib.Path,
+    phase1_learning_rate: float | None,
     phased_phase1_effective_batch_size: int | None,
     phase2_data: pathlib.Path,
     phase2_num_epochs: int | None,
     phase2_samples_per_save: int | None,
+    phase2_learning_rate: float | None,
     phase2_checkpoints_dir: pathlib.Path,
     phased_phase2_effective_batch_size: int | None,
     phase2_eval_cache: pathlib.Path,
@@ -296,6 +304,7 @@ def _run_phased_training(
             checkpoint_dir=phase1_checkpoints_dir,
             num_epochs=phase1_num_epochs,
             samples_per_save=phase1_samples_per_save,
+            learning_rate=phase1_learning_rate,
             effective_batch_size=phased_phase1_effective_batch_size,
             journal=journal,
             phase_model=phase_model,
@@ -380,6 +389,7 @@ def _run_phased_training(
             checkpoint_dir=phase2_checkpoints_dir,
             num_epochs=phase2_num_epochs,
             samples_per_save=phase2_samples_per_save,
+            learning_rate=phase2_learning_rate,
             effective_batch_size=phased_phase2_effective_batch_size,
             journal=journal,
             phase_model=phase_model,
@@ -450,6 +460,7 @@ def _training_phase(
     model_override: pathlib.Path | None = None,
     num_epochs: int | None = None,
     samples_per_save: int | None = None,
+    learning_rate: float | None = None,
     checkpoint_dir: pathlib.Path | None = None,
     effective_batch_size: int | None = None,
 ) -> None:
@@ -485,6 +496,12 @@ def _training_phase(
             f"Phased Training -- training phase -- Overriding samples per save: {train_args.save_samples} with {samples_per_save}"
         )
         train_args.save_samples = samples_per_save
+
+    if learning_rate is not None:
+        logger.debug(
+            f"Phased Training -- training phase -- Overriding learning rate: {train_args.save_samples} with {learning_rate}"
+        )
+        train_args.learning_rate = learning_rate
 
     if effective_batch_size:
         logger.debug(

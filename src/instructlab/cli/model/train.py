@@ -311,6 +311,11 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     type=click.IntRange(min=0),
 )
 @click.option(
+    "--phased-phase1-learning-rate",
+    cls=clickext.ConfigOption,
+    type=click.FloatRange(min=0),
+)
+@click.option(
     "--phased-phase1-effective-batch-size",
     cls=clickext.ConfigOption,
     type=click.IntRange(min=1),
@@ -329,6 +334,11 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     "--phased-phase2-samples-per-save",
     cls=clickext.ConfigOption,
     type=click.IntRange(min=0),
+)
+@click.option(
+    "--phased-phase2-learning-rate",
+    cls=clickext.ConfigOption,
+    type=click.FloatRange(min=0),
 )
 @click.option(
     "--phased-phase2-effective-batch-size",
@@ -397,10 +407,12 @@ def train(
     phased_phase1_data: pathlib.Path | None,
     phased_phase1_num_epochs: int | None,
     phased_phase1_samples_per_save: int | None,
+    phased_phase1_learning_rate: float | None,
     phased_phase1_effective_batch_size: int | None,
     phased_phase2_data: pathlib.Path | None,
     phased_phase2_num_epochs: int | None,
     phased_phase2_samples_per_save: int | None,
+    phased_phase2_learning_rate: float | None,
     phased_phase2_effective_batch_size: int | None,
     phased_mt_bench_judge: pathlib.Path | None,
     skip_user_confirm: bool,
@@ -455,9 +467,11 @@ def train(
                 phased_base_dir=phased_base_dir,
                 phased_phase1_num_epochs=phased_phase1_num_epochs,
                 phased_phase1_samples_per_save=phased_phase1_samples_per_save,
+                phased_phase1_learning_rate=phased_phase1_learning_rate,
                 phased_phase1_effective_batch_size=phased_phase1_effective_batch_size,
                 phased_phase2_num_epochs=phased_phase2_num_epochs,
                 phased_phase2_samples_per_save=phased_phase2_samples_per_save,
+                phased_phase2_learning_rate=phased_phase2_learning_rate,
                 phased_phase2_effective_batch_size=phased_phase2_effective_batch_size,
                 enable_serving_output=enable_serving_output,
                 phased_mt_bench_judge=phased_mt_bench_judge,
