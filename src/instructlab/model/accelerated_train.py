@@ -534,7 +534,7 @@ def _training_phase(
 
     if learning_rate is not None:
         logger.debug(
-            f"Phased Training -- training phase -- Overriding learning rate: {train_args.save_samples} with {learning_rate}"
+            f"Phased Training -- training phase -- Overriding learning rate: {train_args.learning_rate} with {learning_rate}"
         )
         train_args.learning_rate = learning_rate
 
