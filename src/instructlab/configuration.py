@@ -545,6 +545,28 @@ class _train(BaseModel):
     )
 
 
+class _metadata(BaseModel):
+    # model configuration
+    model_config = ConfigDict(extra="ignore")
+    cpu_info: str | None = Field(
+        default=None,
+        description="Manufacturer, Family, and SKU of the system CPU, ex: Apple M3 Max",
+    )
+    gpu_manufacturer: str | None = Field(
+        default=None, description="Manufacturer of the system GPU, ex: Nvidia"
+    )
+    gpu_family: str | None = Field(
+        default=None, description="Family of the system GPU, ex: H100"
+    )
+    gpu_count: int | None = Field(
+        default=None, description="Amount of GPUs on the system, ex: 8"
+    )
+    gpu_sku: list[str] | None = Field(
+        default=None,
+        description="Specific SKU related information about the given GPU, ex: PCIe, NVL",
+    )
+
+
 class Config(BaseModel):
     """Configuration for the InstructLab CLI.
     Config options are defined by the respective subclasses and are loaded into a single 'Config' object here
@@ -583,6 +605,11 @@ class Config(BaseModel):
         default=CONFIG_VERSION,
         description="Configuration file structure version.",
         frozen=True,  # don't allow this to be changed anywhere in the code
+    )
+    # metadata about the configuration, specifically GPU information
+    metadata: _metadata = Field(
+        default_factory=_metadata,
+        description="Metadata pertaining to the specifics of the system which the Configuration is meant to be applied to.",
     )
 
 

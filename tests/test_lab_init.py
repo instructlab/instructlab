@@ -63,7 +63,7 @@ class TestLabInit:
 
     @patch(
         "instructlab.config.init.get_gpu_or_cpu",
-        return_value=("nvidia a100 x2", False, True, 0, 0),
+        return_value=("nvidia a100", 0, 2),
     )
     def test_ilab_config_init_auto_detection_nvidia(
         self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner
@@ -78,7 +78,7 @@ class TestLabInit:
 
     @patch(
         "instructlab.config.init.get_gpu_or_cpu",
-        return_value=("apple m3 max", True, False, 0, 0),
+        return_value=("apple m3 max", 0, 0),
     )
     def test_ilab_config_init_auto_detection_mac(
         self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner
@@ -93,9 +93,9 @@ class TestLabInit:
 
     @patch(
         "instructlab.config.init.get_gpu_or_cpu",
-        return_value=("amd cpu", True, True, 0, 0),
+        return_value=("amd cpu", 0, 0),
     )
-    def test_ilab_config_init_auto_detection_cpu(
+    def test_ilab_config_init_auto_detection_amd_cpu(
         self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner
     ):
         result = cli_runner.invoke(lab.ilab, ["config", "init", "--interactive"])
@@ -108,7 +108,22 @@ class TestLabInit:
 
     @patch(
         "instructlab.config.init.get_gpu_or_cpu",
-        return_value=("intel gaudi 3", False, True, 0, 0),
+        return_value=("intel cpu", 0, 0),
+    )
+    def test_ilab_config_init_auto_detection_intel_cpu(
+        self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner
+    ):
+        result = cli_runner.invoke(lab.ilab, ["config", "init", "--interactive"])
+        assert result.exit_code == 0, result.stdout
+        convert_bytes_to_proper_mag_mock.assert_called_once()
+        assert (
+            "We have detected the INTEL CPU profile as an exact match for your system."
+            in result.stdout
+        )
+
+    @patch(
+        "instructlab.config.init.get_gpu_or_cpu",
+        return_value=("intel gaudi 3", 0, 8),
     )
     def test_ilab_config_init_auto_detection_gaudi(
         self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner
@@ -117,7 +132,52 @@ class TestLabInit:
         assert result.exit_code == 0, result.stdout
         convert_bytes_to_proper_mag_mock.assert_called_once()
         assert (
-            "We have detected the INTEL GAUDI 3 profile as an exact match for your system."
+            "We have detected the INTEL GAUDI 3 X8 profile as an exact match for your system."
+            in result.stdout
+        )
+
+    @patch(
+        "instructlab.config.init.get_gpu_or_cpu",
+        return_value=("nvidia h100 pcie", 0, 8),
+    )
+    def test_ilab_config_init_auto_detection_h100_pcie(
+        self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner
+    ):
+        result = cli_runner.invoke(lab.ilab, ["config", "init", "--interactive"])
+        assert result.exit_code == 0, result.stdout
+        convert_bytes_to_proper_mag_mock.assert_called_once()
+        assert (
+            "We have detected the NVIDIA H100 PCIE X8 profile as an exact match for your system."
+            in result.stdout
+        )
+
+    @patch(
+        "instructlab.config.init.get_gpu_or_cpu",
+        return_value=("nvidia h100 80gb hbm3", 0, 8),
+    )
+    def test_ilab_config_init_auto_detection_h100_hbm3(
+        self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner
+    ):
+        result = cli_runner.invoke(lab.ilab, ["config", "init", "--interactive"])
+        assert result.exit_code == 0, result.stdout
+        convert_bytes_to_proper_mag_mock.assert_called_once()
+        assert (
+            "We have detected the NVIDIA H100 80GB HBM3 X8 profile as an exact match for your system."
+            in result.stdout
+        )
+
+    @patch(
+        "instructlab.config.init.get_gpu_or_cpu",
+        return_value=("nvidia h100 nvl", 0, 8),
+    )
+    def test_ilab_config_init_auto_detection_h100_nvl(
+        self, convert_bytes_to_proper_mag_mock, cli_runner: CliRunner
+    ):
+        result = cli_runner.invoke(lab.ilab, ["config", "init", "--interactive"])
+        assert result.exit_code == 0, result.stdout
+        convert_bytes_to_proper_mag_mock.assert_called_once()
+        assert (
+            "We have detected the NVIDIA H100 NVL X8 profile as an exact match for your system."
             in result.stdout
         )
 
