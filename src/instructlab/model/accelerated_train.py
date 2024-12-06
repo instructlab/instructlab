@@ -84,7 +84,10 @@ def accelerated_train(
             pprint.pformat(train_args),
         )
 
-        if strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value:
+        if (
+            SupportedTrainingStrategies(strategy)
+            == SupportedTrainingStrategies.LAB_MULTIPHASE
+        ):
             if not (phased_phase1_data and phased_phase2_data):
                 # pylint: disable=broad-exception-raised
                 raise Exception(
@@ -96,7 +99,7 @@ def accelerated_train(
                 raise FileNotFoundError(
                     "Data for both phase1 and phase2 must be specified for phased training."
                 )
-        else:  # strategy == SupportedTrainingStrategies.LAB_SKILLS_ONLY.value
+        else:  # SupportedTrainingStrategies(strategy) == SupportedTrainingStrategies.LAB_SKILLS_ONLY
             if not phased_phase2_data:
                 # pylint: disable=broad-exception-raised
                 raise Exception(
@@ -131,7 +134,10 @@ def accelerated_train(
         journal = TrainingJournal(journalfile=training_journal)
         click.secho("\n\n~~~~~~~~~~~~~STARTING MULTI-PHASE TRAINING~~~~~~~~~~~~~")
 
-        if strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value:
+        if (
+            SupportedTrainingStrategies(strategy)
+            == SupportedTrainingStrategies.LAB_MULTIPHASE
+        ):
             # experimental preference.
             if phased_phase1_num_epochs != 7:
                 click.secho(
@@ -157,7 +163,10 @@ def accelerated_train(
                 fg="black",
             )
             # Start at phase 2 for skills only training
-            if strategy == SupportedTrainingStrategies.LAB_SKILLS_ONLY.value:
+            if (
+                SupportedTrainingStrategies(strategy)
+                == SupportedTrainingStrategies.LAB_SKILLS_ONLY
+            ):
                 journal.journal.current_phase = TrainingPhases.TRAIN2
             journal.commit(create_new=True)
 
@@ -393,7 +402,10 @@ def _run_phased_training(
         #     )
 
         next_checkpoint = None
-        if strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value:
+        if (
+            SupportedTrainingStrategies(strategy)
+            == SupportedTrainingStrategies.LAB_MULTIPHASE
+        ):
             # NOTE:
             # this is a recent change, implemented to ignore MMLU. We just look at the checkpoints
             # from the phase 1 training and take the most recent one.
