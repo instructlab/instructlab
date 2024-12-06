@@ -194,6 +194,12 @@ def prompt_user_to_choose_vendors(
         click.echo(
             "No profile selected - ilab will use generic code defaults - these may not be optimized for your system."
         )
+    else:
+        click.secho(
+            "Invalid selection. Please select a valid hardware vendor option.",
+            fg="red",
+        )
+        raise click.exceptions.Exit(1)
     return key
 
 
