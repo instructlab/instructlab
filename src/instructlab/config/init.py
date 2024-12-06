@@ -256,6 +256,12 @@ def walk_and_print_system_profiles(
                 sys_profile.metadata.gpu_manufacturer is not None
                 and sys_profile.metadata.gpu_family is not None
             ):
+                # do not include SKU in the name we store
+                full_chip_name = [
+                    sys_profile.metadata.gpu_manufacturer.lower(),
+                    sys_profile.metadata.gpu_family.lower(),
+                    f"x{sys_profile.metadata.gpu_count}",
+                ]
                 # need to include the case of no SKU
                 all_gpu_skus = [""] + (
                     sys_profile.metadata.gpu_sku
@@ -277,11 +283,6 @@ def walk_and_print_system_profiles(
                         .strip()
                         .lower()
                     )
-                    # we need to re-split to not include the empty "" sku in the above list
-                    full_chip_name = str_chip_name.split(" ")
-                    full_chip_name.append(
-                        f"x{sys_profile.metadata.gpu_count}"
-                    )  # add this in so the users knows which gpu count profile this is when we choose it
                     if (
                         str_chip_name == chip_name
                         and gpus == sys_profile.metadata.gpu_count
