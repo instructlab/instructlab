@@ -56,6 +56,11 @@ def warn_for_unsupported_backend_param(ctx):
     config_sections="llama_cpp",
 )
 @click.option(
+    "--api-key",
+    type=str,
+    cls=clickext.ConfigOption,
+)
+@click.option(
     "--model-family",
     type=str,
     help="Model family is used to specify which chat template to serve with",
@@ -91,6 +96,7 @@ def serve(
     gpu_layers: int,
     num_threads: int | None,
     max_ctx_size: int,
+    api_key: str | None,
     model_family,
     log_file: pathlib.Path | None,
     backend: str | None,
@@ -107,6 +113,7 @@ def serve(
         gpu_layers,
         num_threads,
         max_ctx_size,
+        api_key,
         model_family,
         log_file,
         backend,
