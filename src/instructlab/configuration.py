@@ -493,7 +493,7 @@ class _train(BaseModel):
         description="Additional arguments to pass to the training script. These arguments are passed as key-value pairs to the training script.",
     )
     # additional training configuration for
-    # lab-multiphase training.
+    # lab-multiphase and skills-only training as applicable.
     # TODO: could move into its own object.
     # Not strictly necessary for a correct training object.
     phased_phase1_num_epochs: int | None = Field(

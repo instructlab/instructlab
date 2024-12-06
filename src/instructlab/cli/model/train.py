@@ -2,7 +2,6 @@
 
 # Standard
 from pathlib import Path
-import enum
 import logging
 import os
 import pathlib
@@ -14,16 +13,11 @@ import click
 # First Party
 from instructlab import clickext
 from instructlab.configuration import DEFAULTS, map_train_to_library
+from instructlab.model.accelerated_train import SupportedTrainingStrategies
 
 logger = logging.getLogger(__name__)
 
 ADDITIONAL_ARGUMENTS = "additional_args"
-
-
-class SupportedTrainingStrategies(enum.Enum):
-    """Available advanced training strategies"""
-
-    LAB_MULTIPHASE: str = "lab-multiphase"
 
 
 def clickpath_setup(is_dir: bool) -> click.Path:
@@ -285,7 +279,11 @@ def clickpath_setup(is_dir: bool) -> click.Path:
 @click.option(
     "--strategy",
     type=click.Choice(
-        [SupportedTrainingStrategies.LAB_MULTIPHASE.value], case_sensitive=False
+        [
+            SupportedTrainingStrategies.LAB_MULTIPHASE.value,
+            SupportedTrainingStrategies.LAB_SKILLS_ONLY.value,
+        ],
+        case_sensitive=False,
     ),
     show_default=True,
     help="If chosen, will run the selected training strategy instead of a single training run.",
@@ -428,11 +426,12 @@ def train(
     Takes synthetic data generated locally with `ilab data generate` and the previous model and learns a new model using the MLX API.
     On success, writes newly learned model to {model_dir}/mlx_model, which is where `chatmlx` will look for a model.
     """
-    if (
-        pipeline in ("full", "simple")
-        and strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value
+    if pipeline in ("full", "simple") and SupportedTrainingStrategies.has_strategy(
+        strategy
     ):
-        ctx.fail("Multi Phase training is only supported with `--pipeline accelerated`")
+        ctx.fail(
+            "Multi Phase and Skills Only training is only supported with `--pipeline accelerated`"
+        )
 
     # TODO: cdoern, remove this flag
     if not input_dir:
@@ -444,7 +443,7 @@ def train(
 
     if (
         pipeline in ("full", "accelerated")
-    ) and strategy != SupportedTrainingStrategies.LAB_MULTIPHASE.value:
+    ) and not SupportedTrainingStrategies.has_strategy(strategy):
         if not os.path.isfile(data_path):
             ctx.fail(
                 f"Data path must be to a valid .jsonl file. Value given: {data_path}"

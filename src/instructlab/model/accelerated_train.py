@@ -33,6 +33,11 @@ class SupportedTrainingStrategies(enum.Enum):
     """Available advanced training strategies"""
 
     LAB_MULTIPHASE: str = "lab-multiphase"
+    LAB_SKILLS_ONLY: str = "lab-skills-only"
+
+    @classmethod
+    def has_strategy(cls, value):
+        return value in cls._value2member_map_
 
 
 def accelerated_train(
@@ -62,7 +67,7 @@ def accelerated_train(
     # run_training is a dynamic attribute, pylint is not clever enough
     # to detect it.
     # Third Party
-    if strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value:
+    if SupportedTrainingStrategies.has_strategy(strategy):
         if (
             distributed_backend
             and distributed_backend not in DistributedBackend._value2member_map_
@@ -79,17 +84,29 @@ def accelerated_train(
             pprint.pformat(train_args),
         )
 
-        if not (phased_phase1_data and phased_phase2_data):
-            # pylint: disable=broad-exception-raised
-            raise Exception(
-                "End-to-end training minimally requires: `--phased-phase1-data`, and `--phased-phase2-data`. One or more wasn't correctly specified."
-            )
+        if strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value:
+            if not (phased_phase1_data and phased_phase2_data):
+                # pylint: disable=broad-exception-raised
+                raise Exception(
+                    f"{SupportedTrainingStrategies.LAB_MULTIPHASE} training minimally requires: `--phased-phase1-data`, and `--phased-phase2-data`. One or more wasn't correctly specified."
+                )
 
-        # if they both exist, must be Path objects
-        if not (phased_phase1_data.exists() and phased_phase2_data.exists()):
-            raise FileNotFoundError(
-                "Data for both phase1 and phase2 must be specified for phased training."
-            )
+            # if they both exist, must be Path objects
+            if not (phased_phase1_data.exists() and phased_phase2_data.exists()):
+                raise FileNotFoundError(
+                    "Data for both phase1 and phase2 must be specified for phased training."
+                )
+        else:  # strategy == SupportedTrainingStrategies.LAB_SKILLS_ONLY.value
+            if not phased_phase2_data:
+                # pylint: disable=broad-exception-raised
+                raise Exception(
+                    f"{SupportedTrainingStrategies.LAB_SKILLS_ONLY} training minimally requires: `--phased-phase2-data`"
+                )
+
+            if not phased_phase2_data.exists():
+                raise FileNotFoundError(
+                    "Data for phase2 must be specified for {SupportedTrainingStrategies.LAB_SKILLS_ONLY} training."
+                )
 
         mt_bench_judge: pathlib.Path
         if phased_mt_bench_judge is None:
@@ -114,12 +131,13 @@ def accelerated_train(
         journal = TrainingJournal(journalfile=training_journal)
         click.secho("\n\n~~~~~~~~~~~~~STARTING MULTI-PHASE TRAINING~~~~~~~~~~~~~")
 
-        # experimental preference.
-        if phased_phase1_num_epochs != 7:
-            click.secho(
-                f"Running phased training with '{phased_phase1_num_epochs}' epochs.\nNote: 7 epochs is the recommended amount for optimal performance.",
-                fg="yellow",
-            )
+        if strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value:
+            # experimental preference.
+            if phased_phase1_num_epochs != 7:
+                click.secho(
+                    f"Running phased training with '{phased_phase1_num_epochs}' epochs.\nNote: 7 epochs is the recommended amount for optimal performance.",
+                    fg="yellow",
+                )
 
         if journal.was_loaded:
             click.secho(
@@ -138,6 +156,9 @@ def accelerated_train(
                 bg="yellow",
                 fg="black",
             )
+            # Start at phase 2 for skills only training
+            if strategy == SupportedTrainingStrategies.LAB_SKILLS_ONLY.value:
+                journal.journal.current_phase = TrainingPhases.TRAIN2
             journal.commit(create_new=True)
 
         user_clear_cache: bool = False
@@ -191,6 +212,7 @@ def accelerated_train(
             journal=journal,
             eval_serve=eval_serve,
             eval_gpus=eval_gpus,
+            strategy=strategy,
         )
     else:
         # Third Party
@@ -255,11 +277,15 @@ def _run_phase(
         raise click.exceptions.Exit(1) from exception
 
 
+def _get_checkpoints(phase_checkpoints_dir):
+    return list(phase_checkpoints_dir.iterdir())
+
+
 def _run_phased_training(
     train_args: TrainingArgs,
     torch_args: TorchrunArgs,
     base_dir: pathlib.Path,
-    phase1_data: pathlib.Path,
+    phase1_data: pathlib.Path | None,
     phase1_num_epochs: int | None,
     phase1_samples_per_save: int | None,
     phase1_checkpoints_dir: pathlib.Path,
@@ -271,6 +297,7 @@ def _run_phased_training(
     phase2_learning_rate: float | None,
     phase2_checkpoints_dir: pathlib.Path,
     phased_phase2_effective_batch_size: int | None,
+    strategy: str | None,
     phase2_eval_cache: pathlib.Path,
     mtbench_judge: pathlib.Path,
     enable_serving_output: bool,
@@ -290,6 +317,12 @@ def _run_phased_training(
 
     if journal.current_phase == TrainingPhases.TRAIN1:
         click.secho("Training Phase 1/2...", fg="cyan")
+
+        if phase1_data is None:
+            # pylint: disable=broad-exception-raised
+            raise Exception(
+                f"Phase 1 data is required for phase '{TrainingPhases.TRAIN1}'"
+            )
 
         phase_model = journal.journal.train_1
         if phase_model is None:
@@ -325,7 +358,7 @@ def _run_phased_training(
     # if phase_model is None:
     #     # if it's not None, it already exists and may have 'results', so we shouldn't overwrite it.
     #     phase_model = EvalPhaseModel(
-    #         checkpoints=list(phase1_checkpoints_dir.iterdir())
+    #         checkpoints=_get_checkpoints(phase1_checkpoints_dir)
     #     )
     #     journal.journal.eval_1 = phase_model
     # journal.commit()
@@ -359,29 +392,31 @@ def _run_phased_training(
         #         "Training journal field 'eval_1' cannot be None for phase 'train_2'"
         #     )
 
-        # NOTE:
-        # this is a recent change, implemented to ignore MMLU. We just look at the checkpoints
-        # from the phase 1 training and take the most recent one.
-        phase1_checkpoints_dir_hf = phase1_checkpoints_dir / "hf_format"
-        if not phase1_checkpoints_dir_hf.exists():
-            raise FileNotFoundError(
-                f"{phase1_checkpoints_dir_hf} doesn't exist. This likely means that no checkpoints were saved from phase 1."
+        next_checkpoint = None
+        if strategy == SupportedTrainingStrategies.LAB_MULTIPHASE.value:
+            # NOTE:
+            # this is a recent change, implemented to ignore MMLU. We just look at the checkpoints
+            # from the phase 1 training and take the most recent one.
+            phase1_checkpoints_dir_hf = phase1_checkpoints_dir / "hf_format"
+            if not phase1_checkpoints_dir_hf.exists():
+                raise FileNotFoundError(
+                    f"{phase1_checkpoints_dir_hf} doesn't exist. This likely means that no checkpoints were saved from phase 1."
+                )
+
+            phase1_checkpoints = sorted(
+                _get_checkpoints(phase1_checkpoints_dir_hf),
+                reverse=True,
+                # XXX(osilkin): This line takes the checkpoint name "samples_NNN" and tells sorted
+                #               to use the last NNN string as an integer
+                key=lambda x: int(str(x).rsplit("_", maxsplit=1)[-1]),
             )
 
-        phase1_checkpoints = sorted(
-            list(phase1_checkpoints_dir_hf.iterdir()),
-            reverse=True,
-            # XXX(osilkin): This line takes the checkpoint name "samples_NNN" and tells sorted
-            #               to use the last NNN string as an integer
-            key=lambda x: int(str(x).rsplit("_", maxsplit=1)[-1]),
-        )
+            if len(phase1_checkpoints) == 0:
+                raise FileNotFoundError(
+                    f"{phase1_checkpoints_dir_hf} Has no checkpoints. This likely means that no checkpoints were saved from phase 1."
+                )
 
-        if len(phase1_checkpoints) == 0:
-            raise FileNotFoundError(
-                f"{phase1_checkpoints_dir_hf} Has no checkpoints. This likely means that no checkpoints were saved from phase 1."
-            )
-
-        next_checkpoint = phase1_checkpoints[0]
+            next_checkpoint = phase1_checkpoints[0]
         _run_phase(
             train_args=train_args,
             torch_args=torch_args,
@@ -409,7 +444,7 @@ def _run_phased_training(
         if phase_model is None:
             # if it's not None, it already exists and may have 'results', so we shouldn't overwrite it.
             phase_model = EvalPhaseModel(
-                checkpoints=list(phase2_checkpoints_dir.iterdir())
+                checkpoints=_get_checkpoints(phase2_checkpoints_dir)
             )
             journal.journal.eval_2 = phase_model
         journal.commit()
