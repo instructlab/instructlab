@@ -781,14 +781,13 @@ def chat_cli(
     model_ids = []
     for m in model_list:
         model_ids.append(m.id)
-    if not any(model == m for m in model_ids):
-        if model == "merlinite-7b-lab-Q4_K_M":
-            logger.info(
-                f"Model {model} is not a full path. Try running ilab config init or edit your config to have the full model path for serving, chatting, and generation."
-            )
-        raise ChatException(
-            f"Model {model} is not served by the server. These are the served models: {model_ids}"
+    # if a model is already being served, ignore whatever model may have been supplied with the chat command
+    if (len(model_ids) > 0) and (not any(model == m for m in model_ids)):
+        # assuming chatting with first model in list if there are multiple. Temp fix
+        logger.info(
+            f"Requested model {model} is not served by the server. Proceeding to chat with served model: {model_ids[0]}"
         )
+        model = model_ids[0]
 
     # Load context/session
     loaded = {}
