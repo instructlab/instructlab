@@ -639,6 +639,7 @@ def evaluate(
                 turn2_score = round(turn2_score, 2)
             print(turn2_score)
             display_error_rate(error_rate)
+            click.echo("\n✅ Model evaluate with MTBENCH completed successfully!")
 
         elif benchmark == Benchmark.MT_BENCH_BRANCH:
             # Third Party
@@ -777,6 +778,7 @@ def evaluate(
                 new_qnas,
             )
             display_error_rate((error_rate + base_error_rate) / 2)
+            click.echo("\n✅ Model evaluate with MTBenchBranch completed successfully!")
 
         elif benchmark == Benchmark.MMLU:
             # Third Party
@@ -822,6 +824,7 @@ def evaluate(
             for task, score in individual_scores.items():
                 s = round(score["score"], 2)
                 print(f"{task} - {s}")
+            click.echo("\n✅ Model evaluate with MMLU completed successfully!")
 
         elif benchmark == Benchmark.MMLU_BRANCH:
             # Third Party
@@ -901,6 +904,7 @@ def evaluate(
             display_branch_eval_summary(
                 Benchmark.MMLU_BRANCH, improvements, regressions, no_changes
             )
+            click.echo("\n✅ Model evaluate with MMLUBranch completed successfully!")
     except EvalError as ee:
         print(ee.message)
         logger.debug("Traceback", exc_info=True)

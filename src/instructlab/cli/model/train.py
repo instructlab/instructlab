@@ -480,6 +480,7 @@ def train(
                 eval_gpus=ctx.obj.config.evaluate.gpus,
                 training_journal=training_journal,
             )
+            click.echo("✅ Model train with accelerated completed successfully!")
         except Exception as exc:
             click.secho(f"Accelerated Training failed with {str(exc)}")
             raise click.exceptions.Exit(1)
@@ -498,6 +499,7 @@ def train(
         full_train.train(
             train_args=train_args, device=device, optimize_memory=optimize_memory
         )
+        click.echo("✅ Model train with full completed successfully!")
     elif pipeline == "simple":
         # First Party
         from instructlab.model import simple_train
@@ -518,6 +520,7 @@ def train(
                 device=device,
                 four_bit_quant=four_bit_quant,
             )
+            click.echo("✅ Model train with simple completed successfully!")
         except Exception as exc:
             click.secho(f"{exc}", fg="red")
             raise click.exceptions.Exit(1)
