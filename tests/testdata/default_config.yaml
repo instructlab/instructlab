@@ -41,6 +41,13 @@ evaluate:
   # evaluation runs.
   # Default: None
   branch:
+  # Format of evaluation results. Defaults to 'text' which prints to stdout, also
+  # allows for 'json' to dump to a JSON file.
+  # Default: text
+  # Examples:
+  #   - text
+  #   - json
+  format: text
   # Number of GPUs to use for running evaluation.
   # Default: None
   gpus:
