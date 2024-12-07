@@ -132,7 +132,7 @@ class TestLabInit:
         assert result.exit_code == 0, result.stdout
         convert_bytes_to_proper_mag_mock.assert_called_once()
         assert (
-            "We have detected the INTEL GAUDI 3 X8 profile as an exact match for your system."
+            "We have detected the INTEL GAUDI X8 profile as an exact match for your system."
             in result.stdout
         )
 
@@ -147,7 +147,7 @@ class TestLabInit:
         assert result.exit_code == 0, result.stdout
         convert_bytes_to_proper_mag_mock.assert_called_once()
         assert (
-            "We have detected the NVIDIA H100 PCIE X8 profile as an exact match for your system."
+            "We have detected the NVIDIA H100 X8 profile as an exact match for your system."
             in result.stdout
         )
 
@@ -162,7 +162,7 @@ class TestLabInit:
         assert result.exit_code == 0, result.stdout
         convert_bytes_to_proper_mag_mock.assert_called_once()
         assert (
-            "We have detected the NVIDIA H100 80GB HBM3 X8 profile as an exact match for your system."
+            "We have detected the NVIDIA H100 X8 profile as an exact match for your system."
             in result.stdout
         )
 
@@ -177,7 +177,7 @@ class TestLabInit:
         assert result.exit_code == 0, result.stdout
         convert_bytes_to_proper_mag_mock.assert_called_once()
         assert (
-            "We have detected the NVIDIA H100 NVL X8 profile as an exact match for your system."
+            "We have detected the NVIDIA H100 X8 profile as an exact match for your system."
             in result.stdout
         )
 
