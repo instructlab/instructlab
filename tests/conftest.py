@@ -3,6 +3,7 @@
 
 # Standard
 from unittest import mock
+from unittest.mock import patch
 import os
 import pathlib
 import sys
@@ -103,3 +104,10 @@ def cli_runner(
 def testdata_path() -> typing.Generator[pathlib.Path, None, None]:
     """Path to local test data directory"""
     yield TESTS_PATH / "testdata"
+
+
+@pytest.fixture(autouse=True)
+def temp_task_file(tmp_path: pathlib.Path):
+    temp_file = tmp_path / "process_tasks.json"
+    with patch("instructlab.cli.process.process_manager.TASKS_FILE", temp_file):
+        yield temp_file

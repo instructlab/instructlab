@@ -42,6 +42,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "model" = "instructlab.model.model:model"
 "system" = "instructlab.system.system:system"
 "taxonomy" = "instructlab.taxonomy.taxonomy:taxonomy"
+"process" = "instructlab.cli.process.process:process"
 
 [project.entry-points."instructlab.command.config"]
 "edit" = "instructlab.config.edit:edit"
@@ -67,6 +68,12 @@ issues = "https://github.com/instructlab/instructlab/issues"
 
 [project.entry-points."instructlab.command.taxonomy"]
 "diff" = "instructlab.taxonomy.diff:diff"
+
+[project.entry-points."instructlab.command.process"]
+"list" = "instructlab.cli.process.process_cmds:list_processes"
+"attach" = "instructlab.cli.process.process_cmds:process_attach"
+"stop" = "instructlab.cli.process.process_cmds:process_stop"
+"clean" = "instructlab.cli.process.process_cmds:process_record_clean"
 
 [project.entry-points."instructlab.command.alias"]
 "chat" = "instructlab.model.chat:chat"
