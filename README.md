@@ -93,7 +93,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 - C++ compiler
 - Python 3.10 or Python 3.11
 
-   📋 Python 3.12 is currently not supported. Some InstructLab dependencies don't work on Python 3.12, yet.
+   📋 Python 3.12 is currently not supported. Some InstructLab dependencies don't work on Python 3.12, yet. As of now, we only support Python 3.10 or Python 3.11 (preferred). Any other Python version would install an older version of InstructLab (e.g. 0.17).
 
 - Minimum 250GB disk space. Approximately 500GB disk space is recommended for the entire InstructLab end-to-end process.
 
