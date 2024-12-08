@@ -463,7 +463,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             raise KeyboardInterrupt
         self.loaded["name"] = context
 
-        sys_prompt = CONTEXTS.get(context, "default")(get_model_arch(self.model))
+        sys_prompt = CONTEXTS.get(context, "default")(get_model_arch(pathlib.Path(self.model)))
         self.loaded["messages"] = [{"role": "system", "content": sys_prompt}]
         self._reset_session()
         self.greet(new=True)
@@ -581,11 +581,10 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
     def _handle_list_contexts(self, _):
         # reconstruct contexts dict based on values passed at runtime
+        arch = get_model_arch(pathlib.Path(self.model))
         context_dict = dict.fromkeys(CONTEXTS, None)
-        context_dict["default"] = get_sysprompt(
-            get_model_arch(pathlib.Path(self.model))
-        )
-        context_dict["cli_helper"] = get_cli_helper_sysprompt()
+        context_dict["default"] = get_sysprompt(arch)
+        context_dict["cli_helper"] = get_cli_helper_sysprompt(arch)
 
         context_list = "\n\n".join(
             [f"**{key}**:\n{value}" for key, value in context_dict.items()]
