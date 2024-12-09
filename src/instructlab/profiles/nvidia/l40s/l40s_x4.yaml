@@ -128,4 +128,8 @@ train:
   phased_phase2_num_epochs: 10
   checkpoint_at_epoch: true
   save_samples: 1000
+metadata:
+  gpu_manufacturer: Nvidia
+  gpu_family: L40s
+  gpu_count: 4
 version: 1.0.0

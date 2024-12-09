@@ -130,4 +130,9 @@ train:
   pipeline: accelerated 
   checkpoint_at_epoch: true
   save_samples: 1000
+metadata:
+  gpu_manufacturer: Intel
+  gpu_family: Gaudi
+  gpu_count: 8
+  gpu_sku: ["3"]
 version: 1.0.0

@@ -563,7 +563,7 @@ class _train(BaseModel):
         description="Additional arguments to pass to the training script. These arguments are passed as key-value pairs to the training script.",
     )
     # additional training configuration for
-    # lab-multiphase training.
+    # lab-multiphase and skills-only training as applicable.
     # TODO: could move into its own object.
     # Not strictly necessary for a correct training object.
     phased_phase1_num_epochs: int | None = Field(
@@ -576,6 +576,11 @@ class _train(BaseModel):
         default=0,
         ge=0,
         description="Number of samples the model should see before saving a checkpoint during phase1. Disabled when set to 0.",
+    )
+    phased_phase1_learning_rate: float = Field(
+        default=2e-5,
+        ge=0,
+        description="Learning rate for phase1 knowledge training.",
     )
     phased_phase1_effective_batch_size: int | None = Field(
         default=128,
@@ -593,6 +598,11 @@ class _train(BaseModel):
         ge=0,
         description="Number of samples the model should see before saving a checkpoint during phase2. Disabled when set to 0.",
     )
+    phased_phase2_learning_rate: float = Field(
+        default=6e-6,
+        ge=0,
+        description="Learning rate for phase2 skills training.",
+    )
     phased_phase2_effective_batch_size: int | None = Field(
         default=3840, description="Phased phase2 effective batch size."
     )
@@ -607,6 +617,28 @@ class _train(BaseModel):
     training_journal: str | None = Field(
         default=None,
         description="Optional path to a yaml file that tracks the progress of multiphase training.",
+    )
+
+
+class _metadata(BaseModel):
+    # model configuration
+    model_config = ConfigDict(extra="ignore")
+    cpu_info: str | None = Field(
+        default=None,
+        description="Manufacturer, Family, and SKU of the system CPU, ex: Apple M3 Max",
+    )
+    gpu_manufacturer: str | None = Field(
+        default=None, description="Manufacturer of the system GPU, ex: Nvidia"
+    )
+    gpu_family: str | None = Field(
+        default=None, description="Family of the system GPU, ex: H100"
+    )
+    gpu_count: int | None = Field(
+        default=None, description="Amount of GPUs on the system, ex: 8"
+    )
+    gpu_sku: list[str] | None = Field(
+        default=None,
+        description="Specific SKU related information about the given GPU, ex: PCIe, NVL",
     )
 
 
@@ -650,6 +682,11 @@ class Config(BaseModel):
         default=CONFIG_VERSION,
         description="Configuration file structure version.",
         frozen=True,  # don't allow this to be changed anywhere in the code
+    )
+    # metadata about the configuration, specifically GPU information
+    metadata: _metadata = Field(
+        default_factory=_metadata,
+        description="Metadata pertaining to the specifics of the system which the Configuration is meant to be applied to.",
     )
 
 

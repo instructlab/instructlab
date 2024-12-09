@@ -219,7 +219,7 @@ test_bind_port(){
     }
 
     # configure a different port
-    exec sed -i.bak 's/8000/9999/g' %s
+    exec sed -i.bak 's/:8000/:9999/g' %s
 
     # check that ilab model serve is working on the new port
     # catch ERROR strings in the output
@@ -489,13 +489,13 @@ test_model_print(){
         exit 1
     fi
 
-    # validate that we fail on invalid model
+    # validate that we don't fail on invalid model
     if ! expect -d -c '
         set timeout 30
         spawn ilab model chat -m bar
         expect {
             timeout { exit 124 }
-           -re "Executing chat failed with: Model bar is not served by the server" { exit 0 }
+           -re "Requested model bar is not served by the server. Proceeding to chat with served model" { exit 0 }
         }
     '; then
         echo "Error: expect test failed"

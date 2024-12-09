@@ -272,14 +272,15 @@ def generate(
 
     # determine student model arch from train section of config and pick system prompt to
     # pass to SDG appropriately
-    student_model_arch = get_model_arch(pathlib.Path(ctx.obj.config.train.model_path))
+    student_model_path = pathlib.Path(ctx.obj.config.train.model_path)
+    student_model_arch = get_model_arch(student_model_path)
     system_prompt = get_sysprompt(student_model_arch)
 
     # Check if student model specifies a tokenizer config. If so, check if the special tokens specified
     # match those of granite-7b. If so, set legacy_pretraining_format to true. If no tokenizer config is
     # available, rely on model architecture to make that decision
     legacy_pretraining_format = use_legacy_pretraining_format(
-        model_path, student_model_arch
+        student_model_path, student_model_arch
     )
 
     try:

@@ -418,7 +418,7 @@ For detailed documentation on the InstructLab LLMs and their functions, see the 
    ilab model download --hf-token <your-huggingface-token>
    ```
   
-   If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
+   Hugging Face `hf_transfer` is enabled by default for faster downloads (lacks proxy support), and can be disabled with `HF_HUB_ENABLE_HF_TRANSFER=0`. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
 
 #### Downloading a specific model from a Hugging Face repository
 
@@ -724,7 +724,8 @@ After running `ilab model train`, the output locations depend on the chosen pipe
 | `simple`                           | MacOS                | Model saved in `<model_name>-mlx-q` directory.                                                                           |
 | `full`                             | Linux & MacOS        | `.bin` and `.gguf` models saved in `~/.local/share/instructlab/checkpoints/hf_format` directory. Two models in each `sample_*` directory: one quantized (`Q4-M-K` suffix) and one full precision. |
 | `accelerated`                      | Linux                | Models saved in `~/.local/share/instructlab/checkpoints`. Can be evaluated with `ilab model evaluate` to choose the best one. |
-| `lab-multiphase`                   | Linux                | Phase 1 models saved in `~/.local/share/instructlab/phased/phase1/checkpoints` (Knowledge training). Phase 2 models saved in `~/.local/share/instructlab/phased/phase2/checkpoints` (Skills training). Evaluation is run for both phases to identify the best checkpoint. |
+| `lab-multiphase`                   | Linux                | Phase 1 models saved in `~/.local/share/instructlab/phased/phase1/checkpoints` (Knowledge training). Phase 2 models saved in `~/.local/share/instructlab/phased/phase2/checkpoints` (Skills training). Evaluation is run for phase 2 to identify the best checkpoint. |
+| `lab-skills-only`                  | Linux                | Phase 2 models saved in `~/.local/share/instructlab/phased/phase2/checkpoints` (Skills training). Evaluation is run for phase 2 to identify the best checkpoint. |
 
 To limit training time, you can adjust the `num_epoch` paramater in the `config.yaml` file. The maximum number of epochs for running the InstructLab end-to-end workkflow is 10.
 
@@ -822,7 +823,7 @@ When running multi phase training evaluation is run on each phase, we will tell 
    *Example command*
 
    ```shell
-   ilab model train --pipeline full --device cpu --data-path ~/.local/share/instructlab/datasets/knowledge_train_msgs_2024-10-23T09_14_44.jsonl
+   ilab model train --pipeline full --device cuda --data-path ~/.local/share/instructlab/datasets/knowledge_train_msgs_2024-10-23T09_14_44.jsonl
    ```
 
    This version of `ilab model train` outputs brand-new models that can be served in the `~/.local/share/instructlab/checkpoints` directory.  These models can be run through `ilab model evaluate` to choose the best one.

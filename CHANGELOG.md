@@ -1,3 +1,11 @@
+## v0.22
+
+### Breaking Changes
+
+### Features
+
+* `ilab train --pipeline=accelerated --strategy=lab-skills-only` supports training with only the skills phase (leaving out knowledge).
+
 ## v0.21
 
 ### Breaking Changes

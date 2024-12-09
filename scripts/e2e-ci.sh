@@ -87,6 +87,11 @@ task() {
     step "$@"
 }
 
+check_disk() {
+   task Check disk
+   df -h
+}
+
 test_smoke() {
     task InstructLab smoke test
     ilab | grep --color 'Usage: ilab'
@@ -215,7 +220,6 @@ test_train() {
 test_phased_train() {
     task Train the model with LAB multi-phase training
 
-    # 'Declare and assign separately to avoid masking return values' <-- error.
     local knowledge_data_path
     local skills_data_path
     knowledge_data_path=$(find "${DATA_HOME}"/instructlab/datasets -name 'knowledge_train_msgs*' | head -n 1)
@@ -238,10 +242,42 @@ test_phased_train() {
     task Multi-phase training Complete
 }
 
+test_skills_only_train() {
+    task Train the model with LAB skills-only training
+
+    local skills_data_path
+    skills_data_path=$(find "${DATA_HOME}"/instructlab/datasets -name 'skills_train_msgs*' | head -n 1)
+
+    local skills_phased_base_dir
+    skills_phased_base_dir="${DATA_HOME}/instructlab/skills-only"
+    
+    mkdir -p "${skills_phased_base_dir}"
+
+    # general skills-only training args
+    local train_args
+    train_args+=(
+        "--strategy=lab-skills-only"
+        "--phased-phase2-data=${skills_data_path}"
+        "--phased-phase2-num-epochs=1"
+        "--skip-user-confirm"
+        "--phased-base-dir=${skills_phased_base_dir}"
+    )
+
+    export HF_DATASETS_TRUST_REMOTE_CODE=true
+    ilab model train "${train_args[@]}" 2>&1 | tee "${E2E_TEST_DIR}"/skills_only_training.log
+
+    # final best model is written to log
+    grep "Training finished! Best final checkpoint: " "${E2E_TEST_DIR}"/skills_only_training.log | grep -o "/[^ ]*"
+
+    # cleanup the skills phased base dir
+    rm -rf "${skills_phased_base_dir}"
+
+    task Skills-only training Complete
+}
+
 test_phased_train_resume() {
     task Train the model with LAB multi-phase training resume
 
-    # 'Declare and assign separately to avoid masking return values' <-- error.
     local knowledge_data_path
     local skills_data_path
     knowledge_data_path=$(find "${DATA_HOME}"/instructlab/datasets -name 'knowledge_train_msgs*' | head -n 1)
@@ -345,16 +381,20 @@ test_exec() {
     test_taxonomy
     test_generate
     test_data_list
+    check_disk
 
     # train tests
     if [ "$LARGE" -eq 1 ]; then
       # Validate a single epoch per phase with resumption
       test_phased_train_resume
+      # Validate skills-only training
+      test_skills_only_train
       # Validate the phased training happy path
       test_phased_train
     else
       test_train
     fi
+    check_disk
 
     # serve + chat tests
     test_serve
@@ -372,6 +412,7 @@ test_exec() {
     fi
 
     task E2E success!
+    check_disk
     exit 0
 }
 

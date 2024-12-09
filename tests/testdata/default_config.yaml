@@ -19,7 +19,8 @@ chat:
   # Filepath of a dialog session file.
   # Default: None
   session:
-  # Controls the randomness of the model's responses.
+  # Controls the randomness of the model's responses. Lower values make the output
+  # more deterministic, while higher values produce more random results.
   # Default: 1.0
   temperature: 1.0
   # Enable vim keybindings for chat.
@@ -189,6 +190,24 @@ generate:
       #   - ['--dtype', 'auto']
       #   - ['--lora-alpha', '32']
       vllm_args: []
+# Metadata pertaining to the specifics of the system which the Configuration is
+# meant to be applied to.
+metadata:
+  # Manufacturer, Family, and SKU of the system CPU, ex: Apple M3 Max
+  # Default: None
+  cpu_info:
+  # Amount of GPUs on the system, ex: 8
+  # Default: None
+  gpu_count:
+  # Family the of the system GPU, ex: H100
+  # Default: None
+  gpu_family:
+  # Manufacturer of the system GPU, ex: Nvidia
+  # Default: None
+  gpu_manufacturer:
+  # Specific SKU related information about the given GPU, ex: PCIe, NVL
+  # Default: None
+  gpu_sku:
 # Serve configuration section.
 serve:
   # Serving backend to use to host the model.
@@ -336,6 +355,9 @@ train:
   # Phased phase1 effective batch size.
   # Default: 128
   phased_phase1_effective_batch_size: 128
+  # Learning rate for phase1 knowledge training.
+  # Default: 2e-05
+  phased_phase1_learning_rate: 2e-05
   # Number of epochs to run training for during phase1 (experimentally optimal
   # number is 7).
   # Default: 7
@@ -347,6 +369,9 @@ train:
   # Phased phase2 effective batch size.
   # Default: 3840
   phased_phase2_effective_batch_size: 3840
+  # Learning rate for phase2 skills training.
+  # Default: 6e-06
+  phased_phase2_learning_rate: 6e-06
   # Number of epochs to run training for during phase2.
   # Default: 10
   phased_phase2_num_epochs: 10

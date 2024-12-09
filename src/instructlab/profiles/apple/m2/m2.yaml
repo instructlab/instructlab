@@ -115,5 +115,7 @@ train:
   # Directory where datasets used for training are stored
   data_path: ~/.local/share/instructlab/datasets
   num_epochs: 1
+metadata:
+  cpu_info: Apple M2
 version: 1.0.0
 
