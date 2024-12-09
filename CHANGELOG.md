@@ -5,6 +5,7 @@
 ### Features
 
 * `ilab train --pipeline=accelerated --strategy=lab-skills-only` supports training with only the skills phase (leaving out knowledge).
+* A new command `ilab model upload` has been introduced so users can now upload their trained models to [Hugging Face](https://huggingface.co/) via the `ilab` CLI
 
 ## v0.21
 
