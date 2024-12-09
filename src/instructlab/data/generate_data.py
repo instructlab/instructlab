@@ -120,7 +120,6 @@ def create_server_and_generate(
 
     # First Party
     from instructlab.client_utils import http_client
-
     http_client_params = HttpClientParams(
         {
             "tls_client_cert": tls_client_cert,
@@ -136,7 +135,6 @@ def create_server_and_generate(
         # First Party
         from instructlab.model.backends import backends
         from instructlab.model.backends.llama_cpp import Server as llama_cpp_server
-
         backend_instance = backends.select_backend(cfg=serve_cfg, model_path=model_name)
         if (
             backend_instance.get_backend_type() is not backends.VLLM
