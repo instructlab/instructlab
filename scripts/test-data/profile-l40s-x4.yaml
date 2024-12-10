@@ -137,7 +137,7 @@ train:
   deepspeed_cpu_offload_optimizer: true
   effective_batch_size: 32
   lora_quantize_dtype: null
-  lora_rank: 0
+  lora_rank: 4
   max_batch_len: 10000
   max_seq_len: 4096
   model_path: ~/.cache/instructlab/models/instructlab/granite-7b-lab
@@ -154,5 +154,5 @@ train:
   distributed_backend: fsdp
   pipeline: accelerated
   device: cuda
+  use_dolomite: true
 version: 1.0.0
-

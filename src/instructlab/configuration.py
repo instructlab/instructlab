@@ -1553,10 +1553,6 @@ def map_train_to_library(ctx, params):
     if params["lora_quantize_dtype"] is not None:
         lora_options = True
         lora_args.quantize_data_type = params["lora_quantize_dtype"]
-    if lora_enabled and params["is_padding_free"]:
-        ctx.fail(
-            "Cannot combine LoRA with a padding free model. Set lora_rank to 0 or disable is_padding_free"
-        )
     if lora_options and not lora_enabled:
         click.secho("LoRA is disabled (rank=0), ignoring all additional LoRA args")
 

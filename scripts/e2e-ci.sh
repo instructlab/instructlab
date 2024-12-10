@@ -263,10 +263,11 @@ test_phased_train() {
     )
 
     # << TODO: REMOVE THIS FLAG FROM THE CI SCRIPT AND HAVE IT ADDED AS AN OPTION THAT CAN BE REFERENCED IN A PROFILE >>
-    # For x-large jobs only, we run into physical memory issues due to `accelerate_full_state_at_epoch` == true,
+    # For large jobs, we need this to be disabled to be able to test with LoRA training
+    # For x-large jobs, we run into physical memory issues due to `accelerate_full_state_at_epoch` == true,
     # so we disable full-state checkpoints to ensure we have enough disk space.
-    if [ "$XLARGE" -eq 1 ]; then
-        echo "Detected x-large e2e job... Will disable full-state checkpoints to conserve physical memory."
+    if [ "$LARGE" -eq 1 ] || [ "$XLARGE" -eq 1 ]; then
+        echo "Detected large or x-large e2e job... Will disable full-state checkpoints to conserve physical memory/allow for LoRA training."
         train_args+=("--disable-accelerate-full-state-at-epoch")
     fi
 
@@ -300,10 +301,11 @@ test_skills_only_train() {
     )
 
     # << TODO: REMOVE THIS FLAG FROM THE CI SCRIPT AND HAVE IT ADDED AS AN OPTION THAT CAN BE REFERENCED IN A PROFILE >>
-    # For x-large jobs only, we run into physical memory issues due to `accelerate_full_state_at_epoch` == true,
+    # For large jobs, we need this to be disabled to be able to test with LoRA training
+    # For x-large jobs, we run into physical memory issues due to `accelerate_full_state_at_epoch` == true,
     # so we disable full-state checkpoints to ensure we have enough disk space.
-    if [ "$XLARGE" -eq 1 ]; then
-        echo "Detected x-large e2e job... Will disable full-state checkpoints to conserve physical memory."
+    if [ "$LARGE" -eq 1 ] || [ "$XLARGE" -eq 1 ]; then
+        echo "Detected large or x-large e2e job... Will disable full-state checkpoints to conserve physical memory/allow for LoRA training."
         train_args+=("--disable-accelerate-full-state-at-epoch")
     fi
 
