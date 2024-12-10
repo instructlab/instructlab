@@ -176,7 +176,7 @@ def prompt_user_to_choose_vendors(
 
     system_profile_selection = click.prompt(
         "Enter the number of your choice",
-        type=int,
+        type=click.IntRange(0, len(keys)),
         default=0,
     )
     if 1 <= system_profile_selection <= len(keys):
