@@ -205,7 +205,7 @@ def prompt_user_to_choose_profile(arch_family_processors) -> Config | None:
     cfg = None
     system_profile_selection = click.prompt(
         "Enter the number of your choice [hit enter for hardware defaults]",
-        type=int,
+        type=click.IntRange(0, len(arch_family_processors)),
         default=0,
     )
     # the file is SYSTEM_PROFILE_DIR/arch_family_procesors[key][selection-1]
@@ -217,12 +217,6 @@ def prompt_user_to_choose_profile(arch_family_processors) -> Config | None:
         click.echo(
             "No profile selected - ilab will use generic code defaults - these may not be optimized for your system."
         )
-    else:
-        click.secho(
-            "Invalid selection. Please select a valid system profile option.",
-            fg="red",
-        )
-        raise click.exceptions.Exit(1)
     return cfg
 
 
