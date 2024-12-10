@@ -2,7 +2,7 @@
 
 ### Breaking Changes
 
-* llama-cpp-python has been updated to 0.3.1, which dropped some accelerators (cuBLAS, clBLAS) and added others (OpenBLAS).
+* llama-cpp-python has been updated to 0.3.5, which dropped some accelerators (cuBLAS, clBLAS) and added others (OpenBLAS).
 
 ### Features
 
