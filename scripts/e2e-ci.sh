@@ -167,16 +167,16 @@ test_list() {
 test_taxonomy() {
     task Update the taxonomy
 
-    step Add compositional skill to the taxomony
+    step Add compositional skill to the taxonomy
     mkdir -p "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings
     cp "$SCRIPTDIR"/test-data/e2e-qna-freeform-skill.yaml "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings/qna.yaml
 
     if [ "$LARGE" -eq 1 ]; then
-        step Add knowledge to the taxomony
+        step Add knowledge to the taxonomy
         mkdir -p "$DATA_HOME"/instructlab/taxonomy/knowledge/phoenix/overview/e2e-phoenix
         cp "$SCRIPTDIR"/test-data/e2e-qna-knowledge-phoenix.yaml "$DATA_HOME"/instructlab/taxonomy/knowledge/phoenix/overview/e2e-phoenix/qna.yaml
 
-        step Add grounded skill to the taxomony
+        step Add grounded skill to the taxonomy
         mkdir -p "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no
         cp "$SCRIPTDIR"/test-data/e2e-qna-grounded-skill.yaml "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no/qna.yaml
     fi
