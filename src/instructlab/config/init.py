@@ -208,7 +208,7 @@ def prompt_user_to_choose_profile(arch_family_processors) -> Config | None:
         type=int,
         default=0,
     )
-    # the file is SYSTEM_PROFILE_DIR/arch_family_procesors[key][selection-1]
+    # the file is SYSTEM_PROFILE_DIR/arch_family_processors[key][selection-1]
     if 1 <= system_profile_selection <= len(arch_family_processors):
         file = arch_family_processors[system_profile_selection - 1][1]
         click.secho(f"You selected: {file}", fg="green")
