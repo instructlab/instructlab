@@ -1,0 +1,224 @@
+version: 3
+domain: transportation
+created_by: nathan-weinberg, juliadenham
+seed_examples:
+  - context: |
+      The [Cambridge Railroad](Cambridge_Railroad "wikilink") was the first
+      [streetcar](Tram "wikilink") company in Massachusetts. It was chartered
+      in 1853 to connect the [West End of
+      Boston](West_End,_Boston,_Massachusetts "wikilink") to [Central
+      Square](Central_Square_(Cambridge) "wikilink") and [Harvard
+      Square](Harvard_Square "wikilink") in
+      [Cambridge](Cambridge,_Massachusetts "wikilink") via the West End
+      Bridge. (The bridge was replaced by the current [Longfellow
+      Bridge](Longfellow_Bridge "wikilink") in early August 1906). This is the
+      same route followed by today's [Red Line](Red_Line_(MBTA) "wikilink")
+      subway, but on the surface street network. Using horse-drawn streetcars,
+      the Cambridge Railroad started running on March 26, 1856. Another
+      streetcar company, the [Dorchester
+      Railroad](Dorchester_Railroad "wikilink"), was chartered in 1854. Over
+      20 streetcar lines were laid down throughout the Boston area by these
+      and other competing companies.
+
+      In order to regulate fares and reduce competition, the General Court of
+      Massachusetts passed the West End Consolidation Act to consolidate the
+      rail line operations. This created the [West End Street
+      Railway](West_End_Street_Railway "wikilink") in 1885. The company
+      consolidated ownership of existing streetcar lines in Boston and the
+      inner suburbs and began converting the animal-drawn vehicles to electric
+      propulsion. The first electric trolleys ran in 1889, and the last
+      [horsecar](horsecar "wikilink") went out of service around 1900.
+    questions_and_answers:
+      - question: What was the first streetcar company in Massachusetts?
+        answer: |
+          The Cambridge Railroad was the first streetcar company in
+          Massachusetts.
+      - question: |
+          In 1856, what types of vehicals did the Cambridge Railroad use?
+        answer: |
+          Using horse-drawn streetcars, the Cambridge Railroad started
+          running on March 26, 1856.
+      - question: |
+          When did Boston switch from animal-drawn vehicals to electric
+          trolleys?
+        answer: |
+          The first electric trolleys ran in 1889, and the last horsecar
+          went out of service around 1900.
+  - context: |
+      In 1965, the MBTA assigned colors to its four rapid transit lines and
+      lettered the branches of the Green Line from north to south. However,
+      shortages of streetcars, among other factors, eventually caused bus
+      substitution of rail service on two branches of the Green Line. In 1969,
+      the [A branch](Green_Line_A_branch "wikilink") was replaced by bus
+      service in its entirety. In 1985, the portion of the [E
+      branch](Green_Line_E_branch "wikilink") from [Heath
+      Street](Heath_Street_(MBTA_station) "wikilink") to
+      [Arborway](Forest_Hills_(MBTA_station) "wikilink") was replaced by
+      buses.
+
+      In 1968, the MBTA purchased bus routes in the outer suburbs to the north
+      and south, from the [Eastern Massachusetts Street
+      Railway](Eastern_Massachusetts_Street_Railway "wikilink"). Western
+      suburban routes were purchased in 1972 from the [Middlesex and Boston
+      Street Railway](Middlesex_and_Boston_Street_Railway "wikilink"). (Both
+      of these companies had long since ceased running any streetcar service).
+      A few routes to the north were taken over from Service Bus Lines in
+      1975, and one in the south in 1980 from the Brush Hill Transportation
+      Company. As with the commuter rail system, many of the outlying routes
+      were dropped soon before or after the takeover, due to low ridership and
+      high operating costs, and out-of-district communities' refusal to join
+      or contract with the MBTA.
+    questions_and_answers:
+      - question: What year did the MBTA assign colors to its transit lines?
+        answer: |
+          In 1965, the MBTA assigned colors to its four rapid transit lines
+          and lettered the branches of the Green Line from north to south.
+      - question: What bus routes did the MBTA purchase in 1968?
+        answer: |
+          In 1968, the MBTA purchased bus routes in the outer suburbs to
+          the north and south, from the Eastern Massachusetts Street
+          Railway.
+      - question: In the 1970s, why were MBTA commuter rail routes dropped?
+        answer: |
+          As with the commuter rail system, many of the outlying routes
+          were dropped soon before or after the takeover, due to low
+          ridership and high operating costs, and out-of-district
+          communities' refusal to join or contract with the MBTA.
+  - context: |
+      In 1947, the newly formed Metropolitan Transit Authority (MTA) purchased
+      and took over subway, elevated, streetcar, and bus operations from the
+      [Boston Elevated Railway](Boston_Elevated_Railway "wikilink"). The
+      original MTA district consisted of 14 cities and towns —
+      [Arlington](Arlington,_Massachusetts "wikilink"),
+      [Belmont](Belmont,_Massachusetts "wikilink"), Boston,
+      [Brookline](Brookline,_Massachusetts "wikilink"),
+      [Cambridge](Cambridge,_Massachusetts "wikilink"),
+      [Chelsea](Chelsea,_Massachusetts "wikilink"),
+      [Everett](Everett,_Massachusetts "wikilink"),
+      [Malden](Malden,_Massachusetts "wikilink"),
+      [Medford](Medford,_Massachusetts "wikilink"),
+      [Milton](Milton,_Massachusetts "wikilink"),
+      [Newton](Newton,_Massachusetts "wikilink"),
+      [Revere](Revere,_Massachusetts "wikilink"),
+      [Somerville](Somerville,_Massachusetts "wikilink"), and
+      [Watertown](Watertown,_Massachusetts "wikilink").
+
+      A state commission headed by Lieutenant Governor [Arthur W.
+      Coolidge](Arthur_W._Coolidge "wikilink") published in 1947 an ambitious
+      plan to replace private commuter rail services (which were losing money)
+      with higher-frequency electric rapid transit that would run roughly out
+      to what is now the [Massachusetts Route
+      128](Massachusetts_Route_128 "wikilink") corridor. The goal was to shift
+      commuters from automobiles and buses and deal with the "intolerable
+      traffic conditions in downtown Boston". The MTA successfully
+      implemented a few rapid transit expansions, but progress was slowed as
+      automobile ownership increased and the [Federal-Aid Highway Act of
+      1956](Federal-Aid_Highway_Act_of_1956 "wikilink") diverted many
+      commuters off of mass transit.
+    questions_and_answers:
+      - question: What cities and towns did the original MTA consist of?
+        answer: |
+          The original MTA district consisted of 14 cities and
+          towns — Arlington, Belmont, Boston, Brookline, Cambridge,
+          Chelsea, Everett, Malden, Medford, Milton, Newton, Revere,
+          Somerville, and Watertown.
+      - question: What does MTA stand for?
+        answer: The MTA stands for Metropolitan Transit Authority.
+      - question: |
+          What transportation plan did Arthur W. Coolidge publish in 1947?
+        answer: |
+          A state commission headed by Lieutenant Governor Arthur W. Coolidge
+          published in 1947 an ambitious plan to replace private commuter rail
+          services (which were losing money) with higher-frequency electric
+          rapid transit that would run roughly out to what is now the
+          Massachusetts Route 128 corridor.
+  - context: |
+      Claims have been made by the Pioneer Institute that since 1988 the MBTA
+      has been the fastest expanding transit system in the country, even as
+      [Greater Boston](Greater_Boston "wikilink") has been the slowest growing
+      metropolitan area. However, research by the Frontier Group finds
+      that "no category has the MBTA been the “fastest-growing” of the
+      nation's largest transit agencies, and in only two categories does it
+      crack the top 10. However, the MBTA does crack the top 10 in another
+      category: absolute growth in transit ridership."
+
+      When, in 2000, the MBTA's income was capped, the agency began to run up
+      large debts from already-scheduled projects and obligatory Big Dig
+      remediation work. As of 2012, the MBTA has the highest debt of any transit
+      authority in the United States. In an effort to compensate, rates were
+      hiked on January 1, 2007, from $1.25 up to $2.00 per subway ride with a
+      [CharlieTicket](CharlieCard "wikilink"), and $1.70 with a
+      CharlieCard. Increasingly, local advocacy groups are calling on the
+      state to assume $2.9 billion of the authority's debt, which totals
+      approximately $9 billion. The interest on this debt is a large
+      proportion of the MBTA's annual expenses, and severely limits funds
+      available for any further required projects.
+    questions_and_answers:
+      - question: |
+          What category does the MBTA fall in the top 10 of?
+        answer: |
+          Research by the Frontier Group finds that "no category has the MBTA
+          been the “fastest-growing” of the nation's largest transit agencies,
+          and in only two categories does it crack the top 10. However, the
+          MBTA does crack the top 10 in another category: absolute growth in
+          transit ridership."
+      - question: Was the MBTA in debt in 2012?
+        answer: |
+          As of 2012, the MBTA has the highest debt of any transit authority
+          in the United States.
+      - question: In 2007, what were the MBTA ticket prices changed to?
+        answer: |
+          MBTA rates were hiked on January 1, 2007, from $1.25 up to $2.00
+          per subway ride with a CharlieTicket, and $1.70 with a CharlieCard.
+  - context: |
+      On May 28, 2008, a westbound trolley on the [Green Line D
+      branch](Green_Line_D_branch "wikilink") slammed into a stopped train
+      between the [Waban](Waban_(MBTA_station) "wikilink") and
+      [Woodland](Woodland_(MBTA_station) "wikilink") stations shortly after 6
+      p.m. At least seven people were injured, and the operator of the moving
+      train, Terrese Edmonds, 24, was killed. On May 8, 2009, two Green
+      Line trolleys collided between [Park
+      Street](Park_Street_station_(MBTA) "wikilink") and [Government
+      Center](Government_Center_(MBTA_station) "wikilink") when the driver of
+      one of them, 24-year-old Aiden Quinn, was [text
+      messaging](text_messaging "wikilink") his girlfriend. A rule banning
+      cell phones for operators while driving their bus, train, or streetcar
+      was put into place days later.
+
+      Immediately following the [Boston Marathon
+      bombing](Boston_Marathon_bombing "wikilink"), the MBTA was partially
+      shut down and National Guardsmen were deployed in various stations
+      around the city. During the ensuing manhunt for Dzhokhar and
+      Tamerlan Tsarnaev the MBTA was fully shut down until the stay-inside
+      request for Watertown, Newton, Waltham, Cambridge, Belmont, and Boston
+      was lifted. During the manhunt, MBTA buses were used to ferry police
+      around the city. After the suspect was caught the MBTA resumed normal
+      service. The next day the MBTA began displaying "BOSTON STRONG" and "WE
+      ARE ONE BOSTON" on buses and subway cars, in addition to the destination
+      that is normally displayed.
+    questions_and_answers:
+      - question: Have MBTA trains ever collided?
+        answer: |
+          On May 8, 2009, two Green Line trolleys collided between Park
+          Street and Government Center when the driver of one of them,
+          24-year-old Aiden Quinn, was text messaging his girlfriend.
+      - question: Has the MBTA ever completely shutdown?
+        answer: |
+          During the ensuing manhunt for Dzhokhar and Tamerlan
+          Tsarnaev the MBTA was fully shut down until the stay-inside
+          request for Watertown, Newton, Waltham, Cambridge, Belmont,
+          and Boston was lifted.
+      - question: |
+          During the Boston Marathon Bomber manhunt, what were MBTA buses
+          used for?
+        answer: |
+          During the manhunt, MBTA buses were used to ferry police around
+          the city.
+document_outline: |
+  Information about the MBTA including streetcar ear, MTA incorporation,
+  bus expansion, debt concerns, and major incidents.
+document:
+    repo: https://github.com/juliadenham/Summit_knowledge
+    commit: 2e05aafd6aaee95b689b8a637aa0224793a8233e
+    patterns:
+      - mbta.md

@@ -250,7 +250,7 @@ test_taxonomy() {
     elif [ "$testnum" -eq 3 ]; then
         rm -rf taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no
         mkdir -p taxonomy/knowledge/tonsils/overview/e2e-tonsils
-        cp "$SCRIPTDIR"/test-data/e2e-qna-knowledge.yaml taxonomy/knowledge/tonsils/overview/e2e-tonsils/qna.yaml
+        cp "$SCRIPTDIR"/test-data/knowledge/e2e-qna-knowledge.yaml taxonomy/knowledge/tonsils/overview/e2e-tonsils/qna.yaml
     fi
 
     step Verification
