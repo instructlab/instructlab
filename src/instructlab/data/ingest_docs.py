@@ -1,30 +1,72 @@
 # Standard
 from pathlib import Path
 import logging
+import os
 
 # Third Party
-from haystack import Pipeline
-from haystack.components.converters import JSONConverter
-from haystack.components.embedders import SentenceTransformersDocumentEmbedder
-from haystack.components.joiners import DocumentJoiner
-from haystack.components.preprocessors import DocumentCleaner, DocumentSplitter
-from haystack.components.writers import DocumentWriter
-from milvus_haystack import MilvusDocumentStore
+from haystack import Pipeline  # type: ignore
+from haystack.components.converters import JSONConverter  # type: ignore
+from haystack.components.embedders import (  # type: ignore
+    SentenceTransformersDocumentEmbedder,
+)
+from haystack.components.joiners import DocumentJoiner  # type: ignore
+from haystack.components.preprocessors import (  # type: ignore
+    DocumentCleaner,
+    DocumentSplitter,
+)
+from haystack.components.writers import DocumentWriter  # type: ignore
+from milvus_haystack import MilvusDocumentStore  # type: ignore
 
 logger = logging.getLogger(__name__)
 
 
-def ingest_docs(output_dir, vectordb_type, vectordb_uri, embedding_model):
+class VectorDbParams:
+    def __init__(
+        self,
+        vectordb_type,
+        vectordb_uri,
+        vectordb_collection_name,
+        vectordb_authentication,
+    ):
+        self.type = vectordb_type
+        self.uri = vectordb_uri
+        self.collection_name = vectordb_collection_name
+        self.vectordb_authentication = vectordb_authentication
+
+
+class EmbeddingModel:
+    def __init__(
+        self,
+        model_dir,
+        model_name,
+        model_token,
+    ):
+        self.model_dir = model_dir
+        self.model_name = model_name
+        self.model_token = model_token
+
+    def validate_local_model_path(self):
+        local_model_path = self.local_model_path()
+        return os.path.exists(local_model_path) and os.path.isdir(local_model_path)
+
+    def local_model_path(self) -> str:
+        return os.path.join(self.model_dir, self.model_name)
+
+
+def ingest_docs(
+    input_dir: str, vectordb_params: VectorDbParams, embedding_model: EmbeddingModel
+):
     pipeline = _create_pipeline(
-        vectordb_type=vectordb_type,
-        vectordb_uri=vectordb_uri,
+        vectordb_params=vectordb_params,
         embedding_model=embedding_model,
     )
     _connect_components(pipeline)
-    _ingest_docs(pipeline=pipeline, output_dir=output_dir)
+    _ingest_docs(pipeline=pipeline, input_dir=input_dir)
 
 
-def _create_pipeline(vectordb_type, vectordb_uri, embedding_model) -> Pipeline:
+def _create_pipeline(
+    vectordb_params: VectorDbParams, embedding_model: EmbeddingModel
+) -> Pipeline:
     pipeline = Pipeline()
     pipeline.add_component(instance=_converter(), name="converter")
     pipeline.add_component(instance=DocumentJoiner(), name="document_joiner")
@@ -36,12 +78,18 @@ def _create_pipeline(vectordb_type, vectordb_uri, embedding_model) -> Pipeline:
     )
     # TODO make this more generic
     pipeline.add_component(
-        instance=SentenceTransformersDocumentEmbedder(model=embedding_model),
+        instance=SentenceTransformersDocumentEmbedder(
+            model=embedding_model.local_model_path()
+        ),
         name="document_embedder",
     )
     pipeline.add_component(
         instance=DocumentWriter(
-            _document_store(vectordb_type=vectordb_type, vectordb_uri=vectordb_uri)
+            _document_store(
+                vectordb_type=vectordb_params.type,
+                vectordb_uri=vectordb_params.uri,
+                collection_name=vectordb_params.collection_name,
+            )
         ),
         name="document_writer",
     )
@@ -56,9 +104,9 @@ def _connect_components(pipeline):
     pipeline.connect("document_embedder", "document_writer")
 
 
-def _ingest_docs(pipeline, output_dir):
+def _ingest_docs(pipeline, input_dir):
     ingestion_results = pipeline.run(
-        {"converter": {"sources": list(Path(output_dir).glob("**/*"))}}
+        {"converter": {"sources": list(Path(input_dir).glob("**/*"))}}
     )
 
     document_store = pipeline.get_component("document_writer").document_store
@@ -68,12 +116,11 @@ def _ingest_docs(pipeline, output_dir):
     )
 
 
-def _document_store(vectordb_type, vectordb_uri):
+def _document_store(vectordb_type, vectordb_uri, collection_name):
     if vectordb_type == "milvuslite":
-        docs_collection_name = "UserDocs"
         document_store = MilvusDocumentStore(
             connection_args={"uri": vectordb_uri},
-            collection_name=docs_collection_name,
+            collection_name=collection_name,
             drop_old=True,
         )
         return document_store

@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+from typing import Optional
 import datetime
 import json
 import logging
@@ -12,10 +13,14 @@ import traceback
 
 # Third Party
 # RAG
-from haystack import Pipeline
-from haystack.components.embedders import SentenceTransformersTextEmbedder
-from milvus_haystack import MilvusDocumentStore
-from milvus_haystack.milvus_embedding_retriever import MilvusEmbeddingRetriever
+from haystack import Pipeline  # type: ignore
+from haystack.components.embedders import (  # type: ignore
+    SentenceTransformersTextEmbedder,
+)
+from milvus_haystack import MilvusDocumentStore  # type: ignore
+from milvus_haystack.milvus_embedding_retriever import (  # type: ignore
+    MilvusEmbeddingRetriever,
+)
 from openai import OpenAI
 from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import FormattedText
@@ -35,6 +40,8 @@ from instructlab import client_utils as ilabclient
 from instructlab import configuration as cfg
 from instructlab import log
 from instructlab.client_utils import HttpClientParams
+from instructlab.data.ingest_docs import EmbeddingModel, VectorDbParams  # type: ignore
+from instructlab.defaults import DEFAULTS
 
 # Local
 from ..client_utils import http_client
@@ -43,22 +50,28 @@ from ..utils import get_cli_helper_sysprompt, get_model_arch, get_sysprompt
 logger = logging.getLogger(__name__)
 
 
-def _init_rag_chat_pipeline(vectordb_type, vectordb_uri, embedding_model):
-    if vectordb_type == "milvuslite":
-        docs_collection_name = "UserDocs"
+def _init_rag_chat_pipeline(
+    vectordb_params: VectorDbParams,
+    embedding_model: EmbeddingModel,
+    retriever_top_k: int,
+):
+    if vectordb_params.type == "milvuslite":
         document_store = MilvusDocumentStore(
-            connection_args={"uri": vectordb_uri},
-            collection_name=docs_collection_name,
+            connection_args={"uri": vectordb_params.uri},
+            collection_name=vectordb_params.collection_name,
             drop_old=False,
         )
         logger.debug(f"RAG document_store created {document_store}")
 
         document_retriever = MilvusEmbeddingRetriever(
-            document_store=document_store, top_k=10
+            document_store=document_store,
+            top_k=retriever_top_k,
         )
         logger.debug(f"RAG document_retriever created {document_retriever}")
 
-        text_embedder = SentenceTransformersTextEmbedder(model=embedding_model)
+        text_embedder = SentenceTransformersTextEmbedder(
+            model=embedding_model.local_model_path()
+        )
         logger.debug(f"RAG text_embedder created {text_embedder}")
 
         pipeline = Pipeline()
@@ -69,7 +82,7 @@ def _init_rag_chat_pipeline(vectordb_type, vectordb_uri, embedding_model):
 
         return pipeline
     else:
-        raise ValueError(f"Unmanaged vector db type {vectordb_type}")
+        raise ValueError(f"Unmanaged vector db type {vectordb_params.type}")
 
 
 HELP_MD = """
@@ -208,6 +221,83 @@ def is_openai_server_and_serving_model(
     "--temperature",
     cls=clickext.ConfigOption,
 )
+@click.option(
+    "--rag",
+    "is_rag",
+    is_flag=True,
+    envvar="ILAB_RAG",
+    type=click.BOOL,
+    cls=clickext.ConfigOption,
+    config_sections="rag",
+)
+@click.option(
+    "--retriever-top-k",
+    default=10,
+    envvar="ILAB_CHAT_RAG_RETRIEVER_TOP_K",
+    type=click.INT,
+    cls=clickext.ConfigOption,
+    config_sections="rag",
+)
+@click.option(
+    "--rag-prompt",
+    default=10,
+    envvar="ILAB_CHAT_RAG_PROMPT",
+    type=click.STRING,
+    cls=clickext.ConfigOption,
+    config_sections="rag",
+)
+@click.option(
+    "--vectordb-type",
+    default="milvuslite",
+    envvar="ILAB_VECTORDB_TYPE",
+    type=click.STRING,
+    help="The vector DB type, one of: `milvuslite`, `milvus`.",
+)
+@click.option(
+    "--vectordb-uri",
+    default="rag-output.db",
+    envvar="ILAB_VECTORDB_URI",
+    type=click.STRING,
+    help="The vector DB URI",
+)
+@click.option(
+    "--vectordb-collection-name",
+    default="IlabEmbeddings",
+    envvar="ILAB_VECTORDB_COLLECTION_NAME",
+    type=click.STRING,
+    help="The vector DB collection name",
+)
+@click.option(
+    "--vectordb-authentication",
+    default=None,
+    envvar="ILAB_VECTORDB_AUTHENTICATION",
+    type=click.STRING,
+    hide_input=True,
+)
+@click.option(
+    "--model-dir",
+    default=lambda: DEFAULTS.MODELS_DIR,
+    envvar="ILAB_MODEL_DIR",
+    show_default="The default system model location store, located in the data directory.",
+    help="Base directories where models are stored.",
+)
+@click.option(
+    "--embedding-model",
+    "embedding_model_name",
+    default="sentence-transformers/all-minilm-l6-v2",
+    envvar="ILAB_EMBEDDING_MODEL_NAME",
+    type=click.STRING,
+    help="The embedding model name",
+)
+@click.option(
+    "--embedding-model-token",
+    "embedding_model_token",
+    default=None,
+    envvar="ILAB_EMBEDDING_MODEL_TOKEN",
+    type=click.STRING,
+    help="The token to download the embedding model",
+    show_default=True,
+)
 @click.pass_context
 @clickext.display_params
 def chat(
@@ -227,13 +317,18 @@ def chat(
     model_family,
     serving_log_file,
     temperature,
+    is_rag,
+    retriever_top_k,
+    rag_prompt,
+    vectordb_type,
+    vectordb_uri,
+    vectordb_collection_name,
+    vectordb_authentication,
+    model_dir,
+    embedding_model_name,
+    embedding_model_token,
 ):
     """Runs a chat using the modified model"""
-    rag_chat_config = ctx.obj.config.chat.rag_chat
-    rag_config = ctx.obj.config.rag
-    logger.debug(f"RAG chat? (rag={rag_chat_config.enabled})")
-    logger.debug(f"RAG chat config: {rag_chat_config}")
-    logger.debug(f"RAG config: {rag_config}")
     # pylint: disable=import-outside-toplevel
     # First Party
     from instructlab.model.backends.common import is_temp_server_running
@@ -349,8 +444,20 @@ def chat(
             qq=quick_question,
             max_tokens=max_tokens,
             temperature=temperature,
-            rag_chat_config=rag_chat_config,
-            rag_config=rag_config,
+            is_rag=is_rag,
+            retriever_top_k=retriever_top_k,
+            rag_prompt=rag_prompt,
+            vectordb_params=VectorDbParams(
+                vectordb_type=vectordb_type,
+                vectordb_uri=vectordb_uri,
+                vectordb_collection_name=vectordb_collection_name,
+                vectordb_authentication=vectordb_authentication,
+            ),
+            embedding_model=EmbeddingModel(
+                model_dir=model_dir,
+                model_name=embedding_model_name,
+                model_token=embedding_model_token,
+            ),
         )
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
@@ -374,8 +481,6 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self,
         model,
         client,
-        rag_chat_config,
-        rag_config,
         vi_mode=False,
         prompt=True,
         vertical_overflow="ellipsis",
@@ -383,10 +488,13 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         log_file=None,
         max_tokens=None,
         temperature=1.0,
+        is_rag=False,
+        retriever_top_k=10,
+        rag_prompt=None,
+        vectordb_params: Optional[VectorDbParams] = None,
+        embedding_model: Optional[EmbeddingModel] = None,
     ):
         self.client = client
-        self.rag_chat_config = rag_chat_config
-        self.rag_config = rag_config
         self.rag_pipeline = None
         self.model = model
         self.vi_mode = vi_mode
@@ -395,6 +503,11 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self.log_file = log_file
         self.max_tokens = max_tokens
         self.temperature = temperature
+        self.is_rag = is_rag
+        self.retriever_top_k = retriever_top_k
+        self.rag_prompt = rag_prompt
+        self.vectordb_params = vectordb_params
+        self.embedding_model = embedding_model
 
         self.console = Console()
 
@@ -446,7 +559,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             [
                 (
                     "#3f7cac bold",
-                    "[RAG]" if self.rag_chat_config.enabled else "",
+                    "[RAG]" if self.is_rag else "",
                 ),  # info blue for multiple
                 (
                     "#3f7cac bold",
@@ -647,8 +760,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         raise KeyboardInterrupt
 
     def _handle_rag(self, _):
-        self.rag_chat_config.enabled = not self.rag_chat_config.enabled
-        print(f"RAG now rag is {self.rag_chat_config.enabled}")
+        self.is_rag = not self.is_rag
         raise KeyboardInterrupt
 
     def start_prompt(
@@ -694,37 +806,18 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
         self.log_message(PROMPT_PREFIX + content + "\n\n")
 
-        if self.rag_chat_config.enabled:
+        if self.is_rag:
             if self.rag_pipeline is None:
                 self.rag_pipeline = _init_rag_chat_pipeline(
-                    vectordb_type=self.rag_config.vectordb.type,
-                    vectordb_uri=self.rag_config.vectordb.uri,
-                    embedding_model=self.rag_config.embedding_model,
-                )
-
-            semantic_search_query = content
-            if self.rag_chat_config.context_refinement.enabled:
-                refinement_query = self.rag_chat_config.context_refinement.prompt
-                context_messages = [
-                    {
-                        "role": "system",
-                        "content": "You are an assistant refining user queries for similarity search.",
-                    },
-                    {
-                        "role": "user",
-                        "content": refinement_query.format(user_query=content),
-                    },
-                ]
-                response = self.client.chat.completions.create(
-                    model=self.model, messages=context_messages, temperature=0.7
-                )
-                semantic_search_query = (response).choices[0].message.content
-                logger.info(
-                    f"Refined semantic search query is '{semantic_search_query}'"
+                    vectordb_params=self.vectordb_params,
+                    embedding_model=self.embedding_model,
+                    retriever_top_k=self.retriever_top_k,
                 )
 
             retrieval_results = self.rag_pipeline.run(
-                {"embedder": {"text": semantic_search_query}}
+                {
+                    "embedder": {"text": content},
+                }
             )
             context = "\n".join(
                 [doc.content for doc in retrieval_results["retriever"]["documents"]]
@@ -734,10 +827,8 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             logger.debug(f"RAG context is {context}")
             logger.debug("-" * 10)
 
-            content = self.rag_chat_config.prompt.format(
-                context=context, user_query=content
-            )
-            logger.info(f"Updated user query is {content}")
+            content = self.rag_prompt.format(context=context, user_query=content)
+            logger.debug(f"Updated user query is {content}")
 
         # Update message history and token counters
         self._update_conversation(content, "user")
@@ -869,10 +960,18 @@ def chat_cli(
     qq,
     max_tokens,
     temperature,
-    rag_config,
-    rag_chat_config,
+    is_rag,
+    retriever_top_k,
+    rag_prompt,
+    vectordb_params: VectorDbParams,
+    embedding_model: EmbeddingModel,
 ):
     """Starts a CLI-based chat with the server"""
+    if is_rag and not embedding_model.validate_local_model_path():
+        raise click.UsageError(
+            f"Cannot find local embedding model {embedding_model.model_name} in {embedding_model.model_dir}. Download the model before running the pipeline."
+        )
+
     client = OpenAI(
         base_url=api_base,
         api_key=ctx.params["api_key"],
@@ -930,8 +1029,6 @@ def chat_cli(
     ccb = ConsoleChatBot(
         config.model if model is None else model,
         client=client,
-        rag_chat_config=rag_chat_config,
-        rag_config=rag_config,
         vi_mode=config.vi_mode,
         log_file=log_file,
         prompt=not qq,
@@ -939,6 +1036,11 @@ def chat_cli(
         loaded=loaded,
         temperature=(temperature if temperature is not None else config.temperature),
         max_tokens=(max_tokens if max_tokens else config.max_tokens),
+        is_rag=is_rag,
+        retriever_top_k=retriever_top_k,
+        rag_prompt=rag_prompt,
+        vectordb_params=vectordb_params,
+        embedding_model=embedding_model,
     )
 
     if not qq and session is None:

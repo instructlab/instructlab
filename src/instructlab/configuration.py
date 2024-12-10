@@ -122,24 +122,15 @@ class _general(BaseModel):
         return self
 
 
-class _context_refinement(BaseModel):
-    enabled: bool = Field(
-        default=False, description="To enable the RAG context refinement."
-    )
-    prompt: StrictStr = Field(
-        default="{user_query}", description="The context refinement prompt."
-    )
-
-
 class _rag_chat(BaseModel):
     """Class describing RAG configuration of the 'chat' sub-command."""
 
-    enabled: bool = Field(default=False, description="To enable the RAG chat.")
-    context_refinement: _context_refinement = Field(
-        default_factory=_context_refinement,
-        description="The context refinement options.",
+    is_rag: Optional[bool] = Field(default=False, description="To enable the RAG chat.")
+    retriever_top_k: Optional[int] = Field(
+        default=10,
+        description="The maximum number of documents to retrieve (default is 10)",
     )
-    prompt: StrictStr = Field(
+    rag_prompt: Optional[StrictStr] = Field(
         default="\nGiven the following information, answer the question.\n\nContext:{context}\nQuestion:{user_query}\nAnswer:",
         description="The prompt with augmented context.",
     )
@@ -180,7 +171,7 @@ class _chat(BaseModel):
         default=1.0,
         description="Controls the randomness of the model's responses. Lower values make the output more deterministic, while higher values produce more random results.",
     )
-    rag_chat: _rag_chat = Field(
+    rag: Optional[_rag_chat] = Field(
         default_factory=_rag_chat, description="The RAG chat configuration"
     )
 
@@ -272,45 +263,6 @@ class _serve(BaseModel):
         return get_api_base(self.host_port)
 
 
-class _vectordb(BaseModel):
-    """Class describing configuration of vectordb ingestion."""
-
-    uri: StrictStr = Field(default="ilab_rag.db", description="The vector DB URI.")
-    type: StrictStr = Field(
-        default="milvuslite",
-        description="The vector DB type, one of: `milvuslite`, `milvus`.",
-    )
-
-
-class _rag(BaseModel):
-    """Class describing configuration of the 'rag ingest' sub-command."""
-
-    vectordb: _vectordb = Field(
-        default_factory=_vectordb,
-        description="Vecor DB configuration",
-    )
-    embedding_model: StrictStr = Field(
-        default="sentence-transformers/all-MiniLM-L6-v2", description="Embedding model."
-    )
-
-
-class _rag_ingestion(BaseModel):
-    """Class describing configuration of RAG ingestion during data generation."""
-
-    enabled: bool = Field(
-        default=False,
-        description="To enable the RAG transformation and ingestion pipeline.",
-    )
-    input: str = Field(
-        default="./docs",
-        description="Source folder of documents to be transformed and ingested.",
-    )
-    output: str = Field(
-        default="./output",
-        description="Output folder of pre-processed documents.",
-    )
-
-
 class _generate(BaseModel):
     """Class describing configuration of the 'generate' sub-command."""
 
@@ -372,11 +324,6 @@ class _generate(BaseModel):
         description="Path to seed file to be used for generation.",
         default_factory=lambda: DEFAULTS.SEED_FILE,
         deprecated=True,
-    )
-    rag_ingestion: _rag_ingestion = Field(
-        alias="rag",
-        default_factory=_rag_ingestion,
-        description="RAG configuration",
     )
 
 
@@ -669,8 +616,6 @@ class Config(BaseModel):
     evaluate: _evaluate = Field(
         default_factory=_evaluate, description="Evaluate configuration section."
     )
-    # rag configuration
-    rag: _rag = Field(default_factory=_rag, description="RAG configuration section.")
     # additional fields with defaults
     general: _general = Field(
         default_factory=_general, description="General configuration section."
