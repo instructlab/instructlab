@@ -365,7 +365,8 @@ def get_sysprompt(arch: str):
     return SYSTEM_PROMPTS.get(arch, common.DEFAULT_SYS_PROMPT)
 
 
-def get_cli_helper_sysprompt() -> str:
+# pylint: disable=unused-argument
+def get_cli_helper_sysprompt(arch: str) -> str:
     """
     Returns the system prompt to put the chatbot in CLI helper mode
     """
