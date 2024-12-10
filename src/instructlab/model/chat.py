@@ -11,6 +11,11 @@ import time
 import traceback
 
 # Third Party
+# RAG
+from haystack import Pipeline
+from haystack.components.embedders import SentenceTransformersTextEmbedder
+from milvus_haystack import MilvusDocumentStore
+from milvus_haystack.milvus_embedding_retriever import MilvusEmbeddingRetriever
 from openai import OpenAI
 from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import FormattedText
@@ -37,6 +42,36 @@ from ..utils import get_cli_helper_sysprompt, get_model_arch, get_sysprompt
 
 logger = logging.getLogger(__name__)
 
+
+def _init_rag_chat_pipeline(vectordb_type, vectordb_uri, embedding_model):
+    if vectordb_type == "milvuslite":
+        docs_collection_name = "UserDocs"
+        document_store = MilvusDocumentStore(
+            connection_args={"uri": vectordb_uri},
+            collection_name=docs_collection_name,
+            drop_old=False,
+        )
+        logger.debug(f"RAG document_store created {document_store}")
+
+        document_retriever = MilvusEmbeddingRetriever(
+            document_store=document_store, top_k=10
+        )
+        logger.debug(f"RAG document_retriever created {document_retriever}")
+
+        text_embedder = SentenceTransformersTextEmbedder(model=embedding_model)
+        logger.debug(f"RAG text_embedder created {text_embedder}")
+
+        pipeline = Pipeline()
+        pipeline.add_component("embedder", text_embedder)
+        pipeline.add_component("retriever", document_retriever)
+        pipeline.connect("embedder.embedding", "retriever.query_embedding")
+        logger.debug(f"RAG pipeline created {pipeline}")
+
+        return pipeline
+    else:
+        raise ValueError(f"Unmanaged vector db type {vectordb_type}")
+
+
 HELP_MD = """
 Help / TL;DR
 - `/q`: **q**uit
@@ -50,6 +85,7 @@ Help / TL;DR
 - `/N`: **n**ew session (ignoring loaded)
 - `/d <int>`: **d**isplay previous response based on input, if passed 1 then previous, if 2 then second last response and so on.
 - `/p <int>`: previous response in **p**lain text based on input, if passed 1 then previous, if 2 then second last response and so on.
+- `/r`: toggle the status of the RAG pipeline.
 - `/md <int>`: previous response in **M**ark**d**own based on input, if passed 1 then previous, if 2 then second last response and so on.
 - `/s filepath`: **s**ave current session to `filepath`
 - `/l filepath`: **l**oad `filepath` and start a new session
@@ -193,6 +229,11 @@ def chat(
     temperature,
 ):
     """Runs a chat using the modified model"""
+    rag_chat_config = ctx.obj.config.chat.rag_chat
+    rag_config = ctx.obj.config.rag
+    logger.debug(f"RAG chat? (rag={rag_chat_config.enabled})")
+    logger.debug(f"RAG chat config: {rag_chat_config}")
+    logger.debug(f"RAG config: {rag_config}")
     # pylint: disable=import-outside-toplevel
     # First Party
     from instructlab.model.backends.common import is_temp_server_running
@@ -308,6 +349,8 @@ def chat(
             qq=quick_question,
             max_tokens=max_tokens,
             temperature=temperature,
+            rag_chat_config=rag_chat_config,
+            rag_config=rag_config,
         )
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
@@ -331,6 +374,8 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self,
         model,
         client,
+        rag_chat_config,
+        rag_config,
         vi_mode=False,
         prompt=True,
         vertical_overflow="ellipsis",
@@ -340,6 +385,9 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         temperature=1.0,
     ):
         self.client = client
+        self.rag_chat_config = rag_chat_config
+        self.rag_config = rag_config
+        self.rag_pipeline = None
         self.model = model
         self.vi_mode = vi_mode
         self.vertical_overflow = vertical_overflow
@@ -398,6 +446,10 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             [
                 (
                     "#3f7cac bold",
+                    "[RAG]" if self.rag_chat_config.enabled else "",
+                ),  # info blue for multiple
+                (
+                    "#3f7cac bold",
                     f"[{'M' if self.multiline else 'S'}]",
                 ),  # info blue for multiple
                 *(
@@ -443,6 +495,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                 Markdown("**WARNING**: No contexts loaded from the config file.")
             )
             raise KeyboardInterrupt
+
         cs = content.split()
         if len(cs) < 2:
             self._sys_print(
@@ -593,6 +646,11 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self._sys_print(Markdown(f"**Available contexts:**\n\n{context_list}"))
         raise KeyboardInterrupt
 
+    def _handle_rag(self, _):
+        self.rag_chat_config.enabled = not self.rag_chat_config.enabled
+        print(f"RAG now rag is {self.rag_chat_config.enabled}")
+        raise KeyboardInterrupt
+
     def start_prompt(
         self,
         logger,  # pylint: disable=redefined-outer-name
@@ -614,6 +672,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             "/s": self._handle_save_session,
             "/l": self._handle_load_session,
             "/lc": self._handle_list_contexts,
+            "/r": self._handle_rag,
         }
 
         if content is None:
@@ -634,6 +693,51 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             handler(content)
 
         self.log_message(PROMPT_PREFIX + content + "\n\n")
+
+        if self.rag_chat_config.enabled:
+            if self.rag_pipeline is None:
+                self.rag_pipeline = _init_rag_chat_pipeline(
+                    vectordb_type=self.rag_config.vectordb.type,
+                    vectordb_uri=self.rag_config.vectordb.uri,
+                    embedding_model=self.rag_config.embedding_model,
+                )
+
+            semantic_search_query = content
+            if self.rag_chat_config.context_refinement.enabled:
+                refinement_query = self.rag_chat_config.context_refinement.prompt
+                context_messages = [
+                    {
+                        "role": "system",
+                        "content": "You are an assistant refining user queries for similarity search.",
+                    },
+                    {
+                        "role": "user",
+                        "content": refinement_query.format(user_query=content),
+                    },
+                ]
+                response = self.client.chat.completions.create(
+                    model=self.model, messages=context_messages, temperature=0.7
+                )
+                semantic_search_query = (response).choices[0].message.content
+                logger.info(
+                    f"Refined semantic search query is '{semantic_search_query}'"
+                )
+
+            retrieval_results = self.rag_pipeline.run(
+                {"embedder": {"text": semantic_search_query}}
+            )
+            context = "\n".join(
+                [doc.content for doc in retrieval_results["retriever"]["documents"]]
+            )
+
+            logger.debug("-" * 10)
+            logger.debug(f"RAG context is {context}")
+            logger.debug("-" * 10)
+
+            content = self.rag_chat_config.prompt.format(
+                context=context, user_query=content
+            )
+            logger.info(f"Updated user query is {content}")
 
         # Update message history and token counters
         self._update_conversation(content, "user")
@@ -765,6 +869,8 @@ def chat_cli(
     qq,
     max_tokens,
     temperature,
+    rag_config,
+    rag_chat_config,
 ):
     """Starts a CLI-based chat with the server"""
     client = OpenAI(
@@ -824,6 +930,8 @@ def chat_cli(
     ccb = ConsoleChatBot(
         config.model if model is None else model,
         client=client,
+        rag_chat_config=rag_chat_config,
+        rag_config=rag_config,
         vi_mode=config.vi_mode,
         log_file=log_file,
         prompt=not qq,
