@@ -109,13 +109,14 @@ train:
     lora_alpha: 32
     deepspeed_cpu_offload_optimizer_pin_memory: false
     deepspeed_cpu_oddload_optimizer_ratio: 1
+    accelerate_full_state_at_epoch: false
   ckpt_output_dir: checkpoints
   data_output_dir: train-output
   data_path: ./taxonomy_data
   deepspeed_cpu_offload_optimizer: true
   effective_batch_size: 32
   lora_quantize_dtype: null
-  lora_rank: 0
+  lora_rank: 4
   max_batch_len: 10000
   max_seq_len: 4096
   model_path: ~/.cache/instructlab/models/instructlab/granite-7b-lab
