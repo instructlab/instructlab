@@ -43,6 +43,7 @@
   - [🧪 Evaluate the newly trained model](#-evaluate-the-newly-trained-model)
   - [🍴 Serve the newly trained model](#-serve-the-newly-trained-model)
 - [📣 Chat with the new model (not optional this time)](#-chat-with-the-new-model-not-optional-this-time)
+- [☁️ Upload the new model](#️-upload-the-new-model)
 - [🎁 Submit your new knowledge or skills](#-submit-your-new-knowledge-or-skills)
 - [📬 Contributing](#-contributing)
 
@@ -1031,6 +1032,14 @@ argument to specify your new model:
    ```
 
    If you are interested in optimizing the quality of the model's responses, please see [`TROUBLESHOOTING.md`](./TROUBLESHOOTING.md#model-fine-tuning-and-response-optimization)
+
+## ☁️ Upload the new model
+
+If you are happy with your newly-trained model and wish to upload it to a supported endpoint, you can do so with the `ilab model upload` command.
+
+InstructLab currently supports uploading to [Hugging Face](https://huggingface.co/), with plans to support OCI and S3 uploads as well.
+
+You can upload safetensors or a GGUF to any destination you have access to - see `ilab model upload --help` for more info.
 
 ## 🎁 Submit your new knowledge or skills
 
