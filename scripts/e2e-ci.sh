@@ -210,8 +210,12 @@ test_taxonomy() {
 }
 
 test_generate() {
-    task Generate synthetic data
-    ilab data generate
+    task Generate synthetic data in detached mode
+    ilab data generate -dt
+    task list all processes
+    ilab process list
+    task Attach to the most recent process
+    ilab process attach --latest
     task Synthetic data generation Complete
 }
 
