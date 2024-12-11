@@ -33,6 +33,7 @@ def gen_data(
     system_prompt,
     use_legacy_pretraining_format,
     process_mode,
+    log_level,
 ):
     """Generates synthetic data to enhance your example data"""
     # First Party
@@ -52,6 +53,7 @@ def gen_data(
                 "_serve_server",
             )
         ],
+        log_level=log_level,
         serve_cfg=serve_cfg,
         model_name=model_path,
         num_cpus=num_cpus,
@@ -91,7 +93,9 @@ def gen_data(
 
 
 # actual generate_data function to be kicked off in its own process/eventually be REST API endpoint
+# pylint: disable=redefined-outer-name
 def create_server_and_generate(
+    log_level,
     serve_cfg,
     model_name,
     num_cpus,
@@ -118,14 +122,26 @@ def create_server_and_generate(
     max_num_tokens,
     system_prompt,
     use_legacy_pretraining_format,
+    log_file,
 ):
     backend_instance = None
+    # we need to use the instructlab logger so that the libraries inherit the config we set up.
+    logger = logging.getLogger("instructlab")
+
+    # First Party
+    from instructlab.log import add_file_handler_to_logger
+
+    # when in a new process, logger configuration does not seem to be promised. Add the file handler pointing to our new log file
+    # and also, reenforce the level set on the instructlab logger.
+    add_file_handler_to_logger(log_file=log_file, logger=logger)
+    logger.setLevel(log_level)
 
     # Third Party
     import openai
 
     # First Party
     from instructlab.client_utils import http_client
+
     http_client_params = HttpClientParams(
         {
             "tls_client_cert": tls_client_cert,
@@ -141,6 +157,7 @@ def create_server_and_generate(
         # First Party
         from instructlab.model.backends import backends
         from instructlab.model.backends.llama_cpp import Server as llama_cpp_server
+
         backend_instance = backends.select_backend(cfg=serve_cfg, model_path=model_name)
         if (
             backend_instance.get_backend_type() is not backends.VLLM

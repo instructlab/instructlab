@@ -292,6 +292,7 @@ def generate(
             system_prompt,
             legacy_pretraining_format,
             process_mode=process_mode,
+            log_level=ctx.obj.config.general.log_level,
         )
         if not detached:
             click.echo("ᕦ(òᴗóˇ)ᕤ Data generate completed successfully! ᕦ(òᴗóˇ)ᕤ")

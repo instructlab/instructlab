@@ -213,6 +213,7 @@ def add_process(
     pid: int | None = os.getpid()
     children_pids: list[int] | None = []
     start_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    kwargs["log_file"] = log_file
     if process_mode == ILAB_PROCESS_MODES.DETACHED:
         assert isinstance(log_file, str)
         cmd = format_command(target=target, extra_imports=extra_imports, **kwargs)
