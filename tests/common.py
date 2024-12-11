@@ -61,6 +61,7 @@ def vllm_setup_test(runner, args, mock_popen, *_mock_args):
 
     return mock_popen.call_args_list[0][1]["args"]
 
+
 def assert_tps(args, tps):
     assert args[-2] == "--tensor-parallel-size"
     assert args[-1] == tps

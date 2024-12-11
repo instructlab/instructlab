@@ -85,6 +85,7 @@ def gen_data(
 
 
 # actual generate_data function to be kicked off in its own process/eventually be REST API endpoint
+# pylint: disable=redefined-outer-name
 def create_server_and_generate(
     serve_cfg,
     model_name,
@@ -114,12 +115,21 @@ def create_server_and_generate(
     use_legacy_pretraining_format,
 ):
     backend_instance = None
+    # we need to use the instructlab logger so that the libraries inherit the config we set up.
+    logger = logging.getLogger("instructlab")
+    # Standard
+    import sys
+
+    stream_handler = logging.StreamHandler(sys.stdout)
+    logger.addHandler(stream_handler)
+    logger.setLevel(logging.INFO)
 
     # Third Party
     import openai
 
     # First Party
     from instructlab.client_utils import http_client
+
     http_client_params = HttpClientParams(
         {
             "tls_client_cert": tls_client_cert,
@@ -135,6 +145,7 @@ def create_server_and_generate(
         # First Party
         from instructlab.model.backends import backends
         from instructlab.model.backends.llama_cpp import Server as llama_cpp_server
+
         backend_instance = backends.select_backend(cfg=serve_cfg, model_path=model_name)
         if (
             backend_instance.get_backend_type() is not backends.VLLM
@@ -177,6 +188,7 @@ def create_server_and_generate(
             f"Generating synthetic data using '{pipeline}' pipeline, '{model_name}' model, '{taxonomy}' taxonomy, against {api_base} server"
         )
         generate_data(
+            # logger=logger,
             client=client,
             model_family=model_family,
             model_name=model_name,
