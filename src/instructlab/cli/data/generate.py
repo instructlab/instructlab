@@ -280,6 +280,7 @@ def generate(
             system_prompt,
             legacy_pretraining_format,
         )
+        click.echo("✅ Data generate completed successfully!")
     except Exception as exc:
         click.secho(f"failed to generate data with exception: {exc}", fg="red")
         raise click.exceptions.Exit(1)
