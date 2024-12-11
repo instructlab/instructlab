@@ -379,6 +379,12 @@ class _evaluate(BaseModel):
     gpus: Optional[int] = Field(
         default=None, description="Number of GPUs to use for running evaluation."
     )
+    format: Optional[str] = Field(
+        default="text",
+        description="Format of evaluation results. Defaults to 'text' which prints to stdout with additional logging, also allows for 'json' to print to stdout without additional logging",
+        examples=["text", "json"],
+        pattern="text|json",
+    )
     mmlu: _mmlu = Field(
         default_factory=_mmlu,
         description="MMLU benchmarking settings",
