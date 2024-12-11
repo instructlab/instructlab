@@ -51,6 +51,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 [project.entry-points."instructlab.command.data"]
 "generate" = "instructlab.cli.data.generate:generate"
 "list" = "instructlab.cli.data.list:list_datasets"
+"process" = "instructlab.cli.data.process:process"
 
 [project.entry-points."instructlab.command.model"]
 "chat" = "instructlab.model.chat:chat"

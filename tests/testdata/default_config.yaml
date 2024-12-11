@@ -16,6 +16,23 @@ chat:
   # Model to be used for chatting with.
   # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
   model: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+  # The RAG chat configuration
+  rag:
+    # To enable the RAG chat.
+    # Default: False
+    is_rag: false
+    # The prompt with augmented context.
+    # Default: 
+    # Given the following information, answer the question.
+
+    # Context:{context}
+    # Question:{user_query}
+    # Answer:
+    rag_prompt: "\nGiven the following information, answer the question.\n\nContext:{context}\n\
+      Question:{user_query}\nAnswer:"
+    # The maximum number of documents to retrieve (default is 10)
+    # Default: 10
+    retriever_top_k: 10
   # Filepath of a dialog session file.
   # Default: None
   session:
@@ -199,7 +216,7 @@ metadata:
   # Amount of GPUs on the system, ex: 8
   # Default: None
   gpu_count:
-  # Family the of the system GPU, ex: H100
+  # Family of the system GPU, ex: H100
   # Default: None
   gpu_family:
   # Manufacturer of the system GPU, ex: Nvidia
