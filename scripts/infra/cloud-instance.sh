@@ -289,7 +289,7 @@ pip_install_with_nvidia() {
         "pushd instructlab && source venv/bin/activate; \
          export PATH=\$PATH:/usr/local/cuda/bin; \
          pip cache remove llama_cpp_python \
-         && CMAKE_ARGS='-DLLAMA_CUBLAS=on' pip install --force-reinstall --no-binary \
+         && CMAKE_ARGS='-DGGML_CUDA=on' pip install --force-reinstall --no-binary \
             llama_cpp_python -c constraints.txt llama_cpp_python \
          && pip install wheel packaging torch -c constraints.txt \
          && pip install .[cuda] -r requirements-vllm-cuda.txt \
@@ -300,7 +300,7 @@ pip_install_with_nvidia() {
 pip_install_with_amd() {
     "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "pushd instructlab && source venv/bin/activate && pip cache remove llama_cpp_python && \
     pip install -e .[rocm] --extra-index-url https://download.pytorch.org/whl/rocm6.0 \
-   -C cmake.args='-DLLAMA_HIPBLAS=on' \
+   -C cmake.args='-DGGML_HIPBLAS=on' \
    -C cmake.args='-DAMDGPU_TARGETS=all' \
    -C cmake.args='-DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang' \
    -C cmake.args='-DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++' \
