@@ -335,3 +335,65 @@ def test_warn_for_unsupported_backend_param(param, expected_call_count):
             mock_warning.assert_called_with(
                 f"Option '--{param.replace('_','-')}' not supported by the backend."
             )
+
+
+def test_host_port_for_host(cli_runner: CliRunner):
+    args = common.vllm_setup_test(
+        cli_runner,
+        [
+            "--config=DEFAULT",
+            "model",
+            "serve",
+            "--model-path=foo",
+            "--host-port",
+            "192.168.1.1:8000",
+        ],
+    )
+    assert "192.168.1.1" in args
+    assert "8000" in args
+
+
+def test_host_port_for_port(cli_runner: CliRunner):
+    args = common.vllm_setup_test(
+        cli_runner,
+        [
+            "--config=DEFAULT",
+            "model",
+            "serve",
+            "--model-path=foo",
+            "--host-port",
+            "127.0.0.1:1738",
+        ],
+    )
+    assert "127.0.0.1" in args
+    assert "1738" in args
+
+
+def test_host_port_for_both(cli_runner: CliRunner):
+    args = common.vllm_setup_test(
+        cli_runner,
+        [
+            "--config=DEFAULT",
+            "model",
+            "serve",
+            "--model-path=foo",
+            "--host-port",
+            "2.4.6.8:1738",
+        ],
+    )
+    assert "2.4.6.8" in args
+    assert "1738" in args
+
+
+def test_host_port_default(cli_runner: CliRunner):
+    args = common.vllm_setup_test(
+        cli_runner,
+        [
+            "--config=DEFAULT",
+            "model",
+            "serve",
+            "--model-path=foo",
+        ],
+    )
+    assert "127.0.0.1" in args
+    assert "8000" in args
