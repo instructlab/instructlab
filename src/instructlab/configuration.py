@@ -80,6 +80,10 @@ class _general(BaseModel):
         description="Log format. https://docs.python.org/3/library/logging.html#logrecord-attributes",
         validate_default=True,
     )
+    use_legacy_tmpl: bool = Field(
+        default=False,
+        description="Use legacy IBM Granite chat template (default uses 3.0 Instruct template)",
+    )
 
     @field_validator("log_level")
     def validate_log_level(cls, v):
