@@ -384,6 +384,11 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     is_flag=True,
     help="Optimize Memory Usage on CPU and MacOS. This uses the torch_dtype='auto' instead of float32",
 )
+@click.option(
+    "--use-legacy-tmpl",
+    is_flag=True,
+    cls=clickext.ConfigOption,
+)
 @click.pass_context
 @clickext.display_params
 def train(
@@ -420,6 +425,7 @@ def train(
     force_clear_phased_cache: bool,
     distributed_backend,
     optimize_memory,
+    use_legacy_tmpl,
     **kwargs,
 ):
     """

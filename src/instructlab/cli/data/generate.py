@@ -160,6 +160,11 @@ logger = logging.getLogger(__name__)
     type=click.IntRange(min=512),
     cls=clickext.ConfigOption,
 )
+@click.option(
+    "--use-legacy-tmpl",
+    cls=clickext.ConfigOption,
+    is_flag=True,
+)
 @click.pass_context
 @clickext.display_params
 def generate(
@@ -187,6 +192,7 @@ def generate(
     batch_size,
     gpus,
     max_num_tokens,
+    use_legacy_tmpl,
 ):
     """Generates synthetic data to enhance your example data"""
 
@@ -250,8 +256,10 @@ def generate(
     # Check if student model specifies a tokenizer config. If so, check if the special tokens specified
     # match those of granite-7b. If so, set legacy_pretraining_format to true. If no tokenizer config is
     # available, rely on model architecture to make that decision
-    legacy_pretraining_format = use_legacy_pretraining_format(
-        student_model_path, student_model_arch
+    legacy_pretraining_format = (
+        use_legacy_tmpl
+        if use_legacy_tmpl
+        else use_legacy_pretraining_format(student_model_path, student_model_arch)
     )
 
     try:

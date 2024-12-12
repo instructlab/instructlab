@@ -190,6 +190,9 @@ generate:
       #   - ['--dtype', 'auto']
       #   - ['--lora-alpha', '32']
       vllm_args: []
+  # Use legacy IBM Granite chat template (default uses 3.0 Instruct template)
+  # Default: False
+  use_legacy_tmpl: false
 # Metadata pertaining to the specifics of the system which the Configuration is
 # meant to be applied to.
 metadata:
@@ -199,7 +202,7 @@ metadata:
   # Amount of GPUs on the system, ex: 8
   # Default: None
   gpu_count:
-  # Family the of the system GPU, ex: H100
+  # Family of the system GPU, ex: H100
   # Default: None
   gpu_family:
   # Manufacturer of the system GPU, ex: Nvidia
@@ -394,6 +397,9 @@ train:
   # Optional path to a yaml file that tracks the progress of multiphase training.
   # Default: None
   training_journal:
+  # Use legacy IBM Granite chat template (default uses 3.0 Instruct template)
+  # Default: False
+  use_legacy_tmpl: false
 # Configuration file structure version.
 # Default: 1.0.0
 version: 1.0.0

@@ -308,6 +308,10 @@ class _generate(BaseModel):
         default_factory=lambda: DEFAULTS.SEED_FILE,
         deprecated=True,
     )
+    use_legacy_tmpl: bool = Field(
+        default=False,
+        description="Use legacy IBM Granite chat template (default uses 3.0 Instruct template)",
+    )
 
 
 class _mmlu(BaseModel):
@@ -547,6 +551,10 @@ class _train(BaseModel):
     training_journal: str | None = Field(
         default=None,
         description="Optional path to a yaml file that tracks the progress of multiphase training.",
+    )
+    use_legacy_tmpl: bool = Field(
+        default=False,
+        description="Use legacy IBM Granite chat template (default uses 3.0 Instruct template)",
     )
 
 
@@ -1417,9 +1425,10 @@ def map_train_to_library(ctx, params):
         train_args.disable_flash_attn = True
 
     student_model_arch = get_model_arch(pathlib.Path(params["model_path"]))
-    train_args.use_legacy_tmpl = use_legacy_pretraining_format(
-        params["model_path"], student_model_arch
-    )
+    if not params["use_legacy_tmpl"]:
+        train_args.use_legacy_tmpl = use_legacy_pretraining_format(
+            params["model_path"], student_model_arch
+        )
     return train_args, torch_args
 
 
