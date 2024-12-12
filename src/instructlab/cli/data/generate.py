@@ -250,9 +250,12 @@ def generate(
     # Check if student model specifies a tokenizer config. If so, check if the special tokens specified
     # match those of granite-7b. If so, set legacy_pretraining_format to true. If no tokenizer config is
     # available, rely on model architecture to make that decision
-    legacy_pretraining_format = use_legacy_pretraining_format(
-        student_model_path, student_model_arch
-    )
+    if ctx.obj.config.general.use_legacy_tmpl:
+        legacy_pretraining_format = True
+    else:
+        legacy_pretraining_format = use_legacy_pretraining_format(
+            student_model_path, student_model_arch
+        )
 
     try:
         gen_data(
