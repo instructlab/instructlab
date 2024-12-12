@@ -40,7 +40,6 @@ import yaml
 from . import common
 from .common import CLI_HELPER_SYS_PROMPT, SYSTEM_PROMPTS, SupportedModelArchitectures
 from .defaults import DEFAULTS
-from .configuration import read_config
 
 # mypy: disable_error_code="import-untyped"
 
@@ -1017,9 +1016,6 @@ def use_legacy_pretraining_format(model_path: Path, model_arch: str) -> bool:
     returns
         (bool): True if we should use legacy pretraining format and template, false if not
     """
-    if read_config().general.use_legacy_tmpl:
-        return True
-
     try:
         _, eos_token, bos_token = get_model_template_from_tokenizer(model_path)
         if eos_token is not None and bos_token is not None:
