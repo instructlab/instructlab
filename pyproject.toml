@@ -60,7 +60,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 
 [project.entry-points."instructlab.command.model"]
 "chat" = "instructlab.cli.model.chat:chat"
-"convert" = "instructlab.model.convert:convert"
+"convert" = "instructlab.cli.model.convert:convert"
 "download" = "instructlab.cli.model.download:download"
 "evaluate" = "instructlab.cli.model.evaluate:evaluate"
 "serve" = "instructlab.cli.model.serve:serve"
@@ -162,7 +162,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 # vendored files, maintained externally
-"src/instructlab/llamacpp/llamacpp_convert_to_gguf.py" = ["ALL"]
+"src/instructlab/llamacpp/convert_to_gguf.py" = ["ALL"]
 "src/instructlab/mlx_explore/**" = ["ALL"]
 "src/instructlab/train/lora_mlx/**" = ["ALL"]
 
@@ -194,7 +194,7 @@ follow_imports = "silent"
 exclude = [
   # These are files that were copied from the original codebase.
   # We are trying to keep changes to a minimum.
-  "^src/instructlab/llamacpp/llamacpp_convert_to_gguf\\.py$",
+  "^src/instructlab/llamacpp/convert_to_gguf\\.py$",
   "^src/instructlab/mlx_explore/gguf_convert_to_mlx\\.py$",
   "^src/instructlab/mlx_explore/utils\\.py$",
   "^src/instructlab/train/lora_mlx/convert\\.py$",
