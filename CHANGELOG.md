@@ -5,6 +5,7 @@
 ### Features
 
 * `ilab train --pipeline=accelerated --strategy=lab-skills-only` supports training with only the skills phase (leaving out knowledge).
+* Previously, System Profile Auto-Detection was done by reading the names of the yaml files and matching them to your Hardware. We now depend on the Metadata class stored in the Configuration file itself. Please select `y` when prompted to over-write your existing system profiles to utilize the Auto-Detection System.
 
 ## v0.21
 
