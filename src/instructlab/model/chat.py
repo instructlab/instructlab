@@ -54,8 +54,6 @@ Help / TL;DR
 - `/s filepath`: **s**ave current session to `filepath`
 - `/l filepath`: **l**oad `filepath` and start a new session
 - `/L filepath`: **l**oad `filepath` (permanently) and start a new session
-
-Press Alt (or Meta) and Enter or Esc Enter to end multiline input.
 """
 
 CONTEXTS = {
@@ -421,6 +419,15 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         temp = content == "/m"  # soft multiline only for next prompt
         self.multiline = not self.multiline
         self.multiline_mode = 1 if not temp else 2
+        if self.multiline:
+            mode = " (for the next session only)" if temp else ""
+            self._sys_print(
+                Markdown(
+                    f"**Multi-line mode enabled{mode}.**\nPress **Alt+Enter** or **Esc Enter** to submit your multi-line input."
+                )
+            )
+        else:
+            self._sys_print(Markdown("**Multi-line mode disabled.**"))
         raise KeyboardInterrupt
 
     def _handle_amend(self, content):
