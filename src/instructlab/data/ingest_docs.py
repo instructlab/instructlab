@@ -5,17 +5,16 @@ import os
 
 # Third Party
 from haystack import Pipeline  # type: ignore
-from haystack.components.converters import JSONConverter  # type: ignore
+from haystack.components.converters import TextFileToDocument
 from haystack.components.embedders import (  # type: ignore
     SentenceTransformersDocumentEmbedder,
 )
-from haystack.components.joiners import DocumentJoiner  # type: ignore
-from haystack.components.preprocessors import (  # type: ignore
-    DocumentCleaner,
-    DocumentSplitter,
-)
+from haystack.components.preprocessors import DocumentCleaner  # type: ignore
 from haystack.components.writers import DocumentWriter  # type: ignore
 from milvus_haystack import MilvusDocumentStore  # type: ignore
+
+# First Party
+from instructlab.haystack.docling_splitter import DoclingDocumentSplitter
 
 logger = logging.getLogger(__name__)
 
@@ -65,11 +64,10 @@ def _create_pipeline(
 ) -> Pipeline:
     pipeline = Pipeline()
     pipeline.add_component(instance=_converter(), name="converter")
-    pipeline.add_component(instance=DocumentJoiner(), name="document_joiner")
     pipeline.add_component(instance=DocumentCleaner(), name="document_cleaner")
     # TODO make the params configurable
     pipeline.add_component(
-        instance=DocumentSplitter(split_by="word", split_length=150, split_overlap=50),
+        instance=_splitter(embedding_model),
         name="document_splitter",
     )
     # TODO make this more generic
@@ -93,8 +91,7 @@ def _create_pipeline(
 
 
 def _connect_components(pipeline):
-    pipeline.connect("converter", "document_joiner")
-    pipeline.connect("document_joiner", "document_cleaner")
+    pipeline.connect("converter", "document_cleaner")
     pipeline.connect("document_cleaner", "document_splitter")
     pipeline.connect("document_splitter", "document_embedder")
     pipeline.connect("document_embedder", "document_writer")
@@ -129,8 +126,12 @@ def _document_store(vectordb_type, vectordb_uri, collection_name):
 
 
 def _converter():
-    jq_expr = '.["main-text"][]'
-    json_converter = JSONConverter(
-        jq_schema=jq_expr, content_key="text", extra_meta_fields={"type", "name"}
+    return TextFileToDocument()
+
+
+def _splitter(embedding_model):
+    return DoclingDocumentSplitter(
+        embedding_model_id=embedding_model.local_model_path(),
+        content_format="json",
+        max_tokens=150,
     )
-    return json_converter
