@@ -61,6 +61,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "test" = "instructlab.model.test:test"
 "train" = "instructlab.cli.model.train:train"
 "list" = "instructlab.cli.model.list:model_list"
+"upload" = "instructlab.cli.model.upload:upload"
 
 [project.entry-points."instructlab.command.system"]
 "info" = "instructlab.system.info:info"
@@ -98,6 +99,7 @@ include = [
   "instructlab.generator",
   "instructlab.cli",
   "instructlab.cli.model",
+  "instructlab.model",
   "instructlab.train",
   "instructlab.train.lora_mlx",
   "instructlab.train.lora_mlx.models",

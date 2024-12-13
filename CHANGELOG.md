@@ -1,3 +1,11 @@
+## v0.23
+
+### Breaking Changes
+
+### Features
+
+* A new command `ilab model upload` has been introduced so users can now upload their trained models to [Hugging Face](https://huggingface.co/) via the `ilab` CLI
+
 ## v0.22
 
 ### Breaking Changes

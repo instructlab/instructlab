@@ -16,6 +16,9 @@ MODEL_FAMILIES = {"granite", "mixtral"}
 # Map model names to their family
 MODEL_FAMILY_MAPPINGS = {"merlinite": "granite", "mistral": "mixtral"}
 
+# Destinations where users can upload models
+UPLOAD_DESTINATIONS = frozenset({"hf", "oci", "s3"})
+
 # Indentation constant
 DEFAULT_INDENT = "    "
 
