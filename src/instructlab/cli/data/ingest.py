@@ -54,6 +54,7 @@ logger = logging.getLogger(__name__)
     default="sentence-transformers/all-minilm-l6-v2",
     envvar="ILAB_EMBEDDING_MODEL_NAME",
     type=click.STRING,
+    help="The embedding model name",
 )
 @click.argument(
     "input_dir",

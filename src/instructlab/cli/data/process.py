@@ -47,6 +47,7 @@ logger = logging.getLogger(__name__)
     "embedding_model_name",
     default="sentence-transformers/all-minilm-l6-v2",
     envvar="ILAB_EMBEDDING_MODEL_NAME",
+    help="The embedding model name",
     type=click.STRING,
 )
 @click.pass_context

@@ -17,30 +17,31 @@ def rag_options(command):
     """Wrapper to apply common options."""
     command = click.option(
         "--rag",
+        "is_rag",
         is_flag=True,
         envvar="ILAB_RAG",
-        type=click.BOOL,
+        help="To enable Retrieval-Augmented Generation",
     )(command)
     command = click.option(
         "--document-store-type",
         default="milvuslite",
         envvar="ILAB_DOCUMENT_STORE_TYPE",
         type=click.STRING,
-        help="The vector DB type, one of: `milvuslite`, `milvus`.",
+        help="The document store type, one of: `milvuslite`, `milvus`.",
     )(command)
     command = click.option(
         "--document-store-uri",
         default="embeddings.db",
         envvar="ILAB_DOCUMENT_STORE_URI",
         type=click.STRING,
-        help="The vector DB URI",
+        help="The document store URI",
     )(command)
     command = click.option(
         "--document-store-collection-name",
         default="Ilab",
         envvar="ILAB_DOCUMENT_STORE_COLLECTION_NAME",
         type=click.STRING,
-        help="The vector DB collection name",
+        help="The document store collection name",
     )(command)
     command = click.option(
         "--retriever-top-k",
@@ -91,18 +92,18 @@ class _retriever(BaseModel):
 
 class RagConfig:
     def __init__(self, rag_config: dict[str, Any], **kwargs):
-        print(f"init from {rag_config}")
-        print(f"init from {kwargs}")
-        self.enabled = rag_config.get("enable") or kwargs.get("rag")
+        logger.debug(f"init from {rag_config}")
+        logger.debug(f"init from {kwargs}")
+        self.enabled = rag_config.get("enable") or kwargs.get("is_rag")
         self.document_store = _document_store(
             **(rag_config.get("document_store") or {})
         )
         self.retriever = _retriever(**(rag_config.get("retriever") or {}))
 
-        logger.info(f"Before injecting config: {vars(self)}")
+        logger.debug(f"Before injecting config: {vars(self)}")
         init_from_flags(model=self.document_store, **kwargs)
         init_from_flags(model=self.retriever, **kwargs)
-        logger.info(f"After injecting config: {vars(self)}")
+        logger.debug(f"After injecting config: {vars(self)}")
 
 
 def no_rag_config() -> RagConfig:
@@ -116,15 +117,15 @@ def init_from_flags(model: BaseModel, prefix="", **kwargs):
     if model_name.startswith("_"):
         model_name = model_name[1:] + "_"
     model_name = prefix + model_name
-    logger.info(f"model_name is {model_name}")
+    logger.debug(f"model_name is {model_name}")
     for key, value in kwargs.items():
         if value is not None:
-          logger.debug(f"key is {key}")
-          if key.startswith(model_name):
-              attr_name = key.replace(model_name, "")
-              if hasattr(model, attr_name):
-                  logger.info(f"Overriding from flag {key}")
-                  setattr(model, attr_name, value)
+            logger.debug(f"key is {key}")
+            if key.startswith(model_name):
+                attr_name = key.replace(model_name, "")
+                if hasattr(model, attr_name):
+                    logger.debug(f"Overriding from flag {key}")
+                    setattr(model, attr_name, value)
 
     prefix = model_name
     for _, value in vars(model).items():

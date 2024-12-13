@@ -17,22 +17,8 @@ chat:
   # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
   model: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
   # The RAG chat configuration
-  rag:
-    # To enable the RAG chat.
-    # Default: False
-    is_rag: false
-    # The prompt with augmented context.
-    # Default: 
-    # Given the following information, answer the question.
-
-    # Context:{context}
-    # Question:{user_query}
-    # Answer:
-    rag_prompt: "\nGiven the following information, answer the question.\n\nContext:{context}\n\
-      Question:{user_query}\nAnswer:"
-    # The maximum number of documents to retrieve (default is 10)
-    # Default: 10
-    retriever_top_k: 10
+  # Default: {}
+  rag: {}
   # Filepath of a dialog session file.
   # Default: None
   session:
