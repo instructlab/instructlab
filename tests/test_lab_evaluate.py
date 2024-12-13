@@ -129,6 +129,7 @@ def run_mt_bench(cli_runner, error_rate):
             {round(error_rate, 2)}
             """
         )
+    expected += "\nᕦ(òᴗóˇ)ᕤ Model evaluate with MTBench completed! ᕦ(òᴗóˇ)ᕤ\n"
     assert result.output == expected
 
 
@@ -195,6 +196,7 @@ def run_mt_bench_branch(cli_runner, error_rate):
             {round(error_rate, 2)}
             """
         )
+    expected += "\nᕦ(òᴗóˇ)ᕤ Model evaluate with MTBenchBranch completed! ᕦ(òᴗóˇ)ᕤ\n"
     assert result.output == expected
 
 
@@ -304,6 +306,7 @@ def test_evaluate_mmlu(
         task2 - 0.9
         """
     )
+    expected += "\nᕦ(òᴗóˇ)ᕤ Model evaluate with MMLU completed! ᕦ(òᴗóˇ)ᕤ\n"
     assert result.output == expected
 
 
@@ -364,6 +367,7 @@ def test_evaluate_mmlu_branch(
         1. task5 (0.5)
         """
     )
+    expected += "\nᕦ(òᴗóˇ)ᕤ Model evaluate with MMLUBranch completed! ᕦ(òᴗóˇ)ᕤ\n"
     assert result.output == expected
 
 
