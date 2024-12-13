@@ -11,7 +11,6 @@ import time
 import traceback
 
 # Third Party
-# RAG
 from openai import OpenAI
 from prompt_toolkit import PromptSession
 from prompt_toolkit.formatted_text import FormattedText
