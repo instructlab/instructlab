@@ -92,6 +92,9 @@ general:
   # Log level for logging.
   # Default: INFO
   log_level: INFO
+  # Use legacy IBM Granite chat template (default uses 3.0 Instruct template)
+  # Default: False
+  use_legacy_tmpl: false
 # Generate configuration section.
 generate:
   # Maximum number of words per chunk.
@@ -199,7 +202,7 @@ metadata:
   # Amount of GPUs on the system, ex: 8
   # Default: None
   gpu_count:
-  # Family the of the system GPU, ex: H100
+  # Family of the system GPU, ex: H100
   # Default: None
   gpu_family:
   # Manufacturer of the system GPU, ex: Nvidia
