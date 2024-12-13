@@ -1,5 +1,5 @@
 # Standard
-from pathlib import Path
+import glob
 import logging
 import os
 
@@ -26,12 +26,10 @@ class VectorDbParams:
         vectordb_type,
         vectordb_uri,
         vectordb_collection_name,
-        vectordb_authentication,
     ):
         self.type = vectordb_type
         self.uri = vectordb_uri
         self.collection_name = vectordb_collection_name
-        self.vectordb_authentication = vectordb_authentication
 
 
 class EmbeddingModel:
@@ -39,18 +37,16 @@ class EmbeddingModel:
         self,
         model_dir,
         model_name,
-        model_token,
     ):
         self.model_dir = model_dir
         self.model_name = model_name
-        self.model_token = model_token
 
     def validate_local_model_path(self):
         local_model_path = self.local_model_path()
         return os.path.exists(local_model_path) and os.path.isdir(local_model_path)
 
     def local_model_path(self) -> str:
-        return os.path.join(self.model_dir, self.model_name)
+        return str(os.path.join(self.model_dir, self.model_name))
 
 
 def ingest_docs(
@@ -106,7 +102,11 @@ def _connect_components(pipeline):
 
 def _ingest_docs(pipeline, input_dir):
     ingestion_results = pipeline.run(
-        {"converter": {"sources": list(Path(input_dir).glob("**/*"))}}
+        {
+            "converter": {
+                "sources": glob.glob(os.path.join(input_dir, "docling-artifacts/*json"))
+            }
+        }
     )
 
     document_store = pipeline.get_component("document_writer").document_store

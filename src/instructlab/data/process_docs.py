@@ -6,13 +6,16 @@ import os
 # Third Party
 from instructlab.sdg.utils.chunkers import DocumentChunker
 
+# First Party
+from instructlab.utils import clear_directory
+
 logger = logging.getLogger(__name__)
 
 
-def transform_docs(input_dir, output_dir, model_path):
-    logger.info(f"Transforming {input_dir} to {output_dir} using {model_path}")
-    if not Path(output_dir).exists():
-        os.makedirs(output_dir, exist_ok=True)
+def process_docs(input_dir, output_dir, model_path):
+    logger.info(f"Processing {input_dir} to {output_dir} using {model_path}")
+
+    clear_directory(Path(output_dir))
 
     source_files = _load_source_files(input_dir=input_dir)
     logger.info(f"Transforming source files {[p.name for p in source_files]}")
@@ -34,7 +37,11 @@ def transform_docs(input_dir, output_dir, model_path):
 
 
 def _load_source_files(input_dir) -> list[Path]:
-    return [Path(os.path.join(input_dir, f)) for f in os.listdir(input_dir)]
+    return [
+        Path(os.path.join(input_dir, f))
+        for f in os.listdir(input_dir)
+        if os.path.isfile(os.path.join(input_dir, f))
+    ]
 
 
 def _dummy_leaf_node(source_files):

@@ -3,7 +3,7 @@
 # Standard
 from os import path
 from re import match
-from typing import Any, Optional, Union
+from typing import Any, Dict, Optional, Union
 import enum
 import logging
 import os
@@ -122,20 +122,6 @@ class _general(BaseModel):
         return self
 
 
-class _rag_chat(BaseModel):
-    """Class describing RAG configuration of the 'chat' sub-command."""
-
-    is_rag: Optional[bool] = Field(default=False, description="To enable the RAG chat.")
-    retriever_top_k: Optional[int] = Field(
-        default=10,
-        description="The maximum number of documents to retrieve (default is 10)",
-    )
-    rag_prompt: Optional[StrictStr] = Field(
-        default="\nGiven the following information, answer the question.\n\nContext:{context}\nQuestion:{user_query}\nAnswer:",
-        description="The prompt with augmented context.",
-    )
-
-
 class _chat(BaseModel):
     """Class describing configuration of the 'chat' sub-command."""
 
@@ -171,8 +157,8 @@ class _chat(BaseModel):
         default=1.0,
         description="Controls the randomness of the model's responses. Lower values make the output more deterministic, while higher values produce more random results.",
     )
-    rag: Optional[_rag_chat] = Field(
-        default_factory=_rag_chat, description="The RAG chat configuration"
+    rag: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="The RAG chat configuration"
     )
 
 
