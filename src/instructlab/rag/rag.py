@@ -34,7 +34,7 @@ def rag_prompt() -> str:
     return _DEFAULT_RAG_PROMPT
 
 
-def init_rag_chat_pipeline(
+def _init_rag_chat_pipeline(
     rag_config: RagConfig,
 ):
     if rag_config.document_store.type == "milvuslite":
@@ -67,3 +67,41 @@ def init_rag_chat_pipeline(
         raise ValueError(
             f"Unmanaged document store type {rag_config.document_store.type}"
         )
+
+
+class RagHandler:
+    def __init__(self, rag_config: RagConfig):
+        self._rag_config = rag_config
+        self.rag_pipeline = None
+        self.rag_prompt = rag_prompt()
+
+    def is_enabled(self) -> bool:
+        return self._rag_config.enabled
+
+    def toggle_state(self) -> bool:
+        self._rag_config.enabled = not self._rag_config.enabled
+
+    def augment_user_query(self, user_query: str) -> str:
+        if self.rag_pipeline is None:
+            self.rag_pipeline = _init_rag_chat_pipeline(
+                rag_config=self._rag_config,
+            )
+
+        retrieval_results = self.rag_pipeline.run(
+            {
+                "embedder": {"text": user_query},
+            }
+        )
+        context = "\n".join(
+            [doc.content for doc in retrieval_results["retriever"]["documents"]]
+        )
+
+        logger.debug("-" * 10)
+        logger.debug(f"RAG context is {context}")
+        logger.debug("-" * 10)
+
+        updated_user_query = self.rag_prompt.format(
+            context=context, user_query=user_query
+        )
+        logger.debug(f"Updated user query is {updated_user_query}")
+        return updated_user_query

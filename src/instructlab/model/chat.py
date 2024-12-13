@@ -31,7 +31,7 @@ from instructlab import client_utils as ilabclient
 from instructlab import configuration as cfg
 from instructlab import log
 from instructlab.client_utils import HttpClientParams
-from instructlab.rag.rag import init_rag_chat_pipeline, rag_prompt
+from instructlab.rag.rag import RagHandler
 from instructlab.rag.rag_configuration import RagConfig, no_rag_config, rag_options
 
 # Local
@@ -359,9 +359,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self.log_file = log_file
         self.max_tokens = max_tokens
         self.temperature = temperature
-        self.rag_pipeline = None
-        self.rag_config = rag_config
-        self.rag_prompt = rag_prompt()
+        self.rag_handler = RagHandler(rag_config)
 
         self.console = Console()
 
@@ -413,7 +411,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             [
                 (
                     "#3f7cac bold",
-                    "[RAG]" if self.rag_config.enabled else "",
+                    "[RAG]" if self.rag_handler.is_enabled() else "",
                 ),  # info blue for multiple
                 (
                     "#3f7cac bold",
@@ -614,7 +612,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         raise KeyboardInterrupt
 
     def _handle_rag(self, _):
-        self.rag_config.enabled = not self.rag_config.enabled
+        self.rag_handler.toggle_state()
         raise KeyboardInterrupt
 
     def start_prompt(
@@ -660,27 +658,8 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
         self.log_message(PROMPT_PREFIX + content + "\n\n")
 
-        if self.rag_config.enabled:
-            if self.rag_pipeline is None:
-                self.rag_pipeline = init_rag_chat_pipeline(
-                    rag_config=self.rag_config,
-                )
-
-            retrieval_results = self.rag_pipeline.run(
-                {
-                    "embedder": {"text": content},
-                }
-            )
-            context = "\n".join(
-                [doc.content for doc in retrieval_results["retriever"]["documents"]]
-            )
-
-            logger.debug("-" * 10)
-            logger.debug(f"RAG context is {context}")
-            logger.debug("-" * 10)
-
-            content = self.rag_prompt.format(context=context, user_query=content)
-            logger.debug(f"Updated user query is {content}")
+        if self.rag_handler.is_enabled():
+            content = self.rag_handler.augment_user_query(content)
 
         # Update message history and token counters
         self._update_conversation(content, "user")
