@@ -60,7 +60,8 @@ class TestConfig:
         assert cfg.generate.teacher.llama_cpp.llm_family == ""
         assert cfg.generate.teacher.vllm is not None
         assert cfg.generate.teacher.vllm.vllm_args == []
-        assert cfg.generate.teacher.host_port == "127.0.0.1:8000"
+        assert cfg.generate.teacher.server.host == "127.0.0.1"
+        assert cfg.generate.teacher.server.port == 8000
         assert cfg.generate.teacher.backend is None
         assert cfg.generate.teacher.chat_template is None
         assert cfg.generate.pipeline == "full"
@@ -83,7 +84,8 @@ class TestConfig:
         assert cfg.serve.llama_cpp.llm_family == ""
         assert cfg.serve.vllm is not None
         assert cfg.serve.vllm.vllm_args == []
-        assert cfg.serve.host_port == "127.0.0.1:8000"
+        assert cfg.serve.server.host == "127.0.0.1"
+        assert cfg.serve.server.port == 8000
         assert cfg.serve.backend is None
         assert cfg.serve.chat_template is None
 

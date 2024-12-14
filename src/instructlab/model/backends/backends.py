@@ -11,7 +11,7 @@ import click
 
 # Local
 from ...configuration import _serve as serve_config
-from ...utils import is_model_gguf, is_model_safetensors, split_hostport
+from ...utils import is_model_gguf, is_model_safetensors
 from .common import CHAT_TEMPLATE_AUTO, LLAMA_CPP, VLLM
 from .server import BackendServer
 
@@ -135,7 +135,8 @@ def select_backend(
         click.secho(f"Failed to determine backend: {e}", fg="red")
         raise click.exceptions.Exit(1)
 
-    host, port = split_hostport(cfg.host_port)
+    host = cfg.server.host
+    port = cfg.server.port
     chat_template = cfg.chat_template
     if not chat_template:
         chat_template = CHAT_TEMPLATE_AUTO

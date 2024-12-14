@@ -83,6 +83,20 @@ def warn_for_unsupported_backend_param(ctx):
     cls=clickext.ConfigOption,
     config_sections="vllm",
 )
+@click.option(
+    "-h",
+    "--host",
+    type=str,
+    cls=clickext.ConfigOption,
+    config_sections="server",
+)
+@click.option(
+    "-p",
+    "--port",
+    type=int,
+    cls=clickext.ConfigOption,
+    config_sections="server",
+)
 @click.pass_context
 @clickext.display_params
 def serve(
@@ -96,6 +110,8 @@ def serve(
     backend: str | None,
     chat_template: str | None,
     gpus: int | None,
+    host: str,
+    port: int,
 ) -> None:
     """Starts a local server"""
 
@@ -112,6 +128,8 @@ def serve(
         backend,
         chat_template,
         gpus,
+        host,
+        port,
     )
 
 

@@ -219,7 +219,7 @@ test_bind_port(){
     }
 
     # configure a different port
-    exec sed -i.bak 's/:8000/:9999/g' %s
+    exec sed -i.bak 's/8000/9999/g' %s
 
     # check that ilab model serve is working on the new port
     # catch ERROR strings in the output
