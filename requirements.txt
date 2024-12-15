@@ -37,3 +37,4 @@ wandb>=0.16.4
 xdg-base-dirs>=6.0.1
 psutil>=6.0.0
 huggingface_hub[hf_transfer]>=0.1.8
+yq>=3.0.0
