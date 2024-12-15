@@ -91,6 +91,7 @@ optional-dependencies.cuda = { file = ["requirements/cuda.txt"] }
 optional-dependencies.hpu = { file = ["requirements/hpu.txt"] }
 optional-dependencies.mps = { file = ["requirements/mps.txt"] }
 optional-dependencies.rocm = { file = ["requirements/rocm.txt"] }
+optional-dependencies.milvus = { file = ["requirements/milvus.txt"] }
 
 [tool.setuptools.packages.find]
 where = ["src"]

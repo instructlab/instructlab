@@ -1,0 +1,2 @@
+# Cannot upgrade because of https://github.com/milvus-io/milvus-haystack/issues/39
+milvus_haystack==0.0.11
