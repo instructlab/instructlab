@@ -105,6 +105,15 @@ def get(model_path: pathlib.Path, backend: str | None) -> str:
     return backend
 
 
+def check_model_path_exists(model_path: pathlib.Path) -> None:
+    if not model_path.exists():
+        click.secho(
+            f"{model_path} does not exist. Please download model first.",
+            fg="red",
+        )
+        raise click.exceptions.Exit(1)
+
+
 def select_backend(
     cfg: serve_config,
     backend: Optional[str] = None,
@@ -118,6 +127,7 @@ def select_backend(
     logger.debug("Selecting backend for model %s", model_path)
 
     model_path = pathlib.Path(model_path or cfg.model_path)
+    check_model_path_exists(model_path)
     backend_name = backend if backend is not None else cfg.backend
     try:
         backend = get(model_path, backend_name)

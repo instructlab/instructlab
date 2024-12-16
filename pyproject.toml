@@ -7,7 +7,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "instructlab"
 authors = [{ name = "InstructLab", email = "dev@instructlab.ai" }]
-description = "CLI for interacting with InstructLab"
+description = "Core package for interacting with InstructLab"
 readme = "README.md"
 license = { text = "Apache-2.0 AND MIT" }
 requires-python = ">=3.10,<3.12"
@@ -62,7 +62,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "serve" = "instructlab.cli.model.serve:serve"
 "test" = "instructlab.model.test:test"
 "train" = "instructlab.cli.model.train:train"
-"list" = "instructlab.model.list:model_list"
+"list" = "instructlab.cli.model.list:model_list"
 
 [project.entry-points."instructlab.command.system"]
 "info" = "instructlab.system.info:info"

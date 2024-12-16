@@ -9,6 +9,7 @@
 ![`e2e-nvidia-t4-x1.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-t4-x1.yml/badge.svg?branch=main)
 ![`e2e-nvidia-l4-x1.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-l4-x1.yml/badge.svg?branch=main)
 ![`e2e-nvidia-l40s-x4.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-l40s-x4.yml/badge.svg?branch=main)
+![`e2e-nvidia-l40s-x8.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-l40s-x8.yml/badge.svg?branch=main)
 
 ## 📖 Contents
 

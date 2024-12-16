@@ -95,6 +95,9 @@ general:
   # Log level for logging.
   # Default: INFO
   log_level: INFO
+  # Use legacy IBM Granite chat template (default uses 3.0 Instruct template)
+  # Default: False
+  use_legacy_tmpl: false
 # Generate configuration section.
 generate:
   # Maximum number of words per chunk.

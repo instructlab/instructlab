@@ -419,3 +419,18 @@ def test_get_model_template(tmp_path: pathlib.Path):
     )
     assert eos == "<|endoftext|>"
     assert bos == "<|begginingoftext|>"
+
+
+def test_model_exist_check(cli_runner: CliRunner):
+    cmd = [
+        "--config",
+        "DEFAULT",
+        "model",
+        "chat",
+        "-m",
+        "test-model.gguf",
+    ]
+    result = cli_runner.invoke(lab.ilab, cmd)
+    assert (
+        "test-model.gguf does not exist. Please download model first." in result.stdout
+    )
