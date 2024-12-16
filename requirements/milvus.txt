@@ -1,2 +1,4 @@
 # Cannot upgrade because of https://github.com/milvus-io/milvus-haystack/issues/39
 milvus_haystack==0.0.11
+docling-core[chunking]>=2.10.0
+sentence-transformers>=3.0.0

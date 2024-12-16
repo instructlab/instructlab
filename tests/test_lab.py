@@ -125,6 +125,8 @@ subcommands: list[Command] = [
     Command(("data",), needs_config=False, should_fail=False),
     Command(("data", "generate")),
     Command(("data", "list")),
+    Command(("data", "process"), ("--input", ".", "--output", ".")),
+    Command(("data", "ingest", ".")),
     Command(("system",), needs_config=False, should_fail=False),
     Command(("system", "info"), needs_config=False, should_fail=False),
     Command(("taxonomy",), needs_config=False, should_fail=False),
@@ -257,7 +259,7 @@ def test_ilab_commands_tested():
         if not command.args:
             continue
         sub = tested.setdefault(command.args[0], set())
-        if len(command.args) == 2:
+        if len(command.args) >= 2:
             sub.add(command.args[1])
         else:
             sub.add("")
