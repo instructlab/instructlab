@@ -128,7 +128,7 @@ class Server(BackendServer):
         try:
             self.port = free_tcp_ipv4_port(self.host)
             # start new server
-            self.api_base = str(get_api_base(f"{self.host}:{self.port}"))
+            self.api_base = str(get_api_base(self.host, self.port))
             logger.debug(f"Starting a temporary server at {self.api_base}...")
             self.process = self.create_server_process(self.port)
             self.process.start()

@@ -4,7 +4,6 @@
 from functools import wraps
 from pathlib import Path
 from typing import List, Tuple, TypedDict
-from urllib.parse import urlparse
 import copy
 import glob
 import json
@@ -456,19 +455,6 @@ def validate_taxonomy(
                     f"{total_errors} total errors found across {len(taxonomy_files)} taxonomy files!"
                 )
             )
-
-
-def split_hostport(hostport: str) -> tuple[str, int]:
-    """Split server:port into server and port (IPv6 safe)"""
-    if "//" not in hostport:
-        # urlparse expects an URL-like input like '//host:port'
-        hostport = f"//{hostport}"
-    parsed = urlparse(hostport)
-    hostname = parsed.hostname
-    port = parsed.port
-    if not hostname or not port:
-        raise ValueError(f"Invalid host-port string: '{hostport}'")
-    return hostname, port
 
 
 def is_pretraining_dataset(ds: List[MessageSample]) -> bool:
