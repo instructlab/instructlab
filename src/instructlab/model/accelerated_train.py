@@ -595,7 +595,9 @@ def _mmlu(model: pathlib.Path) -> float:
     tasks = MMLU_TASKS
     if os.environ.get("INSTRUCTLAB_EVAL_MMLU_MIN_TASKS") is not None:
         tasks = tasks[:4]
-    evaluator = MMLUEvaluator(model, tasks=tasks)
+    model_arch = utils.get_model_arch(model)
+    system_prompt = utils.get_sysprompt(model_arch)
+    evaluator = MMLUEvaluator(model, tasks=tasks, system_prompt=system_prompt)
 
     # type the variable because MyPy doesn't seem to honor the types of the spread tuple
     ckpt_score: float

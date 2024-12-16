@@ -16,6 +16,7 @@ import click
 from instructlab import clickext
 from instructlab.configuration import _serve
 from instructlab.model.backends import backends
+from instructlab.utils import get_model_arch, get_sysprompt
 
 # Local
 from ..client_utils import http_client
@@ -786,11 +787,16 @@ def evaluate(
             if os.environ.get("INSTRUCTLAB_EVAL_MMLU_MIN_TASKS") is not None:
                 tasks = tasks[:4]
 
+            # MMLU needs the system prompt to correctly evaluate the model
+            model_path = pathlib.Path(model)
+            system_prompt = get_sysprompt(get_model_arch(model_path))
+
             evaluator = MMLUEvaluator(
-                model,
+                model_path=model,
                 tasks=tasks,
                 few_shots=few_shots,
                 batch_size=batch_size,
+                system_prompt=system_prompt,
             )
 
             server = None
@@ -827,20 +833,28 @@ def evaluate(
             # Third Party
             from instructlab.eval.mmlu import MMLUBranchEvaluator
 
+            # MMLU needs the system prompt to correctly evaluate the model.
+            # Accounts for the case when the baseline & model being compared differ in architectures
+            model_path, base_model_path = pathlib.Path(model), pathlib.Path(base_model)
+            base_model_system_prompt = get_sysprompt(get_model_arch(base_model_path))
+            model_system_prompt = get_sysprompt(get_model_arch(model_path))
+
             evaluators = [
                 MMLUBranchEvaluator(
-                    model,
-                    tasks_dir,
-                    ["mmlu_pr"],
+                    model_path=model,
+                    tasks_dir=tasks_dir,
+                    tasks=["mmlu_pr"],
                     few_shots=few_shots,
                     batch_size=batch_size,
+                    system_prompt=model_system_prompt,
                 ),
                 MMLUBranchEvaluator(
-                    base_model,
-                    tasks_dir,
-                    ["mmlu_pr"],
+                    model_path=base_model,
+                    tasks_dir=tasks_dir,
+                    tasks=["mmlu_pr"],
                     few_shots=few_shots,
                     batch_size=batch_size,
+                    system_prompt=base_model_system_prompt,
                 ),
             ]
             m_paths = [model, base_model]
