@@ -19,7 +19,13 @@ import click
 from instructlab import clickext
 from instructlab.configuration import DEFAULTS
 from instructlab.defaults import DEFAULT_INDENT
-from instructlab.utils import is_huggingface_repo, is_oci_repo, load_json
+from instructlab.utils import (
+    is_huggingface_repo,
+    is_oci_repo,
+    list_models,
+    load_json,
+    print_table,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -337,11 +343,14 @@ def download(ctx, repositories, releases, filenames, model_dir, hf_token):
 
         try:
             downloader.download()
+            click.echo(
+                f"\n✅ {downloader.repository} model download completed successfully!\n"
+            )
         # pylint: disable=broad-exception-caught
         except (ValueError, Exception) as exc:
             if isinstance(exc, ValueError) and "HF_TOKEN" in str(exc):
                 click.secho(
-                    f"\n{downloader.repository} requires a HF Token to be set.\nPlease use '--hf-token' or 'export HF_TOKEN' to download all necessary models.",
+                    f"\n{downloader.repository} requires a HF Token to be set.\nPlease use '--hf-token' or 'export HF_TOKEN' to download all necessary models.\n",
                     fg="yellow",
                 )
             else:
@@ -350,6 +359,11 @@ def download(ctx, repositories, releases, filenames, model_dir, hf_token):
                     fg="red",
                 )
                 raise click.exceptions.Exit(1)
+
+    click.echo("Available models (`ilab model list`):")
+    data = list_models([Path(model_dir)], False)
+    data_as_lists = [list(item) for item in data]
+    print_table(["Model Name", "Last Modified", "Size"], data_as_lists)
 
 
 _RECOMMENDED_SCOPEO_VERSION = "1.9.0"
