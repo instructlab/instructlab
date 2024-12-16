@@ -25,6 +25,9 @@ DEFAULT_INDENT = "    "
 # Default log format
 LOG_FORMAT = "%(levelname)s %(asctime)s %(name)s:%(lineno)d: %(message)s"
 
+# Recommended Scopeo version for OCI model downloading and uploading
+RECOMMENDED_SCOPEO_VERSION = "1.9.0"
+
 
 class STORAGE_DIR_NAMES:
     ILAB = "instructlab"
