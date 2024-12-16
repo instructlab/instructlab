@@ -1,5 +1,5 @@
 # Standard
-from typing import Any, Dict, List
+from typing import Any, Dict, List, cast
 import logging
 
 # Third Party
@@ -9,8 +9,11 @@ from docling_core.types.legacy_doc.document import (
     ExportedCCSDocument as LegacyDoclingDocument,
 )
 from docling_core.utils.legacy import legacy_to_docling_document
-from haystack import Document, component
-from haystack.core.serialization import default_from_dict, default_to_dict
+from haystack import Document, component  # type: ignore
+from haystack.core.serialization import (  # type: ignore
+    default_from_dict,
+    default_to_dict,
+)
 from pydantic_core._pydantic_core import ValidationError
 
 logger = logging.getLogger(__name__)
@@ -58,7 +61,9 @@ class DoclingDocumentSplitter:
                 # We expect the JSON coming from instructlab-sdg, so in docling "legacy" schema
                 # See this note about the content that will not be preserved in the transformation:
                 # https://github.com/DS4SD/docling-core/blob/3f631f06277a2a7301c4c7a4e45792242512ce11/docling_core/utils/legacy.py#L352
-                legacy_document = LegacyDoclingDocument.model_validate_json(text)
+                legacy_document: LegacyDoclingDocument = (
+                    LegacyDoclingDocument.model_validate_json(text)
+                )
                 document = legacy_to_docling_document(legacy_document)
             except ValidationError as e:
                 logger.warning(
@@ -84,7 +89,7 @@ class DoclingDocumentSplitter:
         """
         Serializes the component to a dictionary.
         """
-        return default_to_dict(
+        return default_to_dict(  # type: ignore[no-any-return]
             self,
             embedding_model_id=self.__embedding_model_id,
             content_format=self.__content_format,
@@ -95,4 +100,4 @@ class DoclingDocumentSplitter:
         """
         Deserializes the component from a dictionary.
         """
-        return default_from_dict(cls, data)
+        return cast("DoclingDocumentSplitter", default_from_dict(cls, data))

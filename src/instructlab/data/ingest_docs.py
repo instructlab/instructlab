@@ -5,7 +5,7 @@ import os
 
 # Third Party
 from haystack import Pipeline  # type: ignore
-from haystack.components.converters import TextFileToDocument
+from haystack.components.converters import TextFileToDocument  # type: ignore
 from haystack.components.embedders import (  # type: ignore
     SentenceTransformersDocumentEmbedder,
 )

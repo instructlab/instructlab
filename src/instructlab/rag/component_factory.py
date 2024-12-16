@@ -37,6 +37,11 @@ def create_retriever(
 
 
 def create_embedder(retriever_config: _retriever):
+    if retriever_config.embedder is None:
+        raise ValueError(
+            f"Missing value for field embedder in {vars(retriever_config)}"
+        )
+
     return SentenceTransformersTextEmbedder(
         model=retriever_config.embedder.local_model_path()
     )

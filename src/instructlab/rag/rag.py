@@ -59,13 +59,13 @@ def _init_rag_chat_pipeline(
 class RagHandler:
     def __init__(self, rag_config: RagConfig):
         self._rag_config = rag_config
-        self.rag_pipeline = None
+        self.rag_pipeline: Pipeline = None
         self.rag_prompt = rag_prompt()
 
     def is_enabled(self) -> bool:
-        return self._rag_config.enabled
+        return bool(self._rag_config.enabled)
 
-    def toggle_state(self) -> bool:
+    def toggle_state(self):
         self._rag_config.enabled = not self._rag_config.enabled
 
     def augment_user_query(self, user_query: str) -> str:

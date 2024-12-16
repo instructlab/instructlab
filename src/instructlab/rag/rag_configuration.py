@@ -66,6 +66,27 @@ def rag_options(command):
     return command
 
 
+def init_from_flags(model: BaseModel, prefix="", **kwargs):
+    model_name = model.__class__.__name__
+    if model_name.startswith("_"):
+        model_name = model_name[1:] + "_"
+    model_name = prefix + model_name
+    logger.debug(f"model_name is {model_name}")
+    for key, value in kwargs.items():
+        if value is not None:
+            logger.debug(f"key is {key}")
+            if key.startswith(model_name):
+                attr_name = key.replace(model_name, "")
+                if hasattr(model, attr_name):
+                    logger.debug(f"Overriding from flag {key}")
+                    setattr(model, attr_name, value)
+
+    prefix = model_name
+    for _, value in vars(model).items():
+        if isinstance(value, BaseModel):
+            init_from_flags(model=value, prefix=prefix, **kwargs)
+
+
 class _document_store(BaseModel):
     model_config = ConfigDict(extra="ignore")
     type: Optional[str] = None
@@ -82,7 +103,13 @@ class _embedder(BaseModel):
         return os.path.exists(local_model_path) and os.path.isdir(local_model_path)
 
     def local_model_path(self) -> str:
-        return str(os.path.join(self.model_dir, self.model_name))
+        if self.model_dir is None:
+            raise ValueError(f"Missing value for field model_dir in {vars(self)}")
+
+        if self.model_name is None:
+            raise ValueError(f"Missing value for field model_name in {vars(self)}")
+
+        return os.path.join(self.model_dir, self.model_name)
 
 
 class _retriever(BaseModel):
@@ -106,28 +133,4 @@ class RagConfig:
         logger.debug(f"After injecting config: {vars(self)}")
 
 
-def no_rag_config() -> RagConfig:
-    rag_config = RagConfig()
-    rag_config.enabled = False
-    return rag_config
-
-
-def init_from_flags(model: BaseModel, prefix="", **kwargs):
-    model_name = model.__class__.__name__
-    if model_name.startswith("_"):
-        model_name = model_name[1:] + "_"
-    model_name = prefix + model_name
-    logger.debug(f"model_name is {model_name}")
-    for key, value in kwargs.items():
-        if value is not None:
-            logger.debug(f"key is {key}")
-            if key.startswith(model_name):
-                attr_name = key.replace(model_name, "")
-                if hasattr(model, attr_name):
-                    logger.debug(f"Overriding from flag {key}")
-                    setattr(model, attr_name, value)
-
-    prefix = model_name
-    for _, value in vars(model).items():
-        if isinstance(value, BaseModel):
-            init_from_flags(model=value, prefix=prefix, **kwargs)
+no_rag_config: RagConfig = RagConfig({"enable": False})
