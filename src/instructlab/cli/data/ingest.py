@@ -8,12 +8,9 @@ import click
 
 # First Party
 from instructlab import clickext
-from instructlab.data.ingest_docs import (  # type: ignore
-    EmbeddingModel,
-    VectorDbParams,
-    ingest_docs,
-)
+from instructlab.data.ingest_docs import ingest_docs
 from instructlab.defaults import DEFAULTS
+from instructlab.rag.rag_configuration import _document_store, _embedder  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -21,25 +18,25 @@ logger = logging.getLogger(__name__)
 # TODO: fill-in help fields
 @click.command()
 @click.option(
-    "--vectordb-type",
+    "--document-store-type",
     default="milvuslite",
-    envvar="ILAB_VECTORDB_TYPE",
+    envvar="ILAB_DOCUMENT_STORE_TYPE",
     type=click.STRING,
-    help="The vector DB type, one of: `milvuslite`, `milvus`.",
+    help="The document store type, one of: `milvuslite`, `milvus`.",
 )
 @click.option(
-    "--vectordb-uri",
+    "--document-store-uri",
     default="embeddings.db",
-    envvar="ILAB_VECTORDB_URI",
+    envvar="ILAB_DOCUMENT_STORE_URI",
     type=click.STRING,
-    help="The vector DB URI",
+    help="The document store URI",
 )
 @click.option(
-    "--vectordb-collection-name",
-    default="Ilab",
-    envvar="ILAB_VECTORDB_COLLECTION_NAME",
+    "--document-store-collection-name",
+    default="IlabEmbeddings",
+    envvar="ILAB_DOCUMENT_STORE_COLLECTION_NAME",
     type=click.STRING,
-    help="The vector DB collection name",
+    help="The document store collection name",
 )
 @click.option(
     "--model-dir",
@@ -68,35 +65,35 @@ logger = logging.getLogger(__name__)
 @clickext.display_params
 def ingest(
     ctx,
-    vectordb_type,
-    vectordb_uri,
-    vectordb_collection_name,
+    document_store_type,
+    document_store_uri,
+    document_store_collection_name,
     model_dir,
     embedding_model_name,
     input_dir,
 ):
     """The embedding ingestion pipeline"""
 
-    vectordb_params = VectorDbParams(
-        vectordb_type=vectordb_type,
-        vectordb_uri=vectordb_uri,
-        vectordb_collection_name=vectordb_collection_name,
+    document_store_config = _document_store(
+        type=document_store_type,
+        uri=document_store_uri,
+        collection_name=document_store_collection_name,
     )
-    embedding_model = EmbeddingModel(
+    embedder_config = _embedder(
         model_dir=model_dir,
         model_name=embedding_model_name,
     )
-    logger.info(f"VectorDB params: {vars(vectordb_params)}")
-    logger.info(f"Embedding model: {vars(embedding_model)}")
-    if not embedding_model.validate_local_model_path():
+    logger.info(f"VectorDB params: {vars(document_store_config)}")
+    logger.info(f"Embedding model: {vars(embedder_config)}")
+    if not embedder_config.validate_local_model_path():
         raise click.UsageError(
             f"Cannot find local embedding model {embedding_model_name} in {model_dir}. Download the model before running the pipeline."
         )
 
     ingest_docs(
         input_dir=input_dir,
-        vectordb_params=vectordb_params,
-        embedding_model=embedding_model,
+        document_store_config=document_store_config,
+        embedder_config=embedder_config,
     )
 
     return

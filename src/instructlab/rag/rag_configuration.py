@@ -38,7 +38,7 @@ def rag_options(command):
     )(command)
     command = click.option(
         "--document-store-collection-name",
-        default="Ilab",
+        default="IlabEmbeddings",
         envvar="ILAB_DOCUMENT_STORE_COLLECTION_NAME",
         type=click.STRING,
         help="The document store collection name",
