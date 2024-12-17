@@ -135,6 +135,8 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
    📋 Make sure your system Python build is `Mach-O 64-bit executable arm64` by using `file -b $(command -v python)`, or if your system is setup with [pyenv](https://github.com/pyenv/pyenv) by using the `file -b $(pyenv which python)` command.
 
+   You can also quickly install using the [Bash script](https://github.com/instructlab/instructlab/blob/main/scripts/ilab-macos-installer.sh).
+
 #### Install using PyTorch without CUDA bindings and no GPU acceleration
 
 - Install on a standard Linux machine with:
