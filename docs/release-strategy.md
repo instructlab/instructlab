@@ -57,6 +57,7 @@ The following are the steps for how Y-stream and Z-stream releases gets cut.
 1. Create a new release on GitHub targeting the release branch and using the latest Y-Stream tag as the previous release (e.g. `0.15.1` precedes `0.16.0`).
 1. Announce release via the following:
     - The `#announce` channel on Slack
+    - The `#announce` channel on Discord
     - The `announce` mailing list
 1. Create a milestone on GitHub for the next release without a milestone.
 
@@ -67,6 +68,7 @@ The following are the steps for how Y-stream and Z-stream releases gets cut.
 1. Create a new release on GitHub targeting the release branch and using the previous Z-Stream tag as the previous release (e.g. `0.15.0` precedes `0.15.1`).
 1. If changes warrant an announcement, announce via the following:
     - The `#announce` channel on Slack
+    - The `#announce` channel on Discord
     - The `announce` mailing list
 
 ## Release Notes
