@@ -73,8 +73,6 @@ generate:
     #   - Custom chat template string
     #   - Auto: Uses default for serving backend
     chat_template: 'tokenizer'
-    # host and port where teacher model is being served
-    host_port: 127.0.0.1:8000
     # Llamacpp serving settings
     llama_cpp:
       # number of model layers to offload to GPU
@@ -86,6 +84,12 @@ generate:
       max_ctx_size: 4096
     # Path to teacher model that will be used to synthetically generate training data
     model_path: ~/.cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
+    # Server configuration including host and port.
+    server:
+      # host where the teacher is being served
+      host: 127.0.0.1
+      # port where the teacher is being served
+      port: 8000
 serve:
   # Serving backend to use to host the model
   backend: llama-cpp
@@ -93,8 +97,6 @@ serve:
   #   - Custom chat template string
   #   - Auto: Uses default for serving backend
   chat_template: auto
-  # host and port where the model is being served
-  host_port: 127.0.0.1:8000
   # Llamacpp serving settings
   llama_cpp:
     # number of model layers to offload to GPU
@@ -106,6 +108,12 @@ serve:
     max_ctx_size: 4096
   # Path to model that will be served for inference
   model_path: ~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+  # Server configuration including host and port.
+  server:
+    # host where the model is being served
+    host: 127.0.0.1
+    # port where the model is being served
+    port: 8000
 train:
   pipeline: simple
   # Directory where periodic training checkpoints are stored
