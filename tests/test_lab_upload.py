@@ -98,7 +98,7 @@ class TestLabUpload:
             result.exit_code == 1
         ), f"command finished with an unexpected exit code. {result.stdout}"
         assert (
-            f"Local model path {tmp_gguf} is a valid path, but is neither safetensors nor a GGUF - cannot upload"
+            f"Local model path {tmp_gguf} is a valid path, but is not a compliant format - cannot upload"
         ) in result.output
 
     def test_upload_invalid_safetensors_hf(
@@ -122,7 +122,7 @@ class TestLabUpload:
             result.exit_code == 1
         ), f"command finished with an unexpected exit code. {result.stdout}"
         assert (
-            f"Local model path {tmp_safetensor_dir} is a valid path, but is neither safetensors nor a GGUF - cannot upload"
+            f"Local model path {tmp_safetensor_dir} is a valid path, but is not a compliant format - cannot upload"
         ) in result.output
 
     def test_upload_bad_model_hf(self, cli_runner: CliRunner):
@@ -191,22 +191,33 @@ class TestLabUpload:
             f"Uploading GGUF model at {tmp_gguf} failed with the following Hugging Face Hub error:\n401 Client Error."
         ) in result.output
 
-    def test_upload_oci(self, cli_runner: CliRunner):
+    @patch("instructlab.model.upload.OCIModelUploader.upload_oci")
+    def test_upload_oci(
+        self,
+        mock_upload_oci: Mock,  # pylint: disable=unused-argument
+        tmp_path: pathlib.Path,
+        cli_runner: CliRunner,
+    ):
+        # TODO: replace with realistic OCI model
+        tmp_gguf = tmp_path / "model.gguf"
+        with open(tmp_gguf, "wb") as gguf_file:
+            gguf_file.write(struct.pack("<I", GGUF_MAGIC))
         result = cli_runner.invoke(
             lab.ilab,
             [
                 "--config=DEFAULT",
                 "model",
                 "upload",
-                "--model=foo",
+                f"--model={tmp_gguf}",
                 "--dest-type=oci",
-                "--destination=testuser/testgguf",
+                "--destination=docker://quay.io/testorg/testmodel",
+                "--release=latest",
             ],
         )
         assert (
-            result.exit_code == 1
+            result.exit_code == 0
         ), f"command finished with an unexpected exit code. {result.stdout}"
-        assert result.output == "Uploading of type oci is not yet supported\n"
+        assert f"Uploading OCI model at {tmp_gguf} succeeded!" in result.output
 
     def test_upload_s3(self, cli_runner: CliRunner):
         result = cli_runner.invoke(
