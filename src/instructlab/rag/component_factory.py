@@ -8,10 +8,15 @@ from milvus_haystack.milvus_embedding_retriever import (  # type: ignore
 )
 
 # First Party
-from instructlab.rag.rag_configuration import _document_store, _retriever
+from instructlab.rag.rag_configuration import (
+    _retriever_configuration,
+    document_store_configuration,
+)
 
 
-def create_document_store(document_store_config: _document_store, drop_old: bool):
+def create_document_store(
+    document_store_config: document_store_configuration, drop_old: bool
+):
     if document_store_config.type == "milvuslite":
         return MilvusDocumentStore(
             connection_args={"uri": document_store_config.uri},
@@ -23,8 +28,8 @@ def create_document_store(document_store_config: _document_store, drop_old: bool
 
 
 def create_retriever(
-    document_store_config: _document_store,
-    retriever_config: _retriever,
+    document_store_config: document_store_configuration,
+    retriever_config: _retriever_configuration,
     document_store: MilvusDocumentStore,
 ):
     if document_store_config.type == "milvuslite":
@@ -36,7 +41,7 @@ def create_retriever(
         raise ValueError(f"Unmanaged document store type {document_store_config.type}")
 
 
-def create_embedder(retriever_config: _retriever):
+def create_embedder(retriever_config: _retriever_configuration):
     if retriever_config.embedder is None:
         raise ValueError(
             f"Missing value for field embedder in {vars(retriever_config)}"

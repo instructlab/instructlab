@@ -87,14 +87,14 @@ def init_from_flags(model: BaseModel, prefix="", **kwargs):
             init_from_flags(model=value, prefix=prefix, **kwargs)
 
 
-class _document_store(BaseModel):
+class document_store_configuration(BaseModel):
     model_config = ConfigDict(extra="ignore")
     type: Optional[str] = None
     uri: Optional[str] = None
     collection_name: Optional[str] = None
 
 
-class _embedder(BaseModel):
+class embedder_configuration(BaseModel):
     model_dir: Optional[str] = None
     model_name: Optional[str] = None
 
@@ -112,9 +112,9 @@ class _embedder(BaseModel):
         return os.path.join(self.model_dir, self.model_name)
 
 
-class _retriever(BaseModel):
+class _retriever_configuration(BaseModel):
     top_k: Optional[int] = None
-    embedder: Optional[_embedder] = _embedder()
+    embedder: Optional[embedder_configuration] = embedder_configuration()
 
 
 class RagConfig:
@@ -122,10 +122,10 @@ class RagConfig:
         logger.debug(f"init from {rag_config}")
         logger.debug(f"init from {kwargs}")
         self.enabled = rag_config.get("enable") or kwargs.get("is_rag")
-        self.document_store = _document_store(
+        self.document_store = document_store_configuration(
             **(rag_config.get("document_store") or {})
         )
-        self.retriever = _retriever(**(rag_config.get("retriever") or {}))
+        self.retriever = _retriever_configuration(**(rag_config.get("retriever") or {}))
 
         logger.debug(f"Before injecting config: {vars(self)}")
         init_from_flags(model=self.document_store, **kwargs)

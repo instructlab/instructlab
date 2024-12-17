@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--input",
     "input_dir",
+    required=False,
     default=None,
     envvar="ILAB_PROCESS_INPUT",
     help="The folder with user documents to process.",

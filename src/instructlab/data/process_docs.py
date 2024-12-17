@@ -7,9 +7,9 @@ import os
 import time
 
 # Third Party
-from docling.datamodel.base_models import ConversionStatus
-from docling.datamodel.document import ConversionResult
-from docling.document_converter import DocumentConverter
+from docling.datamodel.base_models import ConversionStatus  # type: ignore
+from docling.datamodel.document import ConversionResult  # type: ignore
+from docling.document_converter import DocumentConverter  # type: ignore
 
 # First Party
 from instructlab.utils import clear_directory

@@ -10,7 +10,10 @@ import click
 from instructlab import clickext
 from instructlab.data.ingest_docs import ingest_docs
 from instructlab.defaults import DEFAULTS
-from instructlab.rag.rag_configuration import _document_store, _embedder  # type: ignore
+from instructlab.rag.rag_configuration import (  # type: ignore
+    document_store_configuration,
+    embedder_configuration,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -74,12 +77,12 @@ def ingest(
 ):
     """The embedding ingestion pipeline"""
 
-    document_store_config = _document_store(
+    document_store_config = document_store_configuration(
         type=document_store_type,
         uri=document_store_uri,
         collection_name=document_store_collection_name,
     )
-    embedder_config = _embedder(
+    embedder_config = embedder_configuration(
         model_dir=model_dir,
         model_name=embedding_model_name,
     )

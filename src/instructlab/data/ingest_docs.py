@@ -16,15 +16,18 @@ from milvus_haystack import MilvusDocumentStore  # type: ignore
 
 # First Party
 from instructlab.haystack.docling_splitter import DoclingDocumentSplitter
-from instructlab.rag.rag_configuration import _document_store, _embedder
+from instructlab.rag.rag_configuration import (
+    document_store_configuration,
+    embedder_configuration,
+)
 
 logger = logging.getLogger(__name__)
 
 
 def ingest_docs(
     input_dir: str,
-    document_store_config: _document_store,
-    embedder_config: _embedder,
+    document_store_config: document_store_configuration,
+    embedder_config: embedder_configuration,
 ):
     pipeline = _create_pipeline(
         document_store_config=document_store_config,
@@ -35,14 +38,15 @@ def ingest_docs(
 
 
 def _create_pipeline(
-    document_store_config: _document_store, embedder_config: _embedder
+    document_store_config: document_store_configuration,
+    embedder_config: embedder_configuration,
 ) -> Pipeline:
     pipeline = Pipeline()
-    pipeline.add_component(instance=_converter(), name="converter")
+    pipeline.add_component(instance=_converter_component(), name="converter")
     pipeline.add_component(instance=DocumentCleaner(), name="document_cleaner")
     # TODO make the params configurable
     pipeline.add_component(
-        instance=_splitter(embedder_config),
+        instance=_splitter_component(embedder_config),
         name="document_splitter",
     )
     # TODO make this more generic
@@ -54,7 +58,7 @@ def _create_pipeline(
     )
     pipeline.add_component(
         instance=DocumentWriter(
-            _document_store(
+            _document_store_component(
                 document_store_type=document_store_config.type,
                 document_store_uri=document_store_config.uri,
                 collection_name=document_store_config.collection_name,
@@ -88,7 +92,7 @@ def _ingest_docs(pipeline, input_dir):
     )
 
 
-def _document_store(document_store_type, document_store_uri, collection_name):
+def _document_store_component(document_store_type, document_store_uri, collection_name):
     if document_store_type == "milvuslite":
         document_store = MilvusDocumentStore(
             connection_args={"uri": document_store_uri},
@@ -100,11 +104,11 @@ def _document_store(document_store_type, document_store_uri, collection_name):
         raise ValueError(f"Unmanaged document store type {document_store_type}")
 
 
-def _converter():
+def _converter_component():
     return TextFileToDocument()
 
 
-def _splitter(embedding_model):
+def _splitter_component(embedding_model):
     return DoclingDocumentSplitter(
         embedding_model_id=embedding_model.local_model_path(),
         content_format="json",

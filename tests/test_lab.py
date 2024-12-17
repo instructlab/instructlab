@@ -129,7 +129,7 @@ subcommands: list[Command] = [
     Command(("data",), needs_config=False, should_fail=False),
     Command(("data", "generate")),
     Command(("data", "list")),
-    Command(("data", "process"), ("--input", ".", "--output", ".")),
+    Command(("data", "process", ".")),
     Command(("data", "ingest", ".")),
     Command(("system",), needs_config=False, should_fail=False),
     Command(("system", "info"), needs_config=False, should_fail=False),
