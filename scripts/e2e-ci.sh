@@ -480,35 +480,37 @@ usage() {
 
 # Process command line arguments
 task "Configuring ..."
-while [ $# -gt 0 ]; do
-    case "$1" in
-        -s)
+while getopts "smlxph" opt; do
+    case $opt in
+        s)
             SMALL=1
             step "Run small T-shirt size job."
-            shift ;;
-        -m)
+            ;;
+        m)
             MEDIUM=1
             step "Run medium T-shirt size job."
-            shift ;;
-        -l)
+            ;;
+        l)
             LARGE=1
             step "Run large T-shirt size job."
-            shift ;;
-        -xl)
+            ;;
+        x)
             XLARGE=1
             step "Run extra large T-shirt size job."
-            shift ;;
-        -p)
+            ;;
+        p)
             PRESERVE=1
             step "Preserve the E2E_TEST_DIR for debugging."
-            shift ;;
-        -h)
+            ;;
+        h)
             usage
-            exit 0 ;;
-        *)
-            echo "Invalid option: $1" >&2
+            exit 0
+            ;;
+        \?)
+            echo "Invalid option: -$opt" >&2
             usage
-            exit 1 ;;
+            exit 1
+            ;;
     esac
 done
 
