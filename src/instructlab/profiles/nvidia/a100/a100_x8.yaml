@@ -130,6 +130,6 @@ metadata:
   gpu_manufacturer: Nvidia
   gpu_family: A100
   gpu_count: 8
-  gpu_sku: [80GB HBM3, NVL, PCIe]
+  gpu_sku: ["SXM4 40GB", "PG509 200", "SXM4 80GB", "SXM 64GB", "80GB PCIe"]
 version: 1.0.0
 

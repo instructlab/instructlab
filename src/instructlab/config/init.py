@@ -349,9 +349,12 @@ def get_gpu_or_cpu() -> tuple[str, int, int]:
         click.echo("Detecting hardware...")
         gpus = torch.cuda.device_count()
         for i in range(gpus):
-            properties = torch.cuda.get_device_properties(i)
-            chip_name = properties.name.lower()
-            total_vram += properties.total_memory  # memory in B
+            chip_name, vram = utils.get_cuda_device_properties(i)
+            # if the SKU is something like A100-SXM4-40GB, split it for easier reading later
+            if "-" in chip_name:
+                chip_split = chip_name.split("-")
+                chip_name = " ".join(chip_split)
+            total_vram += vram
 
     vram = int(floor(convert_bytes_to_proper_mag(total_vram)[0]))
     # only do this on a CUDA system ROCm and HPU can have strange results when getting CPU info.

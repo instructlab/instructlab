@@ -77,6 +77,29 @@ class TestLabInit:
         )
 
     @patch(
+        "torch.cuda.is_available",
+        return_value=True,
+    )
+    @patch("torch.cuda.device_count", return_value=2)
+    @patch(
+        "instructlab.utils.get_cuda_device_properties",
+        return_value=("nvidia-a100-sxm4-40gb", 40000),
+    )
+    def test_ilab_config_init_auto_detection_nvidia_a100(
+        self,
+        get_device_properties_mock,  # pylint: disable=unused-argument
+        device_count_mock,  # pylint: disable=unused-argument
+        is_cuda_available_mock,  # pylint: disable=unused-argument
+        cli_runner: CliRunner,
+    ):
+        result = cli_runner.invoke(lab.ilab, ["config", "init", "--interactive"])
+        assert result.exit_code == 0, result.stdout
+        assert (
+            "We have detected the NVIDIA A100 X2 profile as an exact match for your system."
+            in result.stdout
+        )
+
+    @patch(
         "instructlab.config.init.get_gpu_or_cpu",
         return_value=("apple m3 max", 0, 0),
     )
