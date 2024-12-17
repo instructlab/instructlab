@@ -1,3 +1,12 @@
+## v0.23
+
+### Breaking Changes
+
+### Features
+
+* A new command `ilab model upload` has been introduced so users can now upload their trained models to [Hugging Face](https://huggingface.co/) via the `ilab` CLI
+* `ilab model serve` now has separate `--host` and `--port` options, replacing the `host_port` configuration. The default values are `127.0.0.1` for `--host` and `8000` for `--port`, allowing users to configure the server's binding address and port independently through the configuration file or command-line flags.
+
 ## v0.22
 
 ### Breaking Changes

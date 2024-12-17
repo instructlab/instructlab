@@ -203,7 +203,8 @@ def chat(
     # First Party
     from instructlab.model.backends.common import is_temp_server_running
 
-    users_endpoint_url = cfg.get_api_base(ctx.obj.config.serve.host_port)
+    serve_server = ctx.obj.config.serve.server
+    users_endpoint_url = cfg.get_api_base(serve_server.host, serve_server.port)
 
     # we prefer the given endpoint when one is provided, else we check if the user
     # is actively serving something before falling back to serving our own model

@@ -27,6 +27,7 @@ from pydantic import (
     ConfigDict,
     Field,
     PositiveInt,
+    StrictInt,
     StrictStr,
     ValidationError,
     field_validator,
@@ -208,6 +209,13 @@ class _serve_llama_cpp(BaseModel):
     )
 
 
+class _serve_server(BaseModel):
+    """Class describing configuration of server serving backend."""
+
+    host: StrictStr = Field(default="127.0.0.1", description="Host to serve on.")
+    port: StrictInt = Field(default=8000, description="Port to serve on.")
+
+
 class _serve(BaseModel):
     """Class describing configuration of the 'serve' sub-command."""
 
@@ -228,8 +236,9 @@ class _serve(BaseModel):
         description="Directory where model to be served is stored.",
     )
     # additional fields with defaults
-    host_port: StrictStr = Field(
-        default="127.0.0.1:8000", description="Host and port to serve on."
+    server: _serve_server = Field(
+        default=_serve_server(),
+        description="Server configuration including host and port.",
     )
     chat_template: Optional[str] = Field(
         default=None,
@@ -250,7 +259,7 @@ class _serve(BaseModel):
 
     def api_base(self):
         """Returns server API URL, based on the configured host and port"""
-        return get_api_base(self.host_port)
+        return get_api_base(self.server.host, self.server.port)
 
 
 class _generate(BaseModel):
@@ -1146,9 +1155,9 @@ def write_config_to_yaml(cfg: Config, file_path: str):
         yaml.dump(commented_map, yaml_file)
 
 
-def get_api_base(host_port: str) -> str:
-    """Returns server API URL, based on the provided host_port"""
-    return f"http://{host_port}/v1"
+def get_api_base(host: str, port: int) -> str:
+    """Returns server API URL, based on the provided host and port"""
+    return f"http://{host}:{port}/v1"
 
 
 def get_model_family(family, model_path):

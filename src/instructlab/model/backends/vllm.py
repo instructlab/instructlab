@@ -115,8 +115,7 @@ class Server(BackendServer):
         port = free_tcp_ipv4_port(self.host)
         logger.debug(f"Using available port {port} for temporary model serving.")
 
-        host_port = f"{self.host}:{port}"
-        temp_api_base = get_api_base(host_port)
+        temp_api_base = get_api_base(self.host, port)
         vllm_server_process = self.create_server_process(port, background)
         logger.info("Starting a temporary vLLM server at %s", temp_api_base)
         count = 0
@@ -309,7 +308,7 @@ def run_vllm(
                 start_new_session=True,
             )
 
-        api_base = get_api_base(f"{host}:{port}")
+        api_base = get_api_base(host, port)
         logger.info("vLLM starting up on pid %s at %s", vllm_process.pid, api_base)
 
     except:

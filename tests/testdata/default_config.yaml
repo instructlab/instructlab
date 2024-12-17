@@ -155,9 +155,6 @@ generate:
     #   - tokenizer
     #   - A filesystem path expressing the location of a custom template
     chat_template:
-    # Host and port to serve on.
-    # Default: 127.0.0.1:8000
-    host_port: 127.0.0.1:8000
     # llama-cpp serving settings.
     llama_cpp:
       # Number of model layers to offload to GPU. -1 means all layers.
@@ -175,6 +172,15 @@ generate:
     # Directory where model to be served is stored.
     # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
     model_path: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
+    # Server configuration including host and port.
+    # Default: host='127.0.0.1' port=8000
+    server:
+      # Host to serve on.
+      # Default: 127.0.0.1
+      host: 127.0.0.1
+      # Port to serve on.
+      # Default: 8000
+      port: 8000
     # vLLM serving settings.
     vllm:
       # Number of GPUs to use.
@@ -230,9 +236,6 @@ serve:
   #   - tokenizer
   #   - A filesystem path expressing the location of a custom template
   chat_template:
-  # Host and port to serve on.
-  # Default: 127.0.0.1:8000
-  host_port: 127.0.0.1:8000
   # llama-cpp serving settings.
   llama_cpp:
     # Number of model layers to offload to GPU. -1 means all layers.
@@ -250,6 +253,15 @@ serve:
   # Directory where model to be served is stored.
   # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
   model_path: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+  # Server configuration including host and port.
+  # Default: host='127.0.0.1' port=8000
+  server:
+    # Host to serve on.
+    # Default: 127.0.0.1
+    host: 127.0.0.1
+    # Port to serve on.
+    # Default: 8000
+    port: 8000
   # vLLM serving settings.
   vllm:
     # Number of GPUs to use.

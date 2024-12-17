@@ -26,12 +26,11 @@ from transformers import (
     BitsAndBytesConfig,
     StoppingCriteria,
     StoppingCriteriaList,
-    TrainingArguments,
 )
 
 # Transformer Reinforcement Learning
 # https://huggingface.co/docs/trl/index
-from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
+from trl import DataCollatorForCompletionOnlyLM, SFTConfig, SFTTrainer
 import torch
 
 # First Party
@@ -383,7 +382,7 @@ def linux_train(
         )
         generate_kwargs = {}
     else:
-        training_arguments = TrainingArguments(
+        training_arguments = SFTConfig(
             output_dir=output_dir,
             num_train_epochs=num_epochs,
             per_device_train_batch_size=per_device_train_batch_size,
@@ -393,6 +392,7 @@ def linux_train(
             use_cpu=model.device.type == "cpu",
             save_strategy="epoch",
             report_to="none",
+            max_seq_length=max_seq_length,
             # options to reduce GPU memory usage and improve performance
             # https://huggingface.co/docs/transformers/perf_train_gpu_one
             # https://stackoverflow.com/a/75793317
@@ -412,8 +412,7 @@ def linux_train(
             peft_config=peft_config,
             formatting_func=formatting_prompts_func,
             data_collator=collator,
-            max_seq_length=max_seq_length,
-            tokenizer=tokenizer,
+            processing_class=tokenizer,
             args=training_arguments,
         )
         generate_kwargs = {}
