@@ -30,6 +30,7 @@ from instructlab.schema.taxonomy import (
 from instructlab.training.chat_templates import (
     ibm_legacy_tmpl as granite_llama,  # type: ignore
 )
+from packaging import version
 import click
 import git
 import gitdb
@@ -38,7 +39,7 @@ import yaml
 # Local
 from . import common
 from .common import CLI_HELPER_SYS_PROMPT, SYSTEM_PROMPTS, SupportedModelArchitectures
-from .defaults import DEFAULTS
+from .defaults import DEFAULT_INDENT, DEFAULTS, RECOMMENDED_SCOPEO_VERSION
 
 # mypy: disable_error_code="import-untyped"
 
@@ -1016,3 +1017,38 @@ def use_legacy_pretraining_format(model_path: Path, model_arch: str) -> bool:
         )
         return model_arch.lower() == SupportedModelArchitectures.LLAMA
     return False
+
+
+def check_skopeo_version():
+    """
+    Check if skopeo is installed and the version is at least the recommended version
+    This is required for downloading models from OCI registries.
+    """
+    # Run the 'skopeo --version' command and capture the output
+    try:
+        result = subprocess.run(
+            ["skopeo", "--version"], capture_output=True, text=True, check=True
+        )
+    except FileNotFoundError as fnf_exc:
+        logger.error(
+            f"\nskopeo is not installed.\nPlease install recommended version {RECOMMENDED_SCOPEO_VERSION}",
+        )
+        raise fnf_exc
+
+    logger.debug(f"'skopeo --version' output: {result.stdout}")
+
+    # Extract the version number using a regular expression
+    match = re.search(r"skopeo version (\d+\.\d+\.\d+)", result.stdout)
+    if match:
+        installed_version = match.group(1)
+        logger.debug(f"detected skopeo version: {installed_version}")
+
+        # Compare the extracted version with the required version
+        if version.parse(installed_version) < version.parse(RECOMMENDED_SCOPEO_VERSION):
+            raise ValueError(
+                f"\n{DEFAULT_INDENT}skopeo version {installed_version} is lower than {RECOMMENDED_SCOPEO_VERSION}.\n{DEFAULT_INDENT}Please upgrade it."
+            )
+    else:
+        logger.warning(
+            f"Failed to determine skopeo version. Recommended version is {RECOMMENDED_SCOPEO_VERSION}. Downloading the model might fail."
+        )
