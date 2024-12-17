@@ -31,6 +31,7 @@ class Benchmark(str, enum.Enum):
     MMLU_BRANCH = "mmlu_branch"
     MT_BENCH = "mt_bench"
     MT_BENCH_BRANCH = "mt_bench_branch"
+    UNITXT = "unitxt"
 
 
 def validate_options(
@@ -46,10 +47,26 @@ def validate_options(
     few_shots,
     batch_size,
     tasks_dir,
+    unitxt_recipe,
 ):
     """takes in arguments from the CLI and uses 'benchmark' to validate other arguments
     if all needed configuration is present, raises an exception for the missing values
     """
+    if benchmark == Benchmark.UNITXT:
+        required_args = [
+            model,
+            unitxt_recipe,
+        ]
+        required_arg_names = ["model", "unitxt_recipe"]
+
+        if None in required_args:
+            click.secho(
+                f"Benchmark {benchmark} requires the following args to be set: {required_arg_names}",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
+
+        validate_model(model)
 
     # ensure skills benchmarks have proper arguments if selected
     if benchmark in {Benchmark.MT_BENCH, Benchmark.MT_BENCH_BRANCH}:
@@ -63,7 +80,6 @@ def validate_options(
             "model",
             "judge-model",
         ]
-
         if benchmark == Benchmark.MT_BENCH_BRANCH:
             required_args.append(taxonomy_path)
             required_args.append(branch)
@@ -472,6 +488,12 @@ def launch_server(
     help="Number of GPUs to utilize for evaluation (not applicable to llama-cpp)",
 )
 @click.option(
+    "--unitxt_recipe",
+    type=click.STRING,
+    cls=clickext.ConfigOption,
+    config_sections="unitxt",
+)
+@click.option(
     "--merge-system-user-message",
     is_flag=True,
     help="Indicates whether to merge system and user message for mt_bench and mt_bench_branch (required for Mistral based judges)",
@@ -541,6 +563,7 @@ def evaluate(
     tls_client_key,  # pylint: disable=unused-argument
     tls_client_passwd,  # pylint: disable=unused-argument
     enable_serving_output,
+    unitxt_recipe,
 ):
     """Evaluates a trained model"""
 
@@ -567,6 +590,7 @@ def evaluate(
             few_shots,
             batch_size,
             tasks_dir,
+            unitxt_recipe,
         )
 
         if benchmark == Benchmark.MT_BENCH:
@@ -915,6 +939,36 @@ def evaluate(
             display_branch_eval_summary(
                 Benchmark.MMLU_BRANCH, improvements, regressions, no_changes
             )
+
+        elif benchmark == Benchmark.UNITXT:
+            # Third Party
+            from instructlab.eval.unitxt import UnitxtEvaluator
+
+            evaluator = UnitxtEvaluator(
+                model,
+                unitxt_recipe,
+            )
+
+            server = None
+            try:
+                server, api_base, _ = launch_server(
+                    ctx,
+                    model,
+                    model,
+                    None,
+                    gpus,
+                    backend,
+                    enable_serving_output,
+                )
+                overall_scores, individual_scores = evaluator.run(api_base)
+            finally:
+                if server is not None:
+                    server.shutdown()
+
+            print("# KNOWLEDGE EVALUATION REPORT")
+            print("\n## MODEL (SCORES)\n")
+            print(overall_scores)
+
     except EvalError as ee:
         print(ee.message)
         logger.debug("Traceback", exc_info=True)

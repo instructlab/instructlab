@@ -12,6 +12,7 @@ from git import Repo
 from instructlab import lab
 
 # Local
+# import common
 from . import common
 
 
@@ -85,6 +86,51 @@ def setup_taxonomy(taxonomy_path):
         f.write("#Taxonomy")
     repo.index.add([file_name])
     repo.index.commit("initial commit")
+
+
+@patch("instructlab.model.evaluate.validate_model")
+@patch(
+    "instructlab.model.evaluate.launch_server",
+    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1", 1),
+)
+@patch(
+    "instructlab.eval.unitxt.UnitxtEvaluator.run",
+    return_value=({"f1_micro": 0.1, "f1_macro": 0.5}, None),
+)
+def test_evaluate_unitxt(
+    run_mock, launch_server_mock, validate_model_mock, cli_runner: CliRunner
+):
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "unitxt",
+            "--model",
+            "instructlab/granite-7b-lab",
+            "--unitxt_recipe",
+            "some_unitxt_recipe",
+        ],
+    )
+    assert validate_model_mock.call_count == 1
+    assert launch_server_mock.call_count == 1
+    assert run_mock.call_count == 1
+
+    if result.exit_code != 0:
+        print(result.exit_code)
+    assert result.exit_code == 0
+    expected = textwrap.dedent(
+        """\
+        # KNOWLEDGE EVALUATION REPORT
+
+        ## MODEL (SCORES)
+
+        {'f1_micro': 0.1, 'f1_macro': 0.5}"""
+    )
+
+    assert expected in result.output
 
 
 def run_mt_bench(cli_runner, error_rate):
