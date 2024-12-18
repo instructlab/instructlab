@@ -1,5 +1,6 @@
 # Standard
 from pathlib import Path
+from typing import Optional
 import logging
 
 # Third Party
@@ -31,7 +32,7 @@ def lookup_knowledge_files(taxonomy_path, taxonomy_base, temp_dir) -> list[Path]
     return knowledge_files
 
 
-def lookup_processed_documents_folder(output_dir: str) -> Path:
+def lookup_processed_documents_folder(output_dir: str) -> Optional[Path]:
     latest_folder = (
         max(Path(output_dir).iterdir(), key=lambda d: d.stat().st_mtime)
         if Path(output_dir).exists()
