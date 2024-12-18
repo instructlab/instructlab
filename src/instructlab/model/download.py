@@ -2,6 +2,7 @@
 
 # Standard
 from pathlib import Path
+from typing import List
 import abc
 import logging
 import os
@@ -12,10 +13,8 @@ import subprocess
 from huggingface_hub import hf_hub_download, list_repo_files
 from huggingface_hub import logging as hf_logging
 from huggingface_hub import snapshot_download
-import click
 
 # First Party
-from instructlab import clickext
 from instructlab.configuration import DEFAULTS
 from instructlab.defaults import DEFAULT_INDENT
 from instructlab.utils import (
@@ -30,17 +29,17 @@ from instructlab.utils import (
 logger = logging.getLogger(__name__)
 
 
-class Downloader(abc.ABC):
+class ModelDownloader(abc.ABC):
     """Base class for a downloading backend"""
 
     def __init__(
         self,
-        ctx,
+        log_level,
         repository: str,
         release: str,
-        download_dest: str,
+        download_dest: Path,
     ) -> None:
-        self.ctx = ctx
+        self.log_level = log_level
         self.repository = repository
         self.release = release
         self.download_dest = download_dest
@@ -50,20 +49,23 @@ class Downloader(abc.ABC):
         """Downloads model from specified repo/release and stores it into download_dest"""
 
 
-class HFDownloader(Downloader):
+class HFDownloader(ModelDownloader):
     """Class to handle downloading safetensors and GGUF models from Hugging Face"""
 
     def __init__(
         self,
         repository: str,
         release: str,
-        download_dest: str,
+        download_dest: Path,
         filename: str,
         hf_token: str,
-        ctx,
+        log_level: str,
     ) -> None:
         super().__init__(
-            ctx=ctx, repository=repository, release=release, download_dest=download_dest
+            log_level=log_level,
+            repository=repository,
+            release=release,
+            download_dest=download_dest,
         )
         self.filename = filename
         self.hf_token = hf_token
@@ -72,7 +74,7 @@ class HFDownloader(Downloader):
         """
         Download specified model from Hugging Face
         """
-        click.echo(
+        logger.info(
             f"Downloading model from Hugging Face:\n{DEFAULT_INDENT}Model: {self.repository}@{self.release}\n{DEFAULT_INDENT}Destination: {self.download_dest}"
         )
 
@@ -84,8 +86,8 @@ class HFDownloader(Downloader):
             )
 
         try:
-            if self.ctx.obj is not None:
-                hf_logging.set_verbosity(self.ctx.obj.config.general.log_level.upper())
+            if self.log_level is not None:
+                hf_logging.set_verbosity(self.log_level)
             files = list_repo_files(repo_id=self.repository, token=self.hf_token)
             if any(re.search(r"\.(safetensors|bin)$", fname) for fname in files):
                 self.download_entire_hf_repo()
@@ -93,11 +95,9 @@ class HFDownloader(Downloader):
                 self.download_gguf()
 
         except Exception as exc:
-            click.secho(
-                f"\nDownloading model failed with the following Hugging Face Hub error:\n{DEFAULT_INDENT}{exc}",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
+            raise RuntimeError(
+                f"\nDownloading model failed with the following Hugging Face Hub error:\n{DEFAULT_INDENT}{exc}"
+            ) from exc
 
     def download_gguf(self) -> None:
         try:
@@ -110,11 +110,9 @@ class HFDownloader(Downloader):
             )
 
         except Exception as exc:
-            click.secho(
-                f"\nDownloading GGUF model failed with the following Hugging Face Hub error:\n{DEFAULT_INDENT}{exc}",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
+            raise RuntimeError(
+                f"\nDownloading GGUF model failed with the following Hugging Face Hub error:\n{DEFAULT_INDENT}{exc}"
+            ) from exc
 
     def download_entire_hf_repo(self) -> None:
         try:
@@ -128,14 +126,12 @@ class HFDownloader(Downloader):
                 local_dir=local_dir,
             )
         except Exception as exc:
-            click.secho(
-                f"\nDownloading safetensors model failed with the following Hugging Face Hub error:\n{DEFAULT_INDENT}{exc}",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
+            raise RuntimeError(
+                f"\nDownloading safetensors model failed with the following Hugging Face Hub error:\n{DEFAULT_INDENT}{exc}"
+            ) from exc
 
 
-class OCIDownloader(Downloader):
+class OCIDownloader(ModelDownloader):
     """
     Class to handle downloading safetensors models from OCI Registries
     We are leveraging OCI v1.1 for this functionality
@@ -166,7 +162,7 @@ class OCIDownloader(Downloader):
             if match:
                 index_hash = match.group(1)
             else:
-                raise ValueError(
+                raise KeyError(
                     f"\nFailed to find hash in the index file:\n{DEFAULT_INDENT}{oci_model_path}"
                 )
         except Exception as exc:
@@ -187,25 +183,23 @@ class OCIDownloader(Downloader):
                     blob_name = match.group(1)
                     oci_model_file_map[blob_name] = layer["annotations"][title_ref]
         except Exception as exc:
-            raise ValueError(
+            raise RuntimeError(
                 f"\nFailed to build OCI model file mapping from:\n{DEFAULT_INDENT}{blob_dir}/{index_hash}"
             ) from exc
 
         return oci_model_file_map
 
     def download(self):
-        click.echo(
+        logger.info(
             f"Downloading model from OCI registry:\n{DEFAULT_INDENT}Model: {self.repository}@{self.release}\n{DEFAULT_INDENT}Destination: {self.download_dest}"
         )
 
         # raise an exception if user specified tag/SHA embedded in repository instead of specifying --release
         match = re.search(r"^(?:[^:]*:){2}(.*)$", self.repository)
         if match:
-            click.secho(
-                f"\nInvalid repository supplied:\n{DEFAULT_INDENT}Please specify tag/version '{match.group(1)}' via --release",
-                fg="red",
+            raise ValueError(
+                f"\nInvalid repository supplied:\n{DEFAULT_INDENT}Please specify tag/version '{match.group(1)}' via --release"
             )
-            raise click.exceptions.Exit(1)
 
         model_name = self.repository.split("/")[-1]
         os.makedirs(os.path.join(self.download_dest, model_name), exist_ok=True)
@@ -222,26 +216,20 @@ class OCIDownloader(Downloader):
             f"oci:{oci_dir}",
             "--remove-signatures",
         ]
-        if self.ctx.obj is not None and logger.isEnabledFor(logging.DEBUG):
+        if self.log_level == "DEBUG" and logger.isEnabledFor(logging.DEBUG):
             command.append("--debug")
         logger.debug(f"Running skopeo command: {command}")
 
         try:
             subprocess.run(command, check=True, text=True)
         except subprocess.CalledProcessError as e:
-            click.secho(
-                f"\nFailed to run skopeo command:\n{DEFAULT_INDENT}{e}.\n{DEFAULT_INDENT}stderr: {e.stderr}",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
+            raise RuntimeError(
+                f"\nFailed to run skopeo command:\n{DEFAULT_INDENT}{e}.\n{DEFAULT_INDENT}stderr: {e.stderr}"
+            ) from e
 
         file_map = self._build_oci_model_file_map(oci_dir)
         if not file_map:
-            click.secho(
-                "\nFailed to find OCI image blob hashes.",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
+            raise LookupError("\nFailed to find OCI image blob hashes.")
 
         blob_dir = f"{oci_dir}/blobs/sha256/"
         for name, dest in file_map.items():
@@ -260,62 +248,16 @@ class OCIDownloader(Downloader):
             )
 
 
-@click.command()
-@click.option(
-    "--repository",
-    "-rp",
-    "repositories",
-    multiple=True,
-    default=[
-        DEFAULTS.GRANITE_GGUF_REPO,
-        DEFAULTS.MERLINITE_GGUF_REPO,
-        DEFAULTS.MISTRAL_GGUF_REPO,
-    ],  # TODO: add to config.yaml
-    show_default=True,
-    help="Hugging Face or OCI repository of the model to download.",
-)
-@click.option(
-    "--release",
-    "-rl",
-    "releases",
-    multiple=True,
-    default=[
-        "main",
-        "main",
-        "main",
-    ],  # TODO: add to config.yaml
-    show_default=True,
-    help="The revision of the model to download - e.g. a branch, tag, or commit hash for Hugging Face repositories and tag or commit hash for OCI repositories.",
-)
-@click.option(
-    "--filename",
-    "filenames",
-    multiple=True,
-    default=[
-        DEFAULTS.GRANITE_GGUF_MODEL_NAME,
-        DEFAULTS.MERLINITE_GGUF_MODEL_NAME,
-        DEFAULTS.MISTRAL_GGUF_MODEL_NAME,
-    ],
-    show_default="The default model location in the instructlab data directory.",
-    help="Name of the model file to download from the Hugging Face repository.",
-)
-@click.option(
-    "--model-dir",
-    default=lambda: DEFAULTS.MODELS_DIR,
-    show_default="The default system model location store, located in the data directory.",
-    help="The local directory to download the model files into.",
-)
-@click.option(
-    "--hf-token",
-    default="",
-    envvar="HF_TOKEN",
-    help="User access token for connecting to the Hugging Face Hub.",
-)
-@click.pass_context
-@clickext.display_params
-def download(ctx, repositories, releases, filenames, model_dir, hf_token):
+def download_models(
+    log_level: str,
+    repositories: List[str],
+    releases: List[str],
+    filenames: List[str],
+    model_dir: Path,
+    hf_token: str,
+):
     """Downloads model from a specified repository"""
-    downloader = None
+    downloader: ModelDownloader
 
     # strict = false ensures that if you just give --repository <some_safetensor> we won't error because len(filenames) is greater due to the defaults
     for repository, filename, release in zip(
@@ -323,11 +265,14 @@ def download(ctx, repositories, releases, filenames, model_dir, hf_token):
     ):
         if is_oci_repo(repository):
             downloader = OCIDownloader(
-                ctx=ctx, repository=repository, release=release, download_dest=model_dir
+                log_level=log_level,
+                repository=repository,
+                release=release,
+                download_dest=model_dir,
             )
         elif is_huggingface_repo(repository):
             downloader = HFDownloader(
-                ctx=ctx,
+                log_level=log_level,
                 repository=repository,
                 release=release,
                 download_dest=model_dir,
@@ -335,32 +280,27 @@ def download(ctx, repositories, releases, filenames, model_dir, hf_token):
                 hf_token=hf_token,
             )
         else:
-            click.secho(
-                f"repository {repository} matches neither Hugging Face nor OCI registry format.\nPlease supply a valid repository",
-                fg="red",
+            raise ValueError(
+                f"repository {repository} matches neither Hugging Face nor OCI registry format.\nPlease supply a valid repository"
             )
-            raise click.exceptions.Exit(1)
 
         try:
             downloader.download()
-            click.echo(
+            logger.info(
                 f"\nᕦ(òᴗóˇ)ᕤ {downloader.repository} model download completed successfully! ᕦ(òᴗóˇ)ᕤ\n"
             )
         # pylint: disable=broad-exception-caught
         except (ValueError, Exception) as exc:
             if isinstance(exc, ValueError) and "HF_TOKEN" in str(exc):
-                click.secho(
-                    f"\n{downloader.repository} requires a HF Token to be set.\nPlease use '--hf-token' or 'export HF_TOKEN' to download all necessary models.\n",
-                    fg="yellow",
+                logger.warning(
+                    f"\n{downloader.repository} requires a HF Token to be set.\nPlease use '--hf-token' or 'export HF_TOKEN' to download all necessary models."
                 )
             else:
-                click.secho(
-                    f"\nDownloading model failed with the following error: {exc}",
-                    fg="red",
-                )
-                raise click.exceptions.Exit(1)
+                raise ValueError(
+                    f"\nDownloading model failed with the following error: {exc}"
+                ) from exc
 
-    click.echo("Available models (`ilab model list`):")
+    logger.info("Available models (`ilab model list`):")
     data = list_models([Path(model_dir)], False)
     data_as_lists = [list(item) for item in data]
     print_table(["Model Name", "Last Modified", "Size"], data_as_lists)
