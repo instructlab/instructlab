@@ -73,15 +73,15 @@ def init_from_flags(model: BaseModel, prefix="", **kwargs):
     if model_name.endswith("_configuration"):
         model_name = model_name.replace("_configuration", "")
     model_name = prefix + model_name + "_"
-    logger.info(f"model_name is {model_name}")
+    logger.debug(f"model_name is {model_name}")
     for key, value in kwargs.items():
         if value is not None:
-            logger.info(f"key is {key}")
+            logger.debug(f"key is {key}")
             if key.startswith(model_name):
                 attr_name = key.replace(model_name, "")
-                logger.info(f"attr_name is {attr_name}")
+                logger.debug(f"attr_name is {attr_name}")
                 if hasattr(model, attr_name):
-                    logger.info(f"Overriding from flag {key}")
+                    logger.debug(f"Overriding from flag {key}")
                     setattr(model, attr_name, value)
 
     prefix = model_name
@@ -107,10 +107,12 @@ class embedder_configuration(BaseModel):
 
     def local_model_path(self) -> str:
         if self.model_dir is None:
-            raise ValueError(f"Missing value for field model_dir in {vars(self)}")
+            click.secho(f"Missing value for field model_dir in {vars(self)}")
+            raise click.exceptions.Exit(1)
 
         if self.model_name is None:
-            raise ValueError(f"Missing value for field model_name in {vars(self)}")
+            click.secho(f"Missing value for field model_name in {vars(self)}")
+            raise click.exceptions.Exit(1)
 
         return os.path.join(self.model_dir, self.model_name)
 
@@ -123,7 +125,7 @@ class _retriever_configuration(BaseModel):
 class RagConfig:
     def __init__(self, rag_config: dict[str, Any], **kwargs):
         logger.debug(f"init from {rag_config}")
-        logger.info(f"init from {kwargs}")
+        logger.debug(f"init from {kwargs}")
         self.enabled = rag_config.get("enable") or kwargs.get("is_rag")
         self.document_store = document_store_configuration(
             **(rag_config.get("document_store") or {})
