@@ -95,7 +95,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 - C++ compiler
 - Python 3.10 or Python 3.11
 
-   📋 Python 3.12 is currently not supported. Some InstructLab dependencies don't work on Python 3.12, yet.
+   ⚠️ Python 3.12+ is currently not supported. Some InstructLab dependencies don't work on Python 3.12, yet. It is recommended to use a specific version of Python in the below commands, eg. `python3.11` instead of simply `python3`.
 
 - Minimum 250GB disk space. Approximately 500GB disk space is recommended for the entire InstructLab end-to-end process.
 
@@ -158,7 +158,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 - Install on AMD ROCm with:
 
    ```shell
-   python3 -m venv --upgrade-deps venv
+   python<version> -m venv --upgrade-deps venv
    source venv/bin/activate
    pip cache remove llama_cpp_python
    CMAKE_ARGS="-DLLAMA_HIPBLAS=on \
@@ -178,7 +178,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 - For the best CUDA experience, installing vLLM is necessary to serve Safetensors format models.
 
    ```shell
-   python3 -m venv --upgrade-deps venv
+   python<version> -m venv --upgrade-deps venv
    source venv/bin/activate
    pip cache remove llama_cpp_python
    CMAKE_ARGS="-DLLAMA_CUDA=on -DLLAMA_NATIVE=off" pip install 'instructlab[cuda]'
