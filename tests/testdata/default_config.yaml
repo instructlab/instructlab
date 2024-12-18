@@ -251,7 +251,7 @@ rag:
   embedding_model:
     # Embedding model to use for RAG.
     # Default: /cache/instructlab/models/ibm-granite/granite-embedding-125m-english
-    embedding_model_name: /cache/instructlab/models/ibm-granite/granite-embedding-125m-english
+    embedding_model_path: /cache/instructlab/models/ibm-granite/granite-embedding-125m-english
   # Flag for enabling RAG functionality.
   # Default: False
   enabled: false

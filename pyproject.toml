@@ -71,6 +71,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 
 [project.entry-points."instructlab.command.rag"]
 "convert" = "instructlab.cli.rag.convert:convert"
+"ingest" = "instructlab.cli.rag.ingest:ingest"
 
 [project.entry-points."instructlab.command.system"]
 "info" = "instructlab.cli.system.info:info"

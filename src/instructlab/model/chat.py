@@ -566,7 +566,7 @@ def chat_model(
     rag_enabled,
     document_store_uri,
     collection_name,
-    embedding_model,
+    embedding_model_path,
     top_k,
     backend_type,
     host,
@@ -712,7 +712,7 @@ def chat_model(
             rag_enabled=rag_enabled,
             document_store_uri=document_store_uri,
             collection_name=collection_name,
-            embedding_model=embedding_model,
+            embedding_model_path=embedding_model_path,
             top_k=top_k,
             backend_type=backend_type,
             params=params,
@@ -739,7 +739,7 @@ def chat_cli(
     rag_enabled,
     document_store_uri,
     collection_name,
-    embedding_model,
+    embedding_model_path,
     top_k,
     logs_dir,
     vi_mode,
@@ -789,7 +789,7 @@ def chat_cli(
             document_store_uri=document_store_uri,
             document_store_collection_name=collection_name,
             top_k=top_k,
-            embedding_model_path=embedding_model,
+            embedding_model_path=embedding_model_path,
         )
     else:
         logger.debug("RAG not enabled for chat; skipping retrieval setup")

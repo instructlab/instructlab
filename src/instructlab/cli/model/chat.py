@@ -125,8 +125,8 @@ logger = logging.getLogger(__name__)
     config_sections="document_store",
 )
 @click.option(
-    "--retriever-embedding-model-name",
-    "embedding_model_name",
+    "--retriever-embedding-model-path",
+    "embedding_model_path",
     type=click.STRING,
     cls=clickext.ConfigOption,
     config_class="rag",
@@ -163,7 +163,7 @@ def chat(
     rag_enabled,
     uri,
     collection_name,
-    embedding_model_name,
+    embedding_model_path,
     top_k,
 ):
     """Runs a chat using the modified model"""
@@ -186,7 +186,7 @@ def chat(
         rag_enabled,
         uri,
         collection_name,
-        embedding_model_name,
+        embedding_model_path,
         top_k,
         backend_type=ctx.obj.config.serve.server.backend_type,
         host=ctx.obj.config.serve.server.host,

@@ -53,7 +53,7 @@ logger = logging.getLogger(__name__)
 @click.pass_context
 @clickext.display_params
 def convert(
-    ctx,
+    ctx,  # pylint: disable=unused-argument
     taxonomy_path,
     taxonomy_base,
     input_dir,
