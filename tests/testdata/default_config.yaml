@@ -11,8 +11,8 @@ chat:
   logs_dir: /data/instructlab/chatlogs
   # The maximum number of tokens that can be generated in the chat completion. Be
   # aware that larger values use more memory.
-  # Default: None
-  max_tokens:
+  # Default: 4096
+  max_tokens: 4096
   # Model to be used for chatting with.
   # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
   model: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
@@ -170,8 +170,11 @@ generate:
     # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
     model_path: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
     # Server configuration including host and port.
-    # Default: host='127.0.0.1' port=8000
+    # Default: host='127.0.0.1' port=8000 current_max_ctx_size=4096
     server:
+      # Maximum number of tokens that can be processed by the currently served model.
+      # Default: 4096
+      current_max_ctx_size: 4096
       # Host to serve on.
       # Default: 127.0.0.1
       host: 127.0.0.1
@@ -251,8 +254,11 @@ serve:
   # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
   model_path: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
   # Server configuration including host and port.
-  # Default: host='127.0.0.1' port=8000
+  # Default: host='127.0.0.1' port=8000 current_max_ctx_size=4096
   server:
+    # Maximum number of tokens that can be processed by the currently served model.
+    # Default: 4096
+    current_max_ctx_size: 4096
     # Host to serve on.
     # Default: 127.0.0.1
     host: 127.0.0.1

@@ -155,7 +155,7 @@ class _chat(BaseModel):
         description="Directory where chat logs are stored.",
     )
     max_tokens: typing.Optional[int] = Field(
-        default=None,
+        default=DEFAULTS.MAX_CONTEXT_SIZE,
         description="The maximum number of tokens that can be generated in the chat completion. Be aware that larger values use more memory.",
     )
     temperature: float = Field(
@@ -196,7 +196,7 @@ class _serve_llama_cpp(BaseModel):
         description="Number of model layers to offload to GPU. -1 means all layers.",
     )
     max_ctx_size: PositiveInt = Field(
-        default=4096,
+        default=DEFAULTS.MAX_CONTEXT_SIZE,
         description="Maximum number of tokens that can be processed by the model.",
     )
     llm_family: str = Field(
@@ -211,6 +211,10 @@ class _serve_server(BaseModel):
 
     host: StrictStr = Field(default="127.0.0.1", description="Host to serve on.")
     port: StrictInt = Field(default=8000, description="Port to serve on.")
+    current_max_ctx_size: PositiveInt = Field(
+        default=DEFAULTS.MAX_CONTEXT_SIZE,
+        description="Maximum number of tokens that can be processed by the currently served model.",
+    )
 
 
 class _serve(BaseModel):

@@ -10,6 +10,8 @@ import click
 
 # First Party
 from instructlab import clickext
+from instructlab.configuration import write_config
+from instructlab.defaults import DEFAULTS
 from instructlab.model.backends import backends
 from instructlab.model.serve_backend import serve_backend, signal_handler
 
@@ -116,6 +118,11 @@ def serve(
     """Starts a local server"""
 
     warn_for_unsupported_backend_param(ctx)
+
+    # we need to keep track of the max_ctx_size being uses in the active server so we don't overflow the context
+    if max_ctx_size != DEFAULTS.MAX_CONTEXT_SIZE:
+        ctx.obj.config.serve.server.current_max_ctx_size = max_ctx_size
+        write_config(ctx.obj.config)
 
     serve_backend(
         ctx,
