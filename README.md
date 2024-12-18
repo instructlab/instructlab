@@ -118,7 +118,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
    ⚠️ The `python3` binary shown in the installation guides are the Python version that you installed in the above step. The command can also be `python3.11` or `python3.10` instead of `python3`. You can check Python's version by `python3 -V`.
 
-   ⏳ `pip install` may take some time, depending on your internet connection. In case the installation fails with error ``unsupported instruction `vpdpbusd'``, append `-C cmake.args="-DLLAMA_NATIVE=off"` to `pip install` command.
+   ⏳ `pip install` may take some time, depending on your internet connection. In case the installation fails with error ``unsupported instruction `vpdpbusd'``, append `-C cmake.args="-DGGML_NATIVE=off"` to `pip install` command.
 
    See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for how to to enable hardware acceleration for interaction and training on AMD ROCm, Apple Metal Performance Shaders (MPS), and Nvidia CUDA.
 
@@ -149,9 +149,9 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
    *Additional Build Argument for Intel Macs*
    If you have a Mac with an Intel CPU, you must add a prefix of
-   `CMAKE_ARGS="-DLLAMA_METAL=off"` to the `pip install` command to ensure
+   `CMAKE_ARGS="-DGGML_METAL=off"` to the `pip install` command to ensure
    that the build is done without Apple M-series GPU support.
-   `(venv) $ CMAKE_ARGS="-DLLAMA_METAL=off" pip install ...`
+   `(venv) $ CMAKE_ARGS="-DGGML_METAL=off" pip install ...`
 
 #### Install with AMD ROCm
 
@@ -161,12 +161,12 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    python3 -m venv --upgrade-deps venv
    source venv/bin/activate
    pip cache remove llama_cpp_python
-   CMAKE_ARGS="-DLLAMA_HIPBLAS=on \
+   CMAKE_ARGS="-DGGML_HIPBLAS=on \
       -DAMDGPU_TARGETS=all \
       -DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang \
       -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ \
       -DCMAKE_PREFIX_PATH=/opt/rocm \
-      -DLLAMA_NATIVE=off" \
+      -DGGML_NATIVE=off" \
       pip install 'instructlab[rocm]' \
       --extra-index-url https://download.pytorch.org/whl/rocm6.0
    ```
@@ -181,7 +181,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    python3 -m venv --upgrade-deps venv
    source venv/bin/activate
    pip cache remove llama_cpp_python
-   CMAKE_ARGS="-DLLAMA_CUDA=on -DLLAMA_NATIVE=off" pip install 'instructlab[cuda]'
+   CMAKE_ARGS="-DGGML_CUDA=on -DGGML_NATIVE=off" pip install 'instructlab[cuda]'
    pip install vllm@git+https://github.com/opendatahub-io/vllm@v0.6.2
    ```
 

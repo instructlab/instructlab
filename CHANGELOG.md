@@ -2,6 +2,8 @@
 
 ### Breaking Changes
 
+* llama-cpp-python has been bumped to 0.3.2. This allows for serving of Granite 3.0 GGUF Models. With this change, some previous handling of context window size has been modified to work with the 0.3.z releases of llama-cpp-python.
+
 ### Features
 
 * A new command `ilab model upload` has been introduced so users can now upload their trained models to [Hugging Face](https://huggingface.co/) via the `ilab` CLI

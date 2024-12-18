@@ -250,18 +250,7 @@ test_ctx_size(){
     How many tokens could you take today. Could you tell me about the time you could only take twenty five tokens" &> "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" &
     PID_CHAT=$!
 
-    # look for the context size error in the server logs
-    if ! timeout 20 bash -c "
-        until grep -q 'exceed context window of' $TEST_CTX_SIZE_LAB_SERVE_LOG_FILE; do
-        echo 'waiting for context size error'
-        sleep 1
-    done
-"; then
-        echo "context size error not found in server logs"
-        cat $TEST_CTX_SIZE_LAB_SERVE_LOG_FILE
-        exit 1
-    fi
-
+    # we catch these failure BEOFRE they hit the server. as of llama_cpp_python 0.3.z, these types of failures are fatal and will crash the server
     # look for the context size error in the chat logs
     if ! timeout 20 bash -c "
         until grep -q 'Message too large for context size.' $TEST_CTX_SIZE_LAB_CHAT_LOG_FILE; do
@@ -560,7 +549,7 @@ test_server_chat_template() {
 }
 
 test_ilab_chat_server_logs(){
-    sed -i.bak '/max_ctx_size: 4096/s/4096/1/' "${ILAB_CONFIG_FILE}"
+    sed -i.bak '/max_ctx_size: 4096/s/4096/10/' "${ILAB_CONFIG_FILE}"
 
     chat_shot+=("--serving-log-file" "chat.log")
     "${chat_shot[@]}" "Hello"
@@ -570,7 +559,7 @@ test_ilab_chat_server_logs(){
             echo "waiting for chat log file to be created"
             sleep 1
         done
-        if ! grep "exceed context window of" chat.log; then
+        if ! grep "Message too large for context size" chat.log; then
             echo "chat log file does not contain serving message"
             exit 1
         else

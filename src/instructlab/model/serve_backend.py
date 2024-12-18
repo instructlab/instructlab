@@ -7,6 +7,7 @@ import sys
 
 # First Party
 from instructlab import log
+from instructlab.configuration import write_config
 from instructlab.model.backends import backends
 from instructlab.model.backends.common import ServerException
 from instructlab.model.backends.server import BackendServer
@@ -50,6 +51,9 @@ def serve_backend(
     except (ValueError, AttributeError) as e:
         raise ValueError(f"Failed to determine backend: {e}") from e
 
+    logger.info(f"Setting current_max_ctx_size in the serve config to {max_ctx_size}")
+    ctx.obj.config.serve.server.backend_type = backend
+    write_config(ctx.obj.config)
     if chat_template is None:
         chat_template = ctx.obj.config.serve.chat_template
 
