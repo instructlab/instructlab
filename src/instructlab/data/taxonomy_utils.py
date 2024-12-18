@@ -1,8 +1,11 @@
 # Standard
 from pathlib import Path
+import logging
 
 # Third Party
 from instructlab.sdg.utils.taxonomy import read_taxonomy_leaf_nodes
+
+logger = logging.getLogger(__name__)
 
 
 def lookup_knowledge_files(taxonomy_path, taxonomy_base, temp_dir) -> list[Path]:
@@ -24,6 +27,21 @@ def lookup_knowledge_files(taxonomy_path, taxonomy_base, temp_dir) -> list[Path]
         grouped_knowledge_files.append(
             knowledge_file.rename(Path(temp_dir) / knowledge_file.name)
         )
-    print(f"{grouped_knowledge_files}")
 
     return knowledge_files
+
+
+def lookup_processed_documents_folder(output_dir: str) -> Path:
+    latest_folder = (
+        max(Path(output_dir).iterdir(), key=lambda d: d.stat().st_mtime)
+        if Path(output_dir).exists()
+        else None
+    )
+    logger.info(f"Latest processed folder is {latest_folder}")
+
+    if latest_folder is not None:
+        docling_folder = Path.joinpath(latest_folder, "docling-artifacts")
+        logger.debug(f"Docling folder: {docling_folder}")
+        if docling_folder.exists():
+            return docling_folder
+    return None

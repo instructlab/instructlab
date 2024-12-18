@@ -9,6 +9,7 @@ import click
 # First Party
 from instructlab import clickext
 from instructlab.data.ingest_docs import ingest_docs
+from instructlab.data.taxonomy_utils import lookup_processed_documents_folder
 from instructlab.defaults import DEFAULTS
 from instructlab.rag.rag_configuration import (  # type: ignore
     document_store_configuration,
@@ -56,8 +57,14 @@ logger = logging.getLogger(__name__)
     type=click.STRING,
     help="The embedding model name",
 )
+@click.option(
+    "--output-dir",
+    envvar="ILAB_OUTPUT_DIR",
+    help="Directory where generated datasets are stored.",
+)
 @click.argument(
     "input_dir",
+    required=False,
     type=click.Path(
         exists=True,
         dir_okay=True,
@@ -73,6 +80,7 @@ def ingest(
     document_store_collection_name,
     model_dir,
     embedding_model_name,
+    output_dir,
     input_dir,
 ):
     """The embedding ingestion pipeline"""
@@ -92,6 +100,24 @@ def ingest(
         raise click.UsageError(
             f"Cannot find local embedding model {embedding_model_name} in {model_dir}. Download the model before running the pipeline."
         )
+
+    if input_dir is None:
+        if output_dir is None:
+            output_dir = ctx.obj.config.generate.output_dir
+            if output_dir is None:
+                output_dir = DEFAULTS.DATASETS_DIR
+        logger.info(f"Ingesting latest taxonomy changes at {output_dir}")
+        processed_docs_folder = lookup_processed_documents_folder(output_dir)
+        if processed_docs_folder is None:
+            click.secho(
+                f"Cannot find the latest processed documents folders from {output_dir}."
+                + " Please verify that you executed `ilab data generate` and you have updated or new knowledge"
+                + " documents in the current taxonomy."
+            )
+            raise click.exceptions.Exit(1)
+
+        logger.info(f"Latest processed docs are in {processed_docs_folder}")
+        input_dir = processed_docs_folder
 
     ingest_docs(
         input_dir=input_dir,
