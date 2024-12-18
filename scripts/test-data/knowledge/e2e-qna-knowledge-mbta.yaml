@@ -218,7 +218,7 @@ document_outline: |
   Information about the MBTA including streetcar ear, MTA incorporation,
   bus expansion, debt concerns, and major incidents.
 document:
-    repo: https://github.com/juliadenham/Summit_knowledge
-    commit: 2e05aafd6aaee95b689b8a637aa0224793a8233e
-    patterns:
-      - mbta.md
+  repo: https://github.com/juliadenham/Summit_knowledge
+  commit: 2e05aafd6aaee95b689b8a637aa0224793a8233e
+  patterns:
+    - mbta.md
