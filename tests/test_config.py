@@ -341,20 +341,19 @@ def test_logging(log_level, debug_level, root, instructlab, openai_httpx):
 @patch.multiple(
     config.DEFAULTS,
     _cache_home="/cache/instructlab",
-    _config_dir="/config/instructlab",
     _data_dir="/data/instructlab",
 )
 def test_compare_default_config_testdata(
-    testdata_path: pathlib.Path, tmp_path: pathlib.Path, regenerate_testdata: bool
+    testdata_path: pathlib.Path, regenerate_testdata: bool
 ):
     assert config.DEFAULTS.CHECKPOINTS_DIR == "/data/instructlab/checkpoints"
     saved_file = testdata_path / "default_config.yaml"
-    current_file = tmp_path / "current_config.yaml"
+    current_file = os.path.join(config.DEFAULTS._config_dir, "current_config.yaml")
 
     current_cfg = config.get_default_config()
     # roundtrip to verify serialization and de-serialization
     config.write_config(current_cfg, str(current_file))
-    with current_file.open(encoding="utf-8") as yamlfile:
+    with open(file=current_file, encoding="utf-8") as yamlfile:
         current_content = yaml.safe_load(yamlfile)
 
     if regenerate_testdata:
