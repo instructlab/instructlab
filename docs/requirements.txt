@@ -2,3 +2,5 @@ sphinx
 myst-parser
 furo
 sphinx-click
+autodoc-pydantic
+enum-tools[sphinx]
