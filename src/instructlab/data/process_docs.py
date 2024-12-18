@@ -4,6 +4,7 @@ from typing import Iterable
 import json
 import logging
 import os
+import tempfile
 import time
 
 # Third Party
@@ -12,12 +13,29 @@ from docling.datamodel.document import ConversionResult  # type: ignore
 from docling.document_converter import DocumentConverter  # type: ignore
 
 # First Party
+from instructlab.data.taxonomy_utils import lookup_knowledge_files
 from instructlab.utils import clear_directory
 
 logger = logging.getLogger(__name__)
 
 
-def process_docs(input_dir, output_dir):
+def process_docs_from_taxonomy(taxonomy_path, taxonomy_base, output_dir):
+    # Taxonomy navigation strategy:
+    # Create temp folder that is deleted when the function returns
+    # Read taxonomy using read_taxonomy_leaf_nodes from instructlab-sdg package
+    # The above step also downloads the reference documents.
+    # Move all the downloaded documents under the temp folder
+    # Pass the list to process_docs_from_folder
+    with tempfile.TemporaryDirectory() as temp_dir:
+        logger.info(f"Temporary directory created: {temp_dir}")
+        knowledge_files = lookup_knowledge_files(taxonomy_path, taxonomy_base, temp_dir)
+        logger.info(f"Found {len(knowledge_files)} knowledge files")
+        logger.info(f"{knowledge_files}")
+
+        process_docs_from_folder(temp_dir, output_dir)
+
+
+def process_docs_from_folder(input_dir, output_dir):
     """
     Process user documents from a given `input_dir` folder to the given `output_dir` folder, using docling converters.
     Latest version of docling schema is used (currently, v2).
