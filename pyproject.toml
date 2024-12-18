@@ -55,7 +55,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 [project.entry-points."instructlab.command.model"]
 "chat" = "instructlab.model.chat:chat"
 "convert" = "instructlab.model.convert:convert"
-"download" = "instructlab.model.download:download"
+"download" = "instructlab.cli.model.download:download"
 "evaluate" = "instructlab.model.evaluate:evaluate"
 "serve" = "instructlab.cli.model.serve:serve"
 "test" = "instructlab.model.test:test"
