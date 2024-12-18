@@ -170,6 +170,7 @@ USM
 venv
 vllm
 VRAM
+webhooks
 wikisql
 WSL
 xcode
