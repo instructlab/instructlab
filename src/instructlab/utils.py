@@ -1052,3 +1052,15 @@ def check_skopeo_version():
         logger.warning(
             f"Failed to determine skopeo version. Recommended version is {RECOMMENDED_SCOPEO_VERSION}. Downloading the model might fail."
         )
+
+
+def get_cuda_device_properties(gpu_num: int) -> tuple[str, int]:
+    """
+    get_cuda_device_properties returns the name of the GPU and the amount of vRAM
+    """
+    # Third Party
+    import torch
+
+    properties = torch.cuda.get_device_properties(gpu_num)
+    chip_name = properties.name.lower()
+    return chip_name, int(properties.total_memory)
