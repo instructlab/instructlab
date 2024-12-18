@@ -195,6 +195,30 @@ jobs:
             channel: 'e2e-ci-results'
             text: "*e2e-nvidia-l40s-x8* job in *${{ github.repository }}* running on branch `${{ steps.check_pr.outputs.pr_or_branch }}` completed *successfully* :meow_party: | ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
+      - name: Send Discord notification for failure
+        if: failure() && steps.check_pr.outputs.is_pr == 'false'
+        uses: sarisia/actions-status-discord@65843b6a7d18626c252a055e247ccad1f41b4004 # v1.15.1
+        with:
+          webhook: ${{ secrets.SON_OF_JEEVES_DISCORD_WEBHOOK }}
+          status: ${{ job.status }}
+          title: "e2e-nvidia-l40s-x8"
+          description: |
+            Job in **${{ github.repository }}** running on branch `${{ steps.check_pr.outputs.pr_or_branch }}` completed **with failures** ❌
+            Click [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) to view details.
+          color: 0xCB2431 # Red color for failure
+
+      - name: Send Discord notification for success
+        if: success() && steps.check_pr.outputs.is_pr == 'false'
+        uses: sarisia/actions-status-discord@65843b6a7d18626c252a055e247ccad1f41b4004 # v1.15.1
+        with:
+          webhook: ${{ secrets.SON_OF_JEEVES_DISCORD_WEBHOOK }}
+          status: ${{ job.status }}
+          title: "e2e-nvidia-l40s-x8"
+          description: |
+            Job in **${{ github.repository }}** running on branch `${{ steps.check_pr.outputs.pr_or_branch }}` completed **successfully** ✅
+            Click [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) to view details.
+          color: 0x28A745 # Green color for success
+
   stop-xlarge-ec2-runner:
     needs:
       - start-xlarge-ec2-runner
