@@ -12,14 +12,18 @@ import subprocess
 from huggingface_hub import hf_hub_download, list_repo_files
 from huggingface_hub import logging as hf_logging
 from huggingface_hub import snapshot_download
-from packaging import version
 import click
 
 # First Party
 from instructlab import clickext
 from instructlab.configuration import DEFAULTS
 from instructlab.defaults import DEFAULT_INDENT
-from instructlab.utils import is_huggingface_repo, is_oci_repo, load_json
+from instructlab.utils import (
+    check_skopeo_version,
+    is_huggingface_repo,
+    is_oci_repo,
+    load_json,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -350,44 +354,3 @@ def download(ctx, repositories, releases, filenames, model_dir, hf_token):
                     fg="red",
                 )
                 raise click.exceptions.Exit(1)
-
-
-_RECOMMENDED_SCOPEO_VERSION = "1.9.0"
-
-
-def check_skopeo_version():
-    """
-    Check if skopeo is installed and the version is at least 1.9.0
-    This is required for downloading models from OCI registries.
-    """
-    # Run the 'skopeo --version' command and capture the output
-    try:
-        result = subprocess.run(
-            ["skopeo", "--version"], capture_output=True, text=True, check=True
-        )
-    except FileNotFoundError as exc:
-        click.secho(
-            f"\nskopeo is not installed.\nPlease install recommended version {_RECOMMENDED_SCOPEO_VERSION}",
-            fg="red",
-        )
-        raise click.exceptions.Exit(1) from exc
-
-    logger.debug(f"'skopeo --version' output: {result.stdout}")
-
-    # Extract the version number using a regular expression
-    match = re.search(r"skopeo version (\d+\.\d+\.\d+)", result.stdout)
-    if match:
-        installed_version = match.group(1)
-        logger.debug(f"detected skopeo version: {installed_version}")
-
-        # Compare the extracted version with the required version
-        if version.parse(installed_version) < version.parse(
-            _RECOMMENDED_SCOPEO_VERSION
-        ):
-            raise ValueError(
-                f"\n{DEFAULT_INDENT}skopeo version {installed_version} is lower than {_RECOMMENDED_SCOPEO_VERSION}.\n{DEFAULT_INDENT}Please upgrade it."
-            )
-    else:
-        logger.warning(
-            f"Failed to determine skopeo version. Recommended version is {_RECOMMENDED_SCOPEO_VERSION}. Downloading the model might fail."
-        )

@@ -147,7 +147,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           . venv/bin/activate
-          ./scripts/e2e-ci.sh -xl
+          ./scripts/e2e-ci.sh -x
 
       - name: Check disk after tests
         run: |
