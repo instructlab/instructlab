@@ -133,6 +133,9 @@ subcommands: list[Command] = [
     Command(("system", "info"), needs_config=False, should_fail=False),
     Command(("taxonomy",), needs_config=False, should_fail=False),
     Command(("taxonomy", "diff")),
+    Command(("process",), needs_config=False, should_fail=False),
+    Command(("process", "list")),
+    Command(("process", "attach")),
 ]
 
 aliases = [
