@@ -35,7 +35,7 @@ There is currently a ["small" t-shirt size E2E job](https://github.com/instructl
 These jobs runs automatically on all PRs and after commits merge to `main` or release branches. They depend upon the successful completion of any linting type jobs.
 
 There is also a ["large" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) that can be
-[triggered manually on the actions page](#triggering-an-e2e-job-via-github-web-ui) for the repository.
+[triggered manually on the actions page]((#triggering-an-e2e-job-via-github-web-ui) for the repository.
 It also runs automatically against the `main` branch at 11AM UTC every day.
 
 ### E2E Test Coverage Options
