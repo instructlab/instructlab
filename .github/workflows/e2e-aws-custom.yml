@@ -73,6 +73,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install dependent PRs if needed
+        uses: depends-on/depends-on-action@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Determine if pr_or_branch is a PR number
         id: check_pr
         run: |
