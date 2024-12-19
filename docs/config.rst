@@ -1,11 +1,10 @@
-ilab configuration
-==================
+CLI Configuration
+=================
 
 .. module:: instructlab.configuration
 
-InstructLab's configuration is read from ``config.yaml`` file. The
-configuration is handled avalided by a `Pydantic <https://docs.pydantic.dev/>`_
-schema.
+InstructLab's configuration is read from the ``$/XDG_CONFIG_DIR/instructlab/config.yaml`` file.
+The configuration is handled and valided by a `Pydantic <https://docs.pydantic.dev/>`_ schema.
 
 .. autopydantic_model:: Config
    :model-show-json: True
@@ -14,15 +13,19 @@ General
 -------
 
 .. autopydantic_model:: _general
+
+Metadata
+--------
+
 .. autopydantic_model:: _metadata
 
-model chat
-----------
+ilab model chat
+---------------
 
 .. autopydantic_model:: _chat
 
-model evaluate
---------------
+ilab model evaluate
+-------------------
 
 .. autopydantic_model:: _evaluate
 .. autopydantic_model:: _mmlu
@@ -30,20 +33,20 @@ model evaluate
 .. autopydantic_model:: _mtbench
 .. autopydantic_model:: _mtbenchbranch
 
-data generate
---------------
+ilab data generate
+------------------
 
 .. autopydantic_model:: _generate
 
-model serve
------------
+ilab model serve
+----------------
 
 .. autopydantic_model:: _serve
 .. autopydantic_model:: _serve_llama_cpp
 .. autopydantic_model:: _serve_vllm
 .. autopydantic_model:: _serve_server
 
-model train
------------
+ilab model train
+----------------
 
 .. autopydantic_model:: _train
