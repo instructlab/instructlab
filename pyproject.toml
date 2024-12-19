@@ -51,6 +51,8 @@ issues = "https://github.com/instructlab/instructlab/issues"
 [project.entry-points."instructlab.command.data"]
 "generate" = "instructlab.cli.data.generate:generate"
 "list" = "instructlab.cli.data.list:list_datasets"
+"process" = "instructlab.cli.data.process:process"
+"ingest" = "instructlab.cli.data.ingest:ingest"
 
 [project.entry-points."instructlab.command.model"]
 "chat" = "instructlab.model.chat:chat"
@@ -90,6 +92,7 @@ optional-dependencies.cuda = { file = ["requirements/cuda.txt"] }
 optional-dependencies.hpu = { file = ["requirements/hpu.txt"] }
 optional-dependencies.mps = { file = ["requirements/mps.txt"] }
 optional-dependencies.rocm = { file = ["requirements/rocm.txt"] }
+optional-dependencies.milvus = { file = ["requirements/milvus.txt"] }
 
 [tool.setuptools.packages.find]
 where = ["src"]

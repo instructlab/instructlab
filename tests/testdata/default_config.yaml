@@ -16,6 +16,9 @@ chat:
   # Model to be used for chatting with.
   # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
   model: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+  # The RAG chat configuration
+  # Default: {}
+  rag: {}
   # Filepath of a dialog session file.
   # Default: None
   session:
