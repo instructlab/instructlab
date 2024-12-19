@@ -66,15 +66,14 @@ class DoclingDocumentSplitter:
                 )
                 document = legacy_to_docling_document(legacy_document)
             except ValidationError as e:
-                logger.warning(
-                    f"Expected {file_path} to be in legacy docling format, but schema validation failed: {e}\n"
-                    + "Tring the updated schema instead."
+                logger.info(
+                    f"Document at {file_path} not in legacy docling format. Tring the updated schema instead."
                 )
                 try:
                     document = DoclingDocument.model_validate_json(text)
                 except ValidationError as e:
                     logger.error(
-                        f"Expected {file_path} to be in legacy docling format, but schema validation failed: {e}"
+                        f"Expected {file_path} to be in docling format, but schema validation failed: {e}"
                     )
                     raise e
 

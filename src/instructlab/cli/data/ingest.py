@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
     default="milvuslite",
     envvar="ILAB_DOCUMENT_STORE_TYPE",
     type=click.STRING,
-    help="The document store type, one of: `milvuslite`, `milvus`.",
+    help="The document store type, one of: `milvuslite`.",
 )
 @click.option(
     "--document-store-uri",

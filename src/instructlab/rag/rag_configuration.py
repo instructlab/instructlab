@@ -27,7 +27,7 @@ def rag_options(command):
         default="milvuslite",
         envvar="ILAB_DOCUMENT_STORE_TYPE",
         type=click.STRING,
-        help="The document store type, one of: `milvuslite`, `milvus`.",
+        help="The document store type, one of: `milvuslite`.",
     )(command)
     command = click.option(
         "--document-store-uri",
@@ -98,6 +98,7 @@ class document_store_configuration(BaseModel):
 
 
 class embedder_configuration(BaseModel):
+    model_config = ConfigDict(extra="ignore", protected_namespaces=())
     model_dir: Optional[str] = None
     model_name: Optional[str] = None
 
