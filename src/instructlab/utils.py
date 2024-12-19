@@ -255,6 +255,7 @@ class SourceDict(TypedDict):
     repo: str
     commit: str
     patterns: List[str]
+    folder: str
 
 
 def is_valid_document(file_path: str, file_info: dict) -> bool:
@@ -339,8 +340,21 @@ def _validate_documents(
                 )
 
         except (OSError, exc.GitCommandError, FileNotFoundError) as e:
-            click.secho(f"Error validating documents: {str(e)}", fg="red")
-            raise click.exceptions.Exit(1)
+            if os.path.exists(source.get("folder")):
+                logger.debug("Processing files...")
+                opened_files = False
+                for pattern in file_patterns:
+                    for file_path in glob.glob(
+                        os.path.join(source.get("folder"), pattern)
+                    ):
+                        if os.path.isfile(file_path) and file_path.endswith(".md"):
+                            with open(file_path, "r", encoding="utf-8"):
+                                # Success! we could open the file.
+                                # We don't actually care about the contents, though.
+                                opened_files = True
+            else:
+                click.secho(f"Error validating documents: {str(e)}", fg="red")
+                raise click.exceptions.Exit(1)
 
 
 def git_clone_checkout(
