@@ -234,7 +234,7 @@ test_bind_port(){
 
 test_ctx_size(){
     # A context size of 55 will allow a small message
-    ilab model serve --max-ctx-size 25 &> "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" &
+    ilab model serve --max-ctx-size 55 &> "$TEST_CTX_SIZE_LAB_SERVE_LOG_FILE" &
     PID_SERVE=$!
 
     # Make sure the server has time to open the port
@@ -250,21 +250,10 @@ test_ctx_size(){
     How many tokens could you take today. Could you tell me about the time you could only take twenty five tokens" &> "$TEST_CTX_SIZE_LAB_CHAT_LOG_FILE" &
     PID_CHAT=$!
 
-    # look for the context size error in the server logs
-    if ! timeout 20 bash -c "
-        until grep -q 'exceed context window of' $TEST_CTX_SIZE_LAB_SERVE_LOG_FILE; do
-        echo 'waiting for context size error'
-        sleep 1
-    done
-"; then
-        echo "context size error not found in server logs"
-        cat $TEST_CTX_SIZE_LAB_SERVE_LOG_FILE
-        exit 1
-    fi
-
+    # we catch these failure BEOFRE they hit the server. as of llama_cpp_python 0.3.z, these types of failures are fatal and will crash the server
     # look for the context size error in the chat logs
     if ! timeout 20 bash -c "
-        until grep -q 'Message too large for context size.' $TEST_CTX_SIZE_LAB_CHAT_LOG_FILE; do
+        until grep -q '"Message too large for context size. Dropping from queue."' $TEST_CTX_SIZE_LAB_CHAT_LOG_FILE; do
         echo 'waiting for chat error'
         sleep 1
     done

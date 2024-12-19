@@ -220,6 +220,7 @@ def chat(
             logger.warning(
                 "Setting serving log file (--serving-log-file) is not supported when the server is already running"
             )
+        max_tokens = ctx.obj.config.serve.server.current_max_ctx_size
     else:
         # First Party
         from instructlab.model.backends import backends
@@ -275,7 +276,6 @@ def chat(
 
                 # Currently, we only present a single model so we can safely assume that the first model
                 server_model = models.data[0].id if models is not None else None
-
                 # override 'model' with the first returned model if not provided so that the chat print
                 # the model used by the server
                 model = (
@@ -656,6 +656,17 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         try:
             while True:
                 # Loop to catch situations where we need to retry, such as context length exceeded
+                # We need to catch these errors before they hit the server or else it will crash.
+                # as of llama_cpp_python 0.3.z, BadRequestErrors cause the server to become unavailable
+                total_context_size = 0
+                for msg in self.info["messages"]:
+                    total_context_size += len(msg["content"])
+                if self.max_tokens < total_context_size:
+                    self.info["messages"] = self.info["messages"][1:]
+                    self.console.print(
+                        "Message too large for context size. Dropping from queue.",
+                        style="bold red",
+                    )
                 try:
                     response = self.client.chat.completions.create(
                         model=self.model,
@@ -666,13 +677,6 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                 except openai.BadRequestError as e:
                     logger.debug(f"BadRequestError: {e}")
                     if e.code == "context_length_exceeded":
-                        if len(self.info["messages"]) > 1:
-                            # Trim the oldest entry in our message history
-                            logger.debug(
-                                "Trimming message history to attempt to fit context length"
-                            )
-                            self.info["messages"] = self.info["messages"][1:]
-                            continue
                         # We only have a single message and it's still to big.
                         self.console.print(
                             "Message too large for context size.", style="bold red"
