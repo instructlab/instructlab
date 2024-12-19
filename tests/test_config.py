@@ -27,7 +27,6 @@ class TestConfig:
         # redefine defaults here instead of relyin on those in configuration.DEFAULTS
         # to catch any errors if we are doing things incorrectly over there
         package_name = "instructlab"
-        internal_dirname = "internal"
         cache_dir = os.path.join(xdg_cache_home(), package_name)
         data_dir = os.path.join(xdg_data_home(), package_name)
         default_chat_model = f"{cache_dir}/models/granite-7b-lab-Q4_K_M.gguf"
@@ -72,9 +71,6 @@ class TestConfig:
         assert cfg.generate.sdg_scale_factor == 30
         assert cfg.generate.chunk_word_count == 1000
         assert cfg.generate.output_dir == f"{data_dir}/datasets"
-        assert (
-            cfg.generate.seed_file == f"{data_dir}/{internal_dirname}/seed_tasks.json"
-        )
 
         assert cfg.serve is not None
         assert cfg.serve.model_path == default_chat_model
