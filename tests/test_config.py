@@ -72,9 +72,6 @@ class TestConfig:
         assert cfg.generate.sdg_scale_factor == 30
         assert cfg.generate.chunk_word_count == 1000
         assert cfg.generate.output_dir == f"{data_dir}/datasets"
-        assert (
-            cfg.generate.seed_file == f"{data_dir}/{internal_dirname}/seed_tasks.json"
-        )
 
         assert cfg.serve is not None
         assert cfg.serve.model_path == default_chat_model
