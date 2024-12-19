@@ -3,7 +3,7 @@
 # Standard
 from os import path
 from re import match
-from typing import Any, Optional, Union
+from typing import Any, Dict, Optional, Union
 import enum
 import logging
 import os
@@ -161,6 +161,9 @@ class _chat(BaseModel):
     temperature: float = Field(
         default=1.0,
         description="Controls the randomness of the model's responses. Lower values make the output more deterministic, while higher values produce more random results.",
+    )
+    rag: Optional[Dict[str, Any]] = Field(
+        default_factory=dict, description="The RAG chat configuration"
     )
 
 
