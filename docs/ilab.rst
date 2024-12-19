@@ -1,5 +1,5 @@
-ilab command line reference
-===========================
+CLI Reference
+=============
 
 The following documentation is auto-generated from the ``ilab`` code.
 
