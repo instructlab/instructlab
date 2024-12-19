@@ -107,6 +107,16 @@ jobs:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
 
+      - name: Install dependent PRs if needed
+        uses: depends-on/depends-on-action@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install dependent PRs if needed
+        uses: depends-on/depends-on-action@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Fetch and checkout PR
         if: ${{ github.event_name == 'pull_request_target' }}
         run: |
