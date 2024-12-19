@@ -315,6 +315,7 @@ class _generate(BaseModel):
         description="Directory where generated datasets are stored.",
     )
 
+
 class _mmlu(BaseModel):
     """Class describing configuration of MMLU evaluation benchmark."""
 
