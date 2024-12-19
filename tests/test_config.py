@@ -27,7 +27,6 @@ class TestConfig:
         # redefine defaults here instead of relyin on those in configuration.DEFAULTS
         # to catch any errors if we are doing things incorrectly over there
         package_name = "instructlab"
-        internal_dirname = "internal"
         cache_dir = os.path.join(xdg_cache_home(), package_name)
         data_dir = os.path.join(xdg_data_home(), package_name)
         default_chat_model = f"{cache_dir}/models/granite-7b-lab-Q4_K_M.gguf"
