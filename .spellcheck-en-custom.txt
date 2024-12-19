@@ -3,6 +3,7 @@ Akash
 AMDGPU
 arge
 arXiv
+autogenerate
 aws
 backend
 backends

@@ -1,17 +1,8 @@
-# Workflow PlantUML
+## Instructlab Docs
 
-Workflow figure is generated using [PlantUML](https://plantuml.com/ditaa) with
-the [ditaa](https://ditaa.sourceforge.net).
-To generate it yourself, the easiest way is to install the
-[PlantUML plugin in VS Code](https://marketplace.visualstudio.com/items?itemName=jebbs.plantuml)
-(with the prerequisite installed), open the file and click preview.
+The directory `instructlab/docs` serves to purposes:
 
-If you don't want to install the dependencies locally, you can use the following
-settings to make the preview work with a remote render:
+1. To provide advanced user, and maintainer documentation.
+2. A place for the infrastructure to autogenerate the (sphinx) docs website to live.
 
-```json
-"plantuml.render": "PlantUMLServer",
-"plantuml.server": "https://www.plantuml.com/plantuml",
-```
-
-[ASCIIFlow](https://asciiflow.com/#/) is a helpful tool to edit the source code.
+A preview of the site can be done locally by running `make docs` and opening up `docs/build/html/index.html1 in a web browser.
