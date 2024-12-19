@@ -20,6 +20,7 @@ CPU_BRAND=$(sysctl -n machdep.cpu.brand_string)
 LINK_TARGET_DIR="/usr/local/bin"
 LINK_NAME="$LINK_TARGET_DIR/ilab"
 INDENT_VARIABLE="   "
+LINK_FLAG=ture
 
 # Script usage
 usage() {
@@ -145,35 +146,53 @@ main() {
         exit 1
     fi
 
+    # Check the command file exist
+    if [ ! -f "$INSTALL_DIR/venv/bin/ilab" ]; then
+        echo -e "\nError: InstructLab installation failed! '$INSTALL_DIR/venv/bin/ilab' not found."
+        exit 1
+    fi
+
     # Create symbolic link
     if [ ! -d "$LINK_TARGET_DIR" ]; then
-        echo -e "\nError: $LINK_TARGET_DIR does not exist." 
-        echo "Specify another link target directory or create it manually for $INSTALL_DIR/venv/bin/ilab."
-        exit 1
+        echo -e "\WARNING: $LINK_TARGET_DIR does not exist and cannot create soft link."
+        LINK_FLAG=false
     fi
 
-    if [ ! -w "$LINK_TARGET_DIR" ]; then
-        echo -e "\nError: No write permission to $LINK_TARGET_DIR."
-        echo "Run the script with sudo or choose another directory."
-        echo -e "Alternatively, you can use sudo create the symlink manually for $INSTALL_DIR/venv/bin/ilab"
-        exit 1
+    if [ "$LINK_FLAG" = ture ]; then
+        if [ ! -w "$LINK_TARGET_DIR" ]; then
+            echo -e "\nWARNING: No write permission to $LINK_TARGET_DIR and cannot create soft link."
+            LINK_FLAG=false
+        fi
     fi
 
-    echo -e "\nCreating symbolic link..."
-    if ln -sf "$INSTALL_DIR/venv/bin/ilab" "$LINK_NAME"; then
-        echo -e "$INDENT_VARIABLE Created soft link: $LINK_NAME -> $INSTALL_DIR/venv/bin/ilab"
+    if [ "$LINK_FLAG" = ture ]; then
+        echo -e "\nCreating symbolic link..."
+        if ln -sf "$INSTALL_DIR/venv/bin/ilab" "$LINK_NAME"; then
+            echo -e "$INDENT_VARIABLE Created soft link: $LINK_NAME -> $INSTALL_DIR/venv/bin/ilab"
+            ILAB_CMD="ilab"
+        else
+            echo -e "$INDENT_VARIABLE Error: Failed to create soft link."
+            LINK_FLAG=false
+            ILAB_CMD="$INSTALL_DIR/venv/bin/ilab"
+        fi
     else
-        echo -e "$INDENT_VARIABLE Error: Failed to create soft link."
-        exit 1
+        ILAB_CMD="$INSTALL_DIR/venv/bin/ilab"
     fi
 
     # Check if InstructLab was installed correctly
-    echo -e "\nRunning 'ilab --help' to check the installation..."
-    ilab --help || { echo "Error: 'ilab' command not found. Recheck that InstructLab was installed correctly."; }
+    echo -e "\nRunning '$ILAB_CMD --help' to check the installation..."
+    $ILAB_CMD --help
 
     echo -e "\n============================================================"
     echo -e "$INDENT_VARIABLE InstructLab installation completed successfully."
-    echo -e "\nNext step:\n    Run 'ilab config init' to initialize your configuration."
+    echo -e "\nNext step:\n    Run '$ILAB_CMD config init' to initialize your configuration."
+    # Hanlde symbolic failed situation
+    if [ "$LINK_FLAG" = false ]; then
+        echo -e "    Since sudo was not used or symbolic link creation failed, no symbolic link has been created."
+        echo -e "    You can source into virtual env with 'source $INSTALL_DIR/venv/bin/activate' and use ilab directly."
+        echo -e "    Or create the symbolic link manually:"
+        echo -e "        sudo ln -sf $INSTALL_DIR/venv/bin/ilab $LINK_TARGET_DIR/ilab"
+    fi
     echo -e "============================================================"
 }
 
