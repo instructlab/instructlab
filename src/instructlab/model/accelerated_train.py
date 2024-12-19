@@ -483,7 +483,7 @@ def _run_phased_training(
         )
 
     click.secho(
-        f"Training finished! Best final checkpoint: {output_checkpoint.checkpoint} with score: {output_checkpoint.score}\nJournal: {str(journal.journalfile)}",
+        f"ᕦ(òᴗóˇ)ᕤ Accelerated model training completed successfully! ᕦ(òᴗóˇ)ᕤ\nBest final checkpoint: {output_checkpoint.checkpoint} with score: {output_checkpoint.score}\nJournal: {str(journal.journalfile)}",
         fg="green",
     )
 
