@@ -582,6 +582,17 @@ test_ilab_chat_server_logs(){
     fi
 }
 
+test_ilab_help_without_config() {
+    result=$(ilab --config=test-test.yaml model evaluate --help)
+
+    if echo "$result" | grep -F 'Usage: ilab model evaluate [OPTIONS]'; then
+        echo "Test passed: Help message found."
+    else
+        echo "Error: Help message not found."
+        exit 1
+    fi
+}
+
 #########
 # SETUP #
 #########
@@ -680,6 +691,8 @@ cleanup
 test_log_format
 cleanup
 test_llama_backend
+cleanup
+test_ilab_help_without_config
 cleanup
 
 exit 0
