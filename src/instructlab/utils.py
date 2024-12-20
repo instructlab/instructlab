@@ -777,6 +777,11 @@ def is_model_gguf(model_path: pathlib.Path) -> bool:
     Returns:
         bool: True if the file is a GGUF file, False otherwise.
     """
+
+    if os.path.isdir(model_path):
+        logger.debug(f"GGUF Path {model_path} is a directory")
+        return False
+
     # Third Party
     from gguf.constants import GGUF_MAGIC
 
@@ -793,9 +798,6 @@ def is_model_gguf(model_path: pathlib.Path) -> bool:
             f"Failed to unpack the first four bytes of {model_path}. "
             f"The file might not be a valid GGUF file or is corrupted: {e}"
         )
-        return False
-    except IsADirectoryError as e:
-        logger.debug(f"GGUF Path {model_path} is a directory, returning {e}")
         return False
     except OSError as e:
         logger.debug(f"An unexpected error occurred while processing {model_path}: {e}")
