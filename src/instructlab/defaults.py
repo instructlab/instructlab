@@ -29,6 +29,17 @@ LOG_FORMAT = "%(levelname)s %(asctime)s %(name)s:%(lineno)d: %(message)s"
 RECOMMENDED_SCOPEO_VERSION = "1.9.0"
 
 
+class ILAB_PROCESS_MODES:
+    DETACHED: str = "detached"
+    ATTACHED: str = "attached"
+
+
+class ILAB_PROCESS_TYPES:
+    DATA_GENERATION: str = "Generation"
+
+    TRAINING: str = "Training"
+
+
 class STORAGE_DIR_NAMES:
     ILAB = "instructlab"
     DATASETS = "datasets"
@@ -41,6 +52,7 @@ class STORAGE_DIR_NAMES:
     )
     CHATLOGS = "chatlogs"
     PHASED = "phased"
+    LOGS = "logs"
 
 
 class _InstructlabDefaults:
@@ -111,6 +123,10 @@ class _InstructlabDefaults:
         self._cache_home = path.join(xdg_cache_home(), ILAB_PACKAGE_NAME)
         self._config_dir = path.join(xdg_config_home(), ILAB_PACKAGE_NAME)
         self._data_dir = path.join(xdg_data_home(), ILAB_PACKAGE_NAME)
+
+    @property
+    def LOGS_DIR(self) -> str:
+        return path.join(self._data_dir, STORAGE_DIR_NAMES.LOGS)
 
     @property
     def CHECKPOINTS_DIR(self) -> str:
@@ -227,6 +243,10 @@ class _InstructlabDefaults:
     @property
     def TRAIN_L4_X8_PROFILE(self) -> str:
         return path.join(self.TRAIN_PROFILE_DIR, "L4_x8.yaml")
+
+    @property
+    def REGISTRY_FILE(self) -> str:
+        return path.join(self.INTERNAL_DIR, "process_registry.json")
 
 
 DEFAULTS = _InstructlabDefaults()
