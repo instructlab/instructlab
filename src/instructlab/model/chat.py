@@ -30,12 +30,15 @@ from instructlab import client_utils as ilabclient
 from instructlab import configuration as cfg
 from instructlab import log
 from instructlab.client_utils import HttpClientParams
+from instructlab.rag.rag import RagHandler
+from instructlab.rag.rag_configuration import RagConfig, no_rag_config, rag_options
 
 # Local
 from ..client_utils import http_client
 from ..utils import get_cli_helper_sysprompt, get_model_arch, get_sysprompt
 
 logger = logging.getLogger(__name__)
+
 
 HELP_MD = """
 Help / TL;DR
@@ -50,6 +53,7 @@ Help / TL;DR
 - `/N`: **n**ew session (ignoring loaded)
 - `/d <int>`: **d**isplay previous response based on input, if passed 1 then previous, if 2 then second last response and so on.
 - `/p <int>`: previous response in **p**lain text based on input, if passed 1 then previous, if 2 then second last response and so on.
+- `/r`: toggle the status of the RAG pipeline.
 - `/md <int>`: previous response in **M**ark**d**own based on input, if passed 1 then previous, if 2 then second last response and so on.
 - `/s filepath`: **s**ave current session to `filepath`
 - `/l filepath`: **l**oad `filepath` and start a new session
@@ -172,6 +176,7 @@ def is_openai_server_and_serving_model(
     "--temperature",
     cls=clickext.ConfigOption,
 )
+@rag_options
 @click.pass_context
 @clickext.display_params
 def chat(
@@ -191,6 +196,7 @@ def chat(
     model_family,
     serving_log_file,
     temperature,
+    **kwargs,
 ):
     """Runs a chat using the modified model"""
     # pylint: disable=import-outside-toplevel
@@ -297,6 +303,9 @@ def chat(
                     backend_instance.shutdown()
                 raise click.exceptions.Exit(1) from exc
 
+    rag_config = RagConfig(ctx.obj.config.chat.rag, **kwargs)
+    logger.info(f"rag_config is {vars(rag_config)}")
+
     try:
         chat_cli(
             ctx,
@@ -309,6 +318,7 @@ def chat(
             qq=quick_question,
             max_tokens=max_tokens,
             temperature=temperature,
+            rag_config=rag_config,
         )
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
@@ -339,6 +349,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         log_file=None,
         max_tokens=None,
         temperature=1.0,
+        rag_config: RagConfig = no_rag_config,
     ):
         self.client = client
         self.model = model
@@ -348,6 +359,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self.log_file = log_file
         self.max_tokens = max_tokens
         self.temperature = temperature
+        self.rag_handler = RagHandler(rag_config)
 
         self.console = Console()
 
@@ -399,6 +411,10 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             [
                 (
                     "#3f7cac bold",
+                    "[RAG]" if self.rag_handler.is_enabled() else "",
+                ),  # info blue for multiple
+                (
+                    "#3f7cac bold",
                     f"[{'M' if self.multiline else 'S'}]",
                 ),  # info blue for multiple
                 *(
@@ -444,6 +460,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                 Markdown("**WARNING**: No contexts loaded from the config file.")
             )
             raise KeyboardInterrupt
+
         cs = content.split()
         if len(cs) < 2:
             self._sys_print(
@@ -594,6 +611,10 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self._sys_print(Markdown(f"**Available contexts:**\n\n{context_list}"))
         raise KeyboardInterrupt
 
+    def _handle_rag(self, _):
+        self.rag_handler.toggle_state()
+        raise KeyboardInterrupt
+
     def start_prompt(
         self,
         logger,  # pylint: disable=redefined-outer-name
@@ -615,6 +636,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             "/s": self._handle_save_session,
             "/l": self._handle_load_session,
             "/lc": self._handle_list_contexts,
+            "/r": self._handle_rag,
         }
 
         if content is None:
@@ -635,6 +657,9 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             handler(content)
 
         self.log_message(PROMPT_PREFIX + content + "\n\n")
+
+        if self.rag_handler.is_enabled():
+            content = self.rag_handler.augment_user_query(content)
 
         # Update message history and token counters
         self._update_conversation(content, "user")
@@ -766,6 +791,7 @@ def chat_cli(
     qq,
     max_tokens,
     temperature,
+    rag_config: RagConfig,
 ):
     """Starts a CLI-based chat with the server"""
     client = OpenAI(
@@ -832,6 +858,7 @@ def chat_cli(
         loaded=loaded,
         temperature=(temperature if temperature is not None else config.temperature),
         max_tokens=(max_tokens if max_tokens else config.max_tokens),
+        rag_config=rag_config,
     )
 
     if not qq and session is None:
