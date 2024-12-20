@@ -119,15 +119,15 @@ train:
   max_batch_len: 30000
   max_seq_len: 4096
   model_path: ~/.cache/instructlab/models/instructlab/granite-7b-lab
-  num_epochs: 4
+  num_epochs: 7
   save_samples: 1000
   is_padding_free: true
   nproc_per_node: 8
   phased_phase1_effective_batch_size: 32
-  phased_phase1_num_epochs: 4
+  phased_phase1_num_epochs: 7
   phased_phase1_samples_per_save: 0
   phased_phase2_effective_batch_size: 32
-  phased_phase2_num_epochs: 4
+  phased_phase2_num_epochs: 7
   phased_phase2_samples_per_save: 0
   distributed_backend: fsdp
   pipeline: accelerated
