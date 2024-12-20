@@ -5,6 +5,7 @@ from contextlib import redirect_stderr
 from time import sleep
 from types import FrameType
 from typing import Optional, cast
+import asyncio
 import logging
 import multiprocessing
 import pathlib
@@ -227,7 +228,7 @@ def server(
         raise ServerException(f"failed creating the server application: {exc}") from exc
 
     # Update chat template if necessary
-    augment_chat_template(chat_template, model_family, model_path, queue)
+    asyncio.run(augment_chat_template(chat_template, model_family, model_path, queue))
 
     logger.info("Starting server process, press CTRL+C to shutdown server...")
     logger.info(
@@ -278,7 +279,7 @@ class UvicornServer(uvicorn.Server):
             super().handle_exit(sig=sig, frame=frame)
 
 
-def augment_chat_template(
+async def augment_chat_template(
     chat_template: str,
     model_family: str,
     model_path: pathlib.Path,
@@ -304,7 +305,7 @@ def augment_chat_template(
 
         logger.info("Replacing chat template:\n %s", template)
 
-        for proxy in llama_app.get_llama_proxy():
+        async for proxy in llama_app.get_llama_proxy():
             proxy().chat_handler = llama_chat_format.Jinja2ChatFormatter(
                 template=template,
                 # Use the model defined eos and bos if either is not
