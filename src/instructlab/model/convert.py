@@ -124,3 +124,4 @@ def convert(
 
     logger.info(f"deleting {source_model_dir}...")
     shutil.rmtree(source_model_dir)
+    click.echo("ᕦ(òᴗóˇ)ᕤ Model convert completed successfully! ᕦ(òᴗóˇ)ᕤ")
