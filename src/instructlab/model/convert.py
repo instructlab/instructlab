@@ -14,6 +14,7 @@ import click
 
 # First Party
 from instructlab import clickext, utils
+from instructlab.defaults import DEFAULT_INDENT
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +45,13 @@ logger = logging.getLogger(__name__)
     default=None,
     show_default=True,
 )
+@click.option(
+    "-od",
+    "--output-dir",
+    help="Directory to save the converted model.",
+    default=os.getcwd(),
+    show_default=True,
+)
 @click.pass_context
 @clickext.display_params
 @utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
@@ -54,6 +62,7 @@ def convert(
     skip_de_quantize,
     skip_quantize,
     model_name,
+    output_dir,
 ):
     """Converts model to GGUF"""
     # pylint: disable=import-outside-toplevel
@@ -93,7 +102,11 @@ def convert(
         )
         raise click.exceptions.Exit(1)
 
-    model_dir_fused_pt = f"{model_name}-trained"
+    output_dir = os.path.expanduser(output_dir)
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        logger.info(f"Created output directory: {output_dir}")
+    model_dir_fused_pt = os.path.join(output_dir, f"{model_name}-trained")
     # this converts MLX to PyTorch
     convert_between_mlx_and_pytorch(
         hf_path=model_dir_fused, mlx_path=model_dir_fused_pt, local=True, to_pt=True
@@ -124,3 +137,7 @@ def convert(
 
     logger.info(f"deleting {source_model_dir}...")
     shutil.rmtree(source_model_dir)
+
+    click.secho(
+        f"\nModel directory after coversion:\n{DEFAULT_INDENT}{os.path.abspath(model_dir_fused_pt)}"
+    )
