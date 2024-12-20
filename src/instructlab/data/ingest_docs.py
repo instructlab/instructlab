@@ -15,7 +15,9 @@ from haystack.components.writers import DocumentWriter  # type: ignore
 from milvus_haystack import MilvusDocumentStore  # type: ignore
 
 # First Party
-from instructlab.haystack.docling_splitter import DoclingDocumentSplitter
+from instructlab.rag.haystack.docling_splitter import (  # type: ignore
+    DoclingDocumentSplitter,
+)
 from instructlab.rag.rag_configuration import (
     document_store_configuration,
     embedder_configuration,
@@ -100,8 +102,7 @@ def _document_store_component(document_store_type, document_store_uri, collectio
             drop_old=True,
         )
         return document_store
-    else:
-        raise ValueError(f"Unmanaged document store type {document_store_type}")
+    raise ValueError(f"Unmanaged document store type {document_store_type}")
 
 
 def _converter_component():

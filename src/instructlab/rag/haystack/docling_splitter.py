@@ -65,7 +65,7 @@ class DoclingDocumentSplitter:
                     LegacyDoclingDocument.model_validate_json(text)
                 )
                 document = legacy_to_docling_document(legacy_document)
-            except ValidationError as e:
+            except ValidationError:
                 logger.info(
                     f"Document at {file_path} not in legacy docling format. Tring the updated schema instead."
                 )

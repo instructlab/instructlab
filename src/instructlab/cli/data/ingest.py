@@ -62,7 +62,8 @@ logger = logging.getLogger(__name__)
     envvar="ILAB_OUTPUT_DIR",
     help="Directory where generated datasets are stored.",
 )
-@click.argument(
+@click.option(
+    "--input",
     "input_dir",
     required=False,
     type=click.Path(
@@ -70,6 +71,8 @@ logger = logging.getLogger(__name__)
         dir_okay=True,
         file_okay=False,
     ),
+    envvar="ILAB_INPUT_DIR",
+    help="Directory where pre-processed documents are located.",
 )
 @click.pass_context
 @clickext.display_params

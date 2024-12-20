@@ -39,13 +39,16 @@ logger = logging.getLogger(__name__)
     envvar="ILAB_TAXONOMY_BASE",
     help="Branch of taxonomy used to calculate diff against.",
 )
-@click.argument(
+@click.option(
+    "--output",
     "output_dir",
     type=click.Path(
         exists=True,
         dir_okay=True,
         file_okay=False,
     ),
+    envvar="ILAB_OUTPUT_DIR",
+    help="Directory where processed docs are stored.",
 )
 @click.pass_context
 @clickext.display_params
