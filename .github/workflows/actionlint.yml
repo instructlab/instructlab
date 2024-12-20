@@ -43,6 +43,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install dependent PRs if needed
+        uses: depends-on/depends-on-action@main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: "Download actionlint"
         run: |
           docker build --tag actionlint - < .github/workflows/actionlint.dockerfile
