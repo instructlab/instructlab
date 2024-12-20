@@ -230,9 +230,9 @@ def test_evaluate_mt_bench(
     assert launch_server_mock.call_count == 4
 
 
-@patch("instructlab.model.evaluate.validate_model")
+@patch("instructlab.model.evaluate.validate_model", autospec=True)
 @patch(
-    "instructlab.model.evaluate.launch_server",
+    "instructlab.cli.model.evaluate.launch_server",
     return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1", 1),
 )
 @patch("instructlab.eval.mt_bench.MTBenchBranchEvaluator.gen_answers")
@@ -266,7 +266,7 @@ def test_evaluate_mt_bench_branch(
 
 @patch("instructlab.model.evaluate.validate_model")
 @patch(
-    "instructlab.model.evaluate.launch_server",
+    "instructlab.cli.model.evaluate.launch_server",
     return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1", 1),
 )
 @patch(
@@ -309,7 +309,7 @@ def test_evaluate_mmlu(
 
 @patch("instructlab.model.evaluate.validate_model")
 @patch(
-    "instructlab.model.evaluate.launch_server",
+    "instructlab.cli.model.evaluate.launch_server",
     return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1", 1),
 )
 @patch(
@@ -506,7 +506,7 @@ def test_int_batchsize_mmlu(mmlu_mock, _, cli_runner: CliRunner):
 
 @patch("instructlab.model.evaluate.validate_model")
 @patch(
-    "instructlab.model.evaluate.launch_server",
+    "instructlab.cli.model.evaluate.launch_server",
     return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1", 1),
 )
 def test_invalid_taxonomy_mt_bench_branch(launch_server_mock, _, cli_runner: CliRunner):
@@ -539,7 +539,7 @@ def test_invalid_taxonomy_mt_bench_branch(launch_server_mock, _, cli_runner: Cli
 
 @patch("instructlab.model.evaluate.validate_model")
 @patch(
-    "instructlab.model.evaluate.launch_server",
+    "instructlab.cli.model.evaluate.launch_server",
     return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1", 1),
 )
 def test_invalid_branch_mt_bench_branch(launch_server_mock, _, cli_runner: CliRunner):
