@@ -170,8 +170,11 @@ generate:
     # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
     model_path: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
     # Server configuration including host and port.
-    # Default: host='127.0.0.1' port=8000
+    # Default: host='127.0.0.1' port=8000 current_max_ctx_size=4096
     server:
+      # Maximum number of tokens that can be processed by the currently served model.
+      # Default: 4096
+      current_max_ctx_size: 4096
       # Host to serve on.
       # Default: 127.0.0.1
       host: 127.0.0.1
@@ -251,8 +254,11 @@ serve:
   # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
   model_path: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
   # Server configuration including host and port.
-  # Default: host='127.0.0.1' port=8000
+  # Default: host='127.0.0.1' port=8000 current_max_ctx_size=4096
   server:
+    # Maximum number of tokens that can be processed by the currently served model.
+    # Default: 4096
+    current_max_ctx_size: 4096
     # Host to serve on.
     # Default: 127.0.0.1
     host: 127.0.0.1

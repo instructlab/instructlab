@@ -220,6 +220,7 @@ def chat(
             logger.warning(
                 "Setting serving log file (--serving-log-file) is not supported when the server is already running"
             )
+        max_tokens = ctx.obj.config.serve.server.current_max_ctx_size
     else:
         # First Party
         from instructlab.model.backends import backends
@@ -235,6 +236,13 @@ def chat(
             model_path=model,
             log_file=serving_log_file,
         )
+        # if max tokens is the default, read from the serve cfg in case that has been overriden
+        # if serve has a different max_ctx_size, that is what we use.
+        if (
+            max_tokens is None
+            and backend_instance.get_backend_type() == backends.LLAMA_CPP
+        ):
+            max_tokens = ctx.obj.config.serve.llama_cpp.max_ctx_size
         try:
             # Run the llama server
             api_base = backend_instance.run_detached(http_client(ctx.params))
@@ -275,7 +283,6 @@ def chat(
 
                 # Currently, we only present a single model so we can safely assume that the first model
                 server_model = models.data[0].id if models is not None else None
-
                 # override 'model' with the first returned model if not provided so that the chat print
                 # the model used by the server
                 model = (
@@ -656,6 +663,17 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         try:
             while True:
                 # Loop to catch situations where we need to retry, such as context length exceeded
+                # We need to catch these errors before they hit the server or else it will crash.
+                # as of llama_cpp_python 0.3.z, BadRequestErrors cause the server to become unavailable
+                total_context_size = 0
+                # this handling can apply to both llama-cpp-python and vLLM. However, the exception handling below should still exist for vLLM.
+                for msg in self.info["messages"]:
+                    total_context_size += len(msg["content"])
+                if self.max_tokens is not None and self.max_tokens < total_context_size:
+                    self.info["messages"] = self.info["messages"][1:]
+                    logger.debug(
+                        "Message too large for context size. Dropping from queue."
+                    )
                 try:
                     response = self.client.chat.completions.create(
                         model=self.model,
@@ -664,6 +682,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                         **create_params,
                     )
                 except openai.BadRequestError as e:
+                    # we still want to handle this the same for vLLM
                     logger.debug(f"BadRequestError: {e}")
                     if e.code == "context_length_exceeded":
                         if len(self.info["messages"]) > 1:
