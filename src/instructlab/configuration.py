@@ -1350,8 +1350,7 @@ def init(
         )
 
     # special case: --help should always work
-    if config_obj is None and "--help" in sys.argv[1:]:
-        config_obj = get_default_config()
+    if not os.path.isfile(config_file) and "--help" in sys.argv[1:]:
         error_msg = None
 
     ctx.obj = Lab(config_obj, config_file, error_msg)
