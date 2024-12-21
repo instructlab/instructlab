@@ -137,9 +137,10 @@ test_download() {
         step Downloading granite-7b-lab model to train and as the judge model for evaluation
         ilab model download --repository ${GRANITE_7B_MODEL}
     elif [ "$MEDIUM" -eq 1 ]; then
-        step Downloading the mistral-7b-instruct GGUF model as the teacher model for SDG
-        ilab model download --repository ${MISTRAL_GGUF_REPO} --filename ${MISTRAL_GGUF_MODEL} --hf-token "${HF_TOKEN}"
-        step Downloading granite-7b-lab model to train and as the judge model for evaluation
+        # Run in parallel. Current runtime before parallelism: 18.399s
+        step Downloading the mistral-7b-instruct GGUF model as the teacher model for SDG; \
+        ilab model download --repository ${MISTRAL_GGUF_REPO} --filename ${MISTRAL_GGUF_MODEL} --hf-token "${HF_TOKEN}" & \
+        step Downloading granite-7b-lab model to train and as the judge model for evaluation; \
         ilab model download --repository ${GRANITE_7B_MODEL}
     elif [ "$LARGE" -eq 1 ] || [ "$XLARGE" -eq 1 ]; then
         step Downloading the mixtral-8x7b instruct model as the teacher model for SDG
@@ -359,7 +360,7 @@ test_evaluate() {
     export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true
     export HF_DATASETS_TRUST_REMOTE_CODE=true
     step Running MMLU
-    ilab model evaluate --model "${model_path}" --benchmark mmlu
+    time ilab model evaluate --model "${model_path}" --benchmark mmlu
 
     if [ "$LARGE" -eq 1 ]; then
         step Running MMLU Branch
@@ -370,12 +371,12 @@ test_evaluate() {
 
     export INSTRUCTLAB_EVAL_FIRST_N_QUESTIONS=20
     step Running MT Bench
-    ilab model evaluate --model "${model_path}" --benchmark mt_bench
+    time ilab model evaluate --model "${model_path}" --benchmark mt_bench
 
     step Running MT Bench Branch
     cd "${DATA_HOME}/instructlab/taxonomy"
     git branch rc
-    ilab model evaluate \
+    time ilab model evaluate \
         --model "${model_path}" \
         --branch rc \
         --base-branch main \
@@ -388,22 +389,22 @@ test_evaluate() {
 
 test_exec() {
     # smoke tests
-    test_smoke
-    test_system_info
+    time test_smoke
+    time test_system_info
 
     # intitalization tests
-    test_init
-    test_config_show
+    time test_init
+    time test_config_show
 
     # model download tests
-    test_download
-    test_list
+    time test_download
+    time test_list
 
     # sdg tests
-    test_taxonomy
-    test_generate
-    test_data_list
-    check_disk
+    time test_taxonomy
+    time test_generate
+    time test_data_list
+    time check_disk
 
     # train tests
     if [ "$LARGE" -eq 1 ] || [ "$XLARGE" -eq 1 ]; then
@@ -414,27 +415,27 @@ test_exec() {
       # Validate the phased training happy path
       test_phased_train
     else
-      test_train
+      time test_train
     fi
-    check_disk
+    time check_disk
 
     # serve + chat tests
-    test_serve
+    time test_serve
     PID=$!
-    test_chat
+    time test_chat
 
     # kill the serve process
     task Stopping the ilab model serve for trained model
-    wait_for_server shutdown $PID
+    time wait_for_server shutdown $PID
 
     # evaluate tests
     # note we do not run eval on the small runner due to a lack of GPU resources
     if [ "$SMALL" -eq 0 ]; then
-        test_evaluate
+        time test_evaluate
     fi
 
     task E2E success!
-    check_disk
+    time check_disk
     exit 0
 }
 
