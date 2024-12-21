@@ -11,6 +11,8 @@
 
 ### Breaking Changes
 
+* llama-cpp-python has been updated to 0.3.5, which dropped some accelerators (cuBLAS, clBLAS) and added others (OpenBLAS).
+
 ### Features
 
 * `ilab train --pipeline=accelerated --strategy=lab-skills-only` supports training with only the skills phase (leaving out knowledge).
