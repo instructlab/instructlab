@@ -1,6 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 # Standard
 import importlib
+import json
+import logging
 import os
 import platform
 import subprocess
@@ -8,11 +10,15 @@ import sys
 import typing
 
 # Third Party
-import click
 import psutil
 
-# First Party
-from instructlab import clickext
+logger = logging.getLogger(__name__)
+
+
+def get_system_info():
+    """Returns system information as a JSON string"""
+    categories = get_sysinfo_by_category()
+    return json.dumps(categories)
 
 
 def _platform_info() -> typing.Dict[str, typing.Any]:
@@ -180,17 +186,3 @@ def get_sysinfo_by_category() -> typing.Dict[str, list[tuple[str, typing.Any]]]:
     add_to_category(categories, "Torch", _torch_hpu_info())
     add_to_category(categories, "llama_cpp_python", _llama_cpp_info())
     return categories
-
-
-@click.command()
-@clickext.display_params
-def info():
-    """Print system information"""
-    categories = get_sysinfo_by_category()
-
-    for idx, (category, items) in enumerate(categories.items()):
-        if idx > 0:
-            print()
-        print(f"{category}:")
-        for key, value in items:
-            print(f"  {key}: {value}")
