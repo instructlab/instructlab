@@ -133,6 +133,8 @@ subcommands: list[Command] = [
     Command(("system", "info"), needs_config=False, should_fail=False),
     Command(("taxonomy",), needs_config=False, should_fail=False),
     Command(("taxonomy", "diff")),
+    Command(("profile",), needs_config=False, should_fail=False),
+    Command(("profile", "list"), needs_config=False, should_fail=False),
 ]
 
 aliases = [
