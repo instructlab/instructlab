@@ -124,7 +124,7 @@ def is_openai_server_and_serving_model(
 @click.option(
     "--endpoint-url",
     type=click.STRING,
-    help="Custom URL endpoint for OpenAI-compatible API. Defaults to the `ilab model serve` endpoint.",
+    help="Custom URL endpoint for OpenAI-compatible API. Defaults to the `ilab model serve` endpoint (http://127.0.0.1:8000/v1).",
 )
 @click.option(
     "--api-key",
