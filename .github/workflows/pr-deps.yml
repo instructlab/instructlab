@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: Apache-2.0
+---
+name: Pull Request
+on:
+
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+
+  check-all-dependencies-are-merged:
+    name: "Check all dependencies are merged"
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Check all dependent Pull Requests are merged
+        uses: depends-on/depends-on-action@61cb3f4a0e2c8ae4b90c9448dc57c7ba9ca24c35 # main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          check-unmerged-pr: true
+...
