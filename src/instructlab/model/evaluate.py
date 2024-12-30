@@ -552,6 +552,21 @@ def evaluate(
     with contextlib.suppress(ValueError):
         batch_size = int(batch_size)
 
+    def get_evaluation_params_from_backend(model, model_name, max_workers, backend):
+        return launch_server(
+            eval_serve=ctx.obj.config.serve,
+            tls_client_cert=ctx.params["tls_client_cert"],
+            tls_client_key=ctx.params["tls_client_key"],
+            tls_client_passwd=ctx.params["tls_client_passwd"],
+            tls_insecure=ctx.params["tls_insecure"],
+            model=model,
+            model_name=model_name,
+            max_workers=max_workers,
+            gpus=gpus,
+            backend=backend,
+            enable_serving_output=enable_serving_output,
+        )
+
     try:
         # get appropriate evaluator class from Eval lib
         validate_options(
@@ -584,18 +599,8 @@ def evaluate(
             print("Generating answers...")
             server = None
             try:
-                server, api_base, effective_gpus = launch_server(
-                    eval_serve=ctx.obj.config.serve,
-                    tls_client_cert=ctx.params["tls_client_cert"],
-                    tls_client_key=ctx.params["tls_client_key"],
-                    tls_client_passwd=ctx.params["tls_client_passwd"],
-                    tls_insecure=ctx.params["tls_insecure"],
-                    model=model,
-                    model_name=model_name,
-                    max_workers=max_workers,
-                    gpus=gpus,
-                    backend=backend,
-                    enable_serving_output=enable_serving_output,
+                server, api_base, effective_gpus = get_evaluation_params_from_backend(
+                    model, model_name, max_workers, backend
                 )
                 evaluator.gen_answers(
                     api_base, max_workers=max_workers, serving_gpus=effective_gpus
@@ -606,18 +611,8 @@ def evaluate(
 
             print("Evaluating answers...")
             try:
-                server, api_base, effective_gpus = launch_server(
-                    eval_serve=ctx.obj.config.serve,
-                    tls_client_cert=ctx.params["tls_client_cert"],
-                    tls_client_key=ctx.params["tls_client_key"],
-                    tls_client_passwd=ctx.params["tls_client_passwd"],
-                    tls_insecure=ctx.params["tls_insecure"],
-                    model=judge_model,
-                    model_name=judge_model_name,
-                    max_workers=max_workers,
-                    gpus=gpus,
-                    backend=judge_backend,
-                    enable_serving_output=enable_serving_output,
+                server, api_base, effective_gpus = get_evaluation_params_from_backend(
+                    judge_model, judge_model_name, max_workers, backend=judge_backend
                 )
                 overall_score, qa_pairs, turn_scores, error_rate = (
                     evaluator.judge_answers(
@@ -681,18 +676,10 @@ def evaluate(
                     f"Generating questions and reference answers from qna files for branch {branch}..."
                 )
                 try:
-                    server, api_base, effective_gpus = launch_server(
-                        eval_serve=ctx.obj.config.serve,
-                        tls_client_cert=ctx.params["tls_client_cert"],
-                        tls_client_key=ctx.params["tls_client_key"],
-                        tls_client_passwd=ctx.params["tls_client_passwd"],
-                        tls_insecure=ctx.params["tls_insecure"],
-                        model=m_path,
-                        model_name=m_name,
-                        max_workers=max_workers,
-                        gpus=gpus,
-                        backend=backend,
-                        enable_serving_output=enable_serving_output,
+                    server, api_base, effective_gpus = (
+                        get_evaluation_params_from_backend(
+                            m_path, m_name, max_workers, backend
+                        )
                     )
                     evaluator.gen_answers(
                         api_base, max_workers=max_workers, serving_gpus=effective_gpus
@@ -703,18 +690,11 @@ def evaluate(
 
             try:
                 # Share the judge model server for the two model evaluations
-                server, api_base, effective_gpus = launch_server(
-                    eval_serve=ctx.obj.config.serve,
-                    tls_client_cert=ctx.params["tls_client_cert"],
-                    tls_client_key=ctx.params["tls_client_key"],
-                    tls_client_passwd=ctx.params["tls_client_passwd"],
-                    tls_insecure=ctx.params["tls_insecure"],
-                    model=judge_model,
-                    model_name=get_model_name(judge_model),
-                    max_workers=max_workers,
-                    gpus=gpus,
+                server, api_base, effective_gpus = get_evaluation_params_from_backend(
+                    judge_model,
+                    get_model_name(judge_model),
+                    max_workers,
                     backend=judge_backend,
-                    enable_serving_output=enable_serving_output,
                 )
                 for i, evaluator in enumerate(evaluators):
                     branch = branches[i]
@@ -801,18 +781,8 @@ def evaluate(
 
             server = None
             try:
-                server, api_base, _ = launch_server(
-                    eval_serve=ctx.obj.config.serve,
-                    tls_client_cert=ctx.params["tls_client_cert"],
-                    tls_client_key=ctx.params["tls_client_key"],
-                    tls_client_passwd=ctx.params["tls_client_passwd"],
-                    tls_insecure=ctx.params["tls_insecure"],
-                    model=model,
-                    model_name=model,
-                    max_workers=None,
-                    gpus=gpus,
-                    backend=backend,
-                    enable_serving_output=enable_serving_output,
+                server, api_base, _ = get_evaluation_params_from_backend(
+                    model, model, max_workers=None, backend=backend
                 )
                 overall_score, individual_scores = evaluator.run(api_base)
             finally:
@@ -864,18 +834,8 @@ def evaluate(
                 m_path = m_paths[i]
                 server = None
                 try:
-                    server, api_base, _ = launch_server(
-                        eval_serve=ctx.obj.config.serve,
-                        tls_client_cert=ctx.params["tls_client_cert"],
-                        tls_client_key=ctx.params["tls_client_key"],
-                        tls_client_passwd=ctx.params["tls_client_passwd"],
-                        tls_insecure=ctx.params["tls_insecure"],
-                        model=m_path,
-                        model_name=m_path,
-                        max_workers=None,
-                        gpus=gpus,
-                        backend=backend,
-                        enable_serving_output=enable_serving_output,
+                    server, api_base, _ = get_evaluation_params_from_backend(
+                        m_path, m_path, max_workers=None, backend=backend
                     )
                     overall_score, individual_scores = evaluator.run(api_base)
                     overall_scores.append(overall_score)
