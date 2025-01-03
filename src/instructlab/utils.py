@@ -233,10 +233,12 @@ def get_taxonomy_diff(
     modified_files = [
         d.b_path
         for d in head_commit.diff(None)
-        if not d.deleted_file and is_taxonomy_file(d.b_path)
+        if d.b_path is not None and not d.deleted_file and is_taxonomy_file(d.b_path)
     ]
 
-    updated_taxonomy_files = list(set(untracked_files + modified_files))
+    updated_taxonomy_files = list(
+        {f for f in untracked_files + modified_files if f is not None}
+    )
     return updated_taxonomy_files
 
 
