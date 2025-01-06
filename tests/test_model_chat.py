@@ -1,5 +1,5 @@
 # Standard
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 import contextlib
 import re
 
@@ -8,7 +8,7 @@ from rich.console import Console
 import pytest
 
 # First Party
-from instructlab.model.chat import ConsoleChatBot
+from instructlab.model.chat import ConsoleChatBot, process_prompts_from_file
 
 
 @pytest.mark.parametrize(
@@ -57,3 +57,36 @@ def test_list_contexts_output():
     )
 
     assert handle_output(rendered_output) == handle_output(expected_output)
+
+
+class MockCCB:
+    def _reset_session(self):
+        pass
+
+
+@patch("instructlab.model.chat.process_prompt")
+def test_process_prompts_from_file(mock_process_prompt, tmp_path):
+    def mock_process(_ccb, prompt, output=None):
+        response = f"Response for {prompt}"
+        if output:
+            output.write(f"Q: {prompt}\nA: {response}\n\n")
+        return response
+
+    mock_process_prompt.side_effect = mock_process
+
+    prompt_file = tmp_path / "prompts.txt"
+    output_file = tmp_path / "output.txt"
+
+    prompt_file.write_text("Prompt 1\nPrompt 2\n")
+
+    assert prompt_file.stat().st_size > 0
+
+    ccb = MockCCB()
+    process_prompts_from_file(ccb, prompt_file, output_file)
+
+    output_content = output_file.read_text()
+
+    output_lines = output_content.splitlines()
+
+    assert "Q: Prompt 1\nA: Response for Prompt 1\n" in "\n".join(output_lines)
+    assert "Q: Prompt 2\nA: Response for Prompt 2\n" in "\n".join(output_lines)
