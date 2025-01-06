@@ -498,6 +498,7 @@ def train(
         full_train.train(
             train_args=train_args, device=device, optimize_memory=optimize_memory
         )
+        click.echo("ᕦ(òᴗóˇ)ᕤ Full model training completed successfully! ᕦ(òᴗóˇ)ᕤ")
     elif pipeline == "simple":
         # First Party
         from instructlab.model import simple_train
@@ -517,6 +518,9 @@ def train(
                 num_epochs=num_epochs,
                 device=device,
                 four_bit_quant=four_bit_quant,
+            )
+            click.echo(
+                "ᕦ(òᴗóˇ)ᕤ Simple Model training completed successfully! ᕦ(òᴗóˇ)ᕤ"
             )
         except Exception as exc:
             click.secho(f"{exc}", fg="red")
