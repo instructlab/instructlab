@@ -1023,7 +1023,7 @@ def use_legacy_pretraining_format(model_path: Path, model_arch: str) -> bool:
     return False
 
 
-def check_skopeo_version():
+def check_skopeo_version() -> None:
     """
     Check if skopeo is installed and the version is at least the recommended version
     This is required for downloading models from OCI registries.

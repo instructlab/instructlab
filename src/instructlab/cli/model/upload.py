@@ -9,7 +9,7 @@ import click
 # First Party
 from instructlab import clickext
 from instructlab.defaults import UPLOAD_DESTINATIONS
-from instructlab.model.upload import HFModelUploader
+from instructlab.model.upload import HFModelUploader, OCIModelUploader
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ logger = logging.getLogger(__name__)
 )
 @clickext.display_params
 def upload(model, dest_type, destination, release, hf_token):
-    """Uploads model to a specified location"""
+    """Uploads model to a specified location - currently supports Hugging Face and OCI artifact registries such as Quay.io"""
     uploader = None
 
     if dest_type == "hf":
@@ -60,12 +60,11 @@ def upload(model, dest_type, destination, release, hf_token):
             hf_token=hf_token,
         )
     elif dest_type == "oci":
-        # TODO: update this when OCI uploading is supported
-        click.secho(
-            f"Uploading of type {dest_type} is not yet supported",
-            fg="yellow",
+        uploader = OCIModelUploader(
+            model=model,
+            destination=destination,
+            release=release,
         )
-        raise click.exceptions.Exit(1)
     elif dest_type == "s3":
         # TODO: update this when S3 uploading is supported
         click.secho(
