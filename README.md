@@ -440,7 +440,15 @@ For detailed documentation on the InstructLab LLMs and their functions, see the 
    ilab model download --repository instructlab/granite-7b-lab --hf-token <your-hugginface-token>
    ```
 
-      These types of models are useful for GPU-enabled systems or anyone looking to serve a model using vLLM. InstructLab provides Safetensor versions of our Granite models on HuggingFace.
+   These types of models are useful for GPU-enabled systems or anyone looking to serve a model using vLLM. InstructLab provides Safetensor versions of our Granite models on HuggingFace.
+
+#### Downloading a specific model from an OCI repository via Skopeo
+
+- Specify an OCI-compliant repository and release for download. Ensure you have logged into the registry you wish to download from with Skopeo if necessary. For example:
+
+   ```shell
+   ilab model download -rp docker://instructlab/granite-7b-lab -rl latest
+   ```
 
 #### Listing downloaded models
 
