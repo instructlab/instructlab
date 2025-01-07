@@ -142,7 +142,11 @@ def assert_completion_resumed(result):
     assert_phase2_eval_started(result)
     assert_phase1_in_journal(result)
     assert "SKIPPING: Training Phase 2/2; already in Journal" in result.output
-    assert "Training finished! Best final checkpoint:" in result.output
+    assert (
+        "ᕦ(òᴗóˇ)ᕤ Accelerated model training completed successfully! ᕦ(òᴗóˇ)ᕤ"
+        in result.output
+    )
+    assert "Best final checkpoint:" in result.output
 
 
 def test_phased_training_resume(
