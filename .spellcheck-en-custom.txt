@@ -149,6 +149,7 @@ SFT
 SHA
 Shaders
 Shivchander
+Skopeo
 Srivastava
 sshkey
 subcommand
