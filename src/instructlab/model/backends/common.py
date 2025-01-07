@@ -146,7 +146,15 @@ def get_model_template(
 
     template = eos_token = bos_token = ""
     try:
-        template, eos_token, bos_token = get_model_template_from_tokenizer(model_path)
+        # skip to get it from tokenizer if model file e.g. gguf
+        if model_path.is_file():
+            template, eos_token, bos_token = get_in_memory_model_template(
+                resolved_family, model_arch
+            )
+        else:
+            template, eos_token, bos_token = get_model_template_from_tokenizer(
+                model_path
+            )
 
         # fallback to in-memory template if it is None for some reason
         # like if the tokenizer config exists but does not contain the template
