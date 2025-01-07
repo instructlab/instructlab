@@ -1,3 +1,3 @@
 # Since dependabot cannot update workflows using docker,
 # we use this indirection since dependabot can update this file.
-FROM rhysd/actionlint:1.7.5@sha256:d1b3d067b912ea4cbf697750cee80f59114414365b916167b4c7b4cf9504ca9a
+FROM rhysd/actionlint:1.7.6@sha256:e3856d413f923accc4120884ff79f6bdba3dd53fd42884d325f21af61cc15ce0
