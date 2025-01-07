@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 import pathlib
 import struct
 
@@ -12,6 +12,7 @@ from gguf.constants import GGUF_MAGIC
 # First Party
 from instructlab import lab
 from instructlab.configuration import DEFAULTS
+from instructlab.defaults import DEFAULT_INDENT
 from tests.test_backends import create_safetensors_or_bin_model_files
 
 
@@ -98,7 +99,7 @@ class TestLabUpload:
             result.exit_code == 1
         ), f"command finished with an unexpected exit code. {result.stdout}"
         assert (
-            f"Local model path {tmp_gguf} is a valid path, but is neither safetensors nor a GGUF - cannot upload"
+            f"Local model path {tmp_gguf} is a valid path, but is not a compliant format - cannot upload"
         ) in result.output
 
     def test_upload_invalid_safetensors_hf(
@@ -122,10 +123,10 @@ class TestLabUpload:
             result.exit_code == 1
         ), f"command finished with an unexpected exit code. {result.stdout}"
         assert (
-            f"Local model path {tmp_safetensor_dir} is a valid path, but is neither safetensors nor a GGUF - cannot upload"
+            f"Local model path {tmp_safetensor_dir} is a valid path, but is not a compliant format - cannot upload"
         ) in result.output
 
-    def test_upload_bad_model_hf(self, cli_runner: CliRunner):
+    def test_upload_no_model_hf(self, cli_runner: CliRunner):
         tmp_gguf = "model.gguf"
         result = cli_runner.invoke(
             lab.ilab,
@@ -191,22 +192,90 @@ class TestLabUpload:
             f"Uploading GGUF model at {tmp_gguf} failed with the following Hugging Face Hub error:\n401 Client Error."
         ) in result.output
 
-    def test_upload_oci(self, cli_runner: CliRunner):
+    @patch("instructlab.utils.check_skopeo_version")
+    @patch("subprocess.run", return_value=MagicMock(stdout="", stderr=""))
+    def test_upload_oci(
+        self,
+        mock_subprocess_run: Mock,  # pylint: disable=unused-argument
+        mock_check_skopeo_version: Mock,  # pylint: disable=unused-argument
+        tmp_path: pathlib.Path,
+        cli_runner: CliRunner,
+    ):
+        # we don't use an actual OCI-compliant model here but rather mock the success of the upload
+        tmp_gguf = tmp_path / "model.gguf"
+        with open(tmp_gguf, "wb") as gguf_file:
+            gguf_file.write(struct.pack("<I", GGUF_MAGIC))
         result = cli_runner.invoke(
             lab.ilab,
             [
                 "--config=DEFAULT",
                 "model",
                 "upload",
-                "--model=foo",
+                f"--model={tmp_gguf}",
                 "--dest-type=oci",
-                "--destination=testuser/testgguf",
+                "--destination=docker://quay.io/testorg/testmodel",
+                "--release=latest",
+            ],
+        )
+        assert (
+            result.exit_code == 0
+        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert f"Uploading OCI model at {tmp_gguf} succeeded!" in result.output
+
+    def test_upload_no_model_oci(
+        self,
+        cli_runner: CliRunner,
+    ):
+        # we don't use an actual OCI-compliant model here purposefully
+        tmp_gguf = "model.gguf"
+        result = cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "model",
+                "upload",
+                f"--model={tmp_gguf}",
+                "--dest-type=oci",
+                "--destination=docker://quay.io/testorg/testmodel",
+                "--release=latest",
             ],
         )
         assert (
             result.exit_code == 1
         ), f"command finished with an unexpected exit code. {result.stdout}"
-        assert result.output == "Uploading of type oci is not yet supported\n"
+        assert (
+            f"Couldn't find model at {DEFAULTS.CHECKPOINTS_DIR}/{tmp_gguf} - are you sure it exists?"
+            in result.output
+        )
+
+    def test_upload_bad_dest_oci(
+        self,
+        tmp_path: pathlib.Path,
+        cli_runner: CliRunner,
+    ):
+        # we don't use an actual OCI-compliant model as it's inconsequential
+        tmp_gguf = tmp_path / "model.gguf"
+        with open(tmp_gguf, "wb") as gguf_file:
+            gguf_file.write(struct.pack("<I", GGUF_MAGIC))
+        result = cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "model",
+                "upload",
+                f"--model={tmp_gguf}",
+                "--dest-type=oci",
+                "--destination=invalid://quay.io/testorg/testmodel",
+                "--release=latest",
+            ],
+        )
+        assert (
+            result.exit_code == 1
+        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert (
+            f"Invalid destination supplied:\n{DEFAULT_INDENT}Please specify valid OCI repository URL syntax via --destination"
+            in result.output
+        )
 
     def test_upload_s3(self, cli_runner: CliRunner):
         result = cli_runner.invoke(
