@@ -260,7 +260,7 @@ test_phased_train() {
     ilab model train "${train_args[@]}" 2>&1 | tee "${E2E_TEST_DIR}"/multiphase_training.log
 
     # final best model is written to log
-    TRAINED_MODEL_PATH=$(grep "Training finished! Best final checkpoint: " "${E2E_TEST_DIR}"/multiphase_training.log | grep -o "/[^ ]*")
+    TRAINED_MODEL_PATH=$(grep "Best final checkpoint: " "${E2E_TEST_DIR}"/multiphase_training.log | grep -o "/[^ ]*")
     task Multi-phase training Complete
 }
 
@@ -289,7 +289,7 @@ test_skills_only_train() {
     ilab model train "${train_args[@]}" 2>&1 | tee "${E2E_TEST_DIR}"/skills_only_training.log
 
     # final best model is written to log
-    grep "Training finished! Best final checkpoint: " "${E2E_TEST_DIR}"/skills_only_training.log | grep -o "/[^ ]*"
+    grep "Best final checkpoint: " "${E2E_TEST_DIR}"/skills_only_training.log | grep -o "/[^ ]*"
 
     # cleanup the skills phased base dir
     rm -rf "${skills_phased_base_dir}"
