@@ -40,7 +40,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "config" = "instructlab.config.config:config"
 "data" = "instructlab.cli.data.data:data"
 "model" = "instructlab.model.model:model"
-"system" = "instructlab.system.system:system"
+"system" = "instructlab.cli.system.system:system"
 "taxonomy" = "instructlab.taxonomy.taxonomy:taxonomy"
 
 [project.entry-points."instructlab.command.config"]
@@ -64,7 +64,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "upload" = "instructlab.cli.model.upload:upload"
 
 [project.entry-points."instructlab.command.system"]
-"info" = "instructlab.system.info:info"
+"info" = "instructlab.cli.system.info:info"
 
 [project.entry-points."instructlab.command.taxonomy"]
 "diff" = "instructlab.taxonomy.diff:diff"
