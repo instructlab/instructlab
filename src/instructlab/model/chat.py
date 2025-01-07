@@ -172,6 +172,12 @@ def is_openai_server_and_serving_model(
     "--temperature",
     cls=clickext.ConfigOption,
 )
+@click.option(
+    "-nd",
+    "--no-decoration",
+    is_flag=True,
+    help="Disable decorations for chat responses.",
+)
 @click.pass_context
 @clickext.display_params
 def chat(
@@ -191,6 +197,7 @@ def chat(
     model_family,
     serving_log_file,
     temperature,
+    no_decoration,
 ):
     """Runs a chat using the modified model"""
     # pylint: disable=import-outside-toplevel
@@ -309,6 +316,7 @@ def chat(
             qq=quick_question,
             max_tokens=max_tokens,
             temperature=temperature,
+            no_decoration=no_decoration,
         )
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
@@ -339,6 +347,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         log_file=None,
         max_tokens=None,
         temperature=1.0,
+        box=True,
     ):
         self.client = client
         self.model = model
@@ -348,6 +357,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self.log_file = log_file
         self.max_tokens = max_tokens
         self.temperature = temperature
+        self.box = box
 
         self.console = Console()
 
@@ -371,7 +381,10 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         )
 
     def _sys_print(self, *args, **kwargs):
-        self.console.print(Panel(*args, title="system", **kwargs))
+        if self.box:
+            self.console.print(Panel(*args, title="system", **kwargs))
+        else:
+            self.console.print(*args)
 
     def log_message(self, msg):
         if self.log_file:
@@ -382,12 +395,14 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         side_info_str = (" (type `/h` for help)" if help else "") + (
             f" ({session_name})" if new else ""
         )
-        self._sys_print(
-            Markdown(
-                f"Welcome to InstructLab Chat w/ **{self.model_name.upper()}**"
-                + side_info_str
-            )
+        message = (
+            f"Welcome to InstructLab Chat w/ **{self.model_name.upper()}**"
+            + side_info_str
         )
+        if self.box:
+            self._sys_print(Markdown(message))
+        else:
+            self.console.print(message)
 
     @property
     def model_name(self):
@@ -395,6 +410,8 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
     @property
     def _right_prompt(self):
+        if not self.box:
+            return None
         return FormattedText(
             [
                 (
@@ -498,7 +515,10 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         raise KeyboardInterrupt
 
     def _handle_display(self, content):
-        return self.__handle_replay(content, display_wrapper=lambda x: Panel(x))  # pylint: disable=unnecessary-lambda
+        return self.__handle_replay(
+            content,
+            display_wrapper=lambda x: Panel(x) if self.box else x,  # pylint: disable=unnecessary-lambda
+        )
 
     def _load_session_history(self, content=None):
         data = self.info["messages"]
@@ -510,7 +530,10 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                     "\n" + PROMPT_PREFIX + m["content"], style="dim grey0"
                 )
             else:
-                self.console.print(Panel(m["content"]), style="dim grey0")
+                if self.box:
+                    self.console.print(Panel(m["content"]), style="dim grey0")
+                else:
+                    self.console.print(m["content"], style="dim grey0")
 
     def _handle_plain(self, content):
         return self.__handle_replay(content)
@@ -598,7 +621,6 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self,
         logger,  # pylint: disable=redefined-outer-name
         content=None,
-        box=True,
     ):
         handlers = {
             "/q": self._handle_quit,
@@ -727,7 +749,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                 title=self.model_name,
                 subtitle_align="right",
             )
-            if box
+            if self.box
             else response_content
         )
         subtitle = None
@@ -743,7 +765,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                 if chunk_message.content:
                     response_content.append(chunk_message.content)
 
-                if box:
+                if self.box:
                     panel.subtitle = f"elapsed {time.time() - start_time:.3f} seconds"
             subtitle = f"elapsed {time.time() - start_time:.3f} seconds"
 
@@ -766,6 +788,7 @@ def chat_cli(
     qq,
     max_tokens,
     temperature,
+    no_decoration,
 ):
     """Starts a CLI-based chat with the server"""
     client = OpenAI(
@@ -832,6 +855,7 @@ def chat_cli(
         loaded=loaded,
         temperature=(temperature if temperature is not None else config.temperature),
         max_tokens=(max_tokens if max_tokens else config.max_tokens),
+        box=not no_decoration,
     )
 
     if not qq and session is None:
@@ -844,7 +868,7 @@ def chat_cli(
         if not qq:
             print(f"{PROMPT_PREFIX}{question}")
         try:
-            ccb.start_prompt(logger, content=question, box=not qq)
+            ccb.start_prompt(logger, content=question)
         except ChatException as exc:
             raise ChatException(f"API issue found while executing chat: {exc}") from exc
         except (ChatQuitException, KeyboardInterrupt, EOFError):
