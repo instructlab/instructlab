@@ -299,7 +299,7 @@ pip_install_with_nvidia() {
 
 pip_install_with_amd() {
     "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "pushd instructlab && source venv/bin/activate && pip cache remove llama_cpp_python && \
-    pip install -e .[rocm] --extra-index-url https://download.pytorch.org/whl/rocm6.0 \
+    pip install -e .[rocm] --extra-index-url https://download.pytorch.org/whl/rocm6.2 \
    -C cmake.args='-DGGML_HIPBLAS=on' \
    -C cmake.args='-DAMDGPU_TARGETS=all' \
    -C cmake.args='-DCMAKE_C_COMPILER=/opt/rocm/llvm/bin/clang' \
