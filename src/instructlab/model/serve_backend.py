@@ -51,7 +51,7 @@ def serve_backend(
     except (ValueError, AttributeError) as e:
         raise ValueError(f"Failed to determine backend: {e}") from e
 
-    logger.info(f"Setting current_max_ctx_size in the serve config to {max_ctx_size}")
+    logger.info(f"Setting backend_type in the serve config to {backend}")
     ctx.obj.config.serve.server.backend_type = backend
     write_config(ctx.obj.config)
     if chat_template is None:
