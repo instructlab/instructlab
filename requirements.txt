@@ -28,7 +28,7 @@ sentencepiece>=0.2.0
 tokenizers>=0.11.1
 toml>=0.10.2
 # Default version. Can be overridden in extra requirements
-torch>=2.3.0,<2.5.0
+torch>=2.3.0,<2.6.0
 tqdm>=4.66.2
 # 'optimum' for Intel Gaudi needs transformers <4.44.0,>=4.43.0
 transformers>=4.41.2
