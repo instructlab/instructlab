@@ -33,6 +33,8 @@ from instructlab.client_utils import HttpClientParams
 
 # Local
 from ..client_utils import http_client
+from ..rag.document_store import DocumentStoreRetriever
+from ..rag.document_store_factory import create_document_retriever
 from ..utils import get_cli_helper_sysprompt, get_model_arch, get_sysprompt
 from .backends import backends
 
@@ -87,6 +89,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self,
         model,
         client,
+        retriever=None,
         vi_mode=False,
         prompt=True,
         vertical_overflow="ellipsis",
@@ -98,6 +101,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         backend_type="",
     ):
         self.client = client
+        self.retriever: DocumentStoreRetriever | None = retriever
         self.model = model
         self.vi_mode = vi_mode
         self.vertical_overflow = vertical_overflow
@@ -395,6 +399,13 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
         self.log_message(PROMPT_PREFIX + content + "\n\n")
 
+        # if RAG is enabled, fetch context and insert into session
+        # TODO: what if context is already too long? note that current retriever implementation concatenates all docs
+        # TODO: better way to check whether we should perform retrieval?
+        if self.retriever is not None:
+            context = self.retriever.augmented_context(user_query=content)
+            self._update_conversation(context, "assistant")
+
         # Update message history and token counters
         self._update_conversation(content, "user")
 
@@ -552,6 +563,11 @@ def chat_model(
     model_family,
     serving_log_file,
     temperature,
+    rag_enabled,
+    document_store_uri,
+    collection_name,
+    embedding_model,
+    top_k,
     backend_type,
     host,
     port,
@@ -693,6 +709,11 @@ def chat_model(
             max_tokens=max_tokens,
             max_ctx_size=max_ctx_size,
             temperature=temperature,
+            rag_enabled=rag_enabled,
+            document_store_uri=document_store_uri,
+            collection_name=collection_name,
+            embedding_model=embedding_model,
+            top_k=top_k,
             backend_type=backend_type,
             params=params,
         )
@@ -715,6 +736,11 @@ def chat_cli(
     max_ctx_size,
     temperature,
     backend_type,
+    rag_enabled,
+    document_store_uri,
+    collection_name,
+    embedding_model,
+    top_k,
     logs_dir,
     vi_mode,
     visible_overflow,
@@ -756,6 +782,19 @@ def chat_cli(
     sys_prompt = CONTEXTS.get(context, "default")(get_model_arch(pathlib.Path(model)))
     loaded["messages"] = [{"role": "system", "content": sys_prompt}]
 
+    # Instantiate retriever if RAG is enabled
+    if rag_enabled:
+        logger.debug("RAG enabled for chat; initializing retriever")
+        retriever: DocumentStoreRetriever | None = create_document_retriever(
+            document_store_uri=document_store_uri,
+            document_store_collection_name=collection_name,
+            top_k=top_k,
+            embedding_model_path=embedding_model,
+        )
+    else:
+        logger.debug("RAG not enabled for chat; skipping retrieval setup")
+        retriever: DocumentStoreRetriever | None = None
+
     # Session from CLI
     if session is not None:
         loaded["name"] = os.path.basename(session.name).strip(".json")
@@ -778,6 +817,7 @@ def chat_cli(
     ccb = ConsoleChatBot(
         model if model is None else model,
         client=client,
+        retriever=retriever,
         vi_mode=vi_mode,
         log_file=log_file,
         prompt=not qq,
