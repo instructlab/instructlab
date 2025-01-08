@@ -62,6 +62,8 @@ class TestLabDownload:
         )
         assert result.exit_code == 0
         mock_oci_download.assert_called_once()
+        assert "model download completed successfully!" in result.output
+        assert "Available models (`ilab model list`):" in result.output
 
     def test_oci_download_repository_error(self, cli_runner: CliRunner):
         result = cli_runner.invoke(
