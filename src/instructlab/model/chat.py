@@ -33,6 +33,8 @@ from instructlab.client_utils import HttpClientParams
 
 # Local
 from ..client_utils import http_client
+from ..rag.document_store import DocumentStoreRetriever
+from ..rag.document_store_factory import create_document_retriever
 from ..utils import get_cli_helper_sysprompt, get_model_arch, get_sysprompt
 from .backends import backends
 
@@ -340,6 +342,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self,
         model,
         client,
+        retriever=None,
         vi_mode=False,
         prompt=True,
         vertical_overflow="ellipsis",
@@ -351,6 +354,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         backend_type="",
     ):
         self.client = client
+        self.retriever: DocumentStoreRetriever | None = retriever
         self.model = model
         self.vi_mode = vi_mode
         self.vertical_overflow = vertical_overflow
@@ -839,6 +843,17 @@ def chat_cli(
     sys_prompt = CONTEXTS.get(context, "default")(get_model_arch(pathlib.Path(model)))
     loaded["messages"] = [{"role": "system", "content": sys_prompt}]
 
+    # Instantiate retriever if RAG is enabled
+    if ctx.obj.config.chat.rag.enabled:
+        logger.info("RAG enabled for chat; initializing retriever")
+        retriever: DocumentStoreRetriever | None = create_document_retriever(
+            document_store_config=ctx.obj.config.chat.document_store,
+            retriever_config=ctx.obj.config.chat.retriever,
+        )
+    else:
+        logger.info("RAG not enabled for chat; skipping retrieval setup")
+        retriever: DocumentStoreRetriever | None = None
+
     # Session from CLI
     if session is not None:
         loaded["name"] = os.path.basename(session.name).strip(".json")
@@ -861,6 +876,7 @@ def chat_cli(
     ccb = ConsoleChatBot(
         config.model if model is None else model,
         client=client,
+        retriever=retriever,
         vi_mode=config.vi_mode,
         log_file=log_file,
         prompt=not qq,
