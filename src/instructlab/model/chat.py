@@ -652,6 +652,13 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
         self.log_message(PROMPT_PREFIX + content + "\n\n")
 
+        # if RAG is enabled, fetch context and insert into session
+        # TODO: what if context is already too long? note that current retriever implementation concatenates all docs
+        # TODO: better way to check whether we should perform retrieval?
+        if self.retriever is not None:
+            context = self.retriever.augmented_context(content)
+            self._update_conversation(context, "assistant")
+
         # Update message history and token counters
         self._update_conversation(content, "user")
 
