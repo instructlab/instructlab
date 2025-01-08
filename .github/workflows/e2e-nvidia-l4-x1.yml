@@ -8,6 +8,8 @@ on:
     branches:
       - main
       - release-*
+      - courtneypacheco-medium-e2e-job-enhancements
+      # TODO: REMOVE TEMPORARY BRANCH ABOVE ^^^
   # only run on PRs that touch certain regex paths
   pull_request_target:
     branches:
@@ -99,6 +101,7 @@ jobs:
       - name: Install Packages
         run: |
           cat /etc/os-release
+          sed -i "/\[main\]/a max_parallel_downloads=15" /etc/dnf/dnf.conf
           sudo dnf install -y gcc gcc-c++ make git python3.11 python3.11-devel
 
       - name: Checkout
@@ -118,17 +121,33 @@ jobs:
           export CUDA_HOME="/usr/local/cuda"
           export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/usr/local/cuda/lib64:/usr/local/cuda/extras/CUPTI/lib64"
           export PATH="$PATH:$CUDA_HOME/bin"
+          export PIP_DISABLE_PIP_VERSION_CHECK=1
+          
+          # Testing if different temp dir has faster write speed than tmpfs
+          mkdir -p /home/tmp
+          export TMPDIR="/home/tmp"
+          # Try removing write barriers by adding `barrier=0` to boost speed
+          sed -n -e '/^UUID=/=' /etc/fstab | while read -r line ; do sed -i -e "${line}s/\,/\,barrier=0,/" /etc/fstab; done && cat /etc/fstab
+
+          NUM_PROC="$(nproc)"
+          export CMAKE_BUILD_PARALLEL_LEVEL="$NUM_PROC"
+          export MAKEFLAGS="-j ${NUM_PROC}"
+
           python3.11 -m venv --upgrade-deps venv
           . venv/bin/activate
           nvidia-smi
           python3.11 -m pip cache remove llama_cpp_python
+          # python3.11 -m pip install ninja
 
           CMAKE_ARGS="-DGGML_CUDA=on" python3.11 -m pip install -v .
+          # NINJA_BUILD=1 CMAKE_ARGS="-DGGML_CUDA=on" python3.11 -m pip install -v .
 
           # https://github.com/instructlab/instructlab/issues/1821
           # install with Torch and build dependencies installed
           python3.11 -m pip install -v packaging wheel setuptools-scm
           python3.11 -m pip install -v .[cuda] -r requirements-vllm-cuda.txt
+          # NINJA_BUILD=1 python3.11 -m pip install -v packaging wheel setuptools-scm
+          # NINJA_BUILD=1 python3.11 -m pip install -v .[cuda] -r requirements-vllm-cuda.txt
 
       - name: Check disk before tests
         run: |
