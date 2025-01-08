@@ -34,6 +34,7 @@ from instructlab.client_utils import HttpClientParams
 # Local
 from ..client_utils import http_client
 from ..utils import get_cli_helper_sysprompt, get_model_arch, get_sysprompt
+from .backends import backends
 
 logger = logging.getLogger(__name__)
 
@@ -197,6 +198,8 @@ def chat(
     # First Party
     from instructlab.model.backends.common import is_temp_server_running
 
+    max_ctx_size = None
+    backend_type = ctx.obj.config.serve.server.backend_type
     serve_server = ctx.obj.config.serve.server
     users_endpoint_url = cfg.get_api_base(serve_server.host, serve_server.port)
 
@@ -220,10 +223,9 @@ def chat(
             logger.warning(
                 "Setting serving log file (--serving-log-file) is not supported when the server is already running"
             )
-    else:
-        # First Party
-        from instructlab.model.backends import backends
+        max_ctx_size = ctx.obj.config.serve.server.current_max_ctx_size
 
+    else:
         # If a log file is specified, write logs to the file
         root_logger = logging.getLogger()
         if serving_log_file:
@@ -235,6 +237,11 @@ def chat(
             model_path=model,
             log_file=serving_log_file,
         )
+        backend_type = backend_instance.get_backend_type()
+        # if max tokens is the default, read from the serve cfg in case that has been overriden
+        # if serve has a different max_ctx_size, that is what we use.
+        if max_ctx_size is None and backend_type == backends.LLAMA_CPP:
+            max_ctx_size = ctx.obj.config.serve.llama_cpp.max_ctx_size
         try:
             # Run the llama server
             api_base = backend_instance.run_detached(http_client(ctx.params))
@@ -275,7 +282,6 @@ def chat(
 
                 # Currently, we only present a single model so we can safely assume that the first model
                 server_model = models.data[0].id if models is not None else None
-
                 # override 'model' with the first returned model if not provided so that the chat print
                 # the model used by the server
                 model = (
@@ -308,7 +314,9 @@ def chat(
             session=session,
             qq=quick_question,
             max_tokens=max_tokens,
+            max_ctx_size=max_ctx_size,
             temperature=temperature,
+            backend_type=backend_type,
         )
     except ChatException as exc:
         click.secho(f"Executing chat failed with: {exc}", fg="red")
@@ -338,7 +346,9 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         loaded=None,
         log_file=None,
         max_tokens=None,
+        max_ctx_size=None,
         temperature=1.0,
+        backend_type="",
     ):
         self.client = client
         self.model = model
@@ -347,7 +357,9 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self.loaded = loaded
         self.log_file = log_file
         self.max_tokens = max_tokens
+        self.max_ctx_size = max_ctx_size
         self.temperature = temperature
+        self.backend_type = backend_type
 
         self.console = Console()
 
@@ -656,6 +668,27 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         try:
             while True:
                 # Loop to catch situations where we need to retry, such as context length exceeded
+                # We need to catch these errors before they hit the server or else it will crash.
+                # as of llama_cpp_python 0.3.z, BadRequestErrors cause the server to become unavailable
+                if self.backend_type == backends.LLAMA_CPP:
+                    total_context_size = 0
+                    # this handling can apply to llama-cpp-python only. The exception handling below should still exist for vLLM.
+                    while True:
+                        # we need to loop this. If we only remove 1 message, but it isn't enough to fit our new message in, we can hit the error
+                        # if you have 3 messages in the list, and the last one is 127 tokens with a 128 context window, you need to drop the first two in order to fit the third
+                        for msg in self.info["messages"]:
+                            total_context_size += len(msg["content"])
+                        if (
+                            self.max_ctx_size is not None
+                            and self.max_ctx_size < total_context_size
+                            and len(self.info["messages"]) > 1
+                        ):
+                            self.info["messages"] = self.info["messages"][1:]
+                            logger.debug(
+                                "Message too large for context size. Dropping from queue."
+                            )
+                        else:
+                            break
                 try:
                     response = self.client.chat.completions.create(
                         model=self.model,
@@ -664,6 +697,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                         **create_params,
                     )
                 except openai.BadRequestError as e:
+                    # we still want to handle this the same for vLLM
                     logger.debug(f"BadRequestError: {e}")
                     if e.code == "context_length_exceeded":
                         if len(self.info["messages"]) > 1:
@@ -765,7 +799,9 @@ def chat_cli(
     session,
     qq,
     max_tokens,
+    max_ctx_size,
     temperature,
+    backend_type,
 ):
     """Starts a CLI-based chat with the server"""
     client = OpenAI(
@@ -832,6 +868,8 @@ def chat_cli(
         loaded=loaded,
         temperature=(temperature if temperature is not None else config.temperature),
         max_tokens=(max_tokens if max_tokens else config.max_tokens),
+        max_ctx_size=max_ctx_size,
+        backend_type=backend_type,
     )
 
     if not qq and session is None:

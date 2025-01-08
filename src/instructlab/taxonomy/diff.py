@@ -77,6 +77,8 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
                     )
                     raise SystemExit(1) from exc
             for f in taxonomy_files:
+                if f is None:
+                    continue
                 click.echo(f)
 
     # validate new or changed taxonomy files

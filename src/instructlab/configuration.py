@@ -196,7 +196,7 @@ class _serve_llama_cpp(BaseModel):
         description="Number of model layers to offload to GPU. -1 means all layers.",
     )
     max_ctx_size: PositiveInt = Field(
-        default=4096,
+        default=DEFAULTS.MAX_CONTEXT_SIZE,
         description="Maximum number of tokens that can be processed by the model.",
     )
     llm_family: str = Field(
@@ -211,6 +211,15 @@ class _serve_server(BaseModel):
 
     host: StrictStr = Field(default="127.0.0.1", description="Host to serve on.")
     port: StrictInt = Field(default=8000, description="Port to serve on.")
+    backend_type: str = Field(
+        default="",
+        description="Backend Instance Type",
+        examples=["llama-cpp", "vllm"],
+    )
+    current_max_ctx_size: PositiveInt = Field(
+        default=DEFAULTS.MAX_CONTEXT_SIZE,
+        description="Maximum number of tokens that can be processed by the currently served model.",
+    )
 
 
 class _serve(BaseModel):
@@ -947,9 +956,13 @@ def read_config(
     config_file: str | os.PathLike[str] | None = None,
 ) -> Config:
     """Reads configuration from disk."""
+    # Third Party
+    from filelock import FileLock
+
+    lock = FileLock(DEFAULTS.CONFIG_FILE_LOCK, timeout=1)
     config_file = DEFAULTS.CONFIG_FILE if config_file is None else config_file
     try:
-        with open(config_file, "r", encoding="utf-8") as yamlfile:
+        with lock, open(config_file, "r", encoding="utf-8") as yamlfile:
             content = yaml.load(yamlfile)
             if not isinstance(content, dict):
                 raise ConfigException(
@@ -1147,8 +1160,12 @@ def write_config_to_yaml(cfg: Config, file_path: str):
         cfg (Config): The Pydantic model to write to YAML.
         file_path (str): The path to the YAML file to write.
     """
+    # Third Party
+    from filelock import FileLock
+
+    lock = FileLock(DEFAULTS.CONFIG_FILE_LOCK)
     commented_map = config_to_commented_map(cfg)
-    with open(file_path, "w", encoding="utf-8") as yaml_file:
+    with lock, open(file_path, "w", encoding="utf-8") as yaml_file:
         yaml.dump(commented_map, yaml_file)
 
 
