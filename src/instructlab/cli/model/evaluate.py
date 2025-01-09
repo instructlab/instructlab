@@ -35,15 +35,13 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--judge-model",
+    default=None,
     type=click.STRING,
-    cls=clickext.ConfigOption,
-    config_sections="mt_bench",
 )
 @click.option(
     "--output-dir",
+    default=None,
     type=click.Path(),
-    cls=clickext.ConfigOption,
-    config_sections="mt_bench",
 )
 @click.option(
     "--max-workers",
@@ -140,6 +138,28 @@ logger = logging.getLogger(__name__)
     is_flag=True,
     help="Skip launching the server and evaluate directly with the HuggingFace model. This option supports mmlu and mmlu_branch benchmarks.",
 )
+@click.option(
+    "--input-questions",
+    type=click.STRING,
+    cls=clickext.ConfigOption,
+    config_sections="dk_bench",
+)
+@click.option(
+    "--output-file-formats",
+    type=click.STRING,
+    cls=clickext.ConfigOption,
+    config_sections="dk_bench",
+)
+@click.option(
+    "--system-prompt",
+    type=click.STRING,
+    cls=clickext.ConfigOption,
+)
+@click.option(
+    "--temperature",
+    type=click.FloatRange(min=0.0, max=1.0),
+    cls=clickext.ConfigOption,
+)
 @click.pass_context
 @clickext.display_params
 def evaluate(
@@ -166,6 +186,10 @@ def evaluate(
     tls_client_passwd,  # pylint: disable=unused-argument
     enable_serving_output,
     skip_server: bool,
+    input_questions,
+    output_file_formats,
+    system_prompt,
+    temperature,
 ) -> None:
     """Evaluates a trained model"""
     try:
@@ -193,6 +217,10 @@ def evaluate(
             tls_client_passwd,
             enable_serving_output,
             skip_server,
+            input_questions,
+            output_file_formats,
+            system_prompt,
+            temperature,
         )
     except Exception as e:
         logger.error(f"An error occurred during evaluation: {str(e)}")

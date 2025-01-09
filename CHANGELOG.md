@@ -4,6 +4,8 @@
 
 - llama-cpp-python has been bumped to 0.3.2. This allows for serving of Granite 3.0 GGUF Models. With this change, some previous handling of context window size has been modified to work with the 0.3.z releases of llama-cpp-python.
 - `ilab train --pipeline=simple` no longer supports Intel Gaudi (`hpu`) devices. Simple training on Gaudi was experimental and limited to a single device.
+- The results of MT-Bench and MT-Bench-Branch are now stored in `$XDG_DATA_HOME/eval/{mt_bench,mt_bench_branch}` respectively. Previously the results for both benchmarks were stored in `$XDG_DATA_HOME/eval`. `ilab config init` must be run to initialize the new evaluation results directories.
+- `system_prompt` variable and `dk_bench` section have been added to the `evaluate` section of the configuration file. `ilab config init` should be run to initialize these new sections in the config file.
 
 ### Features
 
@@ -14,6 +16,7 @@
 - `ilab data generate` now stores generated data from each run in individually dated directories.
 - `ilab data list` now organizes tables per dated run, and outputs a more detailed table that describes which model generated which dataset.
 - `ilab model train` and `ilab model test` now search for training data in per-run directories in addition to the top-level directory, maintaining backwards compatibility with old datasets.
+- `ilab model evaluate` now has support for DK-Bench (Domain Knowledge Bench). DK-Bench takes in a set of questions and reference answers provided from a user, gets responses from a model to those questions, and then uses a judge model to grade the response to each question on a 1-5 scale compared to the reference answer. The highest possible score for each question is a 5 (fully accurate, and completely aligned with the reference) and the lowest is a 1 (entirely incorrect, and irrelevant). To run the benchmark the environment variable OPENAI_API_KEY must be set. The judge model for DK-Bench is `gpt-4o` and any judge model provided for DK-Bench must be the name of an OpenAI model.
 
 ## v0.22
 

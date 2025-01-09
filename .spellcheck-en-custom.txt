@@ -35,6 +35,8 @@ datasets
 deepspeed
 dev
 ditaa
+DK
+DK-Bench
 DKMS
 dr
 Dropdown
@@ -103,6 +105,7 @@ NVidia
 OCI
 oneMKL
 OOM
+OpenAI
 orchestrator
 ots
 parallelized

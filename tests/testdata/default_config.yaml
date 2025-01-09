@@ -41,6 +41,26 @@ evaluate:
   # evaluation runs.
   # Default: None
   branch:
+  # Settings to run DK-Bench against a file of user created questions, reference
+  # answers, and responses. If responses are not provided they are generated from a
+  # model
+  dk_bench:
+    # File with questions and reference answers used for evaluation during DK-Bench.
+    # The file must be valid a '.jsonl' file with the fields 'user_input' and
+    # 'reference' in each entry
+    # Default: None
+    input_questions:
+    # Judge model for DK-Bench.
+    # Default: gpt-4o
+    judge_model: gpt-4o
+    # Directory where DK-Bench evaluation results are stored.
+    # Default: /data/instructlab/internal/eval_data/dk_bench
+    output_dir: /data/instructlab/internal/eval_data/dk_bench
+    # Comma-separated list of file formats for results of the DK-Bench evaluation. Ex:
+    # 'csv,jsonl'. Valid options in the list are csv, jsonl, and xlsx. If this option
+    # is not provided the results are written as a .jsonl file
+    # Default: jsonl
+    output_file_formats: jsonl
   # Number of GPUs to use for running evaluation.
   # Default: None
   gpus:
@@ -65,22 +85,36 @@ evaluate:
   model:
   # Multi-turn benchmarking settings for skills.
   mt_bench:
-    # Judge model for mt_bench and mt_bench_branch.
+    # Judge model for MT-Bench.
     # Default: prometheus-eval/prometheus-8x7b-v2.0
     judge_model: prometheus-eval/prometheus-8x7b-v2.0
     # Number of workers to use for evaluation with mt_bench or mt_bench_branch. Must
     # be a positive integer or 'auto'.
     # Default: auto
     max_workers: auto
-    # Directory where evaluation results are stored.
-    # Default: /data/instructlab/internal/eval_data
-    output_dir: /data/instructlab/internal/eval_data
+    # Directory where MT-Bench evaluation results are stored.
+    # Default: /data/instructlab/internal/eval_data/mt_bench
+    output_dir: /data/instructlab/internal/eval_data/mt_bench
   # Settings to run MT-Bench against a branch of taxonomy containing custom
   # skills/knowledge used for training
   mt_bench_branch:
+    # Judge model for MT-Bench-Branch.
+    # Default: prometheus-eval/prometheus-8x7b-v2.0
+    judge_model: prometheus-eval/prometheus-8x7b-v2.0
+    # Directory where MT-Bench-Branch evaluation results are stored.
+    # Default: /data/instructlab/internal/eval_data/mt_bench_branch
+    output_dir: /data/instructlab/internal/eval_data/mt_bench_branch
     # Path to where base taxonomy is stored.
     # Default: /data/instructlab/taxonomy
     taxonomy_path: /data/instructlab/taxonomy
+  # System prompt for model getting responses during DK-Bench.
+  # Default: None
+  system_prompt:
+  # Temperature for model getting responses during DK-Bench. Temperature controls
+  # the randomness of the model's responses. Lower values make the output more
+  # deterministic, while higher values produce more random results.
+  # Default: 0.0
+  temperature: 0.0
 # General configuration section.
 general:
   # Debug level for logging.

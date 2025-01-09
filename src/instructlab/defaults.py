@@ -93,6 +93,8 @@ class _InstructlabDefaults:
     MISTRAL_GGUF_MODEL_NAME = "mistral-7b-instruct-v0.2.Q4_K_M.gguf"
     MODEL_REPO = "instructlab/granite-7b-lab"
     JUDGE_MODEL_MT = "prometheus-eval/prometheus-8x7b-v2.0"
+    JUDGE_MODEL_DK = "gpt-4o"
+    DK_BENCH_OUTPUT_FILE_FORMAT = "jsonl"
     TAXONOMY_REPO = "https://github.com/instructlab/taxonomy.git"
     TAXONOMY_BASE = "origin/main"
     MAX_CONTEXT_SIZE = 4096
@@ -224,6 +226,18 @@ class _InstructlabDefaults:
     @property
     def EVAL_DATA_DIR(self) -> str:
         return path.join(self.INTERNAL_DIR, "eval_data")
+
+    @property
+    def MT_BENCH_DATA_DIR(self) -> str:
+        return path.join(self.EVAL_DATA_DIR, "mt_bench")
+
+    @property
+    def MT_BENCH_BRANCH_DATA_DIR(self) -> str:
+        return path.join(self.EVAL_DATA_DIR, "mt_bench_branch")
+
+    @property
+    def DK_BENCH_DATA_DIR(self) -> str:
+        return path.join(self.EVAL_DATA_DIR, "dk_bench")
 
     @property
     def SYSTEM_PROFILE_DIR(self) -> str:
