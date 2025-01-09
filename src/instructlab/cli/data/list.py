@@ -3,7 +3,7 @@
 # Standard
 from collections import defaultdict
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List
 import logging
 import os
 import re
@@ -23,30 +23,21 @@ logger = logging.getLogger(__name__)
 TIMESTAMP_REGEX = r"\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2}"
 
 
-def extract_model_and_timestamp(
+def extract_model_name(
     filename: str,
-) -> Tuple[Optional[str], bool, Optional[str]]:
+) -> str:
     """
-    Extracts the model name and complete timestamp from a filename.
+    Extracts the model name from a filename, or "General" if not applicable.
     """
-    # Extract model name and full timestamp
+    # Extract model name
     pattern_model = rf"^(test|messages|train)_(?P<model_name>[\w\-\.]+)_(?P<timestamp>{TIMESTAMP_REGEX})"
     match_model = re.search(pattern_model, filename)
 
     if match_model:
         model_name = match_model.group("model_name")
-        timestamp = match_model.group("timestamp").replace("_", ":").replace("T", " ")
-        return (f"{model_name} {timestamp}", False, timestamp)
+        return f"{model_name}"
 
-    # Extract the timestamp
-    pattern_time = rf"(skills_train_msgs|node_datasets|knowledge_train_msgs)_(?P<timestamp>{TIMESTAMP_REGEX})"
-    match_time = re.search(pattern_time, filename)
-
-    if match_time:
-        timestamp = match_time.group("timestamp").replace("_", ":").replace("T", " ")
-        return (f"General {timestamp}", True, timestamp)
-
-    return (None, False, None)
+    return "General"
 
 
 @click.command(name="list")
@@ -71,39 +62,35 @@ def list_datasets(dataset_dirs):
         click.secho(f"Failed to list datasets with exception: {exc}")
         raise click.exceptions.Exit(1)
 
-    headers = ["Dataset", "Created At", "File size"]
+    headers = ["Dataset", "Model", "Created At", "File size"]
     # Check if data is empty and print an empty table if so
     if not data:
         print_table(headers, data)
         return
 
     grouped_data = defaultdict(list)
-    timestamp_to_model = {}
-    general_files = []
 
     # Process model name files e.g. start with test_, train_, messages_
     for item in data:
         filename = item[0]
-        group_key, is_general, timestamp = extract_model_and_timestamp(filename)
+        created_at = item[1]
+        size = item[2]
+        run_id = item[3]
+        model_name = extract_model_name(os.path.basename(filename))
 
-        if group_key:
-            if is_general:
-                general_files.append((item, timestamp))
-            else:
-                grouped_data[group_key].append(item)
-                timestamp_to_model[timestamp] = group_key
+        grouped_data[run_id].append(
+            [
+                filename,
+                model_name,
+                created_at,
+                size,
+            ]
+        )
 
-    # Process General files e.g. start with skills_train_msgs_, node_datasets_
-    for item, timestamp in general_files:
-        # Attempt to find a model group for the general file's timestamp
-        # If no corresponding model file with the same timestamp exists in `timestamp_to_model`,
-        # use the default group "General {timestamp}"
-        model_group = timestamp_to_model.get(timestamp, f"General {timestamp}")
-        grouped_data[model_group].append(item)
-
-    for idx, (group_key, items) in enumerate(
-        sorted(grouped_data.items(), key=lambda x: x[0].split(" ", 1)[1], reverse=True)
-    ):
-        click.echo(f"{os.linesep if idx > 0 else ''}{group_key}")
-        items.sort(key=lambda x: x[0])
-        print_table(headers, items)
+    for idx, run_id in enumerate(sorted(grouped_data.keys(), reverse=True)):
+        click.echo(
+            f"{os.linesep if idx > 0 else ''}{'Uncategorized datasets' if run_id == '' else f'Run from {run_id}'}"
+        )
+        item = grouped_data[run_id]
+        item.sort(key=lambda x: x[0])
+        print_table(headers, item)

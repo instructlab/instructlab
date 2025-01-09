@@ -363,7 +363,7 @@ test_model_train() {
 test_model_test() {
     if [[ "$(uname)" == Linux ]]; then
         echo Using the latest of:
-        ls -ltr "${ILAB_DATA_DIR}"/datasets/test_*
+        ls -ltr "${ILAB_DATA_DIR}"/datasets/*/test_*
         timeout 20m ilab model test > model_test.out
         cat model_test.out
         grep -q '### what is 1+1' model_test.out

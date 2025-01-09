@@ -6,6 +6,7 @@ import logging
 import os
 import os.path
 import pathlib
+import time
 
 # Third Party
 import click
@@ -266,6 +267,11 @@ def generate(
     if detached:
         process_mode = ILAB_PROCESS_MODES.DETACHED
 
+    # create a dated subdirectory to store this run of gen_data
+    dated_dir_name = time.strftime("%Y-%m-%d_%H%M%S")
+    dated_output_dir = os.path.join(output_dir, f"{dated_dir_name}")
+    os.makedirs(dated_output_dir, exist_ok=True)
+
     try:
         gen_data(
             serve_cfg,
@@ -274,7 +280,7 @@ def generate(
             sdg_scale_factor,
             taxonomy_path,
             taxonomy_base,
-            output_dir,
+            dated_output_dir,
             quiet,
             endpoint_url,
             api_key,
