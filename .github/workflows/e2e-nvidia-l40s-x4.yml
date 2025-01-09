@@ -12,6 +12,9 @@ on:
         required: true
         default: 'main'
 
+env:
+  TMPDIR: /home/tmp
+
 jobs:
   start-large-ec2-runner:
     runs-on: ubuntu-latest
@@ -57,6 +60,7 @@ jobs:
       - name: Install Packages
         run: |
           cat /etc/os-release
+          mkdir -p /home/tmp
           sudo dnf install -y gcc gcc-c++ make git python3.11 python3.11-devel
 
       - name: Checkout
