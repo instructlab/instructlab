@@ -860,8 +860,8 @@ def chat_cli(
     if ctx.obj.config.chat.rag.enabled:
         logger.info("RAG enabled for chat; initializing retriever")
         retriever: DocumentStoreRetriever | None = create_document_retriever(
-            document_store_config=ctx.obj.config.chat.document_store,
-            retriever_config=ctx.obj.config.chat.retriever,
+            document_store_config=ctx.obj.config.chat.rag.document_store,
+            retriever_config=ctx.obj.config.chat.rag.retriever,
         )
     else:
         logger.info("RAG not enabled for chat; skipping retrieval setup")

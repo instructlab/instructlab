@@ -27,6 +27,14 @@ chat:
   # Default: False
   rag:
     enabled: false
+    document_store:
+      collection_name: ilab
+      type: milvuslite
+      uri: embeddings.db
+    retriever:
+      embedder:
+        embedding_model_name: ibm-granite/granite-embedding-125m-english
+        top_k: 20
   # Enable vim keybindings for chat.
   # Default: False
   vi_mode: false
