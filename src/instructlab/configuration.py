@@ -127,7 +127,7 @@ class _general(BaseModel):
         return self
 
 
-class _rag_retriever_embedder(BaseModel):
+class _chat_rag_retriever_embedder(BaseModel):
     """Class describing configuration of embedding parameters for RAG."""
     embedding_model_name: str = Field(
         default_factory=lambda: DEFAULTS.DEFAULT_EMBEDDING_MODEL,
@@ -135,19 +135,19 @@ class _rag_retriever_embedder(BaseModel):
     )
 
 
-class _rag_retriever(BaseModel):
+class _chat_rag_retriever(BaseModel):
     """Class describing configuration of retrieval parameters for RAG."""
     top_k: int = Field(
         default=20,
         description="The maximum number of documents to retrieve."
     )
-    embedder: _rag_retriever_embedder = Field(
-        default=_rag_retriever_embedder(),
+    embedder: _chat_rag_retriever_embedder = Field(
+        default=_chat_rag_retriever_embedder(),
         description="Embedding parameters for retrieval."
     )
 
 
-class _rag_document_store(BaseModel):
+class _chat_rag_document_store(BaseModel):
     """Class describing configuration of document store backend for RAG."""
     type: str = Field(
         default="milvuslite",
@@ -163,18 +163,18 @@ class _rag_document_store(BaseModel):
     )
 
 
-class _rag(BaseModel):
+class _chat_rag(BaseModel):
     """Class containing configuration for retrieval augmented generation"""
     enabled: bool = Field(
         default=False,
         description="Enable or disable the RAG pipeline."
     )
-    retriever: _rag_retriever = Field(
-        default=_rag_retriever(),
+    retriever: _chat_rag_retriever = Field(
+        default=_chat_rag_retriever(),
         description="Retrieval parameters for RAG."
     )
-    document_store: _rag_document_store = Field(
-        default=_rag_document_store(),
+    document_store: _chat_rag_document_store = Field(
+        default=_chat_rag_document_store(),
         description="Document store configuration for RAG."
     )
 
@@ -214,8 +214,8 @@ class _chat(BaseModel):
         default=1.0,
         description="Controls the randomness of the model's responses. Lower values make the output more deterministic, while higher values produce more random results.",
     )
-    rag: _rag = Field(
-        default=_rag(retriever=_rag_retriever(), document_store=_rag_document_store()),
+    rag: _chat_rag = Field(
+        default=_chat_rag(retriever=_chat_rag_retriever(), document_store=_chat_rag_document_store()),
         description="Controls retrieval augmented generation parameters."
     )
 
