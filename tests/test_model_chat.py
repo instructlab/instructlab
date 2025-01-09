@@ -1,4 +1,6 @@
 # Standard
+import os
+import tempfile
 from unittest.mock import MagicMock
 import contextlib
 import re
@@ -9,6 +11,9 @@ import pytest
 
 # First Party
 from instructlab.model.chat import ConsoleChatBot
+from instructlab.rag.document_store import DocumentStoreRetriever
+from instructlab.rag.document_store_factory import create_document_retriever
+from instructlab.rag.rag_configuration import DocumentStoreConfig, RetrieverConfig
 
 
 @pytest.mark.parametrize(
@@ -22,6 +27,22 @@ from instructlab.model.chat import ConsoleChatBot
 def test_model_name(model_path, expected_name):
     chatbot = ConsoleChatBot(model=model_path, client=None, loaded={})
     assert chatbot.model_name == expected_name
+
+
+def test_retriever():
+    with tempfile.TemporaryDirectory() as temp_dir:
+        document_store_config = DocumentStoreConfig(
+            uri=os.path.join(temp_dir, "any.db"),
+            collection_name="default",
+        )
+        retriever_config = RetrieverConfig()
+        retriever: DocumentStoreRetriever = create_document_retriever(
+            document_store_config=document_store_config,
+            retriever_config=retriever_config,
+        )
+
+        chatbot = ConsoleChatBot(model="any.model", client=None, retriever=retriever, loaded={})
+        assert chatbot.retriever == retriever
 
 
 def handle_output(output):
