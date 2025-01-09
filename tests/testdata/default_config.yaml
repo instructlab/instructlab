@@ -23,6 +23,10 @@ chat:
   # more deterministic, while higher values produce more random results.
   # Default: 1.0
   temperature: 1.0
+  # Enable retrieval augmented generation in chat.
+  # Default: False
+  rag:
+    enabled: false
   # Enable vim keybindings for chat.
   # Default: False
   vi_mode: false

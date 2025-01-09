@@ -129,9 +129,9 @@ class _general(BaseModel):
 
 class _rag_retriever_embedder(BaseModel):
     """Class describing configuration of embedding parameters for RAG."""
-    model_name: str = Field(
-        default=False,
-        description="ibm-granite/granite-embedding-125m-english"
+    embedding_model_name: str = Field(
+        default="ibm-granite/granite-embedding-125m-english",
+        description="Embedding model to use for RAG."
     )
 
 
@@ -141,7 +141,10 @@ class _rag_retriever(BaseModel):
         default=20,
         description="The maximum number of documents to retrieve."
     )
-    embedder: _rag_retriever_embedder
+    embedder: _rag_retriever_embedder = Field(
+        default=_rag_retriever_embedder(),
+        description="Embedding parameters for retrieval."
+    )
 
 
 class _rag_document_store(BaseModel):
@@ -166,8 +169,14 @@ class _rag(BaseModel):
         default=False,
         description="Enable or disable the RAG pipeline."
     )
-    retriever: _rag_retriever
-    document_store: _rag_document_store
+    retriever: _rag_retriever = Field(
+        default=_rag_retriever(),
+        description="Retrieval parameters for RAG."
+    )
+    document_store: _rag_document_store = Field(
+        default=_rag_document_store(),
+        description="Document store configuration for RAG."
+    )
 
 
 class _chat(BaseModel):
@@ -205,7 +214,10 @@ class _chat(BaseModel):
         default=1.0,
         description="Controls the randomness of the model's responses. Lower values make the output more deterministic, while higher values produce more random results.",
     )
-    rag: _rag
+    rag: _rag = Field(
+        default=_rag(retriever=_rag_retriever(), document_store=_rag_document_store()),
+        description="Controls retrieval augmented generation parameters."
+    )
 
 
 class _serve_vllm(BaseModel):

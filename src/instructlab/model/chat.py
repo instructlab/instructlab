@@ -175,6 +175,12 @@ def is_openai_server_and_serving_model(
     "--temperature",
     cls=clickext.ConfigOption,
 )
+@click.option(
+    "--rag",
+    is_flag=True,
+    cls=clickext.ConfigOption,
+    required=True,  # default from config
+)
 @click.pass_context
 @clickext.display_params
 def chat(
