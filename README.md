@@ -1047,9 +1047,9 @@ argument to specify your new model:
 
 If you are happy with your newly-trained model and wish to upload it to a supported endpoint, you can do so with the `ilab model upload` command.
 
-InstructLab currently supports uploading to [Hugging Face](https://huggingface.co/), with plans to support OCI and S3 uploads as well.
+InstructLab currently supports uploading to [Hugging Face](https://huggingface.co/) and OCI registires such as [Quay.io](https://quay.io/), with plans to support S3 uploads as well.
 
-You can upload safetensors or a GGUF to any destination you have access to - see `ilab model upload --help` for more info.
+You can upload safetensors, GGUFs, and/or OCI-compliant models to any supported destination you have access to - see `ilab model upload --help` for more info.
 
 ## 🎁 Submit your new knowledge or skills
 
