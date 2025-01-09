@@ -130,7 +130,7 @@ class _general(BaseModel):
 class _rag_retriever_embedder(BaseModel):
     """Class describing configuration of embedding parameters for RAG."""
     embedding_model_name: str = Field(
-        default="ibm-granite/granite-embedding-125m-english",
+        default_factory=lambda: DEFAULTS.DEFAULT_EMBEDDING_MODEL,
         description="Embedding model to use for RAG."
     )
 

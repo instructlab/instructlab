@@ -4,11 +4,13 @@ import tempfile
 from unittest.mock import MagicMock
 import contextlib
 import re
+import openai
 
 # Third Party
 from rich.console import Console
 import pytest
 
+from instructlab.defaults import DEFAULTS
 # First Party
 from instructlab.model.chat import ConsoleChatBot
 from instructlab.rag.document_store import DocumentStoreRetriever
@@ -43,6 +45,15 @@ def test_retriever():
 
         chatbot = ConsoleChatBot(model="any.model", client=None, retriever=retriever, loaded={})
         assert chatbot.retriever == retriever
+
+        # verify there was an attempt to load an embeddings model
+        # which should only happen if a document retriever is attempted to be used
+        with contextlib.suppress(KeyboardInterrupt):
+            try:
+                chatbot.start_prompt(content="test", logger=None)
+            except ValueError as e:
+                assert DEFAULTS.GRANITE_EMBEDDINGS_MODEL_NAME in repr(e)
+
 
 
 def handle_output(output):
