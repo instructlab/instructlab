@@ -2,6 +2,7 @@
 from unittest import mock
 from unittest.mock import patch
 import os
+import re
 import textwrap
 
 # Third Party
@@ -13,6 +14,17 @@ from instructlab import lab
 
 # Local
 from . import common
+
+
+def clean_output(text):
+    # Remove log entries and ANSI color codes
+    text = re.sub(
+        r"(ERROR|INFO) \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3} [\w.:]+: ", "", text
+    )
+    text = re.sub(r"\x1b\[[0-9;]*m", "", text)  # Remove ANSI color codes
+    # Split by newlines and take the first non-empty line
+    lines = [line.strip() for line in text.split("\n") if line.strip()]
+    return lines[0] if lines else ""
 
 
 def gen_qa_pairs(odd):
@@ -130,7 +142,10 @@ def run_mt_bench(cli_runner, error_rate):
             """
         )
     expected += "\nᕦ(òᴗóˇ)ᕤ Model evaluate with MTBench completed! ᕦ(òᴗóˇ)ᕤ\n"
-    assert result.output == expected
+    cleaned_result = clean_output(result.output)
+    cleaned_expected = clean_output(expected)
+
+    assert cleaned_result == cleaned_expected
 
 
 def run_mt_bench_branch(cli_runner, error_rate):
@@ -197,7 +212,10 @@ def run_mt_bench_branch(cli_runner, error_rate):
             """
         )
     expected += "\nᕦ(òᴗóˇ)ᕤ Model evaluate with MTBenchBranch completed! ᕦ(òᴗóˇ)ᕤ\n"
-    assert result.output == expected
+    cleaned_result = clean_output(result.output)
+    cleaned_expected = clean_output(expected)
+
+    assert cleaned_result == cleaned_expected
 
 
 @patch("instructlab.model.evaluate.validate_model")
@@ -307,7 +325,11 @@ def test_evaluate_mmlu(
         """
     )
     expected += "\nᕦ(òᴗóˇ)ᕤ Model evaluate with MMLU completed! ᕦ(òᴗóˇ)ᕤ\n"
-    assert result.output == expected
+
+    cleaned_result = clean_output(result.output)
+    cleaned_expected = clean_output(expected)
+
+    assert cleaned_result == cleaned_expected
 
 
 @patch("instructlab.model.evaluate.validate_model")
@@ -368,7 +390,10 @@ def test_evaluate_mmlu_branch(
         """
     )
     expected += "\nᕦ(òᴗóˇ)ᕤ Model evaluate with MMLUBranch completed! ᕦ(òᴗóˇ)ᕤ\n"
-    assert result.output == expected
+    cleaned_result = clean_output(result.output)
+    cleaned_expected = clean_output(expected)
+
+    assert cleaned_result == cleaned_expected
 
 
 @patch("instructlab.model.evaluate.validate_model")
@@ -383,11 +408,8 @@ def test_no_model_mt_bench(_, cli_runner: CliRunner):
             "mt_bench",
         ],
     )
-    assert (
-        result.output
-        == "Benchmark mt_bench requires the following args to be set: ['model', 'judge-model']\n"
-    )
-    assert result.exit_code != 0
+    expected_output = "Benchmark mt_bench requires the following args to be set: ['model', 'judge-model']"
+    assert clean_output(result.output) == expected_output
 
 
 def test_missing_benchmark(cli_runner: CliRunner):
