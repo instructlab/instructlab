@@ -286,7 +286,7 @@ def clickpath_setup(is_dir: bool) -> click.Path:
         case_sensitive=False,
     ),
     show_default=True,
-    help="If chosen, will run the selected training strategy instead of a single training run.",
+    help="When specified with the 'accelerated' pipeline, will run the selected training strategy instead of a single training run.",
 )
 @click.option(
     "--phased-base-dir",
