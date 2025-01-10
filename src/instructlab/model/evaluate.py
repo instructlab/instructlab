@@ -18,6 +18,7 @@ from instructlab.configuration import _serve
 from instructlab.model.backends import backends
 from instructlab.utils import get_model_arch, get_sysprompt
 from instructlab import client_utils
+import instructlab.eval.ragas as ragas_eval
 
 # Local
 from ..client_utils import http_client
@@ -523,6 +524,37 @@ def launch_server(
     default="",
     help="Path to the questions and reference answers the model will be evaluating in the LLMaaJ evaluation",
 )
+@click.option(
+    "--output-file-formats",
+    type=click.STRING,
+    default="jsonl",
+    show_default=True,
+    help="Comma-separated list of file formats for results of the LLMaaJ evaluation. Valid options are csv, jsonl, and xlsx. If this option is not provided the results are written as a .jsonl file",
+)
+@click.option(
+    "--model-prompt",
+    type=click.STRING,
+    default=ragas_eval._DEFAULT_SYSTEM_PROMPT,
+    help="Prompt for the model when getting responses in the LLMaaJ evaluation",
+)
+@click.option(
+    "--temperature",
+    type=click.FLOAT,
+    default=0.0,
+    help="Temperature for the model when getting responses in the LLMaaJ evaluation",
+)
+@click.option(
+    "--model-name",
+    type=click.STRING,
+    default=None,
+    help="Prompt for the model when getting responses in the LLMaaJ evaluation",
+)
+@click.option(
+    "--judge-model-name",
+    type=click.STRING,
+    default=ragas_eval.DEFAULT_JUDGE_MODEL,
+    help="Prompt for the model when getting responses in the LLMaaJ evaluation",
+)
 @click.pass_context
 @clickext.display_params
 def evaluate(
@@ -549,6 +581,11 @@ def evaluate(
     tls_client_passwd,  # pylint: disable=unused-argument
     enable_serving_output,
     input_questions,
+    output_file_formats,
+    model_prompt,
+    temperature,
+    model_name,
+    judge_model_name,
 ):
     """Evaluates a trained model"""
 
@@ -563,7 +600,19 @@ def evaluate(
     if benchmark == Benchmark.LLMAAJ:
         from instructlab.model.llmaaj import run_llmaaj
 
-        run_llmaaj(ctx, model, max_workers, gpus, backend, enable_serving_output, input_questions)
+        run_llmaaj(ctx,
+                   model,
+                   max_workers,
+                   gpus, backend,
+                   enable_serving_output,
+                   input_questions,
+                   output_file_formats,
+                   output_dir,
+                   model_prompt,
+                   temperature,
+                   model_name,
+                   judge_model_name)
+        click.echo("\nᕦ(òᴗóˇ)ᕤ Model evaluate with LLMaaJ completed! ᕦ(òᴗóˇ)ᕤ")
 
     try:
         # get appropriate evaluator class from Eval lib

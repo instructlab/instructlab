@@ -2,6 +2,8 @@
 
 # pylint: disable=ungrouped-imports
 # Standard
+from datetime import datetime
+import enum
 import logging
 import pathlib
 import os
@@ -25,6 +27,12 @@ from .evaluate import launch_server, get_model_name
 from ..configuration import DEFAULTS
 
 logger = logging.getLogger(__name__)
+
+class IOFileType(enum.Enum):
+    CSV: str = "csv"
+    JSONL: str = "jsonl"
+    XLSX: str = "xlsx"
+    QNA_YAML: str = "qna.yaml"
 
 def model_is_local(model: str) -> bool:
     if os.path.exists(model):
@@ -55,15 +63,32 @@ def get_endpoint_model_name(endpoint: str, api_key: str, http_client: httpx.Clie
 
     return models.data[0].id
 
-def create_results_file_name() -> str:
-    return f"{DEFAULTS.EVAL_DATA_DIR}/responses.jsonl"
+def create_results_file_name(file_format: IOFileType, output_dir: str) -> str:
+    file_type = "jsonl"
+    if IOFileType.CSV.value == file_format:
+        file_type = "csv"
+    if IOFileType.XLSX.value == file_format:
+        file_type = "xlsx"
 
-def run_llmaaj(ctx, model, max_workers, gpus, backend, enable_serving_output, input_questions):
+    now = datetime.now()
+    timestamp = now.strftime("%m-%d-%Y_%H-%M-%S")
+
+    output_path = pathlib.Path(output_dir)
+    if not output_path.exists() or not output_path.is_dir():
+        output_dir = DEFAULTS.EVAL_DATA_DIR
+        logger.info(f"Output dir provided is not a directory or does not exist, writing results to output directory {output_dir}")
+
+    return f"{output_dir}/responses-{timestamp}.{file_type}"
+
+def run_llmaaj(ctx, model, max_workers, gpus, backend, enable_serving_output, input_questions, output_file_formats, output_dir, model_prompt, temperature, model_name, judge_model_name):
+    logger.info(f"Input questions path is {input_questions}")
+
     try:
         student_api_key = None
         if model_is_local(model):
             logger.info(f"Model is local")
-            model_name = get_model_name(model)
+            if model_name == None:
+                model_name = get_model_name(model)
             server, api_base, effective_gpus = launch_server(
                 eval_serve=ctx.obj.config.serve,
                 tls_client_cert=ctx.params["tls_client_cert"],
@@ -89,60 +114,51 @@ def run_llmaaj(ctx, model, max_workers, gpus, backend, enable_serving_output, in
                 }
             )
 
-            model_name = get_endpoint_model_name(model, student_api_key, http_params)
+            if model_name == None:
+                model_name = get_endpoint_model_name(model, student_api_key, http_params)
             api_base = model
 
-        logger.info(f"Model name is {model_name}")
-        logger.info(f"Input questions path is {input_questions}")
-        #base_ds_df = pd.read_json(f"{input_questions}", orient="records", lines=True)
         openai_client = get_openai_client(model_api_base=api_base, api_key=student_api_key)
-        student_model_config = ModelConfig(model_name=model_name)
-        run_config = RunConfig(max_retries=3, max_wait=60, seed=42, timeout=30)
+        logger.info(f"Model name is {model_name}")
+        logger.info(f"Student Model Prompt is {model_prompt}")
+        logger.info(f"Temperature is {temperature}")
+        student_model_config = ModelConfig(model_name=model_name, temperature=temperature, system_prompt=model_prompt)
         judge_api_key = os.environ.get("OPENAI_API_KEY", None)
+        logger.info(f"Judge model name is: {judge_model_name}")
 
         evaluator = RagasEvaluator()
         result = evaluator.run(
-            #dataset=base_ds, run_config=run_config,
-            dataset=input_questions, student_model=student_model_config, run_config=run_config, student_openai_client=openai_client, judge_model_name="gpt-4o-mini", judge_openai_api_key=judge_api_key
+            dataset=input_questions, student_model=student_model_config, student_openai_client=openai_client, judge_model_name=judge_model_name, judge_openai_api_key=judge_api_key
         )
+        print("\n")
 
-
-        response_df = result.dataset.to_pandas()
-        results_file = create_results_file_name()
-        response_df.to_json(f"{results_file}", orient="records", lines=True)
-        logger.info(f"Responses written to {results_file}")
-        print("\n###########")
+        # TODO: Make this output much prettier
+        print("###########")
         print("Scores are:")
         for score in result.scores:
-            print(score['domain_specific_rubrics'])
-        """
-        # code in case I don't want to call OpenAI
-        interim_df = pd.DataFrame(
-                {"user_input": user_question1, "response": student_model_response1, "reference": golden_answer1},
-                {"user_input": user_question2, "response": student_model_response2, "reference": golden_answer2}
-        )
+            print(f"Score is: {score['domain_specific_rubrics']}")
+            
+        response_df = result.dataset.to_pandas()
+        scores = [score["domain_specific_rubrics"] for score in result.scores]
+        response_df['scores'] = scores
+        output_formats = output_file_formats.split(",")
 
-        evaluation_dataset = EvaluationDataset.from_pandas(interim_df)
-        _unimportant_ragas_traces = {
-            "default": ChainRun(
-                run_id="42",
-                parent_run_id=None,
-                name="root",
-                inputs={"system": "null", "user": "null"},
-                outputs={"assistant": "null"},
-                metadata={"user_id": 1337},
-            )
-        }
-        temp_res = EvaluationResult(
-            scores=[{'domain_specific_metric': 10}, {'domain_specific_metric': 8}],
-            dataset=evaluation_dataset,
-            ragas_traces=_unimportant_ragas_traces,
-        )
-        """
+        if IOFileType.JSONL.value in output_formats:
+            results_file = create_results_file_name(IOFileType.JSONL.value, output_dir)
+            response_df.to_json(f"{results_file}", orient="records", lines=True)
+            print(f"Responses and scores written to {results_file}")
+
+        if IOFileType.CSV.value in output_formats:
+            results_file = create_results_file_name(IOFileType.CSV.value, output_dir)
+            response_df.to_csv(f"{results_file}", index=False)
+            print(f"Responses and scores written to {results_file}")
+
+        if IOFileType.XLSX.value in output_formats:
+            results_file = create_results_file_name(IOFileType.XLSX.value, output_dir)
+            response_df.to_excel(f"{results_file}", sheet_name="Summary", index=False)
+            print(f"Responses and scores written to {results_file}")
 
     finally:
         if model_is_local(model):
             if server is not None:
                 server.shutdown()
-    return
-
