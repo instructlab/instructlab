@@ -17,6 +17,7 @@ from instructlab import clickext
 from instructlab.configuration import _serve
 from instructlab.model.backends import backends
 from instructlab.utils import get_model_arch, get_sysprompt
+from instructlab import client_utils
 
 # Local
 from ..client_utils import http_client
@@ -32,7 +33,6 @@ class Benchmark(str, enum.Enum):
     MT_BENCH = "mt_bench"
     MT_BENCH_BRANCH = "mt_bench_branch"
     LLMAAJ = "llmaaj"
-
 
 def validate_options(
     model,
@@ -517,6 +517,12 @@ def launch_server(
     is_flag=True,
     help="Print serving engine logs.",
 )
+@click.option(
+    "--input-questions",
+    type=click.Path(exists=True, path_type=pathlib.Path),
+    default="",
+    help="Path to the questions and reference answers the model will be evaluating in the LLMaaJ evaluation",
+)
 @click.pass_context
 @clickext.display_params
 def evaluate(
@@ -542,6 +548,7 @@ def evaluate(
     tls_client_key,  # pylint: disable=unused-argument
     tls_client_passwd,  # pylint: disable=unused-argument
     enable_serving_output,
+    input_questions,
 ):
     """Evaluates a trained model"""
 
@@ -554,112 +561,9 @@ def evaluate(
         batch_size = int(batch_size)
 
     if benchmark == Benchmark.LLMAAJ:
-        from instructlab.eval.ragas import ModelConfig, RagasEvaluator, RunConfig, Sample
-        from ragas.callbacks import ChainRun
-        from ragas.dataset_schema import EvaluationDataset, EvaluationResult
-        from instructlab.eval.mt_bench_common import get_openai_client
-        import pandas as pd
+        from instructlab.model.llmaaj import run_llmaaj
 
-        try:
-            #model_name = get_model_name(model)
-            #server, api_base, effective_gpus = launch_server(
-            #    eval_serve=ctx.obj.config.serve,
-            #    tls_client_cert=ctx.params["tls_client_cert"],
-            #    tls_client_key=ctx.params["tls_client_key"],
-            #    tls_client_passwd=ctx.params["tls_client_passwd"],
-            #    tls_insecure=ctx.params["tls_insecure"],
-            #    model=model,
-            #    model_name=model_name,
-            #    max_workers=max_workers,
-            #    gpus=gpus,
-            #    backend=backend,
-            #    enable_serving_output=enable_serving_output,
-            #)
-            print("made it into try")
-
-            openai_key = ""
-
-            #os.environ["OPENAI_API_KEY"] = openai_key
-
-            student_model_response1 = "Paris"
-            user_question1 = "What is the capital of France?"
-            golden_answer1 = "The capital of France is Paris."
-
-            student_model_response2 = "New York"
-            user_question2 = "What is the United States of America?"
-            golden_answer2 = "The capital of the Unites States of America is Washington DC."
-
-            #base_ds = [{"user_input": user_question1, "response": student_model_response1, "reference": golden_answer1}]
-            #base_ds = [{"user_input": user_question1, "response": student_model_response1, "reference": golden_answer1},
-            #           {"user_input": user_question2, "response": student_model_response2, "reference": golden_answer2}]
-            base_ds = [{"user_input": user_question1, "reference": golden_answer1},
-                       {"user_input": user_question2, "reference": golden_answer2}]
-
-            base_ds_df = pd.read_csv(f"questions.csv")
-            #print(base_ds_df)
-            print("made it past simple var assignment")
-
-            client = get_openai_client(
-                    model_api_base="https://api.openai.com/v1", api_key=openai_key
-            )
-
-            #local_client = get_openai_client(model_api_base=api_base, api_key=None)
-            nys_endpoint = ""
-            nys_model_name = "finetuned"
-            nys_api_key = ""
-            nys_endpoint = get_openai_client(model_api_base=nys_endpoint, api_key=nys_api_key)
-            print("made it past get_openai_client")
-            #local_client = get_openai_client(model_api_base=api_base, api_key=None)
-            #local_client = get_openai_client(model_api_base="http://127.0.0.1:8000/v1", api_key=None)
-
-            #student_model = ModelConfig(model_name="nys-its-model-rhelai-1-3")
-            student_model = ModelConfig(model_name=nys_model_name)
-            run_config = RunConfig(max_retries=3, max_wait=60, seed=42, timeout=30)
-            #student_model = ModelConfig(model_name="gpt-4o-mini")
-            evaluator = RagasEvaluator()
-            print("made it before run")
-
-            result = evaluator.run(
-                #dataset=base_ds, run_config=run_config,
-                dataset=base_ds, student_model=student_model, run_config=run_config, student_openai_client=nys_endpoint, judge_model_name="gpt-4o-mini", judge_openai_api_key=openai_key
-            )
-
-            interim_df = pd.DataFrame(
-                    {"user_input": user_question1, "response": student_model_response1, "reference": golden_answer1},
-                    {"user_input": user_question2, "response": student_model_response2, "reference": golden_answer2}
-            )
-
-            evaluation_dataset = EvaluationDataset.from_pandas(interim_df)
-            _unimportant_ragas_traces = {
-                "default": ChainRun(
-                    run_id="42",
-                    parent_run_id=None,
-                    name="root",
-                    inputs={"system": "null", "user": "null"},
-                    outputs={"assistant": "null"},
-                    metadata={"user_id": 1337},
-                )
-            }
-            temp_res = EvaluationResult(
-                scores=[{'domain_specific_metric': 10}, {'domain_specific_metric': 8}],
-                dataset=evaluation_dataset,
-                ragas_traces=_unimportant_ragas_traces,
-            )
-            print("\n")
-            print("Result is:")
-            print(result.scores)
-            ilab_response_df = result.dataset.to_pandas()
-            ilab_response_df.to_csv(f"responses.csv", index=False)
-
-            #print("Temp Result is:")
-            #print(temp_res.scores)
-
-        finally:
-            #if server is not None:
-            #    server.shutdown()
-            return
-
-        return
+        run_llmaaj(ctx, model, max_workers, gpus, backend, enable_serving_output, input_questions)
 
     try:
         # get appropriate evaluator class from Eval lib
