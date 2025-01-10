@@ -129,6 +129,8 @@ subcommands: list[Command] = [
     Command(("data",), needs_config=False, should_fail=False),
     Command(("data", "generate")),
     Command(("data", "list")),
+    Command(("rag",), needs_config=False, should_fail=False),
+    Command(("rag", "ingest")),
     Command(("system",), needs_config=False, should_fail=False),
     Command(("system", "info"), needs_config=False, should_fail=False),
     Command(("taxonomy",), needs_config=False, should_fail=False),
