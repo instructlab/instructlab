@@ -6,7 +6,7 @@ import pathlib
 import sys
 
 # First Party
-from instructlab import log, utils
+from instructlab import log
 from instructlab.model.backends import backends
 from instructlab.model.backends.common import ServerException
 from instructlab.model.backends.server import BackendServer
@@ -33,6 +33,8 @@ def serve_backend(
     backend: str | None,
     chat_template: str | None,
     gpus: int | None,
+    host: str,
+    port: int,
 ) -> None:
     """Core server functionality to be called from the CLI"""
     # Configure logging
@@ -42,8 +44,6 @@ def serve_backend(
 
     # First Party
     from instructlab.model.backends import llama_cpp, vllm
-
-    host, port = utils.split_hostport(ctx.obj.config.serve.host_port)
 
     try:
         backend = backends.get(model_path, backend)

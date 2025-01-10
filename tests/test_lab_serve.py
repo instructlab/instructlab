@@ -335,3 +335,53 @@ def test_warn_for_unsupported_backend_param(param, expected_call_count):
             mock_warning.assert_called_with(
                 f"Option '--{param.replace('_','-')}' not supported by the backend."
             )
+
+
+def test_serve_host(cli_runner: CliRunner):
+    args = common.vllm_setup_test(
+        cli_runner,
+        [
+            "--config=DEFAULT",
+            "model",
+            "serve",
+            "--model-path=foo",
+            "--host",
+            "2.4.6.8",
+        ],
+    )
+    assert "2.4.6.8" in args
+    assert "8000" in args
+
+
+def test_serve_port(cli_runner: CliRunner):
+    args = common.vllm_setup_test(
+        cli_runner,
+        [
+            "--config=DEFAULT",
+            "model",
+            "serve",
+            "--model-path=foo",
+            "--port",
+            "1234",
+        ],
+    )
+    assert "127.0.0.1" in args
+    assert "1234" in args
+
+
+def test_serve_host_port(cli_runner: CliRunner):
+    args = common.vllm_setup_test(
+        cli_runner,
+        [
+            "--config=DEFAULT",
+            "model",
+            "serve",
+            "--model-path=foo",
+            "--host",
+            "192.168.1.1",
+            "--port",
+            "1234",
+        ],
+    )
+    assert "192.168.1.1" in args
+    assert "1234" in args
