@@ -171,14 +171,14 @@ test_list() {
 test_taxonomy() {
     task Update the taxonomy
 
-    # Extra large will pull in multiple freeform compositional skills to test the coverage of mulitple knowledge/skill leaf node usage. All other t-shirt sizes will only have one compositional skill.
+    # Extra large will pull in multiple freeform compositional skills to test the coverage of multiple knowledge/skill leaf node usage. All other t-shirt sizes will only have one compositional skill.
     if [ "$XLARGE" -eq 1 ]; then
-        step Add two compositional skills to the taxomony
+        step Add two compositional skills to the taxonomy
         mkdir -p "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/inference/qualitative/{e2e-siblings,e2e-palindrome}
         cp "$SCRIPTDIR"/test-data/compositional_skills/freeform/e2e-qna-freeform-siblings-skill.yaml "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings/qna.yaml
         cp "$SCRIPTDIR"/test-data/compositional_skills/freeform/e2e-qna-freeform-palindrome-skill.yaml "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/inference/qualitative/e2e-palindrome/qna.yaml
     else
-        step Add compositional skill to the taxomony
+        step Add compositional skill to the taxonomy
         mkdir -p "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings
         cp "$SCRIPTDIR"/test-data/compositional_skills/freeform/e2e-qna-freeform-siblings-skill.yaml "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings/qna.yaml
     fi
