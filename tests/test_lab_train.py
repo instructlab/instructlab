@@ -105,6 +105,9 @@ def run_default_phased_train(cli_runner):
 
 
 def setup_default_phased_training_dirs():
+    """
+    Write empty object to dummy test files so they're not empty.
+    """
     for f_path in [
         "knowledge_data_path",
         "skills_data_path",
@@ -735,3 +738,57 @@ class TestLabTrain:
         evaluate_mock.assert_called_once()
         get_checkpoints_mock.assert_called_once()
         assert result.exit_code == 0
+
+    @patch(
+        "instructlab.model.accelerated_train.accelerated_train",
+        return_value=0,
+    )
+    def test_disable_fullstate_saving(
+        self, accelerated_train_mock: mock.MagicMock, cli_runner
+    ):
+        """
+        Ensures that when a user attempts to disable full state saving (params, optimizer state, etc.)
+        via the --disable-accelerate-full-state-at-epoch flag, the controlling value inside
+        the `train_args` object that is passed to `accelerate_training` is correctly disabled.
+        """
+
+        setup_default_phased_training_dirs()
+        ##################### Default enabled full state saving saving #####################
+        cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "model",
+                "train",
+                "--strategy",
+                "lab-multiphase",
+                "--pipeline",
+                "accelerated",
+                "--device",
+                "cuda",
+            ],
+        )
+
+        passed_train_args = accelerated_train_mock.call_args.kwargs["train_args"]
+        assert passed_train_args.accelerate_full_state_at_epoch  # should be True
+
+        ##################### Disabled full state saving #####################
+        cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "model",
+                "train",
+                "--strategy",
+                "lab-multiphase",
+                "--pipeline",
+                "accelerated",
+                "--device",
+                "cuda",
+                "--disable-accelerate-full-state-at-epoch",
+            ],
+        )
+
+        passed_train_args = accelerated_train_mock.call_args.kwargs["train_args"]
+
+        assert not passed_train_args.accelerate_full_state_at_epoch

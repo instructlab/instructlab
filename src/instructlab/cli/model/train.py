@@ -384,6 +384,11 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     is_flag=True,
     help="Optimize Memory Usage on CPU and MacOS. This uses the torch_dtype='auto' instead of float32",
 )
+@click.option(
+    "--disable-accelerate-full-state-at-epoch",
+    is_flag=True,
+    help="Globally skips full-state (parameters, optimizer, etc.) saving per epoch. DISABLES TRAINING RESUMEABILITY.",
+)
 @click.pass_context
 @clickext.display_params
 def train(
@@ -420,6 +425,7 @@ def train(
     force_clear_phased_cache: bool,
     distributed_backend,
     optimize_memory,
+    disable_accelerate_full_state_at_epoch: bool,
     **kwargs,
 ):
     """
@@ -452,6 +458,10 @@ def train(
     if is_high_fidelity(device=device) and pipeline == "accelerated":
         train_args, torch_args = map_train_to_library(ctx, ctx.params)
 
+        train_args.accelerate_full_state_at_epoch = (
+            not disable_accelerate_full_state_at_epoch
+        )
+
         # First Party
         from instructlab.model import accelerated_train
 
@@ -483,6 +493,7 @@ def train(
         except Exception as exc:
             click.secho(f"Accelerated Training failed with {str(exc)}")
             raise click.exceptions.Exit(1)
+
     elif not is_high_fidelity(device=device) and pipeline == "full":
         # Third Party
         import torch
