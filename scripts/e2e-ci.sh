@@ -475,11 +475,11 @@ wait_for_server() {
 
 # NOTE: If you add additional or modify existing options, please document them in 'docs/ci.md'
 usage() {
-    echo "Usage: $0 [-s] [-m] [-l] [-xl] [-h]"
+    echo "Usage: $0 [-s] [-m] [-l] [-x] [-h]"
     echo "  -s  Run small t-shirt size job"
     echo "  -m  Run medium t-shirt size job"
     echo "  -l  Run large t-shirt size job"
-    echo "  -xl  Run extra large t-shirt size job"
+    echo "  -x  Run extra large t-shirt size job"
     echo "  -p  Preserve the E2E_TEST_DIR for debugging"
     echo "  -h  Show this help text"
 }
