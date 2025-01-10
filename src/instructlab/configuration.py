@@ -587,25 +587,21 @@ class _embedding_model(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
 
-    model_dir: str = Field(
-        default=DEFAULTS.MODELS_DIR,
-        description="The default system model location store, located in the data directory.",
-    )
-    model_name: str = Field(
+    embedding_model_name: str = Field(
         default_factory=lambda: DEFAULTS.DEFAULT_EMBEDDING_MODEL,
         description="Embedding model to use for RAG.",
     )
 
-    def local_model_path(self) -> str:
-        if self.model_dir is None:
-            click.secho(f"Missing value for field model_dir in {vars(self)}")
-            raise click.exceptions.Exit(1)
 
-        if self.model_name is None:
-            click.secho(f"Missing value for field model_name in {vars(self)}")
-            raise click.exceptions.Exit(1)
+class _ingest(BaseModel):
+    """Class describing configuration of the 'rag ingest' command."""
 
-        return os.path.join(self.model_dir, self.model_name)
+    document_store: _document_store = Field(
+        default_factory=_document_store, description="Document store configuration for RAG."
+    )
+    embedding_model: _embedding_model = Field(
+        default_factory=_embedding_model, description="Embedding parameters for ingestion."
+    )
 
 
 class _retriever(BaseModel):
@@ -672,6 +668,10 @@ class Config(BaseModel):
     # additional fields with defaults
     general: _general = Field(
         default_factory=_general, description="General configuration section."
+    )
+    # ingest configuration
+    ingest: _ingest = Field(
+        default_factory=_ingest, description="Ingest configuration section."
     )
     # model configuration
     model_config = ConfigDict(extra="ignore")

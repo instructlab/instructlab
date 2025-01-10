@@ -208,6 +208,24 @@ generate:
       #   - ['--dtype', 'auto']
       #   - ['--lora-alpha', '32']
       vllm_args: []
+# Ingest configuration section.
+ingest:
+  # Document store configuration for RAG.
+  # Default: uri='embeddings.db' collection_name='ilab'
+  document_store:
+    # Document store collection name.
+    # Default: ilab
+    collection_name: ilab
+    # Document store service URI.
+    # Default: embeddings.db
+    uri: embeddings.db
+  # Embedding parameters for ingestion.
+  # Default: embedding_model_name='/Users/dmartino/.cache/instructlab/models/ibm-granite/granite-embedding-125m-english'
+  embedding_model:
+    # Embedding model to use for RAG.
+    # Default: /cache/instructlab/models/ibm-granite/granite-embedding-125m-english
+    embedding_model_name: 
+      /Users/dmartino/.cache/instructlab/models/ibm-granite/granite-embedding-125m-english
 # Metadata pertaining to the specifics of the system which the Configuration is
 # meant to be applied to.
 metadata:
