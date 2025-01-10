@@ -571,6 +571,37 @@ test_ilab_chat_server_logs(){
     fi
 }
 
+test_ilab_help_without_config() {
+    # Test the help without config file after the fix
+    result=$(ilab --config=test-test.yaml model evaluate --help)
+    if echo "$result" | grep -F 'Usage: ilab model evaluate [OPTIONS]'; then
+        echo "Test passed: ilab model evaluate help message found."
+    else
+        echo "Error: ilab model evaluate help message not found."
+        exit 1
+    fi
+
+    result=$(ilab --config=test-test.yaml config show --help)
+    if echo "$result" | grep -F 'Usage: ilab config show [OPTIONS]'; then
+        echo "Test passed: ilab config show help message found."
+    else
+        echo "Error: ilab config show help message not found."
+        exit 1
+    fi
+
+    set +e
+    # Test the command run without config file, and fail as expected
+    result=$(ilab --config=test-test.yaml config show 2>&1)
+
+    if echo "$result" | grep -F "Error: \`test-test.yaml\` does not exist or is not a readable file"; then
+        echo "Test passed: ilab config show ran as expected with error message."
+    else
+        echo "Error: ilab config show did not output the expected error message."
+        exit 1
+    fi
+    set -e
+}
+
 #########
 # SETUP #
 #########
@@ -669,6 +700,8 @@ cleanup
 test_log_format
 cleanup
 test_llama_backend
+cleanup
+test_ilab_help_without_config
 cleanup
 
 exit 0
