@@ -26,7 +26,7 @@ COPY containers/sitecustomize.py ${VIRTUAL_ENV}/lib/${PYTHON}/site-packages/
 COPY containers/bin/debug-* ${VIRTUAL_ENV}/bin/
 
 COPY . /tmp/instructlab
-RUN CMAKE_ARGS="-DLLAMA_NATIVE=off" \
+RUN CMAKE_ARGS="-DGGML_NATIVE=off" \
         ${VIRTUAL_ENV}/bin/pip install "/tmp/instructlab[hpu]" && \
     find ${VIRTUAL_ENV} -name __pycache__ | xargs rm -rf
 

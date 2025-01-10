@@ -8,6 +8,7 @@ import httpx
 
 ILAB_PACKAGE_NAME = "instructlab"
 CONFIG_FILENAME = "config.yaml"
+CONFIG_LOCK_FILENAME = "config.yaml.lock"
 CONFIG_VERSION = "1.0.0"
 
 # Model families understood by ilab
@@ -121,6 +122,10 @@ class _InstructlabDefaults:
     @property
     def CONFIG_FILE(self) -> str:
         return path.join(self._config_dir, CONFIG_FILENAME)
+
+    @property
+    def CONFIG_FILE_LOCK(self) -> str:
+        return path.join(self._config_dir, CONFIG_LOCK_FILENAME)
 
     @property
     def MODELS_DIR(self) -> str:
