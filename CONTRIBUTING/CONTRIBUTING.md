@@ -137,6 +137,15 @@ tox -e mypy -- code_file.py
 tox -e lint -- code_file.py
 ```
 
+### Debug
+
+Use the `--debug-params` and `--debug-params-json` flags to list options that display diagnostic information about parameters, including their names and values. It also reveals the type of each value and its origin (command line, env vars, default, map), e.g.:
+
+```shell
+ilab model chat --debug-params
+ilab model chat --debug-params-json
+```
+
 ## Your First Code Contribution
 
 Unsure where to begin contributing? You can start by looking through these issues:
