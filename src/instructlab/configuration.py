@@ -1495,3 +1495,12 @@ def storage_dirs_exist() -> bool:
         DEFAULTS.LOGS_DIR,
     ]
     return all(os.path.exists(dirpath) for dirpath in dirs_to_check)
+
+
+def detect_storage_dirs():
+    if not storage_dirs_exist():
+        click.secho(
+            "Some ilab storage directories do not exist yet. Please run `ilab config init` before continuing.",
+            fg="red",
+        )
+        raise click.exceptions.Exit(1)
