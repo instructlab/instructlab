@@ -15,7 +15,7 @@ from instructlab.configuration import storage_dirs_exist
 )
 @click.pass_context
 def config(ctx):
-    """Command Group for Interacting with the Config of InstructLab.
+    """Command group for interacting with the config of InstructLab.
 
     If this is your first time running ilab, it's best to start with `ilab config init` to create the environment.
     """
