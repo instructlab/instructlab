@@ -132,5 +132,7 @@ train:
   distributed_backend: fsdp
   pipeline: accelerated
   device: cuda
+  # Set to 'false' avoid disk space issues
+  disable_accelerate_full_state_at_epoch: true
 version: 1.0.0
 

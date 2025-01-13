@@ -462,6 +462,12 @@ def train(
             not disable_accelerate_full_state_at_epoch
         )
 
+        # Temporary change for testing/debugging
+        click.echo(">>>>>>>>>>>>>>>>>>>>>>>>> Is high fidelity")
+        click.echo(
+            f"disable_accelerate_full_state_at_epoch = {disable_accelerate_full_state_at_epoch}"
+        )
+
         # First Party
         from instructlab.model import accelerated_train
 
@@ -495,6 +501,9 @@ def train(
             raise click.exceptions.Exit(1)
 
     elif not is_high_fidelity(device=device) and pipeline == "full":
+        # Temporary change for testing/debugging
+        click.echo(">>>>>>>>>>>>>>>>>>>>>>>>> Is NOT high fidelity")
+
         # Third Party
         import torch
 
@@ -511,6 +520,9 @@ def train(
         )
         click.echo("ᕦ(òᴗóˇ)ᕤ Full model training completed successfully! ᕦ(òᴗóˇ)ᕤ")
     elif pipeline == "simple":
+        # Temporary change for testing/debugging
+        click.echo(">>>>>>>>>>>>>>>>>>>>>>>>> Is simple pipeline")
+
         # First Party
         from instructlab.model import simple_train
 
