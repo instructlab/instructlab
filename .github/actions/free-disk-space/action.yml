@@ -10,16 +10,81 @@ runs:
     - name: Free Disk Space Linux
       if: runner.os == 'Linux'
       run: |
-        sudo docker rmi "$(docker image ls -aq)" >/dev/null 2>&1 || true
+        # Determine if we have Ubuntu, CentOS, or other distro as our runner OS
+        os_id=$(grep '^ID=' /etc/os-release | cut -d "=" -f2)
+        echo "Detected OS distro as: ${os_id}"
+
+        # Sometimes `docker` is not installed, so only remove images if we need to.
+        if command -v docker 2>&1 >/dev/null ; then
+          sudo docker rmi "$(docker image ls -aq) -f" >/dev/null 2>&1 || true
+        fi
+
+        # Remove Android, .NET, and Haskell runtimes
         sudo rm -rf \
-          /usr/share/dotnet /usr/local/lib/android /opt/ghc \
-          /usr/local/share/powershell /usr/share/swift /usr/local/.ghcup \
+          /usr/local/lib/android \
+          /usr/share/dotnet \
+          /opt/ghc \
+          /usr/local/.ghcup \
+          /usr/local/share/powershell \
+          /usr/share/swift \
           /usr/lib/jvm || true
-        sudo apt install aptitude -y >/dev/null 2>&1
-        sudo aptitude purge '~n ^mysql' -f -y >/dev/null 2>&1
-        sudo aptitude purge '~n ^dotnet' -f -y >/dev/null 2>&1
-        sudo apt-get autoremove -y >/dev/null 2>&1
-        sudo apt-get autoclean -y >/dev/null 2>&1
+
+        printWarningMessage () {
+          echo "[warning] Failed to remove '$1', perhaps because it doesn't exist. Ignoring..."
+        }
+
+        # Remove large packages we don't use.
+        echo "Attempting to remove unused ${os_id} packages..."
+        if [[ "${os_id}" =~ "ubuntu" ]]; then
+          sudo apt-get remove -y '^mysql-.*' || printWarningMessage '^mysql-.*'
+          sudo apt-get remove -y '^dotnet-.*' --fix-missing || printWarningMessage '^dotnet-.*'
+          sudo apt-get remove -y 'php.*' --fix-missing || printWarningMessage 'php.*'
+          sudo apt-get remove -y '^mongodb-.*' --fix-missing || printWarningMessage '^mongodb-.*'
+          sudo apt-get remove -y '^llvm-.*' --fix-missing || printWarningMessage '^llvm-.*'
+          sudo apt-get remove -y google-cloud-sdk --fix-missing || printWarningMessage 'google-cloud-sdk'
+          sudo apt-get remove -y google-cloud-cli --fix-missing || printWarningMessage 'google-cloud-cli'
+          sudo apt-get autoremove -y >/dev/null 2>&1
+          sudo apt-get autoclean -y >/dev/null 2>&1
+        elif [[ "${os_id}" =~ "centos" ]]; then
+          sudo dnf -y remove 'mysql-*' || printWarningMessage 'mysql-*'
+          sudo dnf -y remove 'dotnet-*' || printWarningMessage 'dotnet-*'
+          sudo dnf -y remove 'aspnetcore-*' || printWarningMessage 'aspnetcore-*'
+          sudo dnf -y remove 'php-*' || printWarningMessage 'php-*'
+          sudo dnf -y remove 'mongodb-*' || printWarningMessage 'mongodb-*'
+          sudo dnf -y remove 'llvm-*' || printWarningMessage 'llvm-*'
+          sudo dnf -y remove google-cloud-sdk || printWarningMessage 'google-cloud-sdk'
+          sudo dnf -y remove google-cloud-cli || printWarningMessage 'google-cloud-cli'
+
+          # Unused Bash tools
+          sudo dnf -y remove 'nano' || printWarningMessage 'nano'
+          sudo dnf -y remove 'bash-completion' || printWarningMessage 'bash-completion'
+
+          # Remove mail transfer agents because we're not emailing anything
+          postfix_packages=$(dnf list installed | grep postfix || echo "")
+          if [[ ! -z "${postfix_packages}" ]]; then
+            sudo systemctl stop postfix
+            sudo systemctl disable postfix
+            sudo dnf -y remove postfix
+          fi
+
+          # Remove Cups because we're not printing anything
+          cups_packages=$(dnf list installed | grep cups || echo "")
+          if [[ ! -z "${cups_packages}" ]]; then
+              sudo systemctl disable cups
+              sudo systemctl stop cups
+              sudo dnf -y remove cups
+          fi
+
+          # If we're using NVIDIA, we don't need other graphics drivers provided by mesa
+          if command -v nvidia-smi 2>&1 >/dev/null ; then
+            sudo dnf -y remove 'mesa-*' || printWarningMessage 'mesa-*'
+          fi
+
+          sudo dnf clean all
+          rm -rf /var/cache/dnf*
+        else
+          echo "Unrecognized OS '${os_id}'. Skipping large package cleanup, as this logic has not been implemented for ${os_id}."
+        fi
       shell: bash
     - name: Free Disk Space MacOS
       if: runner.os == 'macOS'

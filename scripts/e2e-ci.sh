@@ -262,6 +262,14 @@ test_phased_train() {
         "--skip-user-confirm"
     )
 
+    # << TODO: REMOVE THIS FLAG FROM THE CI SCRIPT AND HAVE IT ADDED AS AN OPTION THAT CAN BE REFERENCED IN A PROFILE >>
+    # For x-large jobs only, we run into physical memory issues due to `accelerate_full_state_at_epoch` == true,
+    # so we disable full-state checkpoints to ensure we have enough disk space.
+    if [ "$XLARGE" -eq 1 ]; then
+        echo "Detected x-large e2e job... Will disable full-state checkpoints to conserve physical memory."
+        train_args+=("--disable-accelerate-full-state-at-epoch")
+    fi
+
     export HF_DATASETS_TRUST_REMOTE_CODE=true
     ilab model train "${train_args[@]}" 2>&1 | tee "${E2E_TEST_DIR}"/multiphase_training.log
 
@@ -290,6 +298,14 @@ test_skills_only_train() {
         "--skip-user-confirm"
         "--phased-base-dir=${skills_phased_base_dir}"
     )
+
+    # << TODO: REMOVE THIS FLAG FROM THE CI SCRIPT AND HAVE IT ADDED AS AN OPTION THAT CAN BE REFERENCED IN A PROFILE >>
+    # For x-large jobs only, we run into physical memory issues due to `accelerate_full_state_at_epoch` == true,
+    # so we disable full-state checkpoints to ensure we have enough disk space.
+    if [ "$XLARGE" -eq 1 ]; then
+        echo "Detected x-large e2e job... Will disable full-state checkpoints to conserve physical memory."
+        train_args+=("--disable-accelerate-full-state-at-epoch")
+    fi
 
     export HF_DATASETS_TRUST_REMOTE_CODE=true
     ilab model train "${train_args[@]}" 2>&1 | tee "${E2E_TEST_DIR}"/skills_only_training.log
