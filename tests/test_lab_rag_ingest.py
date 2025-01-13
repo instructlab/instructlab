@@ -35,35 +35,38 @@ def fixture_copy_test_data(input_dir: str, tmp_path_home, cli_runner: CliRunner)
     shutil.copytree(input_dir, destination, dirs_exist_ok=True)
 
 
-def test_ingestor(input_dir: str, tmp_path_home, copy_test_data, cli_runner: CliRunner):  # pylint: disable=unused-argument
-    with (
-        patch(
-            "instructlab.rag.document_store_factory.create_document_store_ingestor"
-        ) as mock_function,
-    ):
-        mock_function.side_effect = (
-            lambda document_store_uri,
-            document_store_collection_name,
-            embedding_model_path: MockDocumentStoreIngestor(document_store_uri)
-        )
+@patch(
+    "instructlab.rag.document_store_factory.create_document_store_ingestor",
+    side_effect=(
+        lambda document_store_uri,
+        document_store_collection_name,
+        embedding_model_path: MockDocumentStoreIngestor(document_store_uri)
+    ),
+)
+def test_ingestor(
+    create_document_store_ingestor_mock,
+    input_dir: str,
+    tmp_path_home,
+    copy_test_data,
+    cli_runner: CliRunner,
+):  # pylint: disable=unused-argument
+    document_store_config_uri = os.path.join(tmp_path_home, "any.db")
+    assert not Path(document_store_config_uri).exists()
 
-        document_store_config_uri = os.path.join(tmp_path_home, "any.db")
-        assert not Path(document_store_config_uri).exists()
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "rag",
+            "ingest",
+            "--document-store-uri",
+            document_store_config_uri,
+            "--input",
+            input_dir,
+        ],
+    )
 
-        result = cli_runner.invoke(
-            lab.ilab,
-            [
-                "--config=DEFAULT",
-                "rag",
-                "ingest",
-                "--document-store-uri",
-                document_store_config_uri,
-                "--input",
-                input_dir,
-            ],
-        )
+    create_document_store_ingestor_mock.assert_called_once()
 
-        mock_function.assert_called_once()
-
-        assert Path(document_store_config_uri).exists()
-        assert result.exit_code == 0
+    assert Path(document_store_config_uri).exists()
+    assert result.exit_code == 0

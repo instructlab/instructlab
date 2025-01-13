@@ -7,7 +7,6 @@ import click
 # First Party
 from instructlab import clickext
 from instructlab.defaults import DEFAULTS
-from instructlab.rag.document_store_factory import create_document_store_ingestor
 from instructlab.rag.taxonomy_utils import lookup_processed_documents_folder
 
 logger = logging.getLogger(__name__)
@@ -74,6 +73,9 @@ def ingest(
 
         logger.info(f"Latest processed docs are in {processed_docs_folder}")
         input_dir = processed_docs_folder
+
+    # First Party
+    from instructlab.rag.document_store_factory import create_document_store_ingestor
 
     ingestor = create_document_store_ingestor(
         document_store_uri=uri,
