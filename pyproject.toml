@@ -203,6 +203,7 @@ exclude = [
 [[tool.mypy.overrides]]
 # packages without typing annotations, without stubs, or not available.
 module = [
+  "boto3",
   "click_didyoumean",
   "datasets",
   "fire",
@@ -214,6 +215,7 @@ module = [
   "instructlab.training",
   "mlx.*",
   "optimum.habana.*",
+  "ruamel",
   "sentencepiece",
   "trl",
   "transformers",
