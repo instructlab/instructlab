@@ -13,11 +13,11 @@
 
 ## 📖 Contents
 
-- [Welcome to the InstructLab CLI](#welcome-to-the-instructlab-cli)
-- [❓ What is `ilab`](#-what-is-ilab)
+- [Welcome to the InstructLab Core](#welcome-to-the-instructlab-core)
+- [❓ What is InstructLab Core](#-what-is-instructlab-core)
 - [📋 Requirements](#-requirements)
 - [✅ Getting started](#-getting-started)
-  - [🧰 Installing `ilab`](#-installing-ilab)
+  - [🧰 Installing InstructLab Core](#-installing-instructlab-core)
     - [Install with Apple Metal on M1/M2/M3 Macs](#install-with-apple-metal-on-m1m2m3-macs)
     - [Install with no GPU acceleration and PyTorch without CUDA bindings](#install-using-pytorch-without-cuda-bindings-and-no-gpu-acceleration)
     - [Install with AMD ROCm](#install-with-amd-rocm)
@@ -47,7 +47,7 @@
 - [🎁 Submit your new knowledge or skills](#-submit-your-new-knowledge-or-skills)
 - [📬 Contributing](#-contributing)
 
-## Welcome to the InstructLab CLI
+## Welcome to the InstructLab Core
 
 InstructLab 🐶 uses a novel synthetic data-based alignment tuning method for
 Large Language Models (LLMs.) The "**lab**" in Instruct**Lab** 🐶 stands for
@@ -55,9 +55,9 @@ Large Language Models (LLMs.) The "**lab**" in Instruct**Lab** 🐶 stands for
 
 [1] Shivchander Sudalairaj*, Abhishek Bhandwaldar*, Aldo Pareja*, Kai Xu, David D. Cox, Akash Srivastava*. "LAB: Large-Scale Alignment for ChatBots", arXiv preprint arXiv: 2403.01081, 2024. (* denotes equal contributions)
 
-## ❓ What is `ilab`
+## ❓ What is InstructLab Core
 
-`ilab` is a Command-Line Interface (CLI) tool that allows you to perform the following actions:
+`instructlab` is the Core package for the InstructLab project that contains the `ilab` Command-Line Interface (CLI) tool and allows you to perform the following actions:
 
 1. Download a pre-trained Large Language Model (LLM).
 1. Chat with the LLM.
@@ -90,7 +90,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 - **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora). We anticipate support for more operating systems in the future.
 
-   📋  When installing the `ilab` CLI on macOS, you may have to run the `xcode-select --install` command, installing the required packages listed.
+   📋  When installing InstructLab Core on macOS, you may have to run the `xcode-select --install` command, installing the required packages listed.
 
 - C++ compiler
 - Python 3.10 or Python 3.11
@@ -112,9 +112,9 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 > [!NOTE]
 > The following steps in this document use [Python venv](https://docs.python.org/3/library/venv.html) for virtual environments. However, if you use another tool such as [pyenv](https://github.com/pyenv/pyenv) or [Conda Miniforge](https://github.com/conda-forge/miniforge) for managing Python environments on your machine continue to use that tool instead. Otherwise, you may have issues with packages that are installed but not found in your virtual environment.
 
-### 🧰 Installing `ilab`
+### 🧰 Installing InstructLab Core
 
-1. There are a few ways you can locally install the `ilab` CLI. Select your preferred installation method from the following instructions. You can then install `ilab` and activate your `venv` environment.
+1. There are a few ways you can locally install the InstructLab Core package. Select your preferred installation method from the following instructions. You can then install `ilab` and activate your `venv` environment.
 
    ⚠️ The `python3` binary shown in the installation guides are the Python version that you installed in the above step. The command can also be `python3.11` or `python3.10` instead of `python3`. You can check Python's version by `python3 -V`.
 
@@ -316,7 +316,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
    You can download this model with `ilab model download` command as well.
 
-4. The InstructLab CLI auto-detects your hardware and select the exact system profile that matches your machine. System profiles populate the `config.yaml` file with the proper parameter values based on your detected CPU/GPU types. This system is only applicable to Apple M-Series Chips, Nvidia GPUs, and Intel/AMD CPUs.
+4. The InstructLab Core package auto-detects your hardware and select the exact system profile that matches your machine. System profiles populate the `config.yaml` file with the proper parameter values based on your detected CPU/GPU types. This system is only applicable to Apple M-Series Chips, Nvidia GPUs, and Intel/AMD CPUs.
 
    *Example output of profile auto-detection*
 
@@ -1014,7 +1014,7 @@ resources. You can download it via `ilab model download`.
 If you have a server running, stop the server you have running by entering `ctrl+c` keys in the terminal running the server.
 
 *🍎 Mac only:* Before serving the newly trained model you must convert it to work with
-the `ilab` cli. The `ilab model convert` command converts the new model into quantized [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format which is required by the server to host the model in the `ilab model serve` command.
+the InstructLab Core package. The `ilab model convert` command converts the new model into quantized [GGUF](https://medium.com/@sandyeep70/ggml-to-gguf-a-leap-in-language-model-file-formats-cd5d3a6058f9) format which is required by the server to host the model in the `ilab model serve` command.
 
 - Convert the newly trained model by running the following command:
 
