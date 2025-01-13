@@ -410,7 +410,7 @@ def validate_taxonomy(
     taxonomy: str | Path,
     taxonomy_base: str,
     yaml_rules: str | Path | None = None,
-) -> None:
+) -> bool:
     yamllint_config = None  # If no custom rules file, use default config
     if yaml_rules is not None:  # user attempted to pass custom rules file
         yaml_rules_path = Path(yaml_rules)
@@ -436,12 +436,14 @@ def validate_taxonomy(
         else:
             # Gather the new or changed YAMLs using git diff, including untracked files
             taxonomy_files = get_taxonomy_diff(taxonomy, taxonomy_base)
+        if not taxonomy_files:
+            logger.debug(f"Taxonomy directory {taxonomy} contains no qna.yaml files.")
+            return False
         total_errors = 0
         total_warnings = 0
-        if taxonomy_files:
-            logger.debug("Found new taxonomy files:")
-            for e in taxonomy_files:
-                logger.debug("* %s", e)
+        logger.debug("Found new taxonomy files:")
+        for e in taxonomy_files:
+            logger.debug("* %s", e)
         for f in taxonomy_files:
             file_path = os.path.join(taxonomy, f)
             warnings, errors = validate_taxonomy_file(file_path, yamllint_config)
@@ -458,6 +460,7 @@ def validate_taxonomy(
                     f"{total_errors} total errors found across {len(taxonomy_files)} taxonomy files!"
                 )
             )
+    return True
 
 
 def is_pretraining_dataset(ds: List[MessageSample]) -> bool:
