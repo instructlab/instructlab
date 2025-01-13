@@ -1065,7 +1065,7 @@ ilab model upload --dest-type s3 --model granite-7b-lab --destination my-aws-buc
 ```
 
 > [!NOTE]
-> You do not need to use the `--release` flag if you are uploading to AWS S3
+> You do not need to use the `--release` flag if you are uploading to AWS S3, and you should not prepend your bucket name with `s3://`
 
 ## 🎁 Submit your new knowledge or skills
 

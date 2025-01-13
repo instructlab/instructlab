@@ -9,7 +9,7 @@ import click
 # First Party
 from instructlab import clickext
 from instructlab.defaults import UPLOAD_DESTINATIONS
-from instructlab.model.upload import HFModelUploader, OCIModelUploader
+from instructlab.model.upload import HFModelUploader, OCIModelUploader, S3ModelUploader
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ logger = logging.getLogger(__name__)
     "-rl",
     default="main",
     show_default=True,
-    help="The revision to upload the model to - e.g. a branch for Hugging Face repositories.",
+    help="The revision to upload the model to. Ex: a branch for Hugging Face repositories. Not needed for 's3' uploads.",
 )
 @click.option(
     "--hf-token",
@@ -66,12 +66,10 @@ def upload(model, dest_type, destination, release, hf_token):
             release=release,
         )
     elif dest_type == "s3":
-        # TODO: update this when S3 uploading is supported
-        click.secho(
-            f"Uploading of type {dest_type} is not yet supported",
-            fg="yellow",
+        uploader = S3ModelUploader(
+            model=model,
+            destination=destination,
         )
-        raise click.exceptions.Exit(1)
     else:
         click.secho(
             f"{dest_type} matches neither Hugging Face, OCI registry, or an S3-compatable format.\nPlease supply a supported dest_type",
@@ -86,6 +84,12 @@ def upload(model, dest_type, destination, release, hf_token):
         if isinstance(exc, ValueError) and "HF_TOKEN" in str(exc):
             click.secho(
                 "Uploading to Hugging Face requires a HF Token to be set.\nPlease use '--hf-token' or 'export HF_TOKEN' to upload all necessary models.",
+                fg="yellow",
+            )
+            raise click.exceptions.Exit(1)
+        elif isinstance(exc, ValueError) and "AWS" in str(exc):
+            click.secho(
+                "Uploading to AWS requires credentials to be set.\nPlease set your AWS credentials to upload all necessary models.",
                 fg="yellow",
             )
             raise click.exceptions.Exit(1)

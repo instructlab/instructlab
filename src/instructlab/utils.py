@@ -602,6 +602,17 @@ def ensure_legacy_dataset(
     return convert_messages_to_legacy_dataset(dataset)  # type: ignore
 
 
+def is_s3_repo(bucket_name: str) -> bool:
+    """
+    Checks if a provided repository follows the S3 bucket name syntax
+    """
+    s3_bucket_name_regex = r"^[a-zA-Z0-9.\-_]{1,255}$"
+    if not re.match(s3_bucket_name_regex, bucket_name):
+        logger.warning(f"Invalid S3 bucket name: {bucket_name}")
+        return False
+    return True
+
+
 def is_oci_repo(repo_url: str) -> bool:
     """
     Checks if a provided repository follows the OCI registry URL syntax
