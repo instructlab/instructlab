@@ -19,7 +19,7 @@ class MockDocumentStoreIngestor(DocumentStoreIngestor):
 
     def ingest_documents(self, input_dir: str) -> tuple[bool, int]:
         with open(self.document_store_uri, "w", encoding="utf-8") as _:
-            pass
+            return (True, 0)
 
 
 @pytest.fixture(name="input_dir")
