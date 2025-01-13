@@ -16,7 +16,7 @@ from instructlab.configuration import storage_dirs_exist
 )
 @click.pass_context
 def process(ctx):
-    """Command Group for Interacting with the Processes run by InstructLab.
+    """Command group for interacting with the processes run by InstructLab.
 
     If this is your first time running ilab, it's best to start with `ilab config init` to create the environment.
     """
