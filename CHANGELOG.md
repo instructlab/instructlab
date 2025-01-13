@@ -6,7 +6,7 @@
 
 ### Features
 
-- A new command `ilab model upload` has been introduced so users can now upload their trained models to [Hugging Face](https://huggingface.co/) and OCI registry endpoints via the `ilab` CLI
+- A new command `ilab model upload` has been introduced so users can now upload their trained models to [Hugging Face](https://huggingface.co/), OCI registry endpoints, and [AWS S3](https://aws.amazon.com/s3/) buckets via the `ilab` CLI
 - `ilab model serve` now has separate `--host` and `--port` options, replacing the `host_port` configuration. The default values are `127.0.0.1` for `--host` and `8000` for `--port`, allowing users to configure the server's binding address and port independently through the configuration file or command-line flags.
 - Extends PyTorch support to version 2.5
 - `--disable-accelerate-full-state-at-epoch` added for accelerated training. With this option only HuggingFace checkpoints are saved which are required for multi-phase training. However, if set this switch also disables resumeable training because "full resumeability" requires full-state checkpoints. This option should be used if storage is limited and/or resumeability isn't required.
