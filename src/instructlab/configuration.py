@@ -587,7 +587,7 @@ class _embedding_model(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore", protected_namespaces=())
 
-    embedding_model_name: str = Field(
+    embedding_model_name: StrictStr = Field(
         default_factory=lambda: DEFAULTS.DEFAULT_EMBEDDING_MODEL,
         description="Embedding model to use for RAG.",
     )
@@ -597,7 +597,8 @@ class _ingest(BaseModel):
     """Class describing configuration of the 'rag ingest' command."""
 
     document_store: _document_store = Field(
-        default_factory=_document_store, description="Document store configuration for RAG."
+        default_factory=_document_store,
+        description="Document store configuration for RAG.",
     )
     embedding_model: _embedding_model = Field(
         default_factory=_embedding_model, description="Embedding parameters for ingestion."
