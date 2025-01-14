@@ -48,6 +48,7 @@ def validate_options(
     few_shots,
     batch_size,
     tasks_dir,
+    input_questions,
 ):
     """takes in arguments from the CLI and uses 'benchmark' to validate other arguments
     if all needed configuration is present, raises an exception for the missing values
@@ -115,6 +116,16 @@ def validate_options(
         validate_model(model, allow_gguf=False)
         if benchmark == Benchmark.MMLU_BRANCH:
             validate_model(base_model, "--base-model", allow_gguf=False)
+
+    if benchmark == Benchmark.LLMAAJ:
+        required_args = [input_questions]
+        required_arg_names = ["--input-questions"]
+        if None in required_args:
+            click.secho(
+                f"Benchmark {benchmark} requires the following flags to be set: {required_arg_names}",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
 
 
 def validate_model(model: str, model_arg: str = "--model", allow_gguf: bool = True):
@@ -520,8 +531,8 @@ def launch_server(
 )
 @click.option(
     "--input-questions",
-    type=click.Path(exists=True, path_type=pathlib.Path),
-    default="",
+    type=click.Path(path_type=pathlib.Path),
+    default=None,
     help="Path to the questions and reference answers the model will be evaluating in the LLMaaJ evaluation",
 )
 @click.option(
@@ -542,6 +553,12 @@ def launch_server(
     type=click.FLOAT,
     default=0.0,
     help="Temperature for the model when getting responses in the LLMaaJ evaluation",
+)
+@click.option(
+    "--llmaaj-model",
+    type=click.STRING,
+    default=None,
+    help="Model to evaluate for the LLMaaJ evaluation",
 )
 @click.option(
     "--model-name",
@@ -584,6 +601,7 @@ def evaluate(
     output_file_formats,
     model_prompt,
     temperature,
+    llmaaj_model,
     model_name,
     judge_model_name,
 ):
@@ -596,23 +614,6 @@ def evaluate(
         max_workers = int(max_workers)
     with contextlib.suppress(ValueError):
         batch_size = int(batch_size)
-
-    if benchmark == Benchmark.LLMAAJ:
-        from instructlab.model.llmaaj import run_llmaaj
-
-        run_llmaaj(ctx,
-                   model,
-                   max_workers,
-                   gpus, backend,
-                   enable_serving_output,
-                   input_questions,
-                   output_file_formats,
-                   output_dir,
-                   model_prompt,
-                   temperature,
-                   model_name,
-                   judge_model_name)
-        click.echo("\nᕦ(òᴗóˇ)ᕤ Model evaluate with LLMaaJ completed! ᕦ(òᴗóˇ)ᕤ")
 
     try:
         # get appropriate evaluator class from Eval lib
@@ -629,7 +630,26 @@ def evaluate(
             few_shots,
             batch_size,
             tasks_dir,
+            input_questions,
         )
+
+        if benchmark == Benchmark.LLMAAJ:
+
+            from instructlab.model.llmaaj import run_llmaaj
+            run_llmaaj(ctx,
+                       llmaaj_model,
+                       max_workers,
+                       gpus, backend,
+                       enable_serving_output,
+                       input_questions,
+                       output_file_formats,
+                       output_dir,
+                       model_prompt,
+                       temperature,
+                       model_name,
+                       judge_model_name)
+            click.echo("\nᕦ(òᴗóˇ)ᕤ Model evaluate with LLMaaJ completed! ᕦ(òᴗóˇ)ᕤ")
+
 
         if benchmark == Benchmark.MT_BENCH:
             # Third Party
