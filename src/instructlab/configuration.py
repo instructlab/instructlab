@@ -127,7 +127,7 @@ class _general(BaseModel):
         return self
 
 
-class _chat_rag_retriever_embedder(BaseModel):
+class _rag_retriever_embedder(BaseModel):
     """Class describing configuration of embedding parameters for RAG."""
     embedding_model_name: str = Field(
         default_factory=lambda: DEFAULTS.DEFAULT_EMBEDDING_MODEL,
@@ -141,20 +141,20 @@ class _chat_rag_retriever(BaseModel):
         default=20,
         description="The maximum number of documents to retrieve."
     )
-    embedder: _chat_rag_retriever_embedder = Field(
-        default=_chat_rag_retriever_embedder(),
+    embedder: _rag_retriever_embedder = Field(
+        default=_rag_retriever_embedder(),
         description="Embedding parameters for retrieval."
     )
 
 
-class _chat_rag_document_store(BaseModel):
+class _rag_document_store(BaseModel):
     """Class describing configuration of document store backend for RAG."""
     type: str = Field(
         default="milvuslite",
         description="Document store implementation."
     )
     uri: str = Field(
-        default="embeddings.db",
+        default=DEFAULTS.DEFAULT_DOCUMENT_STORE_PATH,
         description="Document store service URI."
     )
     collection_name: str = Field(
@@ -173,8 +173,8 @@ class _chat_rag(BaseModel):
         default=_chat_rag_retriever(),
         description="Retrieval parameters for RAG."
     )
-    document_store: _chat_rag_document_store = Field(
-        default=_chat_rag_document_store(),
+    document_store: _rag_document_store = Field(
+        default=_rag_document_store(),
         description="Document store configuration for RAG."
     )
 
@@ -215,7 +215,7 @@ class _chat(BaseModel):
         description="Controls the randomness of the model's responses. Lower values make the output more deterministic, while higher values produce more random results.",
     )
     rag: _chat_rag = Field(
-        default=_chat_rag(retriever=_chat_rag_retriever(), document_store=_chat_rag_document_store()),
+        default=_chat_rag(retriever=_chat_rag_retriever(), document_store=_rag_document_store()),
         description="Controls retrieval augmented generation parameters."
     )
 
@@ -625,15 +625,6 @@ class _train(BaseModel):
     training_journal: str | None = Field(
         default=None,
         description="Optional path to a yaml file that tracks the progress of multiphase training.",
-    )
-
-
-class _document_store(BaseModel):
-    """Class describing configuration of document store backend for RAG."""
-
-    uri: str = Field(default="embeddings.db", description="Document store service URI.")
-    collection_name: str = Field(
-        default="ilab", description="Document store collection name."
     )
 
 
