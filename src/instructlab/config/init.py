@@ -307,9 +307,16 @@ def walk_and_print_system_profiles(
     # if auto detection didn't work, just continue prompting as usual!
     key = prompt_user_to_choose_vendors(arch_family_processors)
 
+    list_of_gpus = []
+
     if key is not None:
-        for i, arch_family_processor in enumerate(arch_family_processors[key], start=1):
-            click.echo(f"[{i}] {' '.join(map(str, arch_family_processor[0])).upper()}")
+        for arch_family_processor in sorted(arch_family_processors[key]):
+            list_of_gpus.append(
+                f"{' '.join(map(str, arch_family_processor[0])).upper()}"
+            )
+
+        for i, gpu in enumerate(sorted(list_of_gpus), start=1):
+            click.echo(f"[{i}] {gpu}")
         # pass the specific manufacturer specific list of tuples containing config names
         cfg = prompt_user_to_choose_profile(arch_family_processors[key])
     return cfg
