@@ -192,7 +192,7 @@ test_taxonomy() {
         mkdir -p "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no
         cp "$SCRIPTDIR"/test-data/compositional_skills/grounded/e2e-qna-grounded-employee-skill.yaml "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no/qna.yaml
     elif [ "$XLARGE" -eq 1 ]; then
-        step Add two knowledge to the taxomony
+        step Add two knowledge to the taxonomy
         mkdir -p "$DATA_HOME"/instructlab/taxonomy/knowledge/{phoenix/overview/e2e-phoenix,mbta/overview/e2e-mbta}
         cp "$SCRIPTDIR"/test-data/knowledge/e2e-qna-knowledge-phoenix.yaml "$DATA_HOME"/instructlab/taxonomy/knowledge/phoenix/overview/e2e-phoenix/qna.yaml
         cp "$SCRIPTDIR"/test-data/knowledge/e2e-qna-knowledge-mbta.yaml    "$DATA_HOME"/instructlab/taxonomy/knowledge/mbta/overview/e2e-mbta/qna.yaml
