@@ -15,7 +15,6 @@ from instructlab.defaults import DEFAULTS
 from instructlab.model.chat import ConsoleChatBot
 from instructlab.rag.document_store import DocumentStoreRetriever
 from instructlab.rag.document_store_factory import create_document_retriever
-from instructlab.rag.rag_configuration import DocumentStoreConfig, RetrieverConfig
 
 
 @pytest.mark.parametrize(
