@@ -95,7 +95,7 @@ def clickpath_setup(is_dir: bool) -> click.Path:
 @click.option(
     "--local",
     is_flag=True,
-    help="Whether or not `model_dir` is remote from HuggingFace.",
+    help="Whether or not `model_dir` is local vs remote from HuggingFace (use with '--pipeline simple' on MacOS).",
 )
 @click.option(
     "-sq",
