@@ -58,11 +58,11 @@ You'll want to add a few options to ensure it gets installed over the
 existing package, has the desired backend, and the correct version.
 
 ```shell
-pip install --force-reinstall --no-deps llama_cpp_python==0.2.79 -C cmake.args="-DLLAMA_$BACKEND=on"
+pip install --force-reinstall --no-deps llama_cpp_python==0.2.79 -C cmake.args="-DGGML_$BACKEND=on"
 ```
 
 where `$BACKEND` is one of `HIPBLAS` (ROCm), `CUDA`, `METAL`
-(Apple Silicon MPS), `CLBLAST` (OpenCL), or another backend listed in
+(Apple Silicon MPS), or another backend listed in
 llama-cpp-python's documentation.
 
 ### Nvidia/CUDA
@@ -243,13 +243,13 @@ to use use supported `gfx1030` version.  The environment variable
 
 Now you can skip to the `Testing` section.
 
-#### CLBlast (OpenCL)
+#### OpenBLAS (CPU)
 
-Your final command should look like so (this uses `CLBlast`):
+Your final command should look like so (this uses `OpenBLAS`):
 
 ```shell
 pip cache remove llama_cpp_python
-pip install --force-reinstall llama_cpp_python==0.2.79 -C cmake.args="-DLLAMA_CLBLAST=on"
+pip install --force-reinstall llama_cpp_python==0.2.79 -C cmake.args="-DGGML_BLAS=on -DGGML_BLAS_VENDOR=OpenBLAS"
 ```
 
 Once that package is installed, recompile `ilab` with `pip install .` and skip
