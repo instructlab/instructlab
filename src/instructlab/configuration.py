@@ -601,7 +601,8 @@ class _ingest(BaseModel):
         description="Document store configuration for RAG.",
     )
     embedding_model: _embedding_model = Field(
-        default_factory=_embedding_model, description="Embedding parameters for ingestion."
+        default_factory=_embedding_model,
+        description="Embedding parameters for ingestion.",
     )
 
 
