@@ -284,8 +284,10 @@ def walk_and_print_system_profiles(
                         # this is our config
                         cfg = sys_profile
                         break
-            if cfg is not None:
-                break
+            else:
+                if cfg is not None:
+                    break
+                continue
             arch_family_processors.setdefault(full_chip_name[0], []).append(
                 (full_chip_name, system_profile_file)
             )
