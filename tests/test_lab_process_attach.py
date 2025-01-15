@@ -8,7 +8,7 @@ from click.testing import CliRunner
 
 # First Party
 from instructlab import lab
-from instructlab.defaults import DEFAULTS
+from instructlab.defaults import DEFAULTS, ILAB_PROCESS_STATUS
 
 
 def test_process_attach(
@@ -28,6 +28,7 @@ def test_process_attach(
         "start_time": datetime.datetime.strptime(
             start_time_str, "%Y-%m-%d %H:%M:%S"
         ).isoformat(),
+        "status": ILAB_PROCESS_STATUS.RUNNING,
     }
     # create registry json, place it in the proper dir
     os.makedirs(exist_ok=True, name=DEFAULTS.INTERNAL_DIR)

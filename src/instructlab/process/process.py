@@ -18,7 +18,7 @@ import psutil
 
 # First Party
 from instructlab.configuration import DEFAULTS
-from instructlab.defaults import ILAB_PROCESS_MODES
+from instructlab.defaults import ILAB_PROCESS_MODES, ILAB_PROCESS_STATUS
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,9 @@ class ProcessRegistry:
     def __init__(self):
         self.processes = {}
 
-    def add_process(self, local_uuid, pid, children_pids, type, log_file, start_time):
+    def add_process(
+        self, local_uuid, pid, children_pids, type, log_file, start_time, status
+    ):
         self.processes[str(local_uuid)] = {
             "pid": pid,
             "children_pids": children_pids,
@@ -36,7 +38,7 @@ class ProcessRegistry:
             "start_time": datetime.strptime(
                 start_time, "%Y-%m-%d %H:%M:%S"
             ).isoformat(),
-            "done": False,
+            "status": status,
         }
 
     def load_entry(self, key, value):
@@ -232,6 +234,7 @@ def add_process(
         type=process_type,
         log_file=log_file,
         start_time=start_time_str,
+        status=ILAB_PROCESS_STATUS.RUNNING,
     )
     logger.info(
         f"Started subprocess with PID {pid}. Logs are being written to {log_file}."
@@ -247,7 +250,9 @@ def add_process(
                 target(**kwargs)  # Call the function
             finally:
                 # Restore the original stdout and stderr after the function completes
-                process_registry.processes.pop(str(local_uuid))
+                process_registry.processes[str(local_uuid)]["end_time"] = (
+                    datetime.now().isoformat()
+                )
                 save_registry(process_registry=process_registry)
                 sys.stdout = sys.__stdout__
                 sys.stderr = sys.__stderr__
@@ -285,11 +290,20 @@ def stop_process(local_uuid, remove=True):
     if remove:
         process_registry.processes.pop(local_uuid, None)
     else:
-        process_registry.processes[local_uuid]["done"] = True
+        process_registry.processes[local_uuid]["status"] = ILAB_PROCESS_STATUS.DONE
     save_registry(process_registry=process_registry)
 
 
 def list_processes():
+    """
+    Constructs a list of processes and their statuses. Marks processes as ready for removal if necessary
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
     process_registry = load_registry()
     if not process_registry:
         logger.info("No processes currently in the registry.")
@@ -297,16 +311,26 @@ def list_processes():
 
     list_of_processes = []
     for local_uuid, entry in process_registry.processes.items():
+        # assume all processes are running and not ready for removal unless status indicates otherwise
+        status = ILAB_PROCESS_STATUS.RUNNING
+        remove = False
         all_pids = [entry["pid"]] + entry["children_pids"]
         if not all_processes_running(all_pids):
-            remove = entry["done"]
-            stop_process(local_uuid=local_uuid, remove=remove)
-            if remove:
+            # if all of our child or parent processes are not running, we should either a. remove this process, or b. mark it ready for removal after this list
+            if entry.get("status", "") == ILAB_PROCESS_STATUS.DONE:
+                # if this has been marked as done, it has already been listed once after finishing, remove it
+                process_registry.processes.pop(local_uuid, None)
+                save_registry(process_registry=process_registry)
                 continue
+            # if not, list it, but mark it as ready for removal
+            status = ILAB_PROCESS_STATUS.DONE
+            remove = True
         now = datetime.now()
-
+        start_time = datetime.fromisoformat(entry.get("start_time"))
         # Calculate runtime
-        runtime = now - datetime.fromisoformat(entry.get("start_time"))
+        runtime = now - start_time
+        if "end_time" in entry:
+            runtime = datetime.fromisoformat(entry.get("end_time")) - start_time
         # Convert timedelta to a human-readable string (HH:MM:SS)
         total_seconds = int(runtime.total_seconds())
         hours, remainder = divmod(total_seconds, 3600)
@@ -320,8 +344,13 @@ def list_processes():
                 local_uuid,
                 entry.get("log_file"),
                 runtime_str,
+                status,
             )
         )
+        # we want to stop and remove from the registry only after we have listed it
+        # this allows completed processes to be seen in the list once before being removed from the registry
+        if remove:
+            stop_process(local_uuid=local_uuid, remove=remove)
 
     return list_of_processes
 
@@ -364,7 +393,7 @@ def attach_process(local_uuid: str):
     except KeyboardInterrupt:
         logger.info("\nDetaching from and killing process.")
     finally:
-        stop_process(local_uuid=local_uuid)
+        stop_process(local_uuid=local_uuid, remove=False)
 
 
 def get_latest_process() -> str | None:

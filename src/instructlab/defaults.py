@@ -30,6 +30,12 @@ LOG_FORMAT = "%(levelname)s %(asctime)s %(name)s:%(lineno)d: %(message)s"
 RECOMMENDED_SCOPEO_VERSION = "1.9.0"
 
 
+class ILAB_PROCESS_STATUS:
+    RUNNING: str = "Running"
+    DONE: str = "Done"
+    ERRORED: str = "Errored"
+
+
 class ILAB_PROCESS_MODES:
     DETACHED: str = "detached"
     ATTACHED: str = "attached"
