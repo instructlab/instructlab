@@ -9,7 +9,7 @@ from click.testing import CliRunner
 
 # First Party
 from instructlab import lab
-from instructlab.defaults import DEFAULTS
+from instructlab.defaults import DEFAULTS, ILAB_PROCESS_STATUS
 
 
 def extract_process_entries(table_output: str) -> str:
@@ -22,7 +22,7 @@ def extract_process_entries(table_output: str) -> str:
             columns = [col.strip() for col in line.split("|")[1:-1]]
 
             # Remove the "Runtime" column (last column)
-            desired_columns = columns[:-1]
+            desired_columns = columns[:-2]
 
             # Clean and join the remaining columns
             clean_line = " | ".join(desired_columns)
@@ -42,7 +42,7 @@ def test_process_list(cli_runner: CliRunner):
         "start_time": datetime.datetime.strptime(
             start_time_str, "%Y-%m-%d %H:%M:%S"
         ).isoformat(),
-        "done": False,
+        "status": ILAB_PROCESS_STATUS.RUNNING,
     }
     # create registry json, place it in the proper dir
     os.makedirs(exist_ok=True, name=DEFAULTS.INTERNAL_DIR)
@@ -59,11 +59,11 @@ def test_process_list(cli_runner: CliRunner):
     )
 
     expected_output = textwrap.dedent("""
-+------------+-------+--------------------------------------+------------------------------------------------------------------------------------------------------------------+----------+
-| Type       | PID   | UUID                                 | Log File                                                                                                         | Runtime  |
-+------------+-------+--------------------------------------+------------------------------------------------------------------------------------------------------------------+----------+
-| Generation | 26372 | 63866b91-799a-42a7-af02-d0b68fddf19d | /Users/charliedoern/.local/share/instructlab/logs/generation/generation-63866b91-799a-42a7-af02-d0b68fddf19d.log | 00:00:06 |
-+------------+-------+--------------------------------------+------------------------------------------------------------------------------------------------------------------+----------+
++------------+-------+--------------------------------------+------------------------------------------------------------------------------------------------------------------+----------+---------+
+| Type       | PID   | UUID                                 | Log File                                                                                                         | Runtime  | Status  |
++------------+-------+--------------------------------------+------------------------------------------------------------------------------------------------------------------+----------+---------+
+| Generation | 26372 | 63866b91-799a-42a7-af02-d0b68fddf19d | /Users/charliedoern/.local/share/instructlab/logs/generation/generation-63866b91-799a-42a7-af02-d0b68fddf19d.log | 00:00:00 | Running |
++------------+-------+--------------------------------------+------------------------------------------------------------------------------------------------------------------+----------+---------+
     """).strip()
 
     assert result.exit_code == 0, result.output

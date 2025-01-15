@@ -14,7 +14,9 @@ from instructlab.utils import print_table
 def list():
     process_list = list_processes()
     if process_list is not None and len(process_list) > 0:
-        print_table(["Type", "PID", "UUID", "Log File", "Runtime"], process_list)
+        print_table(
+            ["Type", "PID", "UUID", "Log File", "Runtime", "Status"], process_list
+        )
     else:
         click.secho(
             "No processes found in registry",
