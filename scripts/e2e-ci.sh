@@ -12,6 +12,7 @@ set -xeuf
 BOLD='\033[1m'
 NC='\033[0m' # No Color
 PRESERVE=0
+AMD=0
 
 # path and token globals
 SCRIPTDIR=$(dirname "$0")
@@ -109,7 +110,11 @@ test_init() {
     task Initializing InstructLab
     if [ "$SMALL" -eq 1 ]; then
         step Setting small-size system profile
-        ilab config init --non-interactive --profile "${SCRIPTDIR}/test-data/profile-t4-x1.yaml"
+        if [ "$AMD" -eq 1 ]; then
+            ilab config init --non-interactive --profile "${SCRIPTDIR}/test-data/profile-rp520-x4.yaml"
+        else
+            ilab config init --non-interactive --profile "${SCRIPTDIR}/test-data/profile-t4-x1.yaml"
+        fi
     elif [ "$MEDIUM" -eq 1 ]; then
         step Setting medium-size system profile
         ilab config init --non-interactive --profile="${SCRIPTDIR}/test-data/profile-l4-x1.yaml"
@@ -480,13 +485,14 @@ usage() {
     echo "  -m  Run medium t-shirt size job"
     echo "  -l  Run large t-shirt size job"
     echo "  -x  Run extra large t-shirt size job"
+    echo "  -a  Indicate job is running on AMD hardware"
     echo "  -p  Preserve the E2E_TEST_DIR for debugging"
     echo "  -h  Show this help text"
 }
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "smlxph" opt; do
+while getopts "smlxaph" opt; do
     case $opt in
         s)
             SMALL=1
@@ -503,6 +509,10 @@ while getopts "smlxph" opt; do
         x)
             XLARGE=1
             step "Run extra large T-shirt size job."
+            ;;
+        a)
+            AMD=1
+            step "Indicate job is running on AMD hardware."
             ;;
         p)
             PRESERVE=1

@@ -1,0 +1,67 @@
+chat:
+  context: default
+  # Directory where chat logs are stored
+  logs_dir: ~/.local/share/instructlab/chatlogs
+  # The maximum number of tokens that can be generated in the chat completion
+  max_tokens: null
+  # Directory where model to be used for chatting with is stored
+  model: ~/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+  session: null
+  # visual mode
+  vi_mode: false
+  # renders vertical overflow if enabled, displays ellipses otherwise
+  visible_overflow: true
+general:
+  debug_level: 0
+  log_level: DEBUG
+generate:
+  # Teacher model that will be used to synthetically generate training data
+  model: ~/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+  # Number of CPU cores to use for generation
+  num_cpus: 10
+  # Directory where generated datasets are stored
+  output_dir: ~/.local/share/instructlab/datasets
+  # Directory where pipeline config files are stored
+  pipeline: simple
+  # The total number of instructions to be generated
+  sdg_scale_factor: 30
+  seed_file: ~/.local/share/instructlab/internal/seed_tasks.json
+  # Branch of taxonomy used to calculate diff against
+  taxonomy_base: empty
+  # Directory where taxonomy is stored and accessed from
+  taxonomy_path: ~/.local/share/instructlab/taxonomy
+  # Teacher model specific settings
+  teacher:
+    # Serving backend to use to host the teacher model
+    backend: llama-cpp
+    # Path to teacher model that will be used to synthetically generate training data
+    model_path: ~/.cache/instructlab/models/merlinite-7b-lab-Q4_K_M.gguf
+train:
+  additional_args:
+    deepspeed_cpu_offload_optimizer_pin_memory: true
+    deepspeed_cpu_offload_optimizer_ratio: 1
+    learning_rate: 2e-5
+    lora_alpha: 32
+    lora_dropout: 0.1
+    warmup_steps: 25
+  device: cpu
+  pipeline: simple
+  ckpt_output_dir: ~/.local/share/instructlab/checkpoints
+  data_output_dir: ~/.local/share/instructlab/internal
+  data_path: ~/.local/share/instructlab/datasets
+  deepspeed_cpu_offload_optimizer: true
+  effective_batch_size: 4
+  is_padding_free: true
+  lora_quantize_dtype: null
+  lora_rank: 0
+  max_batch_len: 30000
+  max_seq_len: 4096
+  model_path: ~/.cache/instructlab/models/instructlab/granite-7b-lab
+  nproc_per_node: 1
+  num_epochs: 1
+  phased_mt_bench_judge: ~/.cache/instructlab/models/instructlab/granite-7b-lab
+  phased_phase1_num_epochs: 10
+  phased_phase2_num_epochs: 10
+  checkpoint_at_epoch: true
+  save_samples: 1000
+version: 1.0.0
