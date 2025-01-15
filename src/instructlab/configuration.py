@@ -434,8 +434,8 @@ class _train(BaseModel):
         examples=["simple", "full", "accelerated"],
         pattern="simple|full|accelerated",
     )
-    model_path: str = Field(
-        default=DEFAULTS.MODEL_REPO,
+    model_path: StrictStr = Field(
+        default_factory=lambda: DEFAULTS.DEFAULT_STUDENT_MODEL,
         description="Directory where the model to be trained is stored.",
     )
     device: str = Field(

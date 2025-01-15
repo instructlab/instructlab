@@ -162,6 +162,10 @@ class _InstructlabDefaults:
         return path.join(self.MODELS_DIR, self.MISTRAL_GGUF_MODEL_NAME)
 
     @property
+    def DEFAULT_STUDENT_MODEL(self) -> str:
+        return path.join(self.MODELS_DIR, self.MODEL_REPO)
+
+    @property
     def DEFAULT_JUDGE_MODEL(self) -> str:
         return path.join(self.MODELS_DIR, self.JUDGE_MODEL_MT)
 

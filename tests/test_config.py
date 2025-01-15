@@ -107,7 +107,7 @@ class TestConfig:
         assert cfg.serve.model_path == DEFAULTS.DEFAULT_CHAT_MODEL
 
         assert cfg.train is not None
-        assert cfg.train.model_path == "instructlab/granite-7b-lab"
+        assert "instructlab/granite-7b-lab" in cfg.train.model_path
 
     def test_default_config(self, cli_runner):  # pylint: disable=unused-argument
         cfg = config.get_default_config()
