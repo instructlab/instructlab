@@ -22,17 +22,22 @@ class MockDocumentStoreIngestor(DocumentStoreIngestor):
             return (True, 0)
 
 
-@pytest.fixture(name="input_dir")
-def fixture_input_dir() -> str:
-    return "tests/testdata/temp_datasets_documents"
+# Parameters: input_dir str and completion status (True if succeeds)
+@pytest.fixture(
+    name="input_dir",
+    params=[("tests/testdata/temp_datasets_documents", True), (None, False)],
+)
+def fixture_input_dir(request):
+    return request.param
 
 
 @pytest.fixture(name="copy_test_data")
 def fixture_copy_test_data(input_dir: str, tmp_path_home, cli_runner: CliRunner):  # pylint: disable=unused-argument
-    tmp_dir = os.path.join(tmp_path_home, os.listdir(tmp_path_home)[0])
-    destination = os.path.join(tmp_dir, input_dir)
-    os.makedirs(destination, exist_ok=True)
-    shutil.copytree(input_dir, destination, dirs_exist_ok=True)
+    if input_dir[0] is not None:
+        tmp_dir = os.path.join(tmp_path_home, os.listdir(tmp_path_home)[0])
+        destination = os.path.join(tmp_dir, input_dir[0])
+        os.makedirs(destination, exist_ok=True)
+        shutil.copytree(input_dir[0], destination, dirs_exist_ok=True)
 
 
 @patch(
@@ -45,7 +50,7 @@ def fixture_copy_test_data(input_dir: str, tmp_path_home, cli_runner: CliRunner)
 )
 def test_ingestor(
     create_document_store_ingestor_mock,
-    input_dir: str,
+    input_dir,
     tmp_path_home,
     copy_test_data,
     cli_runner: CliRunner,
@@ -62,11 +67,14 @@ def test_ingestor(
             "--document-store-uri",
             document_store_config_uri,
             "--input",
-            input_dir,
+            input_dir[0],
         ],
     )
 
-    create_document_store_ingestor_mock.assert_called_once()
+    if input_dir[1] is True:
+        create_document_store_ingestor_mock.assert_called_once()
 
-    assert Path(document_store_config_uri).exists()
-    assert result.exit_code == 0
+        assert Path(document_store_config_uri).exists()
+        assert result.exit_code == 0
+    else:
+        assert result.exit_code == 1
