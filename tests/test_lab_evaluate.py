@@ -276,12 +276,12 @@ def test_evaluate_mt_bench_branch(
     assert validate_model_mock.call_count == 3
     assert judge_answers_mock.call_count == 2
     assert gen_answers_mock.call_count == 2
-    assert launch_server_mock.call_count == 3
+    assert launch_server_mock.call_count == 4
     run_mt_bench_branch(cli_runner, 0.4567)
     assert validate_model_mock.call_count == 6
     assert judge_answers_mock.call_count == 4
     assert gen_answers_mock.call_count == 4
-    assert launch_server_mock.call_count == 6
+    assert launch_server_mock.call_count == 8
 
 
 @patch("instructlab.model.evaluate.validate_model")
