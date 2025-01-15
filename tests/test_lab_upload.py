@@ -277,19 +277,135 @@ class TestLabUpload:
             in result.output
         )
 
-    def test_upload_s3(self, cli_runner: CliRunner):
+    @patch("instructlab.model.upload.boto3.client", return_value=MagicMock())
+    def test_upload_file_s3(
+        self,
+        mock_boto3_client: Mock,  # pylint: disable=unused-argument
+        tmp_path: pathlib.Path,
+        cli_runner: CliRunner,
+    ):
+        tmp_gguf = tmp_path / "model.gguf"
+        with open(tmp_gguf, "wb") as gguf_file:
+            gguf_file.write(struct.pack("<I", GGUF_MAGIC))
         result = cli_runner.invoke(
             lab.ilab,
             [
                 "--config=DEFAULT",
                 "model",
                 "upload",
-                "--model=foo",
+                f"--model={tmp_gguf}",
                 "--dest-type=s3",
-                "--destination=testuser/testgguf",
+                "--destination=testbucket",
+            ],
+        )
+        assert (
+            result.exit_code == 0
+        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert f"Uploading model at {tmp_gguf} succeeded!" in result.output
+
+    @patch("instructlab.model.upload.boto3.client", return_value=MagicMock())
+    def test_upload_folder_s3(
+        self,
+        mock_boto3_client: Mock,  # pylint: disable=unused-argument
+        tmp_path: pathlib.Path,
+        cli_runner: CliRunner,
+    ):
+        tmp_safetensor_dir = tmp_path / "tmp_safetensor_model"
+        create_safetensors_or_bin_model_files(tmp_safetensor_dir, "safetensors", True)
+        result = cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "model",
+                "upload",
+                f"--model={tmp_safetensor_dir}",
+                "--dest-type=s3",
+                "--destination=testbucket",
+            ],
+        )
+        assert (
+            result.exit_code == 0
+        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert f"Uploading model at {tmp_safetensor_dir} succeeded!" in result.output
+
+    @patch("instructlab.model.upload.boto3.client", return_value=MagicMock())
+    def test_upload_no_model_s3(
+        self,
+        mock_boto3_client: Mock,  # pylint: disable=unused-argument
+        cli_runner: CliRunner,
+    ):
+        tmp_gguf = "model.gguf"
+        result = cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "model",
+                "upload",
+                f"--model={tmp_gguf}",
+                "--dest-type=s3",
+                "--destination=testbucket",
             ],
         )
         assert (
             result.exit_code == 1
         ), f"command finished with an unexpected exit code. {result.stdout}"
-        assert result.output == "Uploading of type s3 is not yet supported\n"
+        assert (
+            f"Couldn't find model at {DEFAULTS.CHECKPOINTS_DIR}/{tmp_gguf} - are you sure it exists?"
+            in result.output
+        )
+
+    @patch("instructlab.model.upload.boto3.client", side_effect=Exception())
+    def test_upload_no_creds_s3(
+        self,
+        mock_boto3_client: Mock,  # pylint: disable=unused-argument
+        tmp_path: pathlib.Path,
+        cli_runner: CliRunner,
+    ):
+        tmp_gguf = tmp_path / "model.gguf"
+        result = cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "model",
+                "upload",
+                f"--model={tmp_gguf}",
+                "--dest-type=s3",
+                "--destination=testbucket",
+            ],
+        )
+        assert (
+            result.exit_code == 1
+        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert (
+            "Uploading to AWS requires credentials to be set.\nPlease set your AWS credentials to upload all necessary models."
+            in result.output
+        )
+
+    @patch("instructlab.model.upload.boto3.client", return_value=MagicMock())
+    def test_upload_bad_dest_s3(
+        self,
+        mock_boto3_client: Mock,  # pylint: disable=unused-argument
+        tmp_path: pathlib.Path,
+        cli_runner: CliRunner,
+    ):
+        tmp_gguf = tmp_path / "model.gguf"
+        with open(tmp_gguf, "wb") as gguf_file:
+            gguf_file.write(struct.pack("<I", GGUF_MAGIC))
+        result = cli_runner.invoke(
+            lab.ilab,
+            [
+                "--config=DEFAULT",
+                "model",
+                "upload",
+                f"--model={tmp_gguf}",
+                "--dest-type=s3",
+                "--destination=invalid://testbucket",
+            ],
+        )
+        assert (
+            result.exit_code == 1
+        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert (
+            f"Invalid S3 destination supplied:\n{DEFAULT_INDENT}Please specify valid S3 bucket URL syntax via --destination"
+            in result.output
+        )

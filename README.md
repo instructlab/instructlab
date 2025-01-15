@@ -1047,9 +1047,25 @@ argument to specify your new model:
 
 If you are happy with your newly-trained model and wish to upload it to a supported endpoint, you can do so with the `ilab model upload` command.
 
-InstructLab currently supports uploading to [Hugging Face](https://huggingface.co/) and OCI registires such as [Quay.io](https://quay.io/), with plans to support S3 uploads as well.
+InstructLab currently supports uploading to [Hugging Face](https://huggingface.co/), OCI registries such as [Quay.io](https://quay.io/), and [AWS S3](https://aws.amazon.com/s3/) buckets.
 
 You can upload safetensors, GGUFs, and/or OCI-compliant models to any supported destination you have access to - see `ilab model upload --help` for more info.
+Some examples are listed below:
+
+```shell
+# upload model to Hugging Face
+ilab model upload --dest-type hf --model granite-7b-lab --destination instructlab/granite-7b-lab --release main
+
+# upload model to OCI registry
+ilab model upload --dest-type oci --model granite-7b-lab --destination docker://instructlab/granite-7b-lab --release latest
+
+# upload model to S3 bucket
+ilab model upload --dest-type s3 --model granite-7b-lab --destination my-aws-bucket
+
+```
+
+> [!NOTE]
+> You do not need to use the `--release` flag if you are uploading to AWS S3, and you should not prepend your bucket name with `s3://`
 
 ## 🎁 Submit your new knowledge or skills
 
