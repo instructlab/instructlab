@@ -49,6 +49,7 @@ def validate_options(
     batch_size,
     tasks_dir,
     input_questions,
+    llmaaj_job_file,
 ):
     """takes in arguments from the CLI and uses 'benchmark' to validate other arguments
     if all needed configuration is present, raises an exception for the missing values
@@ -118,14 +119,20 @@ def validate_options(
             validate_model(base_model, "--base-model", allow_gguf=False)
 
     if benchmark == Benchmark.LLMAAJ:
-        required_args = [input_questions]
-        required_arg_names = ["--input-questions"]
-        if None in required_args:
-            click.secho(
-                f"Benchmark {benchmark} requires the following flags to be set: {required_arg_names}",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)
+        if llmaaj_job_file is None:
+            required_args = [input_questions]
+            required_arg_names = ["--input-questions"]
+            if None in required_args:
+                click.secho(
+                    f"Benchmark {benchmark} requires the following flags to be set: {required_arg_names}",
+                    fg="red",
+                )
+                raise click.exceptions.Exit(1)
+        else:
+                click.secho(
+                    f"Job file passed in at {llmaaj_job_file} for benchmark {benchmark}. All other flags ignored",
+                    fg="green",
+                )
 
 
 def validate_model(model: str, model_arg: str = "--model", allow_gguf: bool = True):
@@ -531,7 +538,7 @@ def launch_server(
 )
 @click.option(
     "--input-questions",
-    type=click.Path(path_type=pathlib.Path),
+    type=click.Path(exists=True, path_type=pathlib.Path),
     default=None,
     help="Path to the questions and reference answers the model will be evaluating in the LLMaaJ evaluation",
 )
@@ -561,16 +568,16 @@ def launch_server(
     help="Model to evaluate for the LLMaaJ evaluation",
 )
 @click.option(
-    "--model-name",
-    type=click.STRING,
-    default=None,
-    help="Prompt for the model when getting responses in the LLMaaJ evaluation",
-)
-@click.option(
     "--judge-model-name",
     type=click.STRING,
     default=ragas_eval.DEFAULT_JUDGE_MODEL,
     help="Prompt for the model when getting responses in the LLMaaJ evaluation",
+)
+@click.option(
+    "--llmaaj-job-file",
+    type=click.Path(exists=True,path_type=pathlib.Path),
+    default=None,
+    help="Path to the job file for the LLMaaJ evaluation",
 )
 @click.pass_context
 @clickext.display_params
@@ -602,8 +609,8 @@ def evaluate(
     model_prompt,
     temperature,
     llmaaj_model,
-    model_name,
     judge_model_name,
+    llmaaj_job_file
 ):
     """Evaluates a trained model"""
 
@@ -631,24 +638,69 @@ def evaluate(
             batch_size,
             tasks_dir,
             input_questions,
+            llmaaj_job_file,
         )
 
         if benchmark == Benchmark.LLMAAJ:
 
-            from instructlab.model.llmaaj import run_llmaaj
-            run_llmaaj(ctx,
-                       llmaaj_model,
-                       max_workers,
-                       gpus, backend,
-                       enable_serving_output,
-                       input_questions,
-                       output_file_formats,
-                       output_dir,
-                       model_prompt,
-                       temperature,
-                       model_name,
-                       judge_model_name)
-            click.echo("\nᕦ(òᴗóˇ)ᕤ Model evaluate with LLMaaJ completed! ᕦ(òᴗóˇ)ᕤ")
+            from instructlab.model.llmaaj import run_llmaaj, print_header, print_results, write_results, load_job_file, make_run_dir
+            from ragas.evaluation import EvaluationResult
+            from pydantic import ValidationError
+            import yaml
+
+            results = []
+            if llmaaj_job_file is not None:
+                cfg = load_job_file(llmaaj_job_file)
+
+                output_file_formats = cfg.output_file_formats
+                judge_model_name = cfg.judge.name
+                output_dir = cfg.output_dir
+                input_questions = cfg.input_questions
+
+                for model in cfg.models:
+                    llmaaj_model = model.location
+                    model_prompt = model.prompt
+                    temperature = model.temperature
+
+                    api_key_env_var = model.api_key
+                    api_key = os.environ.get(api_key_env_var, None)
+                    os.environ["STUDENT_ENDPOINT_API_KEY"] = api_key
+
+                    result, model_name = run_llmaaj(ctx,
+                               llmaaj_model,
+                               max_workers,
+                               gpus, backend,
+                               enable_serving_output,
+                               input_questions,
+                               output_dir,
+                               model_prompt,
+                               temperature,
+                               judge_model_name)
+                    results.append((result, model_name))
+            else:
+                # turn output_file_formats into a list to be passed into write_results
+                if output_file_formats is not None:
+                    output_file_formats = output_file_formats.split(",")
+                result, model_name = run_llmaaj(ctx,
+                           llmaaj_model,
+                           max_workers,
+                           gpus, backend,
+                           enable_serving_output,
+                           input_questions,
+                           output_dir,
+                           model_prompt,
+                           temperature,
+                           judge_model_name)
+                results.append((result, model_name))
+
+            print_header()
+            output_dir = make_run_dir(output_dir)
+            for result in results:
+                print_results(result[0], result[1])
+                write_results(result[0], output_file_formats, output_dir, result[1])
+
+            print('\n')
+            click.echo("ᕦ(òᴗóˇ)ᕤ Model evaluate with LLMaaJ completed! ᕦ(òᴗóˇ)ᕤ")
 
 
         if benchmark == Benchmark.MT_BENCH:
