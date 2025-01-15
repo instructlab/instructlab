@@ -78,6 +78,7 @@ class _InstructlabDefaults:
     MERLINITE_GGUF_REPO = "instructlab/merlinite-7b-lab-GGUF"
     MISTRAL_GGUF_REPO = "TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
     GRANITE_GGUF_MODEL_NAME = "granite-7b-lab-Q4_K_M.gguf"
+    GRANITE_EMBEDDING_MODEL_NAME = "ibm-granite/granite-embedding-125m-english"
     MERLINITE_GGUF_MODEL_NAME = "merlinite-7b-lab-Q4_K_M.gguf"
     MISTRAL_GGUF_MODEL_NAME = "mistral-7b-instruct-v0.2.Q4_K_M.gguf"
     MODEL_REPO = "instructlab/granite-7b-lab"
@@ -112,6 +113,7 @@ class _InstructlabDefaults:
         "lora_target_modules": ["q_proj", "k_proj", "v_proj", "o_proj"],
         "use_dolomite": False,
     }
+    SUPPORTED_CONTENT_FORMATS = ["json"]
 
     def __init__(self):
         self._reset()
@@ -156,6 +158,10 @@ class _InstructlabDefaults:
     @property
     def DEFAULT_CHAT_MODEL(self) -> str:
         return path.join(self.MODELS_DIR, self.GRANITE_GGUF_MODEL_NAME)
+
+    @property
+    def DEFAULT_EMBEDDING_MODEL(self) -> str:
+        return path.join(self.MODELS_DIR, self.GRANITE_EMBEDDING_MODEL_NAME)
 
     @property
     def DEFAULT_TEACHER_MODEL(self) -> str:
