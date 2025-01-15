@@ -7,15 +7,15 @@ chat:
   # Default: default
   context: default
   # Directory where chat logs are stored.
-  # Default: /data/instructlab/chatlogs
-  logs_dir: /data/instructlab/chatlogs
+  # Default: ~/.local/share/instructlab/chatlogs
+  logs_dir: ~/.local/share/instructlab/chatlogs
   # The maximum number of tokens that can be generated in the chat completion. Be
   # aware that larger values use more memory.
   # Default: None
   max_tokens:
   # Model to be used for chatting with.
-  # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
-  model: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+  # Default: ~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+  model: ~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
   # Filepath of a dialog session file.
   # Default: None
   session:
@@ -58,8 +58,8 @@ evaluate:
   # skills/knowledge used for training.
   mmlu_branch:
     # Directory where custom MMLU tasks are stored.
-    # Default: /data/instructlab/datasets
-    tasks_dir: /data/instructlab/datasets
+    # Default: ~/.local/share/instructlab/datasets
+    tasks_dir: ~/.local/share/instructlab/datasets
   # Model to be evaluated
   # Default: None
   model:
@@ -73,14 +73,14 @@ evaluate:
     # Default: auto
     max_workers: auto
     # Directory where evaluation results are stored.
-    # Default: /data/instructlab/internal/eval_data
-    output_dir: /data/instructlab/internal/eval_data
+    # Default: ~/.local/share/instructlab/internal/eval_data
+    output_dir: ~/.local/share/instructlab/internal/eval_data
   # Settings to run MT-Bench against a branch of taxonomy containing custom
   # skills/knowledge used for training
   mt_bench_branch:
     # Path to where base taxonomy is stored.
-    # Default: /data/instructlab/taxonomy
-    taxonomy_path: /data/instructlab/taxonomy
+    # Default: ~/.local/share/instructlab/taxonomy
+    taxonomy_path: ~/.local/share/instructlab/taxonomy
 # General configuration section.
 general:
   # Debug level for logging.
@@ -106,8 +106,8 @@ generate:
   # Default: 4096
   max_num_tokens: 4096
   # Teacher model that will be used to synthetically generate training data.
-  # Default: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
-  model: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
+  # Default: ~/.cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
+  model: ~/.cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
   # Number of CPU cores to use for generation.
   # Default: 10
   num_cpus: 10
@@ -116,8 +116,8 @@ generate:
   # Deprecated: see 'sdg_scale_factor' instead
   num_instructions: -1
   # Directory where generated datasets are stored.
-  # Default: /data/instructlab/datasets
-  output_dir: /data/instructlab/datasets
+  # Default: ~/.local/share/instructlab~/.local/sharesets
+  output_dir: ~/.local/share/instructlab~/.local/sharesets
   # Data generation pipeline to use. Available: 'simple', 'full', or a valid path to
   # a directory of pipeline workflow YAML files. Note that 'full' requires a larger
   # teacher model, Mixtral-8x7b.
@@ -127,15 +127,15 @@ generate:
   # Default: 30
   sdg_scale_factor: 30
   # Path to seed file to be used for generation.
-  # Default: /data/instructlab/internal/seed_tasks.json
+  # Default: ~/.local/share/instructlab/internal/seed_tasks.json
   # Deprecated
-  seed_file: /data/instructlab/internal/seed_tasks.json
+  seed_file: ~/.local/share/instructlab/internal/seed_tasks.json
   # Branch of taxonomy used to calculate diff against.
   # Default: origin/main
   taxonomy_base: origin/main
   # Directory where taxonomy is stored and accessed from.
-  # Default: /data/instructlab/taxonomy
-  taxonomy_path: /data/instructlab/taxonomy
+  # Default: ~/.local/share/instructlab/taxonomy
+  taxonomy_path: ~/.local/share/instructlab/taxonomy
   # Teacher configuration
   teacher:
     # Serving backend to use to host the model.
@@ -167,8 +167,8 @@ generate:
       # Default: 4096
       max_ctx_size: 4096
     # Directory where model to be served is stored.
-    # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
-    model_path: /cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
+    # Default: ~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+    model_path: ~/.cache/instructlab/models/mistral-7b-instruct-v0.2.Q4_K_M.gguf
     # Server configuration including host and port.
     # Default: host='127.0.0.1' port=8000 backend_type='' current_max_ctx_size=4096
     server:
@@ -257,8 +257,8 @@ serve:
     # Default: 4096
     max_ctx_size: 4096
   # Directory where model to be served is stored.
-  # Default: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
-  model_path: /cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+  # Default: ~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
+  model_path: ~/.cache/instructlab/models/granite-7b-lab-Q4_K_M.gguf
   # Server configuration including host and port.
   # Default: host='127.0.0.1' port=8000 backend_type='' current_max_ctx_size=4096
   server:
@@ -308,17 +308,17 @@ train:
   # Default: True
   checkpoint_at_epoch: true
   # Directory where periodic training checkpoints are stored.
-  # Default: /data/instructlab/checkpoints
-  ckpt_output_dir: /data/instructlab/checkpoints
+  # Default: ~/.local/share/instructlab/checkpoints
+  ckpt_output_dir: ~/.local/share/instructlab/checkpoints
   # Directory where the processed training data is stored (post
   # filtering/tokenization/masking).
-  # Default: /data/instructlab/internal
-  data_output_dir: /data/instructlab/internal
+  # Default: ~/.local/share/instructlab/internal
+  data_output_dir: ~/.local/share/instructlab/internal
   # For the training library (primary training method), this specifies the path to
   # the dataset file. For legacy training (MacOS/Linux), this specifies the path to
   # the directory.
-  # Default: /data/instructlab/datasets
-  data_path: /data/instructlab/datasets
+  # Default: ~/.local/share/instructlab/datasets
+  data_path: ~/.local/share/instructlab/datasets
   # Allow CPU offload for deepspeed optimizer.
   # Default: False
   deepspeed_cpu_offload_optimizer: false
@@ -370,8 +370,8 @@ train:
   # Default: 4096
   max_seq_len: 4096
   # Directory where the model to be trained is stored.
-  # Default: instructlab/granite-7b-lab
-  model_path: instructlab/granite-7b-lab
+  # Default: ~/.cache/instructlab/models/instructlab/granite-7b-lab
+  model_path: ~/.cache/instructlab/models/instructlab/granite-7b-lab
   # Number of GPUs to use for training. This value is not supported in legacy
   # training or MacOS.
   # Default: 1
@@ -380,11 +380,11 @@ train:
   # Default: 10
   num_epochs: 10
   # Base directory for organization of end-to-end intermediate outputs.
-  # Default: /data/instructlab/phased
-  phased_base_dir: /data/instructlab/phased
+  # Default: ~/.local/share/instructlab/phased
+  phased_base_dir: ~/.local/share/instructlab/phased
   # Judge model path for phased MT-Bench evaluation.
-  # Default: /cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
-  phased_mt_bench_judge: /cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
+  # Default: ~/.cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
+  phased_mt_bench_judge: ~/.cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
   # Phased phase1 effective batch size.
   # Default: 128
   phased_phase1_effective_batch_size: 128
