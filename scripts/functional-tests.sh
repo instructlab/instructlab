@@ -36,6 +36,14 @@ init_config() {
         else
             echo "system_profiler not found, cannot determine GPU"
         fi
+
+        # MacOS does not have a `timeout`, but has `gtimeout` in coreutils; alias if present
+        if ! command -v gtimeout &> /dev/null
+            then
+                echo "missing gtimeout (\`brew install coreutils\`)"
+                exit
+            fi
+        alias timeout=gtimeout
     fi
 
     # Enable Debug in func tests with debug level 1
