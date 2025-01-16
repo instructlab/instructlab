@@ -123,12 +123,14 @@ def create_server_and_generate(
     system_prompt,
     use_legacy_pretraining_format,
     log_file,
+    local_uuid,
 ):
     backend_instance = None
     # we need to use the instructlab logger so that the libraries inherit the config we set up.
     logger = logging.getLogger("instructlab")
 
     # First Party
+    from instructlab.defaults import ILAB_PROCESS_STATUS
     from instructlab.log import add_file_handler_to_logger
 
     # when in a new process, logger configuration does not seem to be promised. Add the file handler pointing to our new log file
@@ -195,6 +197,9 @@ def create_server_and_generate(
     # pylint: disable=ungrouped-imports
     from instructlab.sdg.utils import GenerateException
 
+    # First Party
+    from instructlab.process.process import update_status
+
     try:
         logger.info(
             f"Generating synthetic data using '{pipeline}' pipeline, '{model_name}' model, '{taxonomy}' taxonomy, against {api_base} server"
@@ -220,9 +225,13 @@ def create_server_and_generate(
             use_legacy_pretraining_format=use_legacy_pretraining_format,
         )
     except GenerateException as exc:
+        # mark process as errored on registry and set end_time
+        update_status(local_uuid=local_uuid, status=ILAB_PROCESS_STATUS.ERRORED)
         raise ValueError(
             f"Generating dataset failed with the following error: {exc}"
         ) from exc
     finally:
+        # mark process as done on registry and set end_time
+        update_status(local_uuid=local_uuid, status=ILAB_PROCESS_STATUS.DONE)
         if backend_instance is not None:
             backend_instance.shutdown()
