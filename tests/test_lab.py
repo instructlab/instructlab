@@ -128,6 +128,8 @@ subcommands: list[Command] = [
     ),
     Command(("data",), needs_config=False, should_fail=False),
     Command(("data", "generate")),
+    Command(("rag",), needs_config=False, should_fail=False),
+    Command(("rag", "convert")),
     Command(("data", "list")),
     Command(("system",), needs_config=False, should_fail=False),
     Command(("system", "info"), needs_config=False, should_fail=False),
@@ -286,15 +288,21 @@ def test_ilab_missing_config(command: Command, cli_runner: CliRunner) -> None:
     result = cli_runner.invoke(lab.ilab, cmd)
 
     if command.needs_config:
-        assert result.exit_code == 2, result
+        assert (
+            result.exit_code == 2
+        ), f"{command} did not get exit_code=1 but is recorded as needs_config=False and should_fail=True.  result={result}"
         assert "does not exist or is not a readable file" in result.stdout
     else:
         # should fail due to missing dirs
         if command.should_fail:
-            assert result.exit_code == 1, result
+            assert (
+                result.exit_code == 1
+            ), f"{command} did not get exit_code=1 but is recorded as needs_config=False and should_fail=True.  result={result}"
             assert (
                 "Some ilab storage directories do not exist yet. Please run `ilab config init` before continuing."
                 in result.stdout
             )
         else:
-            assert result.exit_code == 0, result
+            assert (
+                result.exit_code == 0
+            ), f"{command} failed with code {result} but is recorded as needs_config=False and should_fail=False"
