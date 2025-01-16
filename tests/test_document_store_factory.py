@@ -7,7 +7,6 @@ import tempfile
 # Third Party
 from haystack import Document, component  # type: ignore
 from haystack.document_stores.in_memory import InMemoryDocumentStore  # type: ignore
-from haystack.document_stores.in_memory import InMemoryDocumentStore  # type: ignore
 import pytest
 
 # First Party
