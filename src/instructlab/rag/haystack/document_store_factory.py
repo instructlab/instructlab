@@ -27,6 +27,10 @@ def create_in_memory_document_store(
     Creates a `DocumentStoreIngestor` based on Haystack components.
     """
 
+    """
+    Creates a `DocumentStoreIngestor` based on Haystack components.
+    """
+
     return HaystackDocumentStoreIngestor(
         document_store_uri=document_store_uri,
         document_store_collection_name=document_store_collection_name,
