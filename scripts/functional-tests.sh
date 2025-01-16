@@ -40,7 +40,7 @@ init_config() {
         # MacOS does not have a `timeout`, but has `gtimeout` in coreutils; alias if present
         if ! command -v gtimeout &> /dev/null
             then
-                echo "missing gtimeout (`brew install coreutils`)"
+                echo "missing gtimeout (\`brew install coreutils\`)"
                 exit
             fi
         alias timeout=gtimeout
