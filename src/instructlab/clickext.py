@@ -17,7 +17,7 @@ from click_didyoumean import DYMGroup
 import click
 
 # First Party
-from instructlab.configuration import DEFAULTS, BaseModel, storage_dirs_exist
+from instructlab.configuration import DEFAULTS, BaseModel, get_dict, storage_dirs_exist
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +126,7 @@ class ConfigOption(click.Option):
         self,
         *args: typing.Any,
         config_sections: str | None = None,
+        config_class: str | None = None,
         **kwargs: typing.Any,
     ) -> None:
         super().__init__(*args, **kwargs)
@@ -135,6 +136,10 @@ class ConfigOption(click.Option):
             raise ValueError(
                 f"help must not be set for '{self.name}', it is derived from the Field description in the Config class"
             )
+        if config_class:
+            self.config_class = config_class
+        else:
+            self.config_class = ""
         if config_sections:
             self.config_sections = list(config_sections.split("."))
         else:
@@ -147,7 +152,11 @@ class ConfigOption(click.Option):
             # missing default map (clickman, sphinx)
             return result
 
-        cmd = ctx.command.name
+        if self.config_class:
+            cmd = self.config_class
+        else:
+            cmd = str(ctx.command.name)
+        assert isinstance(cmd, str)
         name = self.name
 
         if self.config_sections:
@@ -202,15 +211,33 @@ class ConfigOption(click.Option):
         self, ctx: click.Context, opts: typing.Mapping[str, typing.Any]
     ) -> tuple[typing.Any, ParameterSource]:
         value, source = super().consume_value(ctx, opts)
+
+        # overwrite the value if a userpassed a config_class=
+        # this indicates they want to inherit the value from a different config class than their commands. This is a common practice with complex commands
+        default_or_map = source in (
+            ParameterSource.DEFAULT,
+            ParameterSource.DEFAULT_MAP,
+        )
+        if default_or_map and self.config_class:
+            section = get_dict(ctx.obj.config).get(self.config_class)
+            assert isinstance(section, dict)
+            # we need to overwrite the value
+            for secname in self.config_sections:
+                section = section.get(secname, {})
+            value = section.get(self.name)
         # fix parameter source for config section that are mis-reported
         # as DEFAULT source instead of DEFAULT_MAP source.
         if (
             source == ParameterSource.DEFAULT
-            and self.config_sections
+            and (self.config_sections or self.config_class)
             and ctx.default_map is not None
             and self.name is not None
         ):
-            section = ctx.default_map
+            if self.config_class:
+                section = get_dict(ctx.obj.config).get(self.config_class)
+            else:
+                section = ctx.default_map
+            assert isinstance(section, dict)
             for secname in self.config_sections:
                 section = section.get(secname, {})
             if self.name in section:
@@ -229,7 +256,11 @@ class ConfigOption(click.Option):
             # no config subsection
             return super().get_default(ctx, call=call)
         if ctx.default_map is not None and self.name is not None:
-            section = ctx.default_map
+            cfg_dict = get_dict(ctx.obj.config)
+            if self.config_class:
+                section = cfg_dict.get(self.config_class, {})
+            else:
+                section = ctx.default_map
             for secname in self.config_sections:
                 section = section.get(secname, {})
             value = section.get(self.name)
