@@ -226,6 +226,19 @@ metadata:
   # Specific SKU related information about the given GPU, ex: PCIe, NVL
   # Default: None
   gpu_sku:
+# RAG configuration section.
+rag:
+  # RAG convert configuration section.
+  convert:
+    # Directory where converted documents are stored.
+    # Default: /data/instructlab/converted_documents
+    output_dir: /data/instructlab/converted_documents
+    # Branch of taxonomy used to calculate diff against.
+    # Default: origin/main
+    taxonomy_base: origin/main
+    # Directory where taxonomy is stored and accessed from.
+    # Default: /data/instructlab/taxonomy
+    taxonomy_path: /data/instructlab/taxonomy
 # Serve configuration section.
 serve:
   # Serving backend to use to host the model.

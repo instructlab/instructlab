@@ -147,10 +147,12 @@ class ConfigOption(click.Option):
 
     def get_help_record(self, ctx: click.Context) -> tuple[str, str] | None:
         result = super().get_help_record(ctx)
-        if result is None or ctx.default_map is None:
+        if not self.config_class and (result is None or ctx.default_map is None):
             # hidden is True
             # missing default map (clickman, sphinx)
             return result
+        if result is None:
+            result = ("", "")
 
         if self.config_class:
             cmd = self.config_class

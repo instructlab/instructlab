@@ -33,7 +33,7 @@ def get_expected_yaml_output() -> str:
 
     yaml_stream = ruamel.yaml.compat.StringIO()
     YAML().dump(general_config_commented_map, yaml_stream)
-    return yaml_stream.getvalue()
+    return yaml_stream.getvalue()  # type: ignore[no-any-return]
 
 
 def test_ilab_config_show(cli_runner: CliRunner) -> None:

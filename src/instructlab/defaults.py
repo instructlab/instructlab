@@ -50,6 +50,7 @@ class ILAB_PROCESS_TYPES:
 class STORAGE_DIR_NAMES:
     ILAB = "instructlab"
     DATASETS = "datasets"
+    CONVERTED_DOCUMENTS = "converted_documents"
     CHECKPOINTS = "checkpoints"
     OCI = "oci"
     MODELS = "models"
@@ -148,6 +149,10 @@ class _InstructlabDefaults:
     @property
     def DATASETS_DIR(self) -> str:
         return path.join(self._data_dir, STORAGE_DIR_NAMES.DATASETS)
+
+    @property
+    def CONVERTED_DOCUMENTS_DIR(self) -> str:
+        return path.join(self._data_dir, STORAGE_DIR_NAMES.CONVERTED_DOCUMENTS)
 
     @property
     def CONFIG_FILE(self) -> str:
