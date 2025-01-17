@@ -413,23 +413,33 @@ class Config(BaseModel):
 
 
 @pytest.mark.parametrize(
-    "cfg, config_identifier, expected_description, expected_default_value, expect_error",
+    "cfg, cfg_class, config_identifier, expected_description, expected_default_value, expect_error",
     [
-        (Config(), ["field"], "Field description", "default_value", False),
+        (Config(), None, ["field"], "Field description", "default_value", False),
         (
             Config(),
+            None,
             ["nested", "nested_field"],
             "Nested field description",
             "nested_default",
             False,
         ),
-        (Config(), ["non_existent_field"], None, None, True),
-        (Config(), ["nested", "non_existent_field"], None, None, True),
+        (Config(), None, ["non_existent_field"], None, None, True),
+        (Config(), None, ["nested", "non_existent_field"], None, None, True),
+        # Simulate using nested field as the config_class in @click.option
+        (Config(), 'nested', ["nested_field"], "Nested field description", "nested_default", False),
     ],
 )
 def test_get_default_and_description(
-    cfg, config_identifier, expected_description, expected_default_value, expect_error
+    cfg,
+    cfg_class,
+    config_identifier,
+    expected_description,
+    expected_default_value,
+    expect_error,
 ):
+    if cfg_class is not None:
+        cfg = getattr(cfg, cfg_class)
     if expect_error:
         with pytest.raises(ValueError):
             get_default_and_description(cfg, config_identifier)

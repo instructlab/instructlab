@@ -224,7 +224,10 @@ class ConfigOption(click.Option):
             # we need to overwrite the value
             for secname in self.config_sections:
                 section = section.get(secname, {})
-            value = section.get(self.name)
+            if isinstance(section, dict):
+                value = section.get(self.name)
+            else:
+                value = section
         # fix parameter source for config section that are mis-reported
         # as DEFAULT source instead of DEFAULT_MAP source.
         if (
@@ -240,7 +243,7 @@ class ConfigOption(click.Option):
             assert isinstance(section, dict)
             for secname in self.config_sections:
                 section = section.get(secname, {})
-            if self.name in section:
+            if not isinstance(section, dict) or self.name in section:
                 source = ParameterSource.DEFAULT_MAP
         return value, source
 
@@ -263,7 +266,10 @@ class ConfigOption(click.Option):
                 section = ctx.default_map
             for secname in self.config_sections:
                 section = section.get(secname, {})
-            value = section.get(self.name)
+            if isinstance(section, dict):
+                value = section.get(self.name)
+            else:
+                value = section
             if call and callable(value):
                 return value()
             return value
