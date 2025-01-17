@@ -427,7 +427,14 @@ class Config(BaseModel):
         (Config(), None, ["non_existent_field"], None, None, True),
         (Config(), None, ["nested", "non_existent_field"], None, None, True),
         # Simulate using nested field as the config_class in @click.option
-        (Config(), 'nested', ["nested_field"], "Nested field description", "nested_default", False),
+        (
+            Config(),
+            "nested",
+            ["nested_field"],
+            "Nested field description",
+            "nested_default",
+            False,
+        ),
     ],
 )
 def test_get_default_and_description(
