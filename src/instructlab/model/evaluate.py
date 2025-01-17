@@ -675,7 +675,7 @@ def get_gpus(eval_serve, gpus=None) -> tuple[int | None, int]:
     effective_gpus = gpus
     if effective_gpus is None:
         try:
-            tps = get_argument("--tensor-parallel-size", eval_serve.vllm.vllm_args)
+            _, tps = get_argument("--tensor-parallel-size", eval_serve.vllm.vllm_args)
             if tps is not None:
                 effective_gpus = int(tps)
         except ValueError:

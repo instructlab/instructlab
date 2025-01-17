@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 import json
 import logging
 import os
@@ -197,9 +197,26 @@ class Server(BackendServer):
         return VLLM
 
 
-def get_argument(prefix: str, args: typing.List[str]):
-    # Return last value in args for either --foo value or --foo=value
-    # Returns True if flag --foo is provided with no value
+def get_argument(prefix: str, args: List[str]) -> Tuple[bool, Optional[str]]:
+    """
+    Search the last occurrence of flag and its value in a List.
+
+    Parameters:
+        prefix (str): a flag to look for (e.g., "--foo").
+        args (List): a list from input (e.g., ["--foo", "2"]).
+
+    Returns:
+        Tuple[flag, value]:
+    Returns (True, value) for --foo value or --foo=value if found both
+    Returns (True, None) if flag --foo is provided with no value
+    Returns (False, None) if flag --foo is not found, and no value
+
+    Examples:
+        get_argument("--foo", ["--foo", "2"]) -> (True, "2")
+        get_argument("--foo", ["--foo", "--foo"]) -> (True, None)
+        get_argument("--foo", ["--foo=2"]) -> (True, "2")
+        get_argument("--foo", ["foo"]) -> (False, None)
+    """
 
     args_len = len(args)
     # Traverse the args in reverse (args_len-1 to 0)
@@ -209,19 +226,19 @@ def get_argument(prefix: str, args: typing.List[str]):
             # Case: --foo value or --foo (with no value)
             if i == args_len - 1:
                 # --foo is the last entry, must be a flag
-                return True
+                return True, None
             next_arg = args[i + 1]
             if next_arg.startswith("-"):
                 # No value provided, must be a flag
-                return True
+                return True, None
             # The entry after is the value
-            return next_arg
+            return True, next_arg
         v = prefix + "="
         if s.startswith(v):
             # Case: --foo=value
             # Return everything after prefix=
-            return s[len(v) :]
-    return None
+            return True, s[len(v) :]
+    return False, None
 
 
 def create_tmpfile(data: str):
