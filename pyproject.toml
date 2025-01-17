@@ -41,6 +41,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "config" = "instructlab.config.config:config"
 "data" = "instructlab.cli.data.data:data"
 "model" = "instructlab.model.model:model"
+"rag" = "instructlab.cli.rag.rag:rag"
 "system" = "instructlab.cli.system.system:system"
 "taxonomy" = "instructlab.taxonomy.taxonomy:taxonomy"
 
@@ -67,6 +68,9 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "train" = "instructlab.cli.model.train:train"
 "list" = "instructlab.cli.model.list:model_list"
 "upload" = "instructlab.cli.model.upload:upload"
+
+[project.entry-points."instructlab.command.rag"]
+"convert" = "instructlab.cli.rag.convert:convert"
 
 [project.entry-points."instructlab.command.system"]
 "info" = "instructlab.cli.system.info:info"
@@ -101,17 +105,19 @@ where = ["src"]
 include = [
   "instructlab",
   "instructlab.chat",
-  "instructlab.generator",
   "instructlab.cli",
   "instructlab.cli.model",
-  "instructlab.model",
   "instructlab.cli.process",
+  "instructlab.cli.rag",
+  "instructlab.generator",
+  "instructlab.llamacpp",
+  "instructlab.mlx_explore",
+  "instructlab.model",
   "instructlab.process",
+  "instructlab.rag",
   "instructlab.train",
   "instructlab.train.lora_mlx",
   "instructlab.train.lora_mlx.models",
-  "instructlab.llamacpp",
-  "instructlab.mlx_explore",
 ]
 
 [tool.check-wheel-contents]

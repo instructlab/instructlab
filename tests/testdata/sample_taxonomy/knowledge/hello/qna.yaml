@@ -1,0 +1,86 @@
+version: 3
+domain: CookBook-1
+created_by: team1
+document_outline: |
+  Information about Bibimbap, Bacalao ajoarriero, Kuku, Menemen, Panzanella, and Pad Thai
+seed_examples:
+  - context: >
+     Hello world! A
+    questions_and_answers:
+      - question: >
+          Hello 1?
+        answer: >
+          Hello
+      - question: >
+          Hello 2?
+        answer: >
+          Hello
+      - question: >
+          Hello 3?
+        answer: >
+          Hello
+  - context: >
+     Hello world! B
+    questions_and_answers:
+      - question: >
+          Hello 1?
+        answer: >
+          Hello
+      - question: >
+          Hello 2?
+        answer: >
+          Hello
+      - question: >
+          Hello 3?
+        answer: >
+          Hello
+  - context: >
+     Hello world! C
+    questions_and_answers:
+      - question: >
+          Hello 1?
+        answer: >
+          Hello
+      - question: >
+          Hello 2?
+        answer: >
+          Hello
+      - question: >
+          Hello 3?
+        answer: >
+          Hello
+  - context: >
+     Hello world! D
+    questions_and_answers:
+      - question: >
+          Hello 1?
+        answer: >
+          Hello
+      - question: >
+          Hello 2?
+        answer: >
+          Hello
+      - question: >
+          Hello 3?
+        answer: >
+          Hello
+  - context: >
+     Hello world! E
+    questions_and_answers:
+      - question: >
+          Hello 1?
+        answer: >
+          Hello
+      - question: >
+          Hello 2?
+        answer: >
+          Hello
+      - question: >
+          Hello 3?
+        answer: >
+          Hello
+document:
+  repo: https://github.com/RedHatOfficial/rhelai-taxonomy-data
+  commit: c87a82eb15567f28c0a8d30025e0cd77a2150646
+  patterns:
+    - phoenix.md
