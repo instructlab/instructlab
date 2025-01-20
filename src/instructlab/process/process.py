@@ -216,6 +216,7 @@ def add_process(
     children_pids: list[int] | None = []
     start_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     kwargs["log_file"] = log_file
+    kwargs["local_uuid"] = str(local_uuid)
     if process_mode == ILAB_PROCESS_MODES.DETACHED:
         assert isinstance(log_file, str)
         cmd = format_command(target=target, extra_imports=extra_imports, **kwargs)
@@ -249,11 +250,6 @@ def add_process(
             try:
                 target(**kwargs)  # Call the function
             finally:
-                # Restore the original stdout and stderr after the function completes
-                process_registry.processes[str(local_uuid)]["end_time"] = (
-                    datetime.now().isoformat()
-                )
-                save_registry(process_registry=process_registry)
                 sys.stdout = sys.__stdout__
                 sys.stderr = sys.__stderr__
 
@@ -290,8 +286,28 @@ def stop_process(local_uuid, remove=True):
     if remove:
         process_registry.processes.pop(local_uuid, None)
     else:
+        # since we just killed the processes, we cannot depend on it to update itself, mark as done and set end time
         process_registry.processes[local_uuid]["status"] = ILAB_PROCESS_STATUS.DONE
+        process_registry.processes[local_uuid]["end_time"] = datetime.now().isoformat()
     save_registry(process_registry=process_registry)
+
+
+def update_status(local_uuid, status):
+    """
+    Updates the status of a process.
+
+    Args:
+        local_uuid (str): uuid of the process to stop.
+    """
+
+    process_registry = load_registry()
+    entry = process_registry.processes.get(str(local_uuid), {})
+    if entry:
+        process_registry.processes[str(local_uuid)]["end_time"] = (
+            datetime.now().isoformat()
+        )
+        process_registry.processes[str(local_uuid)]["status"] = status
+        save_registry(process_registry=process_registry)
 
 
 def list_processes():
@@ -310,21 +326,19 @@ def list_processes():
         return
 
     list_of_processes = []
+
+    processes_to_remove = []
     for local_uuid, entry in process_registry.processes.items():
         # assume all processes are running and not ready for removal unless status indicates otherwise
-        status = ILAB_PROCESS_STATUS.RUNNING
-        remove = False
+        status = entry.get("status", "")
         all_pids = [entry["pid"]] + entry["children_pids"]
         if not all_processes_running(all_pids):
             # if all of our child or parent processes are not running, we should either a. remove this process, or b. mark it ready for removal after this list
-            if entry.get("status", "") == ILAB_PROCESS_STATUS.DONE:
-                # if this has been marked as done, it has already been listed once after finishing, remove it
-                process_registry.processes.pop(local_uuid, None)
-                save_registry(process_registry=process_registry)
-                continue
+            if status in (ILAB_PROCESS_STATUS.DONE, ILAB_PROCESS_STATUS.ERRORED):
+                # if this has been marked as done remove it after listing once
+                # but, we cannot remove while looping as that will cause errors.
+                processes_to_remove.append(local_uuid)
             # if not, list it, but mark it as ready for removal
-            status = ILAB_PROCESS_STATUS.DONE
-            remove = True
         now = datetime.now()
         start_time = datetime.fromisoformat(entry.get("start_time"))
         # Calculate runtime
@@ -347,10 +361,11 @@ def list_processes():
                 status,
             )
         )
-        # we want to stop and remove from the registry only after we have listed it
-        # this allows completed processes to be seen in the list once before being removed from the registry
-        if remove:
-            stop_process(local_uuid=local_uuid, remove=remove)
+
+    # we want to stop and remove from the process registry only after we have listed it
+    # this allows completed processes to be seen in the list once before being removed from the registry
+    for proc in processes_to_remove:
+        stop_process(local_uuid=proc, remove=True)
 
     return list_of_processes
 
