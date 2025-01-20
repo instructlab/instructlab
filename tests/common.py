@@ -33,6 +33,14 @@ def setup_gpus_config(section_path="serve", gpus=None, tps=None, vllm_args=lambd
 
 
 @mock.patch(
+    "instructlab.model.serve_backend.check_gpu_count",
+    return_value=True,
+)
+@mock.patch(
+    "instructlab.model.serve_backend.check_tensor_parallel_size",
+    return_value=(True, 1),
+)
+@mock.patch(
     "instructlab.model.backends.backends.check_model_path_exists", return_value=None
 )
 @mock.patch("instructlab.model.backends.vllm.check_api_base", return_value=False)
