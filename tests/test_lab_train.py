@@ -36,10 +36,11 @@ TRAINING_FAILURE_MESSAGE = "INTENTIONAL TRAINING FAILURE"
 
 def setup_input_dir(root: typing.Optional[str] = None):
     input_dir = root if root else INPUT_DIR
-    os.makedirs(input_dir)
+    run_dir = input_dir + "/2025-01-01_120000"
+    os.makedirs(run_dir)
     for f_path in ["train_1.jsonl", "test_1.jsonl"]:
-        print(f"Creating {os.path.join(input_dir, f_path)}")
-        with open(os.path.join(input_dir, f_path), "w", encoding=ENCODING):
+        print(f"Creating {os.path.join(run_dir, f_path)}")
+        with open(os.path.join(run_dir, f_path), "w", encoding=ENCODING):
             pass
 
 

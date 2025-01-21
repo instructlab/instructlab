@@ -10,6 +10,9 @@
 - `ilab model serve` now has separate `--host` and `--port` options, replacing the `host_port` configuration. The default values are `127.0.0.1` for `--host` and `8000` for `--port`, allowing users to configure the server's binding address and port independently through the configuration file or command-line flags.
 - Update vLLM to version 0.6.4.post1. As a requirement for this new vLLM version, PyTorch is updated to 2.5.1
 - `--disable-accelerate-full-state-at-epoch` added for accelerated training. With this option only HuggingFace checkpoints are saved which are required for multi-phase training. However, if set this switch also disables resumeable training because "full resumeability" requires full-state checkpoints. This option should be used if storage is limited and/or resumeability isn't required.
+- `ilab data generate` now stores generated data from each run in individually dated directories.
+- `ilab data list` now organizes tables per dated run, and outputs a more detailed table that describes which model generated which dataset.
+- `ilab model train` and `ilab model test` now search for training data in per-run directories in addition to the top-level directory, maintaining backwards compatibility with old datasets.
 
 ## v0.22
 

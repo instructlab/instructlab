@@ -2,6 +2,7 @@
 
 # Standard
 from pathlib import Path
+import itertools
 import json
 import logging
 import os
@@ -142,8 +143,12 @@ def test(
 
         if not test_file:
             try:
+                # Search in both per-run directories as well as top-level for backwards compatibility.
+                datasets_dir = Path(ctx.obj.config.generate.output_dir)
                 test_file = sorted(
-                    Path(ctx.obj.config.generate.output_dir).glob("test_*"),
+                    itertools.chain(
+                        datasets_dir.glob("*/test_*"), datasets_dir.glob("test_*")
+                    ),
                     key=os.path.getmtime,
                     reverse=True,
                 )[0]

@@ -57,16 +57,18 @@ def simple_train(
                 reverse=True,
             )
 
+        # Find applicable test and train files in the datasets directory.
+        # Search in both per-run directories as well as top-level for backwards compatibility.
         # ignore the test_file and train_file to prevent it from being copied back onto itself
         # see: https://github.com/instructlab/instructlab/pull/1685
         test_files = [
             f
-            for f in get_files(input_dir, "test_*")
+            for f in get_files(input_dir, "*/test_*") + get_files(input_dir, "test_*")
             if os.path.basename(f) != os.path.basename(test_file)
         ]
         train_files = [
             f
-            for f in get_files(input_dir, "train_*")
+            for f in get_files(input_dir, "*/train_*") + get_files(input_dir, "train_*")
             if os.path.basename(f) != os.path.basename(train_file)
         ]
 

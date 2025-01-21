@@ -55,11 +55,17 @@ def list_data(dataset_dirs: list[str]) -> List[List[str]]:
                 # capture the entries as 'messages.jsonl', 'dir/dataset2.jsonl'
                 # with respect to the top-level directory
                 relative_name = str(entry.relative_to(top_level_dir))
+
+                # in some cases, data will be categorized per run
+                # parse top-level subdirectory to determine run name
+                run_id = Path(relative_name).parts[0]
+
                 data.append(
                     [
                         relative_name,
                         created_at,
                         formatted_size,
+                        run_id,
                     ]
                 )
 
