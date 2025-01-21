@@ -10,4 +10,4 @@ habana_gpu_migration>=1.18.0
 #habana-torch-dataloader
 
 # Extra dependencies for Intel Gaudi cards
-instructlab-training[hpu]>=0.6.0
+instructlab-training[hpu]>=0.7.0
