@@ -2,6 +2,7 @@
 
 # Standard
 from importlib import metadata
+from unittest.mock import patch
 import json
 import pathlib
 import re
@@ -149,11 +150,16 @@ aliases = [
 
 
 @pytest.mark.parametrize("command", subcommands, ids=lambda sc: repr(sc.args))
-def test_ilab_cli_help(command: Command, cli_runner: CliRunner):
-    cmd = command.get_args("--help")
+@pytest.mark.parametrize("default_config", (False, True))
+def test_ilab_cli_help(command: Command, default_config: bool, cli_runner: CliRunner):
+    cmd = command.get_args("--help", default_config=default_config)
     assert "--help" in cmd
-    result = cli_runner.invoke(lab.ilab, cmd)
+    # click doesn't provide parameters list through context, and we have to
+    # look for --help string in argv instead.
+    with patch.object(sys, "argv", ["ilab"] + cmd):
+        result = cli_runner.invoke(lab.ilab, cmd)
     assert result.exit_code == 0, result.stdout
+    assert "does not exist or is not a readable file" not in result.stdout
 
 
 def test_ilab_alias_output(cli_runner: CliRunner):
