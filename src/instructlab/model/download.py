@@ -22,7 +22,9 @@ from instructlab.utils import (
     check_skopeo_version,
     is_huggingface_repo,
     is_oci_repo,
+    list_models,
     load_json,
+    print_table,
 )
 
 logger = logging.getLogger(__name__)
@@ -341,11 +343,14 @@ def download(ctx, repositories, releases, filenames, model_dir, hf_token):
 
         try:
             downloader.download()
+            click.echo(
+                f"\nᕦ(òᴗóˇ)ᕤ {downloader.repository} model download completed successfully! ᕦ(òᴗóˇ)ᕤ\n"
+            )
         # pylint: disable=broad-exception-caught
         except (ValueError, Exception) as exc:
             if isinstance(exc, ValueError) and "HF_TOKEN" in str(exc):
                 click.secho(
-                    f"\n{downloader.repository} requires a HF Token to be set.\nPlease use '--hf-token' or 'export HF_TOKEN' to download all necessary models.",
+                    f"\n{downloader.repository} requires a HF Token to be set.\nPlease use '--hf-token' or 'export HF_TOKEN' to download all necessary models.\n",
                     fg="yellow",
                 )
             else:
@@ -354,3 +359,8 @@ def download(ctx, repositories, releases, filenames, model_dir, hf_token):
                     fg="red",
                 )
                 raise click.exceptions.Exit(1)
+
+    click.echo("Available models (`ilab model list`):")
+    data = list_models([Path(model_dir)], False)
+    data_as_lists = [list(item) for item in data]
+    print_table(["Model Name", "Last Modified", "Size"], data_as_lists)
