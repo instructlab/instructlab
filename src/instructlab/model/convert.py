@@ -65,7 +65,7 @@ def convert(
     from ..train.lora_mlx.convert import convert_between_mlx_and_pytorch
     from ..train.lora_mlx.fuse import fine_tune
 
-    model_dir = os.path.expandvars(os.path.expanduser(model_dir))
+    model_dir = os.path.expandvars(os.path.expanduser(model_dir)).rstrip("/")
 
     # compute model name from model-dir if not supplied
     if model_name is None:
