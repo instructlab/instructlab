@@ -16,7 +16,7 @@ import torch
 # First Party
 from instructlab import lab
 from instructlab.model.backends import backends, common
-from instructlab.model.backends.vllm import build_vllm_cmd
+from instructlab.model.backends.vllm import build_vllm_cmd, get_argument
 from instructlab.utils import is_model_safetensors
 
 test_json_config = {
@@ -434,3 +434,29 @@ def test_model_exist_check(cli_runner: CliRunner):
     assert (
         "test-model.gguf does not exist. Please download model first." in result.stdout
     )
+
+
+@pytest.mark.parametrize(
+    "flag, args_list, expected_flag, expected_value",
+    [
+        ("--foo", ["--foo", "2"], True, "2"),
+        ("--foo", ["--foo", "2", "--bar", "3"], True, "2"),
+        ("--foo", ["--foo=2", "--bar", "3"], True, "2"),
+        ("--foo", ["--test", "3", "--foo", "2", "--bar", "3"], True, "2"),
+        ("--foo", ["--test", "3", "--foo=2", "--bar", "3"], True, "2"),
+        ("--foo", ["--test", "3", "--foo", "2"], True, "2"),
+        ("--foo", ["--test", "3", "--foo", "2", "--foo", "4"], True, "4"),
+        ("--foo", ["--test", "3", "--foo", "2", "--foo=5"], True, "5"),
+        ("--foo", ["--test", "3", "--foo=2"], True, "2"),
+        ("--foo", ["--foo", "--foo"], True, None),
+        ("--foo", ["--foo=2"], True, "2"),
+        ("--foo", ["--foo"], True, None),
+        ("--bar", ["--foo"], False, None),
+        ("--foo", ["foo"], False, None),
+        ("--foo", [], False, None),
+    ],
+)
+def test_get_argument(flag, args_list, expected_flag, expected_value):
+    result_flag, result_value = get_argument(flag, args_list)
+    assert result_flag == expected_flag
+    assert result_value == expected_value
