@@ -208,7 +208,7 @@ class TestLabInit:
     # of your module, so you should use `my_module.Y`` to patch.
     # When using `import X`, you should use `X.Y` to patch.
     # https://docs.python.org/3/library/unittest.mock.html#where-to-patch?
-    @patch("instructlab.config.init.Repo.clone_from")
+    @patch("instructlab.cli.config.init.Repo.clone_from")
     def test_init_noninteractive(self, mock_clone_from, cli_runner: CliRunner):
         result = cli_runner.invoke(lab.ilab, ["config", "init", "--non-interactive"])
         assert result.exit_code == 0
@@ -216,7 +216,7 @@ class TestLabInit:
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
         mock_clone_from.assert_called_once()
 
-    @patch("instructlab.config.init.Repo.clone_from")
+    @patch("instructlab.cli.config.init.Repo.clone_from")
     def test_init_interactive(self, mock_clone_from, cli_runner: CliRunner):
         result = cli_runner.invoke(lab.ilab, ["config", "init"], input="\nn")
         assert result.exit_code == 0
@@ -225,7 +225,7 @@ class TestLabInit:
         mock_clone_from.assert_not_called()
 
     @patch(
-        "instructlab.config.init.Repo.clone_from",
+        "instructlab.cli.config.init.Repo.clone_from",
         MagicMock(side_effect=GitError("Authentication failed")),
     )
     def test_init_interactive_git_error(self, cli_runner: CliRunner):
@@ -234,14 +234,14 @@ class TestLabInit:
         assert "Failed to clone taxonomy repo: Authentication failed" in result.output
         assert "manually run" in result.output
 
-    @patch("instructlab.config.init.Repo.clone_from")
+    @patch("instructlab.cli.config.init.Repo.clone_from")
     def test_init_interactive_clone(self, mock_clone_from, cli_runner: CliRunner):
         result = cli_runner.invoke(lab.ilab, ["config", "init"], input="y\n\ny")
         assert result.exit_code == 0
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
         mock_clone_from.assert_called_once()
 
-    @patch("instructlab.config.init.Repo.clone_from")
+    @patch("instructlab.cli.config.init.Repo.clone_from")
     def test_init_interactive_default_clone(
         self, mock_clone_from, cli_runner: CliRunner
     ):
@@ -250,7 +250,7 @@ class TestLabInit:
         assert "config.yaml" in os.listdir(DEFAULTS._config_dir)
         mock_clone_from.assert_called_once()
 
-    @patch("instructlab.config.init.Repo.clone_from")
+    @patch("instructlab.cli.config.init.Repo.clone_from")
     def test_init_interactive_with_preexisting_nonempty_taxonomy(
         self, mock_clone_from, cli_runner: CliRunner
     ):

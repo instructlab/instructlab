@@ -1568,3 +1568,11 @@ def storage_dirs_exist() -> bool:
         DEFAULTS.LOGS_DIR,
     ]
     return all(os.path.exists(dirpath) for dirpath in dirs_to_check)
+
+
+def profiles_exist(fresh_install) -> bool:
+    return os.path.exists(DEFAULTS.SYSTEM_PROFILE_DIR) and not fresh_install
+
+
+def configs_exist() -> bool:
+    return os.path.exists(DEFAULTS.CONFIG_FILE)
