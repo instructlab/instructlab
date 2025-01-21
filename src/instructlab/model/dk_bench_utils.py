@@ -19,13 +19,13 @@ from openai import OpenAI, OpenAIError
 from openpyxl import load_workbook  # type: ignore
 from openpyxl.styles import Border, Font, Side  # type: ignore
 from ragas.evaluation import EvaluationResult  # type: ignore
-import click
 import pandas as pd
 
 # First Party
 from instructlab import client_utils
 
 # Local
+from ..configuration import _serve
 from .evaluate import get_model_name as get_local_model_name
 from .evaluate import launch_server, validate_model
 
@@ -281,7 +281,11 @@ def is_judge_model_name_valid(judge_model_name: str, api_key: str) -> bool:
 
 
 def run_dk_bench(
-    ctx: click.Context,
+    serve_config: _serve,
+    tls_insecure: bool,
+    tls_client_cert: str,
+    tls_client_key: str,
+    tls_client_passwd: str,
     model: str,
     max_workers: str | int | None,
     gpus: int | None,
@@ -365,11 +369,11 @@ def run_dk_bench(
             logger.debug("Model being evaluated in DK-Bench is local")
             model_name = get_local_model_name(model)
             server, api_base, _ = launch_server(
-                eval_serve=ctx.obj.config.serve,
-                tls_client_cert=ctx.params["tls_client_cert"],
-                tls_client_key=ctx.params["tls_client_key"],
-                tls_client_passwd=ctx.params["tls_client_passwd"],
-                tls_insecure=ctx.params["tls_insecure"],
+                eval_serve=serve_config,
+                tls_insecure=tls_insecure,
+                tls_client_cert=tls_client_cert,
+                tls_client_key=tls_client_key,
+                tls_client_passwd=tls_client_passwd,
                 model=model,
                 model_name=model_name,
                 max_workers=max_workers,

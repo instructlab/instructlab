@@ -2,6 +2,7 @@
 
 # pylint: disable=ungrouped-imports
 # Standard
+from typing import Tuple
 import logging
 
 # Third Party
@@ -13,6 +14,47 @@ from instructlab.model.backends import backends
 from instructlab.model.evaluate import Benchmark, evaluate_model
 
 logger = logging.getLogger(__name__)
+
+
+def set_benchmark_specific_vars(
+    ctx: click.Context,
+    benchmark: Benchmark,
+    judge_model: str | None,
+    output_dir: str | None,
+) -> Tuple[str | None, str | None]:
+    """
+    Ensure judge_model and output_dir are not None before call into
+    evaluate_data(). If either is, ensure defaults are set correctly depending
+    on benchmark being run.
+
+    Args:
+        ctx (click.Context):   Click context containing of the config defaults
+        benchmark (Benchmark): Name of benchmark being run
+        judge_model (str):     Judge model for benchmark given by CLI input.
+        output_dir (str):      CLI input for directory that evalauation
+                               artifacts to go into.
+    Returns:
+        judge_model (str):     Judge model for benchmark
+        output_dir (str):      Benchmark specific directory for output to go
+                               into.
+    """
+    if benchmark == Benchmark.MT_BENCH:
+        if judge_model is None:
+            judge_model = ctx.obj.config.evaluate.mt_bench.judge_model
+        if output_dir is None:
+            output_dir = ctx.obj.config.evaluate.mt_bench.output_dir
+    elif benchmark == Benchmark.MT_BENCH_BRANCH:
+        if judge_model is None:
+            judge_model = ctx.obj.config.evaluate.mt_bench_branch.judge_model
+        if output_dir is None:
+            output_dir = ctx.obj.config.evaluate.mt_bench_branch.output_dir
+    elif benchmark == Benchmark.DK_BENCH:
+        if judge_model is None:
+            judge_model = ctx.obj.config.evaluate.dk_bench.judge_model
+        if output_dir is None:
+            output_dir = ctx.obj.config.evaluate.dk_bench.output_dir
+
+    return judge_model, output_dir
 
 
 @click.command()
@@ -180,10 +222,10 @@ def evaluate(
     merge_system_user_message,
     backend,
     judge_backend,
-    tls_insecure,  # pylint: disable=unused-argument
-    tls_client_cert,  # pylint: disable=unused-argument
-    tls_client_key,  # pylint: disable=unused-argument
-    tls_client_passwd,  # pylint: disable=unused-argument
+    tls_insecure,
+    tls_client_cert,
+    tls_client_key,
+    tls_client_passwd,
     enable_serving_output,
     skip_server: bool,
     input_questions,
@@ -193,8 +235,12 @@ def evaluate(
 ) -> None:
     """Evaluates a trained model"""
     try:
+        judge_model, output_dir = set_benchmark_specific_vars(
+            ctx, benchmark, judge_model, output_dir
+        )
+
         evaluate_model(
-            ctx,
+            ctx.obj.config.serve,
             model,
             base_model,
             benchmark,
@@ -217,10 +263,10 @@ def evaluate(
             tls_client_passwd,
             enable_serving_output,
             skip_server,
-            input_questions,
-            output_file_formats,
-            system_prompt,
-            temperature,
+            input_questions=input_questions,
+            output_file_formats=output_file_formats,
+            system_prompt=system_prompt,
+            temperature=temperature,
         )
     except Exception as e:
         logger.error(f"An error occurred during evaluation: {str(e)}")

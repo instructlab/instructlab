@@ -31,7 +31,7 @@ class Benchmark(str, enum.Enum):
 
 
 def evaluate_model(
-    ctx,
+    serve_config,
     model,
     base_model,
     benchmark,
@@ -48,10 +48,10 @@ def evaluate_model(
     merge_system_user_message,
     backend,
     judge_backend,
-    tls_insecure,  # pylint: disable=unused-argument
-    tls_client_cert,  # pylint: disable=unused-argument
-    tls_client_key,  # pylint: disable=unused-argument
-    tls_client_passwd,  # pylint: disable=unused-argument
+    tls_insecure,
+    tls_client_cert,
+    tls_client_key,
+    tls_client_passwd,
     enable_serving_output,
     skip_server: bool,
     input_questions,
@@ -80,11 +80,11 @@ def evaluate_model(
                 api_base = None
             else:
                 server, api_base, effective_gpus = launch_server(
-                    eval_serve=ctx.obj.config.serve,
-                    tls_client_cert=ctx.params["tls_client_cert"],
-                    tls_client_key=ctx.params["tls_client_key"],
-                    tls_client_passwd=ctx.params["tls_client_passwd"],
-                    tls_insecure=ctx.params["tls_insecure"],
+                    eval_serve=serve_config,
+                    tls_client_cert=tls_client_cert,
+                    tls_client_key=tls_client_key,
+                    tls_client_passwd=tls_client_passwd,
+                    tls_insecure=tls_insecure,
                     model=model,
                     model_name=model_name,
                     max_workers=max_workers,
@@ -115,24 +115,6 @@ def evaluate_model(
         return evaluator.run(api_base)
 
     try:
-        # ensure judge_model and output_dir are not None and defaults are
-        # set correctly depending on benchmark being run.
-        if benchmark == Benchmark.MT_BENCH:
-            if judge_model is None:
-                judge_model = ctx.obj.config.evaluate.mt_bench.judge_model
-            if output_dir is None:
-                output_dir = ctx.obj.config.evaluate.mt_bench.output_dir
-        if benchmark == Benchmark.MT_BENCH_BRANCH:
-            if judge_model is None:
-                judge_model = ctx.obj.config.evaluate.mt_bench_branch.judge_model
-            if output_dir is None:
-                output_dir = ctx.obj.config.evaluate.mt_bench_branch.output_dir
-        elif benchmark == Benchmark.DK_BENCH:
-            if judge_model is None:
-                judge_model = ctx.obj.config.evaluate.dk_bench.judge_model
-            if output_dir is None:
-                output_dir = ctx.obj.config.evaluate.dk_bench.output_dir
-
         # get appropriate evaluator class from Eval lib
         validate_options(
             model,
@@ -170,7 +152,11 @@ def evaluate_model(
                 system_prompt = get_sysprompt(get_model_arch(model_path))
 
             result, model_name = run_dk_bench(
-                ctx,
+                serve_config,
+                tls_insecure,
+                tls_client_cert,
+                tls_client_key,
+                tls_client_passwd,
                 model,
                 max_workers,
                 gpus,
@@ -771,7 +757,6 @@ def launch_server(
     backend: str | None,
     enable_serving_output: bool,
 ) -> tuple:
-    # eval_serve = deepcopy(ctx.obj.config.serve)
     eval_serve.backend = backend = get_backend(backend, model)
 
     effective_gpus = 0
