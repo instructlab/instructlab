@@ -59,7 +59,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "list" = "instructlab.cli.data.list:list_datasets"
 
 [project.entry-points."instructlab.command.model"]
-"chat" = "instructlab.model.chat:chat"
+"chat" = "instructlab.cli.model.chat:chat"
 "convert" = "instructlab.model.convert:convert"
 "download" = "instructlab.model.download:download"
 "evaluate" = "instructlab.cli.model.evaluate:evaluate"
@@ -79,7 +79,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "diff" = "instructlab.taxonomy.diff:diff"
 
 [project.entry-points."instructlab.command.alias"]
-"chat" = "instructlab.model.chat:chat"
+"chat" = "instructlab.cli.model.chat:chat"
 "generate" = "instructlab.cli.data.generate:generate"
 "train" = "instructlab.cli.model.train:train"
 "serve" = "instructlab.cli.model.serve:serve"
