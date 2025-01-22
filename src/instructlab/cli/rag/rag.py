@@ -16,7 +16,8 @@ from instructlab.configuration import storage_dirs_exist
 @click.pass_context
 @clickext.display_params
 def rag(ctx):
-    """Command Group for Interacting with the RAG for InstructLab.
+    """Command group for interacting with the RAG for InstructLab.
+
     If this is your first time running ilab, it's best to start with `ilab config init` to create the environment.
     """
     ctx.obj = ctx.parent.obj
