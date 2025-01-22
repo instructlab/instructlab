@@ -1,8 +1,6 @@
 # Dependencies for Intel Gaudi / Habana Labs HPU devices
 #
 
-optimum>=1.21.0
-optimum-habana>=1.13.2
 # Habana Labs 1.18.0 has 2.4.0a0+git74cd574 pre-release
 torch>=2.4.0a0,<2.5.0
 # Habana Labs frameworks

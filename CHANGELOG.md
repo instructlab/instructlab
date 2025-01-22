@@ -3,6 +3,7 @@
 ### Breaking Changes
 
 - llama-cpp-python has been bumped to 0.3.2. This allows for serving of Granite 3.0 GGUF Models. With this change, some previous handling of context window size has been modified to work with the 0.3.z releases of llama-cpp-python.
+- `ilab train --pipeline=simple` no longer supports Intel Gaudi (`hpu`) devices. Simple training on Gaudi was experimental and limited to a single device.
 
 ### Features
 

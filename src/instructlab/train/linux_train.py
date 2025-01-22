@@ -43,26 +43,6 @@ logger = logging.getLogger(__name__)
 # TODO CPU: Look into using these extensions
 # import intel_extension_for_pytorch as ipex
 
-# Habana Labs framework for Intel Gaudi HPUs
-# The imports register `hpu` device and `torch.hpu` package.
-try:
-    # pylint: disable=import-error
-    # Third Party
-    from habana_frameworks.torch import core as htcore
-    from habana_frameworks.torch import hpu
-
-    # Habana implementations of SFT Trainer
-    # https://huggingface.co/docs/optimum/habana/index
-    from optimum.habana import GaudiConfig, GaudiTrainingArguments
-    from optimum.habana.trl import GaudiSFTTrainer
-
-    # silence warning: "Call mark_step function will not have any effect"
-    logging.getLogger("habana_frameworks.torch.utils.internal").setLevel(logging.ERROR)
-except ImportError:
-    htcore = None
-    hpu = None
-    hpu_backends = None
-
 
 class StoppingCriteriaSub(StoppingCriteria):
     # pylint: disable=unused-argument
@@ -139,22 +119,6 @@ def report_cuda_device(args_device: torch.device, min_vram: int = 0) -> None:
         )
 
 
-def report_hpu_device(args_device: torch.device) -> None:
-    print(f"Device count: {hpu.device_count()}")
-    for idx in range(hpu.device_count()):
-        device = torch.device(args_device.type, idx)
-        name: str = hpu.get_device_name(device)
-        cap: str = hpu.get_device_capability(device)
-        # property string is surrounded by '()'
-        prop: str = hpu.get_device_properties(device)
-        print(f"  {device} is '{name}', cap: {cap} {prop}")
-    # https://docs.habana.ai/en/latest/PyTorch/Reference/Runtime_Flags.html
-    print("PT and Habana Environment variables")
-    for key, value in sorted(os.environ.items()):
-        if key.startswith(("PT_", "HABANA", "LOG_LEVEL_", "ENABLE_CONSOLE")):
-            print(f'  {key}="{value}"')
-
-
 def linux_train(
     train_file: Path,
     test_file: Path,
@@ -181,9 +145,8 @@ def linux_train(
             device = torch.device(device.type, torch.cuda.current_device())
 
     if device.type == "hpu":
-        logger.warning(
-            "WARNING: HPU support is experimental, unstable, and not "
-            "optimized, yet.",
+        raise RuntimeError(
+            f"{device.type}: Simple training does not support Intel Gaudi."
         )
 
     if four_bit_quant and device.type != "cuda":
@@ -203,14 +166,6 @@ def linux_train(
         min_vram = min_vram * 1024**3
 
         report_cuda_device(device, min_vram)
-    elif device.type == "hpu":
-        if htcore is None:
-            raise RuntimeError("habana_framework package is not installed.")
-        if not hpu.is_available():
-            raise RuntimeError("habana_framework is unable to detect HPUs.")
-
-        hpu.init()
-        report_hpu_device(device)
 
     print("LINUX_TRAIN.PY: LOADING DATASETS")
     # Get the file name
@@ -343,79 +298,40 @@ def linux_train(
     max_seq_length = 300
     generate_kwargs: dict[str, typing.Any]
 
-    if device.type == "hpu":
-        # Intel Gaudi trainer
-        # https://docs.habana.ai/en/latest/PyTorch/Getting_Started_with_PyTorch_and_Gaudi/Getting_Started_with_PyTorch.html
-        # https://huggingface.co/docs/optimum/habana/quickstart
-        # https://huggingface.co/docs/optimum/habana/package_reference/gaudi_config
-        if per_device_train_batch_size == 1:
-            per_device_train_batch_size = 8
+    training_arguments = SFTConfig(
+        output_dir=output_dir,
+        num_train_epochs=num_epochs,
+        per_device_train_batch_size=per_device_train_batch_size,
+        fp16=use_fp16,
+        bf16=not use_fp16,
+        # use_ipex=True, # TODO CPU test this possible optimization
+        use_cpu=model.device.type == "cpu",
+        save_strategy="epoch",
+        report_to="none",
+        max_seq_length=max_seq_length,
+        # options to reduce GPU memory usage and improve performance
+        # https://huggingface.co/docs/transformers/perf_train_gpu_one
+        # https://stackoverflow.com/a/75793317
+        # torch_compile=True,
+        # fp16=False,  # fp16 increases memory consumption 1.5x
+        # gradient_accumulation_steps=8,
+        # gradient_checkpointing=True,
+        # eval_accumulation_steps=1,
+        # per_device_eval_batch_size=1,
+    )
 
-        training_arguments = GaudiTrainingArguments(
-            output_dir=output_dir,
-            num_train_epochs=num_epochs,
-            per_device_train_batch_size=per_device_train_batch_size,
-            bf16=True,
-            save_strategy="epoch",
-            report_to="none",
-            use_habana=True,
-            use_lazy_mode=True,
-            # create checkpoint directories
-            save_on_each_node=True,
-            # gaudi_config_name=gaudi_config_name,
-        )
-        gaudi_config = GaudiConfig(
-            use_fused_adam=True,
-            use_fused_clip_norm=True,
-            use_torch_autocast=True,
-        )
-        trainer = GaudiSFTTrainer(
-            model=model,
-            train_dataset=train_dataset,
-            eval_dataset=test_dataset,
-            peft_config=peft_config,
-            formatting_func=formatting_prompts_func,
-            max_seq_length=max_seq_length,
-            tokenizer=tokenizer,
-            args=training_arguments,
-            gaudi_config=gaudi_config,
-        )
-        generate_kwargs = {}
-    else:
-        training_arguments = SFTConfig(
-            output_dir=output_dir,
-            num_train_epochs=num_epochs,
-            per_device_train_batch_size=per_device_train_batch_size,
-            fp16=use_fp16,
-            bf16=not use_fp16,
-            # use_ipex=True, # TODO CPU test this possible optimization
-            use_cpu=model.device.type == "cpu",
-            save_strategy="epoch",
-            report_to="none",
-            max_seq_length=max_seq_length,
-            # options to reduce GPU memory usage and improve performance
-            # https://huggingface.co/docs/transformers/perf_train_gpu_one
-            # https://stackoverflow.com/a/75793317
-            # torch_compile=True,
-            # fp16=False,  # fp16 increases memory consumption 1.5x
-            # gradient_accumulation_steps=8,
-            # gradient_checkpointing=True,
-            # eval_accumulation_steps=1,
-            # per_device_eval_batch_size=1,
-        )
-
-        # https://huggingface.co/docs/trl/main/en/sft_trainer#trl.SFTTrainer
-        trainer = SFTTrainer(
-            model=model,
-            train_dataset=train_dataset,
-            eval_dataset=test_dataset,
-            peft_config=peft_config,
-            formatting_func=formatting_prompts_func,
-            data_collator=collator,
-            processing_class=tokenizer,
-            args=training_arguments,
-        )
-        generate_kwargs = {}
+    # https://huggingface.co/docs/trl/main/en/sft_trainer#trl.SFTTrainer
+    trainer = SFTTrainer(
+        model=model,
+        train_dataset=train_dataset,
+        eval_dataset=test_dataset,
+        peft_config=peft_config,
+        formatting_func=formatting_prompts_func,
+        data_collator=collator,
+        processing_class=tokenizer,
+        args=training_arguments,
+    )
+    generate_kwargs = {}
 
     print("LINUX_TRAIN.PY: TRAINING")
     trainer.train()
