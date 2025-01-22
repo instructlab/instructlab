@@ -51,7 +51,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 
 [project.entry-points."instructlab.command.config"]
 "edit" = "instructlab.config.edit:edit"
-"init" = "instructlab.config.init:init"
+"init" = "instructlab.cli.config.init:init"
 "show" = "instructlab.config.show:show"
 
 [project.entry-points."instructlab.command.data"]

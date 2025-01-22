@@ -1079,3 +1079,34 @@ def get_cuda_device_properties(gpu_num: int) -> tuple[str, int]:
     properties = torch.cuda.get_device_properties(gpu_num)
     chip_name = properties.name.lower()
     return chip_name, int(properties.total_memory)
+
+
+def get_separator(text: str) -> str:
+    """
+    get_seeparator takes an input string and formats it according to the system's terminal
+
+    Args:
+        text (str): the input string to process
+    Returns
+        str: a string containing the proper amount of dashes according to the separator length
+    """
+    text_length = len(text)
+    try:
+        terminal_width = shutil.get_terminal_size().columns
+    except Exception:  # pylint: disable=broad-exception-caught
+        # Exception can occur in non-interactive scenarios where no terminal is associated with the process
+        terminal_width = text_length
+    separator_length = min(text_length, terminal_width)
+    return "-" * separator_length
+
+
+def print_init_success():
+    """
+    print_init_success is a helper function to tell the user their system is ready, and they can start using ilab.
+    This is used in both the CLI and the config initialization package. A user can use either path independently to initialize a config.
+    """
+    ready_text = "  You're ready to start using `ilab`. Enjoy!"
+    separator = get_separator(ready_text)
+    print(
+        f"\n{separator}\n{DEFAULT_INDENT}Initialization completed successfully!\n{ready_text}\n{separator}",
+    )
