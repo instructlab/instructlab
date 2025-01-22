@@ -33,6 +33,7 @@ from instructlab.client_utils import HttpClientParams
 
 # Local
 from ..client_utils import http_client
+from ..feature_gates import FeatureGating, FeatureScopes, GatedFeatures
 from ..rag.document_store import DocumentStoreRetriever
 from ..rag.document_store_factory import create_document_retriever
 from ..utils import get_cli_helper_sysprompt, get_model_arch, get_sysprompt
@@ -586,6 +587,13 @@ def chat_model(
     visible_overflow,
 ):
     """Runs a chat using the modified model"""
+    if rag_enabled and not FeatureGating.feature_available(GatedFeatures.RAG):
+        logger.error(
+            f"This functionality is experimental; set {FeatureGating.env_var_name}"
+            f' to "{FeatureScopes.DevPreviewNoUpgrade.value}" to enable.'
+        )
+        return
+
     # pylint: disable=import-outside-toplevel
     # First Party
     from instructlab.model.backends.common import is_temp_server_running

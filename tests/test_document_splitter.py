@@ -13,6 +13,7 @@ import pytest
 from instructlab.rag.haystack.components.document_splitter import (
     DoclingDocumentSplitter,
 )
+from tests.test_feature_gates import dev_preview
 
 
 class MockChunker:
@@ -37,6 +38,7 @@ def fixture_document_splitter():
         return DoclingDocumentSplitter(content_format="json")
 
 
+@dev_preview
 def test_document_splitter(document_splitter):
     converter = TextFileToDocument()
     sources = glob.glob(
@@ -54,11 +56,13 @@ def test_document_splitter(document_splitter):
     assert len(docs) > 0
 
 
+@dev_preview
 def test_wrong_documents_type(document_splitter):
     with pytest.raises(TypeError):
         document_splitter.run(documents=None)
 
 
+@dev_preview
 def test_document_splitter_serialization(document_splitter):
     _dict = document_splitter.to_dict()
     assert _dict is not None

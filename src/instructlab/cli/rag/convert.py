@@ -13,6 +13,7 @@ import click
 
 # First Party
 from instructlab import clickext
+from instructlab.feature_gates import FeatureGating, FeatureScopes, GatedFeatures
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +56,13 @@ def convert(
     input_dir,
     output_dir,
 ):
+    if not FeatureGating.feature_available(GatedFeatures.RAG):
+        click.echo(
+            f"This functionality is experimental; set {FeatureGating.env_var_name}"
+            f' to "{FeatureScopes.DevPreviewNoUpgrade.value}" to enable.'
+        )
+        return
+
     """Pipeline to convert documents from their original format (e.g., PDF) into Docling JSON format for use by ilab rag ingest"""
     # Local
     from ...rag.convert import (

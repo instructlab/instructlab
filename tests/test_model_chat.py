@@ -5,11 +5,15 @@ import logging
 import re
 
 # Third Party
+from click.testing import CliRunner
 from rich.console import Console
 import pytest
 
 # First Party
+from instructlab import lab
+from instructlab.feature_gates import FeatureGating, FeatureScopes, GatedFeatures
 from instructlab.model.chat import ChatException, ConsoleChatBot
+from tests.test_feature_gates import dev_preview
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +31,22 @@ def test_model_name(model_path, expected_name):
     assert chatbot.model_name == expected_name
 
 
+def test_rag_chat_errors_with_useful_message_when_not_enabled():
+    runner = CliRunner()
+    env = runner.make_env({"ILAB_FEATURE_SCOPE": "Default"})
+    result = runner.invoke(
+        lab.ilab, ["--config=DEFAULT", "model", "chat", "--rag"], env=env
+    )
+
+    assert not FeatureGating.feature_available(GatedFeatures.RAG)
+
+    # check that the error message contains the environment variable name and the feature
+    # scope level; a (heuristic) check on the message being both up-to-date and useful
+    assert FeatureGating.env_var_name in result.output
+    assert FeatureScopes.DevPreviewNoUpgrade.value in result.output
+
+
+@dev_preview
 def test_retriever_is_called_when_present():
     retriever = MagicMock()
     chatbot = ConsoleChatBot(
