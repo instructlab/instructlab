@@ -1,6 +1,7 @@
 # Standard
 from unittest.mock import MagicMock
 import contextlib
+import logging
 import re
 
 # Third Party
@@ -8,7 +9,9 @@ from rich.console import Console
 import pytest
 
 # First Party
-from instructlab.model.chat import ConsoleChatBot
+from instructlab.model.chat import ChatException, ConsoleChatBot
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.mark.parametrize(
@@ -22,6 +25,19 @@ from instructlab.model.chat import ConsoleChatBot
 def test_model_name(model_path, expected_name):
     chatbot = ConsoleChatBot(model=model_path, client=None, loaded={})
     assert chatbot.model_name == expected_name
+
+
+def test_retriever_is_called_when_present():
+    retriever = MagicMock()
+    chatbot = ConsoleChatBot(
+        model="/var/model/file", client=None, retriever=retriever, loaded={}
+    )
+    assert chatbot.retriever == retriever
+    user_query = "test"
+    with pytest.raises(ChatException) as exc_info:
+        chatbot.start_prompt(content=user_query, logger=logger)
+        logger.info(exc_info)
+        retriever.augmented_context.assert_called_with(user_query=user_query)
 
 
 def handle_output(output):

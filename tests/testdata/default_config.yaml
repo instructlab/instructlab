@@ -239,6 +239,27 @@ rag:
     # Directory where taxonomy is stored and accessed from.
     # Default: /data/instructlab/taxonomy
     taxonomy_path: /data/instructlab/taxonomy
+  # Document store configuration for RAG.
+  document_store:
+    # Document store collection name.
+    # Default: ilab
+    collection_name: ilab
+    # Document store service URI.
+    # Default: /data/instructlab/embeddings.db
+    uri: /data/instructlab/embeddings.db
+  # Embedding model configuration for RAG
+  embedding_model:
+    # Embedding model to use for RAG.
+    # Default: /cache/instructlab/models/ibm-granite/granite-embedding-125m-english
+    embedding_model_name: /cache/instructlab/models/ibm-granite/granite-embedding-125m-english
+  # Flag for enabling RAG functionality.
+  # Default: False
+  enabled: false
+  # Retrieval configuration parameters for RAG
+  retriever:
+    # The maximum number of documents to retrieve.
+    # Default: 20
+    top_k: 20
 # Serve configuration section.
 serve:
   # Serving backend to use to host the model.

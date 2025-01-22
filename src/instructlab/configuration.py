@@ -127,6 +127,31 @@ class _general(BaseModel):
         return self
 
 
+class _document_store(BaseModel):
+    """Class describing configuration of document store backend for RAG."""
+
+    uri: str = Field(
+        default_factory=lambda: DEFAULTS.DEFAULT_DOCUMENT_STORE_PATH,
+        description="Document store service URI.",
+    )
+    collection_name: str = Field(
+        default=DEFAULTS.DOCUMENT_STORE_COLLECTION_NAME,
+        description="Document store collection name.",
+    )
+
+
+class _embedding_model(BaseModel):
+    """Class describing configuration of embedding parameters for RAG."""
+
+    # model configuration
+    model_config = ConfigDict(extra="ignore", protected_namespaces=())
+
+    embedding_model_name: StrictStr = Field(
+        default_factory=lambda: DEFAULTS.DEFAULT_EMBEDDING_MODEL,
+        description="Embedding model to use for RAG.",
+    )
+
+
 class _chat(BaseModel):
     """Class describing configuration of the 'chat' sub-command."""
 
@@ -285,9 +310,33 @@ class _convert(BaseModel):
     )
 
 
+class _retriever(BaseModel):
+    """Class describing configuration of retrieval parameters for RAG."""
+
+    top_k: int = Field(
+        default=DEFAULTS.RETRIEVER_TOP_K,
+        description="The maximum number of documents to retrieve.",
+    )
+
+
 class _rag(BaseModel):
     """Class describing configuration of the 'ilab rag' command."""
 
+    enabled: bool = Field(
+        default=False, description="Flag for enabling RAG functionality."
+    )
+    document_store: _document_store = Field(
+        default_factory=_document_store,
+        description="Document store configuration for RAG.",
+    )
+    embedding_model: _embedding_model = Field(
+        default_factory=_embedding_model,
+        description="Embedding model configuration for RAG",
+    )
+    retriever: _retriever = Field(
+        default_factory=_retriever,
+        description="Retrieval configuration parameters for RAG",
+    )
     convert: _convert = Field(
         default_factory=_convert, description="RAG convert configuration section."
     )
@@ -594,54 +643,6 @@ class _train(BaseModel):
     training_journal: str | None = Field(
         default=None,
         description="Optional path to a yaml file that tracks the progress of multiphase training.",
-    )
-
-
-class _document_store(BaseModel):
-    """Class describing configuration of document store backend for RAG."""
-
-    uri: str = Field(default="embeddings.db", description="Document store service URI.")
-    collection_name: str = Field(
-        default="ilab", description="Document store collection name."
-    )
-
-
-class _embedding_model(BaseModel):
-    """Class describing configuration of embedding parameters for RAG."""
-
-    # model configuration
-    model_config = ConfigDict(extra="ignore", protected_namespaces=())
-
-    model_dir: str = Field(
-        default=DEFAULTS.MODELS_DIR,
-        description="The default system model location store, located in the data directory.",
-    )
-    model_name: str = Field(
-        default_factory=lambda: DEFAULTS.DEFAULT_EMBEDDING_MODEL,
-        description="Embedding model to use for RAG.",
-    )
-
-    def local_model_path(self) -> str:
-        if self.model_dir is None:
-            click.secho(f"Missing value for field model_dir in {vars(self)}")
-            raise click.exceptions.Exit(1)
-
-        if self.model_name is None:
-            click.secho(f"Missing value for field model_name in {vars(self)}")
-            raise click.exceptions.Exit(1)
-
-        return os.path.join(self.model_dir, self.model_name)
-
-
-class _retriever(BaseModel):
-    """Class describing configuration of retrieval parameters for RAG."""
-
-    top_k: int = Field(
-        default=20, description="The maximum number of documents to retrieve."
-    )
-    embedding_model: _embedding_model = Field(
-        default=_embedding_model(),
-        description="Embedding parameters for retrieval.",
     )
 
 

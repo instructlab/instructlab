@@ -10,6 +10,7 @@ import click
 # First Party
 from instructlab import clickext
 from instructlab import configuration as cfg
+from instructlab.defaults import DEFAULTS
 from instructlab.model.chat import chat_model
 
 logger = logging.getLogger(__name__)
@@ -101,6 +102,45 @@ logger = logging.getLogger(__name__)
     "--temperature",
     cls=clickext.ConfigOption,
 )
+@click.option(
+    "--rag",
+    "rag_enabled",
+    default=False,
+    is_flag=True,
+)
+@click.option(
+    "--document-store-uri",
+    "uri",
+    type=click.STRING,
+    cls=clickext.ConfigOption,
+    config_class="rag",
+    config_sections="document_store",
+)
+@click.option(
+    "--document-store-collection-name",
+    "collection_name",
+    type=click.STRING,
+    cls=clickext.ConfigOption,
+    config_class="rag",
+    config_sections="document_store",
+)
+@click.option(
+    "--retriever-embedding-model-name",
+    "embedding_model_name",
+    type=click.STRING,
+    cls=clickext.ConfigOption,
+    config_class="rag",
+    config_sections="embedding_model",
+)
+@click.option(
+    "--retriever-top-k",
+    "top_k",
+    type=click.INT,
+    default=DEFAULTS.RETRIEVER_TOP_K,
+    cls=clickext.ConfigOption,
+    config_class="rag",
+    config_sections="retriever",
+)
 @click.pass_context
 @clickext.display_params
 def chat(
@@ -120,6 +160,11 @@ def chat(
     model_family,
     serving_log_file,
     temperature,
+    rag_enabled,
+    uri,
+    collection_name,
+    embedding_model_name,
+    top_k,
 ):
     """Runs a chat using the modified model"""
     chat_model(
@@ -138,6 +183,11 @@ def chat(
         model_family,
         serving_log_file,
         temperature,
+        rag_enabled,
+        uri,
+        collection_name,
+        embedding_model_name,
+        top_k,
         backend_type=ctx.obj.config.serve.server.backend_type,
         host=ctx.obj.config.serve.server.host,
         port=ctx.obj.config.serve.server.port,
