@@ -107,6 +107,7 @@ logger = logging.getLogger(__name__)
     "rag_enabled",
     default=False,
     is_flag=True,
+    help="To enable the RAG pipeline.",
 )
 @click.option(
     "--document-store-uri",
