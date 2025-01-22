@@ -13,10 +13,6 @@ import click
 
 # First Party
 from instructlab import clickext
-from instructlab.rag.convert import (
-    convert_documents_from_folder,
-    convert_documents_from_taxonomy,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +56,12 @@ def convert(
     output_dir,
 ):
     """Pipeline to convert documents from their original format (e.g., PDF) into Docling JSON format for use by ilab rag ingest"""
+    # Local
+    from ...rag.convert import (
+        convert_documents_from_folder,
+        convert_documents_from_taxonomy,
+    )
+
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
