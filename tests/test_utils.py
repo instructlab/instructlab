@@ -200,11 +200,44 @@ def test_get_sysprompt():
         == "I am a Red Hat® Instruct Model, an AI language model developed by Red Hat and IBM Research based on the granite-3.0-8b-base model. My primary role is to serve as a chat assistant."
     )
 
+    arch = "granite-3.1"
+    assert (
+        utils.get_sysprompt(arch)
+        == "I am a Red Hat® Instruct Model, an AI language model developed by Red Hat and IBM Research based on the granite-3.1-8b-instruct model. My primary role is to serve as a chat assistant."
+    )
+
     arch = "random"
     assert (
         utils.get_sysprompt(arch)
         == "I am an advanced AI language model designed to assist you with a wide range of tasks and provide helpful, clear, and accurate responses. My primary role is to serve as a chat assistant, engaging in natural, conversational dialogue, answering questions, generating ideas, and offering support across various topics."
     )
+
+
+def test_get_model_arch_granite():
+    mock_path = pathlib.Path("/path/to/mock/granite/model")
+    mock_config = {
+        "model_type": "granite",
+        "max_position_embeddings": 32768,  # Less than 131072
+    }
+
+    with (
+        patch("instructlab.utils.is_model_safetensors", return_value=True),
+        patch("instructlab.utils.get_config_file_from_model", return_value=mock_config),
+    ):
+        result = utils.get_model_arch(mock_path)
+        assert result == "granite"
+
+
+def test_get_model_arch_granite_3_1():
+    mock_path = pathlib.Path("/path/to/mock/granite-3.1/model")
+    mock_config = {"model_type": "granite", "max_position_embeddings": 131072}
+
+    with (
+        patch("instructlab.utils.is_model_safetensors", return_value=True),
+        patch("instructlab.utils.get_config_file_from_model", return_value=mock_config),
+    ):
+        result = utils.get_model_arch(mock_path)
+        assert result == "granite-3.1"
 
 
 def test_get_model_template_from_tokenizer(tmp_path: pathlib.Path):
