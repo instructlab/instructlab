@@ -1,15 +1,12 @@
 # Dependencies for Intel Gaudi / Habana Labs HPU devices
 #
 
-# Habana Labs 1.18.0 has 2.4.0a0+git74cd574 pre-release
-torch>=2.4.0a0,<2.5.0
 # Habana Labs frameworks
 habana-torch-plugin>=1.18.0
 habana_gpu_migration>=1.18.0
 # additional Habana Labs packages (installed, but not used)
 #habana-media-loader
 #habana-pyhlml
-#habana_quantization_toolkit
 #habana-torch-dataloader
 
 # Extra dependencies for Intel Gaudi cards
