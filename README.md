@@ -405,17 +405,31 @@ For detailed documentation on the InstructLab LLMs and their functions, see the 
 
    ```shell
    Downloading model from Hugging Face:
-       Model: instructlab/granite-7b-lab-GGUF@main
-       Destination: /Users/<user>/.cache/instructlab/models
+      Model: instructlab/granite-7b-lab-GGUF@main
+      Destination: /Users/<user>/.cache/instructlab/models
+
+   ᕦ(òᴗóˇ)ᕤ instructlab/granite-7b-lab-GGUF model download completed successfully! ᕦ(òᴗóˇ)ᕤ
+
    Downloading model from Hugging Face:
-       Model: instructlab/merlinite-7b-lab-GGUF@main
-       Destination: /Users/<user>/.cache/instructlab/models
+      Model: instructlab/merlinite-7b-lab-GGUF@main
+      Destination: /Users/<user>/.cache/instructlab/models
+
+   ᕦ(òᴗóˇ)ᕤ instructlab/merlinite-7b-lab-GGUF model download completed successfully! ᕦ(òᴗóˇ)ᕤ
+
    Downloading model from Hugging Face:
-       Model: TheBloke/Mistral-7B-Instruct-v0.2-GGUF@main
-       Destination: /Users/<user>/.cache/instructlab/models
+      Model: TheBloke/Mistral-7B-Instruct-v0.2-GGUF@main
+      Destination: /Users/<user>/.cache/instructlab/models
 
    TheBloke/Mistral-7B-Instruct-v0.2-GGUF requires a HF Token to be set.
    Please use '--hf-token' or 'export HF_TOKEN' to download all necessary models.
+
+   Available models (`ilab model list`):
+   +--------------------------------------+---------------------+---------+
+   | Model Name                           | Last Modified       | Size    |
+   +--------------------------------------+---------------------+---------+
+   | merlinite-7b-lab-Q4_K_M.gguf         | 2024-11-21 22:24:50 | 4.1 GB  |
+   | granite-7b-lab-Q4_K_M.gguf           | 2024-11-30 11:16:44 | 3.8 GB  |
+   +--------------------------------------+---------------------+---------+
    ```
 
    You may be prompted to use your Hugging Face token to download the `Mistral-7B-Instruct-v0.2-GGUF` model.
@@ -451,27 +465,6 @@ For detailed documentation on the InstructLab LLMs and their functions, see the 
    ```shell
    ilab model download -rp docker://instructlab/granite-7b-lab -rl latest
    ```
-
-#### Listing downloaded models
-
-- All downloaded models can be seen with `ilab model list`.
-
-  ```shell
-  ilab model list
-  ```
-
-  *Example output of `ilab model list` after `ilab model download`*
-
-  ```shell
-  (venv) $ ilab model list
-  +-------------------------------------+---------------------+--------+
-  | Model Name                          | Last Modified       | Size   |
-  +-------------------------------------+---------------------+--------+
-  | granite-7b-lab-Q4_K_M.gguf          | 2024-08-01 15:05:48 | 4.1 GB |
-  | merlinite-7b-lab-Q4_K_M.gguf        | 2024-08-01 15:05:48 | 4.1 GB |
-  | mistral-7b-instruct-v0.2.Q4_K_M.gguf| 2024-08-01 15:05:48 | 4.1 GB |
-  +-------------------------------------+---------------------+--------+
-  ```
 
 ### 🍴 Serving the model
 
