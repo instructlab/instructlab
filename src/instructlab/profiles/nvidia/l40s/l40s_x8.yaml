@@ -39,7 +39,7 @@ evaluate:
     judge_model: ~/.cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
     max_workers: auto
     # Directory where evaluation results are stored
-    output_dir: ~/.local/share/instructlab/internal/eval_data
+    output_dir: ~/.local/share/instructlab/internal/eval_data/mt_bench
   # Settings to run MT-Bench against a branch of taxonomy containing
   # custom skills/knowledge used for training
   mt_bench_branch:

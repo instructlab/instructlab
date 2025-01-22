@@ -19,6 +19,15 @@ evaluate:
   # Taxonomy branch containing custom skills/knowledge that should be used for evaluation runs
   branch: null
   # Number of GPUs to use for running evaluation
+  dk_bench:
+    # File with questions and reference answers used for evaluation during DK-Bench.
+    input_questions: null
+    # Judge model for DK-Bench.
+    judge_model: gpt-4o
+    # Directory where DK-Bench evaluation results are stored.
+    output_dir: ~/.local/share/instructlab/internal/eval_data/dk_bench
+    # Comma-separated list of file formats for results of the DK-Bench evaluation.
+    output_file_formats: jsonl
   gpus: 1
   # MMLU benchmarking settings
   mmlu:
@@ -39,12 +48,25 @@ evaluate:
     judge_model: ~/.cache/instructlab/models/instructlab/granite-7b-lab
     max_workers: auto
     # Directory where evaluation results are stored
-    output_dir: ~/.local/share/instructlab/internal/eval_data
+    output_dir: ~/.local/share/instructlab/internal/eval_data/mt_bench
   # Settings to run MT-Bench against a branch of taxonomy containing
   # custom skills/knowledge used for training
   mt_bench_branch:
     # Path to where base taxonomy is stored
     taxonomy_path: ~/.local/share/instructlab/taxonomy
+    # Directory where model to be used as judge is stored
+    judge_model: ~/.cache/instructlab/models/instructlab/granite-7b-lab
+    # Directory where evaluation results are stored
+    output_dir: ~/.local/share/instructlab/internal/eval_data/mt_bench_branch
+  # System prompt for model getting responses during DK-Bench.
+  system_prompt: You are an advanced AI assistant designed to provide precise and
+    accurate information. Your primary goal is to answer queries with the most up-to-date
+    and factual information available. Focus on delivering clear, concise, and correct
+    responses. If you're uncertain about any aspect of the query, state your level
+    of confidence and provide the most accurate information you can. Your responses
+    should prioritize accuracy over all other considerations.
+  # Temperature for model getting responses during DK-Bench.
+  temperature: 0.0
 general:
   debug_level: 0
   log_level: DEBUG
