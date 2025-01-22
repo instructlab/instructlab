@@ -30,6 +30,7 @@ concurrency:
 env:
   LC_ALL: en_US.UTF-8
   TMPDIR: /home/tmp
+  COMMON_E2E_RESOURCES: ./.github/workflows/common-resources
 
 defaults:
   run:
@@ -60,6 +61,16 @@ jobs:
       label: ${{ steps.start-ec2-runner.outputs.label }}
       ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          # https://github.com/actions/checkout/issues/249
+          fetch-depth: 0
+
+      # We need to free disk space to avoid the "No space left on device" error on our GH runner
+      - name: Free disk space
+        uses: ./.github/actions/free-disk-space
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@e3dd6a429d7300a6a4c196c26e071d42e0343502 # v4.0.2
         with:
@@ -100,7 +111,7 @@ jobs:
       - name: Install Packages
         run: |
           cat /etc/os-release
-          mkdir -p /home/tmp
+          mkdir -p "${TMPDIR}"
           sudo dnf install -y gcc gcc-c++ make git python3.11 python3.11-devel
 
       - name: Checkout
@@ -127,8 +138,11 @@ jobs:
 
           # https://github.com/instructlab/instructlab/issues/1821
           # install with Torch and build dependencies installed
-          python3.11 -m pip install -v packaging wheel setuptools-scm
+          python3.11 -m pip install -v -r "${COMMON_E2E_RESOURCES}/e2e-instructlab-build-time-requirements.txt"
           python3.11 -m pip install -v .[cuda]
+
+          # Clear pip cache to remove unnecessary cached wheels
+          python3.11 -m pip cache purge
 
       - name: Check disk before tests
         run: |
