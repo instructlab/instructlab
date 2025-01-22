@@ -70,7 +70,7 @@ def fixture_mock_create_text_embedder():
 
 def test_document_store_ingest_and_retrieve_for_in_memory_store(
     mock_create_splitter, mock_create_document_embedder, mock_create_text_embedder
-):
+) -> None:
     with tempfile.TemporaryDirectory() as temp_dir:
         # Ingest docs from a test folder
         document_store_uri = os.path.join(temp_dir, "ingest.db")

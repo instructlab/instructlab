@@ -143,10 +143,7 @@ class _document_store(BaseModel):
 class _embedding_model(BaseModel):
     """Class describing configuration of embedding parameters for RAG."""
 
-    # model configuration
-    model_config = ConfigDict(extra="ignore", protected_namespaces=())
-
-    embedding_model_name: StrictStr = Field(
+    embedding_model_path: StrictStr = Field(
         default_factory=lambda: DEFAULTS.DEFAULT_EMBEDDING_MODEL,
         description="Embedding model to use for RAG.",
     )
