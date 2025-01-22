@@ -221,7 +221,6 @@ module = [
   "instructlab_quantize",
   "instructlab.training",
   "mlx.*",
-  "optimum.habana.*",
   "ruamel",
   "sentencepiece",
   "trl",

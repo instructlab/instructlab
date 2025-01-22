@@ -10,7 +10,6 @@
 - Intel Gaudi 2 device
 - [Habana Labs](https://docs.habana.ai/en/latest/index.html) software stack (tested with 1.18.0)
 - software from Habana Vault for [RHEL](https://vault.habana.ai/ui/native/rhel) and [PyTorch](https://vault.habana.ai/ui/native/gaudi-pt-modules)
-- software [HabanaAI GitHub](https://github.com/HabanaAI/) org like [optimum-habana](https://github.com/HabanaAI/optimum-habana-fork) fork
 
 ## System preparation
 
@@ -126,8 +125,6 @@ Validate installation:
 ## Habana Lab's PyTorch stack
 
 Habana Labs comes with a modified fork of PyTorch that is build with Intel's oneAPI Math Kernel Library (oneMKL). The actual HPU bindings and helpers are provided by the `habana_framework` package. Imports of `habana_framework` sub-packages register `hpu` device support, `torch.hpu` module, and `dynamo` backends.
-
-The [`SFTTrainer`](https://huggingface.co/docs/trl/sft_trainer) from `trl` does not work with Habana stack. Instead the `GaudiSFTTrainer` from [optimum-habana](https://huggingface.co/docs/optimum/habana/index) is needed. The version on PyPI is currently broken, but the HabanaAI [optimum-habana-fork](https://github.com/HabanaAI/optimum-habana-fork) works.
 
 ## Install and run InstructLab with Intel Gaudi
 
