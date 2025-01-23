@@ -35,13 +35,10 @@ def setup_gpus_config(section_path="serve", gpus=None, tps=None, vllm_args=lambd
 @mock.patch(
     "instructlab.model.backends.backends.check_model_path_exists", return_value=None
 )
-@mock.patch("instructlab.model.backends.vllm.check_api_base", return_value=False)
-# ^ mimic server *not* running already
 @mock.patch(
     "instructlab.model.backends.backends.determine_backend",
     return_value=("vllm", "testing"),
 )
-@mock.patch("time.sleep", side_effect=Exception("Intended Abort"))
 @mock.patch("subprocess.Popen")
 def vllm_setup_test(runner, args, mock_popen, *_mock_args):
     mock_process = mock.MagicMock()
