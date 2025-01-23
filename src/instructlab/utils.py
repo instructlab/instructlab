@@ -948,6 +948,10 @@ def get_model_arch(model_path: pathlib.Path) -> str:
         try:
             model_cfg = get_config_file_from_model(model_path, "config.json")
             model_arch = model_cfg["model_type"]
+            max_position_embeddings = model_cfg["max_position_embeddings"]
+            if model_arch == "granite" and max_position_embeddings >= 131072:
+                model_arch = "granite-3.1"
+                return model_arch
         except Exception as e:
             logger.debug(
                 f"Unable to get model architecture from config for model: {model_path}: {e}. Falling back to default value"
