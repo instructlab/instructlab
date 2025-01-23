@@ -18,6 +18,7 @@ from instructlab import lab
 from instructlab.model.backends import backends, common
 from instructlab.model.backends.vllm import build_vllm_cmd, get_argument
 from instructlab.utils import is_model_safetensors
+from tests.test_feature_gates import dev_preview
 
 test_json_config = {
     "model_type": "granite",
@@ -421,6 +422,7 @@ def test_get_model_template(tmp_path: pathlib.Path):
     assert bos == "<|begginingoftext|>"
 
 
+@dev_preview
 def test_model_exist_check(cli_runner: CliRunner):
     cmd = [
         "--config",

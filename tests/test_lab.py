@@ -19,6 +19,7 @@ from instructlab import configuration as config
 from instructlab import lab
 from instructlab.clickext import ConfigOption, get_default_and_description
 from instructlab.utils import is_macos_with_m_chip
+from tests.test_feature_gates import dev_preview
 
 
 def get_commands():
@@ -150,6 +151,7 @@ aliases = [
 ]
 
 
+@dev_preview
 @pytest.mark.parametrize("command", subcommands, ids=lambda sc: repr(sc.args))
 def test_ilab_cli_help(command: Command, cli_runner: CliRunner):
     cmd = command.get_args("--help")
@@ -248,6 +250,7 @@ def test_cli_help_matches_field_description(cli_runner: CliRunner):
     [sc for sc in subcommands if sc.has_debug_params],
     ids=lambda sc: repr(sc.args),
 )
+@dev_preview
 def test_ilab_cli_debug_params(command: Command, cli_runner: CliRunner):
     result = cli_runner.invoke(lab.ilab, command.get_args("--debug-params"))
     assert result.exit_code == 0, result.stdout
@@ -289,6 +292,7 @@ def test_ilab_commands_tested():
     subcommands,
     ids=lambda sc: repr(sc.args),
 )
+@dev_preview
 def test_ilab_missing_config(command: Command, cli_runner: CliRunner) -> None:
     cmd = command.get_args(default_config=False)
     assert "--config" not in cmd

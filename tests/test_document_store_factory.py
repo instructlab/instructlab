@@ -15,6 +15,7 @@ from instructlab.rag.document_store_factory import (
     create_document_retriever,
     create_document_store_ingestor,
 )
+from tests.test_feature_gates import dev_preview
 
 
 @component
@@ -68,6 +69,7 @@ def fixture_mock_create_text_embedder():
         yield mock_function
 
 
+@dev_preview
 def test_document_store_ingest_and_retrieve_for_in_memory_store(
     mock_create_splitter, mock_create_document_embedder, mock_create_text_embedder
 ) -> None:

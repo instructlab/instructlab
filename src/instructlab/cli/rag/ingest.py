@@ -7,6 +7,7 @@ import click
 # First Party
 from instructlab import clickext
 from instructlab.defaults import DEFAULTS
+from instructlab.feature_gates import FeatureGating, FeatureScopes, GatedFeatures
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +57,14 @@ def ingest(
     input_dir,
 ):
     """The embedding ingestion pipeline"""
+
+    if not FeatureGating.feature_available(GatedFeatures.RAG):
+        click.echo(
+            f"This functionality is experimental; set {FeatureGating.env_var_name}"
+            f' to "{FeatureScopes.DevPreviewNoUpgrade.value}" to enable.'
+        )
+        return
+
     logger.debug(f"Document Store: {collection_name} @ {uri}")
     logger.debug(f"Embedding model: {embedding_model_path}")
 

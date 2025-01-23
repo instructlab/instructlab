@@ -21,7 +21,9 @@ from docling.document_converter import FormatOption  # type: ignore  # noqa: F40
 
 # First Party
 from instructlab import lab
+from instructlab.feature_gates import FeatureGating, FeatureScopes, GatedFeatures
 from instructlab.rag.convert import _load_converter_and_format_options
+from tests.test_feature_gates import dev_preview
 
 
 class MockDocumentConverter:
@@ -47,6 +49,19 @@ class MockDocumentConverter:
             )
             conv_res = ConversionResult(input=in_doc, status=ConversionStatus.SUCCESS)
             yield conv_res
+
+
+def test_rag_convert_errors_with_useful_message_when_not_enabled():
+    runner = CliRunner()
+    env = runner.make_env({"ILAB_FEATURE_SCOPE": "Default"})
+    result = runner.invoke(lab.ilab, ["--config=DEFAULT", "rag", "convert"], env=env)
+
+    assert not FeatureGating.feature_available(GatedFeatures.RAG)
+
+    # check that the error message contains the environment variable name and the feature
+    # scope level; a (heuristic) check on the message being both up-to-date and useful
+    assert FeatureGating.env_var_name in result.output
+    assert FeatureScopes.DevPreviewNoUpgrade.value in result.output
 
 
 def run_rag_convert_test(
@@ -82,6 +97,7 @@ def run_rag_convert_test(
             ), f"Unexpected success for parameters {params}: {result.output}"
 
 
+@dev_preview
 def test_convert_pdf_from_directory(tmp_path: Path):
     """
     Tests converting from the sample PDF in tests/testdata/documents/pdf.
@@ -98,6 +114,7 @@ def test_convert_pdf_from_directory(tmp_path: Path):
     run_rag_convert_test(params, expected_strings, expected_output_file, True)
 
 
+@dev_preview
 def test_convert_md_from_directory(tmp_path: Path):
     """
     Tests converting from the sample Markdown file in tests/testdata/documents/md.
@@ -115,6 +132,7 @@ def test_convert_md_from_directory(tmp_path: Path):
 # test won't pass when run on a machine with no connection to the internet.  It wil also fail if the repository
 # is not working or if it ever gets deleted.  That's not ideal, but we do need to test these capabilities.
 # TODO: Consider re-working this with a mock for the github server.
+@dev_preview
 def test_convert_md_from_taxonomy(tmp_path: Path):
     """
     Tests converting from the sample Markdown file in a github repo referenced in tests/testdata/sample_taxonomy.
@@ -144,6 +162,7 @@ def test_convert_md_from_taxonomy(tmp_path: Path):
 # another expensive one for that purpose.
 
 
+@dev_preview
 def test_convert_from_missing_directory_fails(tmp_path: Path):
     """
     Verifies that converting from a non-existent directory fails.
@@ -154,6 +173,7 @@ def test_convert_from_missing_directory_fails(tmp_path: Path):
     run_rag_convert_test(params, [], None, False)
 
 
+@dev_preview
 def test_convert_from_non_directory_fails(tmp_path: Path):
     """
     Verifies that converting fails when the input directory is a file and not a directory.

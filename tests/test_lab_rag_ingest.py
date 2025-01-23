@@ -10,7 +10,9 @@ import pytest
 
 # First Party
 from instructlab import lab
+from instructlab.feature_gates import FeatureGating, FeatureScopes, GatedFeatures
 from instructlab.rag.document_store import DocumentStoreIngestor
+from tests.test_feature_gates import dev_preview
 
 
 class MockDocumentStoreIngestor(DocumentStoreIngestor):
@@ -40,6 +42,19 @@ def fixture_copy_test_data(input_dir: str, tmp_path_home, cli_runner: CliRunner)
         shutil.copytree(input_dir[0], destination, dirs_exist_ok=True)
 
 
+def test_rag_ingest_errors_with_useful_message_when_not_enabled():
+    runner = CliRunner()
+    env = runner.make_env({"ILAB_FEATURE_SCOPE": "Default"})
+    result = runner.invoke(lab.ilab, ["--config=DEFAULT", "rag", "ingest"], env=env)
+
+    assert not FeatureGating.feature_available(GatedFeatures.RAG)
+
+    # check that the error message contains the environment variable name and the feature
+    # scope level; a (heuristic) check on the message being both up-to-date and useful
+    assert FeatureGating.env_var_name in result.output
+    assert FeatureScopes.DevPreviewNoUpgrade.value in result.output
+
+
 @patch(
     "instructlab.rag.document_store_factory.create_document_store_ingestor",
     side_effect=(
@@ -48,6 +63,7 @@ def fixture_copy_test_data(input_dir: str, tmp_path_home, cli_runner: CliRunner)
         embedding_model_path: MockDocumentStoreIngestor(document_store_uri)
     ),
 )
+@dev_preview
 def test_ingestor(
     create_document_store_ingestor_mock,
     input_dir,
