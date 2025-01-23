@@ -41,12 +41,14 @@ def assert_template(args, expect_chat, path_chat, chat_value):
         assert template == chat_value
 
 
-def vllm_setup_test_with_sleep_raise(*args, **kwargs):
+@mock.patch("instructlab.model.backends.vllm.check_api_base", return_value=False)
+# ^ mimic server *not* running already
+def vllm_setup_test_with_sleep_raise(runner, args, *_mock_args):
     # We assume that sleep is executed from inside the serve loop; at this
     # point, we are ready to exit from it; we trigger the exit with this side
     # effect, letting the serve function catch it and exit gracefully.
     with mock.patch("time.sleep", side_effect=Exception("Intended Abort")):
-        return common.vllm_setup_test(*args, **kwargs)
+        return common.vllm_setup_test(runner, args)
 
 
 def test_chat_auto(cli_runner: CliRunner):
