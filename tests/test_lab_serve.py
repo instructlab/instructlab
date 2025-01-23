@@ -41,8 +41,16 @@ def assert_template(args, expect_chat, path_chat, chat_value):
         assert template == chat_value
 
 
+def vllm_setup_test_with_sleep_raise(*args, **kwargs):
+    # We assume that sleep is executed from inside the serve loop; at this
+    # point, we are ready to exit from it; we trigger the exit with this side
+    # effect, letting the serve function catch it and exit gracefully.
+    with mock.patch("time.sleep", side_effect=Exception("Intended Abort")):
+        return common.vllm_setup_test(*args, **kwargs)
+
+
 def test_chat_auto(cli_runner: CliRunner):
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         ["--config=DEFAULT", "model", "serve", "--model-path=foo"],
     )
@@ -53,7 +61,7 @@ def test_chat_auto(cli_runner: CliRunner):
 def test_chat_custom(cli_runner: CliRunner, tmp_path: pathlib.Path):
     file = tmp_path / "chat_template.jinja2"
     file.touch()
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             "--config=DEFAULT",
@@ -68,7 +76,7 @@ def test_chat_custom(cli_runner: CliRunner, tmp_path: pathlib.Path):
 
 
 def test_chat_manual(cli_runner: CliRunner):
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             "--config=DEFAULT",
@@ -83,7 +91,7 @@ def test_chat_manual(cli_runner: CliRunner):
 
 
 def test_gpus(cli_runner: CliRunner):
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             "--config=DEFAULT",
@@ -98,7 +106,7 @@ def test_gpus(cli_runner: CliRunner):
 
 
 def test_gpus_default(cli_runner: CliRunner):
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             "--config=DEFAULT",
@@ -111,7 +119,7 @@ def test_gpus_default(cli_runner: CliRunner):
 
 
 def test_ctx_tps_with_extra_params(cli_runner: CliRunner):
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             "--config=DEFAULT",
@@ -131,7 +139,7 @@ def test_ctx_tps_with_extra_params(cli_runner: CliRunner):
 
 
 def test_ctx_tps_with_gpus(cli_runner: CliRunner):
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             "--config=DEFAULT",
@@ -154,7 +162,7 @@ def test_ctx_tps_with_gpus(cli_runner: CliRunner):
 
 def test_gpus_config(cli_runner: CliRunner):
     fname = common.setup_gpus_config(gpus=8)
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             f"--config={fname}",
@@ -168,7 +176,7 @@ def test_gpus_config(cli_runner: CliRunner):
 
 def test_gpus_with_gpus_config(cli_runner: CliRunner):
     fname = common.setup_gpus_config(gpus=8)
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             f"--config={fname}",
@@ -184,7 +192,7 @@ def test_gpus_with_gpus_config(cli_runner: CliRunner):
 
 def test_ctx_tps_with_gpus_config(cli_runner: CliRunner):
     fname = common.setup_gpus_config(gpus=8)
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             f"--config={fname}",
@@ -201,7 +209,7 @@ def test_ctx_tps_with_gpus_config(cli_runner: CliRunner):
 
 def test_gpus_with_ctx_tps_with_gpus_config(cli_runner: CliRunner):
     fname = common.setup_gpus_config(gpus=8)
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             f"--config={fname}",
@@ -220,7 +228,7 @@ def test_gpus_with_ctx_tps_with_gpus_config(cli_runner: CliRunner):
 
 def test_vllm_args_config(cli_runner: CliRunner):
     fname = common.setup_gpus_config(tps=8)
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             f"--config={fname}",
@@ -234,7 +242,7 @@ def test_vllm_args_config(cli_runner: CliRunner):
 
 def test_vllm_args_config_with_gpus_config(cli_runner: CliRunner):
     fname = common.setup_gpus_config(gpus=4, tps=8)
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             f"--config={fname}",
@@ -248,7 +256,7 @@ def test_vllm_args_config_with_gpus_config(cli_runner: CliRunner):
 
 def test_vllm_args_config_with_gpus(cli_runner: CliRunner):
     fname = common.setup_gpus_config(tps=8)
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             f"--config={fname}",
@@ -264,7 +272,7 @@ def test_vllm_args_config_with_gpus(cli_runner: CliRunner):
 
 def test_vllm_args_config_with_ctx_tps(cli_runner: CliRunner):
     fname = common.setup_gpus_config(tps=8)
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             f"--config={fname}",
@@ -281,7 +289,7 @@ def test_vllm_args_config_with_ctx_tps(cli_runner: CliRunner):
 
 def test_vllm_args_null(cli_runner: CliRunner):
     fname = common.setup_gpus_config(vllm_args=lambda: None)
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             f"--config={fname}",
@@ -338,7 +346,7 @@ def test_warn_for_unsupported_backend_param(param, expected_call_count):
 
 
 def test_serve_host(cli_runner: CliRunner):
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             "--config=DEFAULT",
@@ -354,7 +362,7 @@ def test_serve_host(cli_runner: CliRunner):
 
 
 def test_serve_port(cli_runner: CliRunner):
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             "--config=DEFAULT",
@@ -370,7 +378,7 @@ def test_serve_port(cli_runner: CliRunner):
 
 
 def test_serve_host_port(cli_runner: CliRunner):
-    args = common.vllm_setup_test(
+    args = vllm_setup_test_with_sleep_raise(
         cli_runner,
         [
             "--config=DEFAULT",
