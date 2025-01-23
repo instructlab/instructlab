@@ -31,6 +31,8 @@ MIXTRAL_GGUF_MODEL="mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf"
 GRANITE_GGUF_MODEL="granite-7b-lab-Q4_K_M.gguf"
 MERLINITE_GGUF_MODEL="merlinite-7b-lab-Q4_K_M.gguf"
 GRANITE_SAFETENSOR_REPO="instructlab/granite-7b-lab"
+GRANITE_EMBEDDING_MODEL_NAME="granite-embedding-125m-english"
+GRANITE_EMBEDDING_MODEL="ibm-granite/${GRANITE_EMBEDDING_MODEL_NAME}"
 
 export GREP_COLORS='mt=1;33'
 BOLD='\033[1m'
@@ -42,8 +44,10 @@ export E2E_TEST_DIR
 export CONFIG_HOME
 export DATA_HOME
 export CACHE_HOME
-export CONFIG_HOME
 
+export DEV_PREVIEW_FEATURE_GATING
+export TECH_PREVIEW_FEATURE_GATING
+export CUSTOM_FEATURE_GATING
 
 
 ########################################
@@ -78,6 +82,18 @@ function init_e2e_tests() {
 
     E2E_LOG_DIR="${HOME}/log"
     mkdir -p "${E2E_LOG_DIR}"
+
+    # set appropriate feature gating flag
+    if [ "$DEV_PREVIEW_FEATURE_GATING" -eq 1 ]; then
+        step Setting dev preview environment variable
+        export ILAB_FEATURE_SCOPE="DevPreviewNoUpgrade"
+    elif [ "$TECH_PREVIEW_FEATURE_GATING" -eq 1 ]; then
+        step Setting tech preview environment variable
+        export ILAB_FEATURE_SCOPE="TechPreviewNoUpgrade"
+    elif [ "$CUSTOM_FEATURE_GATING" -eq 1 ]; then
+        step Setting custom feature gating environment variabkle
+        export ILAB_FEATURE_SCOPE="CustomNoUpgrade"
+    fi
 }
 
 
@@ -156,6 +172,11 @@ test_download() {
         ilab model download --repository instructlab/merlinite-7b-lab
     fi
 
+    if [ "$DEV_PREVIEW_FEATURE_GATING" -eq 1 ]; then
+        step Downloading embedding model
+        ilab model download --repository "${GRANITE_EMBEDDING_MODEL}"
+    fi
+
     task Downloading models Complete
 }
 
@@ -172,7 +193,12 @@ test_list() {
         step Listing the merlinite GGUF model only
         ilab model list | grep merlinite-7b-lab-Q4_K_M.gguf4
     fi
-    
+
+    if [ "$DEV_PREVIEW_FEATURE_GATING" -eq 1 ]; then
+        step Listing the embedding model
+        ilab model list | grep "$GRANITE_EMBEDDING_MODEL_NAME"
+    fi
+
     # regardless, download merl safetensors to test that capability
     ilab model download --repository instructlab/merlinite-7b-lab
     ilab model list | grep instructlab/merlinite-7b-lab
@@ -184,7 +210,7 @@ test_serve() {
     local model_path
 
     model_type="$1"
-    serve_args=()
+    serve_args=("--backend" "llama-cpp")
     if [ "${model_type}" == "base" ]; then
         if [ "${BACKEND}" == "vllm" ]; then
             model_path="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}"
@@ -227,6 +253,13 @@ test_chat() {
     ilab model chat -qq "${CHAT_ARGS[@]}" 'Say "Hello" and nothing else\n'
 }
 
+test_rag_enabled_chat() {
+    task RAG-enabled chat with the model
+    CHAT_ARGS=("--endpoint-url" "http://localhost:8000/v1")
+    ilab model chat --rag -qq 'How do you use YAML with InstructLab\n'
+    task RAG-enabled chat with the model Complete
+}
+
 test_taxonomy() {
     task Update the taxonomy
     local testnum
@@ -255,6 +288,32 @@ test_taxonomy() {
 
     step Verification
     ilab taxonomy diff "${DIFF_ARGS[@]}"
+}
+
+test_convert_taxonomy_for_rag() {
+    step Convert user taxonomy for ingestion into vector store
+    ilab rag convert
+    task Taxonomy document conversion Complete
+}
+
+test_convert_user_document_for_rag() {
+    step Convert documents for ingestion into vector store
+    mkdir -p "${DATA_HOME}/instructlab/converted_documents"
+    cp -r "test-data/raw_documents" "${DATA_HOME}/instructlab/raw_documents"
+    ilab rag convert --input-dir "${DATA_HOME}/instructlab/raw_documents" --output-dir="${DATA_HOME}/instructlab/converted_documents"
+    task User document conversion Complete
+}
+
+test_ingest_converted_taxonomy_for_rag() {
+    step Ingest converted taxonomy into vector store
+    ilab rag ingest
+    task Taxonomy document ingestion Complete
+}
+
+test_ingest_converted_user_documents_for_rag() {
+  step Ingest converted document\(s\) into vector store
+  ilab rag ingest --input-dir="${DATA_HOME}/instructlab/converted_documents"
+  task User document ingestion Complete
 }
 
 test_generate() {
@@ -345,14 +404,14 @@ test_phased_train() {
         "--phased-mt-bench-judge-dir=${model_path}" # uses base model
     )
 
-    # phase 1 args 
+    # phase 1 args
     train_args+=(
         "--phased-phase1-num-epochs=1"
         "--phased-phase1-data=${data_path}"
         "--phased-phase1-samples-per-save=1"
     )
 
-    # phase 2 args 
+    # phase 2 args
     train_args+=(
         "--phased-phase2-num-epochs=1"
         "--phased-phase2-data=${data_path}"
@@ -371,9 +430,9 @@ test_convert() {
 
 test_evaluate() {
     task Evaluate the model
-    
+
     local model_path="${CACHE_HOME}/instructlab/models/${GRANITE_SAFETENSOR_REPO}"
-    # Temporarily using merlinite as the base model to confirm the workflow executes correctly 
+    # Temporarily using merlinite as the base model to confirm the workflow executes correctly
     local base_model_path="${CACHE_HOME}/instructlab/models/instructlab/merlinite-7b-lab"
 
     export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true
@@ -434,6 +493,13 @@ test_exec() {
     PID=$!
 
     test_chat
+
+    # Test RAG capabilities
+    if [ "$DEV_PREVIEW_FEATURE_GATING" -eq 1 ]; then
+      test_convert_user_document_for_rag
+      test_ingest_converted_user_documents_for_rag
+      test_rag_enabled_chat
+    fi
 
     task Stopping the ilab model serve for the base model
     wait_for_server shutdown $PID
@@ -540,11 +606,14 @@ usage() {
     echo "  -M  Use the mixtral model (4-bit quantized) instead of merlinite model (4-bit quantized)."
     echo "  -P  Run multi-phase training"
     echo "  -v  Use the vLLM backend for serving"
+    echo "  -d  Enable dev preview functionality"
+    echo "  -t  Enable tech preview functionality"
+    echo "  -c  Enable custom feature gating"
 }
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "eShqasfmMPv" opt; do
+while getopts "eShqasfmMPvdtc" opt; do
     case $opt in
         e)
             EVAL=1
@@ -589,6 +658,18 @@ while getopts "eShqasfmMPv" opt; do
         a)
             ACCELERATED_TRAIN=1
             step "Running using the training library"
+            ;;
+        d)
+            DEV_PREVIEW_FEATURE_GATING=1
+            step "Enabling dev preview feature gating"
+            ;;
+        t)
+            TECH_PREVIEW_FEATURE_GATING=1
+            step "Enabling tech preview feature gating"
+            ;;
+        c)
+            CUSTOM_FEATURE_GATING=1
+            step "Enabling custom feature gating"
             ;;
         \?)
             echo "Invalid option: -$opt" >&2
