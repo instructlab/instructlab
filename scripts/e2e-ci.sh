@@ -377,6 +377,19 @@ test_evaluate() {
 
     model_path=${TRAINED_MODEL_PATH}
     base_model_path="${CACHE_HOME}/instructlab/models/${GRANITE_7B_MODEL}"
+    dk_bench_output_formats="csv,xlsx,jsonl"
+
+    step Running DK Bench where trained model generates responses
+    ilab model evaluate \
+        --model "${model_path}" \
+        --benchmark dk_bench \
+        --input-questions "${SCRIPTDIR}/test-data/dk-bench-questions.jsonl" \
+        --output-file-formats "${dk_bench_output_formats}"
+
+    step Running DK Bench with responses already provided
+    ilab model evaluate \
+        --benchmark dk_bench \
+        --input-questions "${SCRIPTDIR}/test-data/dk-bench-questions-with-responses.jsonl" \
 
     export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true
     export HF_DATASETS_TRUST_REMOTE_CODE=true
