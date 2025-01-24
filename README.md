@@ -487,6 +487,10 @@ For detailed documentation on the InstructLab LLMs and their functions, see the 
 
    📋 If multiple `ilab` clients try to connect to the same InstructLab server at the same time, the 1st will connect to the server while the others will start their own temporary server. This will require additional resources on the host machine.
 
+   Model will be available under both long form absolute path, and a shorthand name.
+
+   The model server will behave in the same way as the backend chosen for execution, either Llama.cpp or vllm.
+
 #### Serving other models
 
 - You can serve a non-default model (e.g. Mixtral-8x7B-Instruct-v0.1) with the following example command:
