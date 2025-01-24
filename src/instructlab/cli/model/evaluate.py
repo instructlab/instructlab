@@ -135,6 +135,11 @@ logger = logging.getLogger(__name__)
     is_flag=True,
     help="Print serving engine logs.",
 )
+@click.option(
+    "--skip-server",
+    is_flag=True,
+    help="Skip launching the server and evaluate directly with the HuggingFace model. This option supports mmlu and mmlu_branch benchmarks.",
+)
 @click.pass_context
 @clickext.display_params
 def evaluate(
@@ -160,6 +165,7 @@ def evaluate(
     tls_client_key,  # pylint: disable=unused-argument
     tls_client_passwd,  # pylint: disable=unused-argument
     enable_serving_output,
+    skip_server: bool,
 ) -> None:
     """Evaluates a trained model"""
     try:
@@ -186,6 +192,7 @@ def evaluate(
             tls_client_key,
             tls_client_passwd,
             enable_serving_output,
+            skip_server,
         )
     except Exception as e:
         logger.error(f"An error occurred during evaluation: {str(e)}")
