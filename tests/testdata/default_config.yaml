@@ -258,8 +258,8 @@ rag:
   # Retrieval configuration parameters for RAG
   retriever:
     # The maximum number of documents to retrieve.
-    # Default: 20
-    top_k: 20
+    # Default: 3
+    top_k: 3
 # Serve configuration section.
 serve:
   # Serving backend to use to host the model.
