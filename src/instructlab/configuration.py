@@ -416,29 +416,60 @@ class _mmlu(BaseModel):
     )
 
 
+class _dkbench(BaseModel):
+    """Class describing configuration of DK-Bench evaluation benchmark."""
+
+    judge_model: str = Field(
+        default_factory=lambda: DEFAULTS.JUDGE_MODEL_DK,
+        description="Judge model for DK-Bench.",
+    )
+    input_questions: Optional[str] = Field(
+        default=None,
+        description="File with questions and reference answers used for evaluation during DK-Bench. The file must be valid a '.jsonl' file with the fields 'user_input' and 'reference' in each entry",
+    )
+    output_file_formats: str = Field(
+        default_factory=lambda: DEFAULTS.DK_BENCH_OUTPUT_FILE_FORMAT,
+        description="Comma-separated list of file formats for results of the DK-Bench evaluation. Ex: 'csv,jsonl'. Valid options in the list are csv, jsonl, and xlsx. If this option is not provided the results are written as a .jsonl file",
+    )
+    output_dir: str = Field(
+        default_factory=lambda: DEFAULTS.DK_BENCH_DATA_DIR,
+        description="Directory where DK-Bench evaluation results are stored.",
+    )
+
+
 class _mtbench(BaseModel):
     """Class describing configuration of MTBench evaluation benchmark."""
 
     judge_model: str = Field(
         default_factory=lambda: DEFAULTS.JUDGE_MODEL_MT,
-        description="Judge model for mt_bench and mt_bench_branch.",
-    )
-    output_dir: str = Field(
-        default_factory=lambda: DEFAULTS.EVAL_DATA_DIR,
-        description="Directory where evaluation results are stored.",
+        description="Judge model for MT-Bench.",
     )
     max_workers: str | int = Field(
         default="auto",
         description="Number of workers to use for evaluation with mt_bench or mt_bench_branch. Must be a positive integer or 'auto'.",
+    )
+    output_dir: str = Field(
+        default_factory=lambda: DEFAULTS.MT_BENCH_DATA_DIR,
+        description="Directory where MT-Bench evaluation results are stored.",
     )
 
 
 class _mtbenchbranch(BaseModel):
     """Class describing configuration of MTBenchBranch evaluation benchmark."""
 
+    judge_model: str = Field(
+        # MT-Bench-Branch uses the same default judge model as MT-Bench
+        default_factory=lambda: DEFAULTS.JUDGE_MODEL_MT,
+        description="Judge model for MT-Bench-Branch.",
+    )
+
     taxonomy_path: str = Field(
         default_factory=lambda: DEFAULTS.TAXONOMY_DIR,
         description="Path to where base taxonomy is stored.",
+    )
+    output_dir: str = Field(
+        default_factory=lambda: DEFAULTS.MT_BENCH_BRANCH_DATA_DIR,
+        description="Directory where MT-Bench-Branch evaluation results are stored.",
     )
 
 
@@ -469,6 +500,10 @@ class _evaluate(BaseModel):
         description="Taxonomy branch containing custom skills/knowledge that should be used for evaluation runs.",
     )
     base_branch: Optional[str] = Field(default=None, description="Base taxonomy branch")
+    dk_bench: _dkbench = Field(
+        default_factory=_dkbench,
+        description="Settings to run DK-Bench against a file of user created questions, reference answers, and responses. If responses are not provided they are generated from a model",
+    )
     gpus: Optional[int] = Field(
         default=None, description="Number of GPUs to use for running evaluation."
     )
@@ -487,6 +522,16 @@ class _evaluate(BaseModel):
     mt_bench_branch: _mtbenchbranch = Field(
         default_factory=_mtbenchbranch,
         description="Settings to run MT-Bench against a branch of taxonomy containing custom skills/knowledge used for training",
+    )
+    system_prompt: Optional[str] = Field(
+        default=None,
+        description="System prompt for model getting responses during DK-Bench.",
+    )
+    temperature: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Temperature for model getting responses during DK-Bench. Temperature controls the randomness of the model's responses. Lower values make the output more deterministic, while higher values produce more random results.",
     )
 
 
@@ -1275,6 +1320,9 @@ def ensure_storage_directories_exist() -> bool:
         DEFAULTS.OCI_DIR,
         DEFAULTS.DATASETS_DIR,
         DEFAULTS.EVAL_DATA_DIR,
+        DEFAULTS.MT_BENCH_DATA_DIR,
+        DEFAULTS.MT_BENCH_BRANCH_DATA_DIR,
+        DEFAULTS.DK_BENCH_DATA_DIR,
         DEFAULTS.INTERNAL_DIR,
         DEFAULTS.MODELS_DIR,
         DEFAULTS.TAXONOMY_DIR,
@@ -1558,6 +1606,9 @@ def storage_dirs_exist() -> bool:
         DEFAULTS.OCI_DIR,
         DEFAULTS.DATASETS_DIR,
         DEFAULTS.EVAL_DATA_DIR,
+        DEFAULTS.MT_BENCH_DATA_DIR,
+        DEFAULTS.MT_BENCH_BRANCH_DATA_DIR,
+        DEFAULTS.DK_BENCH_DATA_DIR,
         DEFAULTS.INTERNAL_DIR,
         DEFAULTS.MODELS_DIR,
         DEFAULTS.TAXONOMY_DIR,

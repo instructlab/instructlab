@@ -27,10 +27,11 @@ class Benchmark(str, enum.Enum):
     MMLU_BRANCH = "mmlu_branch"
     MT_BENCH = "mt_bench"
     MT_BENCH_BRANCH = "mt_bench_branch"
+    DK_BENCH = "dk_bench"
 
 
 def evaluate_model(
-    ctx,
+    serve_config,
     model,
     base_model,
     benchmark,
@@ -47,12 +48,16 @@ def evaluate_model(
     merge_system_user_message,
     backend,
     judge_backend,
-    tls_insecure,  # pylint: disable=unused-argument
-    tls_client_cert,  # pylint: disable=unused-argument
-    tls_client_key,  # pylint: disable=unused-argument
-    tls_client_passwd,  # pylint: disable=unused-argument
+    tls_insecure,
+    tls_client_cert,
+    tls_client_key,
+    tls_client_passwd,
     enable_serving_output,
     skip_server: bool,
+    input_questions,
+    output_file_formats,
+    system_prompt,
+    temperature,
 ):
     """Evaluates a trained model"""
 
@@ -75,11 +80,11 @@ def evaluate_model(
                 api_base = None
             else:
                 server, api_base, effective_gpus = launch_server(
-                    eval_serve=ctx.obj.config.serve,
-                    tls_client_cert=ctx.params["tls_client_cert"],
-                    tls_client_key=ctx.params["tls_client_key"],
-                    tls_client_passwd=ctx.params["tls_client_passwd"],
-                    tls_insecure=ctx.params["tls_insecure"],
+                    eval_serve=serve_config,
+                    tls_client_cert=tls_client_cert,
+                    tls_client_key=tls_client_key,
+                    tls_client_passwd=tls_client_passwd,
+                    tls_insecure=tls_insecure,
                     model=model,
                     model_name=model_name,
                     max_workers=max_workers,
@@ -111,7 +116,6 @@ def evaluate_model(
 
     try:
         # get appropriate evaluator class from Eval lib
-
         validate_options(
             model,
             base_model,
@@ -125,9 +129,53 @@ def evaluate_model(
             few_shots,
             batch_size,
             tasks_dir,
+            input_questions,
         )
 
-        if benchmark == Benchmark.MT_BENCH:
+        if benchmark == Benchmark.DK_BENCH:
+            # First Party
+            from instructlab.model.dk_bench_utils import (
+                print_results,
+                run_dk_bench,
+                validate_output_file_formats,
+                write_results,
+            )
+
+            # turn output_file_formats into a list to be passed into write_results
+            file_formats = output_file_formats.split(",")
+            validate_output_file_formats(file_formats)
+
+            # user did not pass in a system prompt
+            # setting default based on model
+            if system_prompt is None:
+                model_path = pathlib.Path(model)
+                system_prompt = get_sysprompt(get_model_arch(model_path))
+
+            result, model_name = run_dk_bench(
+                serve_config,
+                tls_insecure,
+                tls_client_cert,
+                tls_client_key,
+                tls_client_passwd,
+                model,
+                max_workers,
+                gpus,
+                backend,
+                enable_serving_output,
+                input_questions,
+                system_prompt,
+                temperature,
+                judge_model,
+            )
+
+            # default for output_dir is set by Click in src/instructlab/cli/model/evaluate.py
+            # it is a string not a pathlib.Path
+            files = write_results(result, file_formats, output_dir, model_name)
+            print_results(result, files, model_name)
+
+            logger.info("ᕦ(òᴗóˇ)ᕤ Model Evaluation with DK-Bench completed! ᕦ(òᴗóˇ)ᕤ")
+
+        elif benchmark == Benchmark.MT_BENCH:
             # Third Party
             from instructlab.eval.mt_bench import MTBenchEvaluator
 
@@ -417,6 +465,7 @@ def validate_options(
     few_shots,
     batch_size,
     tasks_dir,
+    input_questions,
 ):
     """takes in arguments from the CLI and uses 'benchmark' to validate other arguments
     if all needed configuration is present, raises an exception for the missing values
@@ -480,6 +529,40 @@ def validate_options(
         validate_model(model, allow_gguf=False)
         if benchmark == Benchmark.MMLU_BRANCH:
             validate_model(base_model, "--base-model", allow_gguf=False)
+
+    if benchmark == Benchmark.DK_BENCH:
+        required_args = [input_questions]
+        if None in required_args:
+            required_arg_names = ["input-questions"]
+            error_message = f"Benchmark {benchmark} requires the following args to be set: {required_arg_names}"
+            logger.error(f"\033[91m{error_message}\033[0m")
+            raise ValueError(error_message)
+
+        validate_output_dir(output_dir)
+
+
+def validate_output_dir(output_dir: str):
+    """
+    Validates that an output dir exists. If it does not it creates one.
+    If the input is a file, then a ValueError is thrown.
+
+    Args:
+        output_dir (str): Output directory for results
+    Returns:
+        None
+    """
+    output_dir_path = pathlib.Path(output_dir).resolve()
+    if not output_dir_path.exists():
+        logger.debug(
+            "Output directory %s does not exist. Creating %s .....",
+            output_dir_path,
+            output_dir_path,
+        )
+        os.makedirs(output_dir_path, exist_ok=True)
+    elif not output_dir_path.is_dir():
+        raise ValueError(
+            f"Output directory {output_dir_path} is a file not a directory",
+        )
 
 
 def validate_model(model: str, model_arg: str = "--model", allow_gguf: bool = True):
@@ -674,7 +757,6 @@ def launch_server(
     backend: str | None,
     enable_serving_output: bool,
 ) -> tuple:
-    # eval_serve = deepcopy(ctx.obj.config.serve)
     eval_serve.backend = backend = get_backend(backend, model)
 
     effective_gpus = 0

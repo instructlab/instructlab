@@ -1,0 +1,10 @@
+{"user_input": "What is the capital of the United States of America?", "reference": "The capital of the United States of America is Washington, D.C.", "response": "The capital is New York City."}
+{"user_input": "What is the capital of France?", "reference": "The capital of France is Paris.", "response": "The capital of France is Paris"}
+{"user_input": "What is the capital of Mexico?", "reference": "The capital of Mexico is Mexico City.", "response": "The capital of Mexico is Mexico City."}
+{"user_input": "What is the capital of Japan?", "reference": "The capital of Japan is Tokyo.", "response": "The capital of Japan is Okinawa."}
+{"user_input": "What is the capital of India?", "reference": "The capital of India is New Delhi.", "response": "The capital of India is New Delhi."}
+{"user_input": "What is the capital of Argentina?", "reference": "The capital of Argentina is Buenos Aires.", "response": "The capital of Argentina is Buenos Aires."}
+{"user_input": "What is the capital of China?", "reference": "The capital of China is Beijing.", "response": "The capital of China is Beijing."}
+{"user_input": "What is the capital of Germany?", "reference": "The capital of Germany is Berlin.", "response": "The capital of Germany is Berlin."}
+{"user_input": "What is the capital of Russia?", "reference": "The capital of Russia is Moscow.", "response": "The capital of Russia is Paris."}
+{"user_input": "What is the capital of Chile?", "reference": "The capital of Chile is Santiago", "response": "The capital of Chile is Buenos Aires."}

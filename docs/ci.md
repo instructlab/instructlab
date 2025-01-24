@@ -51,6 +51,11 @@ script.
 | `x`  | Run the e2e workflow for the x-large t-shirt size of hardware |
 | `p`  | Preserve the E2E_TEST_DIR for debugging |
 
+> [!NOTE]
+> The DK-Bench evaluation requires OPENAI_API_KEY to be set before running in `e2e-ci.sh`.
+> This environment variable is set in the CI. Local users of `e2e-ci.sh` will find that the script will exit with a warning if that environment variable is not set.
+> If a user of the script does not have an OPENAI_API_KEY and wishes to run `e2e-ci.sh` without running DK-Bench they can set OPENAI_API_KEY='NO_API_KEY'.
+
 You can specify the following flags to test various features of `ilab` with the
 `e2e-custom.sh` script.
 

@@ -8,12 +8,45 @@ import textwrap
 # Third Party
 from click.testing import CliRunner
 from git import Repo
+from pandas import DataFrame
+from ragas.callbacks import ChainRun  # type: ignore
+from ragas.evaluation import EvaluationDataset, EvaluationResult  # type: ignore
 
 # First Party
 from instructlab import lab
 
 # Local
 from . import common
+
+df_with_responses = DataFrame(
+    {
+        "user_input": ["What is the capital of France?"],
+        "response": ["Paris is the capital of France."],
+        "reference": ["The capital of France is Paris."],
+    }
+)
+
+
+def get_mock_evaluation_result():
+    unimportant_ragas_traces = {
+        "default": ChainRun(
+            run_id="42",
+            parent_run_id=None,
+            name="root",
+            inputs={"system": "null", "user": "null"},
+            outputs={"assistant": "null"},
+            metadata={"user_id": 1337},
+        )
+    }
+
+    mocked_scores = [{"domain_specific_rubrics": 5}]
+    mocked_evaluation_ds = EvaluationDataset.from_pandas(df_with_responses)
+    result = EvaluationResult(
+        scores=mocked_scores,
+        dataset=mocked_evaluation_ds,
+        ragas_traces=unimportant_ragas_traces,
+    )
+    return result
 
 
 def clean_output(text):
@@ -710,3 +743,327 @@ def test_no_gpu_warning(validate_model_mock, cli_runner: CliRunner):
         "Evaluate is currently not configured to use GPUs. If you are on a GPU-enabled system edit your config or pass the number of GPUs you would like to use with '--gpus'"
         in result.output
     )
+
+
+@patch(
+    "instructlab.model.dk_bench_utils.is_judge_model_name_valid",
+    return_value=True,
+)
+@patch(
+    "instructlab.model.dk_bench_utils.validate_input_questions",
+)
+@patch(
+    "pandas.read_json",
+    return_value=mock.MagicMock(),
+)
+@patch(
+    "instructlab.model.evaluate.validate_model",
+)
+@patch(
+    "instructlab.model.evaluate.launch_server",
+    return_value=(mock.MagicMock(), "http://127.0.0.1:8000/v1", 1),
+)
+@patch(
+    "instructlab.eval.ragas.RagasEvaluator.run",
+    return_value=get_mock_evaluation_result(),
+)
+def test_evaluate_dk_bench(
+    is_judge_model_name_valid_mock,
+    validate_input_questions_mock,
+    read_json_mock,
+    validate_model_mock,
+    launch_server_mock,
+    run_mock,
+    cli_runner: CliRunner,
+    tmp_path,
+):
+    test_file = tmp_path / "test.jsonl"
+    test_file.touch()
+    os.environ["OPENAI_API_KEY"] = "TEMP_KEY"
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "dk_bench",
+            "--model",
+            "instructlab/granite-7b-lab",
+            "--input-questions",
+            test_file,
+            "--output-file-formats",
+            "csv,jsonl,xlsx",
+        ],
+    )
+    is_judge_model_name_valid_mock.assert_called_once()
+    validate_input_questions_mock.assert_called_once()
+    read_json_mock.assert_called_once()
+    validate_model_mock.assert_called_once()
+    launch_server_mock.assert_called_once()
+    run_mock.assert_called_once()
+    expected = textwrap.dedent(
+        """\
+        # DK-BENCH REPORT
+
+        ## MODEL: granite-7b-lab
+
+        Question #1:     5/5
+        ----------------------------
+        Average Score:   5.00/5
+        Total Score:     5/5
+
+        Responses and scores written to:
+        """
+    )
+    assert expected in result.output
+    assert "Model Evaluation with DK-Bench completed!" in result.output
+    output_formats = [".xlsx", ".jsonl", ".csv"]
+    for fmt in output_formats:
+        assert fmt in result.output
+
+    assert result.exit_code == 0
+
+
+@patch(
+    "instructlab.model.dk_bench_utils.is_judge_model_name_valid",
+    return_value=True,
+)
+@patch("instructlab.model.dk_bench_utils.validate_input_questions")
+@patch(
+    "pandas.read_json",
+    return_value=df_with_responses,
+)
+@patch(
+    "instructlab.eval.ragas.RagasEvaluator.run",
+    return_value=get_mock_evaluation_result(),
+)
+def test_evaluate_dk_bench_input_with_responses(
+    is_judge_model_name_valid_mock,
+    validate_input_questions_mock,
+    read_json_mock,
+    run_mock,
+    cli_runner: CliRunner,
+    tmp_path,
+):
+    test_file = tmp_path / "test.jsonl"
+    test_file.touch()
+    os.environ["OPENAI_API_KEY"] = "TEMP_KEY"
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "dk_bench",
+            "--model",
+            "instructlab/granite-7b-lab",
+            "--input-questions",
+            test_file,
+            "--output-file-formats",
+            "csv,jsonl,xlsx",
+        ],
+    )
+    is_judge_model_name_valid_mock.assert_called_once()
+    validate_input_questions_mock.assert_called_once()
+    read_json_mock.assert_called_once()
+    run_mock.assert_called_once()
+    expected = textwrap.dedent(
+        """\
+        # DK-BENCH REPORT
+
+        ## MODEL: no-model-provided
+
+        Question #1:     5/5
+        ----------------------------
+        Average Score:   5.00/5
+        Total Score:     5/5
+
+        Responses and scores written to:
+        """
+    )
+    assert expected in result.output
+    assert "Model Evaluation with DK-Bench completed!" in result.output
+    output_formats = [".xlsx", ".jsonl", ".csv"]
+    for fmt in output_formats:
+        assert fmt in result.output
+
+    assert result.exit_code == 0
+
+
+def test_evaluate_dk_bench_no_input_questions_file(cli_runner: CliRunner):
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "dk_bench",
+            "--model",
+            "instructlab/granite-7b-lab",
+        ],
+    )
+    assert result.exit_code == 1
+    assert (
+        "Benchmark dk_bench requires the following args to be set: ['input-questions']"
+        in result.output
+    )
+
+
+def test_evaluate_dk_bench_invalid_output_file_formats(cli_runner: CliRunner):
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "dk_bench",
+            "--model",
+            "instructlab/granite-7b-lab",
+            "--input-questions",
+            "questions.jsonl",
+            "--output-file-formats",
+            "csv,html",
+        ],
+    )
+    assert result.exit_code == 1
+    assert "File format html is not a valid output format." in result.output
+
+
+@patch(
+    "instructlab.model.dk_bench_utils.is_judge_model_name_valid",
+    return_value=True,
+)
+def test_evaluate_dk_bench_input_file_does_not_exist(
+    is_judge_model_name_valid_mock, cli_runner: CliRunner
+):
+    os.environ["OPENAI_API_KEY"] = "TEMP_KEY"
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "dk_bench",
+            "--model",
+            "instructlab/granite-7b-lab",
+            "--input-questions",
+            "questions.jsonl",
+        ],
+    )
+    is_judge_model_name_valid_mock.assert_called_once()
+    assert result.exit_code == 1
+    assert "questions.jsonl does not exist" in result.output
+
+
+@patch(
+    "instructlab.model.dk_bench_utils.is_judge_model_name_valid",
+    return_value=True,
+)
+def test_evaluate_dk_bench_input_file_is_dir(
+    is_judge_model_name_valid_mock, cli_runner: CliRunner, tmp_path
+):
+    os.environ["OPENAI_API_KEY"] = "TEMP_KEY"
+    test_dir = tmp_path / "test"
+    test_dir.mkdir()
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "dk_bench",
+            "--model",
+            "instructlab/granite-7b-lab",
+            "--input-questions",
+            test_dir,
+        ],
+    )
+    is_judge_model_name_valid_mock.assert_called_once()
+    assert result.exit_code == 1
+    assert "test is a directory" in result.output
+
+
+@patch(
+    "instructlab.model.dk_bench_utils.is_judge_model_name_valid",
+    return_value=True,
+)
+def test_evaluate_dk_bench_input_file_not_jsonl(
+    is_judge_model_name_valid_mock, cli_runner: CliRunner, tmp_path
+):
+    os.environ["OPENAI_API_KEY"] = "TEMP_KEY"
+    test_file = tmp_path / "test.csv"
+    test_file.touch()
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "dk_bench",
+            "--model",
+            "instructlab/granite-7b-lab",
+            "--input-questions",
+            test_file,
+        ],
+    )
+    is_judge_model_name_valid_mock.assert_called_once()
+    assert result.exit_code == 1
+    assert "Expected a '.jsonl' file" in result.output
+
+
+def test_evaluate_dk_bench_no_openai_api_key(cli_runner: CliRunner, tmp_path):
+    test_file = tmp_path / "test.jsonl"
+    test_file.touch()
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "dk_bench",
+            "--model",
+            "instructlab/granite-7b-lab",
+            "--input-questions",
+            test_file,
+            "--output-file-formats",
+            "csv,jsonl,xlsx",
+        ],
+    )
+    assert result.exit_code == 1
+    assert (
+        "Environment variable 'OPENAI_API_KEY' must be set to run the Judge model in DK-Bench."
+        in result.output
+    )
+
+
+def test_evaluate_dk_bench_output_dir_is_file(cli_runner: CliRunner, tmp_path):
+    test_file = tmp_path / "test.jsonl"
+    test_file.touch()
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "model",
+            "evaluate",
+            "--benchmark",
+            "dk_bench",
+            "--model",
+            "instructlab/granite-7b-lab",
+            "--input-questions",
+            test_file,
+            "--output-file-formats",
+            "csv,jsonl,xlsx",
+            "--output-dir",
+            test_file,
+        ],
+    )
+    assert result.exit_code == 1
+    assert "is a file not a directory" in result.output
