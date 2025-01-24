@@ -89,14 +89,19 @@ ec2__terminate() {
 
 ec2_calculate_instance_id() {
     if [ -z "$INSTANCE_ID" ]; then
+        # shellcheck disable=SC2016
         INSTANCE_ID="$(aws ec2 describe-instances \
             --filters "Name=tag:Name,Values=$INSTANCE_NAME" \
             --region "$EC2_REGION" \
-            --query "Reservations[*].Instances[*].InstanceId" \
+            --query 'Reservations[*].Instances[?State.Name!=`terminated`].InstanceId' \
             --output text)" &> /dev/null
     fi
     if [ -z "$INSTANCE_ID" ]; then
         echo "Instance named '${INSTANCE_NAME}' not found"
+        exit 1
+    fi
+    if [[ "$INSTANCE_ID" == *$'\n'* ]]; then
+        printf "Multiple instances found for '%s':\n\n%s\n\nHint: You can pick one by setting INSTANCE_ID= envvar.\n" "$INSTANCE_NAME" "$INSTANCE_ID"
         exit 1
     fi
 }
