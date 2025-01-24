@@ -9,6 +9,9 @@
 
 ### Features
 
+- An experimental/preview implemementation of Retrieval-Augmented Generation (RAG) is added.  It is enabled only when an `ILAB_FEATURE_SCOPE` environemnt variable is set to `DevPreviewNoUpgrade`.  For details see the [development documentation](https://github.com/instructlab/dev-docs/blob/main/docs/rag/ilab-rag-retrieval.md).
+  - A new command-group `ilab rag` has been introduced.  The group includes two new commands: `ilab rag convert` and `ilab rag ingest`.  The former converts documents (e.g., PDF) into a structured form and the latter ingests them into a vector index file.
+  - A new argument `--rag`  is added to the `ilab model chat` command that uses that index during chat to augment the generation.  When that flag is sent, the chat functionality responds to each chat input by first retrieving text from the vector index and then providing that text to the model for its use in answering.
 - A new command `ilab model upload` has been introduced so users can now upload their trained models to [Hugging Face](https://huggingface.co/), OCI registry endpoints, and [AWS S3](https://aws.amazon.com/s3/) buckets via the `ilab` CLI
 - `ilab model serve` now has separate `--host` and `--port` options, replacing the `host_port` configuration. The default values are `127.0.0.1` for `--host` and `8000` for `--port`, allowing users to configure the server's binding address and port independently through the configuration file or command-line flags.
 - Update vLLM to version 0.6.4.post1. As a requirement for this new vLLM version, PyTorch is updated to 2.5.1
