@@ -255,8 +255,20 @@ test_chat() {
 
 test_rag_enabled_chat() {
     task RAG-enabled chat with the model
+    testmode=${1:-}
+    if [[ "$testmode" != "user_docs" ]] && [[ "$testmode" != "training" ]] && [[ "$testmode" != "taxonomy" ]]; then
+        echo "Invalid test mode: $testmode"
+        # exit 1
+    fi
+
+    if [[ "$testmode" == "user_docs" ]]; then
+        QUESTION='How do you use YAML with InstructLab\n'
+    else
+        QUESTION='What is the brightest star in the Phoenix constellation\n'
+    fi
+
     CHAT_ARGS=("--endpoint-url" "http://localhost:8000/v1")
-    ilab model chat --rag -qq 'How do you use YAML with InstructLab\n'
+    ilab model chat --rag --retriever-top-k 5 -qq "${QUESTION}"
     task RAG-enabled chat with the model Complete
 }
 
@@ -275,39 +287,33 @@ test_taxonomy() {
     step Update taxonomy with sample qna additions
     if [ "$testnum" -eq 1 ]; then
         mkdir -p taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings
-        cp "$SCRIPTDIR"/test-data/e2e-qna-freeform-skill.yaml taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings/qna.yaml
+        cp "$SCRIPTDIR"/test-data/compositional_skills/freeform/e2e-qna-freeform-siblings-skill.yaml taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings/qna.yaml
     elif [ "$testnum" -eq 2 ]; then
         rm -rf taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings
         mkdir -p taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no
-        cp "$SCRIPTDIR"/test-data/e2e-qna-grounded-skill.yaml taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no/qna.yaml
+        cp "$SCRIPTDIR"/test-data/compositional_skills/grounded/e2e-qna-grounded-employee-skill.yaml taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no/qna.yaml
     elif [ "$testnum" -eq 3 ]; then
         rm -rf taxonomy/compositional_skills/extraction/answerability/e2e-yes_or_no
-        mkdir -p taxonomy/knowledge/tonsils/overview/e2e-tonsils
-        cp "$SCRIPTDIR"/test-data/knowledge/e2e-qna-knowledge.yaml taxonomy/knowledge/tonsils/overview/e2e-tonsils/qna.yaml
+        mkdir -p taxonomy/knowledge/phoenix/overview/e2e-phoenix
+        cp "$SCRIPTDIR"/test-data/knowledge/e2e-qna-knowledge-phoenix.yaml taxonomy/knowledge/phoenix/overview/e2e-phoenix/qna.yaml
     fi
 
     step Verification
     ilab taxonomy diff "${DIFF_ARGS[@]}"
 }
 
-test_convert_taxonomy_for_rag() {
-    step Convert user taxonomy for ingestion into vector store
-    ilab rag convert
-    task Taxonomy document conversion Complete
-}
-
 test_convert_user_document_for_rag() {
     step Convert documents for ingestion into vector store
     mkdir -p "${DATA_HOME}/instructlab/converted_documents"
-    cp -r "test-data/raw_documents" "${DATA_HOME}/instructlab/raw_documents"
+    cp -r "$SCRIPTDIR"/test-data/raw_documents "${DATA_HOME}/instructlab/raw_documents"
     ilab rag convert --input-dir "${DATA_HOME}/instructlab/raw_documents" --output-dir="${DATA_HOME}/instructlab/converted_documents"
     task User document conversion Complete
 }
 
-test_ingest_converted_taxonomy_for_rag() {
-    step Ingest converted taxonomy into vector store
-    ilab rag ingest
-    task Taxonomy document ingestion Complete
+test_convert_taxonomy_documents_for_rag() {
+    step Convert taxonomy document\(s\) for ingestion into vector store
+    ilab rag convert --taxonomy-path taxonomy
+    task Taxonomy document conversion Complete
 }
 
 test_ingest_converted_user_documents_for_rag() {
@@ -315,6 +321,19 @@ test_ingest_converted_user_documents_for_rag() {
   ilab rag ingest --input-dir="${DATA_HOME}/instructlab/converted_documents"
   task User document ingestion Complete
 }
+
+test_ingest_processed_taxonomy_documents_for_rag() {
+  step Ingest processed taxonomy document\(s\) into vector store
+  ilab rag ingest
+  task User document ingestion Complete
+}
+
+test_ingest_taxonomy_documents_for_rag() {
+    step Ingest taxonomy document\(s\) into vector store
+    ilab rag ingest --input-dir="${DATA_HOME}/instructlab/converted_documents"
+    task Taxonomy document ingestion Complete
+}
+
 
 test_generate() {
     task Generate synthetic data
@@ -494,11 +513,27 @@ test_exec() {
 
     test_chat
 
+    # Anticipate test of taxonomy knowledge to reuse the same data in the RAG tests
+    # test_taxonomy 1
+    # test_generate
+    # test_taxonomy 2
+    # test_generate
+    test_taxonomy 3
+    test_generate
+
     # Test RAG capabilities
     if [ "$DEV_PREVIEW_FEATURE_GATING" -eq 1 ]; then
+      # Plug & Play path
       test_convert_user_document_for_rag
       test_ingest_converted_user_documents_for_rag
-      test_rag_enabled_chat
+      test_rag_enabled_chat 'user_docs'
+      # Model Training
+      test_ingest_processed_taxonomy_documents_for_rag
+      test_rag_enabled_chat 'training'
+      # Taxonomy path
+      test_convert_taxonomy_documents_for_rag
+      test_ingest_taxonomy_documents_for_rag
+      test_rag_enabled_chat 'taxonomy'
     fi
 
     task Stopping the ilab model serve for the base model
@@ -507,13 +542,6 @@ test_exec() {
     test_serve teacher
     PID=$!
     step served the teacher model
-
-    test_taxonomy 1
-    test_generate
-    test_taxonomy 2
-    test_generate
-    test_taxonomy 3
-    test_generate
 
     test_data_list
 
@@ -678,6 +706,10 @@ while getopts "eShqasfmMPvdtc" opt; do
             ;;
     esac
 done
+
+DEV_PREVIEW_FEATURE_GATING=${DEV_PREVIEW_FEATURE_GATING:-}
+TECH_PREVIEW_FEATURE_GATING=${TECH_PREVIEW_FEATURE_GATING:-}
+CUSTOM_FEATURE_GATING=${CUSTOM_FEATURE_GATING:-}
 
 init_e2e_tests
 trap 'rm -rf "${E2E_TEST_DIR}"' EXIT
