@@ -11,7 +11,7 @@ import pytest
 
 # First Party
 from instructlab.cli.model.serve import warn_for_unsupported_backend_param
-from instructlab.model.backends.vllm import get_max_stable_vram_wait
+from instructlab.model.backends import vllm
 
 # Local
 from . import common
@@ -47,7 +47,7 @@ def vllm_setup_test_with_sleep_raise(runner, args, *_mock_args):
     # We assume that sleep is executed from inside the serve loop; at this
     # point, we are ready to exit from it; we trigger the exit with this side
     # effect, letting the serve function catch it and exit gracefully.
-    with mock.patch("time.sleep", side_effect=Exception("Intended Abort")):
+    with mock.patch.object(vllm, "_sleep", side_effect=Exception("Intended Abort")):
         return common.vllm_setup_test(runner, args)
 
 
@@ -307,10 +307,10 @@ def test_vllm_args_null(cli_runner: CliRunner):
 
 def test_max_stable_vram_wait():
     with mock.patch.dict(os.environ, {"ILAB_MAX_STABLE_VRAM_WAIT": "0"}):
-        wait = get_max_stable_vram_wait(10)
+        wait = vllm.get_max_stable_vram_wait(10)
         assert wait == 0
     with mock.patch.dict(os.environ, clear=True):
-        wait = get_max_stable_vram_wait(10)
+        wait = vllm.get_max_stable_vram_wait(10)
         assert wait == 10
 
 

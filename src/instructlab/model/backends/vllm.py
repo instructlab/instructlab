@@ -37,6 +37,9 @@ from .server import BackendServer, ServerConfig
 
 logger = logging.getLogger(__name__)
 
+# Useful for testing (mocking time.sleep for this module only)
+_sleep = time.sleep
+
 
 class Server(BackendServer):
     def __init__(
@@ -77,7 +80,7 @@ class Server(BackendServer):
 
         try:
             while True:
-                time.sleep(1)
+                _sleep(1)
         except KeyboardInterrupt:
             logger.info("vLLM server terminated by keyboard")
         # pylint: disable=broad-exception-caught
@@ -151,7 +154,7 @@ class Server(BackendServer):
                 shutdown_process(vllm_server_process, 20)
                 # pylint: disable=raise-missing-from
                 raise ServerException(f"vLLM failed to start up in {duration} seconds")
-            time.sleep(2)
+            _sleep(2)
         return (vllm_server_process, temp_api_base)
 
     def run_detached(
@@ -492,7 +495,7 @@ def wait_for_stable_vram(timeout: int):
     supported, stable = wait_for_stable_vram_cuda(timeout)
     if not supported:
         # TODO add support for intel
-        time.sleep(timeout)
+        _sleep(timeout)
         return
     if not stable:
         # Only for debugging since recovery is likely after additional start delay
@@ -581,7 +584,7 @@ def wait_for_stable_vram_cuda(timeout: int) -> Tuple[bool, bool]:
                 return True, False
 
             last_free = free_memory
-            time.sleep(1)
+            _sleep(1)
     finally:
         try:
             torch.cuda.empty_cache()
