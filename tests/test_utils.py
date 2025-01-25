@@ -203,7 +203,7 @@ def test_get_sysprompt():
     arch = "granite-3.1"
     assert (
         utils.get_sysprompt(arch)
-        == "I am a Red Hat® Instruct Model, an AI language model developed by Red Hat and IBM Research based on the granite-3.1-8b-instruct model. My primary role is to serve as a chat assistant."
+        == "I am a Red Hat® Instruct Model, an AI language model developed by Red Hat and IBM Research based on the granite-3.1-8b-base model. My primary role is to serve as a chat assistant."
     )
 
     arch = "random"
