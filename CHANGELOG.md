@@ -9,7 +9,7 @@
 
 ### Features
 
-- - An experimental/preview implementation of Retrieval-Augmented Generation (RAG) is added.  It is enabled only when an `ILAB_FEATURE_SCOPE` environment variable is set to `DevPreviewNoUpgrade`.  For details see the [development documentation](https://github.com/instructlab/dev-docs/blob/main/docs/rag/ilab-rag-retrieval.md).
+- An experimental/preview implementation of Retrieval-Augmented Generation (RAG) is added.  It is enabled only when an `ILAB_FEATURE_SCOPE` environment variable is set to `DevPreviewNoUpgrade`.  For details see the [instructions in README.md](https://github.com/instructlab/instructlab/?tab=readme-ov-file#-configure-retrieval-augmented-generation-developer-preview).
   - A new command-group `ilab rag` has been introduced.  The group includes two new commands: `ilab rag convert` and `ilab rag ingest`.  The former converts documents (e.g., PDF) into a structured form and the latter ingests them into a vector index file.
   - A new argument `--rag`  is added to the `ilab model chat` command that uses that index during chat to augment the generation.  When that flag is sent, the chat functionality responds to each chat input by first retrieving text from the vector index and then providing that text to the model for its use in answering.
 - A new command `ilab model upload` has been introduced so users can now upload their trained models to [Hugging Face](https://huggingface.co/), OCI registry endpoints, and [AWS S3](https://aws.amazon.com/s3/) buckets via the `ilab` CLI
