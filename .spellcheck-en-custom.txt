@@ -38,6 +38,7 @@ ditaa
 DK
 DK-Bench
 DKMS
+Docling
 dr
 Dropdown
 env
@@ -170,6 +171,7 @@ tox
 triagers
 UI
 unquantized
+upgradable
 USM
 venv
 vllm
