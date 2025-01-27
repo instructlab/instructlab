@@ -201,7 +201,9 @@ class _serve_vllm(BaseModel):
     gpus: Optional[int] = Field(default=None, description="Number of GPUs to use.")
     # arguments to pass into vLLM process
     vllm_args: list[str] | None = Field(
-        default_factory=list,
+        # adding type: ignore here to workaround this issue: https://github.com/python/mypy/issues/18191
+        # above bug is triggered by https://github.com/pydantic/pydantic/issues/10950
+        default_factory=list,  # type: ignore
         description="vLLM specific arguments. All settings can be passed as a list of strings, see: https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html",
         examples=[
             ["--dtype", "auto"],
@@ -1184,7 +1186,9 @@ def config_to_commented_map(
             # If the default value comes from a factory, evaluate it and use the result as the default value
             if default_value is PydanticUndefined:
                 if default_factory is not None and callable(default_factory):
-                    default_value = default_factory()
+                    # adding type: ignore here to work around this issue https://github.com/pydantic/pydantic/issues/10945
+                    #  pydantic>=2.10.7 will solve the issue.
+                    default_value = default_factory()  # type: ignore
             # When the default value's type is an Enum or Enum value, convert it to a string
             elif isinstance(default_value, enum.Enum):
                 default_value = default_value.value

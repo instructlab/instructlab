@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 class SUPPORTED_FORMATS(Enum):
     GGUF = "gguf"
     SAFETENSORS = "safetensors"
+    OCI = "oci"
 
     def __contains__(self, item):
         return item in [fmt.value for fmt in self.__class__]
@@ -133,6 +134,18 @@ class SafetensorsToGGUF(Converter):
             outfile=dest,
             outtype=self.outtype,
         )
+
+
+@Converter.register_format_converter(
+    SUPPORTED_FORMATS.SAFETENSORS, SUPPORTED_FORMATS.OCI
+)
+class SafetensorsToOCI(Converter):
+    def convert(self):
+        super().convert()
+        # Third Party
+        from olot.oci_artifact import create_oci_artifact_from_model  # type: ignore
+
+        create_oci_artifact_from_model(self.source_model, self.destination)
 
 
 def convert_model(
