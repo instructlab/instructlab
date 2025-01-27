@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -xeuf
+set -xeuf pipefail
 
 # This is the full workflow test of the ilab CLI.
 #
