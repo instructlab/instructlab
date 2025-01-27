@@ -52,11 +52,16 @@ def vllm_setup_test(runner, args, mock_popen, *_mock_args):
     if result.exit_code != 0:
         print(result.output)
 
-    assert len(mock_popen.call_args_list) == 1 or (
-        "Retrying (1/1)" in result.output and len(mock_popen.call_args_list) == 2
+    vllm_calls = [
+        call
+        for call in mock_popen.call_args_list
+        if "vllm.entrypoints.openai.api_server" in call.kwargs.get("args", [])
+    ]
+    assert len(vllm_calls) == 1 or (
+        "Retrying (1/1)" in result.output and len(vllm_calls) == 2
     )
 
-    return mock_popen.call_args_list[0][1]["args"]
+    return vllm_calls[0][1]["args"]
 
 
 def assert_tps(args, tps):
