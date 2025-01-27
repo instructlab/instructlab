@@ -506,6 +506,7 @@ test_exec() {
     test_init
     test_config_show
     test_download
+    test_list
 
     # See below for cleanup, this runs an ilab model serve in the background
     test_serve base
