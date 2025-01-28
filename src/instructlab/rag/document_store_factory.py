@@ -31,6 +31,13 @@ def create_document_retriever(
         create_in_memory_document_retriever,
     )
 
+    if not logger.isEnabledFor(logging.DEBUG):
+        # Increase log level for RAG components
+        for _logger in [
+            logging.getLogger(name) for name in ["haystack", "sentence_transformers"]
+        ]:
+            _logger.setLevel(logging.WARNING)
+
     return create_in_memory_document_retriever(
         document_store_uri=document_store_uri,
         document_store_collection_name=document_store_collection_name,

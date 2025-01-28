@@ -1,4 +1,5 @@
 # Standard
+import logging
 
 # Third Party
 from haystack.components.converters import TextFileToDocument  # type: ignore
@@ -14,6 +15,8 @@ from haystack.document_stores.in_memory import InMemoryDocumentStore  # type: ig
 from instructlab.rag.haystack.components.document_splitter import (
     DoclingDocumentSplitter,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def create_document_writer(
@@ -52,7 +55,9 @@ def create_document_embedder(embedding_model_path: str):
 
 
 def create_text_embedder(embedding_model_path: str):
-    return SentenceTransformersTextEmbedder(model=embedding_model_path)
+    return SentenceTransformersTextEmbedder(
+        model=embedding_model_path, progress_bar=logger.isEnabledFor(logging.DEBUG)
+    )
 
 
 def create_converter():
