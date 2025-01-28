@@ -1,3 +1,11 @@
+## v0.24
+
+### Breaking Changes
+
+### Features
+
+- Update vLLM to version 0.6.6.post1. As a requirement for this new vLLM version, PyTorch is updated to 2.5.1
+
 ## v0.23
 
 ### Breaking Changes
