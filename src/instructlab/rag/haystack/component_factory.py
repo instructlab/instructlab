@@ -51,8 +51,10 @@ def create_document_embedder(embedding_model_path: str):
     return SentenceTransformersDocumentEmbedder(model=embedding_model_path)
 
 
-def create_text_embedder(embedding_model_path: str):
-    return SentenceTransformersTextEmbedder(model=embedding_model_path)
+def create_text_embedder(embedding_model_path: str, is_debug: bool = False):
+    return SentenceTransformersTextEmbedder(
+        model=embedding_model_path, progress_bar=is_debug
+    )
 
 
 def create_converter():

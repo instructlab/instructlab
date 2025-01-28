@@ -39,6 +39,7 @@ def create_in_memory_document_retriever(
     document_store_collection_name: str,
     top_k: int,
     embedding_model_path: str,
+    is_debug: bool = False,
 ) -> DocumentStoreRetriever:
     """
     Creates a `DocumentStoreRetriever` based on Haystack components.
@@ -49,4 +50,5 @@ def create_in_memory_document_retriever(
         document_store_collection_name=document_store_collection_name,
         top_k=top_k,
         embedding_model_path=embedding_model_path,
+        is_debug=is_debug,
     )

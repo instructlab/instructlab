@@ -36,6 +36,7 @@ class HaystackDocumentStoreRetriever(DocumentStoreRetriever):
         document_store_collection_name: str,
         top_k: int,
         embedding_model_path: str,
+        is_debug: bool = False,
     ):
         super().__init__()
         self._pipeline = _create_pipeline(
@@ -43,6 +44,7 @@ class HaystackDocumentStoreRetriever(DocumentStoreRetriever):
             document_store_collection_name=document_store_collection_name,
             top_k=top_k,
             embedding_model_path=embedding_model_path,
+            is_debug=is_debug,
         )
         _connect_components(self._pipeline)
 
@@ -66,6 +68,7 @@ def _create_pipeline(
     document_store_collection_name: str,
     top_k: int,
     embedding_model_path: str,
+    is_debug: bool = False,
 ) -> Pipeline:
     document_store = create_document_store(
         document_store_uri=document_store_uri,
@@ -76,7 +79,9 @@ def _create_pipeline(
         top_k=top_k,
         document_store=document_store,
     )
-    text_embedder = create_text_embedder(embedding_model_path=embedding_model_path)
+    text_embedder = create_text_embedder(
+        embedding_model_path=embedding_model_path, is_debug=is_debug
+    )
     pipeline = Pipeline()
     pipeline.add_component("embedder", text_embedder)
     pipeline.add_component("retriever", document_retriever)
