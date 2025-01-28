@@ -590,8 +590,7 @@ def chat_model(
     """Runs a chat using the modified model"""
     if rag_enabled and not FeatureGating.feature_available(GatedFeatures.RAG):
         logger.error(
-            f"This functionality is experimental; set {FeatureGating.env_var_name}"
-            f' to "{FeatureScopes.DevPreviewNoUpgrade.value}" to enable.'
+            f'This functionality is experimental; run "export {FeatureGating.env_var_name}={FeatureScopes.DevPreviewNoUpgrade.value}" command to enable.'
         )
         return
 
