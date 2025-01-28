@@ -17,13 +17,12 @@ from huggingface_hub import snapshot_download
 # First Party
 from instructlab.configuration import DEFAULTS
 from instructlab.defaults import DEFAULT_INDENT
+from instructlab.model.list import list_and_print_models
 from instructlab.utils import (
     check_skopeo_version,
     is_huggingface_repo,
     is_oci_repo,
-    list_models,
     load_json,
-    print_table,
 )
 
 logger = logging.getLogger(__name__)
@@ -301,6 +300,4 @@ def download_models(
                 ) from exc
 
     logger.info("Available models (`ilab model list`):")
-    data = list_models([Path(model_dir)], False)
-    data_as_lists = [list(item) for item in data]
-    print_table(["Model Name", "Last Modified", "Size"], data_as_lists)
+    list_and_print_models([Path(model_dir)], False)

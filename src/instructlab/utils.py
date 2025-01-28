@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
+from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
 from typing import List, Tuple, TypedDict
@@ -45,7 +46,15 @@ from .defaults import DEFAULT_INDENT, DEFAULTS, RECOMMENDED_SCOPEO_VERSION
 
 logger = logging.getLogger(__name__)
 
-AnalyzeModelResult = Tuple[str, str, str]
+
+# Effectively a dictionary of model name,
+# model modification time, size and absolute path
+@dataclass
+class AnalyzeModelResult:
+    model_name: str
+    model_modification_time: str
+    model_size: str
+    model_path: Path
 
 
 class SDGTokens:
@@ -827,7 +836,12 @@ def _analyze_gguf(entry: Path) -> AnalyzeModelResult:
     modification_time_readable = time.strftime(
         "%Y-%m-%d %H:%M:%S", time.localtime(modification_time)
     )
-    return (entry.name, modification_time_readable, f"{adjusted_size:.1f} {magnitude}")
+    return AnalyzeModelResult(
+        entry.name,
+        modification_time_readable,
+        f"{adjusted_size:.1f} {magnitude}",
+        entry.absolute(),
+    )
 
 
 def _analyze_dir(
@@ -878,10 +892,11 @@ def _analyze_dir(
                 "%Y-%m-%d %H:%M:%S", time.localtime(modification_time)
             )
             models.append(
-                (
+                AnalyzeModelResult(
                     actual_model_name,
                     modification_time_readable,
                     f"{adjusted_all_sizes:.1f} {magnitude}",
+                    entry.absolute(),
                 )
             )
     return models
