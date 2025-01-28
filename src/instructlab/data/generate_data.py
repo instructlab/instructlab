@@ -124,18 +124,20 @@ def create_server_and_generate(
     use_legacy_pretraining_format,
     log_file,
     local_uuid,
+    process_mode,
 ):
     backend_instance = None
     # we need to use the instructlab logger so that the libraries inherit the config we set up.
     logger = logging.getLogger("instructlab")
 
     # First Party
-    from instructlab.defaults import ILAB_PROCESS_STATUS
+    from instructlab.defaults import ILAB_PROCESS_MODES, ILAB_PROCESS_STATUS
     from instructlab.log import add_file_handler_to_logger
 
     # when in a new process, logger configuration does not seem to be promised. Add the file handler pointing to our new log file
     # and also, reenforce the level set on the instructlab logger.
-    add_file_handler_to_logger(log_file=log_file, logger=logger)
+    if process_mode == ILAB_PROCESS_MODES.ATTACHED:
+        add_file_handler_to_logger(log_file=log_file, logger=logger)
     logger.setLevel(log_level)
 
     # Third Party
