@@ -217,6 +217,7 @@ def add_process(
     start_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     kwargs["log_file"] = log_file
     kwargs["local_uuid"] = str(local_uuid)
+    kwargs["process_mode"] = process_mode
     if process_mode == ILAB_PROCESS_MODES.DETACHED:
         assert isinstance(log_file, str)
         cmd = format_command(target=target, extra_imports=extra_imports, **kwargs)
