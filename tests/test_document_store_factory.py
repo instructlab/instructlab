@@ -65,9 +65,7 @@ def fixture_mock_create_text_embedder():
     with patch(
         "instructlab.rag.haystack.component_factory.create_text_embedder"
     ) as mock_function:
-        mock_function.side_effect = (
-            lambda embedding_model_path, is_debug: TextEmbedderMock()
-        )
+        mock_function.side_effect = lambda embedding_model_path: TextEmbedderMock()
         yield mock_function
 
 

@@ -585,7 +585,6 @@ def chat_model(
     logs_dir,
     vi_mode,
     visible_overflow,
-    is_debug: bool,
 ):
     """Runs a chat using the modified model"""
     if rag_enabled and not FeatureGating.feature_available(GatedFeatures.RAG):
@@ -724,7 +723,6 @@ def chat_model(
             top_k=top_k,
             backend_type=backend_type,
             params=params,
-            is_debug=is_debug,
         )
     except ChatException as exc:
         print(f"{RED}Executing chat failed with: {exc}{RESET}")
@@ -754,7 +752,6 @@ def chat_cli(
     vi_mode,
     visible_overflow,
     params,
-    is_debug,
 ):
     """Starts a CLI-based chat with the server"""
     client = OpenAI(
@@ -800,7 +797,6 @@ def chat_cli(
             document_store_collection_name=collection_name,
             top_k=top_k,
             embedding_model_path=embedding_model_path,
-            is_debug=is_debug,
         )
     else:
         logger.debug("RAG not enabled for chat; skipping retrieval setup")

@@ -12,7 +12,6 @@ def create_document_retriever(
     document_store_collection_name: str,
     top_k: int,
     embedding_model_path: str,
-    is_debug: bool = False,
 ) -> DocumentStoreRetriever:
     """
     Creates a `DocumentStoreRetriever` instance using the provided settings.
@@ -32,7 +31,7 @@ def create_document_retriever(
         create_in_memory_document_retriever,
     )
 
-    if not is_debug:
+    if not logger.isEnabledFor(logging.DEBUG):
         # Increase log level for RAG components
         for _logger in [
             logging.getLogger(name) for name in ["haystack", "sentence_transformers"]
@@ -44,7 +43,6 @@ def create_document_retriever(
         document_store_collection_name=document_store_collection_name,
         top_k=top_k,
         embedding_model_path=embedding_model_path,
-        is_debug=is_debug,
     )
 
 
