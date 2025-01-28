@@ -294,7 +294,7 @@ pip_install_with_nvidia() {
         "pushd instructlab && source venv/bin/activate; \
          export PATH=\$PATH:/usr/local/cuda/bin; \
          pip cache remove llama_cpp_python \
-         && CMAKE_ARGS='-DLLAMA_CUBLAS=on' pip install --force-reinstall --no-binary \
+         && CMAKE_ARGS='-DGGML_CUDA=on' pip install --force-reinstall --no-binary \
             llama_cpp_python -c constraints.txt llama_cpp_python \
          && pip install wheel packaging torch -c constraints.txt \
          && pip install .[cuda] -r requirements-vllm-cuda.txt \
