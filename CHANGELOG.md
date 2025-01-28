@@ -20,6 +20,7 @@
 - `ilab data list` now organizes tables per dated run, and outputs a more detailed table that describes which model generated which dataset.
 - `ilab model train` and `ilab model test` now search for training data in per-run directories in addition to the top-level directory, maintaining backwards compatibility with old datasets.
 - `ilab model evaluate` now has support for DK-Bench (Domain Knowledge Bench). DK-Bench takes in a set of questions and reference answers provided from a user, gets responses from a model to those questions, and then uses a judge model to grade the response to each question on a 1-5 scale compared to the reference answer. The highest possible score for each question is a 5 (fully accurate, and completely aligned with the reference) and the lowest is a 1 (entirely incorrect, and irrelevant). To run the benchmark the environment variable OPENAI_API_KEY must be set. The judge model for DK-Bench is `gpt-4o` and any judge model provided for DK-Bench must be the name of an OpenAI model.
+- `ilab model evaluate` now has `--skip-server` option to skip launching the server and evaluate directly with the HuggingFace model. This option supports mmlu and mmlu_branch benchmarks.
 
 ## v0.22
 
