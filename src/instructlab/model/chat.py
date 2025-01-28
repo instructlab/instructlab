@@ -789,18 +789,35 @@ def chat_cli(
     sys_prompt = CONTEXTS.get(context, "default")(get_model_arch(pathlib.Path(model)))
     loaded["messages"] = [{"role": "system", "content": sys_prompt}]
 
+    retriever: DocumentStoreRetriever | None = None
+
     # Instantiate retriever if RAG is enabled
     if rag_enabled:
         logger.debug("RAG enabled for chat; initializing retriever")
-        retriever: DocumentStoreRetriever | None = create_document_retriever(
-            document_store_uri=document_store_uri,
-            document_store_collection_name=collection_name,
-            top_k=top_k,
-            embedding_model_path=embedding_model_path,
-        )
+        try:
+            retriever: DocumentStoreRetriever | None = create_document_retriever(
+                document_store_uri=document_store_uri,
+                document_store_collection_name=collection_name,
+                top_k=top_k,
+                embedding_model_path=embedding_model_path,
+            )
+        except FileNotFoundError:
+            logger.error(
+                f"Ingested documents were not found at {document_store_uri}.  Try running `ilab rag convert` or setting the value for `--document-store-uri` in chat to point to an existing output of convert."
+            )
+            rag_enabled = False
+        except Exception:  # pylint:disable=broad-exception-caught
+            # We get a generic Exception from the document store if it is pointing to a file that exists but is not a valid vector db file.
+            logger.error(
+                f"Unable to load document database at {document_store_uri}.  Try running `ilab rag convert` or setting the value for `--document-store-uri` in chat to point to an existing output of convert."
+            )
+            rag_enabled = False
+        if not rag_enabled:
+            logger.info(
+                "Continuing with RAG disabled because retriever initialization failed"
+            )
     else:
         logger.debug("RAG not enabled for chat; skipping retrieval setup")
-        retriever: DocumentStoreRetriever | None = None
 
     # Session from CLI
     if session is not None:
