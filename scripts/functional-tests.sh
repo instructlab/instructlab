@@ -51,6 +51,11 @@ init_config() {
     sed -i.bak -e 's/debug_level:.*/debug_level: 1/g;' "${ILAB_CONFIG_FILE}"
 }
 
+cleanup_rag_files() {
+    rm -f "${CONVERTED_DOCUMENTS_DIR}"/*
+    rm -f "${DOCUMENT_STORE_FILE}"
+}
+
 cleanup() {
     set +e
     if [ "${1:-0}" -ne 0 ]; then
@@ -78,6 +83,7 @@ cleanup() {
     local temporary_model_filename='foo.gguf'
     mv "${ILAB_CACHE_DIR}/models/${temporary_model_filename}" "${ILAB_CACHE_DIR}/models/${original_model_filename}" || true
     rm -f "${ILAB_CONFIG_FILE}.bak" serve.log "${ILAB_CACHE_DIR}/models/${temporary_model_filename}" chat.log
+    cleanup_rag_files
 
     # reset config file and re-init defaults
     init_config
@@ -99,6 +105,11 @@ cleanup() {
 #   CACHE_DIR
 #   DATA_DIR
 #   CONFIG_DIR
+#   TAXONOMY_DIR
+#   GRANITE_EMBEDDING_MODEL_NAME
+#   GRANITE_EMBEDDING_MODEL
+#   CONVERTED_DOCUMENTS_DIR
+#   DOCUMENT_STORE_FILE
 # Outputs:
 #   Writes logs to stdout
 ########################################
@@ -129,12 +140,21 @@ function init_test_script() {
     ILAB_CONFIG_FILE="${ILAB_CONFIGDIR_LOCATION}/config.yaml"
     ILAB_DATA_DIR=$(python -c "${datadir_script}")
     ILAB_CACHE_DIR=$(python -c "${cachedir_script}")
+    TAXONOMY_DIR="${ILAB_DATA_DIR}/taxonomy"
 
     # ensure these exist at the time of running the test
     for d in "${CONFIG_DIR}" "${DATA_DIR}" "${CACHE_DIR}"; do
         printf 'creating directory: "%s"\n' "${d}"
         mkdir -p "${d}"
     done
+    
+    GRANITE_EMBEDDING_MODEL_NAME="granite-embedding-125m-english"
+    GRANITE_EMBEDDING_MODEL="ibm-granite/${GRANITE_EMBEDDING_MODEL_NAME}"
+
+    CONVERTED_DOCUMENTS_DIR="${ILAB_DATA_DIR}/converted_documents"
+    mkdir -p "${CONVERTED_DOCUMENTS_DIR}"
+    DOCUMENT_STORE_FILE="${ILAB_DATA_DIR}/embeddings.db"
+
     printf 'finished initializing test script\n'
 }
 
@@ -611,6 +631,161 @@ test_ilab_help_without_config() {
 }
 
 #########
+# RAG   #
+#########
+
+test_rag_enabled_chat() {
+    echo "RAG-enabled chat with the model"
+    testmode=${1:-}
+    if [[ "$testmode" != "user_docs" ]] && [[ "$testmode" != "training" ]] && [[ "$testmode" != "taxonomy" ]]; then
+        echo "Invalid test mode: $testmode"
+        # exit 1
+    fi
+
+    if [[ "$testmode" == "user_docs" ]]; then
+        QUESTION='How do you use YAML with InstructLab\n'
+    else
+        QUESTION='What is the brightest star in the Phoenix constellation\n'
+    fi
+
+    ilab model chat --rag --retriever-top-k 5 -qq "${QUESTION}"
+    echo "RAG-enabled chat with the model Complete"
+}
+
+test_rag_user_docs_workflow() {
+  echo "Start testing RAG workflow with user provided documents"
+
+  echo "Convert documents for ingestion into vector store"
+  if [ "$(ls -A ${CONVERTED_DOCUMENTS_DIR}| wc -l)" -ne 0 ]; then
+      echo "${CONVERTED_DOCUMENTS_DIR} is not empty."
+      exit 1
+  fi
+  ilab rag convert --input-dir "scripts/test-data/raw_documents"
+  if [ "$(ls -A ${CONVERTED_DOCUMENTS_DIR/*json}| wc -l)" -ne 1 ]; then
+      echo "Missing the expected JSON document in ${CONVERTED_DOCUMENTS_DIR}."
+      exit 1
+  fi
+  echo "User document conversion Complete"
+
+  echo "Ingest converted document\(s\) into vector store"
+  if [ -f "${DOCUMENT_STORE_FILE}" ]; then
+    echo "${DOCUMENT_STORE_FILE} already exists."
+    exit 1
+  fi
+  ilab rag ingest --input-dir="${CONVERTED_DOCUMENTS_DIR}"
+  if [ ! -f "$DOCUMENT_STORE_FILE" ]; then
+    echo "Missing expected ${DOCUMENT_STORE_FILE}."
+    exit 1
+  fi
+  echo "User document ingestion Complete"
+
+  test_rag_enabled_chat 'user_docs'
+
+  echo "Completed testing of RAG workflow with user provided documents"
+}
+
+init_taxonomy_for_rag() {
+    echo "Start taxonomy update"
+
+    if ! test -d ${TAXONOMY_DIR}; then
+      echo "Missing taxonomy folder ${TAXONOMY_DIR}"
+      exit 1
+    fi
+
+    echo "Update taxonomy with sample qna additions"
+    mkdir -p "${TAXONOMY_DIR}/knowledge/phoenix/overview/e2e-phoenix"
+    cp "$SCRIPTDIR"/test-data/knowledge/e2e-qna-knowledge-phoenix.yaml "${TAXONOMY_DIR}"/knowledge/phoenix/overview/e2e-phoenix/qna.yaml
+
+    echo "Verification"
+    ilab taxonomy diff
+    echo "Taxonomy update Complete"
+}
+
+test_rag_taxonomy_workflow() {
+  echo "Start testing RAG workflow with taxonomy documents"
+
+  echo "Convert taxonomy document\(s\) for ingestion into vector store"
+  if [ "$(ls -A ${CONVERTED_DOCUMENTS_DIR}| wc -l)" -ne 0 ]; then
+      echo "${CONVERTED_DOCUMENTS_DIR} is not empty."
+      exit 1
+  fi
+  ilab rag convert
+  if [ "$(ls -A ${CONVERTED_DOCUMENTS_DIR/*json}| wc -l)" -ne 1 ]; then
+      echo "Missing the expected JSON document in ${CONVERTED_DOCUMENTS_DIR}."
+      exit 1
+  fi
+  echo "Taxonomy document conversion Complete"
+
+  echo "Ingest taxonomy document\(s\) into vector store"
+  if [ -f "${DOCUMENT_STORE_FILE}" ]; then
+    echo "${DOCUMENT_STORE_FILE} already exists."
+    exit 1
+  fi
+  ilab rag ingest --input-dir="${CONVERTED_DOCUMENTS_DIR}"
+  if [ ! -f "$DOCUMENT_STORE_FILE" ]; then
+    echo "Missing expected ${DOCUMENT_STORE_FILE}."
+    exit 1
+  fi
+  echo "Taxonomy document ingestion Complete"
+
+  test_rag_enabled_chat 'taxonomy'
+
+  echo "Completed testing of RAG workflow with taxonomy documents"
+}
+
+process_taxonomy_for_rag() {
+  echo "Start taxonomy processing"
+  ilab data generate --pipeline simple --taxonomy-path "${TAXONOMY_DIR}"/knowledge/phoenix/overview/e2e-phoenix/qna.yaml
+  echo "Taxonomy processing Complete"
+}
+
+test_rag_processed_taxonomy_workflow() {
+  echo "Start testing RAG workflow with processed taxonomy documents"
+
+  echo "Ingest taxonomy document\(s\) into vector store"
+  if [ -f "${DOCUMENT_STORE_FILE}" ]; then
+    echo "${DOCUMENT_STORE_FILE} already exists."
+    exit 1
+  fi
+  ilab rag ingest
+  if [ ! -f "$DOCUMENT_STORE_FILE" ]; then
+    echo "Missing expected ${DOCUMENT_STORE_FILE}."
+    exit 1
+  fi
+  echo "Taxonomy document ingestion Complete"
+
+  test_rag_enabled_chat 'training'
+
+  echo "Completed testing of RAG workflow with processed taxonomy documents"
+}
+
+test_rag_workflow() {
+  export ILAB_FEATURE_SCOPE=DevPreviewNoUpgrade
+  echo "start testing RAG workflow"
+
+  echo "Downloading default embedding model"
+  ilab model download --repository "${GRANITE_EMBEDDING_MODEL}"
+  if ! ilab model list | grep -q "${GRANITE_EMBEDDING_MODEL}"; then
+      echo "Missing expected embedding model ${GRANITE_EMBEDDING_MODEL} in `ilab model list`"
+      exit 1
+  fi
+  echo "Default embedding model downloaded"
+
+  test_rag_user_docs_workflow
+  cleanup_rag_files
+
+  init_taxonomy_for_rag
+  test_rag_taxonomy_workflow
+  cleanup_rag_files
+
+  process_taxonomy_for_rag
+  test_rag_processed_taxonomy_workflow
+  cleanup_rag_files
+
+  unset ILAB_FEATURE_SCOPE
+}
+
+#########
 # SETUP #
 #########
 
@@ -671,7 +846,7 @@ ilab system info
 init_config
 
 # download the latest version of the ilab
-ilab model download
+# ilab model download
 
 ########
 # MAIN #
@@ -710,6 +885,8 @@ cleanup
 test_llama_backend
 cleanup
 test_ilab_help_without_config
+cleanup
+test_rag_workflow
 cleanup
 
 exit 0
