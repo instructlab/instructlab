@@ -319,6 +319,35 @@ general:
         assert cfg.general.log_level == "DEBUG"
         assert cfg.general.debug_level == 1
 
+    # This test case is useful to guarantee that pydantic model loading never
+    # breaks us whenever we remove a particular field from a model definition.
+    def test_config_with_unknown_field_loaded_successfully(self, tmp_path_home):
+        config_path = tmp_path_home / "config.yaml"
+        with open(config_path, "w", encoding="utf-8") as config_file:
+            # TODO: ideally, we'd generate the section names from actual
+            # models; we could also fill in embedded map fields with garbage
+            # too. This is left for the future.
+            config_file.write(
+                """\
+version: 1.0.0
+chat:
+  unknown-field: unknown-value
+evaluate:
+  unknown-field: unknown-value
+general:
+  unknown-field: unknown-value
+generate:
+  unknown-field: unknown-value
+rag:
+  unknown-field: unknown-value
+serve:
+  unknown-field: unknown-value
+train:
+  unknown-field: unknown-value
+"""
+            )
+        config.read_config(config_path)
+
 
 @pytest.mark.parametrize(
     "log_level,debug_level,root,instructlab,openai_httpx",
