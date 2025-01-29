@@ -846,7 +846,7 @@ ilab system info
 init_config
 
 # download the latest version of the ilab
-# ilab model download
+ilab model download
 
 ########
 # MAIN #
