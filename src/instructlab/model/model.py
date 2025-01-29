@@ -18,7 +18,7 @@ from instructlab.configuration import storage_dirs_exist
 @click.pass_context
 # pylint: disable=redefined-outer-name
 def model(ctx):
-    """Command group for interacting with the models in InstructLab.
+    """Manage GenAI (LLM) models.
 
     If this is your first time running ilab, it's best to start with `ilab config init` to create the environment.
     """
