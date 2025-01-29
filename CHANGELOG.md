@@ -5,6 +5,7 @@
 ### Features
 
 - Update vLLM to version 0.6.6.post1. As a requirement for this new vLLM version, PyTorch is updated to 2.5.1
+- `ilab model chat` now has `--no-decoration` option to display chat responses without decoration.
 
 ## v0.23
 
