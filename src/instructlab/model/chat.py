@@ -813,7 +813,7 @@ def chat_cli(
             )
             rag_enabled = False
         if not rag_enabled:
-            logger.info(
+            logger.warning(
                 "Continuing with RAG disabled because retriever initialization failed"
             )
     else:
