@@ -656,12 +656,12 @@ test_rag_user_docs_workflow() {
   echo "Start testing RAG workflow with user provided documents"
 
   echo "Convert documents for ingestion into vector store"
-  if [ $(find "${CONVERTED_DOCUMENTS_DIR}" -type f | wc -l) -ne 0 ]; then
+  if [ '$(find "${CONVERTED_DOCUMENTS_DIR}" -type f | wc -l)' -ne 0 ]; then
       echo "${CONVERTED_DOCUMENTS_DIR} is not empty."
       exit 1
   fi
   ilab rag convert --input-dir "scripts/test-data/raw_documents"
-  if [ $(find "${CONVERTED_DOCUMENTS_DIR}" -type f -name "*json" | wc -l) -ne 1 ]; then
+  if [ '$(find "${CONVERTED_DOCUMENTS_DIR}" -type f -name "*json" | wc -l)' -ne 1 ]; then
       echo "Missing the expected JSON document in ${CONVERTED_DOCUMENTS_DIR}."
       exit 1
   fi
@@ -687,7 +687,7 @@ test_rag_user_docs_workflow() {
 init_taxonomy_for_rag() {
     echo "Start taxonomy update"
 
-    if ! test -d ${TAXONOMY_DIR}; then
+    if ! test -d "${TAXONOMY_DIR}"; then
       echo "Missing taxonomy folder ${TAXONOMY_DIR}"
       exit 1
     fi
@@ -705,12 +705,12 @@ test_rag_taxonomy_workflow() {
   echo "Start testing RAG workflow with taxonomy documents"
 
   echo "Convert taxonomy document\(s\) for ingestion into vector store"
-  if [ $(find ${CONVERTED_DOCUMENTS_DIR} -type f | wc -l) -ne 0 ]; then
+  if [ '$(find "${CONVERTED_DOCUMENTS_DIR}" -type f | wc -l)' -ne 0 ]; then
       echo "${CONVERTED_DOCUMENTS_DIR} is not empty."
       exit 1
   fi
   ilab rag convert
-  if [ $(find "${CONVERTED_DOCUMENTS_DIR}" -type f -name "*json" | wc -l) -ne 1 ]; then
+  if [ '$(find "${CONVERTED_DOCUMENTS_DIR}" -type f -name "*json" | wc -l)' -ne 1 ]; then
       echo "Missing the expected JSON document in ${CONVERTED_DOCUMENTS_DIR}."
       exit 1
   fi
