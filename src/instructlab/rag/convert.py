@@ -7,6 +7,7 @@
 # Standard
 from pathlib import Path
 from typing import Iterable
+from urllib.error import URLError
 import json
 import logging
 import os
@@ -25,6 +26,7 @@ from xdg_base_dirs import xdg_data_dirs, xdg_data_home
 import yaml
 
 # First Party
+from instructlab.exceptions import SslEnvironmentConfigurationException
 from instructlab.rag.taxonomy_utils import lookup_knowledge_files
 from instructlab.utils import clear_directory
 
@@ -175,7 +177,16 @@ def _initialize_docling():
         artifacts_path=docling_model_path,
         do_ocr=False,
     )
-    ocr_options = _resolve_ocr_options()
+    try:
+        ocr_options = _resolve_ocr_options()
+    except URLError as e:
+        if "CERTIFICATE_VERIFY_FAILED" in str(e) and (
+            "SSL_CERT_FILE" not in os.environ or "REQUESTS_CA_BUNDLE" not in os.environ
+        ):
+            raise SslEnvironmentConfigurationException(
+                "SSL_CERT_FILE and REQUESTS_CA_BUNDLE should be set to the value of `python -m certifi`"
+            ) from e
+        raise e
     if ocr_options is not None:
         pipeline_options.do_ocr = True
         pipeline_options.ocr_options = ocr_options

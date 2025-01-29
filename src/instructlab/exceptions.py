@@ -1,0 +1,2 @@
+class SslEnvironmentConfigurationException(EnvironmentError):
+    pass

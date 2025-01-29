@@ -13,6 +13,7 @@ import click
 
 # First Party
 from instructlab import clickext
+from instructlab.exceptions import SslEnvironmentConfigurationException
 from instructlab.feature_gates import FeatureGating, FeatureScopes, GatedFeatures
 
 logger = logging.getLogger(__name__)
@@ -73,18 +74,23 @@ def convert(
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
 
-    if input_dir is None:
-        logger.info(
-            f"Pre-processing latest taxonomy changes at {taxonomy_path}@{taxonomy_base}"
-        )
-        convert_documents_from_taxonomy(
-            taxonomy_path=taxonomy_path,
-            taxonomy_base=taxonomy_base,
-            output_dir=output_dir,
-        )
-    else:
-        logger.info(f"Pre-processing documents from {input_dir} to {output_dir}")
-        convert_documents_from_folder(
-            input_dir=input_dir,
-            output_dir=output_dir,
-        )
+    try:
+        if input_dir is None:
+            logger.info(
+                f"Pre-processing latest taxonomy changes at {taxonomy_path}@{taxonomy_base}"
+            )
+            convert_documents_from_taxonomy(
+                taxonomy_path=taxonomy_path,
+                taxonomy_base=taxonomy_base,
+                output_dir=output_dir,
+            )
+        else:
+            logger.info(f"Pre-processing documents from {input_dir} to {output_dir}")
+            convert_documents_from_folder(
+                input_dir=input_dir,
+                output_dir=output_dir,
+            )
+    except SslEnvironmentConfigurationException as e:
+        logger.exception(e, stack_info=True)
+        click.secho(e, fg="red")
+        click.exceptions.Exit(1)
