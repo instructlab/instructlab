@@ -764,7 +764,7 @@ test_rag_workflow() {
   echo "start testing RAG workflow"
 
   echo "Downloading default embedding model"
-  ilab model download --repository "${GRANITE_EMBEDDING_MODEL}" --hf-token $HF_TOKEN
+  ilab model download --repository "${GRANITE_EMBEDDING_MODEL}" --hf-token "$HF_TOKEN"
   if ! ilab model list | grep -q "${GRANITE_EMBEDDING_MODEL}"; then
       echo "Missing expected embedding model ${GRANITE_EMBEDDING_MODEL} in \`ilab model list\`"
       exit 1
