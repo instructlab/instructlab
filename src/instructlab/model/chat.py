@@ -794,7 +794,9 @@ def chat_cli(
     # Instantiate retriever if RAG is enabled
     if rag_enabled:
         logger.debug("RAG enabled for chat; initializing retriever")
-        if not os.path.exists(embedding_model_path) or not os.access(embedding_model_path, os.R_OK):
+        if not os.path.exists(embedding_model_path) or not os.access(
+            embedding_model_path, os.R_OK
+        ):
             logger.error(
                 f"Embedding model is not found: {embedding_model_path}\n"
                 "  This is typically addressed by running: ilab model download -rp <model-location>\n"
@@ -809,7 +811,7 @@ def chat_cli(
                     top_k=top_k,
                     embedding_model_path=embedding_model_path,
                 )
-            except FileNotFoundError as e: 
+            except FileNotFoundError as e:
                 # When the database is not found, we get a FileNotFoundError.
                 logger.error(
                     f"Ingested content not found: {e}\n"
@@ -817,7 +819,7 @@ def chat_cli(
                     "  For more details, run both of those commands with --help"
                 )
                 rag_enabled = False
-            except Exception as e: 
+            except Exception as e:  # pylint: disable=broad-exception-caught
                 # When the database is not a valid database, we get a generic Exception.
                 # Maybe there are other things that could cause this error?
                 logger.error(f"Failed to create retriever: {e}")
