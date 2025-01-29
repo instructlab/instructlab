@@ -292,7 +292,7 @@ def download_models(
         except (ValueError, Exception) as exc:
             if isinstance(exc, ValueError) and "HF_TOKEN" in str(exc):
                 logger.warning(
-                    f"\n{downloader.repository} requires a HF Token to be set.\nPlease use '--hf-token' or 'export HF_TOKEN' to download all necessary models."
+                    f"\n{downloader.repository} requires a HF Token to be set.\nPlease use '--hf-token' or 'export HF_TOKEN' or set token in '~/.cache/huggingface/token' to download all necessary models."
                 )
             else:
                 raise ValueError(
@@ -301,3 +301,20 @@ def download_models(
 
     logger.info("Available models (`ilab model list`):")
     list_and_print_models([Path(model_dir)], False)
+
+
+def get_hf_token(hf_token: str) -> str:
+    # get it from cli or envvar
+    if hf_token:
+        return hf_token
+
+    # read it from file
+    token_file = os.path.expanduser("~/.cache/huggingface/token")
+    if os.path.exists(token_file):
+        with open(token_file, "r", encoding="utf-8") as token:
+            hf_token = token.read().strip()
+            if hf_token:
+                return hf_token
+
+    # return default
+    return hf_token
