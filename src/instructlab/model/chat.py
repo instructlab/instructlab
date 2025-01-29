@@ -794,27 +794,37 @@ def chat_cli(
     # Instantiate retriever if RAG is enabled
     if rag_enabled:
         logger.debug("RAG enabled for chat; initializing retriever")
-        try:
-            retriever: DocumentStoreRetriever | None = create_document_retriever(
-                document_store_uri=document_store_uri,
-                document_store_collection_name=collection_name,
-                top_k=top_k,
-                embedding_model_path=embedding_model_path,
-            )
-        except FileNotFoundError:
+        if not os.path.exists(embedding_model_path) or not os.access(embedding_model_path, os.R_OK):
             logger.error(
-                f"Ingested documents were not found at {document_store_uri}.  Try running `ilab rag convert` or setting the value for `--document-store-uri` in chat to point to an existing output of convert."
+                f"Embedding model is not found: {embedding_model_path}\n"
+                "  This is typically addressed by running: ilab model download -rp <model-location>\n"
+                "  Where <model-location> is a location for your model, e.g. ibm-granite/granite-embedding-125m-english"
             )
             rag_enabled = False
-        except Exception:  # pylint:disable=broad-exception-caught
-            # We get a generic Exception from the document store if it is pointing to a file that exists but is not a valid vector db file.
-            logger.error(
-                f"Unable to load document database at {document_store_uri}.  Try running `ilab rag convert` or setting the value for `--document-store-uri` in chat to point to an existing output of convert."
-            )
-            rag_enabled = False
+        else:
+            try:
+                retriever = create_document_retriever(
+                    document_store_uri=document_store_uri,
+                    document_store_collection_name=collection_name,
+                    top_k=top_k,
+                    embedding_model_path=embedding_model_path,
+                )
+            except FileNotFoundError as e: 
+                # When the database is not found, we get a FileNotFoundError.
+                logger.error(
+                    f"Ingested content not found: {e}\n"
+                    "  This is typically addressed by running the ilab model convert and ilab model ingest commands"
+                    "  For more details, run both of those commands with --help"
+                )
+                rag_enabled = False
+            except Exception as e: 
+                # When the database is not a valid database, we get a generic Exception.
+                # Maybe there are other things that could cause this error?
+                logger.error(f"Failed to create retriever: {e}")
+                rag_enabled = False
         if not rag_enabled:
             logger.warning(
-                "Continuing with RAG disabled because retriever initialization failed"
+                "Continuing with RAG disabled because retriever creation failed"
             )
     else:
         logger.debug("RAG not enabled for chat; skipping retrieval setup")
