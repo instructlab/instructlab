@@ -852,41 +852,41 @@ ilab model download
 # MAIN #
 ########
 # call cleanup in-between each test so they can run without conflicting with the server/chat process
-# test_ilab_chat_server_logs
-# cleanup
-# test_oci_model_download_with_vllm_backend
-# cleanup
-# test_bind_port
-# cleanup
-# test_ctx_size
-# cleanup
-# test_loading_session_history
-# cleanup
-# test_data_generate
-# cleanup
-# test_model_train
-# cleanup
-# test_model_test
-# cleanup
-# test_temp_server
-# cleanup
-# test_temp_server_sigint
-# cleanup
-# test_no_chat_logs
-# cleanup
-# test_server_chat_template
-# cleanup
-# test_server_welcome_message
-# cleanup
-# test_model_print
-# cleanup
-# test_log_format
-# cleanup
-# test_llama_backend
-# cleanup
-# test_ilab_help_without_config
-# cleanup
 test_rag_workflow
+cleanup
+test_ilab_chat_server_logs
+cleanup
+test_oci_model_download_with_vllm_backend
+cleanup
+test_bind_port
+cleanup
+test_ctx_size
+cleanup
+test_loading_session_history
+cleanup
+test_data_generate
+cleanup
+test_model_train
+cleanup
+test_model_test
+cleanup
+test_temp_server
+cleanup
+test_temp_server_sigint
+cleanup
+test_no_chat_logs
+cleanup
+test_server_chat_template
+cleanup
+test_server_welcome_message
+cleanup
+test_model_print
+cleanup
+test_log_format
+cleanup
+test_llama_backend
+cleanup
+test_ilab_help_without_config
 cleanup
 
 exit 0
