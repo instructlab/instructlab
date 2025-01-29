@@ -28,6 +28,7 @@ ilab model evaluate
 -------------------
 
 .. autopydantic_model:: _evaluate
+.. autopydantic_model:: _dkbench
 .. autopydantic_model:: _mmlu
 .. autopydantic_model:: _mmlubranch
 .. autopydantic_model:: _mtbench
@@ -50,3 +51,13 @@ ilab model train
 ----------------
 
 .. autopydantic_model:: _train
+
+RAG
+--------
+
+.. autopydantic_model:: _rag
+.. autopydantic_model:: _document_store
+.. autopydantic_model:: _embedding_model
+.. autopydantic_model:: _convert
+.. autopydantic_model:: _retriever
+

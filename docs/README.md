@@ -1,4 +1,4 @@
-## Instructlab Docs
+# Instructlab Docs
 
 The directory `instructlab/docs` serves to purposes:
 

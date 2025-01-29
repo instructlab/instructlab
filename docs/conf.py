@@ -31,6 +31,7 @@ exclude_patterns = [
     "Thumbs.db",
     ".DS_Store",
     "cli_reference.md",  # ignored in favor of auto-generated docs
+    "README.md",  # ignored in favor of auto-generated docs
 ]
 
 intersphinx_mapping = {
@@ -74,6 +75,11 @@ nitpick_ignore_regex = [
     ("py:obj", "typing\..*"),
     ("py:obj", "instructlab\.configuration\..*"),
 ]
+
+# Set heading level level depth to assign HTML anchors to a high number for markdown parsing with myst.
+# At default of 0 sphinx build throws a warning.
+# See: https://github.com/executablebooks/MyST-Parser/issues/885#issuecomment-2041026657
+myst_heading_anchors = 5
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
