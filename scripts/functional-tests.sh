@@ -656,12 +656,12 @@ test_rag_user_docs_workflow() {
   echo "Start testing RAG workflow with user provided documents"
 
   echo "Convert documents for ingestion into vector store"
-  if [ "$(ls -A ${CONVERTED_DOCUMENTS_DIR}| wc -l)" -ne 0 ]; then
+  if [ $(find "${CONVERTED_DOCUMENTS_DIR}" -type f | wc -l) -ne 0 ]; then
       echo "${CONVERTED_DOCUMENTS_DIR} is not empty."
       exit 1
   fi
   ilab rag convert --input-dir "scripts/test-data/raw_documents"
-  if [ "$(ls -A ${CONVERTED_DOCUMENTS_DIR/*json}| wc -l)" -ne 1 ]; then
+  if [ $(find "${CONVERTED_DOCUMENTS_DIR}" -type f -name "*json" | wc -l) -ne 1 ]; then
       echo "Missing the expected JSON document in ${CONVERTED_DOCUMENTS_DIR}."
       exit 1
   fi
@@ -705,12 +705,12 @@ test_rag_taxonomy_workflow() {
   echo "Start testing RAG workflow with taxonomy documents"
 
   echo "Convert taxonomy document\(s\) for ingestion into vector store"
-  if [ "$(ls -A ${CONVERTED_DOCUMENTS_DIR}| wc -l)" -ne 0 ]; then
+  if [ $(find ${CONVERTED_DOCUMENTS_DIR} -type f | wc -l) -ne 0 ]; then
       echo "${CONVERTED_DOCUMENTS_DIR} is not empty."
       exit 1
   fi
   ilab rag convert
-  if [ "$(ls -A ${CONVERTED_DOCUMENTS_DIR/*json}| wc -l)" -ne 1 ]; then
+  if [ $(find "${CONVERTED_DOCUMENTS_DIR}" -type f -name "*json" | wc -l) -ne 1 ]; then
       echo "Missing the expected JSON document in ${CONVERTED_DOCUMENTS_DIR}."
       exit 1
   fi
@@ -766,7 +766,7 @@ test_rag_workflow() {
   echo "Downloading default embedding model"
   ilab model download --repository "${GRANITE_EMBEDDING_MODEL}"
   if ! ilab model list | grep -q "${GRANITE_EMBEDDING_MODEL}"; then
-      echo "Missing expected embedding model ${GRANITE_EMBEDDING_MODEL} in `ilab model list`"
+      echo "Missing expected embedding model ${GRANITE_EMBEDDING_MODEL} in \`ilab model list\`"
       exit 1
   fi
   echo "Default embedding model downloaded"
