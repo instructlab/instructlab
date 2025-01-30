@@ -28,8 +28,7 @@ import requests
 # First Party
 from instructlab import client_utils as ilabclient
 from instructlab import configuration as cfg
-from instructlab import defaults
-from instructlab import log
+from instructlab import defaults, log
 from instructlab.client_utils import HttpClientParams
 
 # Local
