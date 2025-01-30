@@ -13,6 +13,7 @@ set -xeuf pipefail
 
 MINIMAL=0
 MIXTRAL=0
+GRANITE=0
 NUM_INSTRUCTIONS=5
 GENERATE_ARGS=("--endpoint-url" "http://localhost:8000/v1" "--num-cpus" "$(nproc)" --taxonomy-path='./taxonomy')
 DIFF_ARGS=("--taxonomy-path" "./taxonomy")
