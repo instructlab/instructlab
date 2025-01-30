@@ -52,6 +52,7 @@ class Server(BackendServer):
         port: int,
         gpu_layers: int,
         max_ctx_size: int,
+        api_key: str,
         num_threads: Optional[int],
         log_file: Optional[pathlib.Path] = None,
     ):
@@ -66,6 +67,7 @@ class Server(BackendServer):
         )
         self.gpu_layers = gpu_layers
         self.max_ctx_size = max_ctx_size
+        self.api_key = api_key
         self.num_threads = num_threads
         self.queue: Optional[multiprocessing.Queue] = None
         self.process: multiprocessing.Process | None = None
@@ -78,6 +80,7 @@ class Server(BackendServer):
                 chat_template=self.chat_template,
                 gpu_layers=self.gpu_layers,
                 max_ctx_size=self.max_ctx_size,
+                api_key=self.api_key,
                 model_family=self.model_family,
                 threads=self.num_threads,
                 host=self.host,
@@ -105,6 +108,7 @@ class Server(BackendServer):
                 "chat_template": self.chat_template,
                 "gpu_layers": self.gpu_layers,
                 "max_ctx_size": self.max_ctx_size,
+                "api_key": self.api_key,
                 "model_family": self.model_family,
                 "port": port,
                 "host": self.host,
@@ -178,6 +182,7 @@ def server(
     chat_template: str,
     gpu_layers: int,
     max_ctx_size: int,
+    api_key: str,
     model_family: str,
     threads=None,
     host: str = "localhost",
@@ -193,6 +198,7 @@ def server(
         port=port,
         model=model_path.as_posix(),
         n_ctx=max_ctx_size,
+        api_key=api_key,
         n_gpu_layers=gpu_layers,
         verbose=verbose,
     )
