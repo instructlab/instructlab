@@ -229,6 +229,15 @@ jobs:
         run: |
           pip cache remove llama_cpp_python
 
+      - name: Deploy Docs Website to GitHub Pages
+        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }} # Only publish docs website on merge to main
+        with:
+          publish_branch: gh-pages
+          github_token: ${{ secrets.GH_TOKEN }}
+          publish_dir: docs/build/html
+          force_orphan: true
+
   test-workflow-complete:
     permissions:
       checks: read

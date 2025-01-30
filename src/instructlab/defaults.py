@@ -220,10 +220,6 @@ class _InstructlabDefaults:
         return path.join(self.INTERNAL_DIR, "prompt.txt")
 
     @property
-    def SEED_FILE(self) -> str:
-        return path.join(self.INTERNAL_DIR, "seed_tasks.json")
-
-    @property
     def EVAL_DATA_DIR(self) -> str:
         return path.join(self.INTERNAL_DIR, "eval_data")
 
