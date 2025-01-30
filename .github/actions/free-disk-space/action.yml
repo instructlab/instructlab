@@ -83,7 +83,7 @@ runs:
           sudo dnf clean all
           rm -rf /var/cache/dnf*
         else
-          echo "Unrecognized OS '${os_id}'. Skipping large package cleanup, as this logic has not been implemented for ${os_id}."
+          echo "Skipping large package cleanup for OS '${os_id}' (not implemented)."
         fi
       shell: bash
     - name: Free Disk Space MacOS
