@@ -153,8 +153,6 @@ jobs:
           echo "not a directory" > ~/.local/share/instructlab
 
       - name: Run unit and functional tests with tox
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           tox
 
