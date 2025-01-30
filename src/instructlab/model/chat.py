@@ -28,6 +28,7 @@ import requests
 # First Party
 from instructlab import client_utils as ilabclient
 from instructlab import configuration as cfg
+from instructlab import defaults
 from instructlab import log
 from instructlab.client_utils import HttpClientParams
 
@@ -800,7 +801,7 @@ def chat_cli(
             logger.error(
                 f"Embedding model is not found: {embedding_model_path}\n"
                 "  This is typically addressed by running: ilab model download -rp <model-location>\n"
-                "  Where <model-location> is a location for your model, e.g. ibm-granite/granite-embedding-125m-english"
+                f"  Where <model-location> is a location for your model, e.g. {defaults.DEFAULTS.GRANITE_EMBEDDING_MODEL_NAME}"
             )
             rag_enabled = False
         else:
