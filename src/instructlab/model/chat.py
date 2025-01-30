@@ -802,7 +802,9 @@ def chat_cli(
     # Instantiate retriever if RAG is enabled
     if rag_enabled:
         logger.debug("RAG enabled for chat; initializing retriever")
-        if not os.path.exists(embedding_model_path) or not os.access(embedding_model_path, os.R_OK):
+        if not os.path.exists(embedding_model_path) or not os.access(
+            embedding_model_path, os.R_OK
+        ):
             raise ChatFailedToLoadRetrievalModelException(
                 f"Embedding model is not found: {embedding_model_path}\n"
                 "  This is typically addressed by running: ilab model download -rp <model-location>\n"
@@ -826,7 +828,7 @@ def chat_cli(
             # When the database is not a valid database, we get a generic Exception.
             # Maybe there are other things that could cause this error?
             raise ChatFailedToLoadIndexException(
-               f"Ingested content at location {document_store_uri} is not a valid index."
+                f"Ingested content at location {document_store_uri} is not a valid index."
             ) from e
     else:
         logger.debug("RAG not enabled for chat; skipping retrieval setup")
