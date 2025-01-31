@@ -14,6 +14,7 @@ from huggingface_hub import hf_hub_download, list_repo_files
 from huggingface_hub import logging as hf_logging
 from huggingface_hub import snapshot_download
 from huggingface_hub.errors import GatedRepoError
+import boto3
 
 # First Party
 from instructlab.configuration import DEFAULTS
@@ -23,6 +24,7 @@ from instructlab.utils import (
     check_skopeo_version,
     is_huggingface_repo,
     is_oci_repo,
+    is_s3_repo,
     load_json,
 )
 
@@ -49,7 +51,7 @@ class ModelDownloader(abc.ABC):
         """Downloads model from specified repo/release and stores it into download_dest"""
 
 
-class HFDownloader(ModelDownloader):
+class HFModelDownloader(ModelDownloader):
     """Class to handle downloading safetensors and GGUF models from Hugging Face"""
 
     def __init__(
@@ -130,7 +132,7 @@ class HFDownloader(ModelDownloader):
             ) from exc
 
 
-class OCIDownloader(ModelDownloader):
+class OCIModelDownloader(ModelDownloader):
     """
     Class to handle downloading safetensors models from OCI Registries
     We are leveraging OCI v1.1 for this functionality
@@ -247,6 +249,75 @@ class OCIDownloader(ModelDownloader):
             )
 
 
+class S3ModelDownloader(ModelDownloader):
+    """Class to handle downloading safetensors and GGUF models from S3"""
+
+    def __init__(
+        self,
+        repository: str,
+        release: str,
+        download_dest: Path,
+        filename: str,
+        log_level: str,
+    ) -> None:
+        super().__init__(
+            log_level=log_level,
+            repository=repository,
+            release=release,
+            download_dest=download_dest,
+        )
+        self.filename = filename
+
+    def download(self):
+        """
+        Download specified model from Hugging Face
+        """
+        # AWS cred check
+        try:
+            sts_client = boto3.client("sts")
+            sts_client.get_caller_identity()
+        except Exception as exc:
+            raise ValueError(
+                """AWS credentials need to be set in your environment to upload to S3. 
+                If you have not already set your credentials, you can set them using the 
+                AWS CLI or through an AWS credentials file. 
+                If you have set your credentials, please ensure they are valid and not expired.
+                For alternative methods to set credentials, please review the boto3 documentation."""
+            ) from exc
+
+        logger.info(
+            f"Downloading model from S3 endpoint:\n{DEFAULT_INDENT}Model: {self.model}\n{DEFAULT_INDENT}Destination: {self.destination}\n"
+        )
+
+        try:
+            # TODO: search bucket for directory with name <repository>
+            #       if it's a directory download whole directory
+            #       if not directory, assume filename and attempt download
+            pass
+        except Exception as exc:
+            raise RuntimeError(
+                f"\nDownloading model failed with the following S3 error:\n{DEFAULT_INDENT}{exc}"
+            ) from exc
+
+    def download_file(self) -> None:
+        try:
+            # TODO: download from S3 via boto
+            pass
+        except Exception as exc:
+            raise RuntimeError(
+                f"\nDownloading GGUF model failed with the following S3 error:\n{DEFAULT_INDENT}{exc}"
+            ) from exc
+
+    def download_folder(self) -> None:
+        try:
+            # TODO: download from S3 via boto
+            pass
+        except Exception as exc:
+            raise RuntimeError(
+                f"\nDownloading safetensors model failed with the following S3 error:\n{DEFAULT_INDENT}{exc}"
+            ) from exc
+
+
 def download_models(
     log_level: str,
     repositories: List[str],
@@ -255,7 +326,7 @@ def download_models(
     model_dir: Path,
     hf_token: str,
 ):
-    """Downloads model from a specified repository"""
+    """Downloads models from a specified repository"""
     downloader: ModelDownloader
 
     # strict = false ensures that if you just give --repository <some_safetensor> we won't error because len(filenames) is greater due to the defaults
@@ -263,14 +334,14 @@ def download_models(
         repositories, filenames, releases, strict=False
     ):
         if is_oci_repo(repository):
-            downloader = OCIDownloader(
+            downloader = OCIModelDownloader(
                 log_level=log_level,
                 repository=repository,
                 release=release,
                 download_dest=model_dir,
             )
         elif is_huggingface_repo(repository):
-            downloader = HFDownloader(
+            downloader = HFModelDownloader(
                 log_level=log_level,
                 repository=repository,
                 release=release,
@@ -278,9 +349,11 @@ def download_models(
                 filename=filename,
                 hf_token=hf_token,
             )
+        elif is_s3_repo(repository):
+            downloader = S3ModelDownloader()
         else:
             raise ValueError(
-                f"repository {repository} matches neither Hugging Face nor OCI registry format.\nPlease supply a valid repository"
+                f"repository {repository} matches neither Hugging Face, OCI registry, nor S3 endpoint format.\nPlease supply a valid repository"
             )
 
         try:

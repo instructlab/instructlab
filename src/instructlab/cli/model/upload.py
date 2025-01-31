@@ -9,7 +9,7 @@ import click
 # First Party
 from instructlab import clickext
 from instructlab.defaults import UPLOAD_DESTINATIONS
-from instructlab.model.upload import HFModelUploader, OCIModelUploader, S3ModelUploader
+from instructlab.model.upload import upload_model
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--model",
     "-m",
+    type=str,
     required=True,
     help="Path to the model to upload or name of an existing checkpoint.",
 )
@@ -47,55 +48,20 @@ logger = logging.getLogger(__name__)
     envvar="HF_TOKEN",
     help="User access token for connecting to the Hugging Face Hub.",
 )
+@click.pass_context
 @clickext.display_params
-def upload(model, dest_type, destination, release, hf_token):
-    """Uploads model to a specified location - currently supports Hugging Face and OCI artifact registries such as Quay.io"""
-    uploader = None
+def upload(ctx, model, dest_type, destination, release, hf_token):
+    """Uploads model to a specified location"""
 
-    if dest_type == "hf":
-        uploader = HFModelUploader(
+    try:
+        upload_model(
+            log_level=ctx.obj.config.general.log_level.upper(),
+            dest_type=dest_type,
             model=model,
             destination=destination,
             release=release,
             hf_token=hf_token,
         )
-    elif dest_type == "oci":
-        uploader = OCIModelUploader(
-            model=model,
-            destination=destination,
-            release=release,
-        )
-    elif dest_type == "s3":
-        uploader = S3ModelUploader(
-            model=model,
-            destination=destination,
-        )
-    else:
-        click.secho(
-            f"{dest_type} matches neither Hugging Face, OCI registry, or an S3-compatable format.\nPlease supply a supported dest_type",
-            fg="red",
-        )
+    except Exception as e:
+        click.secho(f"Uploading failed with the following exception: {e}", fg="red")
         raise click.exceptions.Exit(1)
-
-    try:
-        uploader.upload()
-    # pylint: disable=broad-exception-caught
-    except (ValueError, Exception) as exc:
-        if isinstance(exc, ValueError) and "HF_TOKEN" in str(exc):
-            click.secho(
-                "Uploading to Hugging Face requires a HF Token to be set.\nPlease use '--hf-token' or 'export HF_TOKEN' to upload all necessary models.",
-                fg="yellow",
-            )
-            raise click.exceptions.Exit(1)
-        elif isinstance(exc, ValueError) and "AWS" in str(exc):
-            click.secho(
-                "Uploading to AWS requires credentials to be set.\nPlease set your AWS credentials to upload all necessary models.",
-                fg="yellow",
-            )
-            raise click.exceptions.Exit(1)
-        else:
-            click.secho(
-                f"\nUploading model failed with the following error: {exc}",
-                fg="red",
-            )
-            raise click.exceptions.Exit(1)

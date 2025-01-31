@@ -93,7 +93,7 @@ class TestLabDownload:
         assert result.exit_code == 1, "command finished with an unexpected exit code"
         assert "Could not reach hugging face server" in result.output
 
-    @patch("instructlab.model.download.OCIDownloader.download")
+    @patch("instructlab.model.download.OCIModelDownloader.download")
     def test_oci_download(self, mock_oci_download, cli_runner: CliRunner):
         result = cli_runner.invoke(
             lab.ilab,
