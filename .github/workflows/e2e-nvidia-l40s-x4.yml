@@ -57,6 +57,12 @@ jobs:
       pull-requests: write
 
     steps:
+      - name: Print fake secret on purpose
+        run: |
+          echo "TEST_SECRET: $TEST_SECRET"
+        env:
+          TEST_SECRET: ${{ secrets.TEST_SECRET }}
+
       - name: Install Packages
         run: |
           cat /etc/os-release
@@ -150,6 +156,7 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          TEST_SECRET: ${{ secrets.TEST_SECRET }}
         run: |
           . venv/bin/activate
           ./scripts/e2e-ci.sh -l

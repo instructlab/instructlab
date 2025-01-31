@@ -8,6 +8,9 @@ set -xeuf
 #
 # It represents the workflow a typical user would run through with ilab.
 
+echo ">>>>> PRINTING TEST SECRET FROM GH ENV"
+echo "TEST_SECRET = $TEST_SECRET"
+
 # generic globals
 BOLD='\033[1m'
 NC='\033[0m' # No Color

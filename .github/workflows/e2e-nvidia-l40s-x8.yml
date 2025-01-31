@@ -230,6 +230,10 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
+          # Mask the values of `HF_TOKEN` and `OPENAI_API_KEY` such that any attempt to print them will print "***" to the console
+          echo "::add-mask::$HF_TOKEN"
+          echo "::add-mask::$OPENAI_API_KEY"
+
           . venv/bin/activate
           ./scripts/e2e-ci.sh -x
 
