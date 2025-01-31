@@ -137,9 +137,6 @@ jobs:
           df -h
 
       - name: Run e2e test
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           . venv/bin/activate
           ./scripts/e2e-ci.sh -m
