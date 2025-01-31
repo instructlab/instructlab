@@ -73,7 +73,7 @@ class TestLabDownload:
 
     @patch(
         "instructlab.model.download.OCIDownloader.download",
-        MagicMock(side_effect=HfHubHTTPError("Could not reach hugging face server")),
+        MagicMock(side_effect=HfHubHTTPError("Could not reach server")),
     )
     def test_oci_download_repository_error(self, cli_runner: CliRunner):
         result = cli_runner.invoke(
@@ -86,4 +86,4 @@ class TestLabDownload:
             ],
         )
         assert result.exit_code == 1
-        assert "Could not reach hugging face server" in result.output
+        assert "Could not reach server" in result.output
