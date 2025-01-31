@@ -1,5 +1,6 @@
 ## v0.26
 
+- Enable support for Python 3.12.
 - Remove Python 3.10 support.
 
 ## v0.25

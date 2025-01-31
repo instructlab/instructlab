@@ -94,7 +94,7 @@ jobs:
         run: |
           cat /etc/os-release
           mkdir -p /home/tmp
-          sudo dnf install -y gcc gcc-c++ make git-core python3.11 python3.11-devel
+          sudo dnf install -y gcc gcc-c++ make git-core python3.12 python3.12-devel
 
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -172,17 +172,17 @@ jobs:
           export CUDA_HOME="/usr/local/cuda"
           export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$CUDA_HOME/lib64:$CUDA_HOME/extras/CUPTI/lib64"
           export PATH="$PATH:$CUDA_HOME/bin"
-          python3.11 -m venv --upgrade-deps venv
+          python3.12 -m venv --upgrade-deps venv
           . venv/bin/activate
           nvidia-smi
-          python3.11 -m pip cache remove llama_cpp_python
+          python3.12 -m pip cache remove llama_cpp_python
 
-          CMAKE_ARGS="-DGGML_CUDA=on" python3.11 -m pip install -v . -c constraints-dev.txt
+          CMAKE_ARGS="-DGGML_CUDA=on" python3.12 -m pip install -v . -c constraints-dev.txt
 
           # https://github.com/instructlab/instructlab/issues/1821
           # install with Torch and build dependencies installed
-          python3.11 -m pip install -v packaging wheel setuptools-scm
-          python3.11 -m pip install -v .[cuda] -r requirements-vllm-cuda.txt -c constraints-dev.txt
+          python3.12 -m pip install -v packaging wheel setuptools-scm
+          python3.12 -m pip install -v .[cuda] -r requirements-vllm-cuda.txt -c constraints-dev.txt
 
       - name: Check disk before tests
         run: |

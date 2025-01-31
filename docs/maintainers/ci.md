@@ -4,7 +4,7 @@
 
 ## Unit tests
 
-Unit tests are designed to test specific InstructLab components or features in isolation. In CI, these tests are run on Python 3.11 on CPU-only Ubuntu
+Unit tests are designed to test specific InstructLab components or features in isolation. In CI, these tests are run on Python 3.11 or 3.12 on CPU-only Ubuntu
 and MacOS runners. Generally, new code should be adding or modifying unit tests.
 
 All unit tests currently live in the `tests/` directory and are run with [pytest](https://docs.pytest.org/) via [tox](https://tox.wiki/).
@@ -12,7 +12,7 @@ All unit tests currently live in the `tests/` directory and are run with [pytest
 ## Functional tests
 
 Functional tests are designed to test InstructLab components or features in tandem, but not necessarily as part of a complex workflow. In CI, these tests are run on
-Python 3.11 on CPU-only Ubuntu and MacOS runners. New code may or may not need a functional test but should strive to implement one if possible.
+Python 3.11 or 3.12 on CPU-only Ubuntu and MacOS runners. New code may or may not need a functional test but should strive to implement one if possible.
 
 The functional test script is Shell-based and can be found at `scripts/functional-tests.sh`.
 

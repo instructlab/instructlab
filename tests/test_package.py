@@ -42,11 +42,11 @@ def test_require_no_url_req():
 
 
 @pytest.mark.parametrize("hw_extra", sorted(HW_EXTRAS))
-def test_package_conflict(hw_extra: str) -> None:
+@pytest.mark.parametrize("py_version", ["3.11", "3.12"])
+def test_package_conflict(hw_extra: str, py_version: str) -> None:
     base: dict[str, Requirement] = {}
     hw: dict[str, Requirement] = {}
 
-    py_version = "3.11"
     for req in iter_requirements():
         # override version for environment
         base_env = {

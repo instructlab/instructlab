@@ -324,10 +324,10 @@ wait_ssh_listen() {
 }
 
 setup_rh_devenv() {
-    "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" sudo dnf install git-core gcc make python3.11 python3.11-devel -y
+    "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" sudo dnf install git-core gcc make python3.12 python3.12-devel -y
     "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "sudo dnf install g++ -y || sudo dnf install gcc-c++"
     "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "if [ ! -d instructlab.git ]; then git clone --bare https://github.com/instructlab/instructlab.git && git clone instructlab.git && pushd instructlab && git remote add syncrepo ../instructlab.git && git remote add upstream https://github.com/instructlab/instructlab.git; fi"
-    "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "pushd instructlab && python3.11 -m venv --upgrade-deps venv"
+    "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "pushd instructlab && python3.12 -m venv --upgrade-deps venv"
 }
 
 setup_instructlab_library_devenvs() {
