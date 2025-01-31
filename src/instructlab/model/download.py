@@ -13,6 +13,7 @@ import subprocess
 from huggingface_hub import hf_hub_download, list_repo_files
 from huggingface_hub import logging as hf_logging
 from huggingface_hub import snapshot_download
+from huggingface_hub.errors import GatedRepoError
 
 # First Party
 from instructlab.configuration import DEFAULTS
@@ -78,6 +79,7 @@ class HFDownloader(ModelDownloader):
             f"Downloading model from Hugging Face:\n{DEFAULT_INDENT}Model: {self.repository}@{self.release}\n{DEFAULT_INDENT}Destination: {self.download_dest}"
         )
 
+<<<<<<< HEAD
         if self.hf_token == "" and "instructlab" not in self.repository:
             raise ValueError(
                 """HF_TOKEN var needs to be set in your environment to download HF Model.
@@ -85,6 +87,8 @@ class HFDownloader(ModelDownloader):
                 The HF Token is used to authenticate your identity to the Hugging Face Hub."""
             )
 
+=======
+>>>>>>> d34ba76 (fix: Only require HF_TOKEN when actually needed)
         try:
             if self.log_level is not None:
                 hf_logging.set_verbosity(self.log_level)
@@ -94,6 +98,12 @@ class HFDownloader(ModelDownloader):
             else:
                 self.download_gguf()
 
+        except GatedRepoError as exc:
+            raise ValueError(
+                """The HF_TOKEN environment variable needs to be set in your environment to download this Hugging Face Model.
+                Alternatively, the token can be passed with --hf-token flag.
+                The Hugging Face token is used to authenticate your identity to the Hugging Face Hub."""
+            ) from exc
         except Exception as exc:
             raise RuntimeError(
                 f"\nDownloading model failed with the following Hugging Face Hub error:\n{DEFAULT_INDENT}{exc}"
