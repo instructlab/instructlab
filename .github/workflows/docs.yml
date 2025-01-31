@@ -42,6 +42,10 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
+      - name: Install dependent PRs if needed
+        uses: depends-on/depends-on-action@61cb3f4a0e2c8ae4b90c9448dc57c7ba9ca24c35 # main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: "Check Markdown documents"
         uses: DavidAnson/markdownlint-cli2-action@05f32210e84442804257b2a6f20b273450ec8265 # v19.1.0
         with:

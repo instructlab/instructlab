@@ -122,3 +122,13 @@ begin and end so it's easier for those involved in the PR to follow the results.
 Here is an example of using the GitHub Web UI to launch an E2E workflow:
 
 ![GitHub Actions Run Workflow Example](images/github-actions-run-workflow-example.png)
+
+## Dependency on external Pull Requests
+
+[depends-on-action](https://github.com/marketplace/actions/pr-dependency-management) is activated in the GitHub action workflows. To declare a dependency on an external PR, use the following syntax in the description of your Pull Request:
+
+```text
+Change to use the new library function
+
+Depends-On: https://github.com/org/library/pull/123
+```
