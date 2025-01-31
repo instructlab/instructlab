@@ -14,7 +14,7 @@ import boto3
 
 # First Party
 from instructlab.configuration import DEFAULTS
-from instructlab.defaults import DEFAULT_INDENT
+from instructlab.defaults import DEFAULT_INDENT, UPLOAD_DESTINATIONS
 from instructlab.utils import (
     check_skopeo_version,
     is_model_gguf,
@@ -396,3 +396,60 @@ class S3ModelUploader(ModelUploader):
         logger.info(
             f"\nUploading model at {self.local_model_path} succeeded!",
         )
+
+
+def upload_models(
+    log_level: str,
+    dest_type: str,
+    model: str,
+    destination: str,
+    release: str,
+    hf_token: str,
+):
+    """Upload model from a specified repository"""
+    uploader: ModelUploader
+
+    # TODO: this better
+    for dest in dest_type:
+        if dest in UPLOAD_DESTINATIONS:
+            if dest == "hf":
+                uploader = HFModelUploader(
+                    log_level=log_level,
+                    model=model,
+                    destination=destination,
+                    release=release,
+                    hf_token=hf_token,
+                )
+            elif dest == "oci":
+                uploader = OCIModelUploader(
+                    log_level=log_level,
+                    model=model,
+                    destination=destination,
+                    release=release,
+                )
+            elif dest == "s3":
+                uploader = S3ModelUploader(
+                    log_level=log_level,
+                    model=model,
+                    destination=destination,
+                )
+        else:
+            raise ValueError(
+                f"dest_type {dest_type} matches neither Hugging Face, OCI registry, nor S3 endpoint format.\nPlease supply a valid repository"
+            )
+
+    try:
+        uploader.upload()
+    # pylint: disable=broad-exception-caught
+    except (ValueError, Exception) as exc:
+        if isinstance(exc, ValueError) and "HF_TOKEN" in str(exc):
+            logger.error(
+                "Uploading to Hugging Face requires a HF Token to be set.\nPlease use '--hf-token' or 'export HF_TOKEN' to upload all necessary models."
+            )
+        elif isinstance(exc, ValueError) and "AWS" in str(exc):
+            logger.error(
+                "Uploading to AWS requires credentials to be set.\nPlease set your AWS credentials to upload all necessary models."
+            )
+        else:
+            logger.error(f"Uploading model failed with the following error: {exc}")
+        raise

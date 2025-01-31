@@ -22,7 +22,7 @@ from instructlab.model.download import download_models
         DEFAULTS.MISTRAL_GGUF_REPO,
     ],  # TODO: add to config.yaml
     show_default=True,
-    help="Hugging Face or OCI repository of the model to download.",
+    help="Hugging Face, OCI, or S3 repository of the model to download.",
 )
 @click.option(
     "--release",
@@ -47,7 +47,7 @@ from instructlab.model.download import download_models
         DEFAULTS.MISTRAL_GGUF_MODEL_NAME,
     ],
     show_default="The default model location in the instructlab data directory.",
-    help="Name of the model file to download from the Hugging Face repository.",
+    help="Name of the model file to download from the Hugging Face or S3 repository.",
 )
 @click.option(
     "--model-dir",
@@ -64,6 +64,8 @@ from instructlab.model.download import download_models
 @click.pass_context
 @clickext.display_params
 def download(ctx, repositories, releases, filenames, model_dir, hf_token):
+    """Downloads models to a specified location"""
+
     try:
         model = Path(model_dir)
         download_models(
