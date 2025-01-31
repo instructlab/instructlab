@@ -1,3 +1,9 @@
+## v0.26
+
+### Features
+
+- Enable support for Python 3.12.
+
 ## v0.25
 
 ### Features
