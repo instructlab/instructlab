@@ -226,7 +226,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    ```
 
 > [!IMPORTANT]
-> Every `ilab` command needs to be run from within your Python virtual environment. You can enter the Python environment by running the `source venv/bin/activate` command.
+> Every `ilab` command needs to be run from within your Python virtual environment. You can enter the Python environment by running the `source venv/bin/activate` command. Or you can simply create a symbolic link to a directory that is included in your system’s `$PATH`, for example in Linux: `mkdir -p ~/bin/ && ln -s /path/venv/bin/ilab ~/bin/ilab`, or use an alias: `alias ilab='/path/venv/bin/ilab'` (add it to `~/.bashrc` or `~/.zshrc` to persist).
 
 5. *Optional:* You can enable tab completion for the `ilab` command.
 
