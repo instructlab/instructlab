@@ -17,7 +17,10 @@ class TestLabDownload:
     # When using `import X`, you should use `X.Y` to patch.
     # https://docs.python.org/3/library/unittest.mock.html#where-to-patch?
     @patch("instructlab.model.download.hf_hub_download")
-    def test_download(self, mock_hf_hub_download, cli_runner: CliRunner):
+    @patch("instructlab.model.download.list_repo_files")
+    def test_download(
+        self, mock_list_repo_files, mock_hf_hub_download, cli_runner: CliRunner
+    ):
         result = cli_runner.invoke(
             lab.ilab,
             [
@@ -30,13 +33,15 @@ class TestLabDownload:
         assert (
             result.exit_code == 0
         ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert mock_list_repo_files.call_count == 3
         assert mock_hf_hub_download.call_count == 3
 
     @patch(
         "instructlab.model.download.hf_hub_download",
         MagicMock(side_effect=HfHubHTTPError("Could not reach hugging face server")),
     )
-    def test_download_error(self, cli_runner: CliRunner):
+    @patch("instructlab.model.download.list_repo_files")
+    def test_download_error(self, mock_list_repo_files, cli_runner: CliRunner):
         result = cli_runner.invoke(
             lab.ilab,
             [
@@ -45,6 +50,7 @@ class TestLabDownload:
                 "download",
             ],
         )
+        assert mock_list_repo_files.call_count == 1
         assert result.exit_code == 1, "command finished with an unexpected exit code"
         assert "Could not reach hugging face server" in result.output
 
@@ -65,6 +71,10 @@ class TestLabDownload:
         assert "model download completed successfully!" in result.output
         assert "Available models (`ilab model list`):" in result.output
 
+    @patch(
+        "instructlab.model.download.OCIDownloader.download",
+        MagicMock(side_effect=HfHubHTTPError("Could not reach hugging face server")),
+    )
     def test_oci_download_repository_error(self, cli_runner: CliRunner):
         result = cli_runner.invoke(
             lab.ilab,
@@ -76,7 +86,4 @@ class TestLabDownload:
             ],
         )
         assert result.exit_code == 1
-        assert (
-            "\nInvalid repository supplied:\n    Please specify tag/version 'latest' via --release"
-            in result.output
-        )
+        assert "Could not reach hugging face server" in result.output
