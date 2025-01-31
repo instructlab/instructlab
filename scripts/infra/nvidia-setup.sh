@@ -2,8 +2,8 @@
 # shellcheck disable=SC2155,SC2116,SC2086,SC2155,SC2318,SC2206,SC2126,SC2001,SC1091
 # Derived from:
 # github.com/containers/ai-lab-recipes/blob/main/training/nvidia-bootc/Containerfile
-DRIVER_VERSION="550.90.07"
-CUDA_VERSION='12.4.1'
+DRIVER_VERSION="570.86.15"
+CUDA_VERSION='12.8.0'
 BASE_URL='https://us.download.nvidia.com/tesla'
 
 if [[ $(id -u) != "0" ]]; then
