@@ -56,6 +56,8 @@ def convert(
     input_dir,
     output_dir,
 ):
+    """Pipeline to convert documents from their original format (e.g., PDF) into Docling JSON format for use by ilab rag ingest"""
+
     if not FeatureGating.feature_available(GatedFeatures.RAG):
         click.echo(
             f"This functionality is experimental; set {FeatureGating.env_var_name}"
@@ -63,7 +65,6 @@ def convert(
         )
         return
 
-    """Pipeline to convert documents from their original format (e.g., PDF) into Docling JSON format for use by ilab rag ingest"""
     # Local
     from ...rag.convert import (
         convert_documents_from_folder,

@@ -67,7 +67,7 @@ class HFDownloader(ModelDownloader):
             download_dest=download_dest,
         )
         self.filename = filename
-        self.hf_token = hf_token
+        self.hf_token = hf_token or None
 
     def download(self):
         """
@@ -77,7 +77,7 @@ class HFDownloader(ModelDownloader):
             f"Downloading model from Hugging Face:\n{DEFAULT_INDENT}Model: {self.repository}@{self.release}\n{DEFAULT_INDENT}Destination: {self.download_dest}"
         )
 
-        if self.hf_token == "" and "instructlab" not in self.repository:
+        if self.hf_token is None and "instructlab" not in self.repository:
             raise ValueError(
                 """HF_TOKEN var needs to be set in your environment to download HF Model.
                 Alternatively, the token can be passed with --hf-token flag.

@@ -84,6 +84,13 @@ jobs:
       - name: Free disk space
         uses: ./.github/actions/free-disk-space
 
+      # Always apt-get update before installing any extra packages
+      # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/customizing-github-hosted-runners#installing-software-on-ubuntu-runners
+      - name: Update apt index
+        if: startsWith(matrix.platform, 'ubuntu')
+        run: |
+          sudo apt-get update
+
       - name: Install the expect package
         if: startsWith(matrix.platform, 'ubuntu')
         run: |
@@ -232,7 +239,7 @@ jobs:
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }} # Only publish docs website on merge to main
         with:
           publish_branch: gh-pages
-          github_token: ${{ secrets.GH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs/build/html
           force_orphan: true
 
