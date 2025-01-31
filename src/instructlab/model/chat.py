@@ -28,7 +28,7 @@ import requests
 # First Party
 from instructlab import client_utils as ilabclient
 from instructlab import configuration as cfg
-from instructlab import log
+from instructlab import defaults, log
 from instructlab.client_utils import HttpClientParams
 
 # Local
@@ -78,6 +78,14 @@ PROMPT_PREFIX = ">>> "
 
 class ChatException(Exception):
     """An exception raised during chat step."""
+
+
+class ChatFailedToLoadIndexException(ChatException):
+    """An exception raised during chat: RAG is enabled but the index with the RAG content failed to load."""
+
+
+class ChatFailedToLoadRetrievalModelException(ChatException):
+    """An exception raised during chat step: RAG is enabled but the embedding model for retrieving the RAG content failed to load."""
 
 
 class ChatQuitException(Exception):
@@ -806,18 +814,41 @@ def chat_cli(
     sys_prompt = CONTEXTS.get(context, "default")(get_model_arch(pathlib.Path(model)))
     loaded["messages"] = [{"role": "system", "content": sys_prompt}]
 
+    retriever: DocumentStoreRetriever | None = None
+
     # Instantiate retriever if RAG is enabled
     if rag_enabled:
         logger.debug("RAG enabled for chat; initializing retriever")
-        retriever: DocumentStoreRetriever | None = create_document_retriever(
-            document_store_uri=document_store_uri,
-            document_store_collection_name=collection_name,
-            top_k=top_k,
-            embedding_model_path=embedding_model_path,
-        )
+        if not os.path.exists(embedding_model_path) or not os.access(
+            embedding_model_path, os.R_OK
+        ):
+            raise ChatFailedToLoadRetrievalModelException(
+                f"Embedding model is not found: {embedding_model_path}\n"
+                "  This is typically addressed by running: ilab model download -rp <model-location>\n"
+                f"  Where <model-location> is a location for your model, e.g. {defaults.DEFAULTS.GRANITE_EMBEDDING_MODEL_NAME}"
+            )
+        try:
+            retriever = create_document_retriever(
+                document_store_uri=document_store_uri,
+                document_store_collection_name=collection_name,
+                top_k=top_k,
+                embedding_model_path=embedding_model_path,
+            )
+        except FileNotFoundError as e:
+            # When the database is not found, we get a FileNotFoundError.
+            raise ChatFailedToLoadIndexException(
+                f"Ingested content not found at location {document_store_uri}\n"
+                "  This is typically addressed by running the ilab model convert and ilab model ingest commands\n"
+                "  For more details, run both of those commands with --help"
+            ) from e
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # When the database is not a valid database, we get a generic Exception.
+            # Maybe there are other things that could cause this error?
+            raise ChatFailedToLoadIndexException(
+                f"Ingested content at location {document_store_uri} is not a valid index."
+            ) from e
     else:
         logger.debug("RAG not enabled for chat; skipping retrieval setup")
-        retriever: DocumentStoreRetriever | None = None
 
     # Session from CLI
     if session is not None:
