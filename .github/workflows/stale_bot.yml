@@ -36,7 +36,8 @@ jobs:
             This issue has been automatically marked as stale because it has not had activity within 60 days.
             It will be automatically closed if no further activity occurs within 30 days.
           close-issue-message: >
-            This issue has been automatically closed due to inactivity. Please feel free to reopen if you feel it is still relevant!
+            This issue has been automatically closed due to inactivity.
+            Please feel free to reopen if you feel it is still relevant!
           days-before-issue-stale: 60
           days-before-issue-close: 30
           stale-pr-label: 'stale'
@@ -44,7 +45,8 @@ jobs:
             This pull request has been automatically marked as stale because it has not had activity within 60 days.
             It will be automatically closed if no further activity occurs within 30 days.
           close-pr-message: >
-            This pull request has been automatically closed due to inactivity. Please feel free to reopen if you intend to continue working on it!
+            This pull request has been automatically closed due to inactivity.
+            Please feel free to reopen if you intend to continue working on it!
           days-before-pr-stale: 60
           days-before-pr-close: 30
           operations-per-run: 300
