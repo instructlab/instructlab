@@ -65,10 +65,11 @@ jobs:
         python:
           - "3.10"
           - "3.11"
+          - "3.12"
         platform:
           - "ubuntu-latest"
         include:
-          - python: "3.11"
+          - python: "3.12"
             platform: "macos-latest"
     steps:
       - name: "Harden Runner"
@@ -184,10 +185,10 @@ jobs:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
 
-      - name: Setup Python 3.11
+      - name: Setup Python 3.12
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
         with:
-          python-version: 3.11
+          python-version: 3.12
           cache: pip
           cache-dependency-path: |
             **/pyproject.toml
