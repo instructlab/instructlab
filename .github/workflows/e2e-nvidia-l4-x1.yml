@@ -12,7 +12,6 @@ on:
   pull_request_target:
     branches:
       - main
-      - release-*
     paths:
       # note this should match the merging criteria in 'mergify.yml'
       - '**.py'
