@@ -101,14 +101,14 @@ lspci -n -n -k | grep -A 2 -e VGA -e 3D
 ```
 
 You should now see `Kernel driver in use: nvidia`. The next step is to ensure
-CUDA 12.4 is installed.
+CUDA 12.8 is installed.
 
 ```shell
-# Install CUDA 12.4 and nvtop to monitor GPU usage
-sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/fedora39/x86_64/cuda-fedora39.repo
+# Install CUDA 12.8 and nvtop to monitor GPU usage
+sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/fedora41/x86_64/cuda-fedora41.repo
 
 sudo dnf clean all
-sudo dnf -y install cuda-toolkit-12-4 nvtop
+sudo dnf -y install cuda-toolkit-12-8 nvtop
 ```
 
 Go to the project's GitHub to see the
