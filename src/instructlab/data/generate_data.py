@@ -200,7 +200,7 @@ def create_server_and_generate(
     from instructlab.sdg.utils import GenerateException
 
     # First Party
-    from instructlab.process.process import update_status
+    from instructlab.process.process import complete_process
 
     try:
         logger.info(
@@ -228,12 +228,12 @@ def create_server_and_generate(
         )
     except GenerateException as exc:
         # mark process as errored on registry and set end_time
-        update_status(local_uuid=local_uuid, status=ILAB_PROCESS_STATUS.ERRORED)
+        complete_process(local_uuid=local_uuid, status=ILAB_PROCESS_STATUS.ERRORED)
         raise ValueError(
             f"Generating dataset failed with the following error: {exc}"
         ) from exc
     finally:
         # mark process as done on registry and set end_time
-        update_status(local_uuid=local_uuid, status=ILAB_PROCESS_STATUS.DONE)
+        complete_process(local_uuid=local_uuid, status=ILAB_PROCESS_STATUS.DONE)
         if backend_instance is not None:
             backend_instance.shutdown()

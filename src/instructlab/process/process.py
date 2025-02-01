@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from datetime import datetime
-from typing import Callable
+from datetime import datetime, timedelta
+from typing import Any, Callable
 import json
 import logging
 import os
+import pathlib
 import signal
 import subprocess
 import sys
@@ -23,52 +24,106 @@ from instructlab.defaults import ILAB_PROCESS_MODES, ILAB_PROCESS_STATUS
 logger = logging.getLogger(__name__)
 
 
-class ProcessRegistry:
-    def __init__(self):
-        self.processes = {}
-
-    def add_process(
-        self, local_uuid, pid, children_pids, type, log_file, start_time, status
+class Process:
+    def __init__(
+        self,
+        pid: int,
+        log_path: pathlib.Path,
+        ptype: str,
+        children: list[int] | None = None,
+        start_time: datetime | None = None,
+        status: str = ILAB_PROCESS_STATUS.RUNNING,
     ):
-        self.processes[str(local_uuid)] = {
-            "pid": pid,
-            "children_pids": children_pids,
-            "type": type,
-            "log_file": log_file,
-            "start_time": datetime.strptime(
-                start_time, "%Y-%m-%d %H:%M:%S"
-            ).isoformat(),
-            "status": status,
+        self.pid = pid
+        self.ptype = ptype
+        self.log_path = log_path
+        self.status = status
+
+        self._children = children or []
+        self._start_time: datetime = start_time or datetime.now()
+        self._end_time: datetime | None = None
+
+    @property
+    def pids(self) -> list[int]:
+        return [self.pid] + self._children
+
+    def complete(self, status: str):
+        self.status = status
+        self._end_time = datetime.now()
+
+    @property
+    def completed(self) -> bool:
+        return self.status in (ILAB_PROCESS_STATUS.DONE, ILAB_PROCESS_STATUS.ERRORED)
+
+    @property
+    def started(self) -> bool:
+        return self.log_path.exists()
+
+    @property
+    def runtime(self) -> timedelta:
+        return (self._end_time or datetime.now()) - self._start_time
+
+    # We are making effort to retain the original process representation as was
+    # used in the original implementation. Some fields are named differently
+    # for this reason.
+    def to_json(self) -> dict[str, Any]:
+        res = {
+            "pid": self.pid,
+            "type": str(self.ptype),
+            "log_file": str(self.log_path),
+            "children_pids": self._children,
+            "start_time": self._start_time.isoformat(),
+            "status": str(self.status),
         }
+        if self._end_time:
+            res["end_time"] = self._end_time.isoformat()
+        return res
 
-    def load_entry(self, key, value):
-        self.processes[key] = value
+
+ProcessMap = dict[str, Process]
 
 
-def load_registry() -> ProcessRegistry:
-    process_registry = ProcessRegistry()
-    lock_path = DEFAULTS.PROCESS_REGISTRY_LOCK_FILE
-    lock = FileLock(lock_path, timeout=1)
-    """Load the process registry from a file, if it exists."""
-    # we do not want a persistent registry in memory. This causes issues when in scenarios where you switch registry files (ex, in a unit test, or with multiple users)
-    # but the registry with incorrect processes still exists in memory.
-    with lock:
-        if os.path.exists(DEFAULTS.PROCESS_REGISTRY_FILE):
-            with open(DEFAULTS.PROCESS_REGISTRY_FILE, "r") as f:
+class ProcessRegistry:
+    def __init__(self, filepath: pathlib.Path | None = None):
+        self._filepath = filepath or DEFAULTS.PROCESS_REGISTRY_FILE
+        self._lock = FileLock(f"{filepath}.lock", timeout=1)
+        self._processes: ProcessMap = {}
+
+    @property
+    def processes(self) -> ProcessMap:
+        # Don't allow the caller to modify the internal registry state without
+        # going through proper methods
+        return self._processes.copy()
+
+    def add(self, id_: str, process: Process) -> "ProcessRegistry":
+        self._processes[id_] = process
+        return self
+
+    def remove(self, id_: str) -> Process | None:
+        return self._processes.pop(id_, None)
+
+    def load(self) -> "ProcessRegistry":
+        if os.path.exists(self._filepath):
+            with self._lock, open(self._filepath) as f:
                 data = json.load(f)
                 for key, value in data.items():
-                    process_registry.load_entry(key=key, value=value)
-        else:
-            logger.debug("No existing process registry found. Starting fresh.")
-    return process_registry
+                    self.add(
+                        key,
+                        Process(
+                            pid=value["pid"],
+                            log_path=pathlib.Path(value["log_file"]),
+                            ptype=value["type"],
+                            children=value["children_pids"],
+                            start_time=datetime.fromisoformat(value["start_time"]),
+                            status=value["status"],
+                        ),
+                    )
+        return self
 
-
-def save_registry(process_registry):
-    """Save the current process registry to a file."""
-    lock_path = DEFAULTS.PROCESS_REGISTRY_LOCK_FILE
-    lock = FileLock(lock_path, timeout=1)
-    with lock, open(DEFAULTS.PROCESS_REGISTRY_FILE, "w") as f:
-        json.dump(dict(process_registry.processes), f)
+    def persist(self) -> "ProcessRegistry":
+        with self._lock, open(self._filepath, "w") as f:
+            json.dump({id_: p.to_json() for id_, p in self._processes.items()}, f)
+        return self
 
 
 class Tee:
@@ -199,11 +254,11 @@ def add_process(
     Returns:
         None
     """
-    process_registry = load_registry()
+    process_registry = ProcessRegistry().load()
     if target is None:
         return None, None
 
-    local_uuid = uuid.uuid1()
+    local_uuid = str(uuid.uuid1())
     log_file = None
 
     log_dir = os.path.join(DEFAULTS.LOGS_DIR, process_type.lower())
@@ -212,11 +267,8 @@ def add_process(
         os.makedirs(log_dir)
 
     log_file = os.path.join(log_dir, f"{process_type.lower()}-{local_uuid}.log")
-    pid: int | None = os.getpid()
-    children_pids: list[int] | None = []
-    start_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     kwargs["log_file"] = log_file
-    kwargs["local_uuid"] = str(local_uuid)
+    kwargs["local_uuid"] = local_uuid
     kwargs["process_mode"] = process_mode
     if process_mode == ILAB_PROCESS_MODES.DETACHED:
         assert isinstance(log_file, str)
@@ -228,22 +280,24 @@ def add_process(
                 # process didn't start
                 return None
             assert isinstance(pid, int) and isinstance(children_pids, list)
+    else:
+        pid = os.getpid()
+        children_pids = []
+
     # Add the process info to the shared registry
-    process_registry.add_process(
-        local_uuid=local_uuid,
-        pid=pid,
-        children_pids=children_pids,
-        type=process_type,
-        log_file=log_file,
-        start_time=start_time_str,
-        status=ILAB_PROCESS_STATUS.RUNNING,
+    process_registry.add(
+        local_uuid,
+        Process(
+            pid=pid,
+            log_path=pathlib.Path(log_file),
+            ptype=process_type,
+            children=children_pids,
+        ),
     )
     logger.info(
         f"Started subprocess with PID {pid}. Logs are being written to {log_file}."
     )
-    save_registry(
-        process_registry=process_registry
-    )  # Persist registry after adding process
+    process_registry.persist()  # Persist registry after adding process
     if process_mode == ILAB_PROCESS_MODES.ATTACHED:
         with open(log_file, "a+") as log:
             sys.stdout = Tee(log)
@@ -264,36 +318,36 @@ def all_processes_running(pids: list[int]) -> bool:
     return all(psutil.pid_exists(pid) for pid in pids)
 
 
-def stop_process(local_uuid, remove=True):
+def stop_process(local_uuid: str, remove=True):
     """
     Stop a running process.
 
     Args:
         local_uuid (str): uuid of the process to stop.
     """
-    process_registry = load_registry()
+    process_registry = ProcessRegistry().load()
     # we should kill the parent process, and also children processes.
-    pid = process_registry.processes[local_uuid]["pid"]
-    children_pids = process_registry.processes[local_uuid]["children_pids"]
-    all_processes = [pid] + children_pids
-    for process in all_processes:
+    if local_uuid not in process_registry.processes:
+        logger.warning("Process not found.")
+        return
+
+    process = process_registry.processes[local_uuid]
+    for pid in process.pids:
         try:
-            os.kill(process, signal.SIGKILL)
-            logger.info(f"Process {process} terminated.")
+            os.kill(pid, signal.SIGKILL)
+            logger.info(f"Process {pid} terminated.")
         except (ProcessLookupError, PermissionError):
-            logger.warning(
-                f"Process {process} was not running or could not be stopped."
-            )
+            logger.warning(f"Process {pid} was not running or could not be stopped.")
+
     if remove:
-        process_registry.processes.pop(local_uuid, None)
+        process_registry.remove(local_uuid)
     else:
         # since we just killed the processes, we cannot depend on it to update itself, mark as done and set end time
-        process_registry.processes[local_uuid]["status"] = ILAB_PROCESS_STATUS.DONE
-        process_registry.processes[local_uuid]["end_time"] = datetime.now().isoformat()
-    save_registry(process_registry=process_registry)
+        process.complete(ILAB_PROCESS_STATUS.DONE)
+    process_registry.persist()
 
 
-def update_status(local_uuid, status):
+def complete_process(local_uuid: str, status):
     """
     Updates the status of a process.
 
@@ -301,14 +355,11 @@ def update_status(local_uuid, status):
         local_uuid (str): uuid of the process to stop.
     """
 
-    process_registry = load_registry()
-    entry = process_registry.processes.get(str(local_uuid), {})
-    if entry:
-        process_registry.processes[str(local_uuid)]["end_time"] = (
-            datetime.now().isoformat()
-        )
-        process_registry.processes[str(local_uuid)]["status"] = status
-        save_registry(process_registry=process_registry)
+    process_registry = ProcessRegistry().load()
+    process = process_registry.processes.get(local_uuid, None)
+    if process:
+        process.complete(status)
+    process_registry.persist()
 
 
 def list_processes():
@@ -321,7 +372,7 @@ def list_processes():
     Returns:
         None
     """
-    process_registry = load_registry()
+    process_registry = ProcessRegistry().load()
     if not process_registry:
         logger.info("No processes currently in the registry.")
         return
@@ -329,37 +380,29 @@ def list_processes():
     list_of_processes = []
 
     processes_to_remove = []
-    for local_uuid, entry in process_registry.processes.items():
+    for local_uuid, process in process_registry.processes.items():
         # assume all processes are running and not ready for removal unless status indicates otherwise
-        status = entry.get("status", "")
-        all_pids = [entry["pid"]] + entry["children_pids"]
-        if not all_processes_running(all_pids):
+        if not all_processes_running(process.pids):
             # if all of our child or parent processes are not running, we should either a. remove this process, or b. mark it ready for removal after this list
-            if status in (ILAB_PROCESS_STATUS.DONE, ILAB_PROCESS_STATUS.ERRORED):
+            if process.completed:
                 # if this has been marked as done remove it after listing once
                 # but, we cannot remove while looping as that will cause errors.
                 processes_to_remove.append(local_uuid)
             # if not, list it, but mark it as ready for removal
-        now = datetime.now()
-        start_time = datetime.fromisoformat(entry.get("start_time"))
-        # Calculate runtime
-        runtime = now - start_time
-        if "end_time" in entry:
-            runtime = datetime.fromisoformat(entry.get("end_time")) - start_time
+
         # Convert timedelta to a human-readable string (HH:MM:SS)
-        total_seconds = int(runtime.total_seconds())
-        hours, remainder = divmod(total_seconds, 3600)
+        hours, remainder = divmod(process.runtime.total_seconds(), 3600)
         minutes, seconds = divmod(remainder, 60)
 
         runtime_str = f"{hours:02}:{minutes:02}:{seconds:02}"
         list_of_processes.append(
             (
-                entry.get("type"),
-                entry.get("pid"),
+                process.ptype,
+                process.pid,
                 local_uuid,
-                entry.get("log_file"),
+                str(process.log_path),
                 runtime_str,
-                status,
+                process.status,
             )
         )
 
@@ -378,26 +421,22 @@ def attach_process(local_uuid: str):
     Args:
         local_uuid (str): UUID of the process to attach to
     """
-    process_registry = load_registry()
-    if local_uuid not in process_registry.processes:
+    process_registry = ProcessRegistry().load()
+    process = process_registry.processes.get(local_uuid, None)
+    if not process:
         logger.warning("Process not found.")
         return
 
-    process_info = process_registry.processes[local_uuid]
-    log_file = process_info["log_file"]
-
-    if not os.path.exists(log_file):
-        logger.warning(
-            "Log file not found. The process may not have started logging yet."
-        )
+    if not process.started:
+        logger.warning("The process may not have started yet.")
         return
 
     logger.info(f"Attaching to process {local_uuid}. Press Ctrl+C to detach and kill.")
-    all_pids = [process_info["pid"]] + process_info["children_pids"]
+    all_pids = process.pids
     if not all_processes_running(all_pids):
         return
     try:
-        with open(log_file, "a+") as log:
+        with open(process.log_path, "a+") as log:
             log.seek(0, os.SEEK_END)  # Move to the end of the log file
             while all_processes_running(all_pids):
                 line = log.readline()
@@ -419,11 +458,7 @@ def get_latest_process() -> str | None:
     Returns:
         last_key (str): a string UUID to attach to
     """
-    process_registry = load_registry()
-    keys = process_registry.processes.keys()
-    # no processes
-    if len(keys) == 0:
+    processes = ProcessRegistry().load().processes
+    if not processes:
         return None
-    last_key = list(process_registry.processes.keys())[-1]
-    assert isinstance(last_key, str)
-    return last_key
+    return list(processes)[-1]
