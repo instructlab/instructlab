@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 # Third Party
 from click.testing import CliRunner
+from huggingface_hub.errors import GatedRepoError
 from huggingface_hub.utils import HfHubHTTPError
 import pytest
 
@@ -24,20 +25,25 @@ class TestLabDownload:
             ("any/any", "", None, True),
         ],
     )
+    @patch("instructlab.model.download.list_repo_files")
     def test_downloader_handles_token(
         self,
+        mock_list_repo_files,
         repo: str,
         provided_token: str,
         expected_token: Union[str, bool, None],
         expect_failure: bool,
     ):
+        if expect_failure:
+            mock_list_repo_files.side_effect = GatedRepoError("invalid token")
+
         downloader = HFDownloader(
             repository=repo,
             hf_token=provided_token,
             release="",
             download_dest=Path(""),
             filename="",
-            log_level="",
+            log_level="INFO",
         )
 
         assert downloader.hf_token == expected_token
