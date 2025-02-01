@@ -138,7 +138,7 @@ test_download() {
         ilab model download --repository ${GRANITE_7B_MODEL}
     elif [ "$MEDIUM" -eq 1 ]; then
         step Downloading the mistral-7b-instruct GGUF model as the teacher model for SDG
-        ilab model download --repository ${MISTRAL_GGUF_REPO} --filename ${MISTRAL_GGUF_MODEL} --hf-token "${HF_TOKEN}"
+        ilab model download --repository ${MISTRAL_GGUF_REPO} --filename ${MISTRAL_GGUF_MODEL}
         step Downloading granite-7b-lab model to train and as the judge model for evaluation
         ilab model download --repository ${GRANITE_7B_MODEL}
     elif [ "$LARGE" -eq 1 ] || [ "$XLARGE" -eq 1 ]; then
@@ -379,17 +379,19 @@ test_evaluate() {
     base_model_path="${CACHE_HOME}/instructlab/models/${GRANITE_7B_MODEL}"
     dk_bench_output_formats="csv,xlsx,jsonl"
 
-    step Running DK Bench where trained model generates responses
-    ilab model evaluate \
-        --model "${model_path}" \
-        --benchmark dk_bench \
-        --input-questions "${SCRIPTDIR}/test-data/dk-bench-questions.jsonl" \
-        --output-file-formats "${dk_bench_output_formats}"
+    if [ "$LARGE" -eq 1 ]; then
+        step Running DK Bench where trained model generates responses
+        ilab model evaluate \
+            --model "${model_path}" \
+            --benchmark dk_bench \
+            --input-questions "${SCRIPTDIR}/test-data/dk-bench-questions.jsonl" \
+            --output-file-formats "${dk_bench_output_formats}"
 
-    step Running DK Bench with responses already provided
-    ilab model evaluate \
-        --benchmark dk_bench \
-        --input-questions "${SCRIPTDIR}/test-data/dk-bench-questions-with-responses.jsonl" \
+        step Running DK Bench with responses already provided
+        ilab model evaluate \
+            --benchmark dk_bench \
+            --input-questions "${SCRIPTDIR}/test-data/dk-bench-questions-with-responses.jsonl"
+    fi
 
     export INSTRUCTLAB_EVAL_MMLU_MIN_TASKS=true
     export HF_DATASETS_TRUST_REMOTE_CODE=true
