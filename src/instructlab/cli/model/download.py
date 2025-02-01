@@ -7,7 +7,7 @@ import click
 # First Party
 from instructlab import clickext
 from instructlab.defaults import DEFAULTS
-from instructlab.model.download import download_models
+from instructlab.model.download import download_models, get_hf_token
 
 
 @click.command()
@@ -59,7 +59,7 @@ from instructlab.model.download import download_models
     "--hf-token",
     default="",
     envvar="HF_TOKEN",
-    help="User access token for connecting to the Hugging Face Hub.",
+    help="User access token for connecting to the Hugging Face Hub (also can use environment variable 'HF_TOKEN' or set token in '~/.cache/huggingface/token').",
 )
 @click.pass_context
 @clickext.display_params
@@ -72,7 +72,7 @@ def download(ctx, repositories, releases, filenames, model_dir, hf_token):
             releases=releases,
             filenames=filenames,
             model_dir=model,
-            hf_token=hf_token,
+            hf_token=get_hf_token(hf_token),
         )
     except Exception as e:
         click.secho(f"Downloading failed with the following exception: {e}", fg="red")
