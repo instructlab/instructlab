@@ -1,7 +1,8 @@
 version: 3
 created_by: team1
 task_description: |
-  Sample howdy QNA for unit tests.  Like ../knowledge/hello/qna.yaml except that it is a skill so there is no attached document.
+  Sample howdy QNA for unit tests.
+  Like ../knowledge/hello/qna.yaml except that it is a skill so there is no attached document.
 seed_examples:
     - question: >
         Howdy 1?
