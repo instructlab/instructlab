@@ -1,6 +1,6 @@
 # Instructlab Docs
 
-The directory `instructlab/docs` serves to purposes:
+The directory `instructlab/docs` serves two purposes:
 
 1. To provide advanced user, and maintainer documentation.
 2. A place for the infrastructure to autogenerate the (sphinx) docs website to live.
