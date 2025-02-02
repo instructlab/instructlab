@@ -121,7 +121,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
    ⏳ `pip install` may take some time, depending on your internet connection. In case the installation fails with error ``unsupported instruction `vpdpbusd'``, append `-C cmake.args="-DGGML_NATIVE=off"` to `pip install` command.
 
-   See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for how to to enable hardware acceleration for interaction and training on AMD ROCm, Apple Metal Performance Shaders (MPS), and Nvidia CUDA.
+   See [the GPU acceleration documentation](./docs/accelerators/gpu-acceleration.md) for how to to enable hardware acceleration for interaction and training on AMD ROCm, Apple Metal Performance Shaders (MPS), and Nvidia CUDA.
 
 #### Install with Apple Metal on M1/M2/M3 Macs
 
