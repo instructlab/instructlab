@@ -20,6 +20,7 @@ from instructlab.model.download import download_models
         DEFAULTS.GRANITE_GGUF_REPO,
         DEFAULTS.MERLINITE_GGUF_REPO,
         DEFAULTS.MISTRAL_GGUF_REPO,
+        DEFAULTS.GRANITE_EMBEDDING_REPO,
     ],  # TODO: add to config.yaml
     show_default=True,
     help="Hugging Face or OCI repository of the model to download.",
@@ -30,6 +31,7 @@ from instructlab.model.download import download_models
     "releases",
     multiple=True,
     default=[
+        "main",
         "main",
         "main",
         "main",
@@ -45,6 +47,7 @@ from instructlab.model.download import download_models
         DEFAULTS.GRANITE_GGUF_MODEL_NAME,
         DEFAULTS.MERLINITE_GGUF_MODEL_NAME,
         DEFAULTS.MISTRAL_GGUF_MODEL_NAME,
+        DEFAULTS.GRANITE_EMBEDDING_MODEL_NAME,
     ],
     show_default="The default model location in the instructlab data directory.",
     help="Name of the model file to download from the Hugging Face repository.",

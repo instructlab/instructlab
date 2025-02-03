@@ -84,8 +84,9 @@ class _InstructlabDefaults:
     GRANITE_GGUF_REPO = "instructlab/granite-7b-lab-GGUF"
     MERLINITE_GGUF_REPO = "instructlab/merlinite-7b-lab-GGUF"
     MISTRAL_GGUF_REPO = "TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
+    GRANITE_EMBEDDING_REPO = "ibm-granite/granite-embedding-125m-english"
     GRANITE_GGUF_MODEL_NAME = "granite-7b-lab-Q4_K_M.gguf"
-    GRANITE_EMBEDDING_MODEL_NAME = "ibm-granite/granite-embedding-125m-english"
+    GRANITE_EMBEDDING_MODEL_NAME = GRANITE_EMBEDDING_REPO
     DOCUMENT_STORE_NAME = "embeddings.db"
     DOCUMENT_STORE_COLLECTION_NAME = "ilab"
     RETRIEVER_TOP_K = 3
