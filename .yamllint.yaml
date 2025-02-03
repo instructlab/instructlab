@@ -13,3 +13,4 @@ rules:
       # tests/test_lab_diff.py expects to fail on this file.
       # All other basic yamllint runs should skip this file.
       - /tests/testdata/invalid_yaml.yaml
+      - /.tox/*
