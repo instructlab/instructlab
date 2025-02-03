@@ -81,7 +81,7 @@ def test_list_contexts_and_decoration():
     with contextlib.suppress(KeyboardInterrupt):
         chatbot.start_prompt(logger=None)
 
-    console = Console(force_terminal=False)
+    console = Console(force_terminal=False, width=80)
     with console.capture() as capture:
         console.print(mock_sys_print_output.output)
 
