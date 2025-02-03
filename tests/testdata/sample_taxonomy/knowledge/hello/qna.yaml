@@ -1,8 +1,8 @@
 version: 3
-domain: Hello!
+domain: CookBook-1
 created_by: team1
 document_outline: |
-  Sample hello world QNA for unit tests
+  Information about Bibimbap, Bacalao ajoarriero, Kuku, Menemen, Panzanella, and Pad Thai
 seed_examples:
   - context: >
      Hello world! A

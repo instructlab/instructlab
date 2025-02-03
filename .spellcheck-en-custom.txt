@@ -3,7 +3,6 @@ Akash
 AMDGPU
 arge
 arXiv
-autogenerate
 aws
 backend
 backends
@@ -14,7 +13,6 @@ Bhandwaldar
 chatbot
 chatlogs
 Chatlogs
-clBLAS
 cli
 CLI
 codebase
@@ -109,7 +107,6 @@ OCI
 oneMKL
 OOM
 OpenAI
-OpenBLAS
 orchestrator
 ots
 parallelized

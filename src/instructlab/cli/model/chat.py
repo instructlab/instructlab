@@ -142,12 +142,6 @@ logger = logging.getLogger(__name__)
     config_class="rag",
     config_sections="retriever",
 )
-@click.option(
-    "-nd",
-    "--no-decoration",
-    is_flag=True,
-    help="Disable decorations for chat responses.",
-)
 @click.pass_context
 @clickext.display_params
 def chat(
@@ -172,7 +166,6 @@ def chat(
     collection_name,
     embedding_model_path,
     top_k,
-    no_decoration,
 ):
     """Runs a chat using the modified model"""
     chat_model(
@@ -196,7 +189,6 @@ def chat(
         collection_name,
         embedding_model_path,
         top_k,
-        no_decoration,
         backend_type=ctx.obj.config.serve.server.backend_type,
         host=ctx.obj.config.serve.server.host,
         port=ctx.obj.config.serve.server.port,

@@ -96,7 +96,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 - C++ compiler
 - Python 3.10 or Python 3.11
 
-   ⚠️ Python 3.12+ is currently not supported. Some InstructLab dependencies don't work on Python 3.12, yet. It is recommended to use a specific version of Python in the below commands, e.g. `python3.11` instead of simply `python3`.
+   📋 Python 3.12 and Python 3.13 are currently not supported. Some InstructLab dependencies don't work on Python 3.12 and above, yet.
 
 - Minimum 250GB disk space. Approximately 500GB disk space is recommended for the entire InstructLab end-to-end process.
 
@@ -121,7 +121,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
    ⏳ `pip install` may take some time, depending on your internet connection. In case the installation fails with error ``unsupported instruction `vpdpbusd'``, append `-C cmake.args="-DGGML_NATIVE=off"` to `pip install` command.
 
-   See [the GPU acceleration documentation](./docs/accelerators/gpu-acceleration.md) for how to to enable hardware acceleration for interaction and training on AMD ROCm, Apple Metal Performance Shaders (MPS), and Nvidia CUDA.
+   See [the GPU acceleration documentation](./docs/gpu-acceleration.md) for how to to enable hardware acceleration for interaction and training on AMD ROCm, Apple Metal Performance Shaders (MPS), and Nvidia CUDA.
 
 #### Install with Apple Metal on M1/M2/M3 Macs
 
@@ -159,7 +159,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 - Install on AMD ROCm with:
 
    ```shell
-   python<version> -m venv --upgrade-deps venv
+   python3 -m venv --upgrade-deps venv
    source venv/bin/activate
    pip cache remove llama_cpp_python
    CMAKE_ARGS="-DGGML_HIPBLAS=on \
@@ -179,7 +179,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 - For the best CUDA experience, installing vLLM is necessary to serve Safetensors format models.
 
    ```shell
-   python<version> -m venv --upgrade-deps venv
+   python3 -m venv --upgrade-deps venv
    source venv/bin/activate
    pip cache remove llama_cpp_python
    CMAKE_ARGS="-DGGML_CUDA=on -DGGML_NATIVE=off" pip install 'instructlab[cuda]'

@@ -16,13 +16,10 @@ author = "InstructLab Authors"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    "enum_tools.autoenum",
     "myst_parser",
-    "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     "sphinx_click",
-    "sphinxcontrib.autodoc_pydantic",
 ]
 
 templates_path = ["templates"]
@@ -31,7 +28,6 @@ exclude_patterns = [
     "Thumbs.db",
     ".DS_Store",
     "cli_reference.md",  # ignored in favor of auto-generated docs
-    "README.md",  # ignored in favor of auto-generated docs
 ]
 
 intersphinx_mapping = {
@@ -58,9 +54,6 @@ nitpick_ignore = [
     ("py:class", "mlx.nn.Module"),
     ("py:class", "nn.Module"),
     ("py:class", "mx.array"),
-    # TODO: Warning is thrown that:
-    # py:class reference target not found: instructlab.training.config.DistributedBackend [ref.class]
-    ("py:class", "instructlab.training.config.DistributedBackend"),
     # stdlib
     ("py:class", "FrameType"),
     # pydantic auto-generated doc strings
@@ -68,35 +61,11 @@ nitpick_ignore = [
     ("py:class", "ConfigDict"),
     ("py:class", "FieldInfo"),
 ]
-nitpick_ignore_regex = [
-    # instructlab.configuration
-    ("py:class", "annotated_types\..*"),
-    ("py:class", "pydantic\.types\..*"),
-    ("py:obj", "typing\..*"),
-    ("py:obj", "instructlab\.configuration\..*"),
-]
 
-# Set heading level level depth to assign HTML anchors to a high number for markdown parsing with myst.
-# At default of 0 sphinx build throws a warning.
-# See: https://github.com/executablebooks/MyST-Parser/issues/885#issuecomment-2041026657
-myst_heading_anchors = 5
+myst_heading_anchors = 3
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "furo"
 html_static_path = ["static"]
-
-# autodoc settings
-# add_module_names = False
-
-# https://autodoc-pydantic.readthedocs.io/
-# settings
-autodoc_pydantic_model_show_json = False
-autodoc_pydantic_settings_show_json = False
-autodoc_pydantic_model_show_config_summary = False
-# fields
-autodoc_pydantic_model_show_field_summary = True
-# validators
-autodoc_pydantic_model_show_validator_summary = False
-autodoc_pydantic_model_show_validator_members = False

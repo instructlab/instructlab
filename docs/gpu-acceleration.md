@@ -45,7 +45,7 @@ With Python 3.11 installed, it's time to replace some packages!
 ### llama-cpp-python backends
 
 Go to the project's GitHub to see
-the [supported backends](https://github.com/abetlen/llama-cpp-python/tree/v0.3.6?tab=readme-ov-file#supported-backends).
+the [supported backends](https://github.com/abetlen/llama-cpp-python/tree/v0.2.79?tab=readme-ov-file#supported-backends).
 
 Whichever backend you choose, you'll see a `pip install` command. First
 you have to purge pip's wheel cache to force a rebuild of llama-cpp-python:
@@ -58,11 +58,11 @@ You'll want to add a few options to ensure it gets installed over the
 existing package, has the desired backend, and the correct version.
 
 ```shell
-pip install --force-reinstall --no-deps llama_cpp_python==0.3.6 -C cmake.args="-DGGML_$BACKEND=on"
+pip install --force-reinstall --no-deps llama_cpp_python==0.2.79 -C cmake.args="-DLLAMA_$BACKEND=on"
 ```
 
 where `$BACKEND` is one of `HIPBLAS` (ROCm), `CUDA`, `METAL`
-(Apple Silicon MPS), or another backend listed in
+(Apple Silicon MPS), `CLBLAST` (OpenCL), or another backend listed in
 llama-cpp-python's documentation.
 
 ### Nvidia/CUDA
@@ -101,18 +101,18 @@ lspci -n -n -k | grep -A 2 -e VGA -e 3D
 ```
 
 You should now see `Kernel driver in use: nvidia`. The next step is to ensure
-CUDA 12.8 is installed.
+CUDA 12.4 is installed.
 
 ```shell
-# Install CUDA 12.8 and nvtop to monitor GPU usage
-sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/fedora41/x86_64/cuda-fedora41.repo
+# Install CUDA 12.4 and nvtop to monitor GPU usage
+sudo dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/fedora39/x86_64/cuda-fedora39.repo
 
 sudo dnf clean all
-sudo dnf -y install cuda-toolkit-12-8 nvtop
+sudo dnf -y install cuda-toolkit-12-4 nvtop
 ```
 
 Go to the project's GitHub to see the
-[supported backends](https://github.com/abetlen/llama-cpp-python/tree/v0.3.6?tab=readme-ov-file#supported-backends).
+[supported backends](https://github.com/abetlen/llama-cpp-python/tree/v0.2.79?tab=readme-ov-file#supported-backends).
 Find the `CUDA` backend. You'll see a `pip install` command.
 You'll want to add a few options to ensure it gets installed over the
 existing package: `--force-reinstall`. Your final
@@ -126,7 +126,7 @@ export PATH=$PATH:$CUDA_HOME/bin
 
 # Recompile llama-cpp-python using CUDA
 pip cache remove llama_cpp_python
-pip install --force-reinstall --no-deps llama_cpp_python==0.3.6 -C cmake.args="-DGGML_CUDA=on"
+pip install --force-reinstall --no-deps llama_cpp_python==0.2.79 -C cmake.args="-DGGML_CUDA=on"
 
 # Re-install InstructLab
 pip install ./instructlab[cuda]
@@ -139,7 +139,7 @@ supports GCC v14.1+.
 ```shell
 # Recompile llama-cpp-python using CUDA
 sudo dnf install clang17
-CUDAHOSTCXX=$(which clang++-17) pip install --force-reinstall llama_cpp_python==0.3.6 -C cmake.args="-DGGML_CUDA=on"
+CUDAHOSTCXX=$(which clang++-17) pip install --force-reinstall llama_cpp_python==0.2.79 -C cmake.args="-DGGML_CUDA=on"
 ```
 
 Proceed to the `Initialize` section of
@@ -221,7 +221,7 @@ we'll include that in our build command as follows:
 ```shell
 export PATH=/opt/rocm/llvm/bin:$PATH
 pip cache remove llama_cpp_python
-CMAKE_ARGS="-DGGML_HIPBLAS=on -DCMAKE_C_COMPILER='/opt/rocm/llvm/bin/clang' -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ -DCMAKE_PREFIX_PATH=/opt/rocm -DAMDGPU_TARGETS=gfx1100" FORCE_CMAKE=1 pip install --force-reinstall llama_cpp_python==0.3.6
+CMAKE_ARGS="-DGGML_HIPBLAS=on -DCMAKE_C_COMPILER='/opt/rocm/llvm/bin/clang' -DCMAKE_CXX_COMPILER=/opt/rocm/llvm/bin/clang++ -DCMAKE_PREFIX_PATH=/opt/rocm -DAMDGPU_TARGETS=gfx1100" FORCE_CMAKE=1 pip install --force-reinstall llama_cpp_python==0.2.79
 ```
 
 > **Note:** This is explicitly forcing the build to use the ROCm compilers and
@@ -243,13 +243,13 @@ to use use supported `gfx1030` version.  The environment variable
 
 Now you can skip to the `Testing` section.
 
-#### OpenBLAS (CPU)
+#### CLBlast (OpenCL)
 
-Your final command should look like so (this uses `OpenBLAS`):
+Your final command should look like so (this uses `CLBlast`):
 
 ```shell
 pip cache remove llama_cpp_python
-pip install --force-reinstall llama_cpp_python==0.3.6 -C cmake.args="-DGGML_BLAS=on -DGGML_BLAS_VENDOR=OpenBLAS"
+pip install --force-reinstall llama_cpp_python==0.2.79 -C cmake.args="-DLLAMA_CLBLAST=on"
 ```
 
 Once that package is installed, recompile `ilab` with `pip install .` and skip
@@ -269,7 +269,7 @@ add a few options to ensure it gets installed over the existing package:
 
 ```shell
 pip cache remove llama_cpp_python
-pip install --force-reinstall llama_cpp_python==0.3.6 -C cmake.args="-DGGML_METAL=on"
+pip install --force-reinstall llama_cpp_python==0.2.79 -C cmake.args="-DGGML_METAL=on"
 ```
 
 Once that package is installed, recompile `ilab` with `pip install .[mps]` and skip
@@ -306,7 +306,7 @@ True
 ```python
 >>> import llama
 >>> llama_cpp.__version__
-'0.3.6'
+'0.2.79'
 >>> llama_cpp.llama_supports_gpu_offload()
 True
 >>> llama_cpp.llama_backend_init()

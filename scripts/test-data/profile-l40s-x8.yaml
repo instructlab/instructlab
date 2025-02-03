@@ -82,6 +82,7 @@ generate:
   pipeline: full
   # The total number of instructions to be generated
   sdg_scale_factor: 30
+  seed_file: ~/.local/share/instructlab/internal/seed_tasks.json
   # Branch of taxonomy used to calculate diff against
   taxonomy_base: empty
   # Directory where taxonomy is stored and accessed from

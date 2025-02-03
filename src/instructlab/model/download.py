@@ -13,17 +13,17 @@ import subprocess
 from huggingface_hub import hf_hub_download, list_repo_files
 from huggingface_hub import logging as hf_logging
 from huggingface_hub import snapshot_download
-from huggingface_hub.errors import GatedRepoError
 
 # First Party
 from instructlab.configuration import DEFAULTS
 from instructlab.defaults import DEFAULT_INDENT
-from instructlab.model.list import list_and_print_models
 from instructlab.utils import (
     check_skopeo_version,
     is_huggingface_repo,
     is_oci_repo,
+    list_models,
     load_json,
+    print_table,
 )
 
 logger = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ class HFDownloader(ModelDownloader):
             download_dest=download_dest,
         )
         self.filename = filename
-        self.hf_token = hf_token or None
+        self.hf_token = hf_token
 
     def download(self):
         """
@@ -77,6 +77,13 @@ class HFDownloader(ModelDownloader):
         logger.info(
             f"Downloading model from Hugging Face:\n{DEFAULT_INDENT}Model: {self.repository}@{self.release}\n{DEFAULT_INDENT}Destination: {self.download_dest}"
         )
+
+        if self.hf_token == "" and "instructlab" not in self.repository:
+            raise ValueError(
+                """HF_TOKEN var needs to be set in your environment to download HF Model.
+                Alternatively, the token can be passed with --hf-token flag.
+                The HF Token is used to authenticate your identity to the Hugging Face Hub."""
+            )
 
         try:
             if self.log_level is not None:
@@ -87,12 +94,6 @@ class HFDownloader(ModelDownloader):
             else:
                 self.download_gguf()
 
-        except GatedRepoError as exc:
-            raise ValueError(
-                """The HF_TOKEN environment variable needs to be set in your environment to download this Hugging Face Model.
-                Alternatively, the token can be passed with --hf-token flag.
-                The Hugging Face token is used to authenticate your identity to the Hugging Face Hub."""
-            ) from exc
         except Exception as exc:
             raise RuntimeError(
                 f"\nDownloading model failed with the following Hugging Face Hub error:\n{DEFAULT_INDENT}{exc}"
@@ -300,4 +301,6 @@ def download_models(
                 ) from exc
 
     logger.info("Available models (`ilab model list`):")
-    list_and_print_models([Path(model_dir)], False)
+    data = list_models([Path(model_dir)], False)
+    data_as_lists = [list(item) for item in data]
+    print_table(["Model Name", "Last Modified", "Size"], data_as_lists)

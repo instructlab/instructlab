@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: Apache-2.0
-# yamllint disable rule:line-length
 
 name: Status Checks Reusable Workflow
 

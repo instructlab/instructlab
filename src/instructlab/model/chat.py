@@ -28,7 +28,7 @@ import requests
 # First Party
 from instructlab import client_utils as ilabclient
 from instructlab import configuration as cfg
-from instructlab import log
+from instructlab import defaults, log
 from instructlab.client_utils import HttpClientParams
 
 # Local
@@ -80,6 +80,14 @@ class ChatException(Exception):
     """An exception raised during chat step."""
 
 
+class ChatFailedToLoadIndexException(ChatException):
+    """An exception raised during chat: RAG is enabled but the index with the RAG content failed to load."""
+
+
+class ChatFailedToLoadRetrievalModelException(ChatException):
+    """An exception raised during chat: RAG is enabled but the embedding model for retrieving the RAG content failed to load."""
+
+
 class ChatQuitException(Exception):
     """A quit command was executed during chat."""
 
@@ -100,7 +108,6 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         max_ctx_size=None,
         temperature=1.0,
         backend_type="",
-        box=True,
     ):
         self.client = client
         self.retriever: DocumentStoreRetriever | None = retriever
@@ -113,7 +120,6 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self.max_ctx_size = max_ctx_size
         self.temperature = temperature
         self.backend_type = backend_type
-        self.box = box
 
         self.console = Console()
 
@@ -137,10 +143,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         )
 
     def _sys_print(self, *args, **kwargs):
-        if self.box:
-            self.console.print(Panel(*args, title="system", **kwargs))
-        else:
-            self.console.print(*args)
+        self.console.print(Panel(*args, title="system", **kwargs))
 
     def log_message(self, msg):
         if self.log_file:
@@ -151,14 +154,12 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         side_info_str = (" (type `/h` for help)" if help else "") + (
             f" ({session_name})" if new else ""
         )
-        message = (
-            f"Welcome to InstructLab Chat w/ **{self.model_name.upper()}**"
-            + side_info_str
+        self._sys_print(
+            Markdown(
+                f"Welcome to InstructLab Chat w/ **{self.model_name.upper()}**"
+                + side_info_str
+            )
         )
-        if self.box:
-            self._sys_print(Markdown(message))
-        else:
-            self.console.print(message)
 
     @property
     def model_name(self):
@@ -166,8 +167,6 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 
     @property
     def _right_prompt(self):
-        if not self.box:
-            return None
         return FormattedText(
             [
                 (
@@ -271,10 +270,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         raise KeyboardInterrupt
 
     def _handle_display(self, content):
-        return self.__handle_replay(
-            content,
-            display_wrapper=lambda x: Panel(x) if self.box else x,  # pylint: disable=unnecessary-lambda
-        )
+        return self.__handle_replay(content, display_wrapper=lambda x: Panel(x))  # pylint: disable=unnecessary-lambda
 
     def _load_session_history(self, content=None):
         data = self.info["messages"]
@@ -286,10 +282,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                     "\n" + PROMPT_PREFIX + m["content"], style="dim grey0"
                 )
             else:
-                if self.box:
-                    self.console.print(Panel(m["content"]), style="dim grey0")
-                else:
-                    self.console.print(m["content"], style="dim grey0")
+                self.console.print(Panel(m["content"]), style="dim grey0")
 
     def _handle_plain(self, content):
         return self.__handle_replay(content)
@@ -377,6 +370,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self,
         logger,  # pylint: disable=redefined-outer-name
         content=None,
+        box=True,
     ):
         handlers = {
             "/q": self._handle_quit,
@@ -534,7 +528,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                 title=self.model_name,
                 subtitle_align="right",
             )
-            if self.box
+            if box
             else response_content
         )
         subtitle = None
@@ -550,7 +544,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                 if chunk_message.content:
                     response_content.append(chunk_message.content)
 
-                if self.box:
+                if box:
                     panel.subtitle = f"elapsed {time.time() - start_time:.3f} seconds"
             subtitle = f"elapsed {time.time() - start_time:.3f} seconds"
 
@@ -583,7 +577,6 @@ def chat_model(
     collection_name,
     embedding_model_path,
     top_k,
-    no_decoration,
     backend_type,
     host,
     port,
@@ -738,7 +731,6 @@ def chat_model(
             top_k=top_k,
             backend_type=backend_type,
             params=params,
-            no_decoration=no_decoration,
         )
     except ChatException as exc:
         print(f"{RED}Executing chat failed with: {exc}{RESET}")
@@ -768,7 +760,6 @@ def chat_cli(
     vi_mode,
     visible_overflow,
     params,
-    no_decoration,
 ):
     """Starts a CLI-based chat with the server"""
     client = OpenAI(
@@ -806,18 +797,41 @@ def chat_cli(
     sys_prompt = CONTEXTS.get(context, "default")(get_model_arch(pathlib.Path(model)))
     loaded["messages"] = [{"role": "system", "content": sys_prompt}]
 
+    retriever: DocumentStoreRetriever | None = None
+
     # Instantiate retriever if RAG is enabled
     if rag_enabled:
         logger.debug("RAG enabled for chat; initializing retriever")
-        retriever: DocumentStoreRetriever | None = create_document_retriever(
-            document_store_uri=document_store_uri,
-            document_store_collection_name=collection_name,
-            top_k=top_k,
-            embedding_model_path=embedding_model_path,
-        )
+        if not os.path.exists(embedding_model_path) or not os.access(
+            embedding_model_path, os.R_OK
+        ):
+            raise ChatFailedToLoadRetrievalModelException(
+                f"Embedding model is not found: {embedding_model_path}\n"
+                "  This is typically addressed by running: ilab model download -rp <model-location>\n"
+                f"  Where <model-location> is a location for your model, e.g. {defaults.DEFAULTS.GRANITE_EMBEDDING_MODEL_NAME}"
+            )
+        try:
+            retriever = create_document_retriever(
+                document_store_uri=document_store_uri,
+                document_store_collection_name=collection_name,
+                top_k=top_k,
+                embedding_model_path=embedding_model_path,
+            )
+        except FileNotFoundError as e:
+            # When the database is not found, we get a FileNotFoundError.
+            raise ChatFailedToLoadIndexException(
+                f"Ingested content not found at location {document_store_uri}\n"
+                "  This is typically addressed by running the ilab model convert and ilab model ingest commands\n"
+                "  For more details, run both of those commands with --help"
+            ) from e
+        except Exception as e:  # pylint: disable=broad-exception-caught
+            # When the database is not a valid database, we get a generic Exception.
+            # Maybe there are other things that could cause this error?
+            raise ChatFailedToLoadIndexException(
+                f"Ingested content at location {document_store_uri} is not a valid index."
+            ) from e
     else:
         logger.debug("RAG not enabled for chat; skipping retrieval setup")
-        retriever: DocumentStoreRetriever | None = None
 
     # Session from CLI
     if session is not None:
@@ -851,7 +865,6 @@ def chat_cli(
         max_tokens=(max_tokens if max_tokens else max_tokens),
         max_ctx_size=max_ctx_size,
         backend_type=backend_type,
-        box=not no_decoration,
     )
 
     if not qq and session is None:
@@ -864,7 +877,7 @@ def chat_cli(
         if not qq:
             print(f"{PROMPT_PREFIX}{question}")
         try:
-            ccb.start_prompt(logger, content=question)
+            ccb.start_prompt(logger, content=question, box=not qq)
         except ChatException as exc:
             raise ChatException(f"API issue found while executing chat: {exc}") from exc
         except (ChatQuitException, KeyboardInterrupt, EOFError):

@@ -26,11 +26,7 @@ def lookup_knowledge_files(taxonomy_path, taxonomy_base, temp_dir) -> list[Path]
     )
     knowledge_files: list[Path] = []
     for leaf_node in leaf_nodes.values():
-        if leaf_node and "filepaths" in leaf_node[0]:
-            # The check for "filepaths" in leaf_node[0] is needed here because skill taxonomy
-            #  nodes don't have filepaths.  This code is trying to get filepaths from the
-            #  knowledge taxonomy nodes, so it should skip over the skill taxonomy nodes.
-            knowledge_files.extend(leaf_node[0]["filepaths"])
+        knowledge_files.extend(leaf_node[0]["filepaths"])
 
     grouped_knowledge_files = []
     for knowledge_file in knowledge_files:

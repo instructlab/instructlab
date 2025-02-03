@@ -2,8 +2,8 @@
 # shellcheck disable=SC2155,SC2116,SC2086,SC2155,SC2318,SC2206,SC2126,SC2001,SC1091
 # Derived from:
 # github.com/containers/ai-lab-recipes/blob/main/training/nvidia-bootc/Containerfile
-DRIVER_VERSION="570.86.15"
-CUDA_VERSION='12.8.0'
+DRIVER_VERSION="550.90.07"
+CUDA_VERSION='12.4.1'
 BASE_URL='https://us.download.nvidia.com/tesla'
 
 if [[ $(id -u) != "0" ]]; then
@@ -163,7 +163,7 @@ fi \
         sed -i -e "/^VARIANT_ID=/ {s/^VARIANT_ID=.*/VARIANT_ID=rhel_ai/; t}" -e "\$aVARIANT_ID=rhel_ai" /usr/lib/os-release; \
         sed -i -e "/^BUILD_ID=/ {s/^BUILD_ID=.*/BUILD_ID='${IMAGE_VERSION}'/; t}" -e "\$aBUILD_ID='${IMAGE_VERSION}'" /usr/lib/os-release; \
         fi \
-    && dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm \
+    && dnf install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm \
     && dnf install -y epel-release epel-next-release \
     && dnf install -y nvtop \
     && dnf clean all \

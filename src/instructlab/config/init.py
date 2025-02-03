@@ -207,9 +207,6 @@ def walk_and_choose_system_profile(
                         # this is our config
                         cfg = sys_profile
                         break
-            else:
-                logger.warning(f"No CPU or GPU info in profile {system_profile_file}")
-                continue
             if cfg is not None:
                 break
             arch_family_processors.setdefault(full_chip_name[0], []).append(

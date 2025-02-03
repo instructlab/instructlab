@@ -2,18 +2,24 @@ Welcome to InstructLab's documentation!
 =======================================
 
 .. toctree::
-   :maxdepth: 2
-   :glob:
+   :maxdepth: 1
    :caption: Contents:
 
    ilab.rst
-   config.rst
-   user/index.rst
-   accelerators/index.rst
-   maintainers/index.rst
+   gpu-acceleration.md
+   amd-rocm.md
+   habana-gaudi.md
+   converting_GGUF.md
+   ci.md
+   demo-slides.md
+   README.md
+   release-strategy.md
+   instructlab_models.md
+   PROMPTING-FAQ.md
 
-Looking for something?
-======================
+
+Indices and tables
+==================
 
 * :ref:`genindex`
 * :ref:`modindex`

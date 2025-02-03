@@ -160,6 +160,10 @@ generate:
   # The total number of instructions to be generated.
   # Default: 30
   sdg_scale_factor: 30
+  # Path to seed file to be used for generation.
+  # Default: /data/instructlab/internal/seed_tasks.json
+  # Deprecated
+  seed_file: /data/instructlab/internal/seed_tasks.json
   # Branch of taxonomy used to calculate diff against.
   # Default: origin/main
   taxonomy_base: origin/main

@@ -1,9 +1,6 @@
 # Standard
-from pathlib import Path
 from unittest import mock
-import json
 import pathlib
-import struct
 
 # Third Party
 import yaml
@@ -70,40 +67,3 @@ def vllm_setup_test(runner, args, mock_popen, *_mock_args):
 def assert_tps(args, tps):
     assert args[-2] == "--tensor-parallel-size"
     assert args[-1] == tps
-
-
-def create_safetensors_model_directory(
-    directory_path: Path, model_dir_name="test_namespace/testlab_model"
-):
-    """Simulate a safetensors model directory"""
-    full_directory_path = directory_path / model_dir_name
-    full_directory_path.mkdir(parents=True, exist_ok=True)
-
-    json_data = {"key": "value"}
-    required_files = ["config.json", "tokenizer.json", "tokenizer_config.json"]
-
-    for file_name in required_files:
-        with open(full_directory_path / file_name, "w", encoding="utf-8") as f:
-            json.dump(json_data, f)
-
-    safetensors_file = full_directory_path / "test-model.safetensors"
-    # Third Party
-    from safetensors.torch import save_file
-    import torch
-
-    tensors = {
-        "tensor1": torch.randn(3, 3),
-        "tensor2": torch.randn(5, 5),
-    }
-    save_file(tensors, safetensors_file)
-
-
-def create_gguf_file(file_path: Path, gguf_file_name="test-model.gguf"):
-    """Simulate a GGUF file"""
-    GGUF_MAGIC = 0x46554747
-
-    full_file_path = file_path / gguf_file_name
-    full_file_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with open(full_file_path, "wb") as f:
-        f.write(struct.pack("<I", GGUF_MAGIC))

@@ -268,8 +268,7 @@ def add_process(
 
     log_file = os.path.join(log_dir, f"{process_type.lower()}-{local_uuid}.log")
     kwargs["log_file"] = log_file
-    kwargs["local_uuid"] = local_uuid
-    kwargs["process_mode"] = process_mode
+    kwargs["local_uuid"] = str(local_uuid)
     if process_mode == ILAB_PROCESS_MODES.DETACHED:
         assert isinstance(log_file, str)
         cmd = format_command(target=target, extra_imports=extra_imports, **kwargs)

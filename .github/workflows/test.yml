@@ -1,5 +1,4 @@
 # SPDX-License-Identifier: Apache-2.0
-# yamllint disable rule:line-length
 
 name: Test
 
@@ -90,13 +89,6 @@ jobs:
       - name: Free disk space
         uses: ./.github/actions/free-disk-space
 
-      # Always apt-get update before installing any extra packages
-      # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/customizing-github-hosted-runners#installing-software-on-ubuntu-runners
-      - name: Update apt index
-        if: startsWith(matrix.platform, 'ubuntu')
-        run: |
-          sudo apt-get update
-
       - name: Install the expect package
         if: startsWith(matrix.platform, 'ubuntu')
         run: |
@@ -129,7 +121,7 @@ jobs:
           brew install expect coreutils bash skopeo
 
       - name: Setup Python ${{ matrix.python }}
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
           python-version: ${{ matrix.python }}
           cache: pip
@@ -195,7 +187,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python 3.11
-        uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2b # v5.3.0
         with:
           python-version: 3.11
           cache: pip
@@ -244,15 +236,6 @@ jobs:
         if: always()
         run: |
           pip cache remove llama_cpp_python
-
-      - name: Deploy Docs Website to GitHub Pages
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }} # Only publish docs website on merge to main
-        with:
-          publish_branch: gh-pages
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs/build/html
-          force_orphan: true
 
   test-workflow-complete:
     permissions:

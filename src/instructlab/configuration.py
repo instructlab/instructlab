@@ -394,6 +394,13 @@ class _generate(BaseModel):
         default_factory=lambda: DEFAULTS.DATASETS_DIR,
         description="Directory where generated datasets are stored.",
     )
+    # TODO: remove this? It's not used anywhere, was removed by 19b9f4794f79ef81578c00c901bac3ee9db8c046
+    # related issue: https://github.com/instructlab/instructlab/issues/2261
+    seed_file: StrictStr = Field(
+        description="Path to seed file to be used for generation.",
+        default_factory=lambda: DEFAULTS.SEED_FILE,
+        deprecated=True,
+    )
 
 
 class _mmlu(BaseModel):
