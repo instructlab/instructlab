@@ -2,7 +2,7 @@
 
 # Standard
 from datetime import datetime
-from typing import Callable
+from typing import Callable, List, Optional
 import json
 import logging
 import os
@@ -427,3 +427,50 @@ def get_latest_process() -> str | None:
     last_key = list(process_registry.processes.keys())[-1]
     assert isinstance(last_key, str)
     return last_key
+
+
+def remove_process_record(input_uuid: str):
+    """Remove a process by its UUID and delete its log artifacts."""
+    process_registry = load_registry()
+    if input_uuid not in process_registry.processes:
+        logger.info(f"Process with UUID {input_uuid} not found.")
+        return
+
+    process_info = process_registry.processes.pop(input_uuid)
+
+    # Remove the log
+    log_file = process_info.get("log_file")
+    if log_file and os.path.exists(log_file):
+        os.remove(log_file)
+        logger.debug(f"Log file {log_file} removed.")
+
+    save_registry(process_registry)
+    logger.info(f"Process with UUID {input_uuid} removed.")
+
+
+def filter_process_record_with_conditions(
+    input_uuid: Optional[str] = None,
+    state: Optional[str] = None,
+    older: Optional[int] = None,
+) -> List[str]:
+    """Remove processes based on their uuid, state or older."""
+    process_registry = load_registry()
+    now = datetime.now()
+
+    process_records_to_remove = []
+    for item_uuid, entry in process_registry.processes.items():
+        if input_uuid and item_uuid != input_uuid:
+            continue
+
+        if state and entry.get("status").lower() != state.lower():
+            continue
+
+        if older:
+            start_time = entry.get("start_time")
+            start_time = datetime.fromisoformat(start_time)
+            if (now - start_time).days < older:
+                continue
+
+        process_records_to_remove.append(item_uuid)
+
+    return process_records_to_remove
