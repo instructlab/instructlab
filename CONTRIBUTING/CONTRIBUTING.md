@@ -32,6 +32,12 @@ When your contribution is ready, you can create a pull request. Pull requests ar
 
 Before sending pull requests, make sure your changes pass formatting, linting and unit tests.
 
+### Continuous Integration
+
+Pull requests are tested using [Continuous Integration](../docs/ci.md) pipelines implemented by [GitHub Actions](https://docs.github.com/actions). Be sure to correct any issue reported by these pipelines.
+
+If your change has a dependency on other Pull Requests use [the depends-on mechanism](../docs/ci.md#dependency-on-external-pull-requests).
+
 ### Code Review
 
 Once you've [created a pull request](#how-can-i-contribute), maintainers will review your code and may make suggestions to fix before merging. It will be easier for your pull request to receive reviews if you consider the criteria the reviewers follow while working. Remember to:
