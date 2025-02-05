@@ -1,0 +1,26 @@
+version: 3
+created_by: team1
+task_description: |
+  Sample howdy QNA for unit tests.
+  Like ../knowledge/hello/qna.yaml except that it is a skill so there is no attached document.
+seed_examples:
+    - question: >
+        Howdy 1?
+      answer: >
+        Howdy
+    - question: >
+        Howdy 2?
+      answer: >
+        Howdy
+    - question: >
+        Howdy 3?
+      answer: >
+        Howdy
+    - question: >
+        Howdy 4?
+      answer: >
+        Howdy
+    - question: >
+        Howdy 5?
+      answer: >
+        Howdy

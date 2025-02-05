@@ -128,6 +128,7 @@ subcommands: list[Command] = [
         ("model", "upload"),
         ("--model", "foo", "--destination", "bar"),
     ),
+    Command(("model", "remove"), ("--model", "test-model")),
     Command(("data",), needs_config=False, should_fail=False),
     Command(("data", "generate")),
     Command(("data", "list")),
@@ -251,11 +252,21 @@ def test_cli_help_matches_field_description(cli_runner: CliRunner):
     ids=lambda sc: repr(sc.args),
 )
 @dev_preview
-def test_ilab_cli_debug_params(command: Command, cli_runner: CliRunner):
-    result = cli_runner.invoke(lab.ilab, command.get_args("--debug-params"))
+def test_ilab_cli_debug_params(command: Command, cli_runner: CliRunner, tmp_path):
+    extra_args = []
+    if command.args == ("model", "remove"):
+        temp_model_dir = tmp_path / "custom_models"
+        temp_model_dir.mkdir(parents=True, exist_ok=True)
+        extra_args = ["--model-dir", str(temp_model_dir)]
+
+    result = cli_runner.invoke(
+        lab.ilab, command.get_args("--debug-params", *extra_args)
+    )
     assert result.exit_code == 0, result.stdout
 
-    result = cli_runner.invoke(lab.ilab, command.get_args("--debug-params-json"))
+    result = cli_runner.invoke(
+        lab.ilab, command.get_args("--debug-params-json", *extra_args)
+    )
     assert result.exit_code == 0, result.stdout
     j = json.loads(result.stdout)
     assert isinstance(j, dict)

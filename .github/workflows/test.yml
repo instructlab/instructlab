@@ -1,4 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
+# yamllint disable rule:line-length
 
 name: Test
 
@@ -81,8 +82,20 @@ jobs:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
 
+      - name: Install dependent PRs if needed
+        uses: depends-on/depends-on-action@61cb3f4a0e2c8ae4b90c9448dc57c7ba9ca24c35 # main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Free disk space
         uses: ./.github/actions/free-disk-space
+
+      # Always apt-get update before installing any extra packages
+      # https://docs.github.com/en/actions/using-github-hosted-runners/using-github-hosted-runners/customizing-github-hosted-runners#installing-software-on-ubuntu-runners
+      - name: Update apt index
+        if: startsWith(matrix.platform, 'ubuntu')
+        run: |
+          sudo apt-get update
 
       - name: Install the expect package
         if: startsWith(matrix.platform, 'ubuntu')
@@ -153,8 +166,6 @@ jobs:
           echo "not a directory" > ~/.local/share/instructlab
 
       - name: Run unit and functional tests with tox
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           tox
 
@@ -177,6 +188,11 @@ jobs:
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
+
+      - name: Install dependent PRs if needed
+        uses: depends-on/depends-on-action@61cb3f4a0e2c8ae4b90c9448dc57c7ba9ca24c35 # main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python 3.11
         uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38 # v5.4.0
@@ -234,7 +250,7 @@ jobs:
         if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }} # Only publish docs website on merge to main
         with:
           publish_branch: gh-pages
-          github_token: ${{ secrets.GH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: docs/build/html
           force_orphan: true
 

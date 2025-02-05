@@ -109,6 +109,11 @@ jobs:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
 
+      - name: Install dependent PRs if needed
+        uses: depends-on/depends-on-action@61cb3f4a0e2c8ae4b90c9448dc57c7ba9ca24c35 # main
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Fetch and checkout PR
         if: ${{ github.event_name == 'pull_request_target' }}
         run: |
@@ -137,9 +142,6 @@ jobs:
           df -h
 
       - name: Run e2e test
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           . venv/bin/activate
           ./scripts/e2e-ci.sh -m

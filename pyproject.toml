@@ -68,6 +68,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "train" = "instructlab.cli.model.train:train"
 "list" = "instructlab.cli.model.list:model_list"
 "upload" = "instructlab.cli.model.upload:upload"
+"remove" = "instructlab.cli.model.remove:remove"
 
 [project.entry-points."instructlab.command.rag"]
 "convert" = "instructlab.cli.rag.convert:convert"

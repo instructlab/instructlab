@@ -1,6 +1,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # Standard
 from os import path
+import pathlib
 
 # Third Party
 from xdg_base_dirs import xdg_cache_home, xdg_config_home, xdg_data_home
@@ -30,23 +31,26 @@ LOG_FORMAT = "%(levelname)s %(asctime)s %(name)s:%(lineno)d: %(message)s"
 RECOMMENDED_SCOPEO_VERSION = "1.9.0"
 
 
+# TODO: make it an enum
 class ILAB_PROCESS_STATUS:
     RUNNING: str = "Running"
     DONE: str = "Done"
     ERRORED: str = "Errored"
 
 
+# TODO: make it an enum
 class ILAB_PROCESS_MODES:
     DETACHED: str = "detached"
     ATTACHED: str = "attached"
 
 
+# TODO: make it an enum
 class ILAB_PROCESS_TYPES:
     DATA_GENERATION: str = "Generation"
-
     TRAINING: str = "Training"
 
 
+# TODO: make it an enum
 class STORAGE_DIR_NAMES:
     ILAB = "instructlab"
     DATASETS = "datasets"
@@ -84,8 +88,9 @@ class _InstructlabDefaults:
     GRANITE_GGUF_REPO = "instructlab/granite-7b-lab-GGUF"
     MERLINITE_GGUF_REPO = "instructlab/merlinite-7b-lab-GGUF"
     MISTRAL_GGUF_REPO = "TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
+    GRANITE_EMBEDDING_REPO = "ibm-granite/granite-embedding-125m-english"
     GRANITE_GGUF_MODEL_NAME = "granite-7b-lab-Q4_K_M.gguf"
-    GRANITE_EMBEDDING_MODEL_NAME = "ibm-granite/granite-embedding-125m-english"
+    GRANITE_EMBEDDING_MODEL_NAME = GRANITE_EMBEDDING_REPO
     DOCUMENT_STORE_NAME = "embeddings.db"
     DOCUMENT_STORE_COLLECTION_NAME = "ilab"
     RETRIEVER_TOP_K = 3
@@ -284,12 +289,8 @@ class _InstructlabDefaults:
         return path.join(self.TRAIN_PROFILE_DIR, "L4_x8.yaml")
 
     @property
-    def PROCESS_REGISTRY_FILE(self) -> str:
-        return path.join(self.INTERNAL_DIR, "process_registry.json")
-
-    @property
-    def PROCESS_REGISTRY_LOCK_FILE(self) -> str:
-        return path.join(self.INTERNAL_DIR, "process_registry.json.lock")
+    def PROCESS_REGISTRY_FILE(self) -> pathlib.Path:
+        return pathlib.Path(self.INTERNAL_DIR) / "process_registry.json"
 
 
 DEFAULTS = _InstructlabDefaults()
