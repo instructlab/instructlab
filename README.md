@@ -952,6 +952,7 @@ You can use the `ilab model evaluate` command to evaluate the models you are tra
 
 | Benchmark | Measures | Full Name | Description | Reference |
 | --- | --- | --- | --- | --- |
+| DK-Bench | Knowledge | Domain-Knowledge Bench | Tests a model against a user provided questions with reference answers. A models answers to each of the questions are scored on a 1-5 scale by a judge model | N/A |
 | MMLU | Knowledge | Massive Multitask Language Understanding | Tests a model against a standardized set of knowledge data and produces a score based on the model's performance | [Measuring Massive Multitask Language Understanding](https://arxiv.org/abs/2009.03300) |
 | MMLUBranch | Knowledge | N/A | Tests your knowledge contributions against a base model and produces a score based on the difference in performance | N/A |
 | MTBench | Skills | Multi-turn Benchmark | Tests a model's skill at applying its knowledge against a judge model and produces a score based on the model's performance | [MT-Bench (Multi-turn Benchmark)](https://klu.ai/glossary/mt-bench-eval) |
@@ -963,6 +964,10 @@ You can use the `ilab model evaluate` command to evaluate the models you are tra
 > MTBench and MTBenchBranch use [prometheus-8x7b-v2.0](https://huggingface.co/prometheus-eval/prometheus-8x7b-v2.0) as the judge model by
 default. While you do not need to use this model as your judge, it is strongly recommended to do so if you have the necessary hardware
 resources. You can download it via `ilab model download`.
+
+#### Running DK-Bench
+
+For information on how to run DK-Bench, see the [DK-Bench docs](docs/user/dk_bench.md).
 
 #### Running MMLU
 

@@ -146,7 +146,7 @@ def print_results(
     print(f"Average Score:   {average:.2f}/5")
     print(f"Total Score:     {total_score}/{len(result.scores)*5}\n")
 
-    print("Responses and scores written to:")
+    print("Responses and scores are written to:")
     for file in results_files:
         print(f"{file}")
     print("\n")

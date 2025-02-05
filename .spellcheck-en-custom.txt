@@ -59,6 +59,7 @@ GGUF
 GiB
 GitHub
 Gmail
+GPT
 GPTDolomite
 gpu
 gpus
@@ -79,6 +80,7 @@ ISA
 JIT
 journald
 jsonl
+JSON
 Jupyter
 kaggle
 Kaggle

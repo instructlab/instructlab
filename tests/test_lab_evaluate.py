@@ -813,7 +813,7 @@ def test_evaluate_dk_bench(
         Average Score:   5.00/5
         Total Score:     5/5
 
-        Responses and scores written to:
+        Responses and scores are written to:
         """
     )
     assert expected in result.output
@@ -880,7 +880,7 @@ def test_evaluate_dk_bench_input_with_responses(
         Average Score:   5.00/5
         Total Score:     5/5
 
-        Responses and scores written to:
+        Responses and scores are written to:
         """
     )
     assert expected in result.output
