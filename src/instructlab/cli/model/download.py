@@ -67,6 +67,7 @@ from instructlab.model.download import download_models
 @click.pass_context
 @clickext.display_params
 def download(ctx, repositories, releases, filenames, model_dir, hf_token):
+    """Download models"""
     try:
         model = Path(model_dir)
         download_models(

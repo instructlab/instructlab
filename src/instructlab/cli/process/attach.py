@@ -13,6 +13,7 @@ from instructlab.process.process import attach_process, get_latest_process
 @click.option("--uuid", type=click.STRING, help="UUID of the process to attach to")
 @click.option("--latest", is_flag=True, help="Attach to the latest process")
 def attach(uuid, latest):
+    """Attach to specified process"""
     if latest:
         uuid = get_latest_process()
         if uuid is None:
