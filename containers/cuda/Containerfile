@@ -179,6 +179,7 @@ ENV C_INCLUDE_PATH="${INTEL_MKL_HOME}/include:${C_INCLUDE_PATH}"
 ENV CPLUS_INCLUDE_PATH="${INTEL_MKL_HOME}/include:${CPLUS_INCLUDE_PATH}"
 ENV CMAKE_INCLUDE_PATH="${INTEL_MKL_HOME}/include:${CMAKE_INCLUDE_PATH}"
 
+COPY requirements-vllm-cuda.txt requirements-vllm-cuda.txt
 RUN source ${VIRTUAL_ENV}/bin/activate \
     && if [ "${INSTRUCTLAB_VERSION}" != "" ] ; then \
         INSTRUCTLAB_PKG="${INSTRUCTLAB_PKG}==${INSTRUCTLAB_VERSION}" ; \
@@ -186,7 +187,8 @@ RUN source ${VIRTUAL_ENV}/bin/activate \
     && pip install torch psutil \
     && pip install flash_attn --no-build-isolation \
     && pip install "${INSTRUCTLAB_PKG}" -C cmake.args="-DGGML_CUDA=on" -C cmake.args="-DGGML_NATIVE=off" \
-    && pip install vllm@git+https://github.com/opendatahub-io/vllm@v0.6.2
+    && pip install -r requirements-vllm-cuda.txt \
+    && rm requirements-vllm-cuda.txt
 
 ENV TORCH_HOME="${VIRTUAL_ENV}/lib64/${PYTHON}/site-packages/torch"
 ENV PYTORCH_HOME="${VIRTUAL_ENV}/lib64/${PYTHON}/site-packages/torch"
