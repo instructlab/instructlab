@@ -183,7 +183,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    source venv/bin/activate
    pip cache remove llama_cpp_python
    CMAKE_ARGS="-DGGML_CUDA=on -DGGML_NATIVE=off" pip install 'instructlab[cuda]'
-   pip install vllm@git+https://github.com/opendatahub-io/vllm@v0.6.2
+   pip install -r requirements-vllm-cuda.txt
    ```
 
 4. From your `venv` environment, verify `ilab` is installed correctly, by running the `ilab` command.
@@ -510,7 +510,7 @@ For detailed documentation on the InstructLab LLMs and their functions, see the 
    If it is not, please run:
 
    ```shell
-   pip install vllm@git+https://github.com/opendatahub-io/vllm@v0.6.2
+   pip install -r requirements-vllm-cuda.txt
    ```
 
    Then you can serve a Safetensors model:
