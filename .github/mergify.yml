@@ -171,7 +171,6 @@ pull_request_rules:
       - files=scripts/infra/
       - files=.pre-commit-config.yaml
       - files=.pylintrc
-      - files~=^\.spellcheck[^/]+$
       - files=tox.ini
       - files=.markdownlint-cli2.yaml
   actions:
