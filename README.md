@@ -425,12 +425,12 @@ For detailed documentation on the InstructLab LLMs and their functions, see the 
    Please use '--hf-token' or 'export HF_TOKEN' to download all necessary models.
 
    Available models (`ilab model list`):
-   +--------------------------------------+---------------------+---------+
-   | Model Name                           | Last Modified       | Size    |
-   +--------------------------------------+---------------------+---------+
-   | merlinite-7b-lab-Q4_K_M.gguf         | 2024-11-21 22:24:50 | 4.1 GB  |
-   | granite-7b-lab-Q4_K_M.gguf           | 2024-11-30 11:16:44 | 3.8 GB  |
-   +--------------------------------------+---------------------+---------+
+   +-------------------------------+---------------------+--------+---------------------------------------------+
+   | Model Name                    | Last Modified       | Size   | Absolute path                               |
+   +-------------------------------+---------------------+--------+---------------------------------------------+
+   | merlinite-7b-lab-Q4_K_M.gguf  | 2024-11-21 22:24:50 | 4.1 GB | /path/to/model/merlinite-7b-lab-Q4_K_M.gguf |
+   | granite-7b-lab-Q4_K_M.gguf    | 2024-11-30 11:16:44 | 3.8 GB | /path/to/model/granite-7b-lab-Q4_K_M.gguf   |
+   +-------------------------------+---------------------+--------+---------------------------------------------+
    ```
 
    You may be prompted to use your Hugging Face token to download the `Mistral-7B-Instruct-v0.2-GGUF` model.
