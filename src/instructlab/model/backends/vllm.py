@@ -17,7 +17,7 @@ import typing
 import httpx
 
 # First Party
-from instructlab.utils import contains_argument
+from instructlab.utils import contains_argument, list_models
 
 # Local
 from ...client_utils import check_api_base
@@ -437,6 +437,24 @@ def build_vllm_cmd(
     if not contains_argument("--distributed-executor-backend", vllm_args):
         vllm_cmd.extend(["--distributed-executor-backend", "mp"])
 
+    # Set aliases for the model, absolute path, final path component
+    # combination of final path component and template name
+    if not contains_argument("--served-model-name", vllm_args):
+        # Get model name matching the model list output if possible
+        # Search parent dir of selected model
+        # In practice there should just be one entry
+        model_names = [
+            model.model_name for model in list_models([model_path.parent], True)
+        ]
+
+        vllm_cmd.extend(
+            [
+                "--served-model-name",
+                str(model_path),
+                model_path.name,
+            ]
+            + model_names
+        )
     vllm_cmd.extend(vllm_args)
 
     return vllm_cmd, tmp_files

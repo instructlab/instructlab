@@ -277,7 +277,7 @@ def test_ilab_llama_cpp_args(
 def test_build_vllm_cmd_with_defaults(tmp_path: pathlib.Path):
     host = "localhost"
     port = 8080
-    model_path = pathlib.Path("/path/to/model")
+    model_path = tmp_path / "model"
     model_family = ""
     chat_template = tmp_path / "chat_template.jinja2"
     chat_template.touch()
@@ -296,6 +296,9 @@ def test_build_vllm_cmd_with_defaults(tmp_path: pathlib.Path):
         str(chat_template),
         "--distributed-executor-backend",
         "mp",
+        "--served-model-name",
+        str(model_path),
+        "model",
     ]
     cmd, _ = build_vllm_cmd(
         host, port, model_family, model_path, str(chat_template), vllm_args
@@ -306,7 +309,7 @@ def test_build_vllm_cmd_with_defaults(tmp_path: pathlib.Path):
 def test_build_vllm_cmd_with_args_provided(tmp_path: pathlib.Path):
     host = "localhost"
     port = 8080
-    model_path = pathlib.Path("/path/to/model")
+    model_path = tmp_path / "model"
     model_family = ""
     chat_template = tmp_path / "chat_template.jinja2"
     chat_template.touch()
@@ -325,6 +328,9 @@ def test_build_vllm_cmd_with_args_provided(tmp_path: pathlib.Path):
         host,
         "--chat-template",
         str(chat_template),
+        "--served-model-name",
+        str(model_path),
+        "model",
     ] + vllm_args
 
     cmd, _ = build_vllm_cmd(
@@ -360,6 +366,10 @@ def test_build_vllm_cmd_with_bnb_quant(tmp_path: pathlib.Path):
         "--enforce-eager",
         "--distributed-executor-backend",
         "mp",
+        "--served-model-name",
+        str(model_path),
+        "model",
+        "test_build_vllm_cmd_with_bnb_q0/model",
     ]
     create_safetensors_or_bin_model_files(model_path, "safetensors", True)
     cmd, _ = build_vllm_cmd(
