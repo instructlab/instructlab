@@ -392,7 +392,7 @@ ilab config show
 
 ### 📥 Download the model
 
-For detailed documentation on the InstructLab LLMs and their functions, see the [InstructLab LLM guide](docs/instructlab_models.md).
+For detailed documentation on the InstructLab LLMs and their functions, see the [InstructLab LLM guide](docs/user/instructlab_models.md).
 
 #### Downloading the default InstructLab models
 
