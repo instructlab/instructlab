@@ -51,7 +51,6 @@ jobs:
         actionlint
         markdown-lint
         shellcheck
-        spellcheck
         lint-workflow-complete
 
   test:
