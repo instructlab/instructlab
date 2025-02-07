@@ -38,11 +38,21 @@ def test_process_list(cli_runner: CliRunner):
         "pid": 26372,
         "children_pids": [111, 222, 333],
         "type": "Generation",
-        "log_file": "/Users/charliedoern/.local/share/instructlab/logs/generation/generation-63866b91-799a-42a7-af02-d0b68fddf19d.log",
+        "log_file": "/Users/test/.local/share/instructlab/logs/generation/generation-63866b91-799a-42a7-af02-d0b68fddf19d.log",
         "start_time": datetime.datetime.strptime(
             start_time_str, "%Y-%m-%d %H:%M:%S"
         ).isoformat(),
         "status": ILAB_PROCESS_STATUS.RUNNING,
+    }
+    process_registry["70000000-700a-40b0-be03-d1b79fddf20c"] = {
+        "pid": 30000,
+        "children_pids": [555, 666, 777],
+        "type": "Generation",
+        "log_file": "/Users/test/.local/share/instructlab/logs/generation/generation-70000000-700a-40b0-be03-d1b79fddf20c.log",
+        "start_time": datetime.datetime.strptime(
+            start_time_str, "%Y-%m-%d %H:%M:%S"
+        ).isoformat(),
+        "status": ILAB_PROCESS_STATUS.DONE,
     }
     # create registry json, place it in the proper dir
     os.makedirs(exist_ok=True, name=DEFAULTS.INTERNAL_DIR)
@@ -62,7 +72,8 @@ def test_process_list(cli_runner: CliRunner):
 +------------+-------+--------------------------------------+------------------------------------------------------------------------------------------------------------------+----------+---------+
 | Type       | PID   | UUID                                 | Log File                                                                                                         | Runtime  | Status  |
 +------------+-------+--------------------------------------+------------------------------------------------------------------------------------------------------------------+----------+---------+
-| Generation | 26372 | 63866b91-799a-42a7-af02-d0b68fddf19d | /Users/charliedoern/.local/share/instructlab/logs/generation/generation-63866b91-799a-42a7-af02-d0b68fddf19d.log | 00:00:00 | Running |
+| Generation | 26372 | 63866b91-799a-42a7-af02-d0b68fddf19d | /Users/test/.local/share/instructlab/logs/generation/generation-63866b91-799a-42a7-af02-d0b68fddf19d.log | 00:00:00 | Running |
+| Generation | 30000 | 70000000-700a-40b0-be03-d1b79fddf20c | /Users/test/.local/share/instructlab/logs/generation/generation-70000000-700a-40b0-be03-d1b79fddf20c.log | 00:00:00 | Done    |
 +------------+-------+--------------------------------------+------------------------------------------------------------------------------------------------------------------+----------+---------+
     """).strip()
 
@@ -70,6 +81,35 @@ def test_process_list(cli_runner: CliRunner):
     assert extract_process_entries(result.output) == extract_process_entries(
         expected_output
     ), result.output
+
+    # test with --state
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "process",
+            "list",
+            "--state",
+            "running",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert "63866b91-799a-42a7-af02-d0b68fddf19d" in result.output
+    assert "70000000-700a-40b0-be03-d1b79fddf20c" not in result.output
+
+    # test done process still exist after first list
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            "--config=DEFAULT",
+            "process",
+            "list",
+            "--state",
+            "done",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert "70000000-700a-40b0-be03-d1b79fddf20c" in result.output
 
 
 def test_process_list_none(cli_runner: CliRunner):
