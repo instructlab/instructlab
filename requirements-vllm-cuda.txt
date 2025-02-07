@@ -2,4 +2,4 @@
 # Dependencies for installing vLLM on CUDA
 
 # vLLM only supports Linux platform (including WSL)
-vllm==0.6.6.post1 ; sys_platform == 'linux' and platform_machine == 'x86_64'
+vllm==0.7.2 ; sys_platform == 'linux' and platform_machine == 'x86_64'
