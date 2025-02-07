@@ -35,6 +35,11 @@ def setup_gpus_config(section_path="serve", gpus=None, tps=None, vllm_args=lambd
     return _CFG_FILE_NAME
 
 
+@mock.patch("torch.cuda.device_count", return_value=10)
+@mock.patch(
+    "instructlab.model.serve_backend.get_tensor_parallel_size",
+    return_value=0,
+)
 @mock.patch(
     "instructlab.model.backends.backends.check_model_path_exists", return_value=None
 )
