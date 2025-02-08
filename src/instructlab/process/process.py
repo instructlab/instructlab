@@ -32,7 +32,7 @@ class Process:
         ptype: str,
         children: list[int] | None = None,
         start_time: datetime | None = None,
-        status: str = ILAB_PROCESS_STATUS.RUNNING,
+        status: str = ILAB_PROCESS_STATUS.RUNNING.value,
     ):
         self.pid = pid
         self.ptype = ptype
@@ -53,7 +53,10 @@ class Process:
 
     @property
     def completed(self) -> bool:
-        return self.status in (ILAB_PROCESS_STATUS.DONE, ILAB_PROCESS_STATUS.ERRORED)
+        return self.status in (
+            ILAB_PROCESS_STATUS.DONE.value,
+            ILAB_PROCESS_STATUS.ERRORED.value,
+        )
 
     @property
     def started(self) -> bool:
@@ -343,7 +346,7 @@ def stop_process(local_uuid: str, remove=True):
         process_registry.remove(local_uuid)
     else:
         # since we just killed the processes, we cannot depend on it to update itself, mark as done and set end time
-        process.complete(ILAB_PROCESS_STATUS.DONE)
+        process.complete(ILAB_PROCESS_STATUS.DONE.value)
     process_registry.persist()
 
 
@@ -380,7 +383,7 @@ def filter_processes(state: Optional[str] = None):
     list_of_processes = []
 
     for local_uuid, process in process_registry.processes.items():
-        if state and process.status.lower() != state.lower():
+        if state and process.status != state:
             continue
 
         # Convert timedelta to a human-readable string (HH:MM:SS)

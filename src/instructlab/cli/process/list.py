@@ -14,11 +14,7 @@ from instructlab.utils import print_table
 @click.option(
     "--state",
     type=click.Choice(
-        [
-            ILAB_PROCESS_STATUS.DONE,
-            ILAB_PROCESS_STATUS.RUNNING,
-            ILAB_PROCESS_STATUS.ERRORED,
-        ],
+        [s.value for s in ILAB_PROCESS_STATUS],
         case_sensitive=False,
     ),
     default=None,

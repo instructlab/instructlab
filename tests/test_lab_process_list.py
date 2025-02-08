@@ -42,7 +42,7 @@ def test_process_list(cli_runner: CliRunner):
         "start_time": datetime.datetime.strptime(
             start_time_str, "%Y-%m-%d %H:%M:%S"
         ).isoformat(),
-        "status": ILAB_PROCESS_STATUS.RUNNING,
+        "status": ILAB_PROCESS_STATUS.RUNNING.value,
     }
     process_registry["70000000-700a-40b0-be03-d1b79fddf20c"] = {
         "pid": 30000,
@@ -52,7 +52,7 @@ def test_process_list(cli_runner: CliRunner):
         "start_time": datetime.datetime.strptime(
             start_time_str, "%Y-%m-%d %H:%M:%S"
         ).isoformat(),
-        "status": ILAB_PROCESS_STATUS.DONE,
+        "status": ILAB_PROCESS_STATUS.DONE.value,
     }
     # create registry json, place it in the proper dir
     os.makedirs(exist_ok=True, name=DEFAULTS.INTERNAL_DIR)

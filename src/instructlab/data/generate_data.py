@@ -228,12 +228,14 @@ def create_server_and_generate(
         )
     except GenerateException as exc:
         # mark process as errored on registry and set end_time
-        complete_process(local_uuid=local_uuid, status=ILAB_PROCESS_STATUS.ERRORED)
+        complete_process(
+            local_uuid=local_uuid, status=ILAB_PROCESS_STATUS.ERRORED.value
+        )
         raise ValueError(
             f"Generating dataset failed with the following error: {exc}"
         ) from exc
     finally:
         # mark process as done on registry and set end_time
-        complete_process(local_uuid=local_uuid, status=ILAB_PROCESS_STATUS.DONE)
+        complete_process(local_uuid=local_uuid, status=ILAB_PROCESS_STATUS.DONE.value)
         if backend_instance is not None:
             backend_instance.shutdown()
