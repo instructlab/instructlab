@@ -652,7 +652,9 @@ class TestLabTrain:
         run_training_patch.start()
         result = run_default_phased_train(cli_runner)
         run_training_patch.stop()
-        assert TRAINING_FAILURE_MESSAGE in result.output
+        assert (
+            f"Failed during training loop: {TRAINING_FAILURE_MESSAGE}" in result.output
+        )
         assert "Training Phase 1/2..." in result.output
         assert result.exit_code == 1
 
