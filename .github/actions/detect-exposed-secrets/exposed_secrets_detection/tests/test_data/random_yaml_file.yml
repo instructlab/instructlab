@@ -1,0 +1,4 @@
+some-key:
+  some-sub-key:
+    - some-val1
+    - some-val2

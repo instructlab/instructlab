@@ -13,4 +13,7 @@ rules:
       # tests/test_lab_diff.py expects to fail on this file.
       # All other basic yamllint runs should skip this file.
       - /tests/testdata/invalid_yaml.yaml
-      - /.tox/*
+
+# The in-house GitHub action "detected-exposed-secrets" has a test file with intentional formatting issues
+ignore: |
+  /.github/actions/detect-exposed-secrets/exposed_secrets_detection/tests/test_data/git_workflow_invalid_yaml.yml

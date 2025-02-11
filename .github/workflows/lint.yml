@@ -14,7 +14,7 @@ on:
       - 'tox.ini'
       - .pylintrc
       - 'src/instructlab/profiles/**'
-      - '.github/workflows/lint.yml' # This workflow
+      - '.github/workflows/**' # All workflows, including this one
   pull_request:
     branches:
       - "main"
@@ -26,7 +26,7 @@ on:
       - 'tox.ini'
       - .pylintrc
       - 'src/instructlab/profiles/**'
-      - '.github/workflows/lint.yml' # This workflow
+      - '.github/workflows/**' # All workflows, including this one
 
 env:
   LC_ALL: en_US.UTF-8
@@ -111,10 +111,25 @@ jobs:
         run: |
           python -m pip cache remove llama_cpp_python
 
+  security-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          # https://github.com/actions/checkout/issues/249
+          fetch-depth: 0
+
+      # In-house method to detect and identfy exposed secrets in Git workflow files that
+      # auto-trigger in pull requests
+      - name: Detect exposed GitHub secrets
+        uses: ./.github/actions/detect-exposed-secrets
+
   lint-workflow-complete:
     permissions:
       checks: read
     uses: ./.github/workflows/status-checks.yml
     with:
       job_ids: >- # Space-separated job ids to wait on for status checks
+        security-lint
         lint:
