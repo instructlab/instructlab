@@ -49,7 +49,6 @@ jobs:
         actionlint
         markdown-lint
         shellcheck
-        spellcheck
         lint-workflow-complete
 
   start-small-ec2-runner:

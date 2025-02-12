@@ -125,7 +125,6 @@ setenv =
 | Code style           | [`ruff`](https://github.com/charliermarsh/ruff), [`black`](https://github.com/psf/black), [`isort`](https://pycqa.github.io/isort/) | Enforces [`pep8`](https://peps.python.org/pep-0008/) coding style, checks for unused imports, complexity, and other code quality issues | `tox -e ruff`               |
 |                      | [`pylint`](https://pylint.org) | `pylint` performs static code analysis | `tox -e lint`               |
 | Type Checking        | [`mypy`](https://mypy.readthedocs.io/en/stable/) | Performs static type analysis across the project to catch bugs  | `tox -e mypy`               |
-| Spell Checking       | [`pyspelling`](https://facelessuser.github.io/pyspelling/) & [`aspell`](http://aspell.net/) | Checks for spelling errors in documentation and code comments  | `tox -e spellcheck`         |
 | Documentation        | [`Sphinx`](https://docs.readthedocs.io/en/stable/intro/sphinx.html) | Generates HTML documentation for the project                   | `tox -e docs`               |
 | TOML File Linting    | Custom `Makefile` process                      | Lints and formats the `pyproject.toml` file                    | `tox -e tomllint`           |
 

@@ -149,19 +149,9 @@ pull_request_rules:
         - -files~=\.sh$
         - -files=.github/workflows/shellcheck.yaml
 
-    - or:
-      - and:
-        - check-success=spellcheck
-        - or:
-          - files~=\.md$
-          - files=tox.ini
-          - files~=^\.spellcheck[^/]+$
-          - files=.github/workflows/spellcheck.yaml
-      - and:
-        - -files~=\.md$
-        - -files=tox.ini
-        - -files~=^\.spellcheck[^/]+$
-        - -files=.github/workflows/spellcheck.yaml
+    - and:
+      - -files~=\.md$
+      - -files=tox.ini
 
   actions:
     merge:
@@ -185,7 +175,6 @@ pull_request_rules:
       - files=scripts/ruff.sh
       - files=.pre-commit-config.yaml
       - files=.pylintrc
-      - files~=^\.spellcheck[^/]+$
       - files=tox.ini
       - files=.markdownlint-cli2.yaml
   actions:
