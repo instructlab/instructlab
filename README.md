@@ -105,7 +105,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 - When installing on Fedora Linux, install C++, Python 3.10 or 3.11, and other necessary tools by running the following command:
 
    ```shell
-   sudo dnf install gcc gcc-c++ make git python3.11 python3.11-devel
+   sudo dnf install gcc gcc-c++ make git-core python3.11 python3.11-devel
    ```
 
    Some Python version management tools that build Python (instead of using a pre-built binary) may not by default build libraries implemented in C, and CPython when installing a Python version. This can result in the following error when running the `ilab data generate` command: `ModuleNotFoundError: No module named '_lzma'`. This can be resolved by building CPython during the Python installation with the `--enable-framework`. For example for `pyenv` on MacOS: `PYTHON_CONFIGURE_OPTS="--enable-framework" pyenv install 3.x`. You may need to recreate your virtual environment after reinstalling Python.
