@@ -49,7 +49,7 @@ WantedBy=multi-user.target
 FILEEOF
 
 rm -rf yum-packaging-precompiled-kmod
-dnf install libicu podman skopeo git rpm-build make openssl elfutils-libelf-devel python3.11 python3.11-devel -y
+dnf install libicu podman skopeo git-core rpm-build make openssl elfutils-libelf-devel python3.11 python3.11-devel -y
 if [ -z "${KERNEL_VERSION}" ]; then
       KERNELS=$(rpm -q --qf="%{BUILDTIME} %{VERSION}-%{RELEASE}\n" kernel-core | sort -n)
       KERNEL_COUNT=$(echo "${KERNELS}" | wc -l)

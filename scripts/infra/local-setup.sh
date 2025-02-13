@@ -30,7 +30,7 @@ rh__ensure_aws_system_pkgs() {
     # shellcheck source=/dev/null
     source /etc/os-release
     if [[ "$ID" == "fedora" ]] || [[ "$ID_LIKE" =~ "fedora" ]]; then
-        PKG_LIST=(git aws)
+        PKG_LIST=(git-core aws)
         if "$ADDN_PKGS"; then
             PKG_LIST+=(gcc python-devel python-virtualenv krb5-devel openldap-devel)
         fi
