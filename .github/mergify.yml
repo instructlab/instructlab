@@ -149,20 +149,6 @@ pull_request_rules:
         - -files~=\.sh$
         - -files=.github/workflows/shellcheck.yaml
 
-    - or:
-      - and:
-        - check-success=spellcheck
-        - or:
-          - files~=\.md$
-          - files=tox.ini
-          - files~=^\.spellcheck[^/]+$
-          - files=.github/workflows/spellcheck.yaml
-      - and:
-        - -files~=\.md$
-        - -files=tox.ini
-        - -files~=^\.spellcheck[^/]+$
-        - -files=.github/workflows/spellcheck.yaml
-
   actions:
     merge:
       method: merge
