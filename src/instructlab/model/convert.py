@@ -1,127 +1,187 @@
 # SPDX-License-Identifier: Apache-2.0
 
+# Future
+from __future__ import annotations
+
 # Standard
-from glob import glob
+from enum import Enum
 from pathlib import Path
+from typing import Callable, TypeVar
 import logging
 import os
-import shutil
-
-# Third Party
-from huggingface_hub import errors as hf_errors
-from requests import exceptions as requests_exceptions
-import click
 
 # First Party
-from instructlab import clickext, utils
+from instructlab.utils import is_model_gguf, is_model_safetensors
 
 logger = logging.getLogger(__name__)
 
 
-@click.command()
-@click.option(
-    "--model-dir",
-    help="Base directory where model is stored.",
-    show_default=True,
-    required=True,
+class SUPPORTED_FORMATS(Enum):
+    GGUF = "gguf"
+    SAFETENSORS = "safetensors"
+
+    def __contains__(self, item):
+        return item in [fmt.value for fmt in self.__class__]
+
+
+AnyConverter = TypeVar("AnyConverter", bound="type[Converter]")
+
+
+class Converter:
+    source_model: Path
+    destination: Path
+    outtype: str
+
+    source_format: SUPPORTED_FORMATS
+    target_format: SUPPORTED_FORMATS
+    converter_dict: dict[
+        tuple[SUPPORTED_FORMATS, SUPPORTED_FORMATS], type[Converter]
+    ] = {}
+
+    def __init__(self, model: Path, destination: Path, outtype: str):
+        """
+        Initialize the Converter with the source model, destination, and output type.
+
+        Args:
+            model (Path): Path to the source model.
+            destination (Path): Path to the destination.
+            outtype (str): Output type.
+        """
+        self.source_model = model
+        self.destination = destination
+        self.outtype = outtype
+
+    @classmethod
+    def register_format_converter(
+        cls, src_fmt: SUPPORTED_FORMATS, tgt_fmt: SUPPORTED_FORMATS
+    ) -> Callable[[AnyConverter], AnyConverter]:
+        """
+        Register a format converter for the given source and target formats.
+
+        Args:
+            src_fmt (SUPPORTED_FORMATS): Source format.
+            tgt_fmt (SUPPORTED_FORMATS): Target format.
+
+        Returns:
+            Callable[[AnyConverter], AnyConverter]: Callable that registers the converter class.
+        """
+
+        def func(convertercls: AnyConverter) -> AnyConverter:
+            cls.converter_dict[(src_fmt, tgt_fmt)] = convertercls
+            return convertercls
+
+        return func
+
+    @classmethod
+    def get_fmt_converter(
+        cls, src_fmt: SUPPORTED_FORMATS, tgt_fmt: SUPPORTED_FORMATS
+    ) -> type[Converter]:
+        """
+        Get the format converter for the given source and target formats.
+
+        Args:
+            src_fmt (SUPPORTED_FORMATS): Source format.
+            tgt_fmt (SUPPORTED_FORMATS): Target format.
+
+        Returns:
+            type[Converter]: Converter class.
+
+        Raises:
+            ValueError: If the conversion is not supported.
+        """
+        try:
+            return cls.converter_dict[(src_fmt, tgt_fmt)]
+        except KeyError:
+            raise ValueError(
+                f"Conversion from {src_fmt.value} to {tgt_fmt.value} is not supported"
+            ) from None
+
+    def convert(self):
+        """
+        Convert the model. This method should be implemented by subclasses.
+        """
+
+
+# Register new converters
+# To add a new converter, create a new class that inherits from Converter and
+# decorate it with the register_format_converter decorator. The decorator takes
+# the source and target formats as arguments. The converter class should implement
+# the convert method which will contain the logic to convert the model from the
+
+
+@Converter.register_format_converter(
+    SUPPORTED_FORMATS.SAFETENSORS, SUPPORTED_FORMATS.GGUF
 )
-@click.option("--adapter-file", help="LoRA adapter to fuse.", default=None)
-@click.option(
-    "-sd",
-    "--skip-de-quantize",
-    help="Skip de-quantization.",
-    is_flag=True,
-)
-@click.option(
-    "-sq",
-    "--skip-quantize",
-    is_flag=True,
-    help="Whether to skip quantization while converting to GGUF.",
-)
-@click.option(
-    "--model-name",
-    help="Name of the model being trained/converted. Informs the naming of the final trained model file",
-    default=None,
-    show_default=True,
-)
-@click.pass_context
-@clickext.display_params
-@utils.macos_requirement(echo_func=click.secho, exit_exception=click.exceptions.Exit)
-def convert(
-    ctx,  # pylint: disable=unused-argument
-    model_dir,
-    adapter_file,
-    skip_de_quantize,
-    skip_quantize,
-    model_name,
+class SafetensorsToGGUF(Converter):
+    def convert(self):
+        """
+        Convert the model from Safetensors to GGUF format.
+        """
+        super().convert()
+        # First Party
+        from instructlab.llamacpp.convert_to_gguf import convert_model_to_gguf
+
+        default_gguf_filename = f"{os.path.basename(self.source_model)}.gguf"
+        dest = (
+            self.destination
+            if str(self.destination).endswith(".gguf")
+            else self.destination / default_gguf_filename
+        )
+
+        convert_model_to_gguf(
+            model=self.source_model,
+            outfile=dest,
+            outtype=self.outtype,
+        )
+
+
+def convert_model(
+    model: Path, destination: Path, outtype: str, target_format: SUPPORTED_FORMATS
 ):
-    """Converts model to GGUF"""
-    # pylint: disable=import-outside-toplevel
-    # Third Party
-    from instructlab_quantize import run_quantize  # pylint: disable=import-error
+    """
+    Convert the model to the specified target format.
 
-    # Local
-    from ..llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
-    from ..train.lora_mlx.convert import convert_between_mlx_and_pytorch
-    from ..train.lora_mlx.fuse import fine_tune
+    Args:
+        model (Path): Path to the source model.
+        destination (Path): Path to the destination.
+        outtype (str): Output type.
+        target_format (SUPPORTED_FORMATS): Target format.
 
-    model_dir = os.path.expandvars(os.path.expanduser(model_dir)).rstrip("/")
-
-    # compute model name from model-dir if not supplied
-    if model_name is None:
-        mlx_q_suffix = "-mlx-q"
-        model_name = model_dir.split("/")[-1]
-        model_name = model_name.replace(mlx_q_suffix, "")
-
-    if adapter_file is None:
-        adapter_file = os.path.join(model_dir, "adapters.npz")
-    source_model_dir = model_dir
-    model_dir_fused = f"{source_model_dir}-fused"
-
-    # this combines adapter with the original model to produce the updated model
+    Raises:
+        ValueError: If the conversion fails.
+    """
     try:
-        fine_tune(
-            model=source_model_dir,
-            save_path=model_dir_fused,
-            adapter_file=adapter_file,
-            de_quantize=not skip_de_quantize,
+        src_model_fmt = get_model_format(model)
+        converter_cls = Converter.get_fmt_converter(src_model_fmt, target_format)
+        converter_instance = converter_cls(model, destination, outtype)
+        converter_instance.convert()
+        logger.info(
+            f"ᕦ(òᴗóˇ)ᕤ Model convert completed successfully! ᕦ(òᴗóˇ)ᕤ\nConverted model saved to {destination}"
         )
-    except (requests_exceptions.HTTPError, hf_errors.HFValidationError) as e:
-        click.secho(
-            f"Failed to fine tune: {e}",
-            fg="red",
-        )
-        raise click.exceptions.Exit(1)
+    except ValueError as e:
+        raise ValueError(f"Model conversion failed: {e}") from e
 
-    model_dir_fused_pt = f"{model_name}-trained"
-    # this converts MLX to PyTorch
-    convert_between_mlx_and_pytorch(
-        hf_path=model_dir_fused, mlx_path=model_dir_fused_pt, local=True, to_pt=True
-    )
 
-    logger.info(f"deleting {model_dir_fused}...")
-    shutil.rmtree(model_dir_fused)
+def get_model_format(model: Path) -> SUPPORTED_FORMATS:
+    """
+    Get the format of the model.
 
-    convert_llama_to_gguf(
-        model=Path(model_dir_fused_pt),
-        pad_vocab=True,
-        skip_unknown=True,
-        outfile=f"{model_dir_fused_pt}/{model_name}.gguf",
-    )
+    Args:
+        model (Path): Path to the model.
 
-    logger.info(f"deleting safetensors files from {model_dir_fused_pt}...")
-    for file in glob(os.path.join(model_dir_fused_pt, "*.safetensors")):
-        os.remove(file)
+    Returns:
+        SUPPORTED_FORMATS: Model format.
 
-    # quantize to 4-bit GGUF (optional)
-    if not skip_quantize:
-        gguf_model_dir = f"{model_dir_fused_pt}/{model_name}.gguf"
-        gguf_model_q_dir = f"{model_dir_fused_pt}/{model_name}-Q4_K_M.gguf"
-        run_quantize(gguf_model_dir, gguf_model_q_dir, "Q4_K_M")
+    Raises:
+        ValueError: If the model format is unsupported.
+    """
 
-    logger.info(f"deleting {model_dir_fused_pt}/{model_name}.gguf...")
-    os.remove(os.path.join(model_dir_fused_pt, f"{model_name}.gguf"))
+    if is_model_safetensors(model):
+        return SUPPORTED_FORMATS.SAFETENSORS
 
-    logger.info(f"deleting {source_model_dir}...")
-    shutil.rmtree(source_model_dir)
-    click.echo("ᕦ(òᴗóˇ)ᕤ Model convert completed successfully! ᕦ(òᴗóˇ)ᕤ")
+    if is_model_gguf(model):
+        return SUPPORTED_FORMATS.GGUF
+
+    raise ValueError(
+        f"Source model {model} is in an unsupported format. Supported formats are {SUPPORTED_FORMATS._member_names_}"
+    ) from None

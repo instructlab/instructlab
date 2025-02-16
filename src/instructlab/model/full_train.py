@@ -14,7 +14,7 @@ import numpy as np
 import psutil
 
 # First Party
-from instructlab.llamacpp import llamacpp_convert_to_gguf
+from instructlab.llamacpp import convert_to_gguf
 from instructlab.utils import is_macos_with_m_chip
 
 logger = logging.getLogger(__name__)
@@ -255,10 +255,8 @@ def train(train_args, device, optimize_memory):
         tokenizer.save_pretrained(str(output_dir))
 
         # convert to GGUF at the end so llamacpp can serve the model originally in .bin
-        llamacpp_convert_to_gguf.convert_llama_to_gguf(
+        convert_to_gguf.convert_model_to_gguf(
             model=output_dir,
-            pad_vocab=True,
-            skip_unknown=True,
             outfile=os.path.join(output_dir, "pytorch_model.gguf"),
         )
 
