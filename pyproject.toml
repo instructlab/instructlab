@@ -46,7 +46,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "taxonomy" = "instructlab.taxonomy.taxonomy:taxonomy"
 
 [project.entry-points."instructlab.command.process"]
-"list" = "instructlab.cli.process.list:list"
+"list" = "instructlab.cli.process.list:list_processes"
 "attach" = "instructlab.cli.process.attach:attach"
 
 [project.entry-points."instructlab.command.config"]

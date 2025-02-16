@@ -22,7 +22,7 @@ class TestProcessRegistry:
         type_ = "TestType"
         log_file = tmp_path_home / "test.log"
         now = datetime.now()
-        status = ILAB_PROCESS_STATUS.RUNNING
+        status = ILAB_PROCESS_STATUS.RUNNING.value
 
         reg.add(
             uuid_,
@@ -54,7 +54,7 @@ class TestProcessRegistry:
         assert p.started
 
         # Now complete the process
-        p.complete(ILAB_PROCESS_STATUS.DONE)
+        p.complete(ILAB_PROCESS_STATUS.DONE.value)
 
         # Confirm update happened
         p = reg.processes[uuid_]
@@ -76,7 +76,7 @@ class TestProcessRegistry:
         type_ = "TestType"
         log_file = tmp_path_home / "test.log"
         now = datetime.now()
-        status = ILAB_PROCESS_STATUS.RUNNING
+        status = ILAB_PROCESS_STATUS.RUNNING.value
 
         reg.add(
             uuid_,

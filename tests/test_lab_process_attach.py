@@ -28,7 +28,7 @@ def test_process_attach(
         "start_time": datetime.datetime.strptime(
             start_time_str, "%Y-%m-%d %H:%M:%S"
         ).isoformat(),
-        "status": ILAB_PROCESS_STATUS.RUNNING,
+        "status": ILAB_PROCESS_STATUS.RUNNING.value,
     }
     # create registry json, place it in the proper dir
     os.makedirs(exist_ok=True, name=DEFAULTS.INTERNAL_DIR)

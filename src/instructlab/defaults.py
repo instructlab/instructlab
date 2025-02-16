@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 # Standard
+from enum import Enum
 from os import path
 import pathlib
 
@@ -31,11 +32,10 @@ LOG_FORMAT = "%(levelname)s %(asctime)s %(name)s:%(lineno)d: %(message)s"
 RECOMMENDED_SCOPEO_VERSION = "1.9.0"
 
 
-# TODO: make it an enum
-class ILAB_PROCESS_STATUS:
-    RUNNING: str = "Running"
-    DONE: str = "Done"
-    ERRORED: str = "Errored"
+class ILAB_PROCESS_STATUS(str, Enum):
+    RUNNING = "Running"
+    DONE = "Done"
+    ERRORED = "Errored"
 
 
 # TODO: make it an enum
