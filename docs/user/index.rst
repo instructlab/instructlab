@@ -9,3 +9,4 @@ User Guides
    PROMPTING-FAQ.md
    instructlab_models.md
    converting_GGUF.md
+   dk_bench.md
