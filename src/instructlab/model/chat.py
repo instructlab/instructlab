@@ -584,6 +584,7 @@ def chat_model(
     embedding_model_path,
     top_k,
     no_decoration,
+    system_prompt,
     backend_type,
     host,
     port,
@@ -739,6 +740,7 @@ def chat_model(
             backend_type=backend_type,
             params=params,
             no_decoration=no_decoration,
+            system_prompt=system_prompt,
         )
     except ChatException as exc:
         print(f"{RED}Executing chat failed with: {exc}{RESET}")
@@ -769,6 +771,7 @@ def chat_cli(
     visible_overflow,
     params,
     no_decoration,
+    system_prompt,
 ):
     """Starts a CLI-based chat with the server"""
     client = OpenAI(
@@ -803,7 +806,12 @@ def chat_cli(
         logger.info(f"Context {context} not found in the config file. Using default.")
         context = "default"
     loaded["name"] = context
-    sys_prompt = CONTEXTS.get(context, "default")(get_model_arch(pathlib.Path(model)))
+    if system_prompt:
+        sys_prompt = system_prompt
+    else:
+        sys_prompt = CONTEXTS.get(context, "default")(
+            get_model_arch(pathlib.Path(model))
+        )
     loaded["messages"] = [{"role": "system", "content": sys_prompt}]
 
     # Instantiate retriever if RAG is enabled

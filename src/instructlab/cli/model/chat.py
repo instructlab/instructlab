@@ -148,6 +148,11 @@ logger = logging.getLogger(__name__)
     is_flag=True,
     help="Disable decorations for chat responses.",
 )
+@click.option(
+    "--system-prompt",
+    type=click.STRING,
+    cls=clickext.ConfigOption,
+)
 @click.pass_context
 @clickext.display_params
 def chat(
@@ -173,6 +178,7 @@ def chat(
     embedding_model_path,
     top_k,
     no_decoration,
+    system_prompt,
 ):
     """Runs a chat using the modified model"""
     chat_model(
@@ -197,6 +203,7 @@ def chat(
         embedding_model_path,
         top_k,
         no_decoration,
+        system_prompt,
         backend_type=ctx.obj.config.serve.server.backend_type,
         host=ctx.obj.config.serve.server.host,
         port=ctx.obj.config.serve.server.port,
