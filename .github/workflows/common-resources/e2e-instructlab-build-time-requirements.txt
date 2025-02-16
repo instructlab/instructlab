@@ -1,0 +1,4 @@
+# These packages are needed to build the `instructlab` wheel. They are not runtime dependencies.
+packaging
+setuptools-scm
+wheel
