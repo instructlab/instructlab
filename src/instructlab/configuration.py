@@ -373,6 +373,10 @@ class _generate(BaseModel):
         default=DEFAULTS.NUM_CPUS,
         description="Number of CPU cores to use for generation.",
     )
+    batch_size: PositiveInt = Field(
+        default=DEFAULTS.BATCH_SIZE,
+        description="Number of Batches to send for generation on each core.",
+    )
     chunk_word_count: PositiveInt = Field(
         default=DEFAULTS.CHUNK_WORD_COUNT,
         description="Maximum number of words per chunk.",
