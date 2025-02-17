@@ -145,6 +145,9 @@ generate:
   # Number of CPU cores to use for generation.
   # Default: 10
   num_cpus: 10
+  # Number of batches to send on each core
+  # Default: 8
+  batch_size: 8
   # Number of instructions to use
   # Default: -1
   # Deprecated: see 'sdg_scale_factor' instead
