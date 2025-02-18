@@ -28,7 +28,8 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: instructlab/ci-actions
-          # clone the "ci-actions" repo to a local directory called "ci-actions", instead of overwriting the current WORKDIR contents
+          # clone the "ci-actions" repo to a local directory called "ci-actions", instead of
+          # overwriting the current WORKDIR contents
           path: ci-actions
           ref: release-v0.1
           sparse-checkout: |
