@@ -181,6 +181,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    ```shell
    python<version> -m venv --upgrade-deps venv
    source venv/bin/activate
+   pip install torch psutil
    pip cache remove llama_cpp_python
    CMAKE_ARGS="-DGGML_CUDA=on -DGGML_NATIVE=off" pip install 'instructlab[cuda]'
    pip install -r requirements-vllm-cuda.txt
