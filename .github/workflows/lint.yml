@@ -11,6 +11,7 @@ on:
       - '**.py'
       - 'pyproject.toml'
       - 'requirements**.txt'
+      - 'docs/**'
       - 'tox.ini'
       - .pylintrc
       - 'src/instructlab/profiles/**'
@@ -23,6 +24,7 @@ on:
       - '**.py'
       - 'pyproject.toml'
       - 'requirements**.txt'
+      - 'docs/**'
       - 'tox.ini'
       - .pylintrc
       - 'src/instructlab/profiles/**'
