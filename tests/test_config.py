@@ -101,7 +101,8 @@ class TestConfig:
         assert cfg.generate.model == DEFAULTS.DEFAULT_TEACHER_MODEL
 
         assert cfg.serve is not None
-        assert cfg.serve.model_path == DEFAULTS.DEFAULT_CHAT_MODEL
+        # @TODO: Switch to pathlib.Path once 'serve' subcommand options have been updated
+        assert cfg.serve.model_path == str(DEFAULTS.DEFAULT_CHAT_MODEL)
 
         assert cfg.train is not None
         assert cfg.train.model_path == "instructlab/granite-7b-lab"
@@ -374,11 +375,11 @@ def test_compare_default_config_testdata(
 ):
     assert config.DEFAULTS.CHECKPOINTS_DIR == "/data/instructlab/checkpoints"
     saved_file = testdata_path / "default_config.yaml"
-    current_file = os.path.join(config.DEFAULTS._config_dir, "current_config.yaml")
+    current_file = pathlib.Path(config.DEFAULTS._config_dir) / "current_config.yaml"
 
     current_cfg = config.get_default_config()
     # roundtrip to verify serialization and de-serialization
-    config.write_config(current_cfg, str(current_file))
+    config.write_config(current_cfg, current_file)
     with open(file=current_file, encoding="utf-8") as yamlfile:
         current_content = yaml.safe_load(yamlfile)
 
