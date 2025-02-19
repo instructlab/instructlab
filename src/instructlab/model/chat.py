@@ -62,6 +62,8 @@ Help / TL;DR
 - `/s filepath`: **s**ave current session to `filepath`
 - `/l filepath`: **l**oad `filepath` and start a new session
 - `/L filepath`: **l**oad `filepath` (permanently) and start a new session
+- `/sc context_name custom_context_text`: **s**et **c**ustom context with `context_name` and `custom_context_text`.
+   - Note: For multi-word `context_name`, use underscores (`_`) to separate words.
 
 Press Alt (or Meta) and Enter or Esc Enter to end multiline input.
 """
@@ -375,6 +377,42 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
         self._sys_print(Markdown(f"**Available contexts:**\n\n{context_list}"))
         raise KeyboardInterrupt
 
+    def _handle_set_custom_context(self, content):
+        content = content.rstrip()
+        parts = content.split(" ", 2)
+        if len(parts) < 3:
+            self._sys_print(
+                Markdown(
+                    "**ERROR**: Please use `/sc context_name custom_context_text`. "
+                    "Note: Use underscores (`_`) to join multiple words in `context_name`."
+                )
+            )
+            raise KeyboardInterrupt
+
+        context_name = parts[1]
+        custom_context_text = parts[2]
+
+        # Prevent overriding default contexts
+        if context_name in {"default", "cli_helper"}:
+            self._sys_print(
+                Markdown(
+                    f"**ERROR**: `{context_name}` is a default context and cannot be modified."
+                )
+            )
+            raise KeyboardInterrupt
+
+        CONTEXTS[context_name] = custom_context_text
+
+        self.loaded["name"] = context_name
+        self.loaded["messages"] = [{"role": "system", "content": custom_context_text}]
+        self._reset_session()
+        self.greet(new=True)
+
+        self._sys_print(
+            Markdown(f"**INFO**: Custom context `{context_name}` added and activated.")
+        )
+        raise KeyboardInterrupt
+
     def start_prompt(
         self,
         logger,  # pylint: disable=redefined-outer-name
@@ -395,6 +433,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             "/s": self._handle_save_session,
             "/l": self._handle_load_session,
             "/lc": self._handle_list_contexts,
+            "/sc": self._handle_set_custom_context,
         }
 
         if content is None:
