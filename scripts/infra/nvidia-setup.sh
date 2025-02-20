@@ -47,12 +47,16 @@ FILEEOF
 
 rm -rf yum-packaging-precompiled-kmod
 dnf install libicu podman skopeo git rpm-build make openssl elfutils-libelf-devel python3.11 python3.11-devel -y
-if [ "${KERNEL_VERSION}" == "" ]; then \
-      RELEASE=$(dnf info --installed kernel-core | sort | awk -F: '/^Release/{print $2}' | tr -d '[:blank:]' | tail -n 1) \
-      && VERSION=$(dnf info --installed kernel-core | sort | awk -F: '/^Version/{print $2}' | tr -d '[:blank:]' | tail -n 1) \
-      && export KERNEL_VERSION="${VERSION}-${RELEASE}" ;\
-fi \
-    && dnf install -y "kernel-devel-${KERNEL_VERSION}" \
+if [ "${KERNEL_VERSION}" == "" ]; then
+      KERNELS=$(rpm -q --qf="%{BUILDTIME} %{VERSION}-%{RELEASE}\n" kernel-core | sort -n)
+      KERNEL_COUNT=$(echo "${KERNELS}" | wc -l)
+      LATEST_KERNEL=$(echo "${KERNELS}" | tail -1)
+      export KERNEL_VERSION=${LATEST_KERNEL#* }
+      if [[ "$KERNEL_COUNT" -gt 1 ]]; then
+        echo Multiple kernels found, building for latest ${KERNEL_VERSION}.
+      fi
+fi
+dnf install -y "kernel-devel-${KERNEL_VERSION}" \
     && if [ "${OS_VERSION_MAJOR}" == "" ]; then \
         . /etc/os-release \
 	&& export OS_ID="$(echo ${ID})" \
@@ -167,3 +171,14 @@ fi \
     && ln -f -s /usr/lib/systemd/system/nvidia-persistenced.service /etc/systemd/system/multi-user.target.wants/nvidia-persistenced.service
     systemctl daemon-reload
     systemctl enable --now nvidia-toolkit-setup.service
+
+# Ensure the next kernel that we boot will match the driver we installed.
+EXPECTED_VMLINUZ=/boot/vmlinuz-${KERNEL_VERSION}.$(uname -m)
+grubby --set-default=$EXPECTED_VMLINUZ
+
+# If the driver does not match our installed kernel, warn the user to reboot.
+RUNNING_KERNEL=$(uname -r | sed 's/\.[a-z0-9_-]*$//')
+if [[ "$RUNNING_KERNEL" != "$KERNEL_VERSION" ]]; then
+    # The running kernel does not match the nvidia driver we installed above.
+    echo "You are running kernel $RUNNING_KERNEL. Reboot into kernel $KERNEL_VERSION."
+fi
