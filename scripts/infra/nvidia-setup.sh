@@ -12,6 +12,9 @@ if [[ $(id -u) != "0" ]]; then
 fi
 set -x
 
+dnf config-manager --save \
+  --setopt=skip_missing_names_on_install=False \
+  --setopt=install_weak_deps=False
 
 cat <<FILEEOF > x509-configuration.ini
 [ req ]
@@ -115,7 +118,6 @@ dnf install -y "kernel-devel-${KERNEL_VERSION}" \
         CUDA_REPO_ARCH=${TARGET_ARCH} \
     && if [ "${TARGET_ARCH}" == "aarch64" ]; then CUDA_REPO_ARCH="sbsa"; fi \
     && cp -a /etc/dnf/dnf.conf{,.tmp} && mv /etc/dnf/dnf.conf{.tmp,} \
-    && dnf config-manager --best --nodocs --setopt=install_weak_deps=False --save \
     && dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel${OS_VERSION_MAJOR}/${CUDA_REPO_ARCH}/cuda-rhel${OS_VERSION_MAJOR}.repo \
     && dnf -y module enable nvidia-driver:${DRIVER_STREAM}-open/default \
     && export NCCL_PACKAGE=$(dnf search libnccl --showduplicates 2>/dev/null | grep ${CUDA_MAJOR_MINOR} | awk '{print $1}' | grep libnccl-2 | tail -1) \
