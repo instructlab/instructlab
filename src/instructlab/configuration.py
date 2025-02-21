@@ -1538,6 +1538,16 @@ def map_train_to_library(ctx, params):
     train_args = TrainingArgs(**params)
     torch_args = TorchrunArgs(**params)
 
+    # let's handle the case when `--model-id` was provided
+    if params["model_id"]:
+        try:
+            model_cfg = resolve_model_id(params["model_id"], ctx.obj.config.models)
+        except ValueError as ve:
+            click.secho(f"failed to get model with `--model-id`: {ve}", fg="red")
+            raise click.exceptions.Exit(1)
+        else:
+            params["model_path"] = model_cfg.path
+
     ds_args = DeepSpeedOptions(
         cpu_offload_optimizer=params["deepspeed_cpu_offload_optimizer"],
         cpu_offload_optimizer_ratio=params["deepspeed_cpu_offload_optimizer_ratio"],

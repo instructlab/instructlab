@@ -10,6 +10,7 @@ import pathlib
 import sys
 import time
 import traceback
+from typing import List
 
 # Third Party
 from openai import OpenAI
@@ -38,6 +39,7 @@ from ..rag.document_store import DocumentStoreRetriever
 from ..rag.document_store_factory import create_document_retriever
 from ..utils import get_cli_helper_sysprompt, get_model_arch, get_sysprompt
 from .backends import backends
+from .backends.common import CHAT_TEMPLATE_TOKENIZER
 
 logger = logging.getLogger(__name__)
 
@@ -492,9 +494,9 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                     logger.debug(f"InternalServerError: {e}")
                     self.info["messages"].clear()
                     raise KeyboardInterrupt from e
-                assert (
-                    next(response).choices[0].delta.role == "assistant"
-                ), 'first response should be {"role": "assistant"}'
+                assert next(response).choices[0].delta.role == "assistant", (
+                    'first response should be {"role": "assistant"}'
+                )
                 break
         except openai.AuthenticationError as e:
             self.console.print(
@@ -567,6 +569,7 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
 def chat_model(
     question,
     model,
+    model_id: str | None,
     context,
     session,
     quick_question,
@@ -602,6 +605,7 @@ def chat_model(
     logs_dir,
     vi_mode,
     visible_overflow,
+    models: List[cfg._model_config],
 ):
     """Runs a chat using the modified model"""
     if rag_enabled and not FeatureGating.feature_available(GatedFeatures.RAG):
@@ -609,6 +613,21 @@ def chat_model(
             f'This functionality is experimental; run "export {FeatureGating.env_var_name}={FeatureScopes.DevPreviewNoUpgrade.value}" command to enable.'
         )
         return
+
+    # set these variables here so we can override them if `--model-id` was provided
+    if model_id:
+        # try to load the model from the list
+        try:
+            model_cfg = cfg.resolve_model_id(model_id, models)
+        except ValueError as ve:
+            logger.error(f"failed to load model from ID: {ve}")
+            raise
+        else:
+            model = model_cfg.path
+
+            # if loading a specific model from the list, we should only be loading from the tokenizer config
+            chat_template = CHAT_TEMPLATE_TOKENIZER
+            model_family = ""
 
     # pylint: disable=import-outside-toplevel
     # First Party

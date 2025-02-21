@@ -87,6 +87,7 @@ def clickpath_setup(is_dir: bool) -> click.Path:
     required=True,  # default from config
     default=DEFAULTS.MODEL_REPO,
 )
+@click.option("--model-id", type=click.STRING, required=False, default=None)
 @click.option(
     "--iters",
     help="Number of iterations to train LoRA.",
@@ -399,6 +400,7 @@ def train(
     tokenizer_dir,
     gguf_model_path,
     model_path,
+    model_id,
     iters,
     local,
     skip_quantize,
@@ -454,6 +456,15 @@ def train(
             ctx.fail(
                 f"Data path must be to a valid .jsonl file. Value given: {data_path}"
             )
+
+    # for simplicity, we only enable the `--model-id` path to training jobs
+    # which are based on the instructlab/training repo
+    if model_id and pipeline not in ("full", "accelerated"):
+        ctx.fail(
+            f"'--model-id' is not supported for the '{pipeline}' pipeline. "
+            "Please run using either the 'accelerated' or 'full' pipelines."
+        )
+
     # we can use train_args locally to run lower fidelity training
     if is_high_fidelity(device=device) and pipeline == "accelerated":
         train_args, torch_args = map_train_to_library(ctx, ctx.params)
