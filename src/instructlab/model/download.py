@@ -13,7 +13,7 @@ import subprocess
 from huggingface_hub import hf_hub_download, list_repo_files
 from huggingface_hub import logging as hf_logging
 from huggingface_hub import snapshot_download
-from huggingface_hub.errors import GatedRepoError
+from huggingface_hub.errors import GatedRepoError, RepositoryNotFoundError
 
 # First Party
 from instructlab.configuration import DEFAULTS
@@ -27,6 +27,10 @@ from instructlab.utils import (
 )
 
 logger = logging.getLogger(__name__)
+
+HF_TOKEN_MESSAGE = """The HF_TOKEN environment variable needs to be set in your environment to download this Hugging Face Model.
+Alternatively, the token can be passed with --hf-token flag or set it in ~/.cache/huggingface/token.
+The Hugging Face token is used to authenticate your identity to the Hugging Face Hub."""
 
 
 class ModelDownloader(abc.ABC):
@@ -47,6 +51,10 @@ class ModelDownloader(abc.ABC):
     @abc.abstractmethod
     def download(self) -> None:
         """Downloads model from specified repo/release and stores it into download_dest"""
+
+
+class DownloaderAuthError(Exception):
+    """Raised when authentication fails during the download process"""
 
 
 class HFDownloader(ModelDownloader):
@@ -87,12 +95,14 @@ class HFDownloader(ModelDownloader):
             else:
                 self.download_gguf()
 
-        except GatedRepoError as exc:
-            raise ValueError(
-                """The HF_TOKEN environment variable needs to be set in your environment to download this Hugging Face Model.
-                Alternatively, the token can be passed with --hf-token flag.
-                The Hugging Face token is used to authenticate your identity to the Hugging Face Hub."""
-            ) from exc
+        except (GatedRepoError, RepositoryNotFoundError) as exc:
+            raise DownloaderAuthError(HF_TOKEN_MESSAGE) from exc
+        except RuntimeError as exc:
+            if isinstance(
+                exc, RuntimeError
+            ) and "Cannot access gated repo for url https://huggingface.co" in str(exc):
+                raise DownloaderAuthError(HF_TOKEN_MESSAGE) from exc
+            raise RuntimeError from exc
         except Exception as exc:
             raise RuntimeError(
                 f"\nDownloading model failed with the following Hugging Face Hub error:\n{DEFAULT_INDENT}{exc}"
@@ -289,15 +299,14 @@ def download_models(
                 f"\nᕦ(òᴗóˇ)ᕤ {downloader.repository} model download completed successfully! ᕦ(òᴗóˇ)ᕤ\n"
             )
         # pylint: disable=broad-exception-caught
-        except (ValueError, Exception) as exc:
-            if isinstance(exc, ValueError) and "HF_TOKEN" in str(exc):
-                logger.warning(
-                    f"\n{downloader.repository} requires a HF Token to be set.\nPlease use '--hf-token' or 'export HF_TOKEN' to download all necessary models."
-                )
-            else:
-                raise ValueError(
-                    f"\nDownloading model failed with the following error: {exc}"
-                ) from exc
+        except DownloaderAuthError as auth_exc:
+            logger.warning(
+                f"Authentication issue while downloading {downloader.repository}: {auth_exc}"
+            )
+        except Exception as exc:
+            raise ValueError(
+                f"\nDownloading model failed with the following error: {exc}"
+            ) from exc
 
     logger.info("Available models (`ilab model list`):")
     list_and_print_models([Path(model_dir)], False)
