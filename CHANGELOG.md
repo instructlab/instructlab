@@ -1,3 +1,9 @@
+## v0.25
+
+### Features
+
+- Update vLLM to version 0.7.3.
+
 ## v0.24
 
 ### Breaking Changes
