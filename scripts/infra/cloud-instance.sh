@@ -48,7 +48,7 @@ ec2__launch() {
         exit 1
     else
         local i=1
-        echo "Waiting for instance to be in the 'running' state..."
+        echo "Waiting for instance ${INSTANCE_NAME} (${instance_id}) to be in the 'running' state..."
         while [[ $i -lt $MAX_ITERS ]]; do
             local state
             state="$(aws ec2 describe-instances \
@@ -60,13 +60,13 @@ ec2__launch() {
                 sleep 5
                 ((i++))
             else
-                echo "Instance named ${INSTANCE_NAME}(${instance_id}) is now running"
+                echo "Instance named ${INSTANCE_NAME} (${instance_id}) is now running"
                 break
             fi
         done
 
         if [ $i -eq $MAX_ITERS ]; then
-            echo "Gave up waiting for instance named ${INSTANCE_NAME}(${instance_id}) to start running"
+            echo "Gave up waiting for instance named ${INSTANCE_NAME} (${instance_id}) to start running"
         fi
     fi
 
