@@ -34,7 +34,7 @@ ec2__launch() {
         echo "Failed to launch instance"
         exit 1
     else
-        local i=0
+        local i=1
         echo "Waiting for instance to be in the 'running' state..."
         while [[ $i -lt $MAX_ITERS ]]; do
             local state
