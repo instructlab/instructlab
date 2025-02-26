@@ -88,6 +88,7 @@ def simple_train(
 
     if utils.is_macos_with_m_chip():
         # Local
+        from ..llamacpp.convert_to_gguf import convert_model_to_gguf
         from ..mlx_explore.gguf_convert_to_mlx import load
         from ..mlx_explore.utils import fetch_tokenizer_from_hub
         from ..train.lora_mlx.convert import convert_between_mlx_and_pytorch
@@ -156,9 +157,19 @@ def simple_train(
             save_every=10,
             steps_per_eval=10,
         )
+
+        source_model_dir = dest_model_dir
+        model_dir_fused = f"{source_model_dir}-fused"
+        convert_after_training(
+            source_model_dir=source_model_dir,
+            model_dir_fused=model_dir_fused,
+            adapter_file_path=adapter_file_path,
+            model_dir_local=model_dir_local,
+        )
+
     else:
         # Local
-        from ..llamacpp.llamacpp_convert_to_gguf import convert_llama_to_gguf
+        from ..llamacpp.convert_to_gguf import convert_model_to_gguf
         from ..train.linux_train import linux_train
 
         training_results_dir = linux_train(
@@ -175,10 +186,7 @@ def simple_train(
             shutil.rmtree(final_results_dir)
         final_results_dir.mkdir()
 
-        gguf_models_dir = Path(DEFAULTS.CHECKPOINTS_DIR)
-        gguf_models_dir.mkdir(exist_ok=True)
-        gguf_models_file = gguf_models_dir / "ggml-model-f16.gguf"
-
+        gguf_models_file = final_results_dir / "ggml-model-f16.gguf"
         # Remove previously trained model, its taking up space we may need in the next step
         gguf_models_file.unlink(missing_ok=True)
 
@@ -208,7 +216,10 @@ def simple_train(
             )
             return
 
-        gguf_file_path = convert_llama_to_gguf(model=final_results_dir, pad_vocab=True)
+        gguf_file_path = convert_model_to_gguf(model=final_results_dir)
+
+        shutil.move(gguf_file_path, gguf_models_file)
+        logger.info(f"Save trained model to {gguf_models_file}")
 
         # Remove safetensors files to save space, were done with them here
         # and the huggingface lib has them cached
@@ -217,3 +228,52 @@ def simple_train(
 
         shutil.move(gguf_file_path, gguf_models_file)
         logger.info(f"Save trained model to {gguf_models_file}")
+
+
+def convert_after_training(
+    source_model_dir, model_dir_fused, adapter_file_path, model_dir_local
+):
+    """
+    convert_after_training is a utility used by simple training to convert a model to GGUF after training
+
+    Args:
+        source_model_dir: str
+        model_dir_fused: str
+        adapter_file_path: str
+        model_dir_local: str
+    """
+    # Local
+    from ..llamacpp.convert_to_gguf import convert_model_to_gguf
+    from ..train.lora_mlx.convert import convert_between_mlx_and_pytorch
+    from ..train.lora_mlx.fuse import fine_tune
+
+    fine_tune(
+        model=source_model_dir,
+        save_path=model_dir_fused,
+        adapter_file=adapter_file_path,
+        de_quantize=True,
+    )
+
+    model_dir_fused_pt = f"{source_model_dir}-trained"
+    # this converts MLX to PyTorch
+    convert_between_mlx_and_pytorch(
+        hf_path=model_dir_fused, mlx_path=model_dir_fused_pt, local=True, to_pt=True
+    )
+
+    gguf_file_path = convert_model_to_gguf(model=Path(model_dir_fused_pt))
+
+    gguf_models_file = Path(f"{model_dir_local}.gguf")
+    # Remove previously trained model, its taking up space we may need in the next step
+    gguf_models_file.unlink(missing_ok=True)
+
+    shutil.move(gguf_file_path, gguf_models_file)
+    logger.info(f"Save trained model to {gguf_models_file}")
+
+    shutil.rmtree(model_dir_fused_pt, ignore_errors=True)
+    logger.info(f"Removed {model_dir_fused_pt}")
+
+    shutil.rmtree(model_dir_fused, ignore_errors=True)
+    logger.info(f"Removed {model_dir_fused}")
+
+    shutil.rmtree(source_model_dir, ignore_errors=True)
+    logger.info(f"Removed {source_model_dir}")
