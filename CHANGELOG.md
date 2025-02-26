@@ -15,6 +15,7 @@
 - Use vLLM wheel from PyPI for NVIDIA CUDA to speed up installation of InstructLab.
 - `ilab model chat` now has `--no-decoration` option to display chat responses without decoration.
 - A new command `ilab model remove` has been introduced so users can now remove the model via `ilab` CLI.
+- `ilab process list` now has `--state` to filter different states.
 
 ## v0.23
 
