@@ -53,6 +53,8 @@ generate:
   model: ~/.cache/instructlab/models/mistralai/Mixtral-8x7B-Instruct-v0.1
   # Number of CPU cores to use for generation
   num_cpus: 10
+  # Number of batches to send on each core
+  batch_size: 8
   # Directory where generated datasets are stored
   output_dir: ~/.local/share/instructlab/datasets
   # Directory where pipeline config files are stored
