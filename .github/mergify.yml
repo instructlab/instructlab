@@ -169,6 +169,7 @@ pull_request_rules:
       - files=.github/mergify.yml
       - files~=^\.github/(actions|workflows)/
       - files=scripts/ruff.sh
+      - files=scripts/infra/
       - files=.pre-commit-config.yaml
       - files=.pylintrc
       - files~=^\.spellcheck[^/]+$
