@@ -48,8 +48,8 @@ FILEEOF
 rm -rf yum-packaging-precompiled-kmod
 dnf install libicu podman skopeo git rpm-build make openssl elfutils-libelf-devel python3.11 python3.11-devel -y
 if [ "${KERNEL_VERSION}" == "" ]; then \
-      RELEASE=$(dnf info --installed kernel-core | awk -F: '/^Release/{print $2}' | tr -d '[:blank:]') \
-      && VERSION=$(dnf info --installed kernel-core | awk -F: '/^Version/{print $2}' | tr -d '[:blank:]') \
+      RELEASE=$(dnf info --installed kernel-core | sort | awk -F: '/^Release/{print $2}' | tr -d '[:blank:]' | tail -n 1) \
+      && VERSION=$(dnf info --installed kernel-core | sort | awk -F: '/^Version/{print $2}' | tr -d '[:blank:]' | tail -n 1) \
       && export KERNEL_VERSION="${VERSION}-${RELEASE}" ;\
 fi \
     && dnf install -y "kernel-devel-${KERNEL_VERSION}" \
