@@ -121,7 +121,7 @@ fi \
         tmux \
         nvidia-driver-cuda-${DRIVER_VERSION} \
         nvidia-driver-libs-${DRIVER_VERSION} \
-        nvidia-driver-NVML-${DRIVER_VERSION} \
+        libnvidia-ml-${DRIVER_VERSION} \
         cuda-compat-${CUDA_DASHED_VERSION} \
         cuda-cudart-${CUDA_DASHED_VERSION} \
         cuda-cudart-devel-${CUDA_DASHED_VERSION} \
