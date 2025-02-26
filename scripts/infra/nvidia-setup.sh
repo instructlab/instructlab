@@ -113,7 +113,7 @@ fi \
     && cp -a /etc/dnf/dnf.conf{,.tmp} && mv /etc/dnf/dnf.conf{.tmp,} \
     && dnf config-manager --best --nodocs --setopt=install_weak_deps=False --save \
     && dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel${OS_VERSION_MAJOR}/${CUDA_REPO_ARCH}/cuda-rhel${OS_VERSION_MAJOR}.repo \
-    && dnf -y module enable nvidia-driver:${DRIVER_STREAM}/default \
+    && dnf -y module enable nvidia-driver:${DRIVER_STREAM}-open/default \
     && export NCCL_PACKAGE=$(dnf search libnccl --showduplicates 2>/dev/null | grep ${CUDA_MAJOR_MINOR} | awk '{print $1}' | grep libnccl-2 | tail -1) \
     && dnf install -y \
         cloud-init \
@@ -154,7 +154,7 @@ fi \
     && if [ "$DRIVER_TYPE" != "vgpu" ] && [ "$TARGET_ARCH" != "arm64" ]; then \
         versionArray=(${DRIVER_VERSION//./ }); \
         DRIVER_BRANCH=${versionArray[0]}; \
-        dnf module enable -y nvidia-driver:${DRIVER_BRANCH} && \
+        dnf module enable -y nvidia-driver:${DRIVER_BRANCH}-open && \
         dnf install -y nvidia-fabric-manager-${DRIVER_VERSION} libnvidia-nscq-${DRIVER_BRANCH}-${DRIVER_VERSION} ; \
     fi \
     && . /etc/os-release && if [ "${ID}" == "rhel" ]; then \
