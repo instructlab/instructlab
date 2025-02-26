@@ -271,6 +271,13 @@ class ConfigOption(click.Option):
             return value
         return None
 
+    def type_cast_value(self, ctx: click.Context, value: typing.Any) -> typing.Any:
+        value = super().type_cast_value(ctx, value)
+        # TODO: find a better way to determine the option should be casted
+        if self.name == "lora_target_modules" and isinstance(value, tuple):
+            return list(value)
+        return value
+
 
 def _get_param_info(
     ctx: click.Context, **kwargs: dict
