@@ -70,9 +70,9 @@ def is_arm_mac():
     return sys.platform == "darwin" and platform.machine() == "arm64"
 
 
-def mock_convert_llama_to_gguf(model, pad_vocab):
+def mock_convert_llama_to_gguf(model):
     with open(LINUX_GGUF_FILE, "w", encoding="utf-8") as fp:
-        fp.write(str(model) + str(pad_vocab))
+        fp.write(str(model))
     return LINUX_GGUF_FILE
 
 
@@ -126,10 +126,12 @@ class TestLabTrain:
     @patch("instructlab.mlx_explore.gguf_convert_to_mlx.load")
     @patch("instructlab.train.lora_mlx.make_data.make_data")
     @patch("instructlab.train.lora_mlx.convert.convert_between_mlx_and_pytorch")
+    @patch("instructlab.model.simple_train.convert_after_training")
     @patch("instructlab.train.lora_mlx.lora.load_and_train")
     def test_train_mac(
         self,
         load_and_train_mock,
+        convert_mock,  # pylint: disable=unused-argument
         convert_between_mlx_and_pytorch_mock,
         make_data_mock,
         load_mock,
@@ -175,10 +177,12 @@ class TestLabTrain:
     @patch("instructlab.mlx_explore.gguf_convert_to_mlx.load")
     @patch("instructlab.train.lora_mlx.make_data.make_data")
     @patch("instructlab.train.lora_mlx.convert.convert_between_mlx_and_pytorch")
+    @patch("instructlab.model.simple_train.convert_after_training")
     @patch("instructlab.train.lora_mlx.lora.load_and_train")
     def test_skip_quantize(
         self,
         load_and_train_mock,
+        convert_mock,  # pylint: disable=unused-argument
         convert_between_mlx_and_pytorch_mock,
         make_data_mock,
         load_mock,
@@ -300,10 +304,12 @@ class TestLabTrain:
     @patch("instructlab.mlx_explore.gguf_convert_to_mlx.load")
     @patch("instructlab.train.lora_mlx.make_data.make_data")
     @patch("instructlab.train.lora_mlx.convert.convert_between_mlx_and_pytorch")
+    @patch("instructlab.model.simple_train.convert_after_training")
     @patch("instructlab.train.lora_mlx.lora.load_and_train")
     def test_skip_preprocessing(
         self,
         load_and_train_mock,
+        convert_mock,  # pylint: disable=unused-argument
         convert_between_mlx_and_pytorch_mock,
         make_data_mock,
         load_mock,
@@ -336,10 +342,12 @@ class TestLabTrain:
     @patch("instructlab.mlx_explore.gguf_convert_to_mlx.load")
     @patch("instructlab.train.lora_mlx.make_data.make_data")
     @patch("instructlab.train.lora_mlx.convert.convert_between_mlx_and_pytorch")
+    @patch("instructlab.model.simple_train.convert_after_training")
     @patch("instructlab.train.lora_mlx.lora.load_and_train")
     def test_load(
         self,
         load_and_train_mock,
+        convert_mock,  # pylint: disable=unused-argument
         convert_between_mlx_and_pytorch_mock,
         make_data_mock,
         load_mock,
@@ -383,10 +391,12 @@ class TestLabTrain:
     @patch("instructlab.mlx_explore.gguf_convert_to_mlx.load")
     @patch("instructlab.train.lora_mlx.make_data.make_data")
     @patch("instructlab.train.lora_mlx.convert.convert_between_mlx_and_pytorch")
+    @patch("instructlab.model.simple_train.convert_after_training")
     @patch("instructlab.train.lora_mlx.lora.load_and_train")
     def test_load_local(
         self,
         load_and_train_mock,
+        convert_mock,  # pylint: disable=unused-argument
         convert_between_mlx_and_pytorch_mock,
         make_data_mock,
         load_mock,
@@ -415,7 +425,6 @@ class TestLabTrain:
                 "--local",
             ],
         )
-        print(result.output)
         assert result.exit_code == 0
         load_mock.assert_called_once()
         load_and_train_mock.assert_called_once()
@@ -427,7 +436,7 @@ class TestLabTrain:
     @patch("instructlab.utils.is_macos_with_m_chip", return_value=False)
     @patch.object(linux_train, "linux_train", return_value=Path("training_results"))
     @patch(
-        "instructlab.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf",
+        "instructlab.llamacpp.convert_to_gguf.convert_model_to_gguf",
         side_effect=mock_convert_llama_to_gguf,
     )
     def test_train_linux(
@@ -456,8 +465,7 @@ class TestLabTrain:
         assert convert_llama_to_gguf_mock.call_args[1]["model"] == Path(
             "training_results/final"
         )
-        assert convert_llama_to_gguf_mock.call_args[1]["pad_vocab"] is True
-        assert len(convert_llama_to_gguf_mock.call_args[1]) == 2
+        assert len(convert_llama_to_gguf_mock.call_args[1]) == 1
         linux_train_mock.assert_called_once()
         print(linux_train_mock.call_args[1])
         assert linux_train_mock.call_args[1]["train_file"] == Path(
@@ -471,12 +479,12 @@ class TestLabTrain:
         assert not linux_train_mock.call_args[1]["four_bit_quant"]
         assert len(linux_train_mock.call_args[1]) == 6
         is_macos_with_m_chip_mock.assert_called_once()
-        assert not os.path.isfile(LINUX_GGUF_FILE)
+        assert os.path.isfile(LINUX_GGUF_FILE)
 
     @patch("instructlab.utils.is_macos_with_m_chip", return_value=False)
     @patch.object(linux_train, "linux_train", return_value=Path("training_results"))
     @patch(
-        "instructlab.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf",
+        "instructlab.llamacpp.convert_to_gguf.convert_model_to_gguf",
         side_effect=mock_convert_llama_to_gguf,
     )
     def test_double_train_linux(
@@ -528,8 +536,7 @@ class TestLabTrain:
             assert convert_llama_to_gguf_mock.call_args[1]["model"] == Path(
                 "training_results/final"
             )
-            assert convert_llama_to_gguf_mock.call_args[1]["pad_vocab"] is True
-            assert len(convert_llama_to_gguf_mock.call_args[1]) == 2
+            assert len(convert_llama_to_gguf_mock.call_args[1]) == 1
             linux_train_mock.assert_called_once()
             print(linux_train_mock.call_args[1])
             assert linux_train_mock.call_args[1]["train_file"] == Path(
@@ -543,7 +550,7 @@ class TestLabTrain:
             assert not linux_train_mock.call_args[1]["four_bit_quant"]
             assert len(linux_train_mock.call_args[1]) == 6
             is_macos_with_m_chip_mock.assert_called_once()
-            assert not os.path.isfile(LINUX_GGUF_FILE)
+            assert os.path.isfile(LINUX_GGUF_FILE)
 
             assert "train_gen.jsonl" in os.listdir(DEFAULTS.DATASETS_DIR)
             assert "test_gen.jsonl" in os.listdir(DEFAULTS.DATASETS_DIR)
@@ -567,8 +574,7 @@ class TestLabTrain:
             assert convert_llama_to_gguf_mock.call_args[1]["model"] == Path(
                 "training_results/final"
             )
-            assert convert_llama_to_gguf_mock.call_args[1]["pad_vocab"] is True
-            assert len(convert_llama_to_gguf_mock.call_args[1]) == 2
+            assert len(convert_llama_to_gguf_mock.call_args[1]) == 1
             print(linux_train_mock.call_args[1])
             assert linux_train_mock.call_args[1]["train_file"] == Path(
                 os.path.join(DEFAULTS.DATASETS_DIR, "train_gen.jsonl")
@@ -580,7 +586,7 @@ class TestLabTrain:
             assert linux_train_mock.call_args[1]["train_device"] is not None
             assert not linux_train_mock.call_args[1]["four_bit_quant"]
             assert len(linux_train_mock.call_args[1]) == 6
-            assert not os.path.isfile(LINUX_GGUF_FILE)
+            assert os.path.isfile(LINUX_GGUF_FILE)
 
     @patch("instructlab.utils.is_macos_with_m_chip", return_value=False)
     @patch(
@@ -588,7 +594,7 @@ class TestLabTrain:
         return_value=Path("training_results"),
     )
     @patch(
-        "instructlab.llamacpp.llamacpp_convert_to_gguf.convert_llama_to_gguf",
+        "instructlab.llamacpp.convert_to_gguf.convert_model_to_gguf",
         side_effect=mock_convert_llama_to_gguf,
     )
     def test_num_epochs(
@@ -619,7 +625,7 @@ class TestLabTrain:
         linux_train_mock.assert_called_once()
         assert linux_train_mock.call_args[1]["num_epochs"] == 2
         is_macos_with_m_chip_mock.assert_called_once()
-        assert not os.path.isfile(LINUX_GGUF_FILE)
+        assert os.path.isfile(LINUX_GGUF_FILE)
 
         # Test with invalid num_epochs
         result = cli_runner.invoke(
