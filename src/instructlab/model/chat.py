@@ -68,7 +68,7 @@ Press Alt (or Meta) and Enter or Esc Enter to end multiline input.
 
 CONTEXTS = {
     "default": get_sysprompt,
-    "cli_helper": get_cli_helper_sysprompt,
+    "cli_helper": lambda _: get_cli_helper_sysprompt(),
 }
 
 PROMPT_HISTORY_FILEPATH = os.path.expanduser("~/.local/chat-cli.history")
@@ -237,7 +237,9 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
             raise KeyboardInterrupt
         self.loaded["name"] = context
 
-        sys_prompt = CONTEXTS.get(context, "default")(get_model_arch(self.model))
+        sys_prompt = CONTEXTS.get(context, "default")(
+            get_model_arch(pathlib.Path(self.model))
+        )
         self.loaded["messages"] = [{"role": "system", "content": sys_prompt}]
         self._reset_session()
         self.greet(new=True)
