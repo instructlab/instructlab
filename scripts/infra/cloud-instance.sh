@@ -15,20 +15,30 @@ else
 fi
 
 ec2__launch() {
-    local instance_id
-    instance_id="$(aws ec2 run-instances \
-        --image-id "$EC2_AMI_ID" \
-        --region "$EC2_REGION" \
-        --instance-type "${INSTANCE_TYPE:-$EC2_INSTANCE_TYPE}" \
-        --security-group-ids "$EC2_SECURITY_GROUP_ID" \
-        --subnet-id "$EC2_SUBNET_ID" \
-        --key-name "$EC2_KEY_NAME" \
-        --block-device-mappings '{"DeviceName": "/dev/sda1","Ebs": {"VolumeSize": 800}}' \
-        --associate-public-ip-address \
-        --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME}]" \
-        "ResourceType=volume,Tags=[{Key=Name,Value=$INSTANCE_NAME}]" \
-        --query 'Instances[0].InstanceId' \
-        --output text)" &> /dev/null
+    if [ -z ${EC2_SUBNET_VARS+x} ]; then
+        EC2_SUBNET_VARS=("EC2_SUBNET_ID")
+    fi
+
+    for subnet_var in "${EC2_SUBNET_VARS[@]}"; do
+        subnet="${!subnet_var}"
+        echo "Attempting to launch an instance of type $EC2_INSTANCE_TYPE in subnet $subnet named $INSTANCE_NAME"
+        local instance_id
+        if instance_id="$(aws ec2 run-instances \
+            --image-id "$EC2_AMI_ID" \
+            --region "$EC2_REGION" \
+            --instance-type "${INSTANCE_TYPE:-$EC2_INSTANCE_TYPE}" \
+            --security-group-ids "$EC2_SECURITY_GROUP_ID" \
+            --subnet-id "$subnet" \
+            --key-name "$EC2_KEY_NAME" \
+            --block-device-mappings '{"DeviceName": "/dev/sda1","Ebs": {"VolumeSize": 800}}' \
+            --associate-public-ip-address \
+            --tag-specifications "ResourceType=instance,Tags=[{Key=Name,Value=$INSTANCE_NAME}]" \
+            "ResourceType=volume,Tags=[{Key=Name,Value=$INSTANCE_NAME}]" \
+            --query 'Instances[0].InstanceId' \
+            --output text)" &> /dev/null; then
+            break
+        fi
+    done
 
     if [ -z "$instance_id" ]; then
         echo "Failed to launch instance"
