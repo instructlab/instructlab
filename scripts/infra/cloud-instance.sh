@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 COMMON_OPTS="hn:"
-ALL_OPTS="${COMMON_OPTS}fcl:t:"
+ALL_OPTS="${COMMON_OPTS}fcl:t:i:"
 MAX_ITERS=12
 INSTRUCTLAB_CLOUD_CONFIG=${INSTRUCTLAB_CLOUD_CONFIG:-$HOME/.instructlab/cloud-config}
 
@@ -109,7 +109,7 @@ ec2_calculate_instance_id() {
         exit 1
     fi
     if [[ "$INSTANCE_ID" == *$'\n'* ]]; then
-        printf "Multiple instances found for '%s':\n\n%s\n\nHint: You can pick one by setting INSTANCE_ID= envvar.\n" "$INSTANCE_NAME" "$INSTANCE_ID"
+        printf "Multiple instances found for '%s':\n\n%s\n\nHint: You can pick one with -i option.\n" "$INSTANCE_NAME" "$INSTANCE_ID"
         exit 1
     fi
 }
@@ -444,6 +444,8 @@ handle_opt() {
         ;;
         n)  INSTANCE_NAME=$2
         ;;
+        i)  INSTANCE_ID=$2
+        ;;
         l)  LIBRARY=$2
         ;;
         c)  TEMP_COMMIT=true
@@ -481,6 +483,8 @@ Commands
     terminate - Terminate the instance
         -n
             Name of the instance to terminate (default provided in config)
+        -i
+            Instance ID of the instance to terminate
 
     list - List instances with the applicable name
         -n
@@ -489,46 +493,68 @@ Commands
     details - Get details of the instance
         -n
             Name of the instance to get details of (default provided in config)
+        -i
+            Instance ID of the instance to get details of
 
     stop - Stop the instance
         -n
             Name of the instance to stop (default provided in config)
+        -i
+            Instance ID of the instance to stop
 
     start - Start the instance
         -n
             Name of the instance to start (default provided in config)
+        -i
+            Instance ID of the instance to start
 
-    ssh - Ssh to the instance or run a remote command through ssh
+    ssh - ssh to the instance or run a remote command through ssh
         -n
             Name of the instance to ssh to (default provided in config)
+        -i
+            Instance ID of the instance to ssh to
 
     setup-rh-devenv - Initialize a development environment on the instance
         -n
             Name of the instance to setup (default provided in config)
+        -i
+            Instance ID of the instance to setup
 
     setup-instructlab-library-devenvs - Initialize development environments for the InstructLab libraries (sdg, training, eval)
         -n
             Name of the instance to setup (default provided in config)
+        -i
+            Instance ID of the instance to setup
 
     pip-install-with-nvidia - pip install with nvidia cuda
         -n
             Name of the instance to pip install (default provided in config)
+        -i
+            Instance ID of the instance to pip install
 
     pip-install-with-amd - pip install with AMD ROCm
         -n
             Name of the instance to pip install (default provided in config)
+        -i
+            Instance ID of the instance to pip install
 
     install-rh-nvidia-drivers - Install nvidia drivers
         -n
             Name of the instance to install nvidia drivers (default provided in config)
+        -i
+            Instance ID of the instance to install nvidia drivers
 
     update-rh-nvidia-drivers - Update and (re)install nvidia drivers (reboot required)
         -n
             Name of the instance to install nvidia drivers (default provided in config)
+        -i
+            Instance ID of the instance to install nvidia drivers
 
     sync - Sync your local repo to the instance
         -n
             Name of the instance to sync to (default provided in config)
+        -i
+            Instance ID of the instance to sync to
         -c
             Push uncommitted changes to the remote instance with a temporary commit
         -f
@@ -537,6 +563,8 @@ Commands
     sync-library - Sync your local library repo to the instance
         -n
             Name of the instance to sync to (default provided in config)
+        -i
+            Instance ID of the instance to sync to
         -c
             Push uncommitted changes to the remote instance with a temporary commit
         -l
@@ -547,6 +575,8 @@ Commands
     update-ssh-config - Update the HostIpAddress in ~/.ssh/config
         -n
             Name of the instance to update the HostIpAddress for (default provided in config)
+        -i
+            Instance ID of the instance to update the HostIpAddress for
 "
 }
 
