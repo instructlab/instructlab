@@ -48,8 +48,8 @@ FILEEOF
 rm -rf yum-packaging-precompiled-kmod
 dnf install libicu podman skopeo git rpm-build make openssl elfutils-libelf-devel python3.11 python3.11-devel -y
 if [ "${KERNEL_VERSION}" == "" ]; then \
-      RELEASE=$(dnf info --installed kernel-core | awk -F: '/^Release/{print $2}' | tr -d '[:blank:]') \
-      && VERSION=$(dnf info --installed kernel-core | awk -F: '/^Version/{print $2}' | tr -d '[:blank:]') \
+      RELEASE=$(dnf info --installed kernel-core | sort | awk -F: '/^Release/{print $2}' | tr -d '[:blank:]' | tail -n 1) \
+      && VERSION=$(dnf info --installed kernel-core | sort | awk -F: '/^Version/{print $2}' | tr -d '[:blank:]' | tail -n 1) \
       && export KERNEL_VERSION="${VERSION}-${RELEASE}" ;\
 fi \
     && dnf install -y "kernel-devel-${KERNEL_VERSION}" \
@@ -113,7 +113,7 @@ fi \
     && cp -a /etc/dnf/dnf.conf{,.tmp} && mv /etc/dnf/dnf.conf{.tmp,} \
     && dnf config-manager --best --nodocs --setopt=install_weak_deps=False --save \
     && dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel${OS_VERSION_MAJOR}/${CUDA_REPO_ARCH}/cuda-rhel${OS_VERSION_MAJOR}.repo \
-    && dnf -y module enable nvidia-driver:${DRIVER_STREAM}/default \
+    && dnf -y module enable nvidia-driver:${DRIVER_STREAM}-open/default \
     && export NCCL_PACKAGE=$(dnf search libnccl --showduplicates 2>/dev/null | grep ${CUDA_MAJOR_MINOR} | awk '{print $1}' | grep libnccl-2 | tail -1) \
     && dnf install -y \
         cloud-init \
@@ -121,7 +121,7 @@ fi \
         tmux \
         nvidia-driver-cuda-${DRIVER_VERSION} \
         nvidia-driver-libs-${DRIVER_VERSION} \
-        nvidia-driver-NVML-${DRIVER_VERSION} \
+        libnvidia-ml-${DRIVER_VERSION} \
         cuda-compat-${CUDA_DASHED_VERSION} \
         cuda-cudart-${CUDA_DASHED_VERSION} \
         cuda-cudart-devel-${CUDA_DASHED_VERSION} \
@@ -146,15 +146,10 @@ fi \
         nvidia-container-toolkit \
         rsync \
         ${EXTRA_RPM_PACKAGES} \
-    && if [[ "$(rpm -qa | grep kernel-core | wc -l)" != "1" ]]; then \
-        echo "ERROR - Multiple kernel-core packages detected"; \
-        echo "This usually means that nvidia-drivers are built for a different kernel version than the one installed"; \
-        exit 1; \
-       fi \
     && if [ "$DRIVER_TYPE" != "vgpu" ] && [ "$TARGET_ARCH" != "arm64" ]; then \
         versionArray=(${DRIVER_VERSION//./ }); \
         DRIVER_BRANCH=${versionArray[0]}; \
-        dnf module enable -y nvidia-driver:${DRIVER_BRANCH} && \
+        dnf module enable -y nvidia-driver:${DRIVER_BRANCH}-open && \
         dnf install -y nvidia-fabric-manager-${DRIVER_VERSION} libnvidia-nscq-${DRIVER_BRANCH}-${DRIVER_VERSION} ; \
     fi \
     && . /etc/os-release && if [ "${ID}" == "rhel" ]; then \
