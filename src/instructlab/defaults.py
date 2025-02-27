@@ -167,8 +167,8 @@ class _InstructlabDefaults:
         return path.join(self._data_dir, STORAGE_DIR_NAMES.CONVERTED_DOCUMENTS)
 
     @property
-    def CONFIG_FILE(self) -> str:
-        return path.join(self._config_dir, CONFIG_FILENAME)
+    def CONFIG_FILE(self) -> pathlib.Path:
+        return pathlib.Path(self._config_dir) / CONFIG_FILENAME
 
     @property
     def CONFIG_FILE_LOCK(self) -> str:
@@ -179,8 +179,8 @@ class _InstructlabDefaults:
         return path.join(self._cache_home, STORAGE_DIR_NAMES.MODELS)
 
     @property
-    def DEFAULT_CHAT_MODEL(self) -> str:
-        return path.join(self.MODELS_DIR, self.GRANITE_GGUF_MODEL_NAME)
+    def DEFAULT_CHAT_MODEL(self) -> pathlib.Path:
+        return pathlib.Path(self.MODELS_DIR) / self.GRANITE_GGUF_MODEL_NAME
 
     @property
     def DEFAULT_EMBEDDING_MODEL(self) -> str:
@@ -199,8 +199,8 @@ class _InstructlabDefaults:
         return path.join(self.MODELS_DIR, self.JUDGE_MODEL_MT)
 
     @property
-    def TAXONOMY_DIR(self) -> str:
-        return path.join(self._data_dir, STORAGE_DIR_NAMES.TAXONOMY)
+    def TAXONOMY_DIR(self) -> pathlib.Path:
+        return pathlib.Path(self._data_dir) / STORAGE_DIR_NAMES.TAXONOMY
 
     @property
     def CHATLOGS_DIR(self) -> str:
