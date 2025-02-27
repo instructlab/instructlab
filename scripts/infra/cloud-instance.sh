@@ -59,6 +59,19 @@ ec2__launch() {
 
 }
 
+_get_instances() {
+    # shellcheck disable=SC2016
+    aws ec2 describe-instances \
+        --filters "Name=tag:Name,Values=$INSTANCE_NAME" \
+        --region "$EC2_REGION" \
+        --query 'Reservations[*].Instances[?State.Name!=`terminated`].InstanceId' \
+        --output text
+}
+
+ec2__list() {
+    _get_instances
+}
+
 ec2__details() {
     ec2_calculate_instance_id
     aws ec2 describe-instances \
@@ -89,12 +102,7 @@ ec2__terminate() {
 
 ec2_calculate_instance_id() {
     if [ -z "$INSTANCE_ID" ]; then
-        # shellcheck disable=SC2016
-        INSTANCE_ID="$(aws ec2 describe-instances \
-            --filters "Name=tag:Name,Values=$INSTANCE_NAME" \
-            --region "$EC2_REGION" \
-            --query 'Reservations[*].Instances[?State.Name!=`terminated`].InstanceId' \
-            --output text)" &> /dev/null
+        INSTANCE_ID="$(_get_instances)"
     fi
     if [ -z "$INSTANCE_ID" ]; then
         echo "Instance named '${INSTANCE_NAME}' not found"
@@ -473,6 +481,10 @@ Commands
     terminate - Terminate the instance
         -n
             Name of the instance to terminate (default provided in config)
+
+    list - List instances with the applicable name
+        -n
+            Name of the instances to list (default provided in config)
 
     details - Get details of the instance
         -n
