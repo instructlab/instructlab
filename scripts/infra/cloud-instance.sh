@@ -64,7 +64,7 @@ _get_instances() {
     aws ec2 describe-instances \
         --filters "Name=tag:Name,Values=$INSTANCE_NAME" \
         --region "$EC2_REGION" \
-        --query 'Reservations[*].Instances[?State.Name!=`terminated`].InstanceId' \
+        --query 'Reservations[*].Instances[?State.Name!=`terminated` && State.Name!=`shutting-down`].InstanceId' \
         --output text
 }
 
