@@ -146,11 +146,6 @@ fi \
         nvidia-container-toolkit \
         rsync \
         ${EXTRA_RPM_PACKAGES} \
-    && if [[ "$(rpm -qa | grep kernel-core | wc -l)" != "1" ]]; then \
-        echo "ERROR - Multiple kernel-core packages detected"; \
-        echo "This usually means that nvidia-drivers are built for a different kernel version than the one installed"; \
-        exit 1; \
-       fi \
     && if [ "$DRIVER_TYPE" != "vgpu" ] && [ "$TARGET_ARCH" != "arm64" ]; then \
         versionArray=(${DRIVER_VERSION//./ }); \
         DRIVER_BRANCH=${versionArray[0]}; \
