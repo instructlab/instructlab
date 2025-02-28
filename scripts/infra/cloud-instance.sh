@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 COMMON_OPTS="hn:"
-ALL_OPTS="${COMMON_OPTS}fcl:t:i:"
+ALL_OPTS="${COMMON_OPTS}fcl:t:i:u:"
 MAX_ITERS=12
 INSTRUCTLAB_CLOUD_CONFIG=${INSTRUCTLAB_CLOUD_CONFIG:-$HOME/.instructlab/cloud-config}
 
@@ -19,14 +19,17 @@ ec2__launch() {
         EC2_SUBNET_VARS=("EC2_SUBNET_ID")
     fi
 
+    local instance_type
+    instance_type="${INSTANCE_TYPE:-$EC2_INSTANCE_TYPE}"
+
     for subnet_var in "${EC2_SUBNET_VARS[@]}"; do
         subnet="${!subnet_var}"
-        echo "Attempting to launch an instance of type $EC2_INSTANCE_TYPE in subnet $subnet named $INSTANCE_NAME"
+        echo "Attempting to launch an instance of type $instance_type in subnet $subnet named $INSTANCE_NAME"
         local instance_id
         if instance_id="$(aws ec2 run-instances \
             --image-id "$EC2_AMI_ID" \
             --region "$EC2_REGION" \
-            --instance-type "${INSTANCE_TYPE:-$EC2_INSTANCE_TYPE}" \
+            --instance-type "$instance_type" \
             --security-group-ids "$EC2_SECURITY_GROUP_ID" \
             --subnet-id "$subnet" \
             --key-name "$EC2_KEY_NAME" \
@@ -69,7 +72,7 @@ ec2__launch() {
 
 }
 
-_get_instances() {
+_get_ec2_instances() {
     # shellcheck disable=SC2016
     aws ec2 describe-instances \
         --filters "Name=tag:Name,Values=$INSTANCE_NAME" \
@@ -79,7 +82,7 @@ _get_instances() {
 }
 
 ec2__list() {
-    _get_instances
+    _get_ec2_instances
 }
 
 ec2__details() {
@@ -87,6 +90,13 @@ ec2__details() {
     aws ec2 describe-instances \
         --instance-ids "$INSTANCE_ID" \
         --region "$EC2_REGION"
+}
+
+ec2__rename() {
+    ec2_calculate_instance_id
+    aws ec2 create-tags \
+        --resources "$INSTANCE_ID" \
+        --tags "Key=Name,Value=$NEW_NAME"
 }
 
 ec2__stop() {
@@ -112,7 +122,7 @@ ec2__terminate() {
 
 ec2_calculate_instance_id() {
     if [ -z "$INSTANCE_ID" ]; then
-        INSTANCE_ID="$(_get_instances)"
+        INSTANCE_ID="$(_get_ec2_instances)"
     fi
     if [ -z "$INSTANCE_ID" ]; then
         echo "Instance named '${INSTANCE_NAME}' not found"
@@ -132,6 +142,14 @@ ec2_calculate_instance_public_dns() {
         --query "Reservations[*].Instances[*].PublicDnsName" \
         --output text)" &> /dev/null
     PUBLIC_DNS=$(echo "$PUBLIC_DNS" | xargs)
+}
+
+ibm__details() {
+    ibmcloud is instance "$INSTANCE_NAME"
+}
+
+ibm__rename() {
+    ibmcloud is instance-update "$INSTANCE_NAME" --name "$NEW_NAME"
 }
 
 ibm__stop() {
@@ -188,8 +206,8 @@ run_cmd() {
 
     cmd_name="${cmdname//-/_}"
     CLOUD_TYPE="$cloud_type"
-    calculate_instance_name
     handle_opts "$@"
+    calculate_instance_name
     if [ "$(type -t "i__${cmd_name}")" = "function" ] >/dev/null 2>&1; then
         # i__ is used to not collide with system commands (Ex: ssh, scp)
         "i__${cmd_name}" "$@"
@@ -234,7 +252,11 @@ calculate_instance_name() {
     if [ "$CLOUD_TYPE" = 'ec2' ]; then
 	    INSTANCE_NAME="${INSTANCE_NAME:-$EC2_INSTANCE_NAME}"
     elif [ "$CLOUD_TYPE" = 'ibm' ]; then
-        INSTANCE_NAME="${INSTANCE_NAME:-$IBM_INSTANCE_NAME}"
+        if [ -n "$INSTANCE_ID" ]; then
+            INSTANCE_NAME="$INSTANCE_ID"
+        else
+            INSTANCE_NAME="${INSTANCE_NAME:-$IBM_INSTANCE_NAME}"
+        fi
     fi
 }
 
@@ -456,6 +478,8 @@ handle_opt() {
         ;;
         i)  INSTANCE_ID=$2
         ;;
+        u)  NEW_NAME=$2
+        ;;
         l)  LIBRARY=$2
         ;;
         c)  TEMP_COMMIT=true
@@ -505,6 +529,14 @@ Commands
             Name of the instance to get details of (default provided in config)
         -i
             Instance ID of the instance to get details of
+
+    rename - Rename the instance
+        -u
+            Name to update the instance to
+        -n
+            Name of the instance to rename (default provided in config)
+        -i
+            Instance ID of the instance to rename
 
     stop - Stop the instance
         -n
