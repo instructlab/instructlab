@@ -143,8 +143,8 @@ logger = logging.getLogger(__name__)
 @click.option(
     "--batch-size",
     type=click.IntRange(min=0),
-    default=None,
-    help="Number of elements to process in each batch through the SDG pipeline. Enabled by default for the vLLM serving backend, with a batch size of 8 chosen based on experiments to optimize for throughput. Use 0 to disable.",
+    cls=clickext.ConfigOption,
+    default=DEFAULTS.BATCH_SIZE,
 )
 @click.option(
     "--enable-serving-output",
