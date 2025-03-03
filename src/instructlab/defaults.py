@@ -100,6 +100,8 @@ class _InstructlabDefaults:
     MAX_CONTEXT_SIZE = 4096
     # TODO: these constants should be removed, they should not leak out
     NUM_CPUS = 10
+    # Number of batches to send on each core. Tune the batch size to optimize the vLLM performance
+    BATCH_SIZE = 8
     CHUNK_WORD_COUNT = 1000
     CONNECTION_TIMEOUT = httpx.Timeout(timeout=30.0)
     # use spawn start method, fork is not thread-safe
