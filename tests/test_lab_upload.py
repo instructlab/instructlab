@@ -189,7 +189,7 @@ class TestLabUpload:
             result.exit_code == 1
         ), f"command finished with an unexpected exit code. {result.stdout}"
         assert (
-            f"Uploading GGUF model at {tmp_gguf} failed with the following Hugging Face Hub error:\n401 Client Error."
+            f"Uploading GGUF model at {tmp_gguf} failed with the following Hugging Face Hub error:\n401 Client Error"
         ) in result.output
 
     @patch("instructlab.utils.check_skopeo_version")
