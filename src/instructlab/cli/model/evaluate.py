@@ -10,6 +10,7 @@ import click
 
 # First Party
 from instructlab import clickext
+from instructlab.configuration import resolve_model_id
 from instructlab.model.backends import backends
 from instructlab.model.evaluate import Benchmark, evaluate_model
 
@@ -68,6 +69,12 @@ def set_benchmark_specific_vars(
     type=click.STRING,
     cls=clickext.ConfigOption,
     required=True,  # default from config
+)
+@click.option(
+    "--base-model-id",
+    type=click.STRING,
+    default=None,
+    help="ID of the model to be used as the base in eval comparisons against the provided checkpoint.",
 )
 @click.option(
     "--benchmark",
@@ -208,6 +215,7 @@ def evaluate(
     ctx,
     model,
     base_model,
+    base_model_id: str | None,
     benchmark,
     judge_model,
     output_dir,
@@ -235,6 +243,15 @@ def evaluate(
 ) -> None:
     """Evaluates a trained model"""
     try:
+        if base_model_id:
+            # select the base model configuration and the system prompt to use for the evaluation
+            base_model_cfg = resolve_model_id(base_model_id, ctx.obj.config.models)
+            base_model = base_model_cfg.path
+            system_prompt = base_model_cfg.system_prompt
+            logger.debug(
+                "detected `--model-id`, selecting custom model from config list."
+            )
+
         judge_model, output_dir = set_benchmark_specific_vars(
             ctx, benchmark, judge_model, output_dir
         )
