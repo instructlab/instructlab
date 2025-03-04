@@ -33,7 +33,7 @@ def main(argv=None):
 
     if args.model is None:
         # First Party
-        from instructlab.config import read_config
+        from instructlab.configuration import read_config
 
         try:
             cfg = read_config()
