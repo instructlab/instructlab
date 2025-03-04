@@ -1,4 +1,4 @@
-# InstructLab 🐶 (`ilab`)
+## InstructLab 🐶 (`ilab`)
 
 ![Lint](https://github.com/instructlab/instructlab/actions/workflows/lint.yml/badge.svg?branch=main)
 ![Tests](https://github.com/instructlab/instructlab/actions/workflows/test.yml/badge.svg?branch=main)
