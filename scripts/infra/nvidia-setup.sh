@@ -12,6 +12,9 @@ if [[ $(id -u) != "0" ]]; then
 fi
 set -x
 
+dnf config-manager --save \
+  --setopt=skip_missing_names_on_install=False \
+  --setopt=install_weak_deps=False
 
 cat <<FILEEOF > x509-configuration.ini
 [ req ]
@@ -47,12 +50,16 @@ FILEEOF
 
 rm -rf yum-packaging-precompiled-kmod
 dnf install libicu podman skopeo git rpm-build make openssl elfutils-libelf-devel python3.11 python3.11-devel -y
-if [ "${KERNEL_VERSION}" == "" ]; then \
-      RELEASE=$(dnf info --installed kernel-core | sort | awk -F: '/^Release/{print $2}' | tr -d '[:blank:]' | tail -n 1) \
-      && VERSION=$(dnf info --installed kernel-core | sort | awk -F: '/^Version/{print $2}' | tr -d '[:blank:]' | tail -n 1) \
-      && export KERNEL_VERSION="${VERSION}-${RELEASE}" ;\
-fi \
-    && dnf install -y "kernel-devel-${KERNEL_VERSION}" \
+if [ -z "${KERNEL_VERSION}" ]; then
+      KERNELS=$(rpm -q --qf="%{BUILDTIME} %{VERSION}-%{RELEASE}\n" kernel-core | sort -n)
+      KERNEL_COUNT=$(echo "${KERNELS}" | wc -l)
+      LATEST_KERNEL=$(echo "${KERNELS}" | tail -1)
+      export KERNEL_VERSION=${LATEST_KERNEL#* }
+      if [[ "$KERNEL_COUNT" -gt 1 ]]; then
+        echo Multiple kernels found, building for latest ${KERNEL_VERSION}.
+      fi
+fi
+dnf install -y "kernel-devel-${KERNEL_VERSION}" \
     && if [ "${OS_VERSION_MAJOR}" == "" ]; then \
         . /etc/os-release \
 	&& export OS_ID="$(echo ${ID})" \
@@ -111,7 +118,6 @@ fi \
         CUDA_REPO_ARCH=${TARGET_ARCH} \
     && if [ "${TARGET_ARCH}" == "aarch64" ]; then CUDA_REPO_ARCH="sbsa"; fi \
     && cp -a /etc/dnf/dnf.conf{,.tmp} && mv /etc/dnf/dnf.conf{.tmp,} \
-    && dnf config-manager --best --nodocs --setopt=install_weak_deps=False --save \
     && dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel${OS_VERSION_MAJOR}/${CUDA_REPO_ARCH}/cuda-rhel${OS_VERSION_MAJOR}.repo \
     && dnf -y module enable nvidia-driver:${DRIVER_STREAM}-open/default \
     && export NCCL_PACKAGE=$(dnf search libnccl --showduplicates 2>/dev/null | grep ${CUDA_MAJOR_MINOR} | awk '{print $1}' | grep libnccl-2 | tail -1) \
@@ -167,3 +173,14 @@ fi \
     && ln -f -s /usr/lib/systemd/system/nvidia-persistenced.service /etc/systemd/system/multi-user.target.wants/nvidia-persistenced.service
     systemctl daemon-reload
     systemctl enable --now nvidia-toolkit-setup.service
+
+# Ensure the next kernel that we boot will match the driver we installed.
+EXPECTED_VMLINUZ=/boot/vmlinuz-${KERNEL_VERSION}.$(uname -m)
+grubby --set-default=$EXPECTED_VMLINUZ
+
+# If the driver does not match our installed kernel, warn the user to reboot.
+RUNNING_KERNEL=$(uname -r | sed 's/\.[a-z0-9_-]*$//')
+if [[ "$RUNNING_KERNEL" != "$KERNEL_VERSION" ]]; then
+    # The running kernel does not match the nvidia driver we installed above.
+    echo "You are running kernel $RUNNING_KERNEL. Reboot into kernel $KERNEL_VERSION."
+fi
