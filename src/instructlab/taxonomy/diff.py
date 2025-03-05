@@ -3,6 +3,7 @@
 # Standard
 import logging
 import os
+import traceback
 
 # Third Party
 from git import GitError
@@ -71,8 +72,9 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
                     # Gather the new or changed YAMLs using git diff, including untracked files
                     taxonomy_files = get_taxonomy_diff(taxonomy_path, taxonomy_base)
                 except (TaxonomyReadingException, GitError) as exc:
+                    error_details = traceback.format_exc()
                     click.secho(
-                        f"Reading taxonomy failed with the following error: {exc}",
+                        f"Reading taxonomy failed with the following error: {exc}]\n{error_details}",
                         fg="red",
                     )
                     raise SystemExit(1) from exc
@@ -86,8 +88,9 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
         validate_taxonomy(taxonomy_path, taxonomy_base, yaml_rules)
     except (TaxonomyReadingException, yaml.YAMLError) as exc:
         if not quiet:
+            error_details = traceback.format_exc()
             click.secho(
-                f"Reading taxonomy failed with the following error: {exc}",
+                f"Reading taxonomy failed with the following error: {exc}]\n{error_details}",
                 fg="red",
             )
         raise SystemExit(1) from exc
