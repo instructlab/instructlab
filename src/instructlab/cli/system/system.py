@@ -18,6 +18,6 @@ logger = logging.getLogger(__name__)
 )
 @click.pass_context
 def system(ctx):
-    """Command group for all system-related command calls."""
+    """Execute system commands."""
     ctx.obj = ctx.parent.obj
     ctx.default_map = ctx.parent.default_map
