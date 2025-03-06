@@ -2,6 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 rh__ensure_ibm_system_pkgs() {
+    if command -v ibmcloud &> /dev/null; then
+        echo "ibmcloud CLI is already installed"
+        return
+    fi
     # shellcheck source=/dev/null
     if [ -f /etc/os-release ]; then
         source /etc/os-release
