@@ -19,6 +19,9 @@ chat:
   # Filepath of a dialog session file.
   # Default: None
   session:
+  # Custom system prompt. If not provided, it will use the default context.
+  # Default: None
+  system_prompt:
   # Controls the randomness of the model's responses. Lower values make the output
   # more deterministic, while higher values produce more random results.
   # Default: 1.0
