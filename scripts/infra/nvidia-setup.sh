@@ -119,6 +119,7 @@ dnf install -y "kernel-devel-${KERNEL_VERSION}" \
     && if [ "${TARGET_ARCH}" == "aarch64" ]; then CUDA_REPO_ARCH="sbsa"; fi \
     && cp -a /etc/dnf/dnf.conf{,.tmp} && mv /etc/dnf/dnf.conf{.tmp,} \
     && dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel${OS_VERSION_MAJOR}/${CUDA_REPO_ARCH}/cuda-rhel${OS_VERSION_MAJOR}.repo \
+    && dnf module reset -y nvidia-driver \
     && dnf -y module enable nvidia-driver:${DRIVER_STREAM}-open/default \
     && export NCCL_PACKAGE=$(dnf search libnccl --showduplicates 2>/dev/null | grep ${CUDA_MAJOR_MINOR} | awk '{print $1}' | grep libnccl-2 | tail -1) \
     && dnf install -y \
@@ -155,6 +156,7 @@ dnf install -y "kernel-devel-${KERNEL_VERSION}" \
     && if [ "$DRIVER_TYPE" != "vgpu" ] && [ "$TARGET_ARCH" != "arm64" ]; then \
         versionArray=(${DRIVER_VERSION//./ }); \
         DRIVER_BRANCH=${versionArray[0]}; \
+        dnf module reset -y nvidia-driver && \
         dnf module enable -y nvidia-driver:${DRIVER_BRANCH}-open && \
         dnf install -y nvidia-fabric-manager-${DRIVER_VERSION} libnvidia-nscq-${DRIVER_BRANCH}-${DRIVER_VERSION} ; \
     fi \
