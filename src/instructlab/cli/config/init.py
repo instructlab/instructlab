@@ -38,10 +38,11 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--model-path",
-    type=click.Path(),
+    type=click.Path(path_type=pathlib.Path),
     default=lambda: DEFAULTS.DEFAULT_CHAT_MODEL,
     show_default="The instructlab data files location per the user's system.",
     help="Path to the model used during generation.",
+    required=True,
 )
 @click.option(
     "--taxonomy-base",
@@ -51,10 +52,11 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--taxonomy-path",
-    type=click.Path(),
+    type=click.Path(path_type=pathlib.Path),
     default=lambda: DEFAULTS.TAXONOMY_DIR,
     show_default="The instructlab data files location per the user's system.",
     help="Path to where the taxonomy should be cloned.",
+    required=True,
 )
 @click.option(
     "--repository",
@@ -71,31 +73,33 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--profile",
-    type=click.Path(),
+    type=click.Path(path_type=pathlib.Path),
     default=None,
     help="Overwrite the default values in the generated config.yaml by passing in an existing configuration yaml.",
+    required=False,
 )
 @click.option(
     "--config",
     "config_file",
-    type=click.Path(),
+    type=click.Path(path_type=pathlib.Path),
     default=None,
     envvar=DEFAULTS.ILAB_GLOBAL_CONFIG,
     show_default=True,
     help="Path to a configuration file.",
+    required=False,
 )
 @clickext.display_params
 @click.pass_context
 def init(
     ctx,
     interactive,
-    model_path: str,
-    taxonomy_path,
+    model_path: pathlib.Path,
+    taxonomy_path: pathlib.Path,
     taxonomy_base,
     repository,
     min_taxonomy,
-    profile,
-    config_file,
+    profile: pathlib.Path | None,
+    config_file: pathlib.Path | None,
 ):
     """Initializes environment for InstructLab"""
     param_source = ctx.get_parameter_source("config_file")
@@ -137,12 +141,13 @@ def init(
         cfg = new_cfg
     # we should not override all paths with the serve model if special ENV vars exist
     if param_source != click.core.ParameterSource.ENVIRONMENT:
-        cfg.chat.model = model_path
-        cfg.serve.model_path = model_path
-        cfg.evaluate.model = model_path
+        # @TODO: Switch to pathlib.Path once all associated subcommand options have been updated
+        cfg.chat.model = str(model_path)
+        cfg.serve.model_path = str(model_path)
+        cfg.evaluate.model = str(model_path)
         cfg.generate.taxonomy_base = taxonomy_base
-        cfg.generate.taxonomy_path = taxonomy_path
-        cfg.evaluate.mt_bench_branch.taxonomy_path = taxonomy_path
+        cfg.generate.taxonomy_path = str(taxonomy_path)
+        cfg.evaluate.mt_bench_branch.taxonomy_path = str(taxonomy_path)
     write_config(cfg=cfg)
     # this means auto-detect failed so we didn't print anything
     if is_default_config:
@@ -255,10 +260,10 @@ def get_params(
     interactive: bool,
     repository: str,
     min_taxonomy: bool,
-    model_path: str,
+    model_path: pathlib.Path,
     taxonomy_path: pathlib.Path,
     config: pathlib.Path | None,
-) -> typing.Tuple[str, pathlib.Path, Config]:
+) -> typing.Tuple[pathlib.Path, pathlib.Path, Config]:
     cfg = get_default_config()
     if config is not None:
         cfg = read_config(config)
