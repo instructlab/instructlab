@@ -3,7 +3,7 @@
 # Standard
 from os import path
 from re import match
-from typing import Any, Optional, Union, List
+from typing import Any, List, Optional, Union
 import enum
 import logging
 import os
@@ -686,6 +686,15 @@ class _train(BaseModel):
 
 
 class _model_config(BaseModel):
+    """
+    Class representing the configuration for a model.
+
+    Attributes:
+        id (str): Internal ID referring to a particular model from the list.
+        path (str | None): Path to where the model can be found. Can either be a HF reference or local filepath.
+        system_prompt (str | None): The initial message used to prompt the conversation with this model.
+    """
+
     id: str = Field(
         description="Internal ID referring to a particular model from the list.",
     )
@@ -754,8 +763,6 @@ class Config(BaseModel):
     general: _general = Field(
         default_factory=_general, description="General configuration section."
     )
-    # model configuration
-    model_config = ConfigDict(extra="ignore")
     # config file versioning
     version: str = Field(
         default=CONFIG_VERSION,
@@ -767,6 +774,7 @@ class Config(BaseModel):
         default_factory=_metadata,
         description="Metadata pertaining to the specifics of the system which the Configuration is meant to be applied to.",
     )
+    # List of user-defined models
     models: List[_model_config] = Field(
         default_factory=lambda: [],
         description="User-defined custom set of models. This allows people to use their own models for the InstructLab model customization process.",
@@ -1545,8 +1553,7 @@ def map_train_to_library(ctx, params):
         except ValueError as ve:
             click.secho(f"failed to get model with `--model-id`: {ve}", fg="red")
             raise click.exceptions.Exit(1)
-        else:
-            params["model_path"] = model_cfg.path
+        params["model_path"] = model_cfg.path
 
     ds_args = DeepSpeedOptions(
         cpu_offload_optimizer=params["deepspeed_cpu_offload_optimizer"],

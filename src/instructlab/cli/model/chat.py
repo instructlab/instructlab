@@ -221,5 +221,5 @@ def chat(
         logs_dir=ctx.obj.config.chat.logs_dir,
         vi_mode=ctx.obj.config.chat.vi_mode,
         visible_overflow=ctx.obj.config.chat.visible_overflow,
-        models=ctx.obj.config.models,
+        models_config=ctx.obj.config.models,
     )

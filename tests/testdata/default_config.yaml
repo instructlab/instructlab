@@ -131,6 +131,9 @@ general:
   use_legacy_tmpl: false
 # Generate configuration section.
 generate:
+  # Number of Batches to send for generation on each core.
+  # Default: 8
+  batch_size: 8
   # Maximum number of words per chunk.
   # Default: 1000
   chunk_word_count: 1000
@@ -145,9 +148,6 @@ generate:
   # Number of CPU cores to use for generation.
   # Default: 10
   num_cpus: 10
-  # Number of batches to send on each core
-  # Default: 8
-  batch_size: 8
   # Number of instructions to use
   # Default: -1
   # Deprecated: see 'sdg_scale_factor' instead
@@ -259,6 +259,10 @@ metadata:
   # Specific SKU related information about the given GPU, ex: PCIe, NVL
   # Default: None
   gpu_sku:
+# User-defined custom set of models. This allows people to use their own models
+# for the InstructLab model customization process.
+# Default: []
+models: []
 # RAG configuration section.
 rag:
   # RAG convert configuration section.

@@ -2,6 +2,7 @@
 
 # Standard
 from subprocess import CalledProcessError
+from typing import List
 import datetime
 import json
 import logging
@@ -10,7 +11,6 @@ import pathlib
 import sys
 import time
 import traceback
-from typing import List
 
 # Third Party
 from openai import OpenAI
@@ -494,9 +494,9 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                     logger.debug(f"InternalServerError: {e}")
                     self.info["messages"].clear()
                     raise KeyboardInterrupt from e
-                assert next(response).choices[0].delta.role == "assistant", (
-                    'first response should be {"role": "assistant"}'
-                )
+                assert (
+                    next(response).choices[0].delta.role == "assistant"
+                ), 'first response should be {"role": "assistant"}'
                 break
         except openai.AuthenticationError as e:
             self.console.print(
@@ -605,7 +605,7 @@ def chat_model(
     logs_dir,
     vi_mode,
     visible_overflow,
-    models: List[cfg._model_config],
+    models_config: List[cfg._model_config],
 ):
     """Runs a chat using the modified model"""
     if rag_enabled and not FeatureGating.feature_available(GatedFeatures.RAG):
@@ -618,16 +618,20 @@ def chat_model(
     if model_id:
         # try to load the model from the list
         try:
-            model_cfg = cfg.resolve_model_id(model_id, models)
+            model_cfg = cfg.resolve_model_id(model_id, models_config)
+            if not model_cfg:
+                raise ValueError(
+                    f"Base model with ID '{model_id}' not found in the configuration."
+                )
         except ValueError as ve:
             logger.error(f"failed to load model from ID: {ve}")
             raise
-        else:
-            model = model_cfg.path
 
-            # if loading a specific model from the list, we should only be loading from the tokenizer config
-            chat_template = CHAT_TEMPLATE_TOKENIZER
-            model_family = ""
+        model = model_cfg.path
+
+        # if loading a specific model from the list, we should only be loading from the tokenizer config
+        chat_template = CHAT_TEMPLATE_TOKENIZER
+        model_family = ""
 
     # pylint: disable=import-outside-toplevel
     # First Party

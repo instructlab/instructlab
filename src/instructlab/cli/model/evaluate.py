@@ -88,6 +88,12 @@ def set_benchmark_specific_vars(
     type=click.STRING,
 )
 @click.option(
+    "--judge-model-id",
+    type=click.STRING,
+    default=None,
+    help="ID of the model to be used as the judge in eval comparisons against the provided checkpoint.",
+)
+@click.option(
     "--output-dir",
     default=None,
     type=click.Path(),
@@ -218,6 +224,7 @@ def evaluate(
     base_model_id: str | None,
     benchmark,
     judge_model,
+    judge_model_id: str | None,
     output_dir,
     max_workers: str | int,
     taxonomy_path,
@@ -246,15 +253,31 @@ def evaluate(
         if base_model_id:
             # select the base model configuration and the system prompt to use for the evaluation
             base_model_cfg = resolve_model_id(base_model_id, ctx.obj.config.models)
+            if not base_model_cfg:
+                raise click.exceptions.BadParameter(
+                    f"Base model with ID '{base_model_id}' not found in the configuration."
+                )
             base_model = base_model_cfg.path
             system_prompt = base_model_cfg.system_prompt
             logger.debug(
-                "detected `--model-id`, selecting custom model from config list."
+                "detected `--base-model-id`, selecting custom model from config list."
             )
 
-        judge_model, output_dir = set_benchmark_specific_vars(
-            ctx, benchmark, judge_model, output_dir
-        )
+        if judge_model_id:
+            judge_model_cfg = resolve_model_id(judge_model_id, ctx.obj.config.models)
+            if not judge_model_cfg:
+                raise click.exceptions.BadParameter(
+                    f"Base model with ID '{judge_model_id}' not found in the configuration."
+                )
+
+            judge_model = judge_model_cfg.path
+            logger.debug(
+                "detected `--judge-model-id`, selecting custom model from config list."
+            )
+        else:
+            judge_model, output_dir = set_benchmark_specific_vars(
+                ctx, benchmark, judge_model, output_dir
+            )
 
         evaluate_model(
             ctx.obj.config.serve,

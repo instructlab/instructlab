@@ -167,9 +167,17 @@ logger = logging.getLogger(__name__)
 )
 @click.option(
     "--student-model-id",
-    help="ID of the custom model you want to use for the student.",
+    # help="ID of the custom model you want to use as the student model.",
     default=None,
     type=click.STRING,
+    show_default=True,
+)
+@click.option(
+    "--teacher-model-id",
+    # help="ID of the custom model you want to use as the teacher model.",
+    default=None,
+    type=click.STRING,
+    show_default=True,
 )
 @click.pass_context
 @clickext.display_params
@@ -200,6 +208,7 @@ def generate(
     max_num_tokens,
     detached,
     student_model_id: str | None,
+    teacher_model_id: str | None,
 ):
     """Generates synthetic data to enhance your example data"""
 
@@ -254,6 +263,20 @@ def generate(
         }
     )
 
+    if teacher_model_id:
+        try:
+            teacher_model_config = resolve_model_id(
+                teacher_model_id, ctx.obj.config.models
+            )
+            if not teacher_model_config:
+                raise ValueError(
+                    f"Teacher model with ID '{teacher_model_id}' not found in the configuration."
+                )
+            model_path = teacher_model_config.path
+        except ValueError as ve:
+            click.secho(f"failed to locate teacher model by ID: {ve}", fg="red")
+            raise click.exceptions.Exit(1)
+
     # determine student model arch from train section of config and pick system prompt to
     # pass to SDG appropriately
     system_prompt, legacy_pretraining_format = None, None
@@ -276,18 +299,23 @@ def generate(
             student_model_config = resolve_model_id(
                 student_model_id, ctx.obj.config.models
             )
+            if not student_model_config:
+                raise ValueError(
+                    f"Student model with ID '{student_model_id}' not found in the configuration."
+                )
         except ValueError as ve:
             click.secho(f"failed to locate student model by ID: {ve}", fg="red")
             raise click.exceptions.Exit(1)
-        else:
-            system_prompt = student_model_config.system_prompt
-            legacy_pretraining_format = (
-                True  # just set this to true for testing. We need to fix this in SDG
-            )
 
-    assert None not in (legacy_pretraining_format, system_prompt), (
-        "system_prompt and legacy_pretraining_format must have been set"
-    )
+        system_prompt = student_model_config.system_prompt
+        legacy_pretraining_format = (
+            True  # just set this to true for testing. We need to fix this in SDG
+        )
+
+    assert None not in (
+        legacy_pretraining_format,
+        system_prompt,
+    ), "system_prompt and legacy_pretraining_format must have been set"
 
     process_mode = ILAB_PROCESS_MODES.ATTACHED
     if detached:
