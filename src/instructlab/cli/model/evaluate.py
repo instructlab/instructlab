@@ -263,6 +263,11 @@ def evaluate(
                 "detected `--base-model-id`, selecting custom model from config list."
             )
 
+        judge_model, output_dir = set_benchmark_specific_vars(
+            ctx, benchmark, judge_model, output_dir
+        )
+
+        # override judge_model if judge_model_id is provided
         if judge_model_id:
             judge_model_cfg = resolve_model_id(judge_model_id, ctx.obj.config.models)
             if not judge_model_cfg:
@@ -273,10 +278,6 @@ def evaluate(
             judge_model = judge_model_cfg.path
             logger.debug(
                 "detected `--judge-model-id`, selecting custom model from config list."
-            )
-        else:
-            judge_model, output_dir = set_benchmark_specific_vars(
-                ctx, benchmark, judge_model, output_dir
             )
 
         evaluate_model(

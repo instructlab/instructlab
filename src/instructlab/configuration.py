@@ -763,6 +763,8 @@ class Config(BaseModel):
     general: _general = Field(
         default_factory=_general, description="General configuration section."
     )
+    # model configuration
+    model_config = ConfigDict(extra="ignore")
     # config file versioning
     version: str = Field(
         default=CONFIG_VERSION,
