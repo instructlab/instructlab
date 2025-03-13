@@ -1547,7 +1547,7 @@ def map_train_to_library(ctx, params):
     torch_args = TorchrunArgs(**params)
 
     # let's handle the case when `--model-id` was provided
-    if params["model_id"]:
+    if params.get("model_id"):
         try:
             model_cfg = resolve_model_id(params["model_id"], ctx.obj.config.models)
         except ValueError as ve:
