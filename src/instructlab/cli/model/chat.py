@@ -29,6 +29,11 @@ logger = logging.getLogger(__name__)
     required=True,  # default from config
 )
 @click.option(
+    "--model-id",
+    help="ID of the model to use for chatting from the config models list.",
+    default=None,
+)
+@click.option(
     "-c",
     "--context",
     cls=clickext.ConfigOption,
@@ -154,6 +159,7 @@ def chat(
     ctx,
     question,
     model,
+    model_id: str | None,
     context,
     session,
     quick_question,
@@ -175,9 +181,11 @@ def chat(
     no_decoration,
 ):
     """Runs a chat using the modified model"""
+
     chat_model(
         question,
         model,
+        model_id,
         context,
         session,
         quick_question,
@@ -213,4 +221,5 @@ def chat(
         logs_dir=ctx.obj.config.chat.logs_dir,
         vi_mode=ctx.obj.config.chat.vi_mode,
         visible_overflow=ctx.obj.config.chat.visible_overflow,
+        models_config=ctx.obj.config.models,
     )

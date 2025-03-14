@@ -60,7 +60,9 @@ nitpick_ignore = [
     ("py:class", "mx.array"),
     # TODO: Warning is thrown that:
     # py:class reference target not found: instructlab.training.config.DistributedBackend [ref.class]
+    # py:class reference target not found: instructlab.configuration._model_config [ref.class]
     ("py:class", "instructlab.training.config.DistributedBackend"),
+    ("py:class", "instructlab.configuration._model_config"),
     # stdlib
     ("py:class", "FrameType"),
     # pydantic auto-generated doc strings

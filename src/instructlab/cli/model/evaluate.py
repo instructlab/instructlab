@@ -10,6 +10,7 @@ import click
 
 # First Party
 from instructlab import clickext
+from instructlab.configuration import resolve_model_id
 from instructlab.model.backends import backends
 from instructlab.model.evaluate import Benchmark, evaluate_model
 
@@ -70,6 +71,12 @@ def set_benchmark_specific_vars(
     required=True,  # default from config
 )
 @click.option(
+    "--base-model-id",
+    type=click.STRING,
+    default=None,
+    help="ID of the model to be used as the base in eval comparisons against the provided checkpoint.",
+)
+@click.option(
     "--benchmark",
     type=click.Choice([m.value for m in Benchmark.__members__.values()]),
     required=True,
@@ -79,6 +86,12 @@ def set_benchmark_specific_vars(
     "--judge-model",
     default=None,
     type=click.STRING,
+)
+@click.option(
+    "--judge-model-id",
+    type=click.STRING,
+    default=None,
+    help="ID of the model to be used as the judge in eval comparisons against the provided checkpoint.",
 )
 @click.option(
     "--output-dir",
@@ -208,8 +221,10 @@ def evaluate(
     ctx,
     model,
     base_model,
+    base_model_id: str | None,
     benchmark,
     judge_model,
+    judge_model_id: str | None,
     output_dir,
     max_workers: str | int,
     taxonomy_path,
@@ -235,9 +250,35 @@ def evaluate(
 ) -> None:
     """Evaluates a trained model"""
     try:
+        if base_model_id:
+            # select the base model configuration and the system prompt to use for the evaluation
+            base_model_cfg = resolve_model_id(base_model_id, ctx.obj.config.models)
+            if not base_model_cfg:
+                raise click.exceptions.BadParameter(
+                    f"Base model with ID '{base_model_id}' not found in the configuration."
+                )
+            base_model = base_model_cfg.path
+            system_prompt = base_model_cfg.system_prompt
+            logger.debug(
+                "detected `--base-model-id`, selecting custom model from config list."
+            )
+
         judge_model, output_dir = set_benchmark_specific_vars(
             ctx, benchmark, judge_model, output_dir
         )
+
+        # override judge_model if judge_model_id is provided
+        if judge_model_id:
+            judge_model_cfg = resolve_model_id(judge_model_id, ctx.obj.config.models)
+            if not judge_model_cfg:
+                raise click.exceptions.BadParameter(
+                    f"Base model with ID '{judge_model_id}' not found in the configuration."
+                )
+
+            judge_model = judge_model_cfg.path
+            logger.debug(
+                "detected `--judge-model-id`, selecting custom model from config list."
+            )
 
         evaluate_model(
             ctx.obj.config.serve,

@@ -3,7 +3,7 @@
 # Standard
 from os import path
 from re import match
-from typing import Any, Optional, Union
+from typing import Any, List, Optional, Union
 import enum
 import logging
 import os
@@ -685,6 +685,29 @@ class _train(BaseModel):
     )
 
 
+class _model_config(BaseModel):
+    """
+    Class representing the configuration for a model.
+
+    Attributes:
+        id (str): Internal ID referring to a particular model from the list.
+        path (str | None): Path to where the model can be found. Can either be a HF reference or local filepath.
+        system_prompt (str | None): The initial message used to prompt the conversation with this model.
+    """
+
+    id: str = Field(
+        description="Internal ID referring to a particular model from the list.",
+    )
+    path: str | None = Field(
+        description="Path to where the model can be found. Can either be a HF reference or local filepath.",
+        default=None,
+    )
+    system_prompt: str | None = Field(
+        description='The initial message used to prompt the conversation with this model. E.g. "You are a helfpul AI assistant..."',
+        default=None,
+    )
+
+
 class _metadata(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore")
@@ -752,6 +775,11 @@ class Config(BaseModel):
     metadata: _metadata = Field(
         default_factory=_metadata,
         description="Metadata pertaining to the specifics of the system which the Configuration is meant to be applied to.",
+    )
+    # List of user-defined models
+    models: List[_model_config] = Field(
+        default_factory=lambda: [],
+        description="User-defined custom set of models. This allows people to use their own models for the InstructLab model customization process.",
     )
 
 
@@ -1520,6 +1548,15 @@ def map_train_to_library(ctx, params):
     train_args = TrainingArgs(**params)
     torch_args = TorchrunArgs(**params)
 
+    # let's handle the case when `--model-id` was provided
+    if params.get("model_id"):
+        try:
+            model_cfg = resolve_model_id(params["model_id"], ctx.obj.config.models)
+        except ValueError as ve:
+            click.secho(f"failed to get model with `--model-id`: {ve}", fg="red")
+            raise click.exceptions.Exit(1)
+        params["model_path"] = model_cfg.path
+
     ds_args = DeepSpeedOptions(
         cpu_offload_optimizer=params["deepspeed_cpu_offload_optimizer"],
         cpu_offload_optimizer_ratio=params["deepspeed_cpu_offload_optimizer_ratio"],
@@ -1624,3 +1661,24 @@ def profiles_exist(fresh_install) -> bool:
 
 def configs_exist() -> bool:
     return os.path.exists(DEFAULTS.CONFIG_FILE)
+
+
+def resolve_model_id(
+    model_id: str, models: List[_model_config]
+) -> _model_config | None:
+    """
+    Given a `model_id`, returns the matching model config if one is found.
+    When a model is found, the following validations happen:
+    - No more than one model has the same ID
+    """
+    models_found = [m for m in models if m.id == model_id]
+    if not models_found:
+        raise ValueError(f"Could not find any model with id: '{model_id}'")
+
+    if len(models_found) > 1:
+        raise ValueError(
+            f"Found multiple models matching id: '{model_id}'. "
+            "Please make sure that model IDs are unique and try again."
+        )
+
+    return models_found[0]

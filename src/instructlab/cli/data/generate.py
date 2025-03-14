@@ -14,7 +14,7 @@ import click
 # First Party
 from instructlab import clickext
 from instructlab.client_utils import HttpClientParams
-from instructlab.configuration import DEFAULTS
+from instructlab.configuration import DEFAULTS, resolve_model_id
 from instructlab.data.generate_data import gen_data  # type: ignore
 from instructlab.defaults import ILAB_PROCESS_MODES
 from instructlab.utils import (
@@ -165,6 +165,20 @@ logger = logging.getLogger(__name__)
 @click.option(
     "-dt", "--detached", is_flag=True, help="Run ilab data generate in the background"
 )
+@click.option(
+    "--student-model-id",
+    # help="ID of the custom model you want to use as the student model.",
+    default=None,
+    type=click.STRING,
+    show_default=True,
+)
+@click.option(
+    "--teacher-model-id",
+    # help="ID of the custom model you want to use as the teacher model.",
+    default=None,
+    type=click.STRING,
+    show_default=True,
+)
 @click.pass_context
 @clickext.display_params
 def generate(
@@ -193,6 +207,8 @@ def generate(
     gpus,
     max_num_tokens,
     detached,
+    student_model_id: str | None,
+    teacher_model_id: str | None,
 ):
     """Generates synthetic data to enhance your example data"""
 
@@ -247,21 +263,59 @@ def generate(
         }
     )
 
+    if teacher_model_id:
+        try:
+            teacher_model_config = resolve_model_id(
+                teacher_model_id, ctx.obj.config.models
+            )
+            if not teacher_model_config:
+                raise ValueError(
+                    f"Teacher model with ID '{teacher_model_id}' not found in the configuration."
+                )
+            model_path = teacher_model_config.path
+        except ValueError as ve:
+            click.secho(f"failed to locate teacher model by ID: {ve}", fg="red")
+            raise click.exceptions.Exit(1)
+
     # determine student model arch from train section of config and pick system prompt to
     # pass to SDG appropriately
-    student_model_path = pathlib.Path(ctx.obj.config.train.model_path)
-    student_model_arch = get_model_arch(student_model_path)
-    system_prompt = get_sysprompt(student_model_arch)
+    system_prompt, legacy_pretraining_format = None, None
+    if not student_model_id:
+        student_model_path = pathlib.Path(ctx.obj.config.train.model_path)
+        student_model_arch = get_model_arch(student_model_path)
+        system_prompt = get_sysprompt(student_model_arch)
 
-    # Check if student model specifies a tokenizer config. If so, check if the special tokens specified
-    # match those of granite-7b. If so, set legacy_pretraining_format to true. If no tokenizer config is
-    # available, rely on model architecture to make that decision
-    if ctx.obj.config.general.use_legacy_tmpl:
-        legacy_pretraining_format = True
+        # Check if student model specifies a tokenizer config. If so, check if the special tokens specified
+        # match those of granite-7b. If so, set legacy_pretraining_format to true. If no tokenizer config is
+        # available, rely on model architecture to make that decision
+        if ctx.obj.config.general.use_legacy_tmpl:
+            legacy_pretraining_format = True
+        else:
+            legacy_pretraining_format = use_legacy_pretraining_format(
+                student_model_path, student_model_arch
+            )
     else:
-        legacy_pretraining_format = use_legacy_pretraining_format(
-            student_model_path, student_model_arch
+        try:
+            student_model_config = resolve_model_id(
+                student_model_id, ctx.obj.config.models
+            )
+            if not student_model_config:
+                raise ValueError(
+                    f"Student model with ID '{student_model_id}' not found in the configuration."
+                )
+        except ValueError as ve:
+            click.secho(f"failed to locate student model by ID: {ve}", fg="red")
+            raise click.exceptions.Exit(1)
+
+        system_prompt = student_model_config.system_prompt
+        legacy_pretraining_format = (
+            True  # just set this to true for testing. We need to fix this in SDG
         )
+
+    assert None not in (
+        legacy_pretraining_format,
+        system_prompt,
+    ), "system_prompt and legacy_pretraining_format must have been set"
 
     process_mode = ILAB_PROCESS_MODES.ATTACHED
     if detached:
