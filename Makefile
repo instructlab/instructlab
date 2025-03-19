@@ -161,14 +161,6 @@ verify: check-tox ## Run linting and formatting checks via tox
 fix: check-tox ## Fix formatting and linting violation with Ruff
 	tox -e fix
 
-.PHONY: spellcheck
-spellcheck: .spellcheck.yml ## Spellcheck markdown files
-	pyspelling --config $<
-
-.PHONY: spellcheck-sort
-spellcheck-sort: .spellcheck-en-custom.txt ## Sort and remove duplicate from the spellcheck custom file
-	sort --dictionary-order --unique --output $< $<
-
 .PHONY: docs
 docs: check-tox  ## Generate Sphinx docs and man pages
 	tox -e docs

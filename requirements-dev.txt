@@ -6,7 +6,6 @@ pre-commit>=3.0.4,<4.0
 pydeps>=1.12.12,<2
 pylint>=2.16.2,<4.0
 pylint-pydantic
-pyspelling>=2.0
 pytest
 pytest-asyncio
 pytest-cov[toml]
