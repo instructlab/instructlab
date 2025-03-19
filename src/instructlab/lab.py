@@ -4,6 +4,7 @@
 
 # Standard
 import multiprocessing
+import pathlib
 
 # Third Party
 import click
@@ -25,10 +26,11 @@ multiprocessing.set_start_method(cfg.DEFAULTS.MULTIPROCESSING_START_METHOD, forc
 @click.option(
     "--config",
     "config_file",
-    type=click.Path(),
+    type=click.Path(path_type=pathlib.Path),
     default=cfg.DEFAULTS.CONFIG_FILE,
     show_default=True,
     help="Path to a configuration file.",
+    required=True,
 )
 @click.option(
     "-v",
@@ -42,7 +44,7 @@ multiprocessing.set_start_method(cfg.DEFAULTS.MULTIPROCESSING_START_METHOD, forc
 @click.version_option(package_name="instructlab")
 @click.pass_context
 # pylint: disable=redefined-outer-name
-def ilab(ctx, config_file, debug_level: int = 0):
+def ilab(ctx, config_file: pathlib.Path, debug_level: int = 0):
     """CLI for interacting with InstructLab.
 
     If this is your first time running ilab, it's best to start with `ilab config init` to create the environment.

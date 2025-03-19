@@ -155,7 +155,8 @@ class _chat(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore")
     model: str = Field(
-        default_factory=lambda: DEFAULTS.DEFAULT_CHAT_MODEL,
+        # @TODO: Switch to pathlib.Path once 'chat' subcommand options have been updated
+        default_factory=lambda: str(DEFAULTS.DEFAULT_CHAT_MODEL),
         description="Model to be used for chatting with.",
     )
     # additional fields with defaults
@@ -260,7 +261,8 @@ class _serve(BaseModel):
         description="llama-cpp serving settings.",
     )
     model_path: StrictStr = Field(
-        default_factory=lambda: DEFAULTS.DEFAULT_CHAT_MODEL,
+        # @TODO: Switch to pathlib.Path once 'serve' subcommand options have been updated
+        default_factory=lambda: str(DEFAULTS.DEFAULT_CHAT_MODEL),
         description="Directory where model to be served is stored.",
     )
     # additional fields with defaults
@@ -298,7 +300,8 @@ class _convert(BaseModel):
         description="Directory where converted documents are stored.",
     )
     taxonomy_path: StrictStr = Field(
-        default_factory=lambda: DEFAULTS.TAXONOMY_DIR,
+        # @TODO: Switch to pathlib.Path once 'rag' subcommand options have been updated
+        default_factory=lambda: str(DEFAULTS.TAXONOMY_DIR),
         description="Directory where taxonomy is stored and accessed from.",
     )
     taxonomy_base: StrictStr = Field(
@@ -357,7 +360,8 @@ class _generate(BaseModel):
         description="Teacher model that will be used to synthetically generate training data.",
     )
     taxonomy_path: StrictStr = Field(
-        default_factory=lambda: DEFAULTS.TAXONOMY_DIR,
+        # @TODO: Switch to pathlib.Path once 'generate' subcommand options have been updated
+        default_factory=lambda: str(DEFAULTS.TAXONOMY_DIR),
         description="Directory where taxonomy is stored and accessed from.",
     )
     taxonomy_base: StrictStr = Field(
@@ -461,7 +465,8 @@ class _mtbenchbranch(BaseModel):
     )
 
     taxonomy_path: str = Field(
-        default_factory=lambda: DEFAULTS.TAXONOMY_DIR,
+        # @TODO: Switch to pathlib.Path once 'evaluate' subcommand options have been updated
+        default_factory=lambda: str(DEFAULTS.TAXONOMY_DIR),
         description="Path to where base taxonomy is stored.",
     )
     output_dir: str = Field(
@@ -1159,7 +1164,9 @@ def get_dict(cfg: Config) -> dict[str, typing.Any]:
     return cfg.model_dump()
 
 
-def write_config(cfg: Config, config_file: typing.Optional[str] = None) -> None:
+def write_config(
+    cfg: Config, config_file: typing.Optional[pathlib.Path] = None
+) -> None:
     """Writes configuration to a disk"""
     config_file = DEFAULTS.CONFIG_FILE if config_file is None else config_file
     write_config_to_yaml(cfg, config_file)
@@ -1295,7 +1302,7 @@ def set_comment(
     )
 
 
-def write_config_to_yaml(cfg: Config, file_path: str):
+def write_config_to_yaml(cfg: Config, file_path: pathlib.Path):
     """
     Write a Pydantic model to a YAML file with comments derived from field descriptions.
 
@@ -1490,7 +1497,7 @@ def init(
 ) -> None:
     config_obj: Config
     error_msg: str | None = None
-    if config_file == "DEFAULT":
+    if str(config_file) == "DEFAULT":
         # if user passed --config DEFAULT we should ensure all proper dirs are created
         ensure_storage_directories_exist()
         config_obj = get_default_config()
