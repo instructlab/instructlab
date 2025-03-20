@@ -358,6 +358,7 @@ update_rh_nvidia_drivers() {
 
 install_rh_nvidia_drivers() {
     local should_update=$1
+    "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" sudo dnf remove -y "*cuda*"
     if [[ "$should_update" == "true" ]]; then
         "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" sudo dnf update -y
         "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" sudo reboot
