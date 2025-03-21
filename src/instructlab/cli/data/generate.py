@@ -17,6 +17,7 @@ from instructlab.client_utils import HttpClientParams
 from instructlab.configuration import DEFAULTS, resolve_model_id
 from instructlab.data.generate_data import gen_data  # type: ignore
 from instructlab.defaults import ILAB_PROCESS_MODES
+from instructlab.model.download import resolve_model_path
 from instructlab.utils import (
     contains_argument,
     get_model_arch,
@@ -272,7 +273,7 @@ def generate(
                 raise ValueError(
                     f"Teacher model with ID '{teacher_model_id}' not found in the configuration."
                 )
-            model_path = teacher_model_config.path
+            model_path = resolve_model_path(teacher_model_config.path)
         except ValueError as ve:
             click.secho(f"failed to locate teacher model by ID: {ve}", fg="red")
             raise click.exceptions.Exit(1)

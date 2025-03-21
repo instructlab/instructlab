@@ -45,7 +45,7 @@ class ModelDownloader(abc.ABC):
         self.download_dest = download_dest
 
     @abc.abstractmethod
-    def download(self) -> None:
+    def download(self) -> Path:
         """Downloads model from specified repo/release and stores it into download_dest"""
 
 
@@ -70,7 +70,7 @@ class HFDownloader(ModelDownloader):
         self.filename = filename
         self.hf_token = hf_token or None
 
-    def download(self):
+    def download(self) -> Path:
         """
         Download specified model from Hugging Face
         """
@@ -83,9 +83,8 @@ class HFDownloader(ModelDownloader):
                 hf_logging.set_verbosity(self.log_level)
             files = list_repo_files(repo_id=self.repository, token=self.hf_token)
             if any(re.search(r"\.(safetensors|bin)$", fname) for fname in files):
-                self.download_entire_hf_repo()
-            else:
-                self.download_gguf()
+                return self.download_entire_hf_repo()
+            return self.download_gguf()
 
         except GatedRepoError as exc:
             raise ValueError(
@@ -98,7 +97,7 @@ class HFDownloader(ModelDownloader):
                 f"\nDownloading model failed with the following Hugging Face Hub error:\n{DEFAULT_INDENT}{exc}"
             ) from exc
 
-    def download_gguf(self) -> None:
+    def download_gguf(self) -> Path:
         try:
             hf_hub_download(
                 token=self.hf_token,
@@ -108,12 +107,15 @@ class HFDownloader(ModelDownloader):
                 local_dir=self.download_dest,
             )
 
+            self.download_dest = Path(os.path.join(self.download_dest, self.filename))
+            return self.download_dest
+
         except Exception as exc:
             raise RuntimeError(
                 f"\nDownloading GGUF model failed with the following Hugging Face Hub error:\n{DEFAULT_INDENT}{exc}"
             ) from exc
 
-    def download_entire_hf_repo(self) -> None:
+    def download_entire_hf_repo(self) -> Path:
         try:
             local_dir = os.path.join(self.download_dest, self.repository)
             os.makedirs(name=local_dir, exist_ok=True)
@@ -124,6 +126,9 @@ class HFDownloader(ModelDownloader):
                 revision=self.release,
                 local_dir=local_dir,
             )
+
+            self.download_dest = Path(local_dir)
+            return self.download_dest
         except Exception as exc:
             raise RuntimeError(
                 f"\nDownloading safetensors model failed with the following Hugging Face Hub error:\n{DEFAULT_INDENT}{exc}"
@@ -188,7 +193,7 @@ class OCIDownloader(ModelDownloader):
 
         return oci_model_file_map
 
-    def download(self):
+    def download(self) -> Path:
         logger.info(
             f"Downloading model from OCI registry:\n{DEFAULT_INDENT}Model: {self.repository}@{self.release}\n{DEFAULT_INDENT}Destination: {self.download_dest}"
         )
@@ -246,6 +251,9 @@ class OCIDownloader(ModelDownloader):
                 dest_model_path,
             )
 
+        self.download_dest = Path(os.path.join(self.download_dest, model_name))
+        return self.download_dest
+
 
 def download_models(
     log_level: str,
@@ -257,6 +265,8 @@ def download_models(
 ):
     """Downloads model from a specified repository"""
     downloader: ModelDownloader
+
+    download_dests = []
 
     # strict = false ensures that if you just give --repository <some_safetensor> we won't error because len(filenames) is greater due to the defaults
     for repository, filename, release in zip(
@@ -284,7 +294,7 @@ def download_models(
             )
 
         try:
-            downloader.download()
+            download_dests.append(downloader.download())
             logger.info(
                 f"\nᕦ(òᴗóˇ)ᕤ {downloader.repository} model download completed successfully! ᕦ(òᴗóˇ)ᕤ\n"
             )
@@ -301,3 +311,34 @@ def download_models(
 
     logger.info("Available models (`ilab model list`):")
     list_and_print_models([Path(model_dir)], False)
+    return download_dests
+
+
+def resolve_model_path(
+    model_path: str,
+) -> Path:
+    """
+    This function resolves the model path (which may be a HF path, OCI URL or local path) and returns a local path for the model after downloading it (if required)
+
+    Args:
+        model_path (str): The path expressed for the model in the model config
+    Returns:
+        Path: The local path to the model
+    """
+
+    # if the model path is already a local path that exists, return it as is
+    if os.path.exists(model_path):
+        return Path(model_path)
+
+    try:
+        download_dests = download_models(
+            log_level="INFO",
+            repositories=[model_path],
+            releases=["latest"],
+            filenames=[],
+            model_dir=Path(DEFAULTS.MODELS_DIR),
+            hf_token=os.getenv("HF_TOKEN") or "",
+        )
+        return Path(download_dests[0])
+    except Exception as e:
+        raise ValueError(f"Could not download model from {model_path}: {e}") from e

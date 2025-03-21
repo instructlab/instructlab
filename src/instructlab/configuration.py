@@ -691,16 +691,16 @@ class _model_config(BaseModel):
 
     Attributes:
         id (str): Internal ID referring to a particular model from the list.
-        path (str | None): Path to where the model can be found. Can either be a HF reference or local filepath.
+        path (str): Path to where the model can be found. Can either be a HF reference, OCI URL or local filepath.
         system_prompt (str | None): The initial message used to prompt the conversation with this model.
     """
 
     id: str = Field(
         description="Internal ID referring to a particular model from the list.",
     )
-    path: str | None = Field(
+    path: str = Field(
         description="Path to where the model can be found. Can either be a HF reference or local filepath.",
-        default=None,
+        default="",
     )
     system_prompt: str | None = Field(
         description='The initial message used to prompt the conversation with this model. E.g. "You are a helfpul AI assistant..."',
