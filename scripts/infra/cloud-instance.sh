@@ -367,6 +367,14 @@ install_rh_nvidia_drivers() {
     fi
     "${BASH_SOURCE[0]}" "$CLOUD_TYPE" scp -n "$INSTANCE_NAME" "${SCRIPT_DIR}"/nvidia-setup.sh
     "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" "sudo ./nvidia-setup.sh"
+
+    cat <<-EOF | "${BASH_SOURCE[0]}" "$CLOUD_TYPE" ssh -n "$INSTANCE_NAME" sudo dd of=/etc/motd.d/cuda-warning
+===========================================================================
+Important: Running \`dnf update\` may invalidate the GPU drivers. Requiring a
+           rerun of \`cloud-instance.sh $CLOUD_TYPE install-rh-nvidia-drivers\`
+===========================================================================
+EOF
+
     echo "You may want to reboot even though the install is live (${BASH_SOURCE[0]} ${CLOUD_TYPE} ssh sudo reboot)"
 }
 
