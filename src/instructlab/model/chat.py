@@ -31,6 +31,7 @@ from instructlab import client_utils as ilabclient
 from instructlab import configuration as cfg
 from instructlab import log
 from instructlab.client_utils import HttpClientParams
+from instructlab.model.download import resolve_model_path
 
 # Local
 from ..client_utils import http_client
@@ -627,7 +628,7 @@ def chat_model(
             logger.error(f"failed to load model from ID: {ve}")
             raise
 
-        model = model_cfg.path
+        model = resolve_model_path(model_cfg.path)
 
         # if loading a specific model from the list, we should only be loading from the tokenizer config
         chat_template = CHAT_TEMPLATE_TOKENIZER
