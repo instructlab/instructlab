@@ -147,6 +147,26 @@ the [CLI README](https://github.com/instructlab/instructlab?tab=readme-ov-file#%
 and use the `nvtop` utility to validate GPU utilization when interacting
 with `ilab model chat` or `ilab data generate`
 
+#### Troubleshooting CUDA environments
+
+##### Updating Packages
+
+If during a dnf update on a sytem with cuda drivers you hit a packaging dependecy error e.g.
+
+```text
+ Problem: problem with installed package cudnn9-cuda-12-4-9.1.1.17-1.x86_64
+  - package cudnn9-cuda-12-4-9.1.1.17-1.x86_64 from @System requires libcudnn9-static-cuda-12 = 9.1.1.17, but none of the providers can be installed
+  - package cudnn9-cuda-12-4-9.1.1.17-1.x86_64 from cuda-rhel9-x86_64 requires libcudnn9-static-cuda-12 = 9.1.1.17, but none of the providers can be installed
+  - package cudnn9-cuda-12-4-9.1.0.70-1.x86_64 from cuda-rhel9-x86_64 requires libcudnn9-static-cuda-12 = 9.1.0.70, but none of the providers can be installed
+...
+```
+
+You may find it beneficial to remove all CUDA drivers, update and install them again
+
+```shell
+sudo dnf remove "*cuda*"
+```
+
 ### AMD/ROCm
 
 Your user account must be in the `video` and `render` group to have permission
