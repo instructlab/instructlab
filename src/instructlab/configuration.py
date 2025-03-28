@@ -698,9 +698,11 @@ class _model_config(BaseModel):
     id: str = Field(
         description="Internal ID referring to a particular model from the list.",
     )
-    path: str | None = Field(
+    family: str = Field(
+        description="Family the model belongs to.",
+    )
+    path: str = Field(
         description="Path to where the model can be found. Can either be a HF reference or local filepath.",
-        default=None,
     )
     system_prompt: str | None = Field(
         description='The initial message used to prompt the conversation with this model. E.g. "You are a helfpul AI assistant..."',
@@ -1321,7 +1323,8 @@ def get_model_family(family, model_path):
     family = MODEL_FAMILY_MAPPINGS.get(family, family)
     if family:
         if family.lower() not in MODEL_FAMILIES:
-            raise ConfigException(f"Unknown model family: {family}")
+            # raise ConfigException(f"Unknown model family: {family}")
+            logger.warning(f"Unknown model family: {family}.")
 
         return family.lower()
 
