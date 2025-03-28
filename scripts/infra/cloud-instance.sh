@@ -14,6 +14,20 @@ else
     exit 1
 fi
 
+latest_centos_9_ami() {
+    # Look up the latest CentOS 9 AMI ID for $EC2_REGION.
+    # See https://www.centos.org/download/aws-images/
+    # The CentOS CPE team publishes these with their account ID:
+    local CENTOS_CPE_AWS_ID=125523088429
+    aws ec2 describe-images \
+      --owners $CENTOS_CPE_AWS_ID \
+      --filters "Name=name,Values=CentOS Stream 9 x86_64*" \
+      --region "$EC2_REGION" \
+      --query "sort_by(Images[], &CreationDate)[-1].[ImageId]" \
+      --output text
+}
+
+
 ec2__launch() {
     if [ -z ${EC2_SUBNET_VARS+x} ]; then
         EC2_SUBNET_VARS=("EC2_SUBNET_ID")
@@ -21,6 +35,7 @@ ec2__launch() {
 
     local instance_type
     instance_type="${INSTANCE_TYPE:-$EC2_INSTANCE_TYPE}"
+    [ -n "$EC2_AMI_ID" ] || EC2_AMI_ID=$(latest_centos_9_ami)
 
     for subnet_var in "${EC2_SUBNET_VARS[@]}"; do
         subnet="${!subnet_var}"
