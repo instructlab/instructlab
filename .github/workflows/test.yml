@@ -125,7 +125,7 @@ jobs:
       - name: Install tools on MacOS
         if: startsWith(matrix.platform, 'macos')
         run: |
-          brew install expect coreutils bash skopeo
+          brew install expect coreutils bash skopeo tesseract
 
       - name: Setup Python ${{ matrix.python }}
         uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
