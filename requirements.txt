@@ -14,7 +14,7 @@ instructlab-schema>=0.4.2
 instructlab-sdg>=0.7.2
 # XXX(osilkin): we need to pin this version for now while we improve tokenizer logic
 # see: https://github.com/instructlab/training/pull/428
-instructlab-training>=0.7.0,<0.7.1
+instructlab-training>=0.8.0
 llama_cpp_python[server]==0.3.6
 mlx>=0.5.1,<0.6.0; sys_platform == 'darwin' and platform_machine == 'arm64'
 numpy>=1.26.4,<2.0.0
