@@ -173,7 +173,9 @@ def train(train_args, device, optimize_memory):
         )
     )
 
-    model, dataloader = setup_model(train_args, tokenizer, dataset, optimize_memory)
+    model, dataloader = setup_model(
+        train_args, tokenizer, dataset, optimize_memory, packing_max_batch_len, accum
+    )
 
     # Get virtual memory statistics
     memory_info = psutil.virtual_memory()
