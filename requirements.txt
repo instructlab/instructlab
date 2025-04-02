@@ -42,4 +42,5 @@ psutil>=6.0.0
 huggingface_hub[hf_transfer]>=0.1.8
 haystack-ai>=2.8
 docling-core[chunking]>=2.10.0
+docling>=2.18.0
 sentence-transformers>=3.0.0
