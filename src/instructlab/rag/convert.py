@@ -6,10 +6,11 @@
 
 # Standard
 from pathlib import Path
-from typing import Iterable
+from typing import Iterable, Optional
 import json
 import logging
 import os
+import sys
 import tempfile
 import time
 
@@ -21,6 +22,7 @@ from docling.datamodel.pipeline_options import EasyOcrOptions  # type: ignore
 from docling.datamodel.pipeline_options import OcrOptions  # type: ignore
 from docling.datamodel.pipeline_options import PdfPipelineOptions  # type: ignore
 from docling.datamodel.pipeline_options import TesseractOcrOptions  # type: ignore
+from docling.datamodel.pipeline_options import AcceleratorDevice, AcceleratorOptions
 from xdg_base_dirs import xdg_data_dirs, xdg_data_home
 import yaml
 
@@ -175,7 +177,13 @@ def _initialize_docling():
         artifacts_path=docling_model_path,
         do_ocr=False,
     )
-    ocr_options = _resolve_ocr_options()
+
+    # deactivate MPS acceleration on Github CI
+    if os.getenv("CI") and sys.platform == "darwin":
+        pipeline_options.accelerator_options = AcceleratorOptions(
+            device=AcceleratorDevice.CPU
+        )
+    ocr_options = resolve_ocr_options(docling_model_path=docling_model_path)
     if ocr_options is not None:
         pipeline_options.do_ocr = True
         pipeline_options.ocr_options = ocr_options
@@ -192,13 +200,18 @@ def _initialize_docling():
 
 # Adapted from sdg.utils.chunkers because that code is being refactored so we want to avoid importing anything from it.
 # TODO: Once the code base has settled down, we should make sure this code exists only in one place.
-def _resolve_ocr_options() -> OcrOptions:
+def resolve_ocr_options(
+    docling_model_path: Optional[Path] = None,
+) -> Optional[OcrOptions]:
     """
     Attempts to resolve OCR options for a PDF document. It first tries to use the Tesseract OCR library,
     and if that fails, it tries the EasyOCR library. If neither of these libraries are available, it
     returns None to indicate that OCR will not be used. Note that it imports the OCR libraries inside
     the code if/when they are needed because they are kind of heavy.
     """
+    # Declare ocr_options explicitly as Optional[OcrOptions]
+    ocr_options: Optional[OcrOptions] = None
+
     # First, attempt to use tesserocr
     try:
         ocr_options = TesseractOcrOptions()
@@ -209,11 +222,16 @@ def _resolve_ocr_options() -> OcrOptions:
             TesseractOcrModel,
         )
 
-        _ = TesseractOcrModel(True, ocr_options)
+        _ = TesseractOcrModel(
+            enabled=True,
+            artifacts_path=docling_model_path,
+            options=ocr_options,
+            accelerator_options=AcceleratorOptions(device=AcceleratorDevice.CPU),
+        )
         return ocr_options
     except ImportError:
         # No tesserocr, so try something else
-        pass
+        logger.warning("Tesseract not found, falling back to EasyOCR.")
     try:
         # pylint: disable=import-outside-toplevel
         # Third Party
@@ -221,13 +239,22 @@ def _resolve_ocr_options() -> OcrOptions:
             EasyOcrModel,
         )
 
-        ocr_options = EasyOcrOptions()
-
-        # Keep easyocr models on the CPU instead of GPU
-        ocr_options.use_gpu = False
+        ocr_options = EasyOcrOptions(
+            lang=["en"],
+            use_gpu=None,
+            confidence_threshold=0.5,
+            model_storage_directory=str(docling_model_path),
+            recog_network="standard",
+            download_enabled=True,
+        )
         # triggers torch loading, import lazily
 
-        _ = EasyOcrModel(True, ocr_options)
+        _ = EasyOcrModel(
+            enabled=True,
+            artifacts_path=None,
+            options=ocr_options,
+            accelerator_options=AcceleratorOptions(device=AcceleratorDevice.CPU),
+        )
         return ocr_options
     except ImportError:
         # no easyocr either, so don't use any OCR
