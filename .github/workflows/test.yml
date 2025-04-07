@@ -48,10 +48,6 @@ jobs:
     with:
       job_ids: >- # Space-separated job ids to wait on for status checks
         DCO
-        actionlint
-        markdown-lint
-        shellcheck
-        lint-workflow-complete
 
   test:
     # Start name with 'test:' for test-workflow-complete job_ids
