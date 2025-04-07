@@ -68,7 +68,9 @@ jobs:
           - "ubuntu-latest"
         include:
           - python: "3.11"
-            platform: "macos-latest"
+            # Use macos-15 instead of -latest (-14) since it fixes MPS in
+            # nested virtualization environment.
+            platform: "macos-15"
     steps:
       - name: "Harden Runner"
         uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
