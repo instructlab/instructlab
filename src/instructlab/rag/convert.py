@@ -178,11 +178,6 @@ def _initialize_docling():
         do_ocr=False,
     )
 
-    # deactivate MPS acceleration on Github CI
-    if os.getenv("CI") and sys.platform == "darwin":
-        pipeline_options.accelerator_options = AcceleratorOptions(
-            device=AcceleratorDevice.CPU
-        )
     ocr_options = resolve_ocr_options(docling_model_path=docling_model_path)
     if ocr_options is not None:
         pipeline_options.do_ocr = True

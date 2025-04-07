@@ -120,10 +120,6 @@ jobs:
           rm -rf "$GITHUB_WORKSPACE"/src/github.com/containers/skopeo
           skopeo --version
 
-      - name: set CI value
-        run: |
-          export CI="true"
-
       - name: Install tools on MacOS
         if: startsWith(matrix.platform, 'macos')
         run: |
