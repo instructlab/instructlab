@@ -220,7 +220,7 @@ def train(train_args, device, optimize_memory):
             for k in batch:
                 batch[k] = batch[k].to(device=dev)
 
-            output = model(**batch, use_cache=False, return_dict=True)
+            output = model(**batch, use_cache=False, return_dict_in_generate=True)
             loss = output.loss
             aggregated_values[2] = loss.item()
 
