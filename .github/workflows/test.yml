@@ -122,6 +122,18 @@ jobs:
           rm -rf "$GITHUB_WORKSPACE"/src/github.com/containers/skopeo
           skopeo --version
 
+        # deactivate MPS acceleration on Github CI for MacOS
+        # see https://github.com/actions/runner-images/issues/9918
+      - name: Disable MPS acceleration on MacOS
+        if: startsWith(matrix.platform, 'macos')
+        run: |
+          echo 'INSTRUCTLAB_DISABLE_GPU_ACCELERATION="true"' >> "$GITHUB_ENV"
+
+      - name: Enable MPS acceleration on non-MacOS runners
+        if: ! startsWith(matrix.platform, 'macos')
+        run: |
+          echo 'INSTRUCTLAB_DISABLE_GPU_ACCELERATION=' >> "$GITHUB_ENV"
+
       - name: Install tools on MacOS
         if: startsWith(matrix.platform, 'macos')
         run: |
