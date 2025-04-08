@@ -122,18 +122,6 @@ jobs:
           rm -rf "$GITHUB_WORKSPACE"/src/github.com/containers/skopeo
           skopeo --version
 
-        # deactivate MPS acceleration on Github CI for MacOS
-        # see https://github.com/actions/runner-images/issues/9918
-      - name: Disable MPS acceleration on MacOS
-        if: startsWith(matrix.platform, 'macos')
-        run: |
-          echo 'INSTRUCTLAB_DISABLE_GPU_ACCELERATION="true"' >> "$GITHUB_ENV"
-
-      - name: Enable MPS acceleration on non-MacOS runners
-        if: ! startsWith(matrix.platform, 'macos')
-        run: |
-          echo 'INSTRUCTLAB_DISABLE_GPU_ACCELERATION=' >> "$GITHUB_ENV"
-
       - name: Install tools on MacOS
         if: startsWith(matrix.platform, 'macos')
         run: |
@@ -176,7 +164,17 @@ jobs:
           mkdir -p ~/.local/share
           echo "not a directory" > ~/.local/share/instructlab
 
-      - name: Run unit and functional tests with tox
+      # deactivate MPS acceleration on Github CI for MacOS
+      # see https://github.com/actions/runner-images/issues/9918
+      - name: Run unit and functional tests with tox (MacOS runners only)
+        if: startsWith(matrix.platform, 'macos')
+        run: |
+          tox
+        env:
+          INSTRUCTLAB_DISABLE_GPU_ACCELERATION: "true"
+
+      - name: Run unit and functional tests with tox (non-MacOS runners)
+        if: ${{ ! startsWith(matrix.platform, 'macos') }}
         run: |
           tox
 
