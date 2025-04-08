@@ -1,2 +1,2 @@
 # Extra dependencies for AMD ROCm
-instructlab-training[rocm]>=0.8.0
+instructlab-training @ git+https://github.com/jaideepr97/training.git@fix-bug
