@@ -130,7 +130,7 @@ jobs:
           echo 'INSTRUCTLAB_DISABLE_GPU_ACCELERATION="true"' >> "$GITHUB_ENV"
 
       - name: Enable MPS acceleration on non-MacOS runners
-        if: ! startsWith(matrix.platform, 'macos')
+        if: ${{ ! startsWith(matrix.platform, 'macos') }}
         run: |
           echo 'INSTRUCTLAB_DISABLE_GPU_ACCELERATION=' >> "$GITHUB_ENV"
 
