@@ -1,7 +1,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 # Standard
-from io import BytesIO
 from pathlib import Path
 from typing import Dict, Iterable, Iterator, List, Optional, Union
 from unittest.mock import patch
@@ -11,6 +10,7 @@ from click.testing import CliRunner
 from docling.backend.docling_parse_v2_backend import (  # type: ignore  # noqa: F401
     DoclingParseV2DocumentBackend,
 )
+from docling.datamodel.base_models import DocumentStream  # type: ignore  # noqa: F401
 from docling.datamodel.base_models import (  # type: ignore  # noqa: F401
     ConversionStatus,
     InputFormat,
@@ -36,7 +36,7 @@ class MockDocumentConverter:
 
     def convert_all(
         self,
-        source: Iterable[Union[Path, BytesIO]],  # pylint: disable=unused-argument; noqa: ARG002
+        source: Iterable[Union[Path, str, DocumentStream]],  # pylint: disable=unused-argument; noqa: ARG002
         raises_on_error: bool = True,  # pylint: disable=unused-argument; noqa: ARG002
     ) -> Iterator[ConversionResult]:
         # Third Party
