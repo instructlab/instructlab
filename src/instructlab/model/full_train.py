@@ -20,18 +20,62 @@ from instructlab.utils import is_macos_with_m_chip
 logger = logging.getLogger(__name__)
 
 
-def setup_model(
-    train_args,
-    tokenizer,
-    dataset,
-    optimize_memory: bool,
-    packing_max_batch_len: int,
-    accum: int,
-):
+def train(train_args, device, optimize_memory):
+    """
+    train runs a CPU and MacOS optimized version of full fine tuning.
+    Adafactor is the optimizer of choice and the multiprocessing method is set to spawn.
+    Dataloading functions imported from the training library.
+    """
+
     # pylint: disable=no-name-in-module
     # Third Party
-    from instructlab.training import multipack_sampler, utils
+    from instructlab.training import config
+    from instructlab.training import data_process as dp
+    from instructlab.training import (
+        multipack_sampler,
+        token_dataset,
+        tokenizer_utils,
+        utils,
+    )
     from torch.utils.data import DataLoader
+    import torch
+
+    dp.main(
+        config.DataProcessArgs(
+            data_output_path=train_args.data_output_dir,
+            model_path=train_args.model_path,
+            data_path=train_args.data_path,
+            max_seq_len=train_args.max_seq_len,
+            chat_tmpl_path=train_args.chat_tmpl_path,
+        )
+    )
+
+    # load chat template based on path in the args
+    CHAT_TEMPLATE, SPECIAL_TOKENS = utils.retrieve_chat_template(
+        train_args.chat_tmpl_path
+    )
+    # get the tokenizer for the model
+    tokenizer = tokenizer_utils.setup_tokenizer(
+        train_args.model_path, SPECIAL_TOKENS, CHAT_TEMPLATE
+    )
+
+    # setup the dataset and place it in data.jsonl, this needs to be used for training NOT the jsonl produced by sdg
+    dataset = token_dataset.setup_dataset(
+        os.path.join(train_args.data_output_dir, "data.jsonl"),
+    )
+
+    # based on the length of the dataset, figure out the max batch len
+    packing_max_batch_len, accum = (
+        multipack_sampler.find_packing_max_batch_len_and_grad_accum(
+            num_gpus=1,
+            avg_sample_len=dataset.get_lengths().mean(),
+            effective_batch_size=train_args.effective_batch_size,
+            max_batch_len_per_gpu=train_args.max_batch_len,
+            is_padding=False,
+            dataset=dataset,
+            seed=47,
+        )
+    )
 
     collate_fn = partial(pad_collate_fn, pad_token_id=tokenizer.pad_token_id)
 
@@ -59,6 +103,8 @@ def setup_model(
     logger.info(
         f"avg_sample_len: {dataset.get_lengths().mean()}\n effective_batch_size: {train_args.effective_batch_size}\n max_batch_len: {train_args.max_batch_len}\n packing_max_batch_len: {packing_max_batch_len} \n grad_accum: {accum}\n  num_batches: {len(dataloader)}\n avg_samples_per_batch: {len(dataset) / len(dataloader)}"
     )
+    # set device based off argument given
+    dev = torch.device(device)
 
     # if the user specified --optimize-memory OR they are on a Mac, set dtype=auto
     torch_dtype = "auto" if (optimize_memory or is_macos_with_m_chip()) else "float32"
@@ -113,75 +159,11 @@ def setup_model(
         )
         model.config.eos_token_id = tokenizer.eos_token_id
 
-    # ensure the model has any tokens which were added to the tokenizer
-    if tokenizer.pad_token_id is not None and model.config.pad_token_id is None:
-        model.config.pad_token_id = tokenizer.pad_token_id
-    if tokenizer.bos_token_id is not None and model.config.bos_token_id is None:
-        model.config.bos_token_id = tokenizer.bos_token_id
-    if tokenizer.eos_token_id is not None and model.config.eos_token_id is None:
-        model.config.eos_token_id = tokenizer.eos_token_id
-
     model = utils.convert_loss_to_reduce_sum(model)
     model = utils.add_noisy_embeddings(model, noise_alpha=None)
-    return model, dataloader
-
-
-def train(train_args, device, optimize_memory):
-    """
-    train runs a CPU and MacOS optimized version of full fine tuning.
-    Adafactor is the optimizer of choice and the multiprocessing method is set to spawn.
-    Dataloading functions imported from the training library.
-    """
-
-    # pylint: disable=no-name-in-module
-    # Third Party
-    from instructlab.training import config
-    from instructlab.training import data_process as dp
-    from instructlab.training import multipack_sampler, token_dataset, tokenizer_utils
-    import torch
-
-    dp.main(
-        config.DataProcessArgs(
-            data_output_path=train_args.data_output_dir,
-            model_path=train_args.model_path,
-            data_path=train_args.data_path,
-            max_seq_len=train_args.max_seq_len,
-            chat_tmpl_path=train_args.chat_tmpl_path,
-        )
-    )
-
-    # load chat template based on path in the args
-    tokenizer = tokenizer_utils.setup_tokenizer(
-        train_args.model_path, train_args.chat_tmpl_path
-    )
-
-    # setup the dataset and place it in data.jsonl, this needs to be used for training NOT the jsonl produced by sdg
-    dataset = token_dataset.setup_dataset(
-        os.path.join(train_args.data_output_dir, "data.jsonl"),
-    )
-
-    # based on the length of the dataset, figure out the max batch len
-    packing_max_batch_len, accum = (
-        multipack_sampler.find_packing_max_batch_len_and_grad_accum(
-            num_gpus=1,
-            avg_sample_len=dataset.get_lengths().mean(),
-            effective_batch_size=train_args.effective_batch_size,
-            max_batch_len_per_gpu=train_args.max_batch_len,
-            is_padding=False,
-            dataset=dataset,
-            seed=47,
-        )
-    )
-
-    model, dataloader = setup_model(
-        train_args, tokenizer, dataset, optimize_memory, packing_max_batch_len, accum
-    )
 
     # Get virtual memory statistics
     memory_info = psutil.virtual_memory()
-
-    # set device based off argument given
-    dev = torch.device(device)
 
     # Total RAM
     total_ram = memory_info.total / (1024**3)  # Convert to GB
