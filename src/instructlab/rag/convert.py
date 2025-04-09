@@ -181,6 +181,8 @@ def _initialize_docling():
         pipeline_options.accelerator_options = AcceleratorOptions(
             device=AcceleratorDevice.CPU
         )
+        logger.info("Disabling GPU acceleration for Docling.")
+
     ocr_options = resolve_ocr_options(docling_model_path=docling_model_path)
     if ocr_options is not None:
         pipeline_options.do_ocr = True
