@@ -11,7 +11,7 @@ httpx>=0.25.0
 instructlab-eval>=0.5.1
 instructlab-quantize>=0.1.0
 instructlab-schema>=0.4.2
-instructlab-sdg>=0.7.2
+instructlab-sdg>=0.7.3
 # XXX(osilkin): we need to pin this version for now while we improve tokenizer logic
 # see: https://github.com/instructlab/training/pull/428
 instructlab-training>=0.8.0
