@@ -16,7 +16,7 @@ HW_EXTRAS = frozenset({"cpu", "cuda", "hpu", "mps", "rocm"})
 # special cases
 EXTRA_CHECKS = {
     "hpu": {
-        "torch": Version("2.3.1a0"),
+        "torch": Version("2.6.0"),
         "transformers": Version("4.43.0"),
     }
 }

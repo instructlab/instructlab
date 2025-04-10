@@ -31,8 +31,8 @@ sentencepiece>=0.2.0
 # "old" version required for vLLM on CUDA to build
 tokenizers>=0.11.1
 toml>=0.10.2
-# Default version. Can be overridden in extra requirements
-torch>=2.3.0,<2.6.0
+# Default version. Can be overridden in extra requirements. Do not cap this dependency here. Cap in constraints-dev.txt
+torch>=2.6.0
 tqdm>=4.66.2
 # temporary cap until https://github.com/instructlab/training/pull/443 is merged and consumed within instructlab
 # above PR fixes interactions with newer versions of transformers through the training library
