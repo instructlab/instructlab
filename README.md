@@ -18,7 +18,7 @@
 - [📋 Requirements](#-requirements)
 - [✅ Getting started](#-getting-started)
   - [🧰 Installing InstructLab Core](#-installing-instructlab-core)
-    - [Install with Apple Metal on M1/M2/M3 Macs](#install-with-apple-metal-on-m1m2m3-macs)
+    - [Install with Apple Metal on M1/M2/M3/M4 Macs](#install-with-apple-metal-on-m1m2m3-macs)
     - [Install with no GPU acceleration and PyTorch without CUDA bindings](#install-using-pytorch-without-cuda-bindings-and-no-gpu-acceleration)
     - [Install with AMD ROCm](#install-with-amd-rocm)
     - [Install with Nvidia CUDA](#install-with-nvidia-cuda)
@@ -89,7 +89,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 ## 📋 Requirements
 
-- **🍎 Apple M1/M2/M3 Mac or 🐧 Linux system** (tested on Fedora). We anticipate support for more operating systems in the future.
+- **🍎 Apple M1/M2/M3/M4 Mac or 🐧 Linux system** (tested on Fedora). We anticipate support for more operating systems in the future.
 
    📋  When installing InstructLab Core on macOS, you may have to run the `xcode-select --install` command, installing the required packages listed.
 
@@ -123,7 +123,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
    See [the GPU acceleration documentation](./docs/accelerators/gpu-acceleration.md) for how to to enable hardware acceleration for interaction and training on AMD ROCm, Apple Metal Performance Shaders (MPS), and Nvidia CUDA.
 
-#### Install with Apple Metal on M1/M2/M3 Macs
+#### Install with Apple Metal on M1/M2/M3/M4 Macs
 
 - Install on Apple metal with:
 
@@ -362,6 +362,9 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    [7] APPLE M3 MAX
    [8] APPLE M3 PRO
    [9] APPLE M3
+   [10] APPLE M4 MAX
+   [11] APPLE M4 PRO
+   [12] APPLE M4
    Enter the number of your choice [hit enter for hardware defaults] [0]: 8
    You selected: /home/<user>/.local/share/instructlab/internal/system_profiles/apple/m3/m3_pro.yaml
 
