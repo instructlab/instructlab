@@ -251,11 +251,7 @@ def generate(
                     f"Teacher model with ID '{teacher_model_id}' not found in the configuration."
                 )
             model_path = teacher_model_config.path
-            model_family = (
-                teacher_model_config.family
-                if teacher_model_config.family
-                else model_family
-            )
+            model_family = model_family if model_family else teacher_model_config.family
         except ValueError as ve:
             click.secho(f"failed to locate teacher model by ID: {ve}", fg="red")
             raise click.exceptions.Exit(1)

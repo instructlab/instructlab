@@ -685,7 +685,7 @@ class _train(BaseModel):
     )
 
 
-class _model_config(BaseModel):
+class model_info(BaseModel):
     """
     Class representing the configuration for a model.
 
@@ -779,7 +779,7 @@ class Config(BaseModel):
         description="Metadata pertaining to the specifics of the system which the Configuration is meant to be applied to.",
     )
     # List of user-defined models
-    models: List[_model_config] = Field(
+    models: List[model_info] = Field(
         default_factory=lambda: [],
         description="User-defined custom set of models. This allows people to use their own models for the InstructLab model customization process.",
     )
@@ -1323,8 +1323,8 @@ def get_model_family(family, model_path):
     family = MODEL_FAMILY_MAPPINGS.get(family, family)
     if family:
         if family.lower() not in MODEL_FAMILIES:
-            # raise ConfigException(f"Unknown model family: {family}")
-            logger.warning(f"Unknown model family: {family}.")
+            # not raising an error to allow users to specify any family name
+            logger.warning(f"Using unknown model family: {family} specified by user.")
 
         return family.lower()
 
@@ -1493,6 +1493,7 @@ def init(
 ) -> None:
     config_obj: Config
     error_msg: str | None = None
+
     if config_file == "DEFAULT":
         # if user passed --config DEFAULT we should ensure all proper dirs are created
         ensure_storage_directories_exist()
@@ -1666,9 +1667,7 @@ def configs_exist() -> bool:
     return os.path.exists(DEFAULTS.CONFIG_FILE)
 
 
-def resolve_model_id(
-    model_id: str, models: List[_model_config]
-) -> _model_config | None:
+def resolve_model_id(model_id: str, models: List[model_info]) -> model_info | None:
     """
     Given a `model_id`, returns the matching model config if one is found.
     When a model is found, the following validations happen:
