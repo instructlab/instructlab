@@ -27,7 +27,6 @@ logger = logging.getLogger(__name__)
     "-m",
     "--model",
     cls=clickext.ConfigOption,
-    required=True,  # default from config
 )
 @click.option(
     "--model-id",
@@ -38,7 +37,6 @@ logger = logging.getLogger(__name__)
     "-c",
     "--context",
     cls=clickext.ConfigOption,
-    required=True,  # default from config
 )
 @click.option(
     "-s",

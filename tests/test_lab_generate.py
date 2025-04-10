@@ -1,7 +1,13 @@
 # Standard
+from pathlib import Path
+from unittest.mock import patch
 
 # Third Party
 from click.testing import CliRunner
+
+# First Party
+from instructlab import lab
+from instructlab.configuration import model_info
 
 # Local
 from . import common
@@ -22,3 +28,39 @@ def test_vllm_args_null(cli_runner: CliRunner):
         ],
     )
     common.assert_tps(args, "4")
+
+
+@patch("instructlab.cli.data.generate.gen_data")
+@patch("instructlab.cli.data.data.storage_dirs_exist", return_value=True)
+def test_generate_with_teacher_model_id(
+    mock_gen_data, _, cli_runner: CliRunner, tmp_path: Path
+):
+    fname = common.setup_test_models_config(
+        models_list=[
+            model_info(
+                id="teacher_model",
+                path="teacher/model/path",
+                family="llama",
+                system_prompt="system prompt",
+            )
+        ],
+        dest=tmp_path,
+    )
+
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            f"--config={tmp_path}/{fname}",
+            "data",
+            "generate",
+            "--teacher-model-id",
+            "teacher_model",
+            "--pipeline",
+            "simple",
+            "--output-dir",
+            str(tmp_path),
+        ],
+    )
+
+    assert result.exit_code == 0, f"Command failed with output: {result.output}"
+    assert mock_gen_data.call_count == 1
