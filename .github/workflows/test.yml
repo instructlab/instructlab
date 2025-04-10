@@ -67,9 +67,8 @@ jobs:
           - "3.11"
         platform:
           - "ubuntu-latest"
-        include:
-          - python: "3.11"
-            platform: "macos-latest"
+        # temporarily remove MacOS testing workflow until MPS related issues can be resolved
+        # see https://github.com/instructlab/instructlab/issues/3273 for details
     steps:
       - name: "Harden Runner"
         uses: step-security/harden-runner@cb605e52c26070c328afc4562f0b4ada7618a84e # v2.10.4
