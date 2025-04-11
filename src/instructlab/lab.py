@@ -4,6 +4,7 @@
 
 # Standard
 import multiprocessing
+import sys
 
 # Third Party
 import click
@@ -11,6 +12,7 @@ import click
 # First Party
 from instructlab import clickext
 from instructlab import configuration as cfg
+from instructlab.configuration import storage_dirs_exist
 
 # 'fork' is unsafe and incompatible with some hardware accelerators.
 # Python 3.14 will switch to 'spawn' on all platforms.
@@ -47,4 +49,11 @@ def ilab(ctx, config_file, debug_level: int = 0):
 
     If this is your first time running ilab, it's best to start with `ilab config init` to create the environment.
     """
+    if not any(arg in sys.argv[1:] for arg in ["init", "system", "--help"]):
+        if not storage_dirs_exist():
+            click.secho(
+                "Some ilab storage directories do not exist yet. Please run `ilab config init` before continuing.",
+                fg="red",
+            )
+            raise click.exceptions.Exit(1)
     cfg.init(ctx, config_file, debug_level)
