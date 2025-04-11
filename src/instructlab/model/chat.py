@@ -605,7 +605,7 @@ def chat_model(
     logs_dir,
     vi_mode,
     visible_overflow,
-    models_config: List[cfg._model_config],
+    models_config: List[cfg.model_info],
 ):
     """Runs a chat using the modified model"""
     if rag_enabled and not FeatureGating.feature_available(GatedFeatures.RAG):
