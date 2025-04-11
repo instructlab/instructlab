@@ -1,5 +1,6 @@
 # Standard
-from unittest.mock import MagicMock
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 import contextlib
 import logging
 
@@ -11,9 +12,13 @@ import pytest
 
 # First Party
 from instructlab import lab
+from instructlab.configuration import model_info
 from instructlab.feature_gates import FeatureGating, FeatureScopes, GatedFeatures
 from instructlab.model.chat import ChatException, ConsoleChatBot
 from tests.test_feature_gates import dev_preview
+
+# Local
+from . import common
 
 logger = logging.getLogger(__name__)
 
@@ -130,3 +135,34 @@ def test_list_contexts_and_decoration():
     )
 
     assert rendered_output == expected_output_without_box
+
+
+@patch("instructlab.cli.model.chat.chat_model")
+@patch("instructlab.model.model.storage_dirs_exist", return_value=True)
+def test_chat_with_model_id(mock_chat_model, _, cli_runner: CliRunner, tmp_path: Path):
+    fname = common.setup_test_models_config(
+        models_list=[
+            model_info(
+                id="test_model",
+                path="teacher/model/path",
+                family="llama",
+                system_prompt="system prompt",
+            )
+        ],
+        dest=tmp_path,
+    )
+
+    # Invoke the `chat` command with the model ID
+    result = cli_runner.invoke(
+        lab.ilab,
+        [
+            f"--config={tmp_path}/{fname}",
+            "model",
+            "chat",
+            "--model-id=test_model",
+        ],
+    )
+
+    # Assert that the command executed successfully
+    assert result.exit_code == 0, f"Command failed with output: {result.output}"
+    mock_chat_model.assert_called_once()

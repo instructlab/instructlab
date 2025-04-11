@@ -14,6 +14,16 @@ from instructlab import configuration, lab
 _CFG_FILE_NAME = "test-serve-config.yaml"
 
 
+def setup_test_models_config(models_list, dest=""):
+    _cfg_name = "test-models-config.yaml"
+    cfg = configuration.get_default_config()
+
+    cfg.models = models_list
+    with pathlib.Path(f"{dest}/{_cfg_name}").open("w", encoding="utf-8") as f:
+        yaml.dump(cfg.model_dump(), f)
+    return _cfg_name
+
+
 def setup_gpus_config(section_path="serve", gpus=None, tps=None, vllm_args=lambda: []):
     """Returns the name of the config file with the requested vllm config."""
     cfg = configuration.get_default_config()

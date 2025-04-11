@@ -10,7 +10,7 @@ import click
 
 # First Party
 from instructlab import clickext
-from instructlab.configuration import write_config
+from instructlab.configuration import resolve_model_id, write_config
 from instructlab.defaults import DEFAULTS
 from instructlab.model.backends import backends
 from instructlab.model.serve_backend import serve_backend, signal_handler
@@ -37,6 +37,11 @@ def warn_for_unsupported_backend_param(ctx):
     type=click.Path(path_type=pathlib.Path),
     cls=clickext.ConfigOption,
     required=True,  # default from config
+)
+@click.option(
+    "--model-id",
+    help="ID of the model to use for chatting from the config models list.",
+    default=None,
 )
 @click.option(
     "--gpu-layers",
@@ -104,6 +109,7 @@ def warn_for_unsupported_backend_param(ctx):
 def serve(
     ctx: click.Context,
     model_path: pathlib.Path,
+    model_id: str | None,
     gpu_layers: int,
     num_threads: int | None,
     max_ctx_size: int,
@@ -126,6 +132,19 @@ def serve(
         )
         ctx.obj.config.serve.server.current_max_ctx_size = max_ctx_size
         write_config(ctx.obj.config)
+
+    if model_id:
+        try:
+            model_config = resolve_model_id(model_id, ctx.obj.config.models)
+            if not model_config:
+                raise ValueError(
+                    f"Model with ID '{model_id}' not found in the configuration."
+                )
+            model_path = pathlib.Path(model_config.path)
+            model_family = model_family if model_family else model_config.family
+        except ValueError as ve:
+            click.secho(f"failed to locate model by ID: {ve}", fg="red")
+            raise click.exceptions.Exit(1)
 
     serve_backend(
         ctx,

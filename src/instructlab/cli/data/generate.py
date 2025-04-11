@@ -241,6 +241,21 @@ def generate(
     if batch_size > 0:
         checkpoint_dir = os.path.join(output_dir, "checkpoints")
 
+    if teacher_model_id:
+        try:
+            teacher_model_config = resolve_model_id(
+                teacher_model_id, ctx.obj.config.models
+            )
+            if not teacher_model_config:
+                raise ValueError(
+                    f"Teacher model with ID '{teacher_model_id}' not found in the configuration."
+                )
+            model_path = teacher_model_config.path
+            model_family = model_family if model_family else teacher_model_config.family
+        except ValueError as ve:
+            click.secho(f"failed to locate teacher model by ID: {ve}", fg="red")
+            raise click.exceptions.Exit(1)
+
     serve_cfg = copy.deepcopy(ctx.obj.config.generate.teacher)
     serve_cfg.llama_cpp.llm_family = model_family or serve_cfg.llama_cpp.llm_family
     serve_cfg.vllm.llm_family = model_family or serve_cfg.vllm.llm_family
@@ -262,20 +277,6 @@ def generate(
             "tls_insecure": tls_insecure,
         }
     )
-
-    if teacher_model_id:
-        try:
-            teacher_model_config = resolve_model_id(
-                teacher_model_id, ctx.obj.config.models
-            )
-            if not teacher_model_config:
-                raise ValueError(
-                    f"Teacher model with ID '{teacher_model_id}' not found in the configuration."
-                )
-            model_path = teacher_model_config.path
-        except ValueError as ve:
-            click.secho(f"failed to locate teacher model by ID: {ve}", fg="red")
-            raise click.exceptions.Exit(1)
 
     # determine student model arch from train section of config and pick system prompt to
     # pass to SDG appropriately
