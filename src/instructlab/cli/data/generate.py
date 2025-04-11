@@ -263,14 +263,17 @@ def generate(
         }
     )
 
-    if teacher_model_id:
+    teacher_id = (
+        teacher_model_id
+        if teacher_model_id
+        else ctx.obj.config.general.teacher_model_id
+    )
+    if teacher_id:
         try:
-            teacher_model_config = resolve_model_id(
-                teacher_model_id, ctx.obj.config.models
-            )
+            teacher_model_config = resolve_model_id(teacher_id, ctx.obj.config.models)
             if not teacher_model_config:
                 raise ValueError(
-                    f"Teacher model with ID '{teacher_model_id}' not found in the configuration."
+                    f"Teacher model with ID '{teacher_id}' not found in the configuration."
                 )
             model_path = teacher_model_config.path
         except ValueError as ve:
@@ -280,7 +283,14 @@ def generate(
     # determine student model arch from train section of config and pick system prompt to
     # pass to SDG appropriately
     system_prompt, legacy_pretraining_format = None, None
-    if not student_model_id:
+
+    student_id = (
+        student_model_id
+        if student_model_id
+        else ctx.obj.config.general.student_model_id
+    )
+
+    if not student_id:
         student_model_path = pathlib.Path(ctx.obj.config.train.model_path)
         student_model_arch = get_model_arch(student_model_path)
         system_prompt = get_sysprompt(student_model_arch)
@@ -296,12 +306,10 @@ def generate(
             )
     else:
         try:
-            student_model_config = resolve_model_id(
-                student_model_id, ctx.obj.config.models
-            )
+            student_model_config = resolve_model_id(student_id, ctx.obj.config.models)
             if not student_model_config:
                 raise ValueError(
-                    f"Student model with ID '{student_model_id}' not found in the configuration."
+                    f"Student model with ID '{student_id}' not found in the configuration."
                 )
         except ValueError as ve:
             click.secho(f"failed to locate student model by ID: {ve}", fg="red")
@@ -326,6 +334,7 @@ def generate(
     dated_output_dir = os.path.join(output_dir, f"{dated_dir_name}")
     os.makedirs(dated_output_dir, exist_ok=True)
 
+    os._exit(0)  # TODO: remove this line
     try:
         gen_data(
             serve_cfg,
