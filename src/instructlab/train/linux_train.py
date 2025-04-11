@@ -212,7 +212,7 @@ def linux_train(
     # Loading the model
     print("LINUX_TRAIN.PY: LOADING THE BASE MODEL")
     config = AutoConfig.from_pretrained(
-        model_name, torchscript=True, trust_remote_code=True
+        model_name, torchscript=True, trust_remote_code=True,
     )
 
     # https://huggingface.co/docs/transformers/en/model_doc/auto#transformers.AutoModelForCausalLM.from_pretrained
@@ -256,6 +256,7 @@ def linux_train(
             stopping_criteria=stopping_criteria,
             do_sample=True,
             output_logits=True,
+            return_dict_in_generate=True,
             **kwargs,
         )
         return tokenizer.batch_decode([o[:-1] for o in outputs])[0]
