@@ -130,3 +130,37 @@ def test_list_contexts_and_decoration():
     )
 
     assert rendered_output == expected_output_without_box
+
+
+def test_set_custom_context():
+    chatbot = ConsoleChatBot(model="/var/model/file", client=None, loaded={})
+
+    def mock_sys_print(output):
+        mock_sys_print.output = output
+
+    chatbot._sys_print = mock_sys_print
+
+    custom_context_name = "test_context"
+    custom_context_text = "This is a custom test context for testing."
+    mock_prompt_session = MagicMock()
+    mock_prompt_session.prompt.return_value = (
+        f"/sc {custom_context_name} {custom_context_text}"
+    )
+    chatbot.input = mock_prompt_session
+
+    with contextlib.suppress(KeyboardInterrupt):
+        chatbot.start_prompt(logger=None)
+
+    console = Console(force_terminal=False)
+    with console.capture() as capture:
+        console.print(mock_sys_print.output)
+
+    rendered_output = capture.get().strip()
+
+    assert custom_context_name in chatbot.loaded["name"]
+    assert chatbot.loaded["messages"] == [
+        {"role": "system", "content": custom_context_text}
+    ]
+
+    expected_output = f"INFO: Custom context {custom_context_name} added and activated."
+    assert rendered_output == expected_output
