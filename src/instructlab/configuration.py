@@ -184,6 +184,10 @@ class _chat(BaseModel):
         default=1.0,
         description="Controls the randomness of the model's responses. Lower values make the output more deterministic, while higher values produce more random results.",
     )
+    system_prompt: Optional[str] = Field(
+        default=None,
+        description="Custom system prompt. If not provided, it will use the default context.",
+    )
 
 
 class _serve_vllm(BaseModel):
