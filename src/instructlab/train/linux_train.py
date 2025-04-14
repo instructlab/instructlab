@@ -256,16 +256,9 @@ def linux_train(
             stopping_criteria=stopping_criteria,
             do_sample=True,
             output_logits=True,
-            return_dict_in_generate=True,
             **kwargs,
         )
-        # Access the sequences from the GenerateOutput object
-        if hasattr(outputs, "sequences"):
-            sequences = outputs.sequences
-        else:
-            # Fallback for tuple output
-            sequences = outputs
-        return tokenizer.batch_decode([seq[:-1] for seq in sequences])[0]
+        return tokenizer.batch_decode([o[:-1] for o in outputs])[0]
 
     assistant_old_lst = [
         model_generate(d["user"]).split(response_template.strip())[-1].strip()

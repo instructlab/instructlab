@@ -7,7 +7,6 @@ from typing import Any, List, Optional, Union
 import enum
 import logging
 import os
-import pathlib
 import sys
 import textwrap
 import typing
@@ -37,9 +36,6 @@ from pydantic_core import PydanticUndefined
 from ruamel.yaml import YAML, CommentedMap
 from typing_extensions import deprecated as Deprecated
 import click
-
-# First Party
-from instructlab.utils import get_model_arch, use_legacy_pretraining_format
 
 # Local
 from . import log
@@ -1572,6 +1568,7 @@ def map_train_to_library(ctx, params):
             click.secho(f"failed to get model with `--model-id`: {ve}", fg="red")
             raise click.exceptions.Exit(1)
         params["model_path"] = model_cfg.path
+        train_args.model_path = model_cfg.path
 
     ds_args = DeepSpeedOptions(
         cpu_offload_optimizer=params["deepspeed_cpu_offload_optimizer"],
@@ -1617,14 +1614,8 @@ def map_train_to_library(ctx, params):
     if params["pipeline"] == "full":
         train_args.disable_flash_attn = True
 
-    student_model_arch = get_model_arch(pathlib.Path(params["model_path"]))
     if ctx.obj.config.general.use_legacy_tmpl:
         train_args.use_legacy_tmpl = True
-    else:
-        train_args.use_legacy_tmpl = use_legacy_pretraining_format(
-            params["model_path"],
-            student_model_arch,
-        )
     return train_args, torch_args
 
 
