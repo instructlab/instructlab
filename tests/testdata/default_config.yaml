@@ -126,6 +126,12 @@ general:
   # Log level for logging.
   # Default: INFO
   log_level: INFO
+  # ID of the student model to be used for training.
+  # Default: None
+  student_model_id:
+  # ID of the teacher model to be used for data generation.
+  # Default: None
+  teacher_model_id:
   # Use legacy IBM Granite chat template (default uses 3.0 Instruct template)
   # Default: False
   use_legacy_tmpl: false
