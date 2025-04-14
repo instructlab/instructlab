@@ -27,6 +27,7 @@ HF_TOKEN=${HF_TOKEN:-}
 GRANITE_7B_MODEL="instructlab/granite-7b-lab"
 MIXTRAL_8X7B_MODEL="mistralai/Mixtral-8x7B-Instruct-v0.1"
 PROMETHEUS_8X7B_MODEL="prometheus-eval/prometheus-8x7b-v2.0"
+LLAMA_3_3_70B_MODEL="meta-llama/Llama-3.3-70B-Instruct"
 MERLINITE_GGUF_REPO="instructlab/merlinite-7b-lab-GGUF"
 MERLINITE_GGUF_MODEL="merlinite-7b-lab-Q4_K_M.gguf"
 MISTRAL_GGUF_REPO="TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
@@ -37,9 +38,10 @@ SMALL=0
 MEDIUM=0
 LARGE=0
 XLARGE=0
+LARGE_LLAMA=0
 
 check_flags() {
-    if [ "${SMALL}" -ne 1 ] && [ "${MEDIUM}" -ne 1 ] && [ "${LARGE}" -ne 1 ] && [ "${XLARGE}" -ne 1 ]; then
+    if [ "${SMALL}" -ne 1 ] && [ "${MEDIUM}" -ne 1 ] && [ "${LARGE}" -ne 1 ] && [ "${LARGE_LLAMA}" -ne 1 ] && [ "${XLARGE}" -ne 1 ]; then
          echo "ERROR: Must specify a size flag when invoking this script."
          usage
          exit 1
@@ -116,9 +118,13 @@ test_init() {
     elif [ "$LARGE" -eq 1 ]; then
         step Setting large-size system profile
         ilab config init --non-interactive --profile="${SCRIPTDIR}/test-data/profile-l40s-x4.yaml"
+    elif [ "$LARGE_LLAMA" -eq 1 ]; then
+        step Setting extra large-size system profile
+        ilab config init --non-interactive --profile="${SCRIPTDIR}/test-data/profile-l40s-x8-llama.yaml"
     elif [ "$XLARGE" -eq 1 ]; then
         step Setting extra large-size system profile
         ilab config init --non-interactive --profile="${SCRIPTDIR}/test-data/profile-l40s-x8.yaml"
+
     fi
     task InstructLab initialization Complete
 }
@@ -148,6 +154,13 @@ test_download() {
         ilab model download --repository ${PROMETHEUS_8X7B_MODEL} --hf-token "${HF_TOKEN}"
         step Downloading granite-7b-lab model to train
         ilab model download --repository ${GRANITE_7B_MODEL}
+    elif [ "$LARGE_LLAMA" -eq 1 ]; then
+        step Downloading the llama-3.3-70B instruct model as the teacher model for SDG
+        ilab model download --repository ${LLAMA_3_3_70B_MODEL} --hf-token "${HF_TOKEN}"
+        step Downloading the prometheus-8x7b model as the judge model for evaluation
+        ilab model download --repository ${PROMETHEUS_8X7B_MODEL} --hf-token "${HF_TOKEN}"
+        step Downloading granite-7b-lab model to train
+        ilab model download --repository ${GRANITE_7B_MODEL}
     fi
     task Downloading models Complete
 }
@@ -156,7 +169,7 @@ test_list() {
     task List the Downloaded Models
     if [ "$SMALL" -eq 1 ]; then
         ilab model list | grep ${GRANITE_7B_MODEL}
-        ilab model list | grep ${MERLINITE_GGUF_MODEL}    
+        ilab model list | grep ${MERLINITE_GGUF_MODEL}
     elif [ "$MEDIUM" -eq 1 ]; then
         ilab model list | grep ${GRANITE_7B_MODEL}
         ilab model list | grep ${MISTRAL_GGUF_MODEL}
@@ -164,6 +177,10 @@ test_list() {
         ilab model list | grep ${GRANITE_7B_MODEL}
         ilab model list | grep ${PROMETHEUS_8X7B_MODEL}
         ilab model list | grep ${MIXTRAL_8X7B_MODEL}
+    elif [ "$LARGE_LLAMA" -eq 1 ]; then
+        ilab model list | grep ${GRANITE_7B_MODEL}
+        ilab model list | grep ${PROMETHEUS_8X7B_MODEL}
+        ilab model list | grep ${LLAMA_3_3_70B_MODEL}
     fi
     task Model Listing Complete
 }
@@ -183,7 +200,7 @@ test_taxonomy() {
         cp "$SCRIPTDIR"/test-data/compositional_skills/freeform/e2e-qna-freeform-siblings-skill.yaml "$DATA_HOME"/instructlab/taxonomy/compositional_skills/extraction/inference/qualitative/e2e-siblings/qna.yaml
     fi
 
-    if [ "$LARGE" -eq 1 ]; then
+    if [ "$LARGE" -eq 1 ] || [ "$LARGE_LLAMA" -eq 1 ]; then
         step Add knowledge to the taxonomy
         mkdir -p "$DATA_HOME"/instructlab/taxonomy/knowledge/phoenix/overview/e2e-phoenix
         cp "$SCRIPTDIR"/test-data/knowledge/e2e-qna-knowledge-phoenix.yaml "$DATA_HOME"/instructlab/taxonomy/knowledge/phoenix/overview/e2e-phoenix/qna.yaml
@@ -286,7 +303,7 @@ test_skills_only_train() {
 
     local skills_phased_base_dir
     skills_phased_base_dir="${DATA_HOME}/instructlab/skills-only"
-    
+
     mkdir -p "${skills_phased_base_dir}"
 
     # general skills-only training args
@@ -348,7 +365,7 @@ test_serve() {
     elif [ "$MEDIUM" -eq 1 ]; then
         model_path="${TRAINED_MODEL_PATH}/pytorch_model-Q4_K_M.gguf"
     # use safetensors for large-size and xlarge-size jobs
-    elif [ "$LARGE" -eq 1 ] || [ "$XLARGE" -eq 1 ]; then
+    elif [ "$LARGE" -eq 1 ] || [ "$LARGE_LLAMA" -eq 1 ] || [ "$XLARGE" -eq 1 ]; then
         model_path="${TRAINED_MODEL_PATH}"
     fi
 
@@ -379,7 +396,7 @@ test_evaluate() {
     base_model_path="${CACHE_HOME}/instructlab/models/${GRANITE_7B_MODEL}"
     dk_bench_output_formats="csv,xlsx,jsonl"
 
-    if [ "$LARGE" -eq 1 ]; then
+    if [ "$LARGE" -eq 1 ] || [ "$LARGE_LLAMA" -eq 1 ]; then
         step Running DK Bench where trained model generates responses
         ilab model evaluate \
             --model "${model_path}" \
@@ -398,7 +415,7 @@ test_evaluate() {
     step Running MMLU
     ilab model evaluate --model "${model_path}" --benchmark mmlu
 
-    if [ "$LARGE" -eq 1 ]; then
+    if [ "$LARGE" -eq 1 ] || [ "$LARGE_LLAMA" -eq 1 ]; then
         step Running MMLU Branch
         local mmlu_branch_tasks_dir
         mmlu_branch_tasks_dir=$(find "${DATA_HOME}"/instructlab/datasets -name 'node_datasets_*' | head -n 1)
@@ -443,7 +460,7 @@ test_exec() {
     check_disk
 
     # train tests
-    if [ "$LARGE" -eq 1 ] || [ "$XLARGE" -eq 1 ]; then
+    if [ "$LARGE" -eq 1 ] || [ "$LARGE_LLAMA" -eq 1 ] || [ "$XLARGE" -eq 1 ]; then
       # Validate a single epoch per phase with resumption
       test_phased_train_resume
       # Validate skills-only training
@@ -517,7 +534,7 @@ usage() {
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "smlxph" opt; do
+while getopts "smlaxph" opt; do
     case $opt in
         s)
             SMALL=1
@@ -530,6 +547,10 @@ while getopts "smlxph" opt; do
         l)
             LARGE=1
             step "Run large T-shirt size job."
+            ;;
+        a)
+            LARGE_LLAMA=1
+            step "Run large T-shirt size job with llama pipeline."
             ;;
         x)
             XLARGE=1
