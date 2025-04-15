@@ -255,6 +255,7 @@ def linux_train(
             top_p=0.9,
             stopping_criteria=stopping_criteria,
             do_sample=True,
+            output_logits=True,
             **kwargs,
         )
         return tokenizer.batch_decode([o[:-1] for o in outputs])[0]
