@@ -176,7 +176,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 #### Install with Nvidia CUDA
 
-- For the best CUDA experience, installing vLLM is necessary to serve Safetensors format models.
+- For the best CUDA experience, installing vLLM is necessary to serve Safetensors format models. You can install using pip install or downloading CUDA from [Nvidia](https://developer.nvidia.com/cuda-downloads)
 
    ```shell
    python<version> -m venv --upgrade-deps venv
@@ -439,7 +439,7 @@ For detailed documentation on the InstructLab LLMs and their functions, see the 
    ```shell
    ilab model download --hf-token <your-huggingface-token>
    ```
-  
+
    Hugging Face `hf_transfer` is enabled by default for faster downloads (lacks proxy support), and can be disabled with `HF_HUB_ENABLE_HF_TRANSFER=0`. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
 
 #### Downloading a specific model from a Hugging Face repository
@@ -533,7 +533,7 @@ For detailed documentation on the InstructLab LLMs and their functions, see the 
 
    ```shell
    source venv/bin/activate
-   ilab model chat --model ~/.cache/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf 
+   ilab model chat --model ~/.cache/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
    ```
 
    > [!TIP]
@@ -584,7 +584,7 @@ Once you have enabled developer preview features, the first step is to convert y
 *Converting documents from a directory:* If you have all the source documents (e.g., PDF, Markdown) that you want to convert in a single local directory, you can convert them:
 
    ```shell
-      ilab rag convert --input-dir <path-to-source-document-directory> --output-dir <path-to-converted-document-directory> 
+      ilab rag convert --input-dir <path-to-source-document-directory> --output-dir <path-to-converted-document-directory>
    ```
 
 This capability has been tested with PDF, Markdown, and Microsoft Word format documents.  Any of the [formats supported by Docling](https://ds4sd.github.io/docling/reference/document_converter/#docling.document_converter.InputFormat) should work.
@@ -592,7 +592,7 @@ This capability has been tested with PDF, Markdown, and Microsoft Word format do
 *Converting documents from a taxonomy:* If you do not specify an input directory, the `convert` command will pull from the default --taxonomy-path value, unless specified otherwise.  For example, to use all of the documents in all of the knowledge nodes in the taxonomy in the default location you can run:
 
    ```shell
-   ilab rag convert --taxonomy-base=empty --output-dir <path-to-converted-document-directory> 
+   ilab rag convert --taxonomy-base=empty --output-dir <path-to-converted-document-directory>
    ```
 
 *Converting documents within SDG:* The SDG commands will convert documents along with its primary goal (to generate synthetic data).  If you ran any configuration of `ilab data generate`, then the knowledge documents in the taxonomy that generated synthetic data will already be converted to a structured form.  In this case, there is no need to run the `ilab rag convert` command again.  For example, the following command mentioned in the [🚀 Generate a synthetic dataset](#-generate-a-synthetic-dataset) section converts all of the documents referenced in the entire contents of the taxonomy in the default location (and outputs them to a location that is the default input location for the ingestion command below):
@@ -616,7 +616,7 @@ Once documents are converted, you can use the `ilab rag ingest` command to inges
 *Ingesting documents from ilab rag convert*: Alternatively, if you ran `ilab rag convert` to convert your documents, without SDG, then the output directory you used for `ilab rag convert` should be the input directory you specify for `ilab rag ingest`, e.g.:
 
    ```shell
-   ilab rag ingest --input-dir=<path-to-converted-document-directory> 
+   ilab rag ingest --input-dir=<path-to-converted-document-directory>
    ```
 
 #### Getting answers from RAG
@@ -778,13 +778,13 @@ There are a few models you need to download before running the InstructLab end-t
 - Download the `granite-7b-lab` model for training:
 
    ```shell
-   ilab model download --repository instructlab/granite-7b-lab 
+   ilab model download --repository instructlab/granite-7b-lab
    ```
 
 - Download the `prometheus-8x7b-v2.0` for *multi-phase training* and *benchmark evaluation*. This model is not required for `simple` or `full` training.
 
    ```shell
-   ilab model download --repository prometheus-eval/prometheus-8x7b-v2.0 --hf-token <your-huggingface-token> 
+   ilab model download --repository prometheus-eval/prometheus-8x7b-v2.0 --hf-token <your-huggingface-token>
    ```
 
 #### InstructLab model training pipelines
