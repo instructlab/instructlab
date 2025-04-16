@@ -20,6 +20,87 @@ from instructlab.utils import is_macos_with_m_chip
 logger = logging.getLogger(__name__)
 
 
+def convert_loss_to_reduce_sum(model):
+    """
+    this is necessary because multipack changes the samples per gpu, which biases the gradients to be larger for batches with less samples but longer lengths.
+    """
+    # Standard
+    from typing import List, Optional
+
+    # Third Party
+    import torch
+
+    def reduce_sum_forward(
+        input_ids: torch.LongTensor,
+        attention_mask: Optional[torch.Tensor] = None,
+        position_ids: Optional[torch.LongTensor] = None,
+        past_key_values: Optional[List[torch.FloatTensor]] = None,
+        inputs_embeds: Optional[torch.FloatTensor] = None,
+        labels: Optional[torch.LongTensor] = None,
+        use_cache: Optional[bool] = None,
+        output_attentions: Optional[bool] = None,
+        output_hidden_states: Optional[bool] = None,
+        return_dict_in_generate: Optional[bool] = None,
+        # pylint: disable=unused-argument
+        **deprecated_arguments,
+    ):
+        output = model.__original_forward__(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            position_ids=position_ids,
+            past_key_values=past_key_values,
+            inputs_embeds=inputs_embeds,
+            labels=labels,
+            use_cache=use_cache,
+            output_attentions=output_attentions,
+            output_hidden_states=output_hidden_states,
+            return_dict_in_generate=return_dict_in_generate,
+        )
+
+        logits = None
+        loss = None
+        return_dict = isinstance(output, dict)
+        if return_dict:
+            logits = output.logits
+        else:
+            # just checks that the output from the model is in the shape we expect,
+            # and that one of the tuple elements is the loss and one is the logits
+            if not (
+                len(output) == 2
+                and (
+                    (len(output[0].shape) == 3 and len(output[1].shape) == 0)
+                    or (len(output[1].shape) == 3 and len(output[0].shape) == 0)
+                )
+            ):
+                raise ValueError(
+                    "Output does not match the expected structure. "
+                    "Expected a tuple of length 2 with one element having shape of rank 3 and the other of rank 0."
+                )
+            logits = output[0] if len(output[0].shape) == 3 else output[1]
+
+        if labels is not None:
+            # Shift so that tokens < n predict n
+            shift_logits = logits[..., :-1, :].contiguous()
+            shift_labels = labels[..., 1:].contiguous()
+            # Flatten the tokens
+            shift_logits = shift_logits.view(-1, model.config.vocab_size)
+            shift_labels = shift_labels.view(-1)
+            # Ensure tensors are on the same device
+            shift_labels = shift_labels.to(shift_logits.device)
+            loss_fct = torch.nn.CrossEntropyLoss(reduction="sum")
+            loss = loss_fct(shift_logits, shift_labels)
+
+        if not return_dict:
+            return ((loss,) + output) if loss is not None else output
+
+        output.loss = loss
+        return output
+
+    model.__original_forward__ = model.forward
+    model.forward = reduce_sum_forward
+    return model
+
+
 def setup_model(
     train_args,
     tokenizer,
@@ -30,7 +111,7 @@ def setup_model(
 ):
     # pylint: disable=no-name-in-module
     # Third Party
-    from instructlab.training import multipack_sampler, utils
+    from instructlab.training import multipack_sampler
     from torch.utils.data import DataLoader
 
     collate_fn = partial(pad_collate_fn, pad_token_id=tokenizer.pad_token_id)
@@ -121,8 +202,7 @@ def setup_model(
     if tokenizer.eos_token_id is not None and model.config.eos_token_id is None:
         model.config.eos_token_id = tokenizer.eos_token_id
 
-    model = utils.convert_loss_to_reduce_sum(model)
-    model = utils.add_noisy_embeddings(model, noise_alpha=None)
+    model = convert_loss_to_reduce_sum(model)
     return model, dataloader
 
 
@@ -212,6 +292,12 @@ def train(train_args, device, optimize_memory):
         inner_pb = tqdm(range(len(dataloader)), desc=f"Epoch {epoch}")
         aggregated_values = torch.zeros(3, dtype=torch.float32).to(dev)
 
+        # in order to correctly calculate the loss, we need to divide each microbatch by
+        # a constant factor, so that we can later correct it by the actual `total_minibatch_tokens` amount
+        total_minibatch_tokens = 0
+        interim_batch_denominator = packing_max_batch_len * accum
+        loss_accum = 0.0  # track this for logging puproses
+
         for step, batch in enumerate(dataloader):
             aggregated_values[0] = batch.pop("num_loss_counted_tokens")
             aggregated_values[1] = len(batch["input_ids"])
@@ -220,16 +306,38 @@ def train(train_args, device, optimize_memory):
             for k in batch:
                 batch[k] = batch[k].to(device=dev)
 
-            output = model(**batch, use_cache=False, return_dict=True)
-            loss = output.loss
+            output = model(**batch, use_cache=False, return_dict=False)
+            loss = None
+            if isinstance(output, tuple):
+                loss = output[0]
+                if len(output[0].shape) != 0:
+                    raise ValueError(
+                        "When output is a tuple, the loss should be the first element"
+                    )
+            else:
+                loss = output.loss
+            if loss is None:
+                raise ValueError(
+                    "Loss is None. Ensure the model's output contains a valid loss."
+                )
+
             aggregated_values[2] = loss.item()
 
             num_loss_counted_tokens = aggregated_values[0]
-            loss = loss / num_loss_counted_tokens
+            total_minibatch_tokens += num_loss_counted_tokens
 
-            loss = loss / accum  # Scale the loss for accumulation steps
+            # here we need to correctly rescale the loss, so we divide by the packing_max_batch_len
+            # in order to overshoot the average, and then we will later multiply each gradient
+            # by a correction term
+            loss_orig = loss.detach().cpu().item()
+            loss_accum += loss
+            loss = loss / interim_batch_denominator
 
-            logger.info(f"\nEpoch: {epoch}, Step: {step + 1}, Rank: 0, loss = {loss}")
+            per_batch_loss = loss_orig / num_loss_counted_tokens
+
+            logger.info(
+                f"\nEpoch: {epoch}, Step: {step + 1}, Loss per batch: {loss.detach().item()}, Actual Loss Per Batch = {per_batch_loss}, accumulated loss: {loss_accum.item()}"
+            )
 
             # Gradient accumulation
             loss.backward()  # Backward pass
@@ -243,8 +351,19 @@ def train(train_args, device, optimize_memory):
 
             # if we are on a step which is divisible by 4, step and zero gradients
             if (step + 1) % accum == 0:
+                # lets correct all of the gradients
+                for param in model.parameters():
+                    grad = param.grad
+                    assert grad is not None
+                    correction_term = interim_batch_denominator / total_minibatch_tokens
+                    param.grad *= correction_term
+
                 optimizer.step()  # Optimizer step
                 optimizer.zero_grad()  # Zero gradients
+
+                # reset all of the accumulated data
+                total_minibatch_tokens = 0.0
+                loss_accum = 0.0
 
                 # Clear cache after optimizer step
                 if dev.type == "mps":
@@ -257,7 +376,7 @@ def train(train_args, device, optimize_memory):
             torch.mps.empty_cache()
 
         output_dir = (
-            Path(train_args.ckpt_output_dir) / "hf_format" / f"samples_{(epoch*8)}"
+            Path(train_args.ckpt_output_dir) / "hf_format" / f"samples_{(epoch * 8)}"
         )
 
         logger.info(f"Saving Model to: {output_dir}")
@@ -329,7 +448,7 @@ def pad_collate_fn(batch, pad_token_id):
         ]
     )
     logger.info(
-        f"\033[96m total tokens: {max_len * len(batch)} num samples: {len(batch)} num padding tokens: {max_len * len(batch) - lens.sum()} - rank: {0} "
+        f"\033[96m total tokens: {max_len * len(batch)} num samples: {len(batch)} num padding tokens: {max_len * len(batch) - lens.sum()}"
         f"max len: {max_len} min len: {min(lens)} avg len: {lens.mean()} "
         f"num_loss_counted_tokens: {num_loss_counted_tokens}\033[0m"
     )
