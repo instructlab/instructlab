@@ -40,6 +40,9 @@ permissions:
 
 jobs:
   e2e-small-workflow-ready:
+    # temporarily disable this job on pull requests until
+    # https://github.com/instructlab/instructlab/issues/3289 is resolved
+    if: false
     permissions:
       checks: read
     uses: ./.github/workflows/status-checks.yml
@@ -52,6 +55,9 @@ jobs:
         lint-workflow-complete
 
   start-small-ec2-runner:
+    # temporarily disable this job on pull requests until
+    # https://github.com/instructlab/instructlab/issues/3289 is resolved
+    if: false
     needs:
       - e2e-small-workflow-ready
     runs-on: ubuntu-latest
@@ -86,6 +92,9 @@ jobs:
             ]
 
   e2e-small-test:
+    # temporarily disable this job on pull requests until
+    # https://github.com/instructlab/instructlab/issues/3289 is resolved
+    if: false
     needs:
       - start-small-ec2-runner
     runs-on: ${{ needs.start-small-ec2-runner.outputs.label }}
@@ -152,7 +161,9 @@ jobs:
       - start-small-ec2-runner
       - e2e-small-test
     runs-on: ubuntu-latest
-    if: ${{ always() }}
+    # temporarily disable this job on pull requests until
+    # https://github.com/instructlab/instructlab/issues/3289 is resolved
+    if: ${{ always() && false }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
