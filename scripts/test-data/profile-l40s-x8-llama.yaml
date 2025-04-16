@@ -1,0 +1,167 @@
+chat:
+  context: default
+  # Directory where chat logs are stored
+  logs_dir: ~/.local/share/instructlab/chatlogs
+  # The maximum number of tokens that can be generated in the chat completion
+  max_tokens: null
+  # Directory where model to be used for chatting with is stored
+  model: ~/.cache/instructlab/models/instructlab/granite-7b-lab
+  session: null
+  # visual mode
+  vi_mode: false
+  # renders vertical overflow if enabled, displays ellipses otherwise
+  visible_overflow: true
+evaluate:
+  # Base taxonomy branch
+  base_branch: null
+  # Directory where the model to be evaluated is stored
+  base_model: ~/.cache/instructlab/models/instructlab/granite-7b-lab
+  # Taxonomy branch containing custom skills/knowledge that should be used for evaluation runs
+  branch: null
+  # Number of GPUs to use for running evaluation
+  gpus: 8
+  # DK-Bench settings
+  dk_bench:
+    # File with questions and reference answers used for evaluation during DK-Bench.
+    input_questions: null
+    # Judge model for DK-Bench.
+    judge_model: gpt-4o
+    # Directory where DK-Bench evaluation results are stored.
+    output_dir: ~/.local/share/instructlab/internal/eval_data/dk_bench
+    # Comma-separated list of file formats for results of the DK-Bench evaluation.
+    output_file_formats: jsonl
+  # MMLU benchmarking settings
+  mmlu:
+    # batch size for evaluation.
+    # Valid values are a positive integer or 'auto' to select the largest batch size that will fit in memory
+    batch_size: auto
+    # number of question-answer pairs provided in the context preceding the question used for evaluation
+    few_shots: 5
+  # Settings to run MMLU against a branch of taxonomy containing
+  # custom skills/knowledge used for training
+  mmlu_branch:
+    # Directory where custom MMLU tasks are stored
+    tasks_dir: ~/.local/share/instructlab/datasets
+  model: null
+  # multi-turn benchmarking settings for skills
+  mt_bench:
+    # Directory where model to be used as judge is stored
+    judge_model: ~/.cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
+    max_workers: auto
+    # Directory where evaluation results are stored
+    output_dir: ~/.local/share/instructlab/internal/eval_data/mt_bench
+  # Settings to run MT-Bench against a branch of taxonomy containing
+  # custom skills/knowledge used for training
+  mt_bench_branch:
+    # Directory where model to be used as judge is stored
+    judge_model: ~/.cache/instructlab/models/prometheus-eval/prometheus-8x7b-v2.0
+    # Directory where evaluation results are stored
+    output_dir: ~/.local/share/instructlab/internal/eval_data/mt_bench_branch
+    # Path to where base taxonomy is stored
+    taxonomy_path: ~/.local/share/instructlab/taxonomy
+  # System prompt for model getting responses during DK-Bench.
+  system_prompt: You are an advanced AI assistant designed to provide precise and
+    accurate information. Your primary goal is to answer queries with the most up-to-date
+    and factual information available. Focus on delivering clear, concise, and correct
+    responses. If you're uncertain about any aspect of the query, state your level
+    of confidence and provide the most accurate information you can. Your responses
+    should prioritize accuracy over all other considerations.
+  # Temperature for model getting responses during DK-Bench.
+  temperature: 0.0
+general:
+  debug_level: 0
+  log_level: INFO
+  teacher_model_id: llama-3.3
+generate:
+  # Teacher model that will be used to synthetically generate training data
+  model: ~/.cache/instructlab/models/mistralai/Mixtral-8x7B-Instruct-v0.1
+  # Number of CPU cores to use for generation
+  num_cpus: 10
+  # Directory where generated datasets are stored
+  output_dir: ~/.local/share/instructlab/datasets
+  # Directory where pipeline config files are stored
+  pipeline: full
+  # The total number of instructions to be generated
+  sdg_scale_factor: 30
+  # Branch of taxonomy used to calculate diff against
+  taxonomy_base: empty
+  # Directory where taxonomy is stored and accessed from
+  taxonomy_path: ~/.local/share/instructlab/taxonomy
+  # Teacher model specific settings
+  teacher:
+    # Serving backend to use to host the teacher model
+    backend: vllm
+    # Path to teacher model that will be used to synthetically generate training data
+    model_path: ~/.cache/instructlab/models/mistralai/Mixtral-8x7B-Instruct-v0.1
+    # vLLM serving settings
+    vllm:
+      # number of GPUs to allocate to vLLM
+      gpus: 8
+      # the family of model being served - used to determine the appropriate chat template
+      llm_family: 'mixtral'
+      vllm_args:
+        - --max-model-len
+        - '8192'
+serve:
+  # Serving backend to use to host the model
+  backend: vllm
+  # Chat template to supply to the served model. Possible values:
+  #   - Custom chat template string
+  #   - Auto: Uses default for serving backend
+  chat_template: auto
+  # Llamacpp serving settings
+  llama_cpp:
+    # number of model layers to offload to GPU
+    # -1 means all
+    gpu_layers: -1
+    # the family of model being served - used to determine the appropriate chat template
+    llm_family: ''
+    # maximum number of tokens that can be processed by the model
+    max_ctx_size: 4096
+  # Path to model that will be served for inference
+  model_path: ~/.cache/instructlab/models/instructlab/granite-7b-lab
+  # vLLM serving settings
+  vllm:
+    gpus: 8
+    # the family of model being served - used to determine the appropriate chat template
+    llm_family: ''
+    # additional arguments to be supplied directly to vLLM
+    vllm_args: ["--tensor-parallel-size", "8"]
+models:
+  - id: llama-3.3
+    family: meta-llama
+    path: ~/.cache/instructlab/models/meta-llama/Llama-3.3-70B-Instruct/
+train:
+  additional_args:
+    warmup_steps: 25
+    learning_rate: 2e-5
+    lora_dropout: 0.1
+    lora_alpha: 32
+    deepspeed_cpu_offload_optimizer_pin_memory: true
+    deepspeed_cpu_oddload_optimizer_ratio: 1
+    use_dolomite: true
+  ckpt_output_dir: checkpoints
+  data_output_dir: train-output
+  data_path: ./taxonomy_data
+  deepspeed_cpu_offload_optimizer: true
+  effective_batch_size: 128
+  lora_quantize_dtype: null
+  lora_rank: 0
+  max_batch_len: 30000
+  max_seq_len: 4096
+  model_path: ~/.cache/instructlab/models/instructlab/granite-7b-lab
+  num_epochs: 6
+  save_samples: 1000
+  is_padding_free: true
+  nproc_per_node: 8
+  phased_phase1_effective_batch_size: 32
+  phased_phase1_num_epochs: 6
+  phased_phase1_samples_per_save: 0
+  phased_phase2_effective_batch_size: 32
+  phased_phase2_num_epochs: 6
+  phased_phase2_samples_per_save: 0
+  distributed_backend: fsdp
+  pipeline: accelerated
+  device: cuda
+version: 1.0.0
+
