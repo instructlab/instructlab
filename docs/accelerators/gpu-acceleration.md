@@ -11,36 +11,7 @@ and `llama-cpp-python`. In short, you'll need to replace the default versions of
 these packages with versions that have been compiled for GPU-specific support,
 recompile `ilab`, then run it.
 
-## Python 3.11 (Linux only)
-
-> **NOTE:** This section may be outdated. At least AMD ROCm works fine with
-> Python 3.12 and Torch 2.4.1+rocm6.1 binaries.
-
-Unfortunately, at the time of writing, `torch` does not have GPU-specific
-support for the latest Python (3.12), so if you're on Linux, it's recommended
-to set up a Python 3.11-specific `venv` and install `ilab` to that to minimize
-issues. (MacOS ships Python 3.9, so this step shouldn't be necessary.) Here's
-how to do that on Fedora with `dnf`:
-
-  ```shell
-  # Install Python 3.11
-  sudo dnf install python3.11 python3.11-devel
-
-  # Remove old venv from instructlab/ directory (if it exists)
-  rm -r venv
-
-  # Create and activate new Python 3.11 venv
-  python3.11 -m venv venv
-  source venv/bin/activate
-
-  # Install lab (assumes a locally-cloned repo)
-  # You can clone the repo if you haven't already done so (either one)
-  # gh repo clone instructlab/instructlab
-  # git clone https://github.com/instructlab/instructlab.git
-  pip install ./instructlab[cuda]
-  ```
-
-With Python 3.11 installed, it's time to replace some packages!
+## Linux
 
 ### llama-cpp-python backends
 
