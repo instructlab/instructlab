@@ -36,9 +36,7 @@ def test_create_and_validate_virtualenv(
         [str(venv_python), "--version"], capture_output=True, check=True, text=True
     )
     assert python_version_result.returncode == 0
-    assert (
-        "3.10" in python_version_result.stdout or "3.11" in python_version_result.stdout
-    )
+    assert "3.11" in python_version_result.stdout
 
     # Ensure that the required packages are installed
     pip_list_result = subprocess.run(

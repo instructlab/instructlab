@@ -42,13 +42,11 @@ def test_require_no_url_req():
 
 
 @pytest.mark.parametrize("hw_extra", sorted(HW_EXTRAS))
-@pytest.mark.parametrize("py_version", ["3.10", "3.11"])
-def test_package_conflict(py_version: str, hw_extra: str) -> None:
-    if py_version != "3.11" and hw_extra == "hpu":
-        pytest.skip("Intel Gaudi only supports 3.11")
-
+def test_package_conflict(hw_extra: str) -> None:
     base: dict[str, Requirement] = {}
     hw: dict[str, Requirement] = {}
+
+    py_version = "3.11"
     for req in iter_requirements():
         # override version for environment
         base_env = {
