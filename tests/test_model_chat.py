@@ -12,7 +12,6 @@ import pytest
 
 # First Party
 from instructlab import lab
-from instructlab.configuration import model_info
 from instructlab.feature_gates import FeatureGating, FeatureScopes, GatedFeatures
 from instructlab.model.chat import ChatException, ConsoleChatBot
 from tests.test_feature_gates import dev_preview
@@ -142,12 +141,12 @@ def test_list_contexts_and_decoration():
 def test_chat_with_model_id(mock_chat_model, _, cli_runner: CliRunner, tmp_path: Path):
     fname = common.setup_test_models_config(
         models_list=[
-            model_info(
-                id="test_model",
-                path="teacher/model/path",
-                family="llama",
-                system_prompt="system prompt",
-            )
+            {
+                "id": "test_model",
+                "path": "teacher/model/path",
+                "family": "llama",
+                "system_prompt": "system prompt",
+            }
         ],
         dest=tmp_path,
     )

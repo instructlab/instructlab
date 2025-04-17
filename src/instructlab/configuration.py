@@ -693,31 +693,6 @@ class _train(BaseModel):
     )
 
 
-class model_info(BaseModel):
-    """
-    Class representing the configuration for a model.
-
-    Attributes:
-        id (str): Internal ID referring to a particular model from the list.
-        path (str | None): Path to where the model can be found. Can either be a HF reference or local filepath.
-        system_prompt (str | None): The initial message used to prompt the conversation with this model.
-    """
-
-    id: str = Field(
-        description="Internal ID referring to a particular model from the list.",
-    )
-    family: str = Field(
-        description="Family the model belongs to.",
-    )
-    path: str = Field(
-        description="Path to where the model can be found. Can either be a HF reference or local filepath.",
-    )
-    system_prompt: str | None = Field(
-        description='The initial message used to prompt the conversation with this model. E.g. "You are a helfpul AI assistant..."',
-        default=None,
-    )
-
-
 class _metadata(BaseModel):
     # model configuration
     model_config = ConfigDict(extra="ignore")
@@ -787,7 +762,7 @@ class Config(BaseModel):
         description="Metadata pertaining to the specifics of the system which the Configuration is meant to be applied to.",
     )
     # List of user-defined models
-    models: List[model_info] = Field(
+    models: List[dict] = Field(
         default_factory=lambda: [],
         description="User-defined custom set of models. This allows people to use their own models for the InstructLab model customization process.",
     )
@@ -1180,7 +1155,6 @@ def config_to_commented_map(
 ) -> CommentedMap:
     """
     Convert a Pydantic model to a CommentedMap with comments derived from field descriptions.
-
     This function iterates through the fields of our Config model, converting each field to a
     CommentedMap entry. If a field is itself a model, the function handles it recursively.
     Comments are added to each field based on its description and default value.
@@ -1567,8 +1541,8 @@ def map_train_to_library(ctx, params):
         except ValueError as ve:
             click.secho(f"failed to get model with `--model-id`: {ve}", fg="red")
             raise click.exceptions.Exit(1)
-        params["model_path"] = model_cfg.path
-        train_args.model_path = model_cfg.path
+        params["model_path"] = model_cfg["path"]
+        train_args.model_path = model_cfg["path"]
 
     ds_args = DeepSpeedOptions(
         cpu_offload_optimizer=params["deepspeed_cpu_offload_optimizer"],
@@ -1670,13 +1644,13 @@ def configs_exist() -> bool:
     return os.path.exists(DEFAULTS.CONFIG_FILE)
 
 
-def resolve_model_id(model_id: str, models: List[model_info]) -> model_info | None:
+def resolve_model_id(model_id: str, models: List[dict]) -> dict | None:
     """
     Given a `model_id`, returns the matching model config if one is found.
     When a model is found, the following validations happen:
     - No more than one model has the same ID
     """
-    models_found = [m for m in models if m.id == model_id]
+    models_found = [m for m in models if m["id"] == model_id]
     if not models_found:
         raise ValueError(f"Could not find any model with id: '{model_id}'")
 
