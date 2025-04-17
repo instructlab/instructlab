@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
 # Dependencies for installing vLLM on CUDA
 
-# vLLM only supports Linux platform (including WSL)
-vllm==0.7.3 ; sys_platform == 'linux' and platform_machine == 'x86_64'
+# vLLM only supports Linux platform (including WSL). Do not cap this dependency here. Cap in constraints-dev.txt
+vllm>=0.8.0 ; sys_platform == 'linux'
