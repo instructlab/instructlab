@@ -605,7 +605,7 @@ def chat_model(
     logs_dir,
     vi_mode,
     visible_overflow,
-    models_config: List[cfg.model_info],
+    models_config: List[dict],
 ):
     """Runs a chat using the modified model"""
     if rag_enabled and not FeatureGating.feature_available(GatedFeatures.RAG):
@@ -627,7 +627,7 @@ def chat_model(
             logger.error(f"failed to load model from ID: {ve}")
             raise
 
-        model = model_cfg.path
+        model = model_cfg["path"]
 
         # if loading a specific model from the list, we should only be loading from the tokenizer config
         chat_template = CHAT_TEMPLATE_TOKENIZER
