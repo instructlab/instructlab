@@ -190,8 +190,8 @@ def chat(
                 raise ValueError(
                     f"Model with ID '{model_id}' not found in the configuration."
                 )
-            model = model_config.path
-            model_family = model_config.family if model_config.family else model_family
+            model = model_config["path"]
+            model_family = model_family if model_family else model_config["family"]
         except ValueError as ve:
             click.secho(f"failed to locate model by ID: {ve}", fg="red")
             raise click.exceptions.Exit(1)

@@ -7,7 +7,6 @@ from click.testing import CliRunner
 
 # First Party
 from instructlab import lab
-from instructlab.configuration import model_info
 
 # Local
 from . import common
@@ -37,12 +36,12 @@ def test_generate_with_teacher_model_id(
 ):
     fname = common.setup_test_models_config(
         models_list=[
-            model_info(
-                id="teacher_model",
-                path="teacher/model/path",
-                family="llama",
-                system_prompt="system prompt",
-            )
+            {
+                "id": "teacher_model",
+                "path": "teacher/model/path",
+                "family": "llama",
+                "system_prompt": "system prompt",
+            }
         ],
         dest=tmp_path,
     )
@@ -73,12 +72,12 @@ def test_generate_with_global_teacher_model_id(
 ):
     fname = common.setup_test_models_config(
         models_list=[
-            model_info(
-                id="teacher_model",
-                path="teacher/model/path",
-                family="llama",
-                system_prompt="system prompt",
-            )
+            {
+                "id": "teacher_model",
+                "path": "teacher/model/path",
+                "family": "llama",
+                "system_prompt": "system prompt",
+            }
         ],
         dest=tmp_path,
         global_teacher_id="teacher_model",
