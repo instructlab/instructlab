@@ -33,7 +33,7 @@ from pydantic import (
     model_validator,
 )
 from pydantic_core import PydanticUndefined
-from ruamel.yaml import YAML, CommentedMap
+from ruamel.yaml import YAML, CommentedMap, CommentedSeq
 from typing_extensions import deprecated as Deprecated
 import click
 
@@ -1205,8 +1205,20 @@ def config_to_commented_map(
         examples = field.examples
         default_factory = field.default_factory
 
+        # Recursively handle iterables
+        if isinstance(value, list | tuple):
+            # If the value is a list or tuple, handle each item
+            cm[field_name] = CommentedSeq()
+            for item in value:
+                if isinstance(item, BaseModel):
+                    # If the item is a BaseModel, convert it to a CommentedMap
+                    nested_cm = config_to_commented_map(item, indent + 2)
+                    cm[field_name].append(nested_cm)
+                else:
+                    cm[field_name].append(item)
+
         # Recursively handle nested models
-        if isinstance(value, BaseModel):
+        elif isinstance(value, BaseModel):
             # If the value is a BaseModel but has Field attributes honor them
             set_comment(
                 cm, field_name, description, default_value, deprecated, examples, indent
