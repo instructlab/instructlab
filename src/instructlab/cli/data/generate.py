@@ -241,17 +241,25 @@ def generate(
     if batch_size > 0:
         checkpoint_dir = os.path.join(output_dir, "checkpoints")
 
-    if teacher_model_id:
+    teacher_id = (
+        teacher_model_id
+        if teacher_model_id
+        else ctx.obj.config.general.teacher_model_id
+    )
+
+    if teacher_id:
         try:
             teacher_model_config = resolve_model_id(
-                teacher_model_id, ctx.obj.config.models
+                teacher_id, ctx.obj.config.models
             )
             if not teacher_model_config:
                 raise ValueError(
-                    f"Teacher model with ID '{teacher_model_id}' not found in the configuration."
+                    f"Teacher model with ID '{teacher_id}' not found in the configuration."
                 )
-            model_path = teacher_model_config.path
-            model_family = model_family if model_family else teacher_model_config.family
+            model_path = teacher_model_config["path"]
+            model_family = (
+                model_family if model_family else teacher_model_config["family"]
+            )
         except ValueError as ve:
             click.secho(f"failed to locate teacher model by ID: {ve}", fg="red")
             raise click.exceptions.Exit(1)
@@ -313,7 +321,7 @@ def generate(
             click.secho(f"failed to locate student model by ID: {ve}", fg="red")
             raise click.exceptions.Exit(1)
 
-        system_prompt = student_model_config.system_prompt
+        system_prompt = student_model_config["system_prompt"]
         legacy_pretraining_format = (
             True  # just set this to true for testing. We need to fix this in SDG
         )

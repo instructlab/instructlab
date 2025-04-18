@@ -130,7 +130,7 @@ serve:
 models:
   - id: llama-3.3
     family: meta-llama
-    path: ~/.cache/instructlab/models/meta-llama/Llama-3.3-70B-Instruct/
+    path: ~/.cache/instructlab/models/RedHatAI/Llama-3.3-70B-Instruct-quantized.w8a8
 train:
   additional_args:
     warmup_steps: 25
