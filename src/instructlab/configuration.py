@@ -1541,6 +1541,11 @@ def init(
     if not os.path.isfile(config_file) and "--help" in sys.argv[1:]:
         error_msg = None
 
+    # it should allow editing even if there are errors in the configuration file
+    if error_msg and "edit" in sys.argv[1:] and os.path.isfile(config_file):
+        click.secho(f"{error_msg}", fg="red")
+        error_msg = None
+
     ctx.obj = Lab(config_obj, config_file, error_msg)
     if config_obj is not None:
         ctx.default_map = get_dict(config_obj)
