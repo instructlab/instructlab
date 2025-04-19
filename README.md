@@ -806,7 +806,7 @@ After running `ilab model train`, the output locations depend on the chosen pipe
 | `lab-multiphase`                   | Linux                | Phase 1 models saved in `~/.local/share/instructlab/phased/phase1/checkpoints` (Knowledge training). Phase 2 models saved in `~/.local/share/instructlab/phased/phase2/checkpoints` (Skills training). Evaluation is run for phase 2 to identify the best checkpoint. |
 | `lab-skills-only`                  | Linux                | Phase 2 models saved in `~/.local/share/instructlab/phased/phase2/checkpoints` (Skills training). Evaluation is run for phase 2 to identify the best checkpoint. |
 
-To limit training time, you can adjust the `num_epoch` paramater in the `config.yaml` file. The maximum number of epochs for running the InstructLab end-to-end workkflow is 10.
+To limit training time, you can adjust the `num_epoch` parameter in the `config.yaml` file. The maximum number of epochs for running the InstructLab end-to-end workkflow is 10.
 
 #### Train the model locally
 
@@ -893,7 +893,7 @@ When running multi phase training evaluation is run on each phase, we will tell 
 
 #### Train the model locally with GPU acceleration
 
-- Training has support for GPU acceleration with Nvidia CUDA or AMD ROCm. Please see [the GPU acceleration documentation](./docs/gpu-acceleration.md) for more details. At present, hardware acceleration requires a data center GPU or high-end consumer GPU with at least 18 GB free memory.
+- Training has support for GPU acceleration with Nvidia CUDA or AMD ROCm. Please see [the GPU acceleration documentation](./docs/accelerators/gpu-acceleration.md) for more details. At present, hardware acceleration requires a data center GPU or high-end consumer GPU with at least 18 GB free memory.
 
    ```shell
    ilab model train --pipeline accelerated --device cuda --data-path <path-to-sdg-data>
