@@ -813,7 +813,7 @@ To limit training time, you can adjust the `num_epoch` paramater in the `config.
 - Train the model with your synthetic data with the `ilab model train` command:
 
    ```shell
-   ilab model train
+   ilab model train --data-path <path-to-sdg-dataset>
    ```
 
    ⏳ This step can potentially take **several hours** to complete depending on your computing resources. Please stop `ilab model chat` and `ilab model serve` first to free resources.
