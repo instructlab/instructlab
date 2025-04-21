@@ -50,8 +50,26 @@ pull_request_rules:
         - -files=.github/workflows/e2e-nvidia-l4-x1.yml
 
     # small e2e workflow
-    # temporarily remove requirement for small job passing
-    # until https://github.com/instructlab/instructlab/issues/3289 is fixed
+    - or:
+      - and:
+        # note this should match the triggering criteria in 'e2e-nvidia-t4-x1.yml'
+        - check-success~=e2e-small-workflow-complete
+        - or:
+          - files~=\.py$
+          - files=pyproject.toml
+          - files~=^requirements.*\.txt$
+          - files=scripts/e2e-ci.sh
+          - files~=^scripts/test-data/
+          - files~=^src/instructlab/profiles/
+          - files=.github/workflows/e2e-nvidia-t4-x1.yml
+      - and:
+        - -files~=\.py$
+        - -files=pyproject.toml
+        - -files~=^requirements.*\.txt$
+        - -files=scripts/e2e-ci.sh
+        - -files~=^scripts/test-data/
+        - -files~=^src/instructlab/profiles/
+        - -files=.github/workflows/e2e-nvidia-t4-x1.yml
 
     # test workflow
     - or:
