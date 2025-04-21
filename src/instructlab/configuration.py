@@ -567,7 +567,7 @@ class _train(BaseModel):
     )
     data_path: str = Field(
         default_factory=lambda: DEFAULTS.DATASETS_DIR,
-        description="For the training library (primary training method), this specifies the path to the dataset file. For legacy training (MacOS/Linux), this specifies the path to the directory.",
+        description="For the training library (pipelines 'full' or 'accelerated'), this must specify the path to the dataset '.jsonl' file. For legacy training (pipeline 'simple'), this specifies the path to the directory.",
     )
     ckpt_output_dir: str = Field(
         default_factory=lambda: DEFAULTS.CHECKPOINTS_DIR,

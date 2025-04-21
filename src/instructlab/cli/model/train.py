@@ -454,7 +454,8 @@ def train(
     ) and not SupportedTrainingStrategies.has_strategy(strategy):
         if not os.path.isfile(data_path):
             ctx.fail(
-                f"Data path must be to a valid .jsonl file. Value given: {data_path}"
+                f"When using {pipeline} with {strategy}, it is necessary to specify path "
+                f"to a valid .jsonl file, rather than a directory. Value given: {data_path}"
             )
 
     # for simplicity, we only enable the `--model-id` path to training jobs
