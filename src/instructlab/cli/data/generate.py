@@ -241,14 +241,18 @@ def generate(
     if batch_size > 0:
         checkpoint_dir = os.path.join(output_dir, "checkpoints")
 
-    if teacher_model_id:
+    teacher_id = (
+        teacher_model_id
+        if teacher_model_id
+        else ctx.obj.config.general.teacher_model_id
+    )
+
+    if teacher_id:
         try:
-            teacher_model_config = resolve_model_id(
-                teacher_model_id, ctx.obj.config.models
-            )
+            teacher_model_config = resolve_model_id(teacher_id, ctx.obj.config.models)
             if not teacher_model_config:
                 raise ValueError(
-                    f"Teacher model with ID '{teacher_model_id}' not found in the configuration."
+                    f"Teacher model with ID '{teacher_id}' not found in the configuration."
                 )
             model_path = teacher_model_config.path
             model_family = model_family if model_family else teacher_model_config.family
