@@ -87,6 +87,7 @@ jobs:
               uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
               with:
                   repository-url: https://test.pypi.org/legacy/
+                  verbose: true
 
     # push to Production PyPI on
     # - a new GitHub release is published
@@ -136,3 +137,5 @@ jobs:
 
             - name: Upload to PyPI
               uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+              with:
+                verbose: true
