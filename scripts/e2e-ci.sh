@@ -28,6 +28,7 @@ GRANITE_7B_MODEL="instructlab/granite-7b-lab"
 MIXTRAL_8X7B_MODEL="mistralai/Mixtral-8x7B-Instruct-v0.1"
 PROMETHEUS_8X7B_MODEL="prometheus-eval/prometheus-8x7b-v2.0"
 LLAMA_3_3_70B_MODEL="RedHatAI/Llama-3.3-70B-Instruct-quantized.w8a8"
+# LLAMA_3_3_70B_MODEL="meta-llama/Llama-3.2-3B-Instruct"
 MERLINITE_GGUF_REPO="instructlab/merlinite-7b-lab-GGUF"
 MERLINITE_GGUF_MODEL="merlinite-7b-lab-Q4_K_M.gguf"
 MISTRAL_GGUF_REPO="TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
@@ -228,7 +229,7 @@ test_taxonomy() {
 
 test_generate() {
     task Generate synthetic data in detached mode
-    ilab data generate -dt
+    ilab data generate -dt --enable-serving-output
     task Data generation started
     task List all processes
     ilab process list

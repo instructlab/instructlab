@@ -126,7 +126,7 @@ serve:
     # the family of model being served - used to determine the appropriate chat template
     llm_family: ''
     # additional arguments to be supplied directly to vLLM
-    vllm_args: ["--tensor-parallel-size", "8"]
+    vllm_args: ["--tensor-parallel-size", "4"]
 models:
   - id: llama-3.3
     family: meta-llama
