@@ -257,8 +257,8 @@ def evaluate(
                 raise click.exceptions.BadParameter(
                     f"Base model with ID '{base_model_id}' not found in the configuration."
                 )
-            base_model = base_model_cfg["path"]
-            system_prompt = base_model_cfg["system_prompt"]
+            base_model = base_model_cfg.path
+            system_prompt = base_model_cfg.system_prompt
             logger.debug(
                 "detected `--base-model-id`, selecting custom model from config list."
             )
@@ -275,7 +275,7 @@ def evaluate(
                     f"Base model with ID '{judge_model_id}' not found in the configuration."
                 )
 
-            judge_model = judge_model_cfg["path"]
+            judge_model = judge_model_cfg.path
             logger.debug(
                 "detected `--judge-model-id`, selecting custom model from config list."
             )

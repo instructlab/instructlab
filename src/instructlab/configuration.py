@@ -51,8 +51,6 @@ from .defaults import (
 yaml = YAML()
 yaml.indent(mapping=2, sequence=4, offset=2)
 
-# yaml.representer.add_representer(BaseModel, lambda r, d: r.represent_dict(d.model_dump()))
-
 # Enable fast-download using external dependency "hf_transfer"
 # Used by the "ilab model download" command
 os.environ.setdefault("HF_HUB_ENABLE_HF_TRANSFER", "1")
@@ -789,7 +787,7 @@ class Config(BaseModel):
         description="Metadata pertaining to the specifics of the system which the Configuration is meant to be applied to.",
     )
     # List of user-defined models
-    models: List[dict] = Field(
+    models: List[model_info] = Field(
         default_factory=lambda: [],
         description="User-defined custom set of models. This allows people to use their own models for the InstructLab model customization process.",
     )
@@ -1182,6 +1180,7 @@ def config_to_commented_map(
 ) -> CommentedMap:
     """
     Convert a Pydantic model to a CommentedMap with comments derived from field descriptions.
+
     This function iterates through the fields of our Config model, converting each field to a
     CommentedMap entry. If a field is itself a model, the function handles it recursively.
     Comments are added to each field based on its description and default value.
@@ -1585,8 +1584,8 @@ def map_train_to_library(ctx, params):
         except ValueError as ve:
             click.secho(f"failed to get model with `--model-id`: {ve}", fg="red")
             raise click.exceptions.Exit(1)
-        params["model_path"] = model_cfg["path"]
-        train_args.model_path = model_cfg["path"]
+        params["model_path"] = model_cfg.path
+        train_args.model_path = model_cfg.path
 
     ds_args = DeepSpeedOptions(
         cpu_offload_optimizer=params["deepspeed_cpu_offload_optimizer"],
@@ -1688,13 +1687,13 @@ def configs_exist() -> bool:
     return os.path.exists(DEFAULTS.CONFIG_FILE)
 
 
-def resolve_model_id(model_id: str, models: List[dict]) -> dict | None:
+def resolve_model_id(model_id: str, models: List[model_info]) -> model_info | None:
     """
     Given a `model_id`, returns the matching model config if one is found.
     When a model is found, the following validations happen:
     - No more than one model has the same ID
     """
-    models_found = [m for m in models if m["id"] == model_id]
+    models_found = [m for m in models if m.id == model_id]
     if not models_found:
         raise ValueError(f"Could not find any model with id: '{model_id}'")
 
