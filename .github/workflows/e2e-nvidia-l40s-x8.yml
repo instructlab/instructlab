@@ -20,110 +20,66 @@ env:
 jobs:
   start-xlarge-ec2-runner:
     runs-on: ubuntu-latest
-    env:
-      INSTANCE_TYPE: "g6e.48xlarge"
     outputs:
-      label: ${{ steps.selected-availability-zone.outputs.label }}
-      ec2-instance-id: ${{ steps.selected-availability-zone.outputs.ec2-instance-id }}
+      label: ${{ steps.launch-ec2-instance-with-fallback.outputs.label }}
+      ec2-instance-id: ${{ steps.launch-ec2-instance-with-fallback.outputs.ec2-instance-id }}
+      ec2-instance-region: ${{ steps.launch-ec2-instance-with-fallback.outputs.ec2-instance-region }}
     steps:
-      - name: Checkout
+      - name: Checkout "launch-ec2-runner-with-fallback" in-house CI action
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          # https://github.com/actions/checkout/issues/249
-          fetch-depth: 0
+          repository: instructlab/ci-actions
+          # clone the "ci-actions" repo to a local directory called "ci-actions", instead of
+          # overwriting the current WORKDIR contents
+          path: ci-actions
+          ref: release-v0.1
+          sparse-checkout: |
+            actions/launch-ec2-runner-with-fallback
 
-      # We need to free disk space to avoid the "No space left on device" error on our GH runner
-      - name: Free disk space
-        uses: ./.github/actions/free-disk-space
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
+      - name: Launch EC2 Runner with Fallback
+        id: launch-ec2-instance-with-fallback
+        uses: ./ci-actions/actions/launch-ec2-runner-with-fallback
+        env:
+          TMPDIR: "/tmp"
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      # Attempt to launch the EC2 runner on us-east-2a. If it fails to launch due to insufficient capacity
-      # for this instance, we will continue and try another availability zone within this region.
-      - name: Attempt to start EC2 runner on us-east-2a
-        id: start-ec2-runner-us-east-2a
-        uses: machulav/ec2-github-runner@fcfb31a5760dad1314a64a0e172b78ec6fc8a17e # v2.3.6
-        continue-on-error: true
-        with:
-          mode: start
-          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          ec2-image-id: ${{ vars.AWS_EC2_AMI }}
-          ec2-instance-type: ${{ env.INSTANCE_TYPE }}
-          subnet-id: subnet-02d230cffd9385bd4
-          security-group-id: sg-06300447c4a5fbef3
-          iam-role-name: instructlab-ci-runner
-          aws-resource-tags: >
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          github_token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          regions_config: >
+            [
+              {
+                "region": "us-east-2",
+                "subnets": {
+                  "us-east-2a": "${{ vars.SUBNET_US_EAST_2A }}",
+                  "us-east-2b": "${{ vars.SUBNET_US_EAST_2B }}",
+                  "us-east-2c": "${{ vars.SUBNET_US_EAST_2C }}"
+                },
+                "ec2-ami": "${{ vars.AWS_EC2_AMI_US_EAST_2 }}",
+                "security-group-id": "${{ vars.SECURITY_GROUP_ID_US_EAST_2 }}"
+              },
+              {
+                "region": "us-east-1",
+                "subnets": {
+                  "us-east-1a": "${{ vars.SUBNET_US_EAST_1A }}",
+                  "us-east-1b": "${{ vars.SUBNET_US_EAST_1B }}",
+                  "us-east-1c": "${{ vars.SUBNET_US_EAST_1C }}",
+                  "us-east-1d": "${{ vars.SUBNET_US_EAST_1D }}",
+                  "us-east-1e": "${{ vars.SUBNET_US_EAST_1E }}",
+                  "us-east-1f": "${{ vars.SUBNET_US_EAST_1F }}"
+                },
+                "ec2-ami": "${{ vars.AWS_EC2_AMI_US_EAST_1 }}",
+                "security-group-id": "${{ vars.SECURITY_GROUP_ID_US_EAST_1 }}"
+              }
+            ]
+          try_spot_instance_first: false
+          ec2_instance_type: g6e.48xlarge
+          aws_resource_tags: >
             [
               {"Key": "Name", "Value": "instructlab-ci-github-xlarge-runner"},
               {"Key": "GitHubRepository", "Value": "${{ github.repository }}"},
               {"Key": "GitHubRef", "Value": "${{ github.ref }}"},
               {"Key": "GitHubPR", "Value": "${{ github.event.number }}"}
             ]
-
-      # Fallback in case of failure
-      - name: Attempt to start EC2 runner on us-east-2b (if us-east-2a failed)
-        if: steps.start-ec2-runner-us-east-2a.outcome == 'failure'
-        id: start-ec2-runner-us-east-2b
-        uses: machulav/ec2-github-runner@fcfb31a5760dad1314a64a0e172b78ec6fc8a17e # v2.3.6
-        continue-on-error: true
-        with:
-          mode: start
-          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          ec2-image-id: ${{ vars.AWS_EC2_AMI }}
-          ec2-instance-type: ${{ env.INSTANCE_TYPE }}
-          subnet-id: subnet-024298cefa3bedd61
-          security-group-id: sg-06300447c4a5fbef3
-          iam-role-name: instructlab-ci-runner
-          aws-resource-tags: >
-            [
-              {"Key": "Name", "Value": "instructlab-ci-github-xlarge-runner"},
-              {"Key": "GitHubRepository", "Value": "${{ github.repository }}"},
-              {"Key": "GitHubRef", "Value": "${{ github.ref }}"},
-              {"Key": "GitHubPR", "Value": "${{ github.event.number }}"}
-            ]
-
-      # Only try us-east-2c if the previous two availability zones had no availability, but
-      # do not continue if we see a failure here. Assume we've exhausted all options at that
-      # point in time.
-      - name: Attempt to start EC2 runner on us-east-2c (if us-east-2b failed)
-        if: steps.start-ec2-runner-us-east-2b.outcome == 'failure'
-        id: start-ec2-runner-us-east-2c
-        uses: machulav/ec2-github-runner@fcfb31a5760dad1314a64a0e172b78ec6fc8a17e # v2.3.6
-        with:
-          mode: start
-          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          ec2-image-id: ${{ vars.AWS_EC2_AMI }}
-          ec2-instance-type: ${{ env.INSTANCE_TYPE }}
-          subnet-id: subnet-04701a08396b2ed01
-          security-group-id: sg-06300447c4a5fbef3
-          iam-role-name: instructlab-ci-runner
-          aws-resource-tags: >
-            [
-              {"Key": "Name", "Value": "instructlab-ci-github-xlarge-runner"},
-              {"Key": "GitHubRepository", "Value": "${{ github.repository }}"},
-              {"Key": "GitHubRef", "Value": "${{ github.ref }}"},
-              {"Key": "GitHubPR", "Value": "${{ github.event.number }}"}
-            ]
-
-      - name: Determine EC2 availability zone used
-        id: selected-availability-zone
-        run: |
-          # shellcheck disable=SC2086 # False positive error from shellcheck about word splitting/gobbling
-          if [ "${{ steps.start-ec2-runner-us-east-2a.outcome }}" = "success" ]; then
-            echo "label=${{ steps.start-ec2-runner-us-east-2a.outputs.label }}" >> $GITHUB_OUTPUT
-            echo "ec2-instance-id=${{ steps.start-ec2-runner-us-east-2a.outputs.ec2-instance-id }}" >> $GITHUB_OUTPUT
-          elif [ "${{ steps.start-ec2-runner-us-east-2b.outcome }}" = "success" ]; then
-            echo "label=${{ steps.start-ec2-runner-us-east-2b.outputs.label }}" >> $GITHUB_OUTPUT
-            echo "ec2-instance-id=${{ steps.start-ec2-runner-us-east-2b.outputs.ec2-instance-id }}" >> $GITHUB_OUTPUT
-          elif [ "${{ steps.start-ec2-runner-us-east-2c.outcome }}" = "success" ]; then
-            echo "label=${{ steps.start-ec2-runner-us-east-2c.outputs.label }}" >> $GITHUB_OUTPUT
-            echo "ec2-instance-id=${{ steps.start-ec2-runner-us-east-2c.outputs.ec2-instance-id }}" >> $GITHUB_OUTPUT
-          fi
 
   e2e-xlarge-test:
     needs:
@@ -322,7 +278,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
+          aws-region: ${{ needs.start-xlarge-ec2-runner.outputs.ec2-instance-region }}
 
       - name: Stop EC2 runner
         uses: machulav/ec2-github-runner@fcfb31a5760dad1314a64a0e172b78ec6fc8a17e # v2.3.6
