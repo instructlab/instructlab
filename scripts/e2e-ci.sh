@@ -288,6 +288,7 @@ test_phased_train() {
     fi
 
     export HF_DATASETS_TRUST_REMOTE_CODE=true
+    export NCCL_WATCHDOG_TIMEOUT=6000000
     ilab model train "${train_args[@]}" 2>&1 | tee "${E2E_TEST_DIR}"/multiphase_training.log
 
     # final best model is written to log

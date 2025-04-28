@@ -20,28 +20,58 @@ jobs:
   start-large-ec2-runner:
     runs-on: ubuntu-latest
     outputs:
-      label: ${{ steps.start-ec2-runner.outputs.label }}
-      ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
+      label: ${{ steps.launch-ec2-instance-with-fallback.outputs.label }}
+      ec2-instance-id: ${{ steps.launch-ec2-instance-with-fallback.outputs.ec2-instance-id }}
+      ec2-instance-region: ${{ steps.launch-ec2-instance-with-fallback.outputs.ec2-instance-region }}
     steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@ececac1a45f3b08a01d2dd070d28d111c5fe6722 # v4.1.0
+      - name: Checkout "launch-ec2-runner-with-fallback" in-house CI action
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ vars.AWS_REGION }}
+          repository: instructlab/ci-actions
+          # clone the "ci-actions" repo to a local directory called "ci-actions", instead of overwriting the current WORKDIR contents
+          path: ci-actions
+          ref: release-v0.1
+          sparse-checkout: |
+            actions/launch-ec2-runner-with-fallback
 
-      - name: Start EC2 runner
-        id: start-ec2-runner
-        uses: machulav/ec2-github-runner@fcfb31a5760dad1314a64a0e172b78ec6fc8a17e # v2.3.6
+      - name: Launch EC2 Runner with Fallback
+        id: launch-ec2-instance-with-fallback
+        uses: ./ci-actions/actions/launch-ec2-runner-with-fallback
+        env:
+          TMPDIR: "/tmp"
         with:
-          mode: start
-          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          ec2-image-id: ${{ vars.AWS_EC2_AMI }}
-          ec2-instance-type: g6e.12xlarge
-          subnet-id: subnet-024298cefa3bedd61
-          security-group-id: sg-06300447c4a5fbef3
-          iam-role-name: instructlab-ci-runner
-          aws-resource-tags: >
+          aws_access_key_id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          github_token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          regions_config: >
+            [
+              {
+                "region": "us-east-2",
+                "subnets": {
+                  "us-east-2a": "${{ vars.SUBNET_US_EAST_2A }}",
+                  "us-east-2b": "${{ vars.SUBNET_US_EAST_2B }}",
+                  "us-east-2c": "${{ vars.SUBNET_US_EAST_2C }}"
+                },
+                "ec2-ami": "${{ vars.AWS_EC2_AMI_US_EAST_2 }}",
+                "security-group-id": "${{ vars.SECURITY_GROUP_ID_US_EAST_2 }}"
+              },
+              {
+                "region": "us-east-1",
+                "subnets": {
+                  "us-east-1a": "${{ vars.SUBNET_US_EAST_1A }}",
+                  "us-east-1b": "${{ vars.SUBNET_US_EAST_1B }}",
+                  "us-east-1c": "${{ vars.SUBNET_US_EAST_1C }}",
+                  "us-east-1d": "${{ vars.SUBNET_US_EAST_1D }}",
+                  "us-east-1e": "${{ vars.SUBNET_US_EAST_1E }}",
+                  "us-east-1f": "${{ vars.SUBNET_US_EAST_1F }}"
+                },
+                "ec2-ami": "${{ vars.AWS_EC2_AMI_US_EAST_1 }}",
+                "security-group-id": "${{ vars.SECURITY_GROUP_ID_US_EAST_1 }}"
+              }
+            ]
+          try_spot_instance_first: false
+          ec2_instance_type: g6e.12xlarge
+          aws_resource_tags: >
             [
               {"Key": "Name", "Value": "instructlab-ci-github-large-runner"},
               {"Key": "GitHubRepository", "Value": "${{ github.repository }}"},
@@ -157,6 +187,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
+          export NCCL_WATCHDOG_TIMEOUT=6000000
           . venv/bin/activate
           ./scripts/e2e-ci.sh -l
 
