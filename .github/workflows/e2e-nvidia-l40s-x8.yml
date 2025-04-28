@@ -238,7 +238,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           . venv/bin/activate
-          ./scripts/e2e-ci.sh -x
+          ./scripts/e2e-ci.sh -x -p
 
       - name: Check disk after tests
         run: |

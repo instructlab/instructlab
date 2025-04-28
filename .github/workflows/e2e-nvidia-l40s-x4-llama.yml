@@ -189,7 +189,7 @@ jobs:
           LARGE_LLAMA: 1
         run: |
           . venv/bin/activate
-          ./scripts/e2e-ci.sh -a
+          ./scripts/e2e-ci.sh -a -p
 
       - name: Check disk after tests
         run: |
