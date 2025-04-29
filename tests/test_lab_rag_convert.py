@@ -18,6 +18,7 @@ from docling.datamodel.base_models import (  # type: ignore  # noqa: F401
 from docling.datamodel.document import ConversionResult  # type: ignore  # noqa: F401
 from docling.datamodel.document import InputDocument  # type: ignore  # noqa: F401
 from docling.document_converter import FormatOption  # type: ignore  # noqa: F401
+import pytest
 
 # First Party
 from instructlab import lab
@@ -98,6 +99,7 @@ def run_rag_convert_test(
 
 
 @dev_preview
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
 def test_convert_pdf_from_directory(tmp_path: Path):
     """
     Tests converting from the sample PDF in tests/testdata/documents/pdf.
@@ -115,6 +117,7 @@ def test_convert_pdf_from_directory(tmp_path: Path):
 
 
 @dev_preview
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
 def test_convert_md_from_directory(tmp_path: Path):
     """
     Tests converting from the sample Markdown file in tests/testdata/documents/md.
@@ -133,6 +136,7 @@ def test_convert_md_from_directory(tmp_path: Path):
 # is not working or if it ever gets deleted.  That's not ideal, but we do need to test these capabilities.
 # TODO: Consider re-working this with a mock for the github server.
 @dev_preview
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
 def test_convert_md_from_taxonomy(tmp_path: Path):
     """
     Tests converting from the sample Markdown file in a github repo referenced in tests/testdata/sample_taxonomy.
