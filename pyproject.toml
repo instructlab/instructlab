@@ -43,6 +43,7 @@ issues = "https://github.com/instructlab/instructlab/issues"
 "rag" = "instructlab.cli.rag.rag:rag"
 "system" = "instructlab.cli.system.system:system"
 "taxonomy" = "instructlab.taxonomy.taxonomy:taxonomy"
+"profile" = "instructlab.cli.profile.profile:profile"
 
 [project.entry-points."instructlab.command.process"]
 "list" = "instructlab.cli.process.list:list_processes"
@@ -78,6 +79,9 @@ issues = "https://github.com/instructlab/instructlab/issues"
 
 [project.entry-points."instructlab.command.taxonomy"]
 "diff" = "instructlab.taxonomy.diff:diff"
+
+[project.entry-points."instructlab.command.profile"]
+"list" = "instructlab.cli.profile.list:profile_list"
 
 [project.entry-points."instructlab.command.alias"]
 "chat" = "instructlab.cli.model.chat:chat"
@@ -116,6 +120,8 @@ include = [
   "instructlab.model",
   "instructlab.process",
   "instructlab.rag",
+  "instructlab.cli.profile",
+  "instructlab.profile",
   "instructlab.train",
   "instructlab.train.lora_mlx",
   "instructlab.train.lora_mlx.models",
