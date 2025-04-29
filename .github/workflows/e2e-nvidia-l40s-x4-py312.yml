@@ -192,6 +192,7 @@ jobs:
           ./scripts/e2e-ci.sh -l
 
       - name: Check disk after tests
+        if: always()
         run: |
           df -h
 
