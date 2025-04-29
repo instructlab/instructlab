@@ -66,6 +66,8 @@ check_flags() {
 ########################################
 
 init_e2e_tests() {
+    . ./scripts/e2e-common-settings.sh
+
     E2E_TEST_DIR=$(mktemp -d)
     export HOME="${E2E_TEST_DIR}"  # update the HOME directory used to resolve paths
 
