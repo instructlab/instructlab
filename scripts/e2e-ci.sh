@@ -277,6 +277,7 @@ test_phased_train() {
         "--phased-phase1-data=${knowledge_data_path}"
         "--phased-phase2-data=${skills_data_path}"
         "--skip-user-confirm"
+        "--enable-serving-output"
     )
 
     # << TODO: REMOVE THIS FLAG FROM THE CI SCRIPT AND HAVE IT ADDED AS AN OPTION THAT CAN BE REFERENCED IN A PROFILE >>
@@ -314,6 +315,7 @@ test_skills_only_train() {
         "--phased-phase2-num-epochs=1"
         "--skip-user-confirm"
         "--phased-base-dir=${skills_phased_base_dir}"
+        "--enable-serving-output"
     )
 
     # << TODO: REMOVE THIS FLAG FROM THE CI SCRIPT AND HAVE IT ADDED AS AN OPTION THAT CAN BE REFERENCED IN A PROFILE >>
