@@ -199,6 +199,7 @@ jobs:
           ./scripts/${{ github.event.inputs.e2e_script }} ${{ github.event.inputs.e2e_script_args }}
 
       - name: Check disk after tests
+        if: always()
         run: |
           df -h
 
