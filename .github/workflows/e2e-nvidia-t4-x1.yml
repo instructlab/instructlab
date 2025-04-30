@@ -21,7 +21,12 @@ on:
       - 'scripts/e2e-ci.sh' # Used by this workflow
       - 'scripts/test-data/**'
       - 'src/instructlab/profiles/**'
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      pr_or_branch:
+        description: 'pull request number or branch name'
+        required: true
+        default: 'main'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.number || github.ref }}
@@ -144,11 +149,50 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Fetch and checkout PR
-        if: ${{ github.event_name == 'pull_request_target' }}
+      - name: Determine if pr_or_branch is a PR number
+        id: check_pr
         run: |
-          git fetch origin pull/${{ github.event.number }}/head:pr-${{ github.event.number }}
-          git checkout pr-${{ github.event.number }}
+          PR_OR_BRANCH=${{ github.event.inputs.pr_or_branch || 'main' }} # Default to 'main' if not set
+          if [[ "$PR_OR_BRANCH" =~ ^[0-9]+$ ]]; then
+            echo "is_pr=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_pr=false" >> "$GITHUB_OUTPUT"
+          fi
+          echo "pr_or_branch=$PR_OR_BRANCH" >> "$GITHUB_OUTPUT"
+
+      - name: Check if gh cli is installed
+        id: gh_cli
+        run: |
+          if command -v gh &> /dev/null ; then
+            echo "gh_cli_installed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "gh_cli_installed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install gh CLI
+        if: steps.gh_cli.outputs.gh_cli_installed == 'false'
+        run: |
+          sudo dnf install 'dnf-command(config-manager)' -y
+          sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
+          sudo dnf install gh --repo gh-cli -y
+
+      - name: test gh CLI
+        run: |
+          gh --version
+
+      - name: set default repo
+        run: |
+          gh repo set-default ${{ github.server_url }}/${{ github.repository }}
+
+      - name: Fetch and checkout PR
+        if: steps.check_pr.outputs.is_pr == 'true'
+        run: |
+          gh pr checkout ${{ steps.check_pr.outputs.pr_or_branch }}
+
+      - name: Checkout branch
+        if: steps.check_pr.outputs.is_pr == 'false'
+        run: |
+          git checkout ${{ steps.check_pr.outputs.pr_or_branch }}
 
       - name: Install ilab
         run: |
