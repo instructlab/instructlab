@@ -167,7 +167,7 @@ jobs:
       - name: Install Packages
         run: |
           cat /etc/os-release
-          sudo dnf install -y gcc gcc-c++ make git-core python3.11 python3.11-devel
+          sudo dnf install -y gcc gcc-c++ make git-core python3.11 python3.11-devel moreutils
 
       - name: Install ilab
         run: |
@@ -196,7 +196,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           . venv/bin/activate
-          ./scripts/${{ github.event.inputs.e2e_script }} ${{ github.event.inputs.e2e_script_args }}
+          ./scripts/${{ github.event.inputs.e2e_script }} ${{ github.event.inputs.e2e_script_args }} | ts
 
       - name: Check disk after tests
         if: always()

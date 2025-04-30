@@ -131,7 +131,7 @@ jobs:
         run: |
           cat /etc/os-release
           mkdir -p /home/tmp
-          sudo dnf install -y gcc gcc-c++ make git-core python3.11 python3.11-devel
+          sudo dnf install -y gcc gcc-c++ make git-core python3.11 python3.11-devel moreutils
 
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -172,7 +172,7 @@ jobs:
       - name: Run e2e test
         run: |
           . venv/bin/activate
-          ./scripts/e2e-ci.sh -s -p
+          ./scripts/e2e-ci.sh -s -p | ts
 
       - name: Check disk after tests
         if: always()
