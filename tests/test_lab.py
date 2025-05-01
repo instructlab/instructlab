@@ -142,6 +142,8 @@ subcommands: list[Command] = [
     Command(("process",), needs_config=False, should_fail=False),
     Command(("process", "list")),
     Command(("process", "attach")),
+    Command(("process", "remove"), ("test_uuid_string",)),
+    Command(("process", "prune")),
 ]
 
 aliases = [

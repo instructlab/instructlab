@@ -123,4 +123,4 @@ def test_process_list_none(cli_runner: CliRunner):
         ],
     )
     assert result.exit_code == 0, result.output
-    assert "No processes found in registry" in result.output
+    assert "No matching process found" in result.output

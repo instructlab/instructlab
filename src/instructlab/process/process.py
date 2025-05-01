@@ -2,7 +2,7 @@
 
 # Standard
 from datetime import datetime, timedelta
-from typing import Any, Callable, Optional
+from typing import Any, Callable, List, Optional
 import json
 import logging
 import os
@@ -20,6 +20,7 @@ import psutil
 # First Party
 from instructlab.configuration import DEFAULTS
 from instructlab.defaults import ILAB_PROCESS_MODES, ILAB_PROCESS_STATUS
+from instructlab.utils import print_table
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +66,10 @@ class Process:
     @property
     def runtime(self) -> timedelta:
         return (self._end_time or datetime.now()) - self._start_time
+
+    @property
+    def start_time(self) -> datetime:
+        return self._start_time
 
     # We are making effort to retain the original process representation as was
     # used in the original implementation. Some fields are named differently
@@ -365,46 +370,6 @@ def complete_process(local_uuid: str, status):
     process_registry.persist()
 
 
-def filter_processes(state: Optional[str] = None):
-    """
-    Constructs a list of processes and their statuses. Marks processes as ready for removal if necessary
-
-    Args:
-        None
-
-    Returns:
-        None
-    """
-    process_registry = ProcessRegistry().load()
-    if not process_registry:
-        logger.info("No processes currently in the registry.")
-        return
-
-    list_of_processes = []
-
-    for local_uuid, process in process_registry.processes.items():
-        if state and process.status != state:
-            continue
-
-        # Convert timedelta to a human-readable string (HH:MM:SS)
-        hours, remainder = divmod(process.runtime.total_seconds(), 3600)
-        minutes, seconds = divmod(remainder, 60)
-
-        runtime_str = f"{hours:02}:{minutes:02}:{seconds:02}"
-        list_of_processes.append(
-            (
-                process.ptype,
-                process.pid,
-                local_uuid,
-                str(process.log_path),
-                runtime_str,
-                process.status,
-            )
-        )
-
-    return list_of_processes
-
-
 def attach_process(local_uuid: str):
     """
     Attach to a running process and display its output in real-time.
@@ -453,3 +418,80 @@ def get_latest_process() -> str | None:
     if not processes:
         return None
     return list(processes)[-1]
+
+
+def remove_process(process_uuid: str):
+    """Remove a process by its UUID and delete its log artifacts."""
+    process_registry = ProcessRegistry().load()
+    if process_uuid not in process_registry.processes:
+        logger.info(f"Process with UUID {process_uuid} not found.")
+        return
+
+    process = process_registry.processes.get(process_uuid)
+    log_file = process.log_path if process else None
+    stop_process(process_uuid, remove=True)
+    logger.debug(f"Stopped process {process_uuid}.")
+
+    # Remove the log
+    if log_file and os.path.exists(log_file):
+        os.remove(log_file)
+        logger.debug(f"Log file {log_file} removed.")
+
+    logger.info(f"Process with UUID {process_uuid} removed.")
+
+
+def filter_process_with_conditions(
+    process_uuid: Optional[str] = None,
+    state: Optional[str] = None,
+    older: Optional[int] = None,
+) -> List[str]:
+    """Filter processes based on their uuid, state or older."""
+    process_registry = ProcessRegistry().load()
+
+    uuid_list = []
+    for item_uuid, process in process_registry.processes.items():
+        if process_uuid and item_uuid != process_uuid:
+            continue
+
+        if state and process.status != state:
+            continue
+
+        if older == 0:
+            uuid_list.append(item_uuid)
+            continue
+
+        if older:
+            start_time = process.start_time
+            now = datetime.now()
+            if (now - start_time).days < older:
+                continue
+
+        uuid_list.append(item_uuid)
+
+    return uuid_list
+
+
+def display_processes(uuid_list: List[str]):
+    process_registry = ProcessRegistry().load()
+    display_list = []
+
+    for local_uuid, process in process_registry.processes.items():
+        if local_uuid in uuid_list:
+            hours, remainder = divmod(process.runtime.total_seconds(), 3600)
+            minutes, seconds = divmod(remainder, 60)
+            runtime_str = f"{hours:02}:{minutes:02}:{seconds:02}"
+            display_list.append(
+                (
+                    process.ptype,
+                    process.pid,
+                    local_uuid,
+                    process.log_path,
+                    runtime_str,
+                    process.status,
+                )
+            )
+
+    print_table(
+        ["Type", "PID", "UUID", "Log File", "Runtime", "Status"],
+        [tuple(map(str, row)) for row in display_list],
+    )

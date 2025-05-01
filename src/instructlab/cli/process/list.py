@@ -6,8 +6,10 @@ import click
 # First Party
 from instructlab import clickext
 from instructlab.defaults import ILAB_PROCESS_STATUS
-from instructlab.process.process import filter_processes
-from instructlab.utils import print_table
+from instructlab.process.process import (
+    display_processes,
+    filter_process_with_conditions,
+)
 
 
 @click.command(name="list")
@@ -24,14 +26,8 @@ from instructlab.utils import print_table
 @clickext.display_params
 def list_processes(state: str):
     """List processes"""
-    process_list = filter_processes(state=state)
-    if process_list is not None and len(process_list) > 0:
-        print_table(
-            ["Type", "PID", "UUID", "Log File", "Runtime", "Status"], process_list
-        )
-    else:
-        click.secho(
-            "No processes found in registry",
-            fg="red",
-        )
-        raise click.exceptions.Exit(0)
+    uuid_list = filter_process_with_conditions(state=state)
+    if not uuid_list:
+        click.echo("No matching process found.")
+        return
+    display_processes(uuid_list)
