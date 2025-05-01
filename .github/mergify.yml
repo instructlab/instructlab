@@ -39,7 +39,6 @@ pull_request_rules:
           - files=scripts/e2e-ci.sh
           - files~=^scripts/test-data/
           - files~=^src/instructlab/profiles/
-          - files=.github/workflows/e2e-nvidia-l4-x1.yml
       - and:
         - -files~=\.py$
         - -files=pyproject.toml
@@ -47,7 +46,6 @@ pull_request_rules:
         - -files=scripts/e2e-ci.sh
         - -files~=^scripts/test-data/
         - -files~=^src/instructlab/profiles/
-        - -files=.github/workflows/e2e-nvidia-l4-x1.yml
 
     # small e2e workflow
     - or:
@@ -61,7 +59,6 @@ pull_request_rules:
           - files=scripts/e2e-ci.sh
           - files~=^scripts/test-data/
           - files~=^src/instructlab/profiles/
-          - files=.github/workflows/e2e-nvidia-t4-x1.yml
       - and:
         - -files~=\.py$
         - -files=pyproject.toml
@@ -69,7 +66,6 @@ pull_request_rules:
         - -files=scripts/e2e-ci.sh
         - -files~=^scripts/test-data/
         - -files~=^src/instructlab/profiles/
-        - -files=.github/workflows/e2e-nvidia-t4-x1.yml
 
     # test workflow
     - or:
