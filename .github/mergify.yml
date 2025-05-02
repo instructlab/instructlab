@@ -36,6 +36,7 @@ pull_request_rules:
           - files~=\.py$
           - files=pyproject.toml
           - files~=^requirements.*\.txt$
+          - files=constraints-dev.txt
           - files=scripts/e2e-ci.sh
           - files~=^scripts/test-data/
           - files~=^src/instructlab/profiles/
@@ -43,6 +44,7 @@ pull_request_rules:
         - -files~=\.py$
         - -files=pyproject.toml
         - -files~=^requirements.*\.txt$
+        - -files=constraints-dev.txt
         - -files=scripts/e2e-ci.sh
         - -files~=^scripts/test-data/
         - -files~=^src/instructlab/profiles/
@@ -56,6 +58,7 @@ pull_request_rules:
           - files~=\.py$
           - files=pyproject.toml
           - files~=^requirements.*\.txt$
+          - files=constraints-dev.txt
           - files=scripts/e2e-ci.sh
           - files~=^scripts/test-data/
           - files~=^src/instructlab/profiles/
@@ -63,6 +66,7 @@ pull_request_rules:
         - -files~=\.py$
         - -files=pyproject.toml
         - -files~=^requirements.*\.txt$
+        - -files=constraints-dev.txt
         - -files=scripts/e2e-ci.sh
         - -files~=^scripts/test-data/
         - -files~=^src/instructlab/profiles/
@@ -76,6 +80,7 @@ pull_request_rules:
           - files~=\.py$
           - files=pyproject.toml
           - files~=^requirements.*\.txt$
+          - files=constraints-dev.txt
           - files=tox.ini
           - files~=^scripts/[^/]+\.sh$
           - files~=^src/instructlab/profiles/
@@ -84,6 +89,7 @@ pull_request_rules:
         - -files~=\.py$
         - -files=pyproject.toml
         - -files~=^requirements.*\.txt$
+        - -files=constraints-dev.txt
         - -files=tox.ini
         - -files~=^scripts/[^/]+\.sh$
         - -files~=^src/instructlab/profiles/
@@ -98,6 +104,7 @@ pull_request_rules:
           - files~=\.py$
           - files=pyproject.toml
           - files~=^requirements.*\.txt$
+          - files=constraints-dev.txt
           - files=tox.ini
           - files=.pylintrc
           - files~=^src/instructlab/profiles/
@@ -106,6 +113,7 @@ pull_request_rules:
         - -files~=\.py$
         - -files=pyproject.toml
         - -files~=^requirements.*\.txt$
+        - -files=constraints-dev.txt
         - -files=tox.ini
         - -files=.pylintrc
         - -files~=^src/instructlab/profiles/
@@ -279,6 +287,7 @@ pull_request_rules:
     - or:
       - files~=^requirements.*\.txt$
       - files~=^requirements/
+      - files=constraints-dev.txt
   actions:
     label:
       add:
