@@ -8,6 +8,7 @@ import sys
 
 # First Party
 from instructlab import log
+from instructlab.config.init import is_hpu_available
 from instructlab.configuration import write_config
 from instructlab.model.backends import backends
 from instructlab.model.backends.common import ServerException
@@ -114,9 +115,14 @@ def serve_backend(
 
         ctx.obj.config.serve.vllm.vllm_args = ctx.obj.config.serve.vllm.vllm_args or []
 
-        available_gpus = torch.cuda.device_count()
+        # TODO: add support for Gaudi, ROCm, etc.
+        # we only offer HW detection if CUDA is available
+        available_gpus = None
+        no_rocm_or_hpu = torch.version.hip is None and not is_hpu_available()
+        if torch.cuda.is_available() and no_rocm_or_hpu:
+            available_gpus = torch.cuda.device_count()
         if gpus:
-            if gpus > available_gpus:
+            if available_gpus and gpus > available_gpus:
                 logger.error(
                     f"Specified --gpus value ({gpus}) exceeds available GPUs ({available_gpus}).\nPlease specify a valid number of GPUs."
                 )
@@ -134,7 +140,7 @@ def serve_backend(
             tensor_parallel_size = get_tensor_parallel_size(
                 ctx.obj.config.serve.vllm.vllm_args
             )
-            if tensor_parallel_size > available_gpus:
+            if available_gpus and tensor_parallel_size > available_gpus:
                 logger.error(
                     f"Invalid --tensor-parallel-size ({tensor_parallel_size}) value. It cannot be greater than the number of available GPUs ({available_gpus}).\nPlease reduce --tensor-parallel-size to a valid value or ensure that sufficient GPUs are available."
                 )
