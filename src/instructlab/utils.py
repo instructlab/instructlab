@@ -635,11 +635,64 @@ def is_oci_repo(repo_url: str) -> bool:
     return True
 
 
+def extract_huggingface_repo_name(value: str) -> str:
+    """
+    Extracts the repository name from a Hugging Face URL or returns the original value.
+    
+    This allows users to input either a direct repository name (e.g., "user/model") 
+    or a full Hugging Face URL (e.g., "https://huggingface.co/user/model").
+    
+    Args:
+        value (str): The input string which could be a URL or a repository name
+        
+    Returns:
+        str: The extracted repository name or the original value if it's not a URL
+    """
+    if not value or not isinstance(value, str):
+        return value
+        
+    # Check if the value appears to be a Hugging Face URL
+    hf_url_pattern = r"https?://(?:www\.)?huggingface\.co/(.+)"
+    match = re.match(hf_url_pattern, value)
+    
+    if match:
+        return match.group(1)
+    
+    return value
+
+
 def is_huggingface_repo(repo_name: str) -> bool:
-    # allow alphanumerics, underscores, hyphens and periods in huggingface repo names
-    # repo name should be of the format <owner>/<model>
+    """
+    Validates if a repository name follows the Hugging Face format.
+    
+    The Hugging Face repository name should follow the pattern <owner>/<model> where both owner
+    and model can contain alphanumeric characters, underscores, hyphens, and periods.
+    
+    This function will attempt to extract a repository name from a URL if provided.
+    
+    Args:
+        repo_name (str): The repository name to validate
+        
+    Returns:
+        bool: True if the name is a valid Hugging Face repository name, False otherwise
+    """
+    if not repo_name or not isinstance(repo_name, str):
+        logger.debug(f"Invalid Hugging Face repository name: {repo_name} - Expected a non-empty string")
+        return False
+    
+    # If a URL was provided, extract the repository name
+    repo_name = extract_huggingface_repo_name(repo_name)
+        
+    # Allow alphanumerics, underscores, hyphens and periods in Hugging Face repo names
+    # Repo name should be of the format <owner>/<model>
+    # Neither owner nor model part should be empty
     pattern = r"^[\w.-]+\/[\w.-]+$"
-    return re.match(pattern, repo_name) is not None
+    is_valid = re.match(pattern, repo_name) is not None
+    
+    if not is_valid:
+        logger.debug(f"Invalid Hugging Face repository name format: {repo_name}")
+        
+    return is_valid
 
 
 def load_json(file_path: Path):
