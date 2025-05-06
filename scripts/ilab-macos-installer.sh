@@ -41,11 +41,11 @@ check_python_version() {
     fi
 
     PYTHON_VERSION=$($PYTHON_COMMAND --version 2>&1 | awk '{print $2}')
-    if [[ "$PYTHON_VERSION" =~ ^3\.11 ]]; then
+    if [[ "$PYTHON_VERSION" =~ ^3\.1(1|2) ]]; then
         echo -e "$INDENT_VARIABLE Detected Python version: $PYTHON_VERSION"
         return 0
     else
-        echo -e "$INDENT_VARIABLE Detected Python version: $PYTHON_VERSION (not 3.11)"
+        echo -e "$INDENT_VARIABLE Detected Python version: $PYTHON_VERSION (not 3.11 or 3.12)"
         exit 1
     fi
 }
@@ -84,14 +84,15 @@ main() {
         exit 1
     fi
 
-    # Try checking python3.11 first (priority), then python3
     echo -e "\nChecking for supported Python version and CPU brand:"
-    if check_python_version python3.11; then
+    if check_python_version python3.12; then
+        PYTHON_BIN="python3.12"
+    elif check_python_version python3.11; then
         PYTHON_BIN="python3.11"
     elif check_python_version python3; then
         PYTHON_BIN="python3"
     else
-        echo "Error: Python 3.11 is required but not found."
+        echo "Error: Python 3.11 or 3.12 is required but not found."
         exit 1
     fi
 

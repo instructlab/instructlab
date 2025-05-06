@@ -3,7 +3,7 @@ ARG BASEIMAGE=vault.habana.ai/gaudi-docker/${HABANA_VERSION}/rhel9.4/habanalabs/
 
 FROM ${BASEIMAGE} AS runtime
 # base image has PyTorch fork with Habana plugins in self-compiled Python 3.10
-ARG PYTHON=python3.11
+ARG PYTHON=python3.12
 
 ENV PYTHON="${PYTHON}" \
     APP_ROOT="/opt/app-root"

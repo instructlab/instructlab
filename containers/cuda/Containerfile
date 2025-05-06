@@ -21,7 +21,7 @@ ENV APP_ROOT=/opt/app-root \
     PATH=/opt/app-root/src/bin:/opt/app-root/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 # Python, pip, and virtual env settings
-ARG PYTHON_VERSION=3.11
+ARG PYTHON_VERSION=3.12
 ENV PYTHON_VERSION=${PYTHON_VERSION} \
     PYTHON=python${PYTHON_VERSION} \
     PIP_NO_CACHE_DIR=off \

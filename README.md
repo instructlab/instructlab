@@ -94,18 +94,18 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    📋  When installing InstructLab Core on macOS, you may have to run the `xcode-select --install` command, installing the required packages listed.
 
 - C++ compiler
-- Python 3.11
+- Python 3.11 or later
 
-   ⚠️ Python 3.12+ is currently not supported. Some InstructLab dependencies don't work on Python 3.12, yet. It is recommended to use a specific version of Python in the below commands, e.g. `python3.11` instead of simply `python3`.
+   ⚠️ It is recommended to use a specific version of Python in the below commands, e.g. `python3.12` instead of simply `python3`.
 
 - Minimum 250GB disk space. Approximately 500GB disk space is recommended for the entire InstructLab end-to-end process.
 
 ## ✅ Getting started
 
-- When installing on Fedora Linux, install C++, Python 3.11, and other necessary tools by running the following command:
+- When installing on Fedora Linux, install C++, Python 3.11 or 3.12, and other necessary tools by running the following command:
 
    ```shell
-   sudo dnf install gcc gcc-c++ make git-core python3.11 python3.11-devel
+   sudo dnf install gcc gcc-c++ make git-core python3.12 python3.12-devel
    ```
 
    Some Python version management tools that build Python (instead of using a pre-built binary) may not by default build libraries implemented in C, and CPython when installing a Python version. This can result in the following error when running the `ilab data generate` command: `ModuleNotFoundError: No module named '_lzma'`. This can be resolved by building CPython during the Python installation with the `--enable-framework`. For example for `pyenv` on MacOS: `PYTHON_CONFIGURE_OPTS="--enable-framework" pyenv install 3.x`. You may need to recreate your virtual environment after reinstalling Python.
@@ -117,7 +117,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 1. There are a few ways you can locally install the InstructLab Core package. Select your preferred installation method from the following instructions. You can then install `ilab` and activate your `venv` environment.
 
-   ⚠️ The `python3` binary shown in the installation guides are the Python version that you installed in the above step. The command can also be `python3.11` instead of `python3`. You can check Python's version by `python3 -V`.
+   ⚠️ The `python3` binary shown in the installation guides are the Python version that you installed in the above step. The command can also be `python3.12` instead of `python3`. You can check Python's version by `python3 -V`.
 
    ⏳ `pip install` may take some time, depending on your internet connection. In case the installation fails with error ``unsupported instruction `vpdpbusd'``, append `-C cmake.args="-DGGML_NATIVE=off"` to `pip install` command.
 
