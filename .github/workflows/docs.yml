@@ -11,6 +11,7 @@ on:
       - '**/*.md'
       - '.markdownlint-cli2.yaml'
       - '.github/workflows/docs.yml' # This workflow
+      - 'docs/**'
   pull_request:
     branches:
       - "main"
@@ -19,6 +20,7 @@ on:
       - '**/*.md'
       - '.markdownlint-cli2.yaml'
       - '.github/workflows/docs.yml' # This workflow
+      - 'docs/**'
 
 env:
   LC_ALL: en_US.UTF-8
