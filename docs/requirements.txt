@@ -1,4 +1,4 @@
-sphinx<8.2.0
+sphinx
 myst-parser
 furo
 sphinx-click
