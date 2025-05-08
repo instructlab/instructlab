@@ -11,6 +11,7 @@ on:
       - '**.py'
       - 'pyproject.toml'
       - 'requirements**.txt'
+      - 'constraints-dev.txt'
       - 'docs/**'
       - 'tox.ini'
       - .pylintrc
@@ -24,6 +25,7 @@ on:
       - '**.py'
       - 'pyproject.toml'
       - 'requirements**.txt'
+      - 'constraints-dev.txt'
       - 'docs/**'
       - 'tox.ini'
       - .pylintrc

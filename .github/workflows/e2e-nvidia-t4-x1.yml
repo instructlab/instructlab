@@ -18,6 +18,7 @@ on:
       - '**.py'
       - 'pyproject.toml'
       - 'requirements**.txt'
+      - 'constraints-dev.txt'
       - 'scripts/e2e-ci.sh' # Used by this workflow
       - 'scripts/test-data/**'
       - 'src/instructlab/profiles/**'
