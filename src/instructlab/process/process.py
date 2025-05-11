@@ -479,7 +479,10 @@ def display_processes(uuid_list: List[str]):
         if local_uuid in uuid_list:
             hours, remainder = divmod(process.runtime.total_seconds(), 3600)
             minutes, seconds = divmod(remainder, 60)
+            days, hours = divmod(hours, 24)
             runtime_str = f"{hours:02}:{minutes:02}:{seconds:02}"
+            if days > 0:
+                runtime_str = f"{days}d {runtime_str}"
             display_list.append(
                 (
                     process.ptype,
