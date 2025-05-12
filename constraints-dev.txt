@@ -1,4 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
+# TODO: Remove constraint once this issue is resolved: https://github.com/instructlab/instructlab/issues/3368
+click<=8.1.8
+# Testing
+torchvision<=0.21.0
 torch<2.7.0
 vllm<0.9.0
