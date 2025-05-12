@@ -34,6 +34,7 @@ on:
 
 env:
   LC_ALL: en_US.UTF-8
+  TOX_VERBOSE: "-vvv"
 
 defaults:
   run:
@@ -173,7 +174,7 @@ jobs:
 
       - name: Run unit and functional tests with tox
         run: |
-          tox
+          tox ${{ env.TOX_VERBOSE }}
 
       - name: Remove llama-cpp-python from cache
         if: always()

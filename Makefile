@@ -7,6 +7,8 @@ CENGINE ?= podman
 CONTAINER_PREFIX ?= localhost/instructlab
 TOOLBOX ?= instructlab
 
+TOX_VERBOSE ?= -vvv
+
 NULL =
 COMMON_DEPS = \
 	$(CURDIR)/requirements.txt \
@@ -147,23 +149,23 @@ toolbox-rm: check-toolbox ## Stop and remove toolbox container
 
 .PHONY: tests
 tests: check-tox ## Run unit and type checks
-	tox -e py3-unit,mypy
+	tox ${TOX_VERBOSE} -e py3-unit,mypy
 
 .PHONY: regenerate-testdata
 regenerate-testdata: check-tox ## Run unit tests and regenerate test data
-	tox -e py3-unit -- --regenerate-testdata
+	tox ${TOX_VERBOSE} -e py3-unit -- --regenerate-testdata
 
 .PHONY: verify
 verify: check-tox ## Run linting and formatting checks via tox
-	tox p -m fastverify
+	tox ${TOX_VERBOSE} p -m fastverify
 
 .PHONY: fix
 fix: check-tox ## Fix formatting and linting violation with Ruff
-	tox -e fix
+	tox ${TOX_VERBOSE} -e fix
 
 .PHONY: docs
 docs: check-tox  ## Generate Sphinx docs and man pages
-	tox -e docs
+	tox ${TOX_VERBOSE} -e docs
 	@echo
 	@echo "Sphinx: docs/build/html/index.html"
 	@echo "man pages: man/"
