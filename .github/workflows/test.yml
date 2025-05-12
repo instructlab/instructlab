@@ -174,7 +174,7 @@ jobs:
 
       - name: Run unit and functional tests with tox
         run: |
-          tox
+          tox -vvv
 
       - name: Remove llama-cpp-python from cache
         if: always()
