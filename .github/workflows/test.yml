@@ -142,6 +142,7 @@ jobs:
           cache-dependency-path: |
             **/pyproject.toml
             **/requirements*.txt
+            **/constraints-dev*.txt
 
       - name: Remove llama-cpp-python from cache
         run: |
