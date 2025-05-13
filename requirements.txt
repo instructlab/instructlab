@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 boto3>=1.35.96
-click>=8.1.7,<9.0.0
+# TODO: Expand the click cap once tests are adjusted for new click release:
+# https://github.com/instructlab/instructlab/issues/3368
+click>=8.1.7,<8.2.0
 click-didyoumean>=0.3.0
 datasets>=2.18.0
 filelock
