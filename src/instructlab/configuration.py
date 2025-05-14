@@ -208,9 +208,8 @@ class _serve_vllm(BaseModel):
     )
     gpus: Optional[int] = Field(default=None, description="Number of GPUs to use.")
     # arguments to pass into vLLM process
-    vllm_args: list[str] | None = Field(
-        # TODO: revisit the type check ignore
-        default_factory=list,  # type: ignore
+    vllm_args: list[str] = Field(
+        default_factory=list,
         description="vLLM specific arguments. All settings can be passed as a list of strings, see: https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html",
         examples=[
             ["--dtype", "auto"],
@@ -1232,8 +1231,10 @@ def config_to_commented_map(
             # If the default value comes from a factory, evaluate it and use the result as the default value
             if default_value is PydanticUndefined:
                 if default_factory is not None and callable(default_factory):
-                    # TODO: revisit the type check ignore
-                    default_value = default_factory()  # type: ignore
+                    default_factory = typing.cast(
+                        typing.Callable[[], Any], default_factory
+                    )
+                    default_value = default_factory()
             # When the default value's type is an Enum or Enum value, convert it to a string
             elif isinstance(default_value, enum.Enum):
                 default_value = default_value.value
