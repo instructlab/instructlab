@@ -53,22 +53,22 @@ jobs:
         lint:
           - name: "ruff"
             commands: |
-              tox -e ruff
+              tox -vvv -e ruff
           - name: "pylint"
             commands: |
               echo "::add-matcher::.github/workflows/matchers/pylint.json"
-              tox -e fastlint
-              tox -e lint
+              tox -vvv -e fastlint
+              tox -vvv -e lint
           - name: "mypy"
             commands: |
               echo "::add-matcher::.github/workflows/matchers/mypy.json"
-              tox -e mypy
+              tox -vvv -e mypy
           - name: "tomllint"
             commands: |
-              tox -e tomllint
+              tox -vvv -e tomllint
           - name: "yamllint"
             commands: |
-              tox -e yamllint
+              tox -vvv -e yamllint
     steps:
       - name: "Harden Runner"
         uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
