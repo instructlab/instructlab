@@ -7,6 +7,9 @@ if [ "$(uname)" != "Linux" ]; then
     exit 1
 fi
 
+# If we run from tox, ignore the index url
+unset PIP_EXTRA_INDEX_URL
+
 pip-compile --output-file=constraints-dev.txt constraints-dev.txt.in requirements*.txt
 sed '/#.*/d' -i constraints-dev.txt
 sed 's/\[.*\]//' -i constraints-dev.txt
