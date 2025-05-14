@@ -67,7 +67,7 @@ jobs:
           context: .
           platforms: linux/amd64
           build-args: |
-            PIP_CONSTRAINT=constraints-dev.txt
+            CONSTRAINTS_FILE=constraints-dev.txt
           push: false
           tags: ${{ steps.cuda_meta.outputs.tags }}
           labels: ${{ steps.cuda_meta.outputs.labels }}
