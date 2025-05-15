@@ -152,6 +152,7 @@ jobs:
 
       - name: Install ilab
         run: |
+<<<<<<< HEAD
           export PATH="/home/ec2-user/.local/bin:/usr/local/cuda/bin:$PATH"
           python3.11 -m venv --upgrade-deps venv
           . venv/bin/activate
@@ -164,6 +165,9 @@ jobs:
           # install with Torch and build dependencies installed
           python3.11 -m pip install -v packaging wheel setuptools-scm
           python3.11 -m pip install -v .[cuda]
+=======
+          PYTHON="python3.11" ./scripts/install-ilab-with-cuda.sh
+>>>>>>> 2ce4ef1 (feat(ci): Migrate InstructLab CUDA installation logic into a reusable script)
 
       - name: Check disk before tests
         run: |
