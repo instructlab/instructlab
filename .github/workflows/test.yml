@@ -65,6 +65,7 @@ jobs:
       matrix:
         python:
           - "3.11"
+          - "3.12"
         platform:
           - "ubuntu-latest"
         # temporarily remove MacOS testing workflow until MPS related issues can be resolved
