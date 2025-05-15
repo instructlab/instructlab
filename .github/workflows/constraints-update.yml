@@ -43,3 +43,4 @@ jobs:
           body: |
             This PR updates the constraints-dev.txt file using `tox -e constraints`.
           branch: update-constraints
+          token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
