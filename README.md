@@ -444,7 +444,7 @@ For detailed documentation on the InstructLab LLMs and their functions, see the 
 
 #### Downloading a specific model from a Hugging Face repository
 
-- Specify a repository, model, and a Hugging Face token if necessary. More information about Hugging Face tokens can be found [here](https://huggingface.co/docs/hub/en/security-tokens)
+- Specify a repository, model, and a [Hugging Face token](https://huggingface.co/docs/hub/en/security-tokens) if necessary.
 
    ```shell
    ilab model download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf --hf-token <your-huggingface-token>
