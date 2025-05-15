@@ -1,4 +1,4 @@
-absl-py==2.2.2
+absl-py==2.2.2 
 accelerate==1.0.1
 aiofiles==24.1.0
 aiohappyeyeballs==2.6.1
