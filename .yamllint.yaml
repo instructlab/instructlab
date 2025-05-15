@@ -10,6 +10,8 @@ rules:
     allow-non-breakable-words: true
     allow-non-breakable-inline-mappings: false
     ignore:
+      # Don't fail on any violating yaml files in toxdir
+      - .tox/**
       # Skip workflow files where we have use for long lines (for commands posting long-ish comments using `gh`).
       - .github/workflows/*.yml
       # tests/test_lab_diff.py expects to fail on this file.
