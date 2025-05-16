@@ -11,6 +11,7 @@ fi
 unset PIP_EXTRA_INDEX_URL
 
 pip-compile \
+    --allow-unsafe \
     --strip-extras \
     --output-file=constraints-dev.txt \
     --constraint constraints-dev.txt.in \
