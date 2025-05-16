@@ -1,0 +1,4 @@
+# SPDX-License-Identifier: Apache-2.0
+
+torch<2.7.0
+vllm<0.9.0
