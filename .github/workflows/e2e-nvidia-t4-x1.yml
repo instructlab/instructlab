@@ -18,6 +18,11 @@ on:
       - '**.py'
       - 'pyproject.toml'
       - 'requirements**.txt'
+<<<<<<< HEAD
+=======
+      - 'constraints-dev.txt'
+      - 'scripts/install-ilab-with-cuda.sh' # Used by this workflow
+>>>>>>> 93b200a (ci: Run medium/small e2e on install-ilab-with-cuda.sh touched)
       - 'scripts/e2e-ci.sh' # Used by this workflow
       - 'scripts/test-data/**'
       - 'src/instructlab/profiles/**'
