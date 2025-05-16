@@ -85,17 +85,17 @@ def run_rag_convert_test(
             lab.ilab, ["--config=DEFAULT", "rag", "convert"] + params
         )
         if should_succeed:
-            assert (
-                result.exit_code == 0
-            ), f"Unexpected failure for parameters {params}: {result.output}"
+            assert result.exit_code == 0, (
+                f"Unexpected failure for parameters {params}: {result.output}"
+            )
         for expected_string in expected_strings:
             assert expected_string in result.output
         if expected_output_file is not None:
             assert expected_output_file.exists()
         else:
-            assert (
-                result.exit_code != 0
-            ), f"Unexpected success for parameters {params}: {result.output}"
+            assert result.exit_code != 0, (
+                f"Unexpected success for parameters {params}: {result.output}"
+            )
 
 
 @dev_preview

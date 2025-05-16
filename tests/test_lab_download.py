@@ -69,9 +69,9 @@ class TestLabDownload:
                 "--hf-token=foo",
             ],
         )
-        assert (
-            result.exit_code == 0
-        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert result.exit_code == 0, (
+            f"command finished with an unexpected exit code. {result.stdout}"
+        )
         assert mock_list_repo_files.call_count == 4
         assert mock_hf_hub_download.call_count == 4
 
