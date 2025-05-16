@@ -21,7 +21,6 @@ on:
       - 'scripts/e2e-ci.sh' # Used by this workflow
       - 'scripts/test-data/**'
       - 'src/instructlab/profiles/**'
-      - '.github/workflows/e2e-nvidia-l4-x1.yml' # This workflow
   workflow_dispatch: {}
 
 concurrency:
