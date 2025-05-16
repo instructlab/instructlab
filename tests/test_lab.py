@@ -186,9 +186,9 @@ def test_ilab_alias_output(cli_runner: CliRunner):
             actual_output.append(line)
 
     actual_output_str = "\n".join(actual_output).strip()
-    assert (
-        expected_output == actual_output_str
-    ), f"Expected aliases output:\n{expected_output}\n\nBut got:\n{actual_output_str}"
+    assert expected_output == actual_output_str, (
+        f"Expected aliases output:\n{expected_output}\n\nBut got:\n{actual_output_str}"
+    )
 
 
 def test_cli_help_matches_field_description(cli_runner: CliRunner):
@@ -316,22 +316,22 @@ def test_ilab_missing_config(command: Command, cli_runner: CliRunner) -> None:
     result = cli_runner.invoke(lab.ilab, cmd)
 
     if command.needs_config:
-        assert (
-            result.exit_code == 2
-        ), f"{command} did not get exit_code=1 but is recorded as needs_config=False and should_fail=True.  result={result}"
+        assert result.exit_code == 2, (
+            f"{command} did not get exit_code=1 but is recorded as needs_config=False and should_fail=True.  result={result}"
+        )
         expected_err = "does not exist or is not a readable file"
         assert expected_err in result.stdout or expected_err in result.stderr
     else:
         match command.should_fail:
             case False:
-                assert (
-                    result.exit_code == 0
-                ), f"{command} failed with code {result} but is recorded as needs_config=False and should_fail=False"
+                assert result.exit_code == 0, (
+                    f"{command} failed with code {result} but is recorded as needs_config=False and should_fail=False"
+                )
             case True:
                 # should fail due to missing dirs
-                assert (
-                    result.exit_code == 1
-                ), f"{command} did not get exit_code=1 but is recorded as needs_config=False and should_fail=True.  result={result}"
+                assert result.exit_code == 1, (
+                    f"{command} did not get exit_code=1 but is recorded as needs_config=False and should_fail=True.  result={result}"
+                )
                 expected_err = "Some ilab storage directories do not exist yet. Please run `ilab config init` before continuing."
                 assert expected_err in result.stdout or expected_err in result.stderr
             case None:

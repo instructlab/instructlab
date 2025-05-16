@@ -25,7 +25,7 @@ def warn_for_unsupported_backend_param(ctx):
     for param in ["gpu_layers", "num_threads", "max_ctx_size"]:
         if ctx.get_parameter_source(param) == click.core.ParameterSource.COMMANDLINE:
             logger.warning(
-                f"Option '--{param.replace('_','-')}' not supported by the backend."
+                f"Option '--{param.replace('_', '-')}' not supported by the backend."
             )
 
 

@@ -10,11 +10,11 @@ from ...utils import get_sysprompt
 def format_text(obj):
     return f"""\
 <|system|>
-{obj['system']}
+{obj["system"]}
 <|user|>
-{obj['user']}
+{obj["user"]}
 <|assistant|>
-{obj['assistant']}<|endoftext|>\
+{obj["assistant"]}<|endoftext|>\
 """
 
 
