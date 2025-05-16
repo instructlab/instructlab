@@ -108,7 +108,7 @@ jobs:
           ec2_instance_type: g6.8xlarge
           aws_resource_tags: >
             [
-              {"Key": "Name", "Value": "instructlab-ci-github-large-runner"},
+              {"Key": "Name", "Value": "instructlab-ci-github-medium-runner"},
               {"Key": "GitHubRepository", "Value": "${{ github.repository }}"},
               {"Key": "GitHubRef", "Value": "${{ github.ref }}"},
               {"Key": "GitHubPR", "Value": "${{ github.event.number }}"}
