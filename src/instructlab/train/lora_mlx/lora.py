@@ -174,7 +174,7 @@ def train_model(
 
             stop = time.perf_counter()
             print(
-                f"Iter {it+1:03d}: Train loss {train_loss:.3f}, "
+                f"Iter {it + 1:03d}: Train loss {train_loss:.3f}, "
                 f"It/sec {steps_per_report / (stop - start):.3f}, "
                 f"Tokens/sec {float(n_tokens) / (stop - start):.3f}"
             )
@@ -203,7 +203,7 @@ def train_model(
             mx.savez(adapter_file, **dict(tree_flatten(model.trainable_parameters())))
             # Update the split function to based on the last occurence of "." since the file path now includes . in MacOs.
             a, b = adapter_file.rsplit(".", 1)
-            fn = f"{a}-{it+1:03d}.{b}"
+            fn = f"{a}-{it + 1:03d}.{b}"
             mx.savez(fn, **dict(tree_flatten(model.trainable_parameters())))
             print(f"Iter {it + 1}: Saved adapter weights to {fn}.")
 

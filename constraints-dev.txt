@@ -52,7 +52,7 @@ distro==1.9.0             # via openai, posthog
 dnspython==2.7.0          # via email-validator
 docling==2.37.0           # via instructlab-sdg, -r requirements.txt
 docling-core==2.38.0      # via docling, docling-ibm-models, docling-parse, instructlab-sdg, -r requirements.txt
-docling-ibm-models==3.4.4  # via docling
+docling-ibm-models==3.5.0  # via docling
 docling-parse==4.0.5      # via docling
 docutils==0.21.2          # via myst-parser, sphinx, sphinx-click, sphinx-prompt, sphinx-tabs, sphinx-toolbox
 domdf-python-tools==3.10.0  # via apeye, apeye-core, dict2css, sphinx-toolbox
@@ -103,7 +103,7 @@ instructlab-schema==0.4.2  # via instructlab-sdg, -r requirements.txt
 instructlab-sdg==0.8.3    # via -r requirements.txt
 instructlab-training==0.10.3  # via -r requirements/cuda.txt, -r requirements/rocm.txt, -r requirements.txt
 interegular==0.3.3        # via lm-format-enforcer, outlines, outlines-core
-isort==6.0.1              # via pylint
+isort==6.0.1              # via pylint, -r requirements-dev.txt
 jinja2==3.1.6             # via fastapi, haystack-ai, instructlab-sdg, llama-cpp-python, myst-parser, outlines, pytest-html, sphinx, sphinx-jinja2-compat, torch
 jiter==0.10.0             # via openai
 jmespath==1.0.1           # via boto3, botocore
@@ -199,7 +199,7 @@ pillow==11.2.1            # via docling, docling-core, docling-ibm-models, docli
 platformdirs==4.3.8       # via apeye, pylint, tox, virtualenv, wandb
 pluggy==1.6.0             # via docling, pytest, pytest-cov, tox
 portalocker==3.2.0        # via sacrebleu
-posthog==5.0.0            # via haystack-ai
+posthog==5.1.0            # via haystack-ai
 pre-commit==3.8.0         # via -r requirements-dev.txt
 prometheus-client==0.22.1  # via prometheus-fastapi-instrumentator, vllm
 prometheus-fastapi-instrumentator==7.1.0  # via vllm
@@ -251,9 +251,10 @@ rich==14.0.0              # via instructlab-training, rich-toolkit, trl, typer, 
 rich-toolkit==0.14.7      # via fastapi-cli
 rouge-score==0.1.2        # via lm-eval, -r requirements.txt
 rpds-py==0.25.1           # via jsonschema, referencing
-rtree==1.4.0              # via docling
+rtree==1.4.0              # via docling, docling-ibm-models
 ruamel-yaml==0.18.14      # via pydantic-yaml, sphinx-toolbox, -r requirements.txt
 ruamel-yaml-clib==0.2.12  # via ruamel-yaml
+ruff==0.12.0              # via -r requirements-dev.txt
 s3transfer==0.13.0        # via boto3
 sacrebleu==2.5.1          # via lm-eval
 safetensors==0.5.3        # via accelerate, docling-ibm-models, instructlab-dolomite, peft, transformers
