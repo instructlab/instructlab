@@ -19,9 +19,25 @@ $PYTHON -m venv --upgrade-deps venv
 $PYTHON -m pip cache remove llama_cpp_python
 
 pip_install="$PYTHON -m pip install -v -c constraints-dev.txt"
-CMAKE_ARGS="-DGGML_CUDA=on" $pip_install .
 
-# https://github.com/instructlab/instructlab/issues/1821
-# install with Torch and build dependencies installed
+# pre-install some build dependencies
 $pip_install packaging wheel setuptools-scm
+
+# flash-attn has a bug in the setup.py that causes pip to attempt installing it
+# before torch is installed. This is a bug because their setup.py depends on
+# importing the module, so it should have been listed in build_requires. Alas!
+#
+# See: https://github.com/Dao-AILab/flash-attention/pull/958
+# Also: https://github.com/instructlab/instructlab/issues/1821
+#
+# first, pre-install flash-attn build dependencies
+$pip_install torch packaging setuptools wheel psutil ninja
+
+# now build flash-attn using the pre-installed build dependencies; this will
+# guarantee that the build version of torch will match the runtime version of
+# torch; otherwise, all kinds of problems may occur, like missing symbols when
+# accessing C extensions and such
+$pip_install flash-attn --no-build-isolation
+
+CMAKE_ARGS="-DGGML_CUDA=on" $pip_install .
 $pip_install .[cuda] -r requirements-vllm-cuda.txt
