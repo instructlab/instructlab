@@ -97,7 +97,7 @@ check_disk() {
 
 test_smoke() {
     task InstructLab smoke test
-    ilab | grep --color 'Usage: ilab'
+    ilab --help | grep --color 'Usage: ilab'
     task InstructLab smoke test Complete
 }
 
