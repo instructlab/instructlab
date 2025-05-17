@@ -494,9 +494,9 @@ class ConsoleChatBot:  # pylint: disable=too-many-instance-attributes
                     logger.debug(f"InternalServerError: {e}")
                     self.info["messages"].clear()
                     raise KeyboardInterrupt from e
-                assert (
-                    next(response).choices[0].delta.role == "assistant"
-                ), 'first response should be {"role": "assistant"}'
+                assert next(response).choices[0].delta.role == "assistant", (
+                    'first response should be {"role": "assistant"}'
+                )
                 break
         except openai.AuthenticationError as e:
             self.console.print(

@@ -138,13 +138,13 @@ def print_results(
     print(f"\n## MODEL: {model_name}\n")
     total_score = 0
     for i, score in enumerate(result.scores):
-        print(f"Question #{i+1}:     {score['domain_specific_rubrics']}/5")
+        print(f"Question #{i + 1}:     {score['domain_specific_rubrics']}/5")
         total_score += score["domain_specific_rubrics"]
 
     average = total_score / len(result.scores)
     print("----------------------------")
     print(f"Average Score:   {average:.2f}/5")
-    print(f"Total Score:     {total_score}/{len(result.scores)*5}\n")
+    print(f"Total Score:     {total_score}/{len(result.scores) * 5}\n")
 
     print("Responses and scores are written to:")
     for file in results_files:

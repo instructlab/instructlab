@@ -102,6 +102,7 @@ instructlab-schema==0.4.2  # via -r requirements.txt, instructlab-sdg
 instructlab-sdg==0.8.2    # via -r requirements.txt
 instructlab-training==0.11  # via -r requirements.txt
 interegular==0.3.3        # via lm-format-enforcer, outlines, outlines-core
+isort==6.0.1              # via -r requirements-dev.txt, pylint
 jinja2==3.1.6             # via fastapi, haystack-ai, instructlab-sdg, llama-cpp-python, myst-parser, outlines, pytest-html, sphinx, sphinx-jinja2-compat, torch
 jiter==0.9.0              # via openai
 jmespath==1.0.1           # via boto3, botocore
@@ -251,6 +252,7 @@ rpds-py==0.24.0           # via jsonschema, referencing
 rtree==1.4.0              # via docling
 ruamel-yaml==0.18.10      # via -r requirements.txt, pydantic-yaml, sphinx-toolbox
 ruamel-yaml-clib==0.2.12  # via ruamel-yaml
+ruff==0.11.10             # via -r requirements-dev.txt
 s3transfer==0.12.0        # via boto3
 sacrebleu==2.5.1          # via lm-eval
 safetensors==0.5.3        # via accelerate, docling-ibm-models, instructlab-dolomite, peft, transformers
