@@ -10,9 +10,25 @@ fi
 # If we run from tox, ignore the index url
 unset PIP_EXTRA_INDEX_URL
 
-pip-compile --output-file=constraints-dev.txt constraints-dev.txt.in requirements*.txt docs/requirements.txt
-sed '/#.*/d' -i constraints-dev.txt
-sed 's/\[.*\]//' -i constraints-dev.txt
+CONSTRAINTS_FILE=constraints-dev.txt
+
+pip-compile \
+    --no-header \
+    --annotate \
+    --annotation-style line \
+    --allow-unsafe \
+    --strip-extras \
+    --output-file=$CONSTRAINTS_FILE \
+    --constraint constraints-dev.txt.in \
+    requirements*.txt docs/requirements.txt
+
+# clean up empty lines and comments
+sed '/^#.*/d' -i constraints-dev.txt
+sed '/^$/d' -i constraints-dev.txt
+
+# pip-compile lists -r requirements.txt twice for some reason: once with
+# relative path and once with absolute. Clean it up.
+sed -E 's/-r \/[^ ]+\/[^,]+, *//' -i $CONSTRAINTS_FILE
 
 # TODO: remove after constraint is moved from tox.ini to constraints-dev.txt
-sed '/^isort==/d' -i constraints-dev.txt
+sed '/^isort==/d' -i $CONSTRAINTS_FILE
