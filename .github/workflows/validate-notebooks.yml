@@ -51,6 +51,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Validate Jupyter Notebooks
-        uses: iamemilio/ci-actions/actions/validate-notebooks@582ae124390e8e383378a4ce3f992ccccb6362e6
+        uses: iamemilio/ci-actions/.github/workflows/validate-notebooks.yml@582ae124390e8e383378a4ce3f992ccccb6362e6
         with:
           notebook_paths: "notebooks/"
