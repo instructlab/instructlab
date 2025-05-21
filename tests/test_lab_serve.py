@@ -343,7 +343,7 @@ def test_warn_for_unsupported_backend_param(param, expected_call_count):
         assert mock_warning.call_count == expected_call_count
         if expected_call_count > 0:
             mock_warning.assert_called_with(
-                f"Option '--{param.replace('_','-')}' not supported by the backend."
+                f"Option '--{param.replace('_', '-')}' not supported by the backend."
             )
 
 

@@ -244,9 +244,10 @@ def get_argument(prefix: str, args: List[str]) -> Tuple[bool, Optional[str]]:
     return False, None
 
 
+# TODO: this code may be prone to leak file objects. Revisit.
 def create_tmpfile(data: str):
     # pylint: disable=consider-using-with
-    file = tempfile.NamedTemporaryFile()
+    file = tempfile.NamedTemporaryFile()  # noqa: SIM115
     file.write(data.encode("utf-8"))
     file.flush()
     return file

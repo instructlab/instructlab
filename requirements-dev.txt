@@ -2,6 +2,7 @@
 
 -r requirements.txt
 
+isort
 pre-commit>=3.0.4
 pydeps>=1.12.12
 pylint>=2.16.2
@@ -10,4 +11,5 @@ pytest
 pytest-asyncio
 pytest-cov[toml]
 pytest-html
+ruff
 tox>=4.4.2

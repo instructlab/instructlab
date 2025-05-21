@@ -29,6 +29,3 @@ sed '/^$/d' -i constraints-dev.txt
 # pip-compile lists -r requirements.txt twice for some reason: once with
 # relative path and once with absolute. Clean it up.
 sed -E 's/-r \/[^ ]+\/[^,]+, *//' -i $CONSTRAINTS_FILE
-
-# TODO: remove after constraint is moved from tox.ini to constraints-dev.txt
-sed '/^isort==/d' -i $CONSTRAINTS_FILE

@@ -43,9 +43,9 @@ class TestLabUpload:
                 "--hf-token=foo",
             ],
         )
-        assert (
-            result.exit_code == 0
-        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert result.exit_code == 0, (
+            f"command finished with an unexpected exit code. {result.stdout}"
+        )
         assert f"Uploading GGUF model at {tmp_gguf} succeeded!" in result.output
 
     @patch("instructlab.model.upload.HfApi.upload_folder")
@@ -69,9 +69,9 @@ class TestLabUpload:
                 "--hf-token=foo",
             ],
         )
-        assert (
-            result.exit_code == 0
-        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert result.exit_code == 0, (
+            f"command finished with an unexpected exit code. {result.stdout}"
+        )
         assert (
             f"Uploading safetensors model at {tmp_safetensor_dir} succeeded!"
             in result.output
@@ -95,9 +95,9 @@ class TestLabUpload:
                 "--hf-token=foo",
             ],
         )
-        assert (
-            result.exit_code == 1
-        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert result.exit_code == 1, (
+            f"command finished with an unexpected exit code. {result.stdout}"
+        )
         assert (
             f"Local model path {tmp_gguf} is a valid path, but is not a compliant format - cannot upload"
         ) in result.output
@@ -119,9 +119,9 @@ class TestLabUpload:
                 "--hf-token=foo",
             ],
         )
-        assert (
-            result.exit_code == 1
-        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert result.exit_code == 1, (
+            f"command finished with an unexpected exit code. {result.stdout}"
+        )
         assert (
             f"Local model path {tmp_safetensor_dir} is a valid path, but is not a compliant format - cannot upload"
         ) in result.output
@@ -140,9 +140,9 @@ class TestLabUpload:
                 "--hf-token=foo",
             ],
         )
-        assert (
-            result.exit_code == 1
-        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert result.exit_code == 1, (
+            f"command finished with an unexpected exit code. {result.stdout}"
+        )
         assert (
             f"Couldn't find model at {DEFAULTS.CHECKPOINTS_DIR}/{tmp_gguf} - are you sure it exists?"
             in result.output
@@ -161,9 +161,9 @@ class TestLabUpload:
                 "--destination=testuser/testgguf",
             ],
         )
-        assert (
-            result.exit_code == 1
-        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert result.exit_code == 1, (
+            f"command finished with an unexpected exit code. {result.stdout}"
+        )
         assert (
             "Uploading to Hugging Face requires a HF Token to be set.\nPlease use '--hf-token' or 'export HF_TOKEN' to upload all necessary models."
             in result.output
@@ -185,9 +185,9 @@ class TestLabUpload:
                 "--hf-token=foo",
             ],
         )
-        assert (
-            result.exit_code == 1
-        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert result.exit_code == 1, (
+            f"command finished with an unexpected exit code. {result.stdout}"
+        )
         assert (
             f"Uploading GGUF model at {tmp_gguf} failed with the following Hugging Face Hub error:\n401 Client Error"
         ) in result.output
@@ -217,9 +217,9 @@ class TestLabUpload:
                 "--release=latest",
             ],
         )
-        assert (
-            result.exit_code == 0
-        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert result.exit_code == 0, (
+            f"command finished with an unexpected exit code. {result.stdout}"
+        )
         assert f"Uploading OCI model at {tmp_gguf} succeeded!" in result.output
 
     def test_upload_no_model_oci(
@@ -240,9 +240,9 @@ class TestLabUpload:
                 "--release=latest",
             ],
         )
-        assert (
-            result.exit_code == 1
-        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert result.exit_code == 1, (
+            f"command finished with an unexpected exit code. {result.stdout}"
+        )
         assert (
             f"Couldn't find model at {DEFAULTS.CHECKPOINTS_DIR}/{tmp_gguf} - are you sure it exists?"
             in result.output
@@ -269,9 +269,9 @@ class TestLabUpload:
                 "--release=latest",
             ],
         )
-        assert (
-            result.exit_code == 1
-        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert result.exit_code == 1, (
+            f"command finished with an unexpected exit code. {result.stdout}"
+        )
         assert (
             f"Invalid destination supplied:\n{DEFAULT_INDENT}Please specify valid OCI repository URL syntax via --destination"
             in result.output
@@ -298,9 +298,9 @@ class TestLabUpload:
                 "--destination=testbucket",
             ],
         )
-        assert (
-            result.exit_code == 0
-        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert result.exit_code == 0, (
+            f"command finished with an unexpected exit code. {result.stdout}"
+        )
         assert f"Uploading model at {tmp_gguf} succeeded!" in result.output
 
     @patch("instructlab.model.upload.boto3.client", return_value=MagicMock())
@@ -323,9 +323,9 @@ class TestLabUpload:
                 "--destination=testbucket",
             ],
         )
-        assert (
-            result.exit_code == 0
-        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert result.exit_code == 0, (
+            f"command finished with an unexpected exit code. {result.stdout}"
+        )
         assert f"Uploading model at {tmp_safetensor_dir} succeeded!" in result.output
 
     @patch("instructlab.model.upload.boto3.client", return_value=MagicMock())
@@ -346,9 +346,9 @@ class TestLabUpload:
                 "--destination=testbucket",
             ],
         )
-        assert (
-            result.exit_code == 1
-        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert result.exit_code == 1, (
+            f"command finished with an unexpected exit code. {result.stdout}"
+        )
         assert (
             f"Couldn't find model at {DEFAULTS.CHECKPOINTS_DIR}/{tmp_gguf} - are you sure it exists?"
             in result.output
@@ -373,9 +373,9 @@ class TestLabUpload:
                 "--destination=testbucket",
             ],
         )
-        assert (
-            result.exit_code == 1
-        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert result.exit_code == 1, (
+            f"command finished with an unexpected exit code. {result.stdout}"
+        )
         assert (
             "Uploading to AWS requires credentials to be set.\nPlease set your AWS credentials to upload all necessary models."
             in result.output
@@ -402,9 +402,9 @@ class TestLabUpload:
                 "--destination=invalid://testbucket",
             ],
         )
-        assert (
-            result.exit_code == 1
-        ), f"command finished with an unexpected exit code. {result.stdout}"
+        assert result.exit_code == 1, (
+            f"command finished with an unexpected exit code. {result.stdout}"
+        )
         assert (
             f"Invalid S3 destination supplied:\n{DEFAULT_INDENT}Please specify valid S3 bucket URL syntax via --destination"
             in result.output
