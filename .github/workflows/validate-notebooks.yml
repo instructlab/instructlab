@@ -53,8 +53,9 @@ jobs:
       - name: Checkout "validate-notebooks" in-house CI action
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
+          ref: notebook-validate
           # The action is stored in this repository, so we need to tell GitHub to pull from: {org}/{repo}
-          repository: iamemilio/ci-actions@validate-notebooks
+          repository: iamemilio/ci-actions
           # clone the "ci-actions" repo to a local directory called "ci-actions", instead of overwriting the current WORKDIR contents
           path: ci-actions
           # Only checkout the relevant GitHub action
