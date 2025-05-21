@@ -50,7 +50,18 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Checkout "validate-notebooks" in-house CI action
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          # The action is stored in this repository, so we need to tell GitHub to pull from: {org}/{repo}
+          repository: iamemilio/ci-actions@validate-notebooks
+          # clone the "ci-actions" repo to a local directory called "ci-actions", instead of overwriting the current WORKDIR contents
+          path: ci-actions
+          # Only checkout the relevant GitHub action
+          sparse-checkout: |
+            actions/validate-notebooks
+
       - name: Validate Jupyter Notebooks
-        uses: iamemilio/ci-actions/.github/actions/validate-notebooks/action.yml@f7062b76e6b231d81d63056c1d7454c6ebb6c30f
+        uses: ./ci-actions/actions/validate-notebooks
         with:
           notebook_paths: "notebooks/"
