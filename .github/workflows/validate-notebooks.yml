@@ -53,4 +53,4 @@ jobs:
       - name: Validate Jupyter Notebooks
         uses: iamemilio/ci-actions/actions/validate-notebooks@9572ad9a83291c6647f513b3cbb9b942be3c4bae
         with:
-          paths: "notebooks/"
+          notebook_paths: "notebooks/"
