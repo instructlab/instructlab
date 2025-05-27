@@ -69,8 +69,8 @@ jobs:
           build-args: |
             GIT_TAG=main
           push: false
-          tags: ${{ steps.cuda_meta.outputs.tags }}
-          labels: ${{ steps.cuda_meta.outputs.labels }}
+          tags: ${{ steps.gobot_meta.outputs.tags }}
+          labels: ${{ steps.gobot_meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           file: containers/cuda/Containerfile
