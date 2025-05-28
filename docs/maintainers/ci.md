@@ -69,7 +69,7 @@ You can specify the following flags to test various features of `ilab` with the
 
 ### Current E2E Jobs
 
-| Name | T-Shirt Size | Runner Host | Instance Type | OS | GPU Type | Script | Flags | Runs when? | Slack/Discord reporting? |
+| Name | T-Shirt Size | Runner Host | Instance Type | OS | GPU Type | Script | Flags | Runs when? | Discord reporting? |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | [`e2e-nvidia-l4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l4-x1.yml) | Medium | AWS |[`g6.8xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | CentOS Stream 9 | 1 x NVIDIA L4 w/ 24 GB VRAM | `e2e-ci.sh` | `m` | Pull Requests, Push to `main` or `release-*` branch | No |
 | [`e2e-nvidia-l40s-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) | Large | AWS |[`g6e.12xlarge`](https://aws.amazon.com/ec2/instance-types/g6e/) | CentOS Stream 9 | 4 x NVIDIA L40S w/ 48 GB VRAM (192 GB) | `e2e-ci.sh` | `l` | Manually by Maintainers, Automatically against `main` branch at 11AM UTC | Yes |
@@ -91,11 +91,10 @@ Points of clarification (*):
 
 1. `MMLU Branch` is not run as the `full` SDG pipeline does not create the needed files in the tasks directory when only training against a skill.
 
-### Discord/Slack reporting
+### Discord reporting
 
-Some E2E jobs send their results to the channel `#e2e-ci-results` via the `Son of Jeeves` bot in both Discord and Slack. You can see which jobs currently have reporting via the "Current E2E Jobs" table above.
+Some E2E jobs send their results to the channel `#e2e-ci-results` via the `Son of Jeeves` bot in Discord. You can see which jobs currently have reporting via the "Current E2E Jobs" table above.
 
-In Slack, this has been implemented via [the official Slack GitHub Action](https://github.com/slackapi/slack-github-action?tab=readme-ov-file#technique-2-slack-app).
 In Discord, we use [actions/actions-status-discord](https://github.com/sarisia/actions-status-discord) and the built-in channel webhooks feature.
 
 ### Triggering an E2E job via GitHub Web UI
