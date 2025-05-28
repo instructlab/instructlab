@@ -66,8 +66,6 @@ jobs:
         with:
           context: .
           platforms: linux/amd64
-          build-args: |
-            GIT_TAG=main
           push: false
           tags: ${{ steps.gobot_meta.outputs.tags }}
           labels: ${{ steps.gobot_meta.outputs.labels }}
