@@ -529,6 +529,7 @@ usage() {
     echo "  -s  Run small t-shirt size job"
     echo "  -m  Run medium t-shirt size job"
     echo "  -l  Run large t-shirt size job"
+    echo "  -a  Run large T-shirt size job with llama pipeline."
     echo "  -x  Run extra large t-shirt size job"
     echo "  -p  Preserve the E2E_TEST_DIR for debugging"
     echo "  -h  Show this help text"
