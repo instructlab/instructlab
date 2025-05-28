@@ -35,7 +35,7 @@ HPU_DEPS = \
 	$(NULL)
 
 ROCM_CONTAINERFILE = $(CURDIR)/containers/rocm/Containerfile
-ROCM_CONTEXT_DIR = $(CURDIR)/containers/rocm
+ROCM_CONTEXT_DIR = $(CURDIR)
 ROCM_DEPS = \
 	$(ROCM_CONTAINERFILE) \
 	$(COMMON_DEPS) \
@@ -93,6 +93,7 @@ define build-rocm =
 		--build-arg INSTRUCTLAB_VERSION=$(INSTRUCTLAB_VERSION) \
 		-t $(CONTAINER_PREFIX):rocm-$(1) \
 		-t $(CONTAINER_PREFIX):rocm \
+		-f $(ROCM_CONTAINERFILE) \
 		$(ROCM_CONTEXT_DIR)
 endef
 
