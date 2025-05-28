@@ -56,11 +56,15 @@ jobs:
           python-version: 3.11
           cache: pip
 
-      - name: Install nbformat
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install nbformat
+      - name: Checkout "validate-notebooks" in-house CI action
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: instructlab/ci-actions
+          path: ci-actions
+          ref: v0.2.0
+          sparse-checkout: actions/validate-notebooks
 
       - name: Validate Jupyter Notebooks
-        run: |
-          find notebooks/ -name "*.ipynb" -print0 | xargs python scripts/validate_notebook.py
+        uses: ./ci-actions/actions/validate-notebooks
+        with:
+          path: "notebooks/"
