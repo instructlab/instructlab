@@ -16,32 +16,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+      - name: Checkout "update-constraints" in-house CI action
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
-          python-version: '3.11'
+          repository: booxter/ci-actions
+          path: ci-actions
+          ref: constraints
+          sparse-checkout: |
+            actions/update-constraints
 
-      - name: Install tox
-        run: python -m pip install --upgrade pip tox -c constraints-dev.txt
-
-      - name: Run tox constraints
-        run: tox -e constraints
-
-      - name: git diff
-        run: |
-          git diff constraints-dev.txt
-
-      - name: set release date
-        run: |
-          echo "date=$(date --rfc-3339=date)" >> "${GITHUB_ENV}"
-
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@271a8d0340265f705b14b6d32b9829c1cb33d45e # v7.0.8
+      - name: Update constraints
+        id: update-constraints
+        uses: ./ci-actions/actions/update-constraints
         with:
-          signoff: true
-          commit-message: "chore: update constraints-dev.txt (${{ env.date }})"
-          title: "chore: update constraints-dev.txt (${{ env.date }})"
-          body: |
-            This PR updates the constraints-dev.txt file using `tox -e constraints`.
-          branch: update-constraints
-          token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          gh-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
