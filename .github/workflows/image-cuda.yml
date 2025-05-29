@@ -66,8 +66,6 @@ jobs:
         with:
           context: .
           platforms: linux/amd64
-          build-args: |
-            GIT_TAG=main
           push: false
           tags: ${{ steps.cuda_meta.outputs.tags }}
           labels: ${{ steps.cuda_meta.outputs.labels }}
