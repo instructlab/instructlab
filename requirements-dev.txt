@@ -9,7 +9,7 @@ pylint>=2.16.2
 pylint-pydantic
 pytest
 pytest-asyncio
-pytest-cov[toml]
+pytest-cov
 pytest-html
 ruff
 tox>=4.4.2
