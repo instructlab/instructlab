@@ -63,7 +63,7 @@ class HaystackDocumentStoreIngestor(DocumentStoreIngestor):
             )
             document_store = self._pipeline.get_component(
                 "document_writer"
-            ).document_store
+            ).document_store  # type: ignore [attr-defined]
             logger.info(f"count_documents: {document_store.count_documents()}")
 
             # Final step required for InMemory document store
