@@ -38,8 +38,14 @@ ENV TORCH_CUDA_ARCH_LIST="7.0 7.5 8.0 8.6 8.7 8.9 9.0+PTX"
 ENV TORCH_ALLOW_TF32_CUBLAS_OVERRIDE=1
 ENV TORCH_CUDNN_V8_API_ENABLED=1
 
-ARG INSTRUCTLAB_PKG="instructlab[cuda]"
-ARG INSTRUCTLAB_VERSION=''
+ARG INSTRUCTLAB_EXTRA="[cuda]"
+ARG CONSTRAINTS_FILE
+
+ENV INSTRUCTLAB_SRCDIR="${HOME}/instructlab"
+# Only set PIP_CONSTRAINT if CONSTRAINTS_FILE is defined
+ENV PIP_CONSTRAINT="${CONSTRAINTS_FILE:+${INSTRUCTLAB_SRCDIR}/${CONSTRAINTS_FILE}}"
+COPY . ${INSTRUCTLAB_SRCDIR}
+WORKDIR ${INSTRUCTLAB_SRCDIR}
 
 RUN dnf -y install --best --nodocs --setopt=install_weak_deps=False dnf-plugins-core \
     && dnf config-manager --best --nodocs --setopt=install_weak_deps=False --save \
@@ -179,16 +185,11 @@ ENV C_INCLUDE_PATH="${INTEL_MKL_HOME}/include:${C_INCLUDE_PATH}"
 ENV CPLUS_INCLUDE_PATH="${INTEL_MKL_HOME}/include:${CPLUS_INCLUDE_PATH}"
 ENV CMAKE_INCLUDE_PATH="${INTEL_MKL_HOME}/include:${CMAKE_INCLUDE_PATH}"
 
-COPY requirements-vllm-cuda.txt requirements-vllm-cuda.txt
 RUN source ${VIRTUAL_ENV}/bin/activate \
-    && if [ "${INSTRUCTLAB_VERSION}" != "" ] ; then \
-        INSTRUCTLAB_PKG="${INSTRUCTLAB_PKG}==${INSTRUCTLAB_VERSION}" ; \
-    fi \
     && pip install torch psutil \
     && pip install flash_attn --no-build-isolation \
-    && pip install "${INSTRUCTLAB_PKG}" -C cmake.args="-DGGML_CUDA=on" -C cmake.args="-DGGML_NATIVE=off" \
-    && pip install -r requirements-vllm-cuda.txt \
-    && rm requirements-vllm-cuda.txt
+    && pip install .${INSTRUCTLAB_EXTRA} -C cmake.args="-DGGML_CUDA=on" -C cmake.args="-DGGML_NATIVE=off" \
+      -r requirements-vllm-cuda.txt
 
 ENV TORCH_HOME="${VIRTUAL_ENV}/lib64/${PYTHON}/site-packages/torch"
 ENV PYTORCH_HOME="${VIRTUAL_ENV}/lib64/${PYTHON}/site-packages/torch"
