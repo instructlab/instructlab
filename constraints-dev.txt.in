@@ -6,3 +6,8 @@ vllm<0.9.0
 # flash-attn 2.8.0+ is broken for torch 2.6.x.
 # See: https://github.com/Dao-AILab/flash-attention/issues/1717
 flash-attn<2.8.0
+
+# small e2e job fails:
+# https://github.com/instructlab/instructlab/issues/3456
+trl<0.15.0
+transformers<=4.51.3
