@@ -1,35 +1,23 @@
 # SPDX-License-Identifier: Apache-2.0
 # yamllint disable rule:line-length
 
-name: E2E (Custom)
+name: E2E (NVIDIA L40S x4) - Python 3.12
 
 on:
+  schedule:
+    - cron: '0 11 * * *' # Runs at 11AM UTC every day
   workflow_dispatch:
     inputs:
       pr_or_branch:
         description: 'pull request number or branch name'
         required: true
         default: 'main'
-      instance_type:
-        description: 'EC2 instance type'
-        required: true
-        default: 'g6.2xlarge'
-      e2e_script:
-        description: 'Script to use in e2e job'
-        required: true
-        default: 'e2e-custom.sh'
-      e2e_script_args:
-        description: 'Arguments to pass to the e2e script'
-        required: true
-        default: '-m'
-      ilab_install_target:
-        description: 'pip install target for instructlab, e.g. . or .[vllm]'
-        required: true
-        default: '.'
+
+env:
+  TMPDIR: /home/tmp
 
 jobs:
-  start-runner:
-    name: Start external EC2 runner
+  start-large-ec2-runner:
     runs-on: ubuntu-latest
     outputs:
       label: ${{ steps.launch-ec2-instance-with-fallback.outputs.label }}
@@ -40,7 +28,8 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           repository: instructlab/ci-actions
-          # clone the "ci-actions" repo to a local directory called "ci-actions", instead of overwriting the current WORKDIR contents
+          # clone the "ci-actions" repo to a local directory called "ci-actions", instead of
+          # overwriting the current WORKDIR contents
           path: ci-actions
           ref: release-v0.1
           sparse-checkout: |
@@ -82,27 +71,34 @@ jobs:
               }
             ]
           try_spot_instance_first: false
-          ec2_instance_type: ${{ github.event.inputs.instance_type }}
+          ec2_instance_type: g6e.12xlarge
           aws_resource_tags: >
             [
-              {"Key": "Name", "Value": "instructlab-ci-github-runner"},
+              {"Key": "Name", "Value": "instructlab-ci-github-large-runner"},
               {"Key": "GitHubRepository", "Value": "${{ github.repository }}"},
               {"Key": "GitHubRef", "Value": "${{ github.ref }}"},
               {"Key": "GitHubPR", "Value": "${{ github.event.number }}"}
             ]
 
-  e2e:
-    name: E2E Test
-    needs: start-runner
-    runs-on: ${{ needs.start-runner.outputs.label }}
+  e2e-large-test:
+    needs:
+      - start-large-ec2-runner
+    runs-on: ${{ needs.start-large-ec2-runner.outputs.label }}
 
     permissions:
       pull-requests: write
 
     steps:
+      - name: Install Packages
+        run: |
+          cat /etc/os-release
+          mkdir -p /home/tmp
+          sudo dnf install -y gcc gcc-c++ make git-core python3.12 python3.12-devel
+
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
+          # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
 
       - name: Install dependent PRs if needed
@@ -113,11 +109,13 @@ jobs:
       - name: Determine if pr_or_branch is a PR number
         id: check_pr
         run: |
-          if [[ "${{ github.event.inputs.pr_or_branch }}" =~ ^[0-9]+$ ]]; then
+          PR_OR_BRANCH=${{ github.event.inputs.pr_or_branch || 'main' }} # Default to 'main' if not set
+          if [[ "$PR_OR_BRANCH" =~ ^[0-9]+$ ]]; then
             echo "is_pr=true" >> "$GITHUB_OUTPUT"
           else
             echo "is_pr=false" >> "$GITHUB_OUTPUT"
           fi
+          echo "pr_or_branch=$PR_OR_BRANCH" >> "$GITHUB_OUTPUT"
 
       - name: Check if gh cli is installed
         id: gh_cli
@@ -148,30 +146,25 @@ jobs:
       - name: Add comment to PR
         if: steps.check_pr.outputs.is_pr == 'true'
         run: |
-          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "${{ github.workflow }} (instance-type: ${{ github.event.inputs.instance_type }}, e2e_script_args: ${{ github.event.inputs.e2e_script_args }}) workflow launched on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+          gh pr comment "${{ steps.check_pr.outputs.pr_or_branch }}" -b "${{ github.workflow }} workflow launched on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Fetch and checkout PR
         if: steps.check_pr.outputs.is_pr == 'true'
         run: |
-          gh pr checkout ${{ github.event.inputs.pr_or_branch }}
+          gh pr checkout ${{ steps.check_pr.outputs.pr_or_branch }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Checkout branch
         if: steps.check_pr.outputs.is_pr == 'false'
         run: |
-          git checkout ${{ github.event.inputs.pr_or_branch }}
-
-      - name: Install Packages
-        run: |
-          cat /etc/os-release
-          sudo dnf install -y gcc gcc-c++ make git-core python3.11 python3.11-devel
+          git checkout ${{ steps.check_pr.outputs.pr_or_branch }}
 
       - name: Install ilab
         run: |
-          PYTHON="python3.11" ./scripts/install-ilab-with-cuda.sh
+          PYTHON="python3.12" ./scripts/install-ilab-with-cuda.sh
 
       - name: Check disk before tests
         run: |
@@ -183,7 +176,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           . venv/bin/activate
-          ./scripts/${{ github.event.inputs.e2e_script }} ${{ github.event.inputs.e2e_script_args }}
+          ./scripts/e2e-ci.sh -l
 
       - name: Check disk after tests
         if: always()
@@ -193,22 +186,45 @@ jobs:
       - name: Add comment to PR if the workflow failed
         if: failure() && steps.check_pr.outputs.is_pr == 'true'
         run: |
-          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "e2e workflow failed on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), please investigate."
+          gh pr comment "${{ steps.check_pr.outputs.pr_or_branch }}" -b "e2e workflow failed on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), please investigate."
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Add comment to PR if the workflow succeeded
         if: success() && steps.check_pr.outputs.is_pr == 'true'
         run: |
-          gh pr comment "${{ github.event.inputs.pr_or_branch }}" -b "e2e workflow succeeded on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), congrats!"
+          gh pr comment "${{ steps.check_pr.outputs.pr_or_branch }}" -b "e2e workflow succeeded on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), congrats!"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  stop-runner:
-    name: Stop external EC2 runner
+      - name: Send Discord notification for failure
+        if: failure() && steps.check_pr.outputs.is_pr == 'false'
+        uses: sarisia/actions-status-discord@5ddd3b114a98457dd80a39b2f00b6a998cd69008 # v1.15.3
+        with:
+          webhook: ${{ secrets.SON_OF_JEEVES_DISCORD_WEBHOOK }}
+          status: ${{ job.status }}
+          title: "e2e-nvidia-l40s-x4"
+          description: |
+            Job in **${{ github.repository }}** running on branch `${{ steps.check_pr.outputs.pr_or_branch }}` completed **with failures** ❌
+            Click [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) to view details.
+          color: 0xCB2431 # Red color for failure
+
+      - name: Send Discord notification for success
+        if: success() && steps.check_pr.outputs.is_pr == 'false'
+        uses: sarisia/actions-status-discord@5ddd3b114a98457dd80a39b2f00b6a998cd69008 # v1.15.3
+        with:
+          webhook: ${{ secrets.SON_OF_JEEVES_DISCORD_WEBHOOK }}
+          status: ${{ job.status }}
+          title: "e2e-nvidia-l40s-x4"
+          description: |
+            Job in **${{ github.repository }}** running on branch `${{ steps.check_pr.outputs.pr_or_branch }}` completed **successfully** ✅
+            Click [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) to view details.
+          color: 0x28A745 # Green color for success
+
+  stop-large-ec2-runner:
     needs:
-      - start-runner
-      - e2e
+      - start-large-ec2-runner
+      - e2e-large-test
     runs-on: ubuntu-latest
     if: ${{ always() }}
     steps:
@@ -217,11 +233,12 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ needs.start-runner.outputs.ec2-instance-region }}
+          aws-region: ${{ needs.start-large-ec2-runner.outputs.ec2-instance-region }}
+
       - name: Stop EC2 runner
-        uses: machulav/ec2-github-runner@v2
+        uses: machulav/ec2-github-runner@fcfb31a5760dad1314a64a0e172b78ec6fc8a17e # v2.3.6
         with:
           mode: stop
           github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          label: ${{ needs.start-runner.outputs.label }}
-          ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
+          label: ${{ needs.start-large-ec2-runner.outputs.label }}
+          ec2-instance-id: ${{ needs.start-large-ec2-runner.outputs.ec2-instance-id }}

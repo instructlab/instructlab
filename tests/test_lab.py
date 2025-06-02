@@ -86,10 +86,21 @@ def test_ilab_cli_imports(testdata_path: pathlib.Path):
 
 
 class Command(typing.NamedTuple):
+    """
+    Represent an ilab CLI sub-command.
+
+    should_fail=False means the command should exit with a zero exit code.
+    should_fail=True means the command should exit with a non-zero exit code.
+    should_fail=None means the tests should ignore the exit code.
+
+    (Click 8.2.0+ exits with non-zero on incomplete commands, and Click
+    8.1.x does not.)
+    """
+
     args: tuple[str, ...]
     extra_args: tuple[str, ...] = ()
     needs_config: bool = True
-    should_fail: bool = True
+    should_fail: bool | None = True
 
     def get_args(self, *extra, default_config: bool = True) -> list[str]:
         args = []
@@ -109,12 +120,12 @@ class Command(typing.NamedTuple):
 subcommands: list[Command] = [
     # split first and second level for nicer pytest output
     # first, second, extra args
-    Command((), needs_config=False, should_fail=False),
-    Command(("config",), needs_config=False, should_fail=False),
+    Command((), needs_config=False, should_fail=None),
+    Command(("config",), needs_config=False, should_fail=None),
     Command(("config", "edit")),
     Command(("config", "init"), needs_config=False, should_fail=False),
     Command(("config", "show")),
-    Command(("model",), needs_config=False, should_fail=False),
+    Command(("model",), needs_config=False, should_fail=None),
     Command(("model", "chat")),
     Command(("model", "chat"), ("--rag",)),
     Command(("model", "convert"), ("--model-dir", "test")),
@@ -129,19 +140,21 @@ subcommands: list[Command] = [
         ("--model", "foo", "--destination", "bar"),
     ),
     Command(("model", "remove"), ("--model", "test-model")),
-    Command(("data",), needs_config=False, should_fail=False),
+    Command(("data",), needs_config=False, should_fail=None),
     Command(("data", "generate")),
     Command(("data", "list")),
-    Command(("rag",), needs_config=False, should_fail=False),
+    Command(("rag",), needs_config=False, should_fail=None),
     Command(("rag", "convert")),
     Command(("rag", "ingest")),
-    Command(("system",), needs_config=False, should_fail=False),
+    Command(("system",), needs_config=False, should_fail=None),
     Command(("system", "info"), needs_config=False, should_fail=False),
-    Command(("taxonomy",), needs_config=False, should_fail=False),
+    Command(("taxonomy",), needs_config=False, should_fail=None),
     Command(("taxonomy", "diff")),
-    Command(("process",), needs_config=False, should_fail=False),
+    Command(("process",), needs_config=False, should_fail=None),
     Command(("process", "list")),
     Command(("process", "attach")),
+    Command(("process", "remove"), ("test_uuid_string",)),
+    Command(("process", "prune")),
 ]
 
 aliases = [
@@ -152,15 +165,6 @@ aliases = [
 ]
 
 
-@dev_preview
-@pytest.mark.parametrize("command", subcommands, ids=lambda sc: repr(sc.args))
-def test_ilab_cli_help(command: Command, cli_runner: CliRunner):
-    cmd = command.get_args("--help")
-    assert "--help" in cmd
-    result = cli_runner.invoke(lab.ilab, cmd)
-    assert result.exit_code == 0, result.stdout
-
-
 def test_ilab_alias_output(cli_runner: CliRunner):
     expected_output = """Aliases:
   chat      model chat
@@ -168,21 +172,23 @@ def test_ilab_alias_output(cli_runner: CliRunner):
   serve     model serve
   train     model train"""
     result = cli_runner.invoke(lab.ilab)
-    assert result.exit_code == 0, result.stdout
 
     alias_section = False
     actual_output = []
+    result_out = result.stdout
+    if result.stderr_bytes:
+        result_out += result.stderr
 
-    for line in result.stdout.splitlines():
+    for line in result_out.splitlines():
         if line.strip() == "Aliases:":
             alias_section = True
         if alias_section:
             actual_output.append(line)
 
     actual_output_str = "\n".join(actual_output).strip()
-    assert (
-        expected_output == actual_output_str
-    ), f"Expected aliases output:\n{expected_output}\n\nBut got:\n{actual_output_str}"
+    assert expected_output == actual_output_str, (
+        f"Expected aliases output:\n{expected_output}\n\nBut got:\n{actual_output_str}"
+    )
 
 
 def test_cli_help_matches_field_description(cli_runner: CliRunner):
@@ -310,21 +316,24 @@ def test_ilab_missing_config(command: Command, cli_runner: CliRunner) -> None:
     result = cli_runner.invoke(lab.ilab, cmd)
 
     if command.needs_config:
-        assert (
-            result.exit_code == 2
-        ), f"{command} did not get exit_code=1 but is recorded as needs_config=False and should_fail=True.  result={result}"
-        assert "does not exist or is not a readable file" in result.stdout
+        assert result.exit_code == 2, (
+            f"{command} did not get exit_code=1 but is recorded as needs_config=False and should_fail=True.  result={result}"
+        )
+        expected_err = "does not exist or is not a readable file"
+        assert expected_err in result.stdout or expected_err in result.stderr
     else:
-        # should fail due to missing dirs
-        if command.should_fail:
-            assert (
-                result.exit_code == 1
-            ), f"{command} did not get exit_code=1 but is recorded as needs_config=False and should_fail=True.  result={result}"
-            assert (
-                "Some ilab storage directories do not exist yet. Please run `ilab config init` before continuing."
-                in result.stdout
-            )
-        else:
-            assert (
-                result.exit_code == 0
-            ), f"{command} failed with code {result} but is recorded as needs_config=False and should_fail=False"
+        match command.should_fail:
+            case False:
+                assert result.exit_code == 0, (
+                    f"{command} failed with code {result} but is recorded as needs_config=False and should_fail=False"
+                )
+            case True:
+                # should fail due to missing dirs
+                assert result.exit_code == 1, (
+                    f"{command} did not get exit_code=1 but is recorded as needs_config=False and should_fail=True.  result={result}"
+                )
+                expected_err = "Some ilab storage directories do not exist yet. Please run `ilab config init` before continuing."
+                assert expected_err in result.stdout or expected_err in result.stderr
+            case None:
+                # The exit code can depend on other factors, for example: Click version.
+                pass

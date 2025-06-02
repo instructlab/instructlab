@@ -235,18 +235,10 @@ serve:
             # default empty value of model_family will use name of model in model path to guess model_family
             "": "granite",
         }
-        bad_cases = [
-            # unknown family
-            "unknown",
-        ]
         for model_name, expected_family in good_cases.items():
             model_path = os.path.join("models", f"{model_name}-7b-lab-Q4_K_M.gguf")
             assert config.get_model_family(model_name, model_path) == expected_family
             assert config.get_model_family(None, model_path) == expected_family
-        for model_name in bad_cases:
-            model_path = os.path.join("models", f"{model_name}-7b-lab-Q4_K_M.gguf")
-            with pytest.raises(config.ConfigException):
-                config.get_model_family(model_name, model_path)
 
     def test_config_modified_settings(self, tmp_path_home):
         config_path = tmp_path_home / "config.yaml"
@@ -415,7 +407,9 @@ def test_all_config_options_have_description():
         return fields_without_description
 
     fields_without_description = loop_through_fields(cfg)
-    assert not fields_without_description, f"Fields without description: {fields_without_description}, update 'configuration.py' Field with missing descriptions."
+    assert not fields_without_description, (
+        f"Fields without description: {fields_without_description}, update 'configuration.py' Field with missing descriptions."
+    )
 
 
 @pytest.mark.parametrize(

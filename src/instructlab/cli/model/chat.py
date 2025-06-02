@@ -10,6 +10,7 @@ import click
 # First Party
 from instructlab import clickext
 from instructlab import configuration as cfg
+from instructlab.configuration import resolve_model_id
 from instructlab.defaults import DEFAULTS
 from instructlab.model.chat import chat_model
 
@@ -182,6 +183,19 @@ def chat(
 ):
     """Runs a chat using the modified model"""
 
+    if model_id:
+        try:
+            model_config = resolve_model_id(model_id, ctx.obj.config.models)
+            if not model_config:
+                raise ValueError(
+                    f"Model with ID '{model_id}' not found in the configuration."
+                )
+            model = model_config.path
+            model_family = model_config.family if model_config.family else model_family
+        except ValueError as ve:
+            click.secho(f"failed to locate model by ID: {ve}", fg="red")
+            raise click.exceptions.Exit(1)
+
     chat_model(
         question,
         model,
@@ -215,7 +229,7 @@ def chat(
         api_base=ctx.obj.config.serve.api_base(),
         gpu_layers=ctx.obj.config.serve.llama_cpp.gpu_layers,
         max_ctx_size=ctx.obj.config.serve.llama_cpp.max_ctx_size,
-        vllm_model_family=ctx.obj.config.serve.vllm.llm_family,
+        vllm_model_family=model_family,  # use the resolved model family
         vllm_args=ctx.obj.config.serve.vllm.vllm_args,
         max_startup_attempts=ctx.obj.config.serve.vllm.max_startup_attempts,
         logs_dir=ctx.obj.config.chat.logs_dir,

@@ -1,0 +1,33 @@
+name: Update constraints-dev.txt
+
+on:
+  schedule:
+    - cron: '0 3 * * 1'  # Every Monday at 03:00 UTC
+  workflow_dispatch:
+
+jobs:
+  update-constraints:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Checkout "update-constraints" in-house CI action
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          repository: instructlab/ci-actions
+          path: ci-actions
+          # no tag that includes https://github.com/instructlab/ci-actions/pull/26, yet
+          ref: 88641ccaf122964eacdc1a82b18bda369b6f99bd # main
+          sparse-checkout: |
+            actions/update-constraints
+
+      - name: Update constraints
+        id: update-constraints
+        uses: ./ci-actions/actions/update-constraints
+        with:
+          gh-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}

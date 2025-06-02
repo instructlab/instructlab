@@ -18,6 +18,7 @@ from docling.datamodel.base_models import (  # type: ignore  # noqa: F401
 from docling.datamodel.document import ConversionResult  # type: ignore  # noqa: F401
 from docling.datamodel.document import InputDocument  # type: ignore  # noqa: F401
 from docling.document_converter import FormatOption  # type: ignore  # noqa: F401
+import pytest
 
 # First Party
 from instructlab import lab
@@ -84,20 +85,21 @@ def run_rag_convert_test(
             lab.ilab, ["--config=DEFAULT", "rag", "convert"] + params
         )
         if should_succeed:
-            assert (
-                result.exit_code == 0
-            ), f"Unexpected failure for parameters {params}: {result.output}"
+            assert result.exit_code == 0, (
+                f"Unexpected failure for parameters {params}: {result.output}"
+            )
         for expected_string in expected_strings:
             assert expected_string in result.output
         if expected_output_file is not None:
             assert expected_output_file.exists()
         else:
-            assert (
-                result.exit_code != 0
-            ), f"Unexpected success for parameters {params}: {result.output}"
+            assert result.exit_code != 0, (
+                f"Unexpected success for parameters {params}: {result.output}"
+            )
 
 
 @dev_preview
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
 def test_convert_pdf_from_directory(tmp_path: Path):
     """
     Tests converting from the sample PDF in tests/testdata/documents/pdf.
@@ -115,6 +117,7 @@ def test_convert_pdf_from_directory(tmp_path: Path):
 
 
 @dev_preview
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
 def test_convert_md_from_directory(tmp_path: Path):
     """
     Tests converting from the sample Markdown file in tests/testdata/documents/md.
@@ -133,6 +136,7 @@ def test_convert_md_from_directory(tmp_path: Path):
 # is not working or if it ever gets deleted.  That's not ideal, but we do need to test these capabilities.
 # TODO: Consider re-working this with a mock for the github server.
 @dev_preview
+@pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
 def test_convert_md_from_taxonomy(tmp_path: Path):
     """
     Tests converting from the sample Markdown file in a github repo referenced in tests/testdata/sample_taxonomy.

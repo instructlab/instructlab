@@ -7,7 +7,6 @@ from typing import Any, List, Optional, Union
 import enum
 import logging
 import os
-import pathlib
 import sys
 import textwrap
 import typing
@@ -34,12 +33,9 @@ from pydantic import (
     model_validator,
 )
 from pydantic_core import PydanticUndefined
-from ruamel.yaml import YAML, CommentedMap
+from ruamel.yaml import YAML, CommentedMap, CommentedSeq
 from typing_extensions import deprecated as Deprecated
 import click
-
-# First Party
-from instructlab.utils import get_model_arch, use_legacy_pretraining_format
 
 # Local
 from . import log
@@ -84,6 +80,18 @@ class _general(BaseModel):
     use_legacy_tmpl: bool = Field(
         default=False,
         description="Use legacy IBM Granite chat template (default uses 3.0 Instruct template)",
+    )
+    # Global student model id
+    student_model_id: str | None = Field(
+        default_factory=lambda: None,
+        description="ID of the student model to be used for training.",
+        exclude=True,
+    )
+    # Global teacher model id
+    teacher_model_id: str | None = Field(
+        default_factory=lambda: None,
+        description="ID of the teacher model to be used for data generation.",
+        exclude=True,
     )
 
     @field_validator("log_level")
@@ -201,7 +209,8 @@ class _serve_vllm(BaseModel):
     gpus: Optional[int] = Field(default=None, description="Number of GPUs to use.")
     # arguments to pass into vLLM process
     vllm_args: list[str] | None = Field(
-        default_factory=list,
+        # TODO: revisit the type check ignore
+        default_factory=list,  # type: ignore
         description="vLLM specific arguments. All settings can be passed as a list of strings, see: https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html",
         examples=[
             ["--dtype", "auto"],
@@ -559,7 +568,7 @@ class _train(BaseModel):
     )
     data_path: str = Field(
         default_factory=lambda: DEFAULTS.DATASETS_DIR,
-        description="For the training library (primary training method), this specifies the path to the dataset file. For legacy training (MacOS/Linux), this specifies the path to the directory.",
+        description="For the training library (pipelines 'full' or 'accelerated'), this must specify the path to the dataset '.jsonl' file. For legacy training (pipeline 'simple'), this specifies the path to the directory.",
     )
     ckpt_output_dir: str = Field(
         default_factory=lambda: DEFAULTS.CHECKPOINTS_DIR,
@@ -685,7 +694,7 @@ class _train(BaseModel):
     )
 
 
-class _model_config(BaseModel):
+class model_info(BaseModel):
     """
     Class representing the configuration for a model.
 
@@ -698,9 +707,11 @@ class _model_config(BaseModel):
     id: str = Field(
         description="Internal ID referring to a particular model from the list.",
     )
-    path: str | None = Field(
+    family: str = Field(
+        description="Family the model belongs to.",
+    )
+    path: str = Field(
         description="Path to where the model can be found. Can either be a HF reference or local filepath.",
-        default=None,
     )
     system_prompt: str | None = Field(
         description='The initial message used to prompt the conversation with this model. E.g. "You are a helfpul AI assistant..."',
@@ -777,7 +788,7 @@ class Config(BaseModel):
         description="Metadata pertaining to the specifics of the system which the Configuration is meant to be applied to.",
     )
     # List of user-defined models
-    models: List[_model_config] = Field(
+    models: List[model_info] = Field(
         default_factory=lambda: [],
         description="User-defined custom set of models. This allows people to use their own models for the InstructLab model customization process.",
     )
@@ -1195,8 +1206,20 @@ def config_to_commented_map(
         examples = field.examples
         default_factory = field.default_factory
 
+        # Recursively handle iterables
+        if isinstance(value, list | tuple):
+            # If the value is a list or tuple, handle each item
+            cm[field_name] = CommentedSeq()
+            for item in value:
+                if isinstance(item, BaseModel):
+                    # If the item is a BaseModel, convert it to a CommentedMap
+                    nested_cm = config_to_commented_map(item, indent + 2)
+                    cm[field_name].append(nested_cm)
+                else:
+                    cm[field_name].append(item)
+
         # Recursively handle nested models
-        if isinstance(value, BaseModel):
+        elif isinstance(value, BaseModel):
             # If the value is a BaseModel but has Field attributes honor them
             set_comment(
                 cm, field_name, description, default_value, deprecated, examples, indent
@@ -1209,7 +1232,8 @@ def config_to_commented_map(
             # If the default value comes from a factory, evaluate it and use the result as the default value
             if default_value is PydanticUndefined:
                 if default_factory is not None and callable(default_factory):
-                    default_value = default_factory()
+                    # TODO: revisit the type check ignore
+                    default_value = default_factory()  # type: ignore
             # When the default value's type is an Enum or Enum value, convert it to a string
             elif isinstance(default_value, enum.Enum):
                 default_value = default_value.value
@@ -1321,7 +1345,8 @@ def get_model_family(family, model_path):
     family = MODEL_FAMILY_MAPPINGS.get(family, family)
     if family:
         if family.lower() not in MODEL_FAMILIES:
-            raise ConfigException(f"Unknown model family: {family}")
+            # not raising an error to allow users to specify any family name
+            logger.warning(f"Using unknown model family: {family} specified by user.")
 
         return family.lower()
 
@@ -1490,6 +1515,7 @@ def init(
 ) -> None:
     config_obj: Config
     error_msg: str | None = None
+
     if config_file == "DEFAULT":
         # if user passed --config DEFAULT we should ensure all proper dirs are created
         ensure_storage_directories_exist()
@@ -1515,6 +1541,11 @@ def init(
 
     # special case: --help should always work
     if not os.path.isfile(config_file) and "--help" in sys.argv[1:]:
+        error_msg = None
+
+    # it should allow editing even if there are errors in the configuration file
+    if error_msg and "edit" in sys.argv[1:] and os.path.isfile(config_file):
+        click.secho(f"{error_msg}", fg="red")
         error_msg = None
 
     ctx.obj = Lab(config_obj, config_file, error_msg)
@@ -1556,6 +1587,7 @@ def map_train_to_library(ctx, params):
             click.secho(f"failed to get model with `--model-id`: {ve}", fg="red")
             raise click.exceptions.Exit(1)
         params["model_path"] = model_cfg.path
+        train_args.model_path = model_cfg.path
 
     ds_args = DeepSpeedOptions(
         cpu_offload_optimizer=params["deepspeed_cpu_offload_optimizer"],
@@ -1601,14 +1633,8 @@ def map_train_to_library(ctx, params):
     if params["pipeline"] == "full":
         train_args.disable_flash_attn = True
 
-    student_model_arch = get_model_arch(pathlib.Path(params["model_path"]))
     if ctx.obj.config.general.use_legacy_tmpl:
         train_args.use_legacy_tmpl = True
-    else:
-        train_args.use_legacy_tmpl = use_legacy_pretraining_format(
-            params["model_path"],
-            student_model_arch,
-        )
     return train_args, torch_args
 
 
@@ -1663,9 +1689,7 @@ def configs_exist() -> bool:
     return os.path.exists(DEFAULTS.CONFIG_FILE)
 
 
-def resolve_model_id(
-    model_id: str, models: List[_model_config]
-) -> _model_config | None:
+def resolve_model_id(model_id: str, models: List[model_info]) -> model_info | None:
     """
     Given a `model_id`, returns the matching model config if one is found.
     When a model is found, the following validations happen:

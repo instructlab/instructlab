@@ -1,3 +1,7 @@
+## v0.26
+
+- Remove Python 3.10 support.
+
 ## v0.25
 
 ### Features

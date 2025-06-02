@@ -94,7 +94,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
    📋  When installing InstructLab Core on macOS, you may have to run the `xcode-select --install` command, installing the required packages listed.
 
 - C++ compiler
-- Python 3.10 or Python 3.11
+- Python 3.11
 
    ⚠️ Python 3.12+ is currently not supported. Some InstructLab dependencies don't work on Python 3.12, yet. It is recommended to use a specific version of Python in the below commands, e.g. `python3.11` instead of simply `python3`.
 
@@ -102,7 +102,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 ## ✅ Getting started
 
-- When installing on Fedora Linux, install C++, Python 3.10 or 3.11, and other necessary tools by running the following command:
+- When installing on Fedora Linux, install C++, Python 3.11, and other necessary tools by running the following command:
 
    ```shell
    sudo dnf install gcc gcc-c++ make git-core python3.11 python3.11-devel
@@ -117,7 +117,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 1. There are a few ways you can locally install the InstructLab Core package. Select your preferred installation method from the following instructions. You can then install `ilab` and activate your `venv` environment.
 
-   ⚠️ The `python3` binary shown in the installation guides are the Python version that you installed in the above step. The command can also be `python3.11` or `python3.10` instead of `python3`. You can check Python's version by `python3 -V`.
+   ⚠️ The `python3` binary shown in the installation guides are the Python version that you installed in the above step. The command can also be `python3.11` instead of `python3`. You can check Python's version by `python3 -V`.
 
    ⏳ `pip install` may take some time, depending on your internet connection. In case the installation fails with error ``unsupported instruction `vpdpbusd'``, append `-C cmake.args="-DGGML_NATIVE=off"` to `pip install` command.
 
@@ -176,7 +176,7 @@ For an overview of the full workflow, see the [workflow diagram](./docs/workflow
 
 #### Install with Nvidia CUDA
 
-- For the best CUDA experience, installing vLLM is necessary to serve Safetensors format models.
+- For the best CUDA experience, installing vLLM is necessary to serve Safetensors format models. You can install using pip install or downloading CUDA from [Nvidia](https://developer.nvidia.com/cuda-downloads)
 
    ```shell
    python<version> -m venv --upgrade-deps venv
@@ -442,12 +442,12 @@ For detailed documentation on the InstructLab LLMs and their functions, see the 
    ```shell
    ilab model download --hf-token <your-huggingface-token>
    ```
-  
+
    Hugging Face `hf_transfer` is enabled by default for faster downloads (lacks proxy support), and can be disabled with `HF_HUB_ENABLE_HF_TRANSFER=0`. If you have issues connecting to Hugging Face, refer to the [Hugging Face discussion forum](https://discuss.huggingface.co/) for more details.
 
 #### Downloading a specific model from a Hugging Face repository
 
-- Specify a repository, model, and a Hugging Face token if necessary. More information about Hugging Face tokens can be found [here](https://huggingface.co/docs/hub/en/security-tokens)
+- Specify a repository, model, and a [Hugging Face token](https://huggingface.co/docs/hub/en/security-tokens) if necessary.
 
    ```shell
    ilab model download --repository instructlab/granite-7b-lab-GGUF --filename granite-7b-lab-Q4_K_M.gguf --hf-token <your-huggingface-token>
@@ -536,7 +536,7 @@ For detailed documentation on the InstructLab LLMs and their functions, see the 
 
    ```shell
    source venv/bin/activate
-   ilab model chat --model ~/.cache/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf 
+   ilab model chat --model ~/.cache/instructlab/models/mixtral-8x7b-instruct-v0.1.Q4_K_M.gguf
    ```
 
    > [!TIP]
@@ -587,7 +587,7 @@ Once you have enabled developer preview features, the first step is to convert y
 *Converting documents from a directory:* If you have all the source documents (e.g., PDF, Markdown) that you want to convert in a single local directory, you can convert them:
 
    ```shell
-      ilab rag convert --input-dir <path-to-source-document-directory> --output-dir <path-to-converted-document-directory> 
+      ilab rag convert --input-dir <path-to-source-document-directory> --output-dir <path-to-converted-document-directory>
    ```
 
 This capability has been tested with PDF, Markdown, and Microsoft Word format documents.  Any of the [formats supported by Docling](https://ds4sd.github.io/docling/reference/document_converter/#docling.document_converter.InputFormat) should work.
@@ -595,7 +595,7 @@ This capability has been tested with PDF, Markdown, and Microsoft Word format do
 *Converting documents from a taxonomy:* If you do not specify an input directory, the `convert` command will pull from the default --taxonomy-path value, unless specified otherwise.  For example, to use all of the documents in all of the knowledge nodes in the taxonomy in the default location you can run:
 
    ```shell
-   ilab rag convert --taxonomy-base=empty --output-dir <path-to-converted-document-directory> 
+   ilab rag convert --taxonomy-base=empty --output-dir <path-to-converted-document-directory>
    ```
 
 *Converting documents within SDG:* The SDG commands will convert documents along with its primary goal (to generate synthetic data).  If you ran any configuration of `ilab data generate`, then the knowledge documents in the taxonomy that generated synthetic data will already be converted to a structured form.  In this case, there is no need to run the `ilab rag convert` command again.  For example, the following command mentioned in the [🚀 Generate a synthetic dataset](#-generate-a-synthetic-dataset) section converts all of the documents referenced in the entire contents of the taxonomy in the default location (and outputs them to a location that is the default input location for the ingestion command below):
@@ -619,7 +619,7 @@ Once documents are converted, you can use the `ilab rag ingest` command to inges
 *Ingesting documents from ilab rag convert*: Alternatively, if you ran `ilab rag convert` to convert your documents, without SDG, then the output directory you used for `ilab rag convert` should be the input directory you specify for `ilab rag ingest`, e.g.:
 
    ```shell
-   ilab rag ingest --input-dir=<path-to-converted-document-directory> 
+   ilab rag ingest --input-dir=<path-to-converted-document-directory>
    ```
 
 #### Getting answers from RAG
@@ -781,13 +781,13 @@ There are a few models you need to download before running the InstructLab end-t
 - Download the `granite-7b-lab` model for training:
 
    ```shell
-   ilab model download --repository instructlab/granite-7b-lab 
+   ilab model download --repository instructlab/granite-7b-lab
    ```
 
 - Download the `prometheus-8x7b-v2.0` for *multi-phase training* and *benchmark evaluation*. This model is not required for `simple` or `full` training.
 
    ```shell
-   ilab model download --repository prometheus-eval/prometheus-8x7b-v2.0 --hf-token <your-huggingface-token> 
+   ilab model download --repository prometheus-eval/prometheus-8x7b-v2.0 --hf-token <your-huggingface-token>
    ```
 
 #### InstructLab model training pipelines
@@ -809,14 +809,14 @@ After running `ilab model train`, the output locations depend on the chosen pipe
 | `lab-multiphase`                   | Linux                | Phase 1 models saved in `~/.local/share/instructlab/phased/phase1/checkpoints` (Knowledge training). Phase 2 models saved in `~/.local/share/instructlab/phased/phase2/checkpoints` (Skills training). Evaluation is run for phase 2 to identify the best checkpoint. |
 | `lab-skills-only`                  | Linux                | Phase 2 models saved in `~/.local/share/instructlab/phased/phase2/checkpoints` (Skills training). Evaluation is run for phase 2 to identify the best checkpoint. |
 
-To limit training time, you can adjust the `num_epoch` paramater in the `config.yaml` file. The maximum number of epochs for running the InstructLab end-to-end workkflow is 10.
+To limit training time, you can adjust the `num_epoch` parameter in the `config.yaml` file. The maximum number of epochs for running the InstructLab end-to-end workkflow is 10.
 
 #### Train the model locally
 
 - Train the model with your synthetic data with the `ilab model train` command:
 
    ```shell
-   ilab model train
+   ilab model train --data-path <path-to-sdg-dataset>
    ```
 
    ⏳ This step can potentially take **several hours** to complete depending on your computing resources. Please stop `ilab model chat` and `ilab model serve` first to free resources.
@@ -896,7 +896,7 @@ When running multi phase training evaluation is run on each phase, we will tell 
 
 #### Train the model locally with GPU acceleration
 
-- Training has support for GPU acceleration with Nvidia CUDA or AMD ROCm. Please see [the GPU acceleration documentation](./docs/gpu-acceleration.md) for more details. At present, hardware acceleration requires a data center GPU or high-end consumer GPU with at least 18 GB free memory.
+- Training has support for GPU acceleration with Nvidia CUDA or AMD ROCm. Please see [the GPU acceleration documentation](./docs/accelerators/gpu-acceleration.md) for more details. At present, hardware acceleration requires a data center GPU or high-end consumer GPU with at least 18 GB free memory.
 
    ```shell
    ilab model train --pipeline accelerated --device cuda --data-path <path-to-sdg-data>

@@ -21,8 +21,7 @@ from ..utils import is_model_gguf, is_model_safetensors
 logger = logging.getLogger(__name__)
 
 
-# Python 3.10 does not have StrEnum
-class Benchmark(str, enum.Enum):
+class Benchmark(enum.StrEnum):
     MMLU = "mmlu"
     MMLU_BRANCH = "mmlu_branch"
     MT_BENCH = "mt_bench"

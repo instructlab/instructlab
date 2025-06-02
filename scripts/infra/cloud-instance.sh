@@ -183,7 +183,7 @@ ibm__launch() {
     echo "Creating IBM Cloud VPC instance..."
     ibmcloud is instance-create "$INSTANCE_NAME" "$IBM_VPC_ID" "$IBM_ZONE" "${INSTANCE_TYPE:-$IBM_INSTANCE_PROFILE_NAME}" "$IBM_SUBNET_ID" --image "$IBM_IMAGE_ID" --boot-volume '{"name": "boot-vol-attachment-name", "volume": {"name": "boot-vol", "capacity": 200, "profile": {"name": "general-purpose"}}}' --keys "$IBM_KEY_NAME" --pnac-vni-name "$INSTANCE_NAME"
     echo "Attaching IBM Cloud VNI for new instance..."
-    ibmcloud is virtual-network-interface-floating-ip-add "$INSTANCE_NAME" "$INSTANCE_NAME" "$IBM_FLOATING_IP_NAME"
+    ibmcloud is virtual-network-interface-floating-ip-add "$INSTANCE_NAME" "$IBM_FLOATING_IP_NAME"
     local i
     i=0
     echo "Waiting for instance to be in the 'running' state..."

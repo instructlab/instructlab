@@ -454,7 +454,8 @@ def train(
     ) and not SupportedTrainingStrategies.has_strategy(strategy):
         if not os.path.isfile(data_path):
             ctx.fail(
-                f"Data path must be to a valid .jsonl file. Value given: {data_path}"
+                f"When using {pipeline} with {strategy}, it is necessary to specify path "
+                f"to a valid .jsonl file, rather than a directory. Value given: {data_path}"
             )
 
     # for simplicity, we only enable the `--model-id` path to training jobs
@@ -464,6 +465,10 @@ def train(
             f"'--model-id' is not supported for the '{pipeline}' pipeline. "
             "Please run using either the 'accelerated' or 'full' pipelines."
         )
+
+    ctx.params["model_id"] = (
+        model_id if model_id else ctx.obj.config.general.student_model_id
+    )
 
     # we can use train_args locally to run lower fidelity training
     if is_high_fidelity(device=device) and pipeline == "accelerated":

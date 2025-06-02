@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: "Harden Runner"
-        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
         with:
           egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
@@ -54,23 +54,21 @@ jobs:
 
       - uses: docker/setup-buildx-action@b5ca514318bd6ebac0fb2aedd5d36ec1b5c232a2 # v3.10.0
 
-      - name: Extract metadata (tags, labels) for gotbot image
-        id: gobot_meta
+      - name: Extract metadata (tags, labels) for CUDA image
+        id: cuda_meta
         uses: docker/metadata-action@902fa8ec7d6ecbf8d84d538b9b233a880e428804 # v5.7.0
         with:
           images: |
             ghcr.io/${{ github.repository }}/instructlab-cuda
 
-      - name: Build and push gobot image
-        uses: docker/build-push-action@471d1dc4e07e5cdedd4c2171150001c434f0b7a4 # v6.15.0
+      - name: Build and push CUDA image
+        uses: docker/build-push-action@263435318d21b8e681c14492fe198d362a7d2c83 # v6.18.0
         with:
           context: .
           platforms: linux/amd64
-          build-args: |
-            GIT_TAG=main
           push: false
-          tags: ${{ steps.gobot_meta.outputs.tags }}
-          labels: ${{ steps.gobot_meta.outputs.labels }}
+          tags: ${{ steps.cuda_meta.outputs.tags }}
+          labels: ${{ steps.cuda_meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
           file: containers/cuda/Containerfile

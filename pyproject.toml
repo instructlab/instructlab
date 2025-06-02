@@ -10,7 +10,7 @@ authors = [{ name = "InstructLab", email = "dev@instructlab.ai" }]
 description = "Core package for interacting with InstructLab"
 readme = "README.md"
 license = { text = "Apache-2.0 AND MIT" }
-requires-python = ">=3.10,<3.12"
+requires-python = ">=3.11,<3.13"
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Console",
@@ -20,7 +20,6 @@ classifiers = [
   "Operating System :: POSIX :: Linux",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: Implementation :: CPython",
 ]
@@ -48,6 +47,8 @@ issues = "https://github.com/instructlab/instructlab/issues"
 [project.entry-points."instructlab.command.process"]
 "list" = "instructlab.cli.process.list:list_processes"
 "attach" = "instructlab.cli.process.attach:attach"
+"remove" = "instructlab.cli.process.remove:remove"
+"prune" = "instructlab.cli.process.prune:prune"
 
 [project.entry-points."instructlab.command.config"]
 "edit" = "instructlab.config.edit:edit"
@@ -129,7 +130,7 @@ include = [
 ignore = ["W002"]
 
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 # same as black's default line length
 line-length = 88
 
@@ -182,6 +183,7 @@ from-first = true
 known-local-folder = ["tuning"]
 
 [tool.mypy]
+plugins = ['pydantic.mypy']
 mypy_path = ["src"]
 packages = ["instructlab", "tests"]
 disable_error_code = []
@@ -228,6 +230,11 @@ module = [
   "transformers",
 ]
 ignore_missing_imports = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
 
 [tool.coverage.run]
 branch = false

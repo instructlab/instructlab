@@ -11,6 +11,7 @@ on:
       - '**.py'
       - 'pyproject.toml'
       - 'requirements**.txt'
+      - 'constraints-dev.txt'
       - 'docs/**'
       - 'tox.ini'
       - .pylintrc
@@ -24,6 +25,7 @@ on:
       - '**.py'
       - 'pyproject.toml'
       - 'requirements**.txt'
+      - 'constraints-dev.txt'
       - 'docs/**'
       - 'tox.ini'
       - .pylintrc
@@ -51,25 +53,25 @@ jobs:
         lint:
           - name: "ruff"
             commands: |
-              tox -e ruff
+              tox -vvv -e ruff
           - name: "pylint"
             commands: |
               echo "::add-matcher::.github/workflows/matchers/pylint.json"
-              tox -e fastlint
-              tox -e lint
+              tox -vvv -e fastlint
+              tox -vvv -e lint
           - name: "mypy"
             commands: |
               echo "::add-matcher::.github/workflows/matchers/mypy.json"
-              tox -e mypy
+              tox -vvv -e mypy
           - name: "tomllint"
             commands: |
-              tox -e tomllint
+              tox -vvv -e tomllint
           - name: "yamllint"
             commands: |
-              tox -e yamllint
+              tox -vvv -e yamllint
     steps:
       - name: "Harden Runner"
-        uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+        uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
         with:
           egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
@@ -85,7 +87,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Python 3.11
-        uses: actions/setup-python@8d9ed9ac5c53483de85588cdf95a591a75ab9f55 # v5.5.0
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: 3.11
           cache: pip

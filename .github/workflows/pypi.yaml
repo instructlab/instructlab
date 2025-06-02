@@ -37,7 +37,7 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: "Harden Runner"
-              uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
               with:
                   egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
@@ -73,12 +73,12 @@ jobs:
 
         steps:
             - name: "Harden Runner"
-              uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
               with:
                   egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
             - name: Fetch build artifacts
-              uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
+              uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
               with:
                   name: Packages
                   path: dist
@@ -87,6 +87,7 @@ jobs:
               uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
               with:
                   repository-url: https://test.pypi.org/legacy/
+                  verbose: true
 
     # push to Production PyPI on
     # - a new GitHub release is published
@@ -106,12 +107,12 @@ jobs:
 
         steps:
             - name: "Harden Runner"
-              uses: step-security/harden-runner@4d991eb9b905ef189e4c376166672c3f2f230481 # v2.11.0
+              uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
               with:
                   egress-policy: audit # TODO: change to 'egress-policy: block' after couple of runs
 
             - name: Fetch build artifacts
-              uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e # v4.2.1
+              uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
               with:
                   name: Packages
                   path: dist
@@ -136,3 +137,5 @@ jobs:
 
             - name: Upload to PyPI
               uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc # v1.12.4
+              with:
+                verbose: true

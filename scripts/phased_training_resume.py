@@ -88,6 +88,7 @@ def run_training_phase(
                 "--phased-base-dir",
                 phased_base_dir,
                 "--skip-user-confirm",
+                "--enable-serving-output",
             ],
         )
 

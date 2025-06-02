@@ -36,18 +36,18 @@ pull_request_rules:
           - files~=\.py$
           - files=pyproject.toml
           - files~=^requirements.*\.txt$
+          - files=constraints-dev.txt
           - files=scripts/e2e-ci.sh
           - files~=^scripts/test-data/
           - files~=^src/instructlab/profiles/
-          - files=.github/workflows/e2e-nvidia-l4-x1.yml
       - and:
         - -files~=\.py$
         - -files=pyproject.toml
         - -files~=^requirements.*\.txt$
+        - -files=constraints-dev.txt
         - -files=scripts/e2e-ci.sh
         - -files~=^scripts/test-data/
         - -files~=^src/instructlab/profiles/
-        - -files=.github/workflows/e2e-nvidia-l4-x1.yml
 
     # small e2e workflow
     - or:
@@ -58,18 +58,18 @@ pull_request_rules:
           - files~=\.py$
           - files=pyproject.toml
           - files~=^requirements.*\.txt$
+          - files=constraints-dev.txt
           - files=scripts/e2e-ci.sh
           - files~=^scripts/test-data/
           - files~=^src/instructlab/profiles/
-          - files=.github/workflows/e2e-nvidia-t4-x1.yml
       - and:
         - -files~=\.py$
         - -files=pyproject.toml
         - -files~=^requirements.*\.txt$
+        - -files=constraints-dev.txt
         - -files=scripts/e2e-ci.sh
         - -files~=^scripts/test-data/
         - -files~=^src/instructlab/profiles/
-        - -files=.github/workflows/e2e-nvidia-t4-x1.yml
 
     # test workflow
     - or:
@@ -80,6 +80,7 @@ pull_request_rules:
           - files~=\.py$
           - files=pyproject.toml
           - files~=^requirements.*\.txt$
+          - files=constraints-dev.txt
           - files=tox.ini
           - files~=^scripts/[^/]+\.sh$
           - files~=^src/instructlab/profiles/
@@ -88,6 +89,7 @@ pull_request_rules:
         - -files~=\.py$
         - -files=pyproject.toml
         - -files~=^requirements.*\.txt$
+        - -files=constraints-dev.txt
         - -files=tox.ini
         - -files~=^scripts/[^/]+\.sh$
         - -files~=^src/instructlab/profiles/
@@ -102,6 +104,7 @@ pull_request_rules:
           - files~=\.py$
           - files=pyproject.toml
           - files~=^requirements.*\.txt$
+          - files=constraints-dev.txt
           - files=tox.ini
           - files=.pylintrc
           - files~=^src/instructlab/profiles/
@@ -110,6 +113,7 @@ pull_request_rules:
         - -files~=\.py$
         - -files=pyproject.toml
         - -files~=^requirements.*\.txt$
+        - -files=constraints-dev.txt
         - -files=tox.ini
         - -files=.pylintrc
         - -files~=^src/instructlab/profiles/
@@ -283,6 +287,7 @@ pull_request_rules:
     - or:
       - files~=^requirements.*\.txt$
       - files~=^requirements/
+      - files=constraints-dev.txt
   actions:
     label:
       add:
