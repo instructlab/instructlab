@@ -104,3 +104,7 @@ file.
 
 You simply need to put it in your `${HOME}/.bashrc.d` folder and restart your
 bash shell to be able to call only `instructlab` or `ilab`.
+
+## Container file dependencies
+
+Currently our e2e CI tests do not use these containers and the main user documentation [README.md](https://github.com/instructlab/instructlab/blob/main/README.md) instructs users to install from PyPI rather than build from these container files. However, dependencies on these in-tree container files, such as with [the ai-lab-recipes project](https://github.com/containers/ai-lab-recipes/blob/main/training/instructlab/Makefile) may exist.  
