@@ -6,7 +6,7 @@ The InstructLab continuous integration (CI) ecosystem:
 
 ## Unit tests
 
-Unit tests test specific components or features of InstructLab in isolation. InstructLab CI runs these tests on CPU-only Ubuntu runners using Python 3.11.
+Unit tests validate specific components or features of InstructLab in isolation. InstructLab CI runs these tests on CPU-only Ubuntu runners using Python 3.11.
 
 In general, all code changes should add a new unit test or modify an existing unit test.
 
@@ -14,7 +14,7 @@ Unit tests are stored in the `tests/` directory and are run with [pytest](https:
 
 ## Functional tests
 
-Functional tests test components or features of InstructLab in tandem, but not necessarily as part of a complex workflow. InstructLab CI runs these tests on CPU-only Ubuntu runners using Python 3.11.
+Functional tests validate components or features of InstructLab in tandem, but not necessarily as part of a complex workflow. InstructLab CI runs these tests on CPU-only Ubuntu runners using Python 3.11.
 
 New code may or may not need a functional test. However, contributors should strive to create functional tests where possible.
 
@@ -30,7 +30,7 @@ There are two E2E test scripts:
 
 The ["small" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) and ["medium" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l4-x1.yml) run automatically on all pull requests and commits merged into the `main` branch and release branches. These jobs depend on the successful completion of any linting jobs.
 
-The ["large" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) and ["X-large" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x8.yml) can be [triggered manually on the actions page](#triggering-an-e2e-job-via-github-web-ui). The "large" t-shirt size E2E job also runs automatically against the `main` branch at 11AM UTC every day.
+The ["large" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) and ["X-large" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x8.yml) can be [triggered manually on the actions page](#triggering-an-e2e-job-via-the-github-web-user-interface). The "large" t-shirt size E2E job also runs automatically against the `main` branch at 11AM UTC every day.
 
 ### E2E Test Coverage Options
 
@@ -74,6 +74,7 @@ When running `e2e-custom.sh`, specify the following flags to test the correspond
 | [`e2e-nvidia-l40s-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) | Large | AWS |[`g6e.12xlarge`](https://aws.amazon.com/ec2/instance-types/g6e/) | CentOS Stream 9 | 4 x NVIDIA L40S w/ 48 GB VRAM (192 GB) | `e2e-ci.sh` | `l` | Manually by Maintainers, Automatically against `main` branch at 11AM UTC | Yes |
 | [`e2e-nvidia-l40s-x4-llama.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/`e2e-nvidia-l40s-x4-llama.yml`) | Large | AWS | [`g6e.12xlarge`](https://aws.amazon.com/ec2/instance-types/g6e/) | CentOS Stream 9 | 4 x NVIDIA L40S w/ 48 GB VRAM (192 GB) | `e2e-ci.sh` | `a` | Manually by Maintainers, Automatically against `main` branch at 11AM UTC | Yes |
 | [`e2e-nvidia-l40s-x4-py312.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/`e2e-nvidia-l40s-x4-py312.yml`) | Large | AWS | [`g6e.12xlarge`](https://aws.amazon.com/ec2/instance-types/g6e/) | CentOS Stream 9 | 4 x NVIDIA L40S w/ 48 GB VRAM (192 GB) | `e2e-ci.sh` | `a` | Manually by Maintainers, Automatically against `main` branch at 11AM UTC | Yes |
+| [`e2e-nvidia-l40s-x4-release.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/`e2e-nvidia-l40s-x4-release.yml`) | Large | AWS | [`g6e.12xlarge`](https://aws.amazon.com/ec2/instance-types/g6e/) | CentOS Stream 9 | 4 x NVIDIA L40S w/ 48 GB VRAM (192 GB) | `e2e-ci.sh` | `a` | Manually by Maintainers, Automatically against `main` branch at 11AM UTC | Yes |
 | [`e2e-nvidia-l40s-x8.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x8.yml) | X-Large | AWS |[`g6e.48xlarge`](https://aws.amazon.com/ec2/instance-types/g6e/) | CentOS Stream 9 | 8 x NVIDIA L40S w/ 192 GB VRAM (384 GB) | `e2e-ci.sh` | `x` | Manually by Maintainers, Automatically against `main` branch at 11AM UTC | Yes |
 
 ### E2E Test Coverage Matrix
@@ -93,15 +94,15 @@ Points of clarification (*):
 
 1. The `simple` training pipeline uses 4-bit-quantization. We cannot use the trained model here due to [#579](https://github.com/instructlab/instructlab/issues/579)
 2. `MMLU Branch` is not run as the `full` SDG pipeline does not create the needed files in the tasks directory when only training against a skill.
-3. Also applies to [`e2e-nvidia-l40s-x4-llama.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/`e2e-nvidia-l40s-x4-py312.yml`) and [`e2e-nvidia-l40s-x4-py312.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/`e2e-nvidia-l40s-x4-py312.yml`).
+3. Also applies to [`e2e-nvidia-l40s-x4-llama.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/`e2e-nvidia-l40s-x4-llama.yml`), [`e2e-nvidia-l40s-x4-py312.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/`e2e-nvidia-l40s-x4-py312.yml`), and [`e2e-nvidia-l40s-x4-release.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/`e2e-nvidia-l40s-x4-release.yml`).
 
 ### Discord reporting
 
-Upon completion, the `Son of Jeeves` bot sends the results of some E2E jobs to the channel `#e2e-ci-results` in Discord and Slack. See which jobs currently have reporting via the "Current E2E Jobs" table above.
+Upon completion, the `Son of Jeeves` bot sends the results of some E2E jobs to the channel `#e2e-ci-results` in Discord. See which jobs currently have reporting via the "Current E2E Jobs" table above.
 
 In Discord, we use [actions/actions-status-discord](https://github.com/sarisia/actions-status-discord) and the built-in channel webhooks feature.
 
-### Triggering an E2E job via GitHub Web user interface
+### Triggering an E2E job via the GitHub web user interface
 
 For the E2E jobs that can be launched manually, they take an input field that
 specifies the PR number or git branch to run them against. If you run them
