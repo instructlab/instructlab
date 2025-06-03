@@ -189,4 +189,4 @@ jobs:
     with:
       job_ids: >- # Space-separated job ids to wait on for status checks
         test-workflow-ready
-        test
+        test:
