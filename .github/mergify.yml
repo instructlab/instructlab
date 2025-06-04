@@ -13,7 +13,6 @@ pull_request_rules:
     - label!=hold
     - label!=do-not-merge
     - label!=needs-rebase
-    - check-success=DCO
 
     # The files conditions regex should match the globs in workflow files
     # If workflow configuration files in .github/ are changed, the actionlint check must pass
