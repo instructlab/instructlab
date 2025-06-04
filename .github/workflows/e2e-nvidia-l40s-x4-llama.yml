@@ -71,7 +71,7 @@ jobs:
               }
             ]
           try_spot_instance_first: false
-          ec2_instance_type: g6e.12xlarge
+          ec2_instance_type: g6.24xlarge
           aws_resource_tags: >
             [
               {"Key": "Name", "Value": "instructlab-ci-github-large-runner"},
