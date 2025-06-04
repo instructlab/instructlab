@@ -157,3 +157,7 @@ Unsure where to begin contributing? You can start by looking through these issue
 
 - Issues with the [`good first issue` label](https://github.com/instructlab/instructlab/issues?q=is%3Aopen+is%3Aissue+label%3A%22good+first+issue%22) - these should only require a few lines of code and are good targets if you're just starting contributing.
 - Issues with the [`help wanted` label](https://github.com/instructlab/instructlab/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) - these range from simple to more complex, but are generally things we want but can't get to in a short time frame.
+
+## Developer Certificate of Origin
+
+When you make a contribution to InstructLab, you implicitly agree to the Developer Certificate of Origin terms as set in `DCO.txt` at the root of this repository.

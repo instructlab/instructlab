@@ -49,7 +49,6 @@ jobs:
     uses: ./.github/workflows/status-checks.yml
     with:
       job_ids: >- # Space-separated job ids to wait on for status checks
-        DCO
         actionlint
         markdown-lint
         shellcheck
