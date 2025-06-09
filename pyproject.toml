@@ -261,3 +261,4 @@ exclude_lines = ["@abc.abstractmethod", "if typing.TYPE_CHECKING"]
 testpaths = "tests"
 # verbose diffs
 verbosity_assertions = 2
+asyncio_default_fixture_loop_scope = "function"
