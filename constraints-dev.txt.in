@@ -2,8 +2,3 @@
 
 torch<2.7.0
 vllm<0.9.0
-
-# small e2e job fails:
-# https://github.com/instructlab/instructlab/issues/3456
-trl<0.15.0
-transformers<=4.51.3

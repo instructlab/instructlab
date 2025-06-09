@@ -28,20 +28,17 @@ GRANITE_7B_MODEL="instructlab/granite-7b-lab"
 MIXTRAL_8X7B_MODEL="mistralai/Mixtral-8x7B-Instruct-v0.1"
 PROMETHEUS_8X7B_MODEL="prometheus-eval/prometheus-8x7b-v2.0"
 LLAMA_3_3_70B_MODEL="meta-llama/Llama-3.3-70B-Instruct"
-MERLINITE_GGUF_REPO="instructlab/merlinite-7b-lab-GGUF"
-MERLINITE_GGUF_MODEL="merlinite-7b-lab-Q4_K_M.gguf"
 MISTRAL_GGUF_REPO="TheBloke/Mistral-7B-Instruct-v0.2-GGUF"
 MISTRAL_GGUF_MODEL="mistral-7b-instruct-v0.2.Q4_K_M.gguf"
 
 # t-shirt size globals
-SMALL=0
 MEDIUM=0
 LARGE=0
 XLARGE=0
 LARGE_LLAMA=0
 
 check_flags() {
-    if [ "${SMALL}" -ne 1 ] && [ "${MEDIUM}" -ne 1 ] && [ "${LARGE}" -ne 1 ] && [ "${LARGE_LLAMA}" -ne 1 ] && [ "${XLARGE}" -ne 1 ]; then
+    if [ "${MEDIUM}" -ne 1 ] && [ "${LARGE}" -ne 1 ] && [ "${LARGE_LLAMA}" -ne 1 ] && [ "${XLARGE}" -ne 1 ]; then
          echo "ERROR: Must specify a size flag when invoking this script."
          usage
          exit 1
@@ -109,10 +106,7 @@ test_system_info() {
 
 test_init() {
     task Initializing InstructLab
-    if [ "$SMALL" -eq 1 ]; then
-        step Setting small-size system profile
-        ilab config init --non-interactive --profile "${SCRIPTDIR}/test-data/profile-t4-x1.yaml"
-    elif [ "$MEDIUM" -eq 1 ]; then
+    if [ "$MEDIUM" -eq 1 ]; then
         step Setting medium-size system profile
         ilab config init --non-interactive --profile="${SCRIPTDIR}/test-data/profile-l4-x1.yaml"
     elif [ "$LARGE" -eq 1 ]; then
@@ -137,12 +131,7 @@ test_config_show() {
 
 test_download() {
     task Download models
-    if [ "$SMALL" -eq 1 ]; then
-        step Downloading the merlinite-7b-lab GGUF model as the teacher model for SDG
-        ilab model download --repository ${MERLINITE_GGUF_REPO} --filename ${MERLINITE_GGUF_MODEL}
-        step Downloading granite-7b-lab model to train and as the judge model for evaluation
-        ilab model download --repository ${GRANITE_7B_MODEL}
-    elif [ "$MEDIUM" -eq 1 ]; then
+    if [ "$MEDIUM" -eq 1 ]; then
         step Downloading the mistral-7b-instruct GGUF model as the teacher model for SDG
         ilab model download --repository ${MISTRAL_GGUF_REPO} --filename ${MISTRAL_GGUF_MODEL}
         step Downloading granite-7b-lab model to train and as the judge model for evaluation
@@ -167,10 +156,7 @@ test_download() {
 
 test_list() {
     task List the Downloaded Models
-    if [ "$SMALL" -eq 1 ]; then
-        ilab model list | grep ${GRANITE_7B_MODEL}
-        ilab model list | grep ${MERLINITE_GGUF_MODEL}
-    elif [ "$MEDIUM" -eq 1 ]; then
+    if [ "$MEDIUM" -eq 1 ]; then
         ilab model list | grep ${GRANITE_7B_MODEL}
         ilab model list | grep ${MISTRAL_GGUF_MODEL}
     elif [ "$LARGE" -eq 1 ] || [ "$XLARGE" -eq 1 ]; then
@@ -251,9 +237,7 @@ test_train() {
     local skill_data_path
     skill_data_path=$(find "${DATA_HOME}"/instructlab/datasets -name 'skills_train_msgs*' | head -n 1)
     knowledge_data_path=$(find "${DATA_HOME}"/instructlab/datasets -name 'knowledge_train_msgs*' | head -n 1)
-    if [ "$SMALL" -eq 1 ]; then
-        ilab model train --4-bit-quant
-    elif [ "$MEDIUM" -eq 1 ]; then
+    if [ "$MEDIUM" -eq 1 ]; then
         ilab model train --data-path "${skill_data_path}"
     fi
 
@@ -358,13 +342,8 @@ test_serve() {
     task Serve the model
 
     local model_path
-    # When we run training with --4-bit-quant, we can't convert the result to a gguf
-    # https://github.com/instructlab/instructlab/issues/579
-    # so we skip trying to test the result and just ensure that serve works in general
-    if [ "$SMALL" -eq 1 ]; then
-        model_path="${CACHE_HOME}/instructlab/models/${MERLINITE_GGUF_MODEL}"
     # use trained gguf for medium-size job
-    elif [ "$MEDIUM" -eq 1 ]; then
+    if [ "$MEDIUM" -eq 1 ]; then
         model_path="${TRAINED_MODEL_PATH}/pytorch_model-Q4_K_M.gguf"
     # use safetensors for large-size and xlarge-size jobs
     elif [ "$LARGE" -eq 1 ] || [ "$LARGE_LLAMA" -eq 1 ] || [ "$XLARGE" -eq 1 ]; then
@@ -484,10 +463,7 @@ test_exec() {
     wait_for_server shutdown $PID
 
     # evaluate tests
-    # note we do not run eval on the small runner due to a lack of GPU resources
-    if [ "$SMALL" -eq 0 ]; then
-        test_evaluate
-    fi
+    test_evaluate
 
     task E2E success!
     check_disk
@@ -525,8 +501,7 @@ wait_for_server() {
 
 # NOTE: If you add additional or modify existing options, please document them in 'docs/ci.md'
 usage() {
-    echo "Usage: $0 [-s] [-m] [-l] [-x] [-h]"
-    echo "  -s  Run small t-shirt size job"
+    echo "Usage: $0 [-m] [-l] [-x] [-h]"
     echo "  -m  Run medium t-shirt size job"
     echo "  -l  Run large t-shirt size job"
     echo "  -a  Run large T-shirt size job with llama pipeline."
@@ -537,12 +512,8 @@ usage() {
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "smlaxph" opt; do
+while getopts "mlaxph" opt; do
     case $opt in
-        s)
-            SMALL=1
-            step "Run small T-shirt size job."
-            ;;
         m)
             MEDIUM=1
             step "Run medium T-shirt size job."

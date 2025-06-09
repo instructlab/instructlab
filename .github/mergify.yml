@@ -48,28 +48,6 @@ pull_request_rules:
         - -files~=^scripts/test-data/
         - -files~=^src/instructlab/profiles/
 
-    # small e2e workflow
-    - or:
-      - and:
-        # note this should match the triggering criteria in 'e2e-nvidia-t4-x1.yml'
-        - check-success~=e2e-small-workflow-complete
-        - or:
-          - files~=\.py$
-          - files=pyproject.toml
-          - files~=^requirements.*\.txt$
-          - files=constraints-dev.txt
-          - files=scripts/e2e-ci.sh
-          - files~=^scripts/test-data/
-          - files~=^src/instructlab/profiles/
-      - and:
-        - -files~=\.py$
-        - -files=pyproject.toml
-        - -files~=^requirements.*\.txt$
-        - -files=constraints-dev.txt
-        - -files=scripts/e2e-ci.sh
-        - -files~=^scripts/test-data/
-        - -files~=^src/instructlab/profiles/
-
     # test workflow
     - or:
       - and:
