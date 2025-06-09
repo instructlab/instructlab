@@ -314,7 +314,7 @@ torchvision==0.21.0       # via docling-ibm-models, easyocr, vllm
 tox==4.27.0               # via -r requirements-dev.txt
 tqdm==4.67.1              # via datasets, docling, docling-ibm-models, evaluate, gguf, haystack-ai, huggingface-hub, mpire, nltk, openai, outlines, peft, semchunk, sentence-transformers, submodlib-py, tqdm-multiprocess, transformers, vllm, -r requirements.txt
 tqdm-multiprocess==0.0.11  # via lm-eval
-transformers==4.51.3      # via compressed-tensors, docling-core, docling-ibm-models, instructlab-dolomite, instructlab-eval, instructlab-sdg, instructlab-training, lm-eval, peft, sentence-transformers, trl, vllm, xgrammar, -r requirements.txt
+transformers==4.52.4      # via compressed-tensors, docling-core, docling-ibm-models, instructlab-dolomite, instructlab-eval, instructlab-sdg, instructlab-training, lm-eval, peft, sentence-transformers, trl, vllm, xgrammar, -r requirements.txt
 triton==3.2.0             # via liger-kernel, torch, xgrammar
 trl==0.14.0               # via instructlab-training, -r requirements.txt
 typepy==1.3.4             # via dataproperty, pytablewriter, tabledata

@@ -19,8 +19,6 @@ DIFF_ARGS=("--taxonomy-path" "./taxonomy")
 TRAIN_ARGS=()
 PHASED_TRAINING=0
 BACKEND="llama-cpp"
-FOUR_BIT_QUANT=0
-SIMPLE_TRAIN=0
 FULL_TRAIN=0
 ACCELERATED_TRAIN=0
 HF_TOKEN=${HF_TOKEN:-}
@@ -288,23 +286,13 @@ test_train() {
     local data
     data=$(find "${DATA_HOME}"/instructlab/datasets -name 'skills_train_msgs_*' | head -n 1)
 
-    # simple, full, and accelerated, are different workflows
+    # full and accelerated are different workflows
     # To mimic a real user e2e scenario, only one of these should be run on a given system
-    # The `small` worker can manage `simple`, The medium worker can handle `full` and the large worker can handle `accelerated`
+    # The medium worker can handle `full` and the large worker can handle `accelerated`
     if [ "$ACCELERATED_TRAIN" -eq 1 ]; then
         # TODO Only cuda for now
         # the train profile specified in test_init overrides the majority of TRAIN_ARGS, including things like num_epochs. While it looks like much of those settings are being lost, they just have different values here.
         TRAIN_ARGS=("--pipeline=accelerated" "--device=cuda" "--model-path=${GRANITE_SAFETENSOR_REPO}" "--data-path=${data}" "--lora-quantize-dtype=nf4" "--4-bit-quant" "--effective-batch-size=4" "--is-padding-free=False")
-        if [ "${BACKEND}" != "vllm" ]; then
-            TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}")
-        fi
-    fi
-    if [ "$SIMPLE_TRAIN" -eq 1 ]; then
-        if [ "$FOUR_BIT_QUANT" -eq 1 ]; then
-            TRAIN_ARGS+=("--4-bit-quant")
-        fi
-        # TODO Only cuda for now
-        TRAIN_ARGS+=("--pipeline=simple" "--device=cuda" "--num-epochs=1")
         if [ "${BACKEND}" != "vllm" ]; then
             TRAIN_ARGS+=("--gguf-model-path" "${CACHE_HOME}/instructlab/models/${GRANITE_GGUF_MODEL}")
         fi
@@ -530,9 +518,7 @@ wait_for_server() {
 usage() {
     echo "Usage: $0 [-m] [-h]"
     echo "  -e  Run model evaluation"
-    echo "  -q  Use 4-bit-quant when training"
     echo "  -a  Use the 'full' training library rather than legacy training"
-    echo "  -s  Run the simple training using the SFTTainer rather than the custom training loop"
     echo "  -f  Run the fullsize training instead of --4-bit-quant"
     echo "  -S  Use the 'simple' SDG pipeline instead of the default 'full' pipeline"
     echo "  -h  Show this help text"
@@ -544,7 +530,7 @@ usage() {
 
 # Process command line arguments
 task "Configuring ..."
-while getopts "eShqasfmMPv" opt; do
+while getopts "eShafmMPv" opt; do
     case $opt in
         e)
             EVAL=1
@@ -573,14 +559,6 @@ while getopts "eShqasfmMPv" opt; do
         v)
             BACKEND=vllm
             step "Running with vLLM backend."
-            ;;
-        q)
-            FOUR_BIT_QUANT=1
-            step "Running training using 4-bit-quantization."
-            ;;
-        s)
-            SIMPLE_TRAIN=1
-            step "Running the simple training pipeline"
             ;;
         f)
             FULL_TRAIN=1
