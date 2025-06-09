@@ -36,6 +36,10 @@ def simple_train(
     train_file = effective_data_dir / "train_gen.jsonl"
     test_file = effective_data_dir / "test_gen.jsonl"
 
+    logger.warning(
+        "The `simple` pipeline is deprecated and will be removed in a future release."
+    )
+
     # NOTE: If given a data_dir, input-dir is ignored in favor of existing!
     if not data_path or data_path.strip() == DEFAULTS.DATASETS_DIR:
         data_path = str(effective_data_dir)
