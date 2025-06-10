@@ -28,7 +28,7 @@ There are two E2E test scripts:
 
 `scripts/e2e-custom.sh` - This script takes arguments that control which features are used to allow varying test coverage based on the resources available on a given test runner. The ["custom" E2E CI job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-aws-custom.yml) uses this script. However, you can specify another script such as `e2e-ci.sh` to test changes to a different code path that does not automatically run against a pull request.
 
-The ["small" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) and ["medium" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l4-x1.yml) run automatically on all pull requests and commits merged into the `main` branch and release branches. These jobs depend on the successful completion of any linting jobs.
+The ["medium" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l4-x1.yml) runs automatically on all pull requests and commits merged into the `main` branch and release branches. This job depends on the successful completion of any linting jobs.
 
 The ["large" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) and ["X-large" t-shirt size E2E job](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x8.yml) can be [triggered manually on the actions page](#triggering-an-e2e-job-via-the-github-web-user-interface). The "large" t-shirt size E2E job also runs automatically against the `main` branch at 11AM UTC every day.
 
@@ -38,7 +38,6 @@ When running `e2e-ci.sh`, specify one of the following flags to run the correspo
 
 | Flag | Feature |
 | ---- | --- |
-| `s`  | Run the e2e workflow for the small t-shirt size of hardware |
 | `m`  | Run the e2e workflow for the medium t-shirt size of hardware |
 | `l`  | Run the e2e workflow for the large t-shirt size of hardware |
 | `a`  | Run the e2e workflow for the large t-shirt size of hardware on a llama pipeline |
@@ -56,10 +55,8 @@ When running `e2e-custom.sh`, specify the following flags to test the correspond
 | --- | --- |
 | `e` | Run model evaluation |
 | `F` | Run "fullsize" SDG |
-| `q` | Run the 'simple' training pipeline with 4 bit quantization |
-| `s` | Run the 'simple' training pipeline |
-| `f` | Use the 'full' training pipeline optimized for CPU and MPS rather than simple training |
-| `a` | Use the 'accelerated' training library rather than simple or full training |
+| `f` | Use the 'full' training pipeline optimized for CPU and MPS |
+| `a` | Use the 'accelerated' training library rather than full training |
 | `m` | Run minimal configuration (lower number of instructions and training epochs) |
 | `M` | Use Mixtral model (4-bit quantized) instead of Merlinite (4-bit quantized) |
 | `P` | Use the phased training within the 'full' training library |
@@ -69,7 +66,6 @@ When running `e2e-custom.sh`, specify the following flags to test the correspond
 
 | Name | T-Shirt Size | Runner Host | Instance Type | OS | GPU Type | Script | Flags | Runs when? | Discord reporting? |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | Small | AWS | [`g4dn.2xlarge`](https://aws.amazon.com/ec2/instance-types/g4/) | CentOS Stream 9 | 1 x NVIDIA Tesla T4 w/ 16 GB VRAM | `e2e-ci.sh` | `s` | Pull requests, Push to `main` or `release-*` branch | No |
 | [`e2e-nvidia-l4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l4-x1.yml) | Medium | AWS |[`g6.8xlarge`](https://aws.amazon.com/ec2/instance-types/g5/) | CentOS Stream 9 | 1 x NVIDIA L4 w/ 24 GB VRAM | `e2e-ci.sh` | `m` | Pull requests, Push to `main` or `release-*` branch | No |
 | [`e2e-nvidia-l40s-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml) | Large | AWS |[`g6e.12xlarge`](https://aws.amazon.com/ec2/instance-types/g6e/) | CentOS Stream 9 | 4 x NVIDIA L40S w/ 48 GB VRAM (192 GB) | `e2e-ci.sh` | `l` | Manually by Maintainers, Automatically against `main` branch at 11AM UTC | Yes |
 | [`e2e-nvidia-l40s-x4-llama.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/`e2e-nvidia-l40s-x4-llama.yml`) | Large | AWS | [`g6e.12xlarge`](https://aws.amazon.com/ec2/instance-types/g6e/) | CentOS Stream 9 | 4 x NVIDIA L40S w/ 48 GB VRAM (192 GB) | `e2e-ci.sh` | `a` | Manually by Maintainers, Automatically against `main` branch at 11AM UTC | Yes |
@@ -79,22 +75,20 @@ When running `e2e-custom.sh`, specify the following flags to test the correspond
 
 ### E2E Test Coverage Matrix
 
-| Area | Feature | [`e2e-nvidia-t4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-t4-x1.yml) | [`e2e-nvidia-l4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l4-x1.yml) | [`e2e-nvidia-l40s-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml)(*3) | [`e2e-nvidia-l40s-x8.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x8.yml) |
+| Area | Feature | [`e2e-nvidia-l4-x1.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l4-x1.yml) | [`e2e-nvidia-l40s-x4.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x4.yml)(*3) | [`e2e-nvidia-l40s-x8.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/e2e-nvidia-l40s-x8.yml) |
 | --- | --- | --- | --- | --- | --- |
-| **Serving**  | llama-cpp                 |✅|✅|⎯|⎯|
-|              | vllm                      |⎯|✅|✅|✅|
-| **Generate** | simple                    |✅|⎯|⎯|⎯|
-|              | full                      |⎯|✅|✅|✅|
-| **Training** | simple                    |✅(*1)|⎯|⎯|⎯|
-|              | full                      |⎯|✅|⎯|⎯|
-|              | accelerated (multi-phase) |⎯|⎯|✅|✅|
-| **Eval**     | eval                      |⎯|✅(*2)|✅|✅|
+| **Serving**  | llama-cpp                 |✅|⎯|⎯|
+|              | vllm                      |⎯|✅|✅|
+| **Generate** | simple                    |✅|⎯|⎯|
+|              | full                      |⎯|✅|✅|
+| **Training** | full                      |⎯|⎯|⎯|
+|              | accelerated (multi-phase) |⎯|✅|✅|
+| **Eval**     | eval                      |⎯|✅|✅|
 
 Points of clarification (*):
 
-1. The `simple` training pipeline uses 4-bit-quantization. We cannot use the trained model here due to [#579](https://github.com/instructlab/instructlab/issues/579)
-2. `MMLU Branch` is not run as the `full` SDG pipeline does not create the needed files in the tasks directory when only training against a skill.
-3. Also applies to [`e2e-nvidia-l40s-x4-llama.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/`e2e-nvidia-l40s-x4-llama.yml`), [`e2e-nvidia-l40s-x4-py312.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/`e2e-nvidia-l40s-x4-py312.yml`), and [`e2e-nvidia-l40s-x4-release.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/`e2e-nvidia-l40s-x4-release.yml`).
+1. `MMLU Branch` is not run as the `full` SDG pipeline does not create the needed files in the tasks directory when only training against a skill.
+2. Also applies to [`e2e-nvidia-l40s-x4-llama.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/`e2e-nvidia-l40s-x4-llama.yml`), [`e2e-nvidia-l40s-x4-py312.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/`e2e-nvidia-l40s-x4-py312.yml`), and [`e2e-nvidia-l40s-x4-release.yml`](https://github.com/instructlab/instructlab/blob/main/.github/workflows/`e2e-nvidia-l40s-x4-release.yml`).
 
 ### Discord reporting
 
