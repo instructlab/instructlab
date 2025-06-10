@@ -42,7 +42,7 @@ jobs:
           repository: instructlab/ci-actions
           # clone the "ci-actions" repo to a local directory called "ci-actions", instead of overwriting the current WORKDIR contents
           path: ci-actions
-          ref: release-v0.1
+          ref: v0.2.1
           sparse-checkout: |
             actions/launch-ec2-runner-with-fallback
 
