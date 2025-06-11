@@ -6,7 +6,6 @@
 ![Release](https://img.shields.io/github/v/release/instructlab/instructlab)
 ![License](https://img.shields.io/github/license/instructlab/instructlab)
 
-![`e2e-nvidia-t4-x1.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-t4-x1.yml/badge.svg?branch=main)
 ![`e2e-nvidia-l4-x1.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-l4-x1.yml/badge.svg?branch=main)
 ![`e2e-nvidia-l40s-x4.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-l40s-x4.yml/badge.svg?branch=main)
 ![`e2e-nvidia-l40s-x8.yaml` on `main`](https://github.com/instructlab/instructlab/actions/workflows/e2e-nvidia-l40s-x8.yml/badge.svg?branch=main)
@@ -37,7 +36,6 @@
     - [InstructLab training pipelines](#instructlab-model-training-pipelines)
     - [Train the model locally](#train-the-model-locally)
     - [Train the model locally on an M-Series Mac or on Linux using the full pipeline](#train-the-model-locally-on-an-m-series-mac-or-on-linux-using-the-full-pipeline)
-    - [Train the model locally on an M-Series Mac or on Linux using the simple pipeline](#train-the-model-locally-on-an-m-series-mac-or-on-linux-using-the-simple-pipeline)
     - [Train the model locally with GPU acceleration](#train-the-model-locally-with-gpu-acceleration)
     - [Train the model in the cloud](#train-the-model-in-the-cloud)
   - [📜 Test the newly trained model](#-test-the-newly-trained-model)
@@ -781,7 +779,7 @@ There are a few models you need to download before running the InstructLab end-t
    ilab model download --repository instructlab/granite-7b-lab
    ```
 
-- Download the `prometheus-8x7b-v2.0` for *multi-phase training* and *benchmark evaluation*. This model is not required for `simple` or `full` training.
+- Download the `prometheus-8x7b-v2.0` for *multi-phase training* and *benchmark evaluation*. This model is not required for `full` training.
 
    ```shell
    ilab model download --repository prometheus-eval/prometheus-8x7b-v2.0 --hf-token <your-huggingface-token>
@@ -789,18 +787,15 @@ There are a few models you need to download before running the InstructLab end-t
 
 #### InstructLab model training pipelines
 
-`ilab model train` has three pipelines: `simple`, `full`, and `accelerated`. The default is `full`.
+`ilab model train` has two pipelines: `full` and `accelerated`. The default is `full`.
 
-1. `simple` uses an SFT Trainer on Linux and MLX on MacOS. This type of training takes roughly an hour and produces the lowest fidelity model but should indicate if your data is being picked up by the training process.
-2. `full` uses a custom training loop and data processing functions for the granite family of models. This loop is optimized for CPU and MPS functionality. Please use `--pipeline=full` in combination with `--device=cpu` (Linux) or `--device=mps` (MacOS). You can also use `--device=cpu` on a MacOS machine. However, MPS is optimized for better performance on these systems.
-3. `accelerated` uses the instructlab-training library which supports GPU accelerated and distributed training. The `full` loop and data processing functions are either pulled directly from or based off of the work in this library.
+1. `full` uses a custom training loop and data processing functions for the granite family of models. This loop is optimized for CPU and MPS functionality. Please use `--pipeline=full` in combination with `--device=cpu` (Linux) or `--device=mps` (MacOS). You can also use `--device=cpu` on a MacOS machine. However, MPS is optimized for better performance on these systems.
+2. `accelerated` uses the instructlab-training library which supports GPU accelerated and distributed training. The `full` loop and data processing functions are either pulled directly from or based off of the work in this library.
 
 After running `ilab model train`, the output locations depend on the chosen pipeline or strategy:
 
 | **Pipeline/Strategy**              | **Operating System** | **Output Location/Details**                                                                                             |
 |------------------------------------|----------------------|--------------------------------------------------------------------------------------------------------------------------|
-| `simple`                           | Linux                | Model saved in `models` directory as `ggml-model-f16.gguf`.                                                              |
-| `simple`                           | MacOS                | Model saved in `<model_name>-mlx-q` directory.                                                                           |
 | `full`                             | Linux & MacOS        | `.bin` and `.gguf` models saved in `~/.local/share/instructlab/checkpoints/hf_format` directory. Two models in each `sample_*` directory: one quantized (`Q4-M-K` suffix) and one full precision. |
 | `accelerated`                      | Linux                | Models saved in `~/.local/share/instructlab/checkpoints`. Can be evaluated with `ilab model evaluate` to choose the best one. |
 | `lab-multiphase`                   | Linux                | Phase 1 models saved in `~/.local/share/instructlab/phased/phase1/checkpoints` (Knowledge training). Phase 2 models saved in `~/.local/share/instructlab/phased/phase2/checkpoints` (Skills training). Evaluation is run for phase 2 to identify the best checkpoint. |
@@ -856,40 +851,6 @@ When running multi phase training evaluation is run on each phase, we will tell 
    ```
 
    This entire folder can be served on a system that supports vLLM using the `.bin` model. However, on most laptops you can serve either the full precision gguf: `pytorch_model.gguf` or the 4-bit-quantized one: `pytorch_model-Q4_K_M.gguf`.
-
-#### Train the model locally on an M-series Mac or on Linux using the simple pipeline
-
-- To train the model locally on your M-Series Mac using our simple pipeline and MLX or on your Linux laptop/desktop using an SFT Trainer:
-
-   ```shell
-   ilab model train --pipeline simple
-   ```
-
-   ⏳ This process will take a little while to complete (time can vary based on hardware and output of `ilab data generate` but on the order of 5 to 15 minutes)
-
-   On a Mac `ilab model train` outputs a brand-new model that is saved in the `<model_name>-mlx-q` directory called `adapters.npz` (in `Numpy` compressed array format). For example:
-
-   ```shell
-   (venv) $ ls instructlab-granite-7b-lab-mlx-q/
-   ├── adapters-010.npz
-   ├── adapters-020.npz
-   ├── adapters-030.npz
-   ├── adapters-040.npz
-   ├── adapters-050.npz
-   ├── adapters-060.npz
-   ├── adapters-070.npz
-   ├── adapters-080.npz
-   ├── adapters-090.npz
-   ├── adapters-100.npz
-   ├── adapters.npz
-   ├── added_tokens.json
-   ├── config.json
-   ├── model.safetensors
-   ├── special_tokens_map.json
-   ├── tokenizer.json
-   ├── tokenizer.model
-   └── tokenizer_config.json
-   ```
 
 #### Train the model locally with GPU acceleration
 
