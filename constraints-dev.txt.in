@@ -2,3 +2,7 @@
 
 torch<2.7.0
 vllm<0.9.0
+
+# click 8.2.0+ raises ValueError in vllm_setup_test
+# See: https://github.com/instructlab/instructlab/issues/3484
+click<8.2.0
