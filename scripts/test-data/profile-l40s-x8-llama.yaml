@@ -129,7 +129,7 @@ serve:
     vllm_args: ["--tensor-parallel-size", "8"]
 models:
   - id: llama-3.3
-    family: meta-llama
+    family: llama
     path: ~/.cache/instructlab/models/meta-llama/Llama-3.3-70B-Instruct/
 train:
   additional_args:
