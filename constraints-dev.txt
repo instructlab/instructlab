@@ -67,7 +67,7 @@ fastapi-cli==0.0.7        # via fastapi
 fastrlock==0.8.3          # via cupy-cuda12x
 filelock==3.18.0          # via cachecontrol, datasets, huggingface-hub, ray, sphinx-toolbox, torch, tox, transformers, virtualenv, vllm, -r requirements.txt
 filetype==1.2.0           # via docling, haystack-experimental
-flash-attn==2.8.0.post2   # via instructlab-training
+flash-attn==2.7.4.post1   # via instructlab-training
 fonttools==4.58.4         # via matplotlib
 frozenlist==1.7.0         # via aiohttp, aiosignal
 fsspec==2025.3.0          # via datasets, evaluate, huggingface-hub, torch
