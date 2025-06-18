@@ -1232,8 +1232,13 @@ def config_to_commented_map(
             # If the default value comes from a factory, evaluate it and use the result as the default value
             if default_value is PydanticUndefined:
                 if default_factory is not None and callable(default_factory):
-                    # TODO: revisit the type check ignore
-                    default_value = default_factory()  # type: ignore
+                    # default_factory can have type `() -> Any` or `(dict[str, Any]) -> Any`. Here we tell
+                    # type checking to assume the former because that is the only form we use when defining `Fields`
+                    # in this file. Note: `typing.cast` is a no-op that only affects static type checking.
+                    default_factory = typing.cast(
+                        typing.Callable[[], Any], default_factory
+                    )
+                    default_value = default_factory()
             # When the default value's type is an Enum or Enum value, convert it to a string
             elif isinstance(default_value, enum.Enum):
                 default_value = default_value.value
