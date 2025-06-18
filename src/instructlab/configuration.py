@@ -208,8 +208,9 @@ class _serve_vllm(BaseModel):
     )
     gpus: Optional[int] = Field(default=None, description="Number of GPUs to use.")
     # arguments to pass into vLLM process
-    vllm_args: list[str] = Field(
-        default_factory=list,
+    vllm_args: list[str] | None = Field(
+        # TODO: revisit the type check ignore
+        default_factory=list,  # type: ignore
         description="vLLM specific arguments. All settings can be passed as a list of strings, see: https://docs.vllm.ai/en/latest/serving/openai_compatible_server.html",
         examples=[
             ["--dtype", "auto"],
