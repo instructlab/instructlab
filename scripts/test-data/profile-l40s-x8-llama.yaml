@@ -139,7 +139,6 @@ train:
     lora_alpha: 32
     deepspeed_cpu_offload_optimizer_pin_memory: true
     deepspeed_cpu_oddload_optimizer_ratio: 1
-    use_dolomite: true
   ckpt_output_dir: checkpoints
   data_output_dir: train-output
   data_path: ./taxonomy_data

@@ -382,7 +382,6 @@ known-standard-library=
 
 # Force import order to recognize a module as part of a third party library.
 known-third-party=enchant,
-    instructlab.dolomite,
     instructlab.eval,
     instructlab.schema,
     instructlab.sdg,
