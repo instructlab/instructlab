@@ -180,7 +180,9 @@ def linux_train(
     except ValueError as e:
         raise ValueError(f"Failed to parse dataset: {e}") from e
 
-    train_dataset.to_pandas().head()
+    # TODO: there's a type hinting bug - or worse - here; may need to revisit
+    # if we ever care about this code again
+    train_dataset.to_pandas().head()  # type: ignore
 
     # https://huggingface.co/docs/transformers/en/model_doc/auto#transformers.AutoTokenizer.from_pretrained
     tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)

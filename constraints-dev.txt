@@ -151,6 +151,7 @@ msgspec==0.19.0           # via vllm
 multidict==6.4.4          # via aiohttp, yarl
 multiprocess==0.70.16     # via datasets, evaluate, mpire
 mypy-extensions==1.1.0    # via typing-inspect
+mypy==1.16.1              # via -r requirements-dev.txt
 myst-parser==4.0.1        # via -r docs/requirements.txt
 natsort==8.4.0            # via domdf-python-tools
 nest-asyncio==1.6.0       # via outlines, ragas
