@@ -95,7 +95,7 @@ def gen_qa_pairs(odd):
             {
                 "question_id": i + 1,
                 "score": 0.6,
-                "qna_file": f"category{i+1}/qna.yaml",
+                "qna_file": f"category{i + 1}/qna.yaml",
             }
         )
     return qa_pairs

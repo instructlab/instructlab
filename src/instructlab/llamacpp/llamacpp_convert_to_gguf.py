@@ -99,9 +99,9 @@ class QuantizedDataType(DataType):
         raise NotImplementedError(f"Quantization for {self.name} not implemented")
 
     def elements_to_bytes(self, n_elements: int) -> int:
-        assert (
-            n_elements % self.block_size == 0
-        ), f"Invalid number of elements {n_elements} for {self.name} with block size {self.block_size}"
+        assert n_elements % self.block_size == 0, (
+            f"Invalid number of elements {n_elements} for {self.name} with block size {self.block_size}"
+        )
         return self.quantized_dtype.itemsize * (n_elements // self.block_size)
 
 
@@ -109,9 +109,9 @@ class QuantizedDataType(DataType):
 class Q8_0QuantizedDataType(QuantizedDataType):
     # Mini Q8_0 quantization in Python!
     def quantize(self, arr: NDArray) -> NDArray:
-        assert (
-            arr.size % self.block_size == 0 and arr.size != 0
-        ), f"Bad array size {arr.size}"
+        assert arr.size % self.block_size == 0 and arr.size != 0, (
+            f"Bad array size {arr.size}"
+        )
         assert arr.dtype == np.float32, f"Bad array type {arr.dtype}"
         n_blocks = arr.size // self.block_size
         blocks = arr.reshape((n_blocks, self.block_size))
@@ -673,9 +673,9 @@ class Tensor(metaclass=ABCMeta):
 
 
 def bf16_to_fp32(bf16_arr: np.ndarray[Any, np.dtype[np.uint16]]) -> NDArray:
-    assert (
-        bf16_arr.dtype == np.uint16
-    ), f"Input array should be of dtype uint16, but got {bf16_arr.dtype}"
+    assert bf16_arr.dtype == np.uint16, (
+        f"Input array should be of dtype uint16, but got {bf16_arr.dtype}"
+    )
     fp32_arr = bf16_arr.astype(np.uint32) << 16
     return fp32_arr.view(np.float32)
 
@@ -1335,7 +1335,7 @@ class OutputFile:
             size = " x ".join(f"{dim:6d}" for dim in lazy_tensor.shape)
             padi = len(str(len(model)))
             print(
-                f"[{i+1:{padi}d}/{len(model)}] Writing tensor {name:38s} | size {size:16} | type {lazy_tensor.data_type.name:4} | T+{int(elapsed):4}"
+                f"[{i + 1:{padi}d}/{len(model)}] Writing tensor {name:38s} | size {size:16} | type {lazy_tensor.data_type.name:4} | T+{int(elapsed):4}"
             )
             of.gguf.write_tensor_data(ndarray)
 

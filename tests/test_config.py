@@ -407,7 +407,9 @@ def test_all_config_options_have_description():
         return fields_without_description
 
     fields_without_description = loop_through_fields(cfg)
-    assert not fields_without_description, f"Fields without description: {fields_without_description}, update 'configuration.py' Field with missing descriptions."
+    assert not fields_without_description, (
+        f"Fields without description: {fields_without_description}, update 'configuration.py' Field with missing descriptions."
+    )
 
 
 @pytest.mark.parametrize(
