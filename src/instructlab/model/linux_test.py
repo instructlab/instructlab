@@ -9,7 +9,7 @@ import os
 
 # Third Party
 from datasets import load_dataset
-from openai import OpenAI, Stream
+from openai import OpenAI
 import click
 
 # First Party
@@ -34,15 +34,6 @@ def response(client, user: str, create_params: dict):
             {"role": "user", "content": user},
         ],
     )
-    if isinstance(resp, Stream):
-        # https://platform.openai.com/docs/api-reference/chat/streaming
-        resp = ""
-        for r in resp:
-            if c := r.choices[0].delta.content:
-                print(c, end="", flush=True)
-                resp += c
-        print()
-        return resp
     # https://platform.openai.com/docs/api-reference/chat/object
     c = resp.choices[0].message.content
     logger.debug("received %d bytes, elapsed %.1fs", len(c), time() - start_time)
@@ -94,7 +85,6 @@ def linux_test(
 
     # https://platform.openai.com/docs/api-reference/chat/create
     create_params["temperature"] = 0  # for more reproducible results
-    # create_params["stream"] = True  # optional, useful for interactive debugging
 
     ds = load_dataset("json", data_files=os.fspath(test_file), split="train")
     res: dict[str, Any] = {}

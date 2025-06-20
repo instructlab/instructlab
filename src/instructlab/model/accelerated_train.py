@@ -32,8 +32,8 @@ logger = logging.getLogger(__name__)
 class SupportedTrainingStrategies(enum.Enum):
     """Available advanced training strategies"""
 
-    LAB_MULTIPHASE: str = "lab-multiphase"
-    LAB_SKILLS_ONLY: str = "lab-skills-only"
+    LAB_MULTIPHASE = "lab-multiphase"
+    LAB_SKILLS_ONLY = "lab-skills-only"
 
     @classmethod
     def has_strategy(cls, value):
