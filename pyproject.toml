@@ -240,14 +240,6 @@ warn_required_dynamic_aliases = true
 branch = false
 relative_files = true
 source = ["instructlab", "tests/"]
-omit = [
-  # omit instructlab code in different packages
-  "*/instructlab/dolomite/*",
-  "*/instructlab/eval/*",
-  "*/instructlab/schema/*",
-  "*/instructlab/sdg/*",
-  "*/instructlab/training/*",
-]
 
 [tool.coverage.paths]
 source = ["src/instructlab", "*.tox/*/lib*/python*/site-packages/instructlab"]
