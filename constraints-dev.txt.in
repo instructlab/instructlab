@@ -2,3 +2,15 @@
 
 torch<2.7.0
 vllm<0.9.0
+
+# flash-attn 2.8.0+ is broken for torch 2.6.x.
+# See: https://github.com/Dao-AILab/flash-attention/issues/1717
+flash-attn<2.8.0
+
+# transformers 4.52+ is broken for vllm<0.9.0
+# See: https://github.com/vllm-project/vllm/pull/18432
+transformers<4.52
+
+# click 8.2.0+ raises ValueError in vllm_setup_test
+# See: https://github.com/instructlab/instructlab/issues/3484
+click<8.2.0

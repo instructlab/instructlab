@@ -2,7 +2,7 @@ absl-py==2.3.0            # via rouge-score
 accelerate==1.0.1         # via instructlab-eval, instructlab-training, lm-eval, peft, trl
 aiofiles==24.1.0          # via instructlab-training
 aiohappyeyeballs==2.6.1   # via aiohttp
-aiohttp==3.12.6           # via fsspec, langchain-community, vllm
+aiohttp==3.12.13          # via fsspec, langchain-community, vllm
 aiosignal==1.3.2          # via aiohttp
 airportsdata==20250523    # via outlines
 alabaster==1.0.0          # via sphinx
@@ -21,21 +21,21 @@ backoff==2.2.1            # via posthog
 beautifulsoup4==4.13.4    # via docling, furo, sphinx-toolbox
 bitsandbytes==0.46.0      # via instructlab-training
 blake3==1.0.5             # via vllm
-boto3==1.38.27            # via -r requirements.txt
-botocore==1.38.27         # via boto3, s3transfer
+boto3==1.38.38            # via -r requirements.txt
+botocore==1.38.38         # via boto3, s3transfer
 cachecontrol==0.14.3      # via sphinx-toolbox
-cachetools==6.0.0         # via tox, vllm
-certifi==2025.4.26        # via docling, httpcore, httpx, requests, sentry-sdk, sphinx-prompt
+cachetools==6.1.0         # via tox, vllm
+certifi==2025.6.15        # via docling, httpcore, httpx, requests, sentry-sdk, sphinx-prompt
 cfgv==3.4.0               # via pre-commit
 chardet==5.2.0            # via mbstrdecoder, tox
 charset-normalizer==3.4.2  # via requests
-click==8.1.8              # via click-didyoumean, docling, instructlab-sdg, nltk, ray, rich-toolkit, sphinx-click, typer, uvicorn, wandb, -r requirements.txt
+click==8.1.8              # via click-didyoumean, instructlab-sdg, nltk, ray, rich-toolkit, sphinx-click, typer, uvicorn, wandb, -c constraints-dev.txt.in, -r requirements.txt
 click-didyoumean==0.3.1   # via -r requirements.txt
 cloudpickle==3.1.1        # via outlines, vllm
 colorama==0.4.6           # via sacrebleu, tox, tqdm-multiprocess
 compressed-tensors==0.9.3  # via vllm
 contourpy==1.3.2          # via matplotlib
-coverage==7.8.2           # via pytest-cov
+coverage==7.9.1           # via pytest-cov
 cssutils==2.11.1          # via dict2css
 cupy-cuda12x==13.4.1      # via ray
 cycler==0.12.1            # via matplotlib
@@ -50,11 +50,10 @@ diskcache==5.6.3          # via llama-cpp-python, outlines, ragas
 distlib==0.3.9            # via virtualenv
 distro==1.9.0             # via openai, posthog
 dnspython==2.7.0          # via email-validator
-docker-pycreds==0.4.0     # via wandb
-docling==2.34.0           # via instructlab-sdg, -r requirements.txt
-docling-core==2.32.0      # via docling, docling-ibm-models, docling-parse, instructlab-sdg, -r requirements.txt
-docling-ibm-models==3.4.3  # via docling
-docling-parse==4.0.1      # via docling
+docling==2.37.0           # via instructlab-sdg, -r requirements.txt
+docling-core==2.38.0      # via docling, docling-ibm-models, docling-parse, instructlab-sdg, -r requirements.txt
+docling-ibm-models==3.4.4  # via docling
+docling-parse==4.0.5      # via docling
 docutils==0.21.2          # via myst-parser, sphinx, sphinx-click, sphinx-prompt, sphinx-tabs, sphinx-toolbox
 domdf-python-tools==3.10.0  # via apeye, apeye-core, dict2css, sphinx-toolbox
 easyocr==1.7.2            # via docling
@@ -63,34 +62,34 @@ email-validator==2.2.0    # via fastapi
 enum-tools==0.13.0        # via -r docs/requirements.txt
 et-xmlfile==2.0.0         # via openpyxl
 evaluate==0.4.3           # via lm-eval
-fastapi==0.115.12         # via llama-cpp-python, vllm
+fastapi==0.115.13         # via llama-cpp-python, vllm
 fastapi-cli==0.0.7        # via fastapi
 fastrlock==0.8.3          # via cupy-cuda12x
 filelock==3.18.0          # via cachecontrol, datasets, huggingface-hub, ray, sphinx-toolbox, torch, tox, transformers, virtualenv, vllm, -r requirements.txt
 filetype==1.2.0           # via docling, haystack-experimental
-flash-attn==2.7.4.post1   # via instructlab-training
-fonttools==4.58.1         # via matplotlib
-frozenlist==1.6.0         # via aiohttp, aiosignal
+flash-attn==2.7.4.post1   # via instructlab-training, -c constraints-dev.txt.in
+fonttools==4.58.4         # via matplotlib
+frozenlist==1.7.0         # via aiohttp, aiosignal
 fsspec==2025.3.0          # via datasets, evaluate, huggingface-hub, torch
 furo==2024.8.6            # via -r docs/requirements.txt
 gguf==0.17.0              # via instructlab-sdg, vllm, -r requirements.txt
 gitdb==4.0.12             # via gitpython
 gitpython==3.1.44         # via instructlab-eval, instructlab-sdg, wandb, -r requirements.txt
 googleapis-common-protos==1.70.0  # via opentelemetry-exporter-otlp-proto-grpc, opentelemetry-exporter-otlp-proto-http
-greenlet==3.2.2           # via sqlalchemy
-grpcio==1.71.0            # via opentelemetry-exporter-otlp-proto-grpc
+greenlet==3.2.3           # via sqlalchemy
+grpcio==1.73.0            # via opentelemetry-exporter-otlp-proto-grpc
 h11==0.16.0               # via httpcore, uvicorn
-h5py==3.13.0              # via instructlab-sdg
-haystack-ai==2.14.1       # via haystack-experimental, -r requirements.txt
+h5py==3.14.0              # via instructlab-sdg
+haystack-ai==2.14.2       # via haystack-experimental, -r requirements.txt
 haystack-experimental==0.10.0  # via haystack-ai
 hf-transfer==0.1.9        # via huggingface-hub
-hf-xet==1.1.2             # via huggingface-hub
+hf-xet==1.1.4             # via huggingface-hub
 html5lib==1.1             # via sphinx-toolbox
 httpcore==1.0.9           # via httpx
 httptools==0.6.4          # via uvicorn
 httpx==0.28.1             # via fastapi, instructlab-eval, instructlab-sdg, langsmith, openai, -r requirements.txt
 httpx-sse==0.4.0          # via langchain-community
-huggingface-hub==0.32.3   # via accelerate, datasets, docling, docling-ibm-models, evaluate, peft, sentence-transformers, tokenizers, transformers, vllm, -r requirements.txt
+huggingface-hub==0.33.0   # via accelerate, datasets, docling, docling-ibm-models, evaluate, peft, sentence-transformers, tokenizers, transformers, vllm, -r requirements.txt
 identify==2.6.12          # via pre-commit
 idna==3.10                # via anyio, apeye-core, email-validator, httpx, requests, sphinx-prompt, yarl
 imageio==2.37.0           # via scikit-image
@@ -101,7 +100,7 @@ instructlab-dolomite==0.2.0  # via instructlab-training
 instructlab-eval==0.6.0   # via -r requirements.txt
 instructlab-quantize==0.1.0  # via -r requirements.txt
 instructlab-schema==0.4.2  # via instructlab-sdg, -r requirements.txt
-instructlab-sdg==0.8.2    # via -r requirements.txt
+instructlab-sdg==0.8.3    # via -r requirements.txt
 instructlab-training==0.11  # via -r requirements/cuda.txt, -r requirements/rocm.txt, -r requirements.txt
 interegular==0.3.3        # via lm-format-enforcer, outlines, outlines-core
 isort==6.0.1              # via pylint, -r requirements-dev.txt
@@ -117,24 +116,24 @@ jsonschema==4.24.0        # via docling-core, haystack-ai, instructlab-schema, m
 jsonschema-specifications==2025.4.1  # via jsonschema
 kiwisolver==1.4.8         # via matplotlib
 langchain==0.3.25         # via langchain-community, ragas
-langchain-community==0.3.24  # via ragas
-langchain-core==0.3.63    # via langchain, langchain-community, langchain-openai, langchain-text-splitters, ragas
-langchain-openai==0.3.18  # via ragas
+langchain-community==0.3.25  # via ragas
+langchain-core==0.3.65    # via langchain, langchain-community, langchain-openai, langchain-text-splitters, ragas
+langchain-openai==0.3.24  # via ragas
 langchain-text-splitters==0.3.8  # via instructlab-sdg, langchain
-langsmith==0.3.43         # via langchain, langchain-community, langchain-core
+langsmith==0.3.45         # via langchain, langchain-community, langchain-core
 lark==1.2.2               # via outlines, vllm
 latex2mathml==3.78.0      # via docling-core
-lazy-imports==0.4.0       # via haystack-ai
+lazy-imports==1.0.0       # via haystack-ai
 lazy-loader==0.4          # via scikit-image
 liger-kernel==0.5.10      # via instructlab-training
 llama-cpp-python==0.3.9   # via -r requirements.txt
-llguidance==0.7.26        # via vllm
+llguidance==0.7.29        # via vllm
 llvmlite==0.44.0          # via numba
 lm-eval==0.4.8            # via instructlab-eval
 lm-format-enforcer==0.10.11  # via vllm
 lxml==5.4.0               # via docling, python-docx, python-pptx, sacrebleu
 markdown-it-py==3.0.0     # via mdit-py-plugins, myst-parser, rich
-marko==2.1.3              # via docling
+marko==2.1.4              # via docling
 markupsafe==3.0.2         # via jinja2, sphinx-jinja2-compat
 marshmallow==3.26.1       # via dataclasses-json
 matplotlib==3.10.3        # via submodlib-py
@@ -142,13 +141,13 @@ mbstrdecoder==1.1.4       # via dataproperty, pytablewriter, typepy
 mccabe==0.7.0             # via pylint
 mdit-py-plugins==0.4.2    # via myst-parser
 mdurl==0.1.2              # via markdown-it-py
-mistral-common==1.5.6     # via vllm
+mistral-common==1.6.2     # via vllm
 more-itertools==10.7.0    # via cssutils, haystack-ai, lm-eval
 mpire==2.10.2             # via semchunk
 mpmath==1.3.0             # via sympy
-msgpack==1.1.0            # via cachecontrol, ray
+msgpack==1.1.1            # via cachecontrol, ray
 msgspec==0.19.0           # via vllm
-multidict==6.4.4          # via aiohttp, yarl
+multidict==6.5.0          # via aiohttp, yarl
 multiprocess==0.70.16     # via datasets, evaluate, mpire
 mypy-extensions==1.1.0    # via typing-inspect
 myst-parser==4.0.1        # via -r docs/requirements.txt
@@ -159,7 +158,7 @@ ninja==1.11.1.4           # via easyocr, vllm, xgrammar
 nltk==3.9.1               # via rouge-score
 nodeenv==1.9.1            # via pre-commit
 numba==0.61.2             # via instructlab-sdg, instructlab-training, submodlib-py, vllm
-numexpr==2.10.2           # via lm-eval
+numexpr==2.11.0           # via lm-eval
 numpy==1.26.4             # via accelerate, bitsandbytes, contourpy, cupy-cuda12x, datasets, docling-ibm-models, easyocr, evaluate, gguf, h5py, haystack-ai, imageio, instructlab-training, langchain-community, llama-cpp-python, matplotlib, mistral-common, numba, numexpr, opencv-python-headless, outlines, pandas, pandas-stubs, peft, ragas, rouge-score, sacrebleu, safetensors, scikit-image, scikit-learn, scipy, shapely, submodlib-py, tifffile, torchvision, transformers, vllm, xformers, -r requirements.txt
 nvidia-cublas-cu12==12.4.5.8  # via nvidia-cudnn-cu12, nvidia-cusolver-cu12, torch
 nvidia-cuda-cupti-cu12==12.4.127  # via torch
@@ -174,7 +173,7 @@ nvidia-cusparselt-cu12==0.6.2  # via torch
 nvidia-nccl-cu12==2.21.5  # via torch
 nvidia-nvjitlink-cu12==12.4.127  # via nvidia-cusolver-cu12, nvidia-cusparse-cu12, torch
 nvidia-nvtx-cu12==12.4.127  # via torch
-openai==1.82.1            # via haystack-ai, instructlab-eval, instructlab-sdg, langchain-openai, ragas, vllm, -r requirements.txt
+openai==1.88.0            # via haystack-ai, instructlab-eval, instructlab-sdg, langchain-openai, ragas, vllm, -r requirements.txt
 opencv-python-headless==4.11.0.86  # via docling-ibm-models, easyocr, mistral-common, vllm
 openpyxl==3.1.5           # via docling
 opentelemetry-api==1.26.0  # via opentelemetry-exporter-otlp-proto-grpc, opentelemetry-exporter-otlp-proto-http, opentelemetry-sdk, opentelemetry-semantic-conventions, vllm
@@ -189,23 +188,23 @@ opentelemetry-semantic-conventions-ai==0.4.9  # via vllm
 orjson==3.10.18           # via langsmith
 outlines==0.1.11          # via vllm
 outlines-core==0.1.26     # via outlines
-packaging==24.2           # via accelerate, datasets, evaluate, huggingface-hub, instructlab-training, langchain-core, langsmith, lazy-loader, lm-format-enforcer, marshmallow, matplotlib, peft, pyproject-api, pytest, ray, scikit-image, sphinx, tox, transformers, typepy
-pandas==2.2.3             # via datasets, docling, docling-core, evaluate, instructlab-eval, submodlib-py
+packaging==24.2           # via accelerate, datasets, evaluate, huggingface-hub, instructlab-training, langchain-core, langsmith, lazy-loader, lm-format-enforcer, marshmallow, matplotlib, peft, pyproject-api, pytest, ray, scikit-image, sphinx, tox, transformers, typepy, wandb
+pandas==2.3.0             # via datasets, docling, docling-core, evaluate, instructlab-eval, submodlib-py
 pandas-stubs==2.2.3.250527  # via instructlab-eval
 partial-json-parser==0.2.1.1.post5  # via vllm
 pathspec==0.12.1          # via yamllint
-pathvalidate==3.2.3       # via pytablewriter
+pathvalidate==3.3.1       # via pytablewriter
 peft==0.15.2              # via instructlab-training, lm-eval, -r requirements.txt
 pillow==11.2.1            # via docling, docling-core, docling-ibm-models, docling-parse, easyocr, imageio, matplotlib, mistral-common, python-pptx, scikit-image, sentence-transformers, torchvision, vllm
 platformdirs==4.3.8       # via apeye, pylint, tox, virtualenv, wandb
-pluggy==1.6.0             # via docling, pytest, tox
-portalocker==3.1.1        # via sacrebleu
-posthog==4.2.0            # via haystack-ai
+pluggy==1.6.0             # via docling, pytest, pytest-cov, tox
+portalocker==3.2.0        # via sacrebleu
+posthog==5.0.0            # via haystack-ai
 pre-commit==4.2.0         # via -r requirements-dev.txt
-prometheus-client==0.22.0  # via prometheus-fastapi-instrumentator, vllm
+prometheus-client==0.22.1  # via prometheus-fastapi-instrumentator, vllm
 prometheus-fastapi-instrumentator==7.1.0  # via vllm
 prompt-toolkit==3.0.51    # via -r requirements.txt
-propcache==0.3.1          # via aiohttp, yarl
+propcache==0.3.2          # via aiohttp, yarl
 protobuf==4.25.8          # via googleapis-common-protos, opentelemetry-proto, ray, vllm, wandb
 psutil==7.0.0             # via accelerate, instructlab-eval, peft, vllm, wandb, -r requirements.txt
 py-cpuinfo==9.0.0         # via instructlab-training, vllm
@@ -213,12 +212,12 @@ pyarrow==20.0.0           # via datasets
 pybind11==2.13.6          # via lm-eval
 pyclipper==1.3.0.post6    # via easyocr
 pycountry==24.6.1         # via outlines
-pydantic==2.11.5          # via autodoc-pydantic, compressed-tensors, docling, docling-core, docling-ibm-models, docling-parse, fastapi, haystack-ai, instructlab-training, langchain, langchain-core, langsmith, lm-format-enforcer, mistral-common, openai, outlines, pydantic-settings, pydantic-yaml, pylint-pydantic, ragas, vllm, wandb, xgrammar, -r requirements.txt
+pydantic==2.11.7          # via autodoc-pydantic, compressed-tensors, docling, docling-core, docling-ibm-models, docling-parse, fastapi, haystack-ai, instructlab-training, langchain, langchain-core, langsmith, lm-format-enforcer, mistral-common, openai, outlines, pydantic-settings, pydantic-yaml, pylint-pydantic, ragas, vllm, wandb, xgrammar, -r requirements.txt
 pydantic-core==2.33.2     # via pydantic
 pydantic-settings==2.9.1  # via autodoc-pydantic, docling, langchain-community, llama-cpp-python
 pydantic-yaml==1.5.1      # via -r requirements.txt
 pydeps==3.0.1             # via -r requirements-dev.txt
-pygments==2.19.1          # via enum-tools, furo, mpire, rich, sphinx, sphinx-prompt, sphinx-tabs
+pygments==2.19.1          # via enum-tools, furo, mpire, pytest, rich, sphinx, sphinx-prompt, sphinx-tabs
 pylatexenc==2.10          # via docling
 pylint==3.3.7             # via pylint-plugin-utils, pylint-pydantic, -r requirements-dev.txt
 pylint-plugin-utils==0.8.2  # via pylint-pydantic
@@ -227,51 +226,51 @@ pyparsing==3.2.3          # via matplotlib
 pypdfium2==4.30.1         # via docling
 pyproject-api==1.9.0      # via tox
 pytablewriter==1.2.1      # via lm-eval
-pytest==8.3.5             # via pytest-asyncio, pytest-cov, pytest-html, pytest-metadata, -r requirements-dev.txt
+pytest==8.4.1             # via pytest-asyncio, pytest-cov, pytest-html, pytest-metadata, -r requirements-dev.txt
 pytest-asyncio==1.0.0     # via -r requirements-dev.txt
-pytest-cov==6.1.1         # via -r requirements-dev.txt
+pytest-cov==6.2.1         # via -r requirements-dev.txt
 pytest-html==4.1.1        # via -r requirements-dev.txt
 pytest-metadata==3.1.1    # via pytest-html
 python-bidi==0.6.6        # via easyocr
 python-dateutil==2.9.0.post0  # via botocore, haystack-ai, matplotlib, pandas, posthog, typepy
-python-docx==1.1.2        # via docling
+python-docx==1.2.0        # via docling
 python-dotenv==1.1.0      # via pydantic-settings, uvicorn
 python-json-logger==3.3.0  # via vllm
 python-multipart==0.0.20  # via fastapi
 python-pptx==1.0.2        # via docling
 pytz==2025.2              # via pandas, typepy
 pyyaml==6.0.2             # via accelerate, datasets, docling-core, easyocr, gguf, haystack-ai, huggingface-hub, instructlab-schema, instructlab-training, langchain, langchain-community, langchain-core, llama-cpp-python, lm-format-enforcer, myst-parser, peft, pre-commit, ray, transformers, uvicorn, vllm, wandb, yamllint, -r requirements.txt
-pyzmq==26.4.0             # via vllm
+pyzmq==27.0.0             # via vllm
 ragas==0.2.15             # via instructlab-eval
-ray==2.46.0               # via vllm
+ray==2.47.1               # via vllm
 referencing==0.36.2       # via jsonschema, jsonschema-specifications, outlines
 regex==2024.11.6          # via nltk, sacrebleu, tiktoken, transformers
-requests==2.32.3          # via apeye, cachecontrol, datasets, docling, evaluate, haystack-ai, huggingface-hub, langchain, langchain-community, langsmith, mistral-common, opentelemetry-exporter-otlp-proto-http, outlines, posthog, ray, requests-toolbelt, sphinx, tiktoken, transformers, vllm, wandb
+requests==2.32.4          # via apeye, cachecontrol, datasets, docling, evaluate, haystack-ai, huggingface-hub, langchain, langchain-community, langsmith, mistral-common, opentelemetry-exporter-otlp-proto-http, outlines, posthog, ray, requests-toolbelt, sphinx, tiktoken, transformers, vllm, wandb
 requests-toolbelt==1.0.0  # via langsmith
 rich==14.0.0              # via instructlab-training, rich-toolkit, typer, -r requirements.txt
 rich-toolkit==0.14.7      # via fastapi-cli
 rouge-score==0.1.2        # via lm-eval, -r requirements.txt
 rpds-py==0.25.1           # via jsonschema, referencing
 rtree==1.4.0              # via docling
-ruamel-yaml==0.18.12      # via pydantic-yaml, sphinx-toolbox, -r requirements.txt
+ruamel-yaml==0.18.14      # via pydantic-yaml, sphinx-toolbox, -r requirements.txt
 ruamel-yaml-clib==0.2.12  # via ruamel-yaml
-ruff==0.11.12             # via -r requirements-dev.txt
+ruff==0.12.0              # via -r requirements-dev.txt
 s3transfer==0.13.0        # via boto3
 sacrebleu==2.5.1          # via lm-eval
 safetensors==0.5.3        # via accelerate, docling-ibm-models, instructlab-dolomite, peft, transformers
 scikit-image==0.25.2      # via easyocr
-scikit-learn==1.6.1       # via lm-eval, sentence-transformers, submodlib-py
+scikit-learn==1.7.0       # via lm-eval, sentence-transformers, submodlib-py
 scipy==1.15.3             # via docling, easyocr, scikit-image, scikit-learn, sentence-transformers, submodlib-py, vllm
 semchunk==2.2.2           # via docling-core
 sentence-transformers==4.1.0  # via -r requirements.txt
 sentencepiece==0.2.0      # via gguf, instructlab-sdg, mistral-common, vllm, xgrammar, -r requirements.txt
-sentry-sdk==2.29.1        # via wandb
+sentry-sdk==2.30.0        # via wandb
 setproctitle==1.3.6       # via wandb
-setuptools==80.9.0        # via pytablewriter, wandb
+setuptools==80.9.0        # via pytablewriter, torch, vllm
 shapely==2.1.1            # via easyocr
 shellingham==1.5.4        # via typer
 shortuuid==1.0.13         # via instructlab-eval
-six==1.17.0               # via docker-pycreds, html5lib, posthog, python-dateutil, rouge-score
+six==1.17.0               # via html5lib, posthog, python-dateutil, rouge-score, vllm
 smmap==5.0.2              # via gitdb
 sniffio==1.3.1            # via anyio, openai
 snowballstemmer==3.0.1    # via sphinx
@@ -304,34 +303,34 @@ tcolorpy==0.1.7           # via pytablewriter
 tenacity==9.1.2           # via haystack-ai, instructlab-sdg, langchain-community, langchain-core
 tesserocr==2.8.0          # via docling
 threadpoolctl==3.6.0      # via scikit-learn
-tifffile==2025.6.1        # via scikit-image
+tifffile==2025.6.11       # via scikit-image
 tiktoken==0.9.0           # via langchain-openai, mistral-common, ragas, vllm, xgrammar
 tokenizers==0.21.1        # via transformers, vllm, -r requirements.txt
 toml==0.10.2              # via -r requirements.txt
-tomlkit==0.13.2           # via pylint
+tomlkit==0.13.3           # via pylint
 torch==2.6.0              # via accelerate, bitsandbytes, compressed-tensors, docling-ibm-models, easyocr, flash-attn, instructlab-dolomite, instructlab-eval, instructlab-training, liger-kernel, lm-eval, outlines, peft, safetensors, sentence-transformers, torchaudio, torchvision, vllm, xformers, xgrammar, -c constraints-dev.txt.in, -r requirements.txt
 torchaudio==2.6.0         # via vllm
 torchvision==0.21.0       # via docling-ibm-models, easyocr, vllm
-tox==4.26.0               # via -r requirements-dev.txt
+tox==4.27.0               # via -r requirements-dev.txt
 tqdm==4.67.1              # via datasets, docling, docling-ibm-models, evaluate, gguf, haystack-ai, huggingface-hub, mpire, nltk, openai, outlines, peft, semchunk, sentence-transformers, submodlib-py, tqdm-multiprocess, transformers, vllm, -r requirements.txt
 tqdm-multiprocess==0.0.11  # via lm-eval
-transformers==4.51.3      # via compressed-tensors, docling-core, docling-ibm-models, instructlab-dolomite, instructlab-eval, instructlab-sdg, instructlab-training, lm-eval, peft, sentence-transformers, trl, vllm, xgrammar, -r requirements.txt
+transformers==4.51.3      # via compressed-tensors, docling-core, docling-ibm-models, instructlab-dolomite, instructlab-eval, instructlab-sdg, instructlab-training, lm-eval, peft, sentence-transformers, trl, vllm, xgrammar, -c constraints-dev.txt.in, -r requirements.txt
 triton==3.2.0             # via liger-kernel, torch, xgrammar
-trl==0.14.0               # via instructlab-training, -r requirements.txt
+trl==0.18.2               # via instructlab-training, -r requirements.txt
 typepy==1.3.4             # via dataproperty, pytablewriter, tabledata
-typer==0.15.4             # via docling, docling-core, fastapi-cli
+typer==0.16.0             # via docling, docling-core, fastapi-cli
 types-pytz==2025.2.0.20250516  # via pandas-stubs
-typing-extensions==4.13.2  # via anyio, beautifulsoup4, docling-core, domdf-python-tools, enum-tools, fastapi, haystack-ai, huggingface-hub, instructlab-schema, langchain-core, llama-cpp-python, mistral-common, openai, opentelemetry-sdk, outlines, pydantic, pydantic-core, pydantic-yaml, python-docx, python-pptx, referencing, rich-toolkit, sentence-transformers, sphinx-toolbox, sqlalchemy, torch, typer, typing-inspect, typing-inspection, vllm, wandb
+typing-extensions==4.14.0  # via anyio, beautifulsoup4, docling-core, domdf-python-tools, enum-tools, fastapi, haystack-ai, huggingface-hub, instructlab-schema, langchain-core, llama-cpp-python, mistral-common, openai, opentelemetry-sdk, outlines, pydantic, pydantic-core, pydantic-yaml, python-docx, python-pptx, referencing, rich-toolkit, sentence-transformers, sphinx-toolbox, sqlalchemy, torch, typer, typing-inspect, typing-inspection, vllm, wandb
 typing-inspect==0.9.0     # via dataclasses-json
 typing-inspection==0.4.1  # via pydantic, pydantic-settings
 tzdata==2025.2            # via pandas
-urllib3==2.4.0            # via botocore, requests, sentry-sdk, sphinx-prompt
+urllib3==2.5.0            # via botocore, requests, sentry-sdk, sphinx-prompt
 uvicorn==0.34.3           # via fastapi, fastapi-cli, llama-cpp-python
 uvloop==0.21.0            # via uvicorn
 virtualenv==20.31.2       # via pre-commit, tox
 vllm==0.8.5.post1         # via -c constraints-dev.txt.in, -r requirements-vllm-cuda.txt
-wandb==0.19.11            # via -r requirements.txt
-watchfiles==1.0.5         # via uvicorn, vllm
+wandb==0.20.1             # via -r requirements.txt
+watchfiles==1.1.0         # via uvicorn, vllm
 wcwidth==0.2.13           # via prompt-toolkit
 webencodings==0.5.1       # via html5lib
 websockets==15.0.1        # via uvicorn
@@ -341,9 +340,9 @@ wrapt==1.17.2             # via deprecated
 xdg-base-dirs==6.0.2      # via instructlab-sdg, -r requirements.txt
 xformers==0.0.29.post2    # via vllm
 xgrammar==0.1.18          # via vllm
-xlsxwriter==3.2.3         # via python-pptx
+xlsxwriter==3.2.5         # via python-pptx
 xxhash==3.5.0             # via datasets, evaluate
 yamllint==1.37.1          # via instructlab-schema
-yarl==1.20.0              # via aiohttp
-zipp==3.22.0              # via importlib-metadata
+yarl==1.20.1              # via aiohttp
+zipp==3.23.0              # via importlib-metadata
 zstandard==0.23.0         # via langsmith, lm-eval
