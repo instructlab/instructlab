@@ -62,6 +62,7 @@ email-validator==2.2.0    # via fastapi
 enum-tools==0.13.0        # via -r docs/requirements.txt
 et-xmlfile==2.0.0         # via openpyxl
 evaluate==0.4.3           # via lm-eval
+execnet==2.1.1            # via pytest-xdist
 fastapi==0.115.13         # via llama-cpp-python, vllm
 fastapi-cli==0.0.7        # via fastapi
 fastrlock==0.8.3          # via cupy-cuda12x
@@ -231,6 +232,7 @@ pytest-asyncio==1.0.0     # via -r requirements-dev.txt
 pytest-cov==6.2.1         # via -r requirements-dev.txt
 pytest-html==4.1.1        # via -r requirements-dev.txt
 pytest-metadata==3.1.1    # via pytest-html
+pytest-xdist==3.7.0       # via -r requirements-dev.txt
 python-bidi==0.6.6        # via easyocr
 python-dateutil==2.9.0.post0  # via botocore, haystack-ai, matplotlib, pandas, posthog, typepy
 python-docx==1.2.0        # via docling

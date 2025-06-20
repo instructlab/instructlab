@@ -11,5 +11,6 @@ pytest
 pytest-asyncio
 pytest-cov
 pytest-html
+pytest-xdist
 ruff
 tox>=4.4.2
