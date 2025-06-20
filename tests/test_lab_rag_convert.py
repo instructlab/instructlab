@@ -100,6 +100,9 @@ def run_rag_convert_test(
 
 @dev_preview
 @pytest.mark.filterwarnings("ignore::pytest.PytestUnraisableExceptionWarning")
+# EasyOCR attempts to use gpu when only cpu is available, which triggers a
+# warning from torch 2.7+. See: https://github.com/JaidedAI/EasyOCR/pull/1400
+@pytest.mark.filterwarnings("ignore::UserWarning")
 def test_convert_pdf_from_directory(tmp_path: Path):
     """
     Tests converting from the sample PDF in tests/testdata/documents/pdf.
