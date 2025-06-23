@@ -167,11 +167,11 @@ jobs:
       - name: Install Packages
         run: |
           cat /etc/os-release
-          sudo dnf install -y gcc gcc-c++ make git-core python3.11 python3.11-devel
+          sudo dnf install -y gcc gcc-c++ make git-core python3.12 python3.12-devel
 
       - name: Install ilab
         run: |
-          PYTHON="python3.11" ./scripts/install-ilab-with-cuda.sh
+          PYTHON="python3.12" ./scripts/install-ilab-with-cuda.sh
 
       - name: Check disk before tests
         run: |

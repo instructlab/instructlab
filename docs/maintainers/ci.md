@@ -6,7 +6,7 @@ The InstructLab continuous integration (CI) ecosystem:
 
 ## Unit tests
 
-Unit tests validate specific components or features of InstructLab in isolation. InstructLab CI runs these tests on CPU-only Ubuntu runners using Python 3.11.
+Unit tests validate specific components or features of InstructLab in isolation. InstructLab CI runs these tests on CPU-only Ubuntu runners.
 
 In general, all code changes should add a new unit test or modify an existing unit test.
 
@@ -14,7 +14,7 @@ Unit tests are stored in the `tests/` directory and are run with [pytest](https:
 
 ## Functional tests
 
-Functional tests validate components or features of InstructLab in tandem, but not necessarily as part of a complex workflow. InstructLab CI runs these tests on CPU-only Ubuntu runners using Python 3.11.
+Functional tests validate components or features of InstructLab in tandem, but not necessarily as part of a complex workflow. InstructLab CI runs these tests on CPU-only Ubuntu runners.
 
 New code may or may not need a functional test. However, contributors should strive to create functional tests where possible.
 
