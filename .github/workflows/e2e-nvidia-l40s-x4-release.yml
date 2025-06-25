@@ -6,15 +6,11 @@ name: E2E (NVIDIA L40S x4) Release Branch
 on:
   schedule:
     - cron: '0 11 * * *' # Runs at 11AM UTC every day
-  workflow_dispatch:
-    inputs:
-      pr_or_branch:
-        description: 'pull request number or branch name'
-        required: true
-        default: 'release-v0.26'
+  workflow_dispatch: {}
 
 env:
   TMPDIR: /home/tmp
+  LATEST_RELEASE_BRANCH: release-v0.26
 
 jobs:
   start-large-ec2-runner:
@@ -100,67 +96,12 @@ jobs:
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
+          ref: ${{ env.LATEST_RELEASE_BRANCH }}
 
       - name: Install dependent PRs if needed
         uses: depends-on/depends-on-action@61cb3f4a0e2c8ae4b90c9448dc57c7ba9ca24c35 # main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Determine if pr_or_branch is a PR number
-        id: check_pr
-        run: |
-          PR_OR_BRANCH=${{ github.event.inputs.pr_or_branch || 'main' }} # Default to 'main' if not set
-          if [[ "$PR_OR_BRANCH" =~ ^[0-9]+$ ]]; then
-            echo "is_pr=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "is_pr=false" >> "$GITHUB_OUTPUT"
-          fi
-          echo "pr_or_branch=$PR_OR_BRANCH" >> "$GITHUB_OUTPUT"
-
-      - name: Check if gh cli is installed
-        id: gh_cli
-        run: |
-          if command -v gh &> /dev/null ; then
-            echo "gh_cli_installed=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "gh_cli_installed=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Install gh CLI
-        if: steps.gh_cli.outputs.gh_cli_installed == 'false'
-        run: |
-          sudo dnf install 'dnf-command(config-manager)' -y
-          sudo dnf config-manager --add-repo https://cli.github.com/packages/rpm/gh-cli.repo
-          sudo dnf install gh --repo gh-cli -y
-
-      - name: test gh CLI
-        run: |
-          gh --version
-
-      - name: set default repo
-        run: |
-          gh repo set-default ${{ github.server_url }}/${{ github.repository }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Add comment to PR
-        if: steps.check_pr.outputs.is_pr == 'true'
-        run: |
-          gh pr comment "${{ steps.check_pr.outputs.pr_or_branch }}" -b "${{ github.workflow }} workflow launched on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Fetch and checkout PR
-        if: steps.check_pr.outputs.is_pr == 'true'
-        run: |
-          gh pr checkout ${{ steps.check_pr.outputs.pr_or_branch }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Checkout branch
-        if: steps.check_pr.outputs.is_pr == 'false'
-        run: |
-          git checkout ${{ steps.check_pr.outputs.pr_or_branch }}
 
       - name: Install ilab
         run: |
@@ -183,41 +124,27 @@ jobs:
         run: |
           df -h
 
-      - name: Add comment to PR if the workflow failed
-        if: failure() && steps.check_pr.outputs.is_pr == 'true'
-        run: |
-          gh pr comment "${{ steps.check_pr.outputs.pr_or_branch }}" -b "e2e workflow failed on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), please investigate."
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Add comment to PR if the workflow succeeded
-        if: success() && steps.check_pr.outputs.is_pr == 'true'
-        run: |
-          gh pr comment "${{ steps.check_pr.outputs.pr_or_branch }}" -b "e2e workflow succeeded on this PR: [View run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}), congrats!"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Send Discord notification for failure
-        if: failure() && steps.check_pr.outputs.is_pr == 'false'
+        if: failure()
         uses: sarisia/actions-status-discord@5ddd3b114a98457dd80a39b2f00b6a998cd69008 # v1.15.3
         with:
           webhook: ${{ secrets.SON_OF_JEEVES_DISCORD_WEBHOOK }}
           status: ${{ job.status }}
           title: "e2e-nvidia-l40s-x4"
           description: |
-            Job in **${{ github.repository }}** running on branch `${{ steps.check_pr.outputs.pr_or_branch }}` completed **with failures** ❌
+            Job in **${{ github.repository }}** running on branch `${{ env.LATEST_RELEASE_BRANCH }}` completed **with failures** ❌
             Click [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) to view details.
           color: 0xCB2431 # Red color for failure
 
       - name: Send Discord notification for success
-        if: success() && steps.check_pr.outputs.is_pr == 'false'
+        if: success()
         uses: sarisia/actions-status-discord@5ddd3b114a98457dd80a39b2f00b6a998cd69008 # v1.15.3
         with:
           webhook: ${{ secrets.SON_OF_JEEVES_DISCORD_WEBHOOK }}
           status: ${{ job.status }}
           title: "e2e-nvidia-l40s-x4"
           description: |
-            Job in **${{ github.repository }}** running on branch `${{ steps.check_pr.outputs.pr_or_branch }}` completed **successfully** ✅
+            Job in **${{ github.repository }}** running on branch `${{ env.LATEST_RELEASE_BRANCH }}` completed **successfully** ✅
             Click [here](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) to view details.
           color: 0x28A745 # Green color for success
 
