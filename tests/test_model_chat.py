@@ -15,6 +15,7 @@ from instructlab import lab
 from instructlab.configuration import model_info
 from instructlab.feature_gates import FeatureGating, FeatureScopes, GatedFeatures
 from instructlab.model.chat import ChatException, ConsoleChatBot
+from instructlab.utils import get_sysprompt
 from tests.test_feature_gates import dev_preview
 
 # Local
@@ -166,3 +167,32 @@ def test_chat_with_model_id(mock_chat_model, _, cli_runner: CliRunner, tmp_path:
     # Assert that the command executed successfully
     assert result.exit_code == 0, f"Command failed with output: {result.output}"
     mock_chat_model.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "system_prompt,expected_prompt",
+    [
+        ("I am a AI assistant.", "I am a AI assistant."),
+        (
+            None,
+            "I am an advanced AI language model designed to assist you with a wide range of tasks and provide helpful, clear, and accurate responses. My primary role is to serve as a chat assistant, engaging in natural, conversational dialogue, answering questions, generating ideas, and offering support across various topics.",
+        ),
+    ],
+)
+def test_system_prompt_option(system_prompt, expected_prompt):
+    loaded = {}
+
+    chatbot = ConsoleChatBot(
+        model="/var/model/file",
+        client=None,
+        loaded=loaded,
+    )
+
+    if system_prompt:
+        chatbot.info["messages"] = [{"role": "system", "content": system_prompt}]
+    else:
+        chatbot.info["messages"] = [
+            {"role": "system", "content": get_sysprompt("default")}
+        ]
+
+    assert chatbot.info["messages"][0]["content"] == expected_prompt
