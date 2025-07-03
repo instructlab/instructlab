@@ -216,7 +216,7 @@ test_taxonomy() {
 
 test_generate() {
     task Generate synthetic data in detached mode
-    ilab data generate -dt
+    ilab data generate -dt --enable-serving-output
     task Data generation started
     task List all processes
     ilab process list
