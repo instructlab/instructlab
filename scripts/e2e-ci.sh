@@ -223,6 +223,28 @@ test_generate() {
     task Listing processes Complete
     task Attach to the most recent process
     ilab process attach --latest
+
+    # Print the output of the latest generation log file
+    step Print latest generation log file
+    PROCESS_REGISTRY_FILE="$HOME/.local/share/instructlab/internal/process_registry.json"
+    if [ -f "$PROCESS_REGISTRY_FILE" ]; then
+        LATEST_UUID=$(jq -r 'to_entries | map(select(.value.type=="Generation")) | sort_by(.value.start_time) | last.key' "$PROCESS_REGISTRY_FILE")
+        if [ -n "$LATEST_UUID" ] && [ "$LATEST_UUID" != "null" ]; then
+            LOG_FILE=$(jq -r --arg uuid "$LATEST_UUID" '.[$uuid].log_file' "$PROCESS_REGISTRY_FILE")
+            if [ -f "$LOG_FILE" ]; then
+                echo "--- Generation Log: $LOG_FILE ---"
+                cat "$LOG_FILE"
+                echo "--- End of Generation Log ---"
+            else
+                echo "Log file $LOG_FILE not found."
+            fi
+        else
+            echo "No Generation process found in registry."
+        fi
+    else
+        echo "Process registry file $PROCESS_REGISTRY_FILE not found."
+    fi
+    
     task Synthetic data generation Complete
 }
 
