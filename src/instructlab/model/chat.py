@@ -872,7 +872,7 @@ def chat_cli(
         prompt=not qq,
         vertical_overflow=("visible" if visible_overflow else "ellipsis"),
         loaded=loaded,
-        temperature=(temperature if temperature is not None else temperature),
+        temperature=(float(temperature) if temperature is not None else temperature),
         max_tokens=(max_tokens if max_tokens else max_tokens),
         max_ctx_size=max_ctx_size,
         backend_type=backend_type,
