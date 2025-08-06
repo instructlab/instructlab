@@ -34,6 +34,7 @@ def gen_data(
     use_legacy_pretraining_format,
     process_mode,
     log_level,
+    openai_client_max_retries,
 ):
     """Generates synthetic data to enhance your example data"""
     # First Party
@@ -88,6 +89,7 @@ def gen_data(
         max_num_tokens=max_num_tokens,
         system_prompt=system_prompt,
         use_legacy_pretraining_format=use_legacy_pretraining_format,
+        openai_client_max_retries=openai_client_max_retries,
         # http_client_params=http_client_params,
     )
 
@@ -125,6 +127,7 @@ def create_server_and_generate(
     log_file,
     local_uuid,
     process_mode,
+    openai_client_max_retries,
 ):
     backend_instance = None
     # we need to use the instructlab logger so that the libraries inherit the config we set up.
@@ -191,7 +194,10 @@ def create_server_and_generate(
             batch_size = 0
 
     client = openai.OpenAI(
-        base_url=api_base, api_key=api_key, http_client=http_client(http_client_params)
+        base_url=api_base,
+        max_retries=openai_client_max_retries,
+        api_key=api_key,
+        http_client=http_client(http_client_params),
     )
     # Third Party
     from instructlab.sdg.generate_data import generate_data
