@@ -290,7 +290,7 @@ def is_valid_document(file_path: str, file_info: dict) -> bool:
 def _validate_documents(
     source: SourceDict,
     skip_checkout: bool = False,
-) -> None:
+) -> int:
     """
     Validate that we can retrieve the content of files from a Git repository specified in qna.yaml.
 
@@ -303,7 +303,7 @@ def _validate_documents(
         OSError, GitCommandError, FileNotFoundError: If an error occurs during Git operations or file access.
 
     Returns:
-        None
+        cumulative_reference_file_size (int): cumulative size of referenced documents.
     """
     repo_url = source.get("repo", "")
     commit_hash = source.get("commit", "")
@@ -315,6 +315,7 @@ def _validate_documents(
         ".pdf": {"mode": "rb", "encoding": None, "description": "PDF"},
         # Add other file types when supported here.
     }
+    cumulative_reference_file_size = 0
 
     with tempfile.TemporaryDirectory() as temp_dir:
         try:
@@ -333,6 +334,7 @@ def _validate_documents(
                     if os.path.isfile(file_path):
                         file_extension = os.path.splitext(file_path)[1]
                         file_info = file_types.get(file_extension)
+                        cumulative_reference_file_size += os.path.getsize(file_path)
 
                         if not isinstance(file_info, dict):
                             click.secho(
@@ -352,6 +354,7 @@ def _validate_documents(
         except (OSError, exc.GitCommandError, FileNotFoundError) as e:
             click.secho(f"Error validating documents: {str(e)}", fg="red")
             raise click.exceptions.Exit(1)
+    return cumulative_reference_file_size
 
 
 def git_clone_checkout(
@@ -385,25 +388,29 @@ def get_cli_helper_sysprompt() -> str:
 
 # pylint: disable=broad-exception-caught
 def validate_taxonomy_file(
-    file_path: str | Path, yamllint_config: str | None = None
-) -> tuple[int, int]:
+    file_path: str | Path, quiet: bool, yamllint_config: str | None = None
+) -> tuple[int, int, int]:
     parser = TaxonomyParser(
         schema_version=0,  # Use version value in yaml
         message_format=TaxonomyMessageFormat.LOGGING,  # Report warnings and errors to the logger
         yamllint_config=yamllint_config,
         yamllint_strict=True,  # Report yamllint warnings as errors
     )
+    cumulative_referenced_document_size = 0
+    estimated_samples = 0
     taxonomy = parser.parse(file_path)
 
     if taxonomy.warnings or taxonomy.errors:
-        return taxonomy.warnings, taxonomy.errors
+        return taxonomy.warnings, taxonomy.errors, estimated_samples
+
+    total_seed_examples = len(taxonomy.contents.get("seed_examples"))  # type: ignore
 
     # If the taxonomy file includes a document reference, validate that
     # we can retrieve the content of the document
     document = taxonomy.contents.get("document")
     if document:
         try:
-            _validate_documents(document)
+            cumulative_referenced_document_size = _validate_documents(document)
         except Exception:
             logger.error(
                 "Failed to load document content for %s",
@@ -411,16 +418,44 @@ def validate_taxonomy_file(
                 exc_info=True,
             )
             taxonomy.errors += 1
+    if cumulative_referenced_document_size > 0:
+        # knowledge estimation path
+        estimated_tokens_per_word = 1.3
+        estimated_bytes_per_token = 4
+        estimated_samples = int(
+            (
+                cumulative_referenced_document_size
+                * total_seed_examples
+                * DEFAULTS.SDG_SCALE_FACTOR
+            )
+            / (
+                estimated_bytes_per_token
+                * estimated_tokens_per_word
+                * DEFAULTS.CHUNK_WORD_COUNT
+            )
+        )
+    else:
+        # skills estimation path
+        estimated_samples = total_seed_examples * DEFAULTS.SDG_SCALE_FACTOR
+    if not quiet:
+        logger.info(
+            "estimated samples sdg will produce for leaf node %s: %d",
+            taxonomy.path,
+            estimated_samples,
+        )
 
-    return taxonomy.warnings, taxonomy.errors
+    return taxonomy.warnings, taxonomy.errors, estimated_samples
 
 
 def validate_taxonomy(
     taxonomy: str | Path,
     taxonomy_base: str,
+    estimated_tokens_per_sdg_sample: int,
+    quiet: bool,
     yaml_rules: str | Path | None = None,
 ) -> None:
     yamllint_config = None  # If no custom rules file, use default config
+    cumulative_estimated_sdg_samples = 0
     if yaml_rules is not None:  # user attempted to pass custom rules file
         yaml_rules_path = Path(yaml_rules)
         if yaml_rules_path.is_file():  # file was found, use specified config
@@ -430,7 +465,9 @@ def validate_taxonomy(
             logger.debug("Cannot find %s. Using default rules.", yaml_rules)
 
     if os.path.isfile(taxonomy):
-        warnings, errors = validate_taxonomy_file(taxonomy, yamllint_config)
+        warnings, errors, estimated_samples = validate_taxonomy_file(
+            taxonomy, quiet, yamllint_config
+        )
         if warnings:
             logger.warning(
                 "%s warnings (see above) due to taxonomy file not (fully) usable.",
@@ -438,6 +475,7 @@ def validate_taxonomy(
             )
         if errors:
             raise TaxonomyReadingException(yaml.YAMLError("Taxonomy file with errors!"))
+        cumulative_estimated_sdg_samples += estimated_samples
     else:  # taxonomy is dir
         if taxonomy_base == "empty":
             # Gather all the yamls - equivalent to a diff against "the null tree"
@@ -453,9 +491,12 @@ def validate_taxonomy(
                 logger.debug("* %s", e)
         for f in taxonomy_files:
             file_path = os.path.join(taxonomy, f)
-            warnings, errors = validate_taxonomy_file(file_path, yamllint_config)
+            warnings, errors, estimated_samples = validate_taxonomy_file(
+                file_path, quiet, yamllint_config
+            )
             total_warnings += warnings
             total_errors += errors
+            cumulative_estimated_sdg_samples += estimated_samples
         if total_warnings:
             logger.warning(
                 "%s warnings (see above) due to taxonomy files that were not (fully) usable.",
@@ -467,6 +508,17 @@ def validate_taxonomy(
                     f"{total_errors} total errors found across {len(taxonomy_files)} taxonomy files!"
                 )
             )
+    total_estimated_sdg_tokens = (
+        cumulative_estimated_sdg_samples * estimated_tokens_per_sdg_sample
+    )
+    if not quiet:
+        logger.info(
+            "total estimated sdg samples for taxonomy: %d",
+            cumulative_estimated_sdg_samples,
+        )
+        logger.info(
+            "total estimated sdg tokens for taxonomy: %d", total_estimated_sdg_tokens
+        )
 
 
 def is_pretraining_dataset(ds: List[MessageSample]) -> bool:

@@ -12,6 +12,7 @@ import yaml
 
 # First Party
 from instructlab import clickext
+from instructlab.configuration import DEFAULTS
 
 logger = logging.getLogger(__name__)
 
@@ -34,13 +35,27 @@ logger = logging.getLogger(__name__)
     help="Custom rules file for YAML linting.",
 )
 @click.option(
+    "--estimated-tokens-per-sdg-sample",
+    type=click.INT,
+    default=DEFAULTS.ESTIMATED_TOKENS_PER_SDG_SAMPLE,
+    show_default=True,
+    help="Estimated average tokens per sdg sample.",
+)
+@click.option(
     "--quiet",
     is_flag=True,
     help="Suppress all output. Call returns 0 if check passes, 1 otherwise.",
 )
 @click.pass_context
 @clickext.display_params
-def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
+def diff(
+    ctx,
+    taxonomy_path,
+    taxonomy_base,
+    yaml_rules,
+    estimated_tokens_per_sdg_sample,
+    quiet,
+):
     """
     Lists taxonomy files that have changed since <taxonomy-base>
     and checks that taxonomy is valid. Similar to 'git diff <ref>'.
@@ -85,7 +100,13 @@ def diff(ctx, taxonomy_path, taxonomy_base, yaml_rules, quiet):
 
     # validate new or changed taxonomy files
     try:
-        validate_taxonomy(taxonomy_path, taxonomy_base, yaml_rules)
+        validate_taxonomy(
+            taxonomy_path,
+            taxonomy_base,
+            estimated_tokens_per_sdg_sample,
+            quiet,
+            yaml_rules,
+        )
     except (TaxonomyReadingException, yaml.YAMLError) as exc:
         if not quiet:
             error_details = traceback.format_exc()
