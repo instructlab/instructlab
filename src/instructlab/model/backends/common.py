@@ -34,6 +34,12 @@ VLLM = "vllm"
 templates = [
     {
         "family": "granite",
+        "arch": SupportedModelArchitectures.GRANITE3_128K,
+        "template": granite.CHAT_TEMPLATE,
+        "special_tokens": granite.SPECIAL_TOKENS,
+    },
+    {
+        "family": "granite",
         "arch": SupportedModelArchitectures.GRANITE,
         "template": granite.CHAT_TEMPLATE,
         "special_tokens": granite.SPECIAL_TOKENS,
