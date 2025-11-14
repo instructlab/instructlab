@@ -167,7 +167,7 @@ ENV CPLUS_INCLUDE_PATH="${CUDA_HOME}/include:${CPLUS_INCLUDE_PATH}"
 ENV CMAKE_INCLUDE_PATH="${CUDA_HOME}/include:${CMAKE_INCLUDE_PATH}"
 
 # Install Intel oneAPI repository for Intel oneMKL
-COPY containers/cuda/intel-oneapi.repo /etc/yum.repos.d/oneapi.repo
+COPY intel-oneapi.repo /etc/yum.repos.d/oneapi.repo
 RUN dnf config-manager --set-enabled intel-oneapi
 
 RUN dnf -y install --nodocs \

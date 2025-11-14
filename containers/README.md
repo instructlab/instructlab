@@ -90,7 +90,7 @@ The above command will print the help, as we didn't pass any argument.
 Let's initialize our configuration, download the model and start the chat bot.
 
 ```shell
-podman run --rm -it --device nvidia.com/gpu=0 --volume ${HOME}/.ilab:/opt/appr-root/ilab:Z localhost/instructlab:cuda init
+podman run --rm -it --device nvidia.com/gpu=0 --volume ${HOME}/.ilab:/opt/app-root/ilab:Z localhost/instructlab:cuda init
 podman run --rm -it --device nvidia.com/gpu=0 --volume ${HOME}/.ilab:/opt/app-root/ilab:Z localhost/instructlab:cuda download
 podman run --rm -it --device nvidia.com/gpu=0 --volume ${HOME}/.ilab:/opt/app-root/ilab:Z localhost/instructlab:cuda chat
 ```

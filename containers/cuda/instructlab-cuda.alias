@@ -1,0 +1,7 @@
+# Alias for running instructlab in a CUDA container
+# To use this alias, copy this file to ${HOME}/.bashrc.d/ and restart your shell
+# or source it directly: source ${HOME}/.bashrc.d/instructlab-cuda.alias
+
+alias instructlab='podman run --rm -it --user 1001 --device nvidia.com/gpu=0 --volume ${HOME}/.ilab:/opt/app-root/ilab:Z localhost/instructlab:cuda'
+alias ilab='instructlab'
+
