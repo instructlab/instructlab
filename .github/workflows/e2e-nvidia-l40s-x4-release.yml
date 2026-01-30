@@ -21,7 +21,7 @@ jobs:
       ec2-instance-region: ${{ steps.launch-ec2-instance-with-fallback.outputs.ec2-instance-region }}
     steps:
       - name: Checkout "launch-ec2-runner-with-fallback" in-house CI action
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           repository: instructlab/ci-actions
           # clone the "ci-actions" repo to a local directory called "ci-actions", instead of
@@ -92,7 +92,7 @@ jobs:
           sudo dnf install -y gcc gcc-c++ make git-core python3.11 python3.11-devel
 
       - name: Checkout
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           # https://github.com/actions/checkout/issues/249
           fetch-depth: 0
