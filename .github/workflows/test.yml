@@ -98,7 +98,7 @@ jobs:
 
       - name: Install go for skopeo
         if: startsWith(matrix.platform, 'ubuntu')
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           cache: false
           go-version: 1.22.x
