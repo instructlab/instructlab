@@ -103,7 +103,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install dependent PRs if needed
-        uses: depends-on/depends-on-action@61cb3f4a0e2c8ae4b90c9448dc57c7ba9ca24c35 # main
+        uses: depends-on/depends-on-action@826c144163ac67bf08347590a5f81afd45da63ca # main
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
